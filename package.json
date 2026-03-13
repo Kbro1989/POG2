@@ -1,0 +1,66 @@
+{
+  "name": "pog2-cli",
+  "version": "1.1.0",
+  "description": "POG2 Sovereign CLI — Ternary Intelligence Engine",
+  "type": "module",
+  "bin": {
+    "pog2": "./dist/cli.js"
+  },
+  "main": "./dist/cli.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "npm run typecheck && npm run lint",
+    "install-global": "npm run build && npm install -g .",
+    "prepublishOnly": "npm run build && npm run typecheck"
+  },
+  "dependencies": {
+    "@google-cloud/language": "^6.5.0",
+    "@google-cloud/translate": "^8.5.0",
+    "@google-cloud/vision": "^4.3.2",
+    "@google/genai": "^1.44.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@types/sqlite3": "^3.1.11",
+    "better-sqlite3": "^9.4.3",
+    "chokidar": "^5.0.0",
+    "commander": "^12.1.0",
+    "googleapis": "^171.4.0",
+    "pino": "^9.4.0",
+    "sqlite3": "^5.0.2",
+    "three": "^0.160.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/chokidar": "^1.7.5",
+    "@types/node": "^22.0.0",
+    "@types/three": "^0.160.0",
+    "@typescript-eslint/eslint-plugin": "^7.5.0",
+    "@typescript-eslint/parser": "^7.5.0",
+    "tar": "^7.5.9",
+    "tsx": "^4.19.1",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "**/*",
+    "!resources/**/*",
+    "!node_modules/**/*",
+    "!logs/**/*",
+    "!dist/**/*"
+  ],
+  "keywords": [
+    "cli",
+    "ai",
+    "codegen",
+    "embeddings",
+    "ternary",
+    "sovereign"
+  ],
+  "preferGlobal": true
+}

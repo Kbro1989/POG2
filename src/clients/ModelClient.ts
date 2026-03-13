@@ -1,0 +1,1065 @@
+﻿import pino from 'pino';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { Agent } from 'undici';
+import type { SovereignConfig } from '../config/SovereignConfig.js';
+import {
+    type Result,
+    type ModelCallParams,
+    type ModelResponse,
+    type ModelExecutor,
+    type ModelCallResult,
+    ok,
+    type AICapability,
+    type AITaskType,
+    type AIServiceType
+} from '../core/models.js';
+import type { TernaryRouter } from '../routing/TernaryRouter.js';
+import { TrainingCollector, type ErrorFixRecord } from '../utils/TrainingCollector.js';
+import { EndpointHealer } from '../utils/EndpointHealer.js';
+import { ModelRolodex } from '../api/ai/ModelRolodex.js';
+
+import { ArchitectureDigest } from '../core/ArchitectureDigest.js';
+
+const execAsync = promisify(exec);
+const logger = pino({ name: 'ModelClient', base: { hostname: 'POG2' } });
+
+/**
+ * ModelClient — Real API calls to local and cloud-based neural substrates.
+ * NO MOCKS. NO FAKES. Real network calls with proper error handling.
+ */
+export class ModelClient implements ModelExecutor {
+    private readonly trainingCollector: TrainingCollector;
+    private readonly healer: EndpointHealer;
+    private readonly digest: ArchitectureDigest;
+    private readonly customAgent: Agent;
+    private rolodex?: ModelRolodex;
+
+    public async execute(params: ModelCallParams): Promise<Result<string>> {
+        const result = await this.call(params);
+        if (result.ok) {
+            return { ok: true, value: result.value.response };
+        }
+        return { ok: false, error: result.error || new Error("Unknown model execution error") };
+    }
+
+    constructor(
+        public readonly config: SovereignConfig,
+        private readonly router?: TernaryRouter
+    ) {
+        this.trainingCollector = TrainingCollector.getInstance();
+        this.digest = new ArchitectureDigest(process.cwd());
+        // Fallback to router's hexagram if available
+        const hex = router?.getHexagram() || (globalThis as any).hexagram;
+        this.healer = new EndpointHealer(hex, this.trainingCollector);
+
+        // Massive local contexts (33b+) may take over 5 mins to load into VRAM or stream.
+        // Node's default fetch relies on Undici which enforces a strict 300_000ms headers timeout.
+        // We override this to 4 hours (14,400,000ms) for high-fidelity local perseverance.
+        this.customAgent = new Agent({
+            headersTimeout: 14_400_000,
+            bodyTimeout: 14_400_000,
+            connectTimeout: 120_000
+        });
+    }
+
+    public getRouter(): TernaryRouter | undefined {
+        return this.router;
+    }
+
+    public getHealer(): EndpointHealer {
+        return this.healer;
+    }
+
+    public getTrainingCollector(): TrainingCollector {
+        return this.trainingCollector;
+    }
+
+    /** Inject or retrieve the ModelRolodex for dynamic model discovery */
+    public setRolodex(rolodex: ModelRolodex): void { this.rolodex = rolodex; }
+    public getRolodex(): ModelRolodex | undefined { return this.rolodex; }
+
+    /**
+     * Implements ModelExecutor.callModel
+     */
+    async callModel(model: string, prompt: string, systemPrompt?: string, category?: string): Promise<ModelCallResult> {
+        const result = await this.call({ model, prompt, systemPrompt, category });
+        if (result.ok) {
+            return { ok: true, value: { response: result.value.response } };
+        }
+        return { ok: false, value: { response: '' }, error: result.error };
+    }
+
+    async call(params: ModelCallParams): Promise<Result<ModelResponse>> {
+        const startTime = Date.now();
+        let provider: 'ollama' | 'huggingface' | 'gemini' | 'cloudflare' | 'fireworks' | 'openrouter' | 'unknown' = 'ollama';
+
+        // Inject sovereign architectural constraints into all prompts
+        const enforcedParams = {
+            ...params,
+            prompt: this.digest.inject(params.prompt)
+        };
+
+        let result: Result<ModelResponse>;
+
+        if (enforcedParams.model.startsWith('gemini:')) {
+            provider = 'gemini';
+            result = await this.callGemini(enforcedParams, startTime);
+        } else if (enforcedParams.model.startsWith('huggingface:')) {
+            provider = 'huggingface';
+            result = await this.callHuggingFace(enforcedParams, startTime);
+        } else if (enforcedParams.model.startsWith('fireworks:')) {
+            provider = 'fireworks';
+            result = await this.callFireworks(enforcedParams, startTime);
+        } else if (enforcedParams.model.startsWith('openrouter:')) {
+            provider = 'openrouter';
+            result = await this.callOpenRouter(enforcedParams, startTime);
+        } else if (enforcedParams.model.startsWith('@cf/') || enforcedParams.model.includes('cloudflare')) {
+            provider = 'cloudflare';
+            result = await this.callCloudflare(enforcedParams, startTime);
+        } else {
+            provider = 'ollama';
+            result = await this.callOllama(enforcedParams, startTime);
+        }
+
+        // Record interaction to D:\ training substrate
+        const latency = Date.now() - startTime;
+        this.trainingCollector.recordInteraction({
+            model: enforcedParams.model,
+            provider,
+            category: enforcedParams.category as any,
+            prompt: enforcedParams.prompt.substring(0, 2000),
+            response: result.ok ? result.value.response.substring(0, 2000) : '',
+            latencyMs: latency,
+            tokenCount: result.ok ? result.value.tokensUsed : undefined,
+            success: result.ok,
+            error: result.ok ? undefined : result.error?.message
+        }).catch(() => { /* non-blocking */ });
+
+        this.trainingCollector.recordMetric({
+            model: enforcedParams.model,
+            provider,
+            latencyMs: latency,
+            success: result.ok,
+            tokenCount: result.ok ? result.value.tokensUsed : undefined
+        }).catch(() => { /* non-blocking */ });
+
+        // Phase 6: Update ModelRolodex with call metrics
+        if (this.rolodex) {
+            this.rolodex.recordCallResult(
+                enforcedParams.model,
+                ModelRolodex.toRolodexProvider(provider),
+                result.ok,
+                latency,
+                result.ok ? result.value.tokensUsed : undefined
+            );
+        }
+
+        return result;
+    }
+
+    /**
+     * Resilient Call: Automatically retries with a fallback model from the router if the first attempt fails.
+     */
+    async resilientCall(params: ModelCallParams & { maxRetries?: number }): Promise<Result<ModelResponse>> {
+        let attempts = 0;
+        const maxRetries = params.maxRetries ?? 2;
+        let lastError: Error | undefined;
+        let cascadeIndex = -1;
+        let failoverSequence: string[] = [];
+
+        while (attempts <= maxRetries) {
+            const result = await this.call(params);
+            if (result.ok) return result;
+
+            lastError = result.error;
+            attempts++;
+
+            if (attempts <= maxRetries && this.router) {
+                logger.warn({ model: params.model, attempt: attempts }, 'Model call failed, seeking fallback...');
+                this.router.recordFailure(params.model);
+
+                // Phase 2: If a tier is explicitly provided, use the tier's failover sequence directly
+                if (params.tier) {
+                    if (failoverSequence.length === 0) {
+                        failoverSequence = Array.from(new Set(this.router.getFailoverSequence(params.tier)));
+                        cascadeIndex = failoverSequence.indexOf(params.model);
+                        if (cascadeIndex === -1) cascadeIndex = 0;
+                    }
+                    if (cascadeIndex < failoverSequence.length - 1) {
+                        cascadeIndex++;
+                        params = { ...params, model: failoverSequence[cascadeIndex] };
+                        logger.info({ nextModel: params.model, tier: params.tier }, 'Tier-aware cascade to next substrate');
+                    } else {
+                        logger.error({ tier: params.tier }, 'All substrates in tier exhausted');
+                        break;
+                    }
+                } else {
+                    // Legacy Phase 72/76.3 logic: Deduplicate sequence and advance index explicitly
+                    if (failoverSequence.length === 0) {
+                        const currentComplexity = await this.router.classify(params.prompt);
+                        const isMaster = params.model === this.config.masterReasoningModel || params.model === this.config.masterFallbackModel || params.model === this.config.masterLocalModel || params.model === this.config.orchestratorModel;
+
+                        const decision = await this.router.route(isMaster ? 'Orchestrator' : currentComplexity);
+                        failoverSequence = Array.from(new Set(this.router.getFailoverSequence(decision.tier)));
+                        cascadeIndex = failoverSequence.indexOf(params.model);
+                    }
+
+                    if (cascadeIndex !== -1 && cascadeIndex < failoverSequence.length - 1) {
+                        cascadeIndex++;
+                        params = { ...params, model: failoverSequence[cascadeIndex] };
+                        logger.info({ nextModel: params.model }, 'Cascading to next model in sequence');
+                    } else {
+                        // Fallback to standard routing if not in sequence or at end
+                        const currentComplexity = await this.router.classify(params.prompt);
+                        const newRoute = await this.router.route(currentComplexity);
+                        if (newRoute.model === params.model) break;
+                        params = { ...params, model: newRoute.model };
+                    }
+                }
+            }
+        }
+
+        // All retries exhausted â€” invoke EndpointHealer before final failure
+        const provider: 'ollama' | 'huggingface' | 'gemini' | 'cloudflare' | 'fireworks' | 'openrouter' | 'unknown' = params.model.startsWith('gemini:') ? 'gemini'
+            : params.model.startsWith('huggingface:') ? 'huggingface'
+                : params.model.startsWith('fireworks:') ? 'fireworks'
+                    : params.model.startsWith('openrouter:') ? 'openrouter'
+                        : params.model.startsWith('@cf/') || params.model.includes('cloudflare') ? 'cloudflare'
+                            : 'ollama';
+        const diagnostic = await this.healer.diagnoseAndHeal(provider, lastError?.message || 'Unknown', params.model);
+
+        if (diagnostic.resolved) {
+            // One final attempt after healing
+            logger.info({ resolution: diagnostic.resolution }, 'EndpointHealer resolved issue â€” retrying...');
+            const finalAttempt = await this.call(params);
+
+            // Phase 56: Persistent Training Loop - Record Error Fix
+            this.trainingCollector.recordErrorFix({
+                errorMessage: lastError?.message || 'Unknown',
+                resolution: diagnostic.resolution,
+                model: params.model,
+                success: finalAttempt.ok
+            }).catch(() => { /* Non-blocking training persistence */ });
+
+            if (finalAttempt.ok) return finalAttempt;
+        }
+
+        return { ok: false, error: lastError || new Error('Max retries exceeded â€” EndpointHealer could not resolve') };
+    }
+
+    async embed(text: string, modelOverride?: string): Promise<Result<Float32Array>> {
+        const model = modelOverride ?? this.config.embeddingModel;
+
+        let result: Result<Float32Array>;
+        if (model.startsWith('gemini:')) {
+            result = await this.embedGemini(text);
+        } else {
+            result = await this.embedOllama(text, model);
+        }
+
+        // Phase 108: Resilient Embedding (Forced Local Sovereignty)
+        if (!result.ok) {
+            logger.error({ model, error: result.error?.message }, 'Primary local embedding failed. Gemini fallback disabled (quota exhausted).');
+        }
+
+        return result;
+    }
+
+    private async callGemini(params: ModelCallParams, startTime: number): Promise<Result<ModelResponse>> {
+        const apiKey = this.config.secondaryCloudApiKey;
+        if (!apiKey) {
+            return { ok: false, error: new Error('SECONDARY_CLOUD_API_KEY not set â€” cannot call cloud substrate') };
+        }
+
+        // Tiered Gemini Fallback Sequence
+        const primaryModelId = params.model.replace('gemini:', '');
+        const fallbackSequence = [
+            primaryModelId,
+            this.config.geminiFlashModel,
+            'gemini-1.5-flash-001',
+            this.config.geminiProModel
+        ];
+
+        // Deduplicate
+        const uniqueSequence = Array.from(new Set(fallbackSequence));
+        let lastError: Error | undefined;
+
+        for (const modelId of uniqueSequence) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+
+            const messages: Array<{ role: string; parts: Array<{ text: string }> }> = [];
+
+            if (params.systemPrompt) {
+                messages.push({ role: 'user', parts: [{ text: params.systemPrompt }] });
+                messages.push({ role: 'model', parts: [{ text: 'Understood.' }] });
+            }
+
+            messages.push({ role: 'user', parts: [{ text: params.prompt }] });
+
+            const body = {
+                contents: messages,
+                generationConfig: {
+                    temperature: params.temperature ?? 0.3,
+                    maxOutputTokens: params.maxTokens ?? 8192
+                }
+            };
+
+            try {
+                let response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+
+                    // If 404, try next model in sequence
+                    if (response.status === 404) {
+                        logger.warn({ modelId, status: 404 }, 'Gemini model not found (404), trying next in sequence...');
+                        lastError = new Error(`Gemini model ${modelId} not found: ${errorText}`);
+                        continue;
+                    }
+
+                    logger.warn({ status: response.status, errorText }, 'Secondary Cloud API failed. Attempting substrate-specific CLI fallback...');
+
+                    try {
+                        const { stdout } = await execAsync('gcloud auth print-access-token');
+                        const token = stdout.trim();
+                        if (token) {
+                            const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`;
+                            response = await fetch(fallbackUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify(body)
+                            });
+
+                            if (!response.ok) {
+                                const fallbackErrorText = await response.text();
+                                lastError = new Error(`Gemini API & GCloud fallback failed: ${fallbackErrorText}`);
+                                continue;
+                            }
+                        } else {
+                            lastError = new Error(`Gemini API ${response.status}: ${errorText}`);
+                            continue;
+                        }
+                    } catch (fallbackErr) {
+                        logger.error({ err: fallbackErr }, 'GCloud CLI not available or auth failed');
+                        lastError = new Error(`Gemini API ${response.status}: ${errorText}`);
+                        continue;
+                    }
+                }
+
+                const data = await response.json() as {
+                    candidates?: Array<{
+                        content?: { parts?: Array<{ text?: string }> };
+                        finishReason?: string;
+                    }>;
+                    usageMetadata?: { totalTokenCount?: number };
+                };
+
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+                const latency = Date.now() - startTime;
+
+                logger.debug({ model: `gemini:${modelId}`, latency, tokens: data.usageMetadata?.totalTokenCount }, 'Secondary Cloud call complete');
+
+                return {
+                    ok: true,
+                    value: {
+                        response: text,
+                        model: `gemini:${modelId}`,
+                        latency,
+                        tokensUsed: data.usageMetadata?.totalTokenCount
+                    }
+                };
+            } catch (err) {
+                logger.error({ err, modelId }, 'Secondary Cloud network error for specific Gemini model');
+                lastError = err as Error;
+            }
+        }
+
+        return { ok: false, error: lastError || new Error('All Gemini retry attempts failed.') };
+    }
+
+    private async callOllama(params: ModelCallParams, startTime: number): Promise<Result<ModelResponse>> {
+        const url = `${this.config.ollamaBaseUrl}/api/generate`;
+
+        const fullPrompt = params.systemPrompt
+            ? `${params.systemPrompt}\n\n${params.prompt}`
+            : params.prompt;
+
+        const body = {
+            model: params.model,
+            prompt: fullPrompt,
+            stream: false,
+            images: params.images, // Multimodal support
+            format: params.format === 'text' ? undefined : (params.format === 'json' ? 'json' : (this.config.outputFormat === 'json' ? 'json' : undefined)),
+            options: {
+                temperature: params.temperature ?? this.config.temperature,
+                top_p: this.config.topP,
+                repeat_penalty: this.config.repeatPenalty,
+                num_ctx: this.config.numCtx,
+                stop: this.config.stopSequences,
+                num_predict: params.maxTokens ?? 4096
+            }
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+                // Massive local timeout: natively handled by Undici dispatcher
+                dispatcher: this.customAgent,
+                signal: AbortSignal.timeout(14_400_000)
+            } as RequestInit & { dispatcher: any });
+
+            // LOGGING LOOP: The Persistence Heartbeat
+            const persistenceInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                logger.info({ model: params.model, elapsed: `${minutes}m ${seconds}s` }, 'Neural Perseverance: Local substrate calculation in progress...');
+            }, 60000);
+
+            try {
+                if (!response.ok) {
+                    clearInterval(persistenceInterval);
+                    const errorText = await response.text();
+                    logger.error({ status: response.status, model: params.model }, 'Ollama API error');
+
+                    // Activate cooldown on 429 rate limit responses
+                    if (response.status === 429) {
+                        logger.warn({ model: params.model }, 'Ollama 429 rate limit â€” activating HuggingFace fallback');
+                        this.router?.activateOllamaCooldown();
+                    }
+
+                    return { ok: false, error: new Error(`Ollama ${response.status}: ${errorText}`) };
+                }
+
+                const data = await response.json() as { response?: string; done?: boolean };
+                clearInterval(persistenceInterval);
+                const latency = Date.now() - startTime;
+
+                logger.debug({ model: params.model, latency }, 'Ollama call complete');
+
+                return {
+                    ok: true,
+                    value: {
+                        response: data.response ?? '',
+                        model: params.model,
+                        latency
+                    }
+                };
+            } catch (err) {
+                const error = err as Error;
+                const errorMsg = error.message?.toLowerCase() ?? '';
+                clearInterval(persistenceInterval);
+
+                // Check if this looks like a cooldown/ratelimit error
+                if (errorMsg.includes('rate limit') ||
+                    errorMsg.includes('cooldown') ||
+                    errorMsg.includes('429') ||
+                    errorMsg.includes('too many requests') ||
+                    errorMsg.includes('resource exhausted') ||
+                    errorMsg.includes('connect') ||
+                    errorMsg.includes('econnrefused') ||
+                    errorMsg.includes('timeout')) {
+                    logger.warn({ model: params.model, error: errorMsg }, 'Ollama issue detected â€” activating Hugging Face fallback');
+                    this.router?.activateOllamaCooldown();
+                }
+
+                logger.error({ err: error, model: params.model }, 'Ollama network error');
+                return { ok: false, error };
+            }
+        } catch (err) {
+            logger.error({ err, model: params.model }, 'Critical error in Ollama call wrapper');
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    private async callHuggingFace(params: ModelCallParams, startTime: number): Promise<Result<ModelResponse>> {
+        const apiKey = this.config.primaryCloudApiKey;
+        if (!apiKey) {
+            return { ok: false, error: new Error('PRIMARY_CLOUD_API_KEY not set â€” cannot call primary cloud substrate') };
+        }
+
+        // Format: huggingface:provider/model-name (e.g., huggingface:openai-compat/kimi-k2.5-thinking)
+        // HF Router API: model goes in the request body, NOT the URL path
+        const modelPath = params.model.replace('huggingface:', '');
+        const url = `https://router.huggingface.co/v1/chat/completions`;
+
+        const messages: Array<{ role: string; content: string }> = [];
+
+        if (params.systemPrompt) {
+            messages.push({ role: 'system', content: params.systemPrompt });
+        }
+
+        messages.push({ role: 'user', content: params.prompt });
+
+        const body = {
+            model: modelPath,
+            messages,
+            max_tokens: params.maxTokens ?? 4096,
+            temperature: params.temperature ?? 0.7,
+            stream: false
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify(body),
+                signal: AbortSignal.timeout(300_000)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                logger.error({ status: response.status, errorText }, 'Primary Cloud API error');
+                return { ok: false, error: new Error(`Primary Cloud API ${response.status}: ${errorText}`) };
+            }
+
+            const data = await response.json() as {
+                choices?: Array<{
+                    message?: { content?: string };
+                    finish_reason?: string;
+                }>;
+                usage?: { total_tokens?: number };
+            };
+
+            const text = data.choices?.[0]?.message?.content ?? '';
+            const latency = Date.now() - startTime;
+
+            logger.debug({ model: params.model, latency, tokens: data.usage?.total_tokens }, 'Primary Cloud call complete');
+
+            return {
+                ok: true,
+                value: {
+                    response: text,
+                    model: params.model,
+                    latency,
+                    tokensUsed: data.usage?.total_tokens
+                }
+            };
+        } catch (err) {
+            const error = err as Error;
+            const errorMsg = error.message?.toLowerCase() ?? '';
+
+            if (errorMsg.includes('429') ||
+                errorMsg.includes('too many requests') ||
+                errorMsg.includes('rate limit') ||
+                errorMsg.includes('timeout')) {
+                logger.warn({ model: params.model, error: errorMsg }, 'Hugging Face ratelimit/cooldown hit');
+                if (this.router && typeof this.router.activateHfCooldown === 'function') {
+                    this.router.activateHfCooldown();
+                }
+            }
+
+            logger.error({ err }, 'Primary Cloud network error');
+            return { ok: false, error };
+        }
+    }
+
+    private async callCloudflare(params: ModelCallParams, startTime: number): Promise<Result<ModelResponse>> {
+        const accountId = this.config.cloudflareAccountId;
+        const apiToken = this.config.cloudflareApiToken;
+        const authEmail = this.config.cloudflareAuthEmail;
+        const modelId = params.model.includes('cloudflare:')
+            ? params.model.replace('cloudflare:', '')
+            : params.model;
+
+        if (!accountId || !apiToken) {
+            return {
+                ok: false,
+                error: new Error('Cloudflare credentials (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) missing from substrate.')
+            };
+        }
+
+        const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${modelId}`;
+
+        // Phase 95: Support Global API Key (X-Auth headers) or Scoped Token (Bearer)
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json'
+        };
+        if (authEmail) {
+            headers['X-Auth-Email'] = authEmail;
+            headers['X-Auth-Key'] = apiToken;
+        } else {
+            headers['Authorization'] = `Bearer ${apiToken}`;
+        }
+        const body = {
+            messages: [
+                ...(params.systemPrompt ? [{ role: 'system', content: params.systemPrompt }] : []),
+                { role: 'user', content: params.prompt }
+            ],
+            stream: false
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body),
+                signal: AbortSignal.timeout(300_000) // 5m timeout for cloud
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                logger.error({ status: response.status, model: params.model }, 'Cloudflare AI error');
+                return { ok: false, error: new Error(`Cloudflare ${response.status}: ${errorText}`) };
+            }
+
+            const data = await response.json() as {
+                result: { response?: string } | string;
+                errors?: Array<{ message: string }>;
+                success: boolean;
+            };
+
+            if (!data.success) {
+                return { ok: false, error: new Error(`Cloudflare API error: ${data.errors?.[0]?.message || 'Unknown'}`) };
+            }
+
+            const text = typeof data.result === 'string' ? data.result : (data.result.response || '');
+            const latency = Date.now() - startTime;
+
+            logger.debug({ model: params.model, latency }, 'Cloudflare call complete');
+
+            return {
+                ok: true,
+                value: {
+                    response: text,
+                    model: params.model,
+                    latency
+                }
+            };
+        } catch (err) {
+            logger.error({ err, model: params.model }, 'Cloudflare network error');
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    private async callFireworks(params: ModelCallParams, startTime: number): Promise<Result<ModelResponse>> {
+        const apiKey = this.config.fireworksApiKey;
+        if (!apiKey) {
+            return { ok: false, error: new Error('fireworksApiKey not set in substrate config') };
+        }
+
+        const modelPath = params.model.replace('fireworks:', '');
+        const url = `https://api.fireworks.ai/inference/v1/chat/completions`;
+
+        const messages: Array<{ role: string; content: string }> = [];
+        if (params.systemPrompt) messages.push({ role: 'system', content: params.systemPrompt });
+        messages.push({ role: 'user', content: params.prompt });
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: `accounts/fireworks/models/${modelPath}`,
+                    messages,
+                    max_tokens: params.maxTokens ?? 4096,
+                    temperature: params.temperature ?? 0.7
+                }),
+                signal: AbortSignal.timeout(300_000)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                return { ok: false, error: new Error(`Fireworks API ${response.status}: ${errorText}`) };
+            }
+
+            const data = await response.json() as any;
+            const text = data.choices?.[0]?.message?.content ?? '';
+            const latency = Date.now() - startTime;
+            logger.info({ model: params.model, latency }, 'Fireworks AI call complete');
+
+            return {
+                ok: true,
+                value: {
+                    response: text,
+                    model: params.model,
+                    latency,
+                    tokensUsed: data.usage?.total_tokens
+                }
+            };
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    private async callOpenRouter(params: ModelCallParams, startTime: number): Promise<Result<ModelResponse>> {
+        const apiKey = this.config.openRouterApiKey;
+        if (!apiKey) {
+            return { ok: false, error: new Error('openRouterApiKey not set in substrate config') };
+        }
+
+        const modelPath = params.model.replace('openrouter:', '');
+        const url = `https://openrouter.ai/api/v1/chat/completions`;
+
+        const messages: Array<{ role: string; content: string }> = [];
+        if (params.systemPrompt) messages.push({ role: 'system', content: params.systemPrompt });
+        messages.push({ role: 'user', content: params.prompt });
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                    'HTTP-Referer': 'https://github.com/Kbro1989/pog2-sovereign',
+                    'X-Title': 'POG2 Sovereign'
+                },
+                body: JSON.stringify({
+                    model: modelPath,
+                    messages,
+                    max_tokens: params.maxTokens ?? 4096,
+                    temperature: params.temperature ?? 0.7
+                }),
+                signal: AbortSignal.timeout(300_000)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                return { ok: false, error: new Error(`OpenRouter API ${response.status}: ${errorText}`) };
+            }
+
+            const data = await response.json() as any;
+            const text = data.choices?.[0]?.message?.content ?? '';
+            const latency = Date.now() - startTime;
+            logger.info({ model: params.model, latency }, 'OpenRouter call complete');
+
+            return {
+                ok: true,
+                value: {
+                    response: text,
+                    model: params.model,
+                    latency,
+                    tokensUsed: data.usage?.total_tokens
+                }
+            };
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    async callCloudflareTTS(text: string, options: { speed?: number; pitch?: number } = {}): Promise<Result<Buffer>> {
+        const accountId = this.config.cloudflareAccountId;
+        const apiToken = this.config.cloudflareApiToken;
+        const authEmail = this.config.cloudflareAuthEmail;
+        const modelId = '@cf/myshell-ai/melotts'; // Known documented TTS model
+
+        if (!accountId || !apiToken) {
+            return {
+                ok: false,
+                error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) â€” cannot generate TTS.')
+            };
+        }
+
+        const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${modelId}`;
+
+        // Phase 95: Support Global API Key (X-Auth headers) or Scoped Token (Bearer)
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json'
+        };
+        if (authEmail) {
+            headers['X-Auth-Email'] = authEmail;
+            headers['X-Auth-Key'] = apiToken;
+        } else {
+            headers['Authorization'] = `Bearer ${apiToken}`;
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    text: text, // MeloTTS uses 'text', not 'prompt'
+                    speaker: 'en-us-male-1', // Required speaker ID
+                    speed: options.speed || 1.0,
+                    pitch: options.pitch || 1.0
+                }),
+                signal: AbortSignal.timeout(300_000)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                logger.error({ status: response.status }, 'Cloudflare TTS error response');
+                return { ok: false, error: new Error(`Cloudflare TTS ${response.status}: ${errorText}`) };
+            }
+
+            const contentType = response.headers.get('content-type') || '';
+
+            if (contentType.includes('application/json')) {
+                const data = await response.json() as { result?: { audio?: string }, success: boolean, errors?: any[] };
+                if (data.success && data.result?.audio) {
+                    const buffer = Buffer.from(data.result.audio, 'base64');
+                    logger.info({ bytes: buffer.length, format: 'json-base64' }, 'Cloudflare TTS generation complete (decoded from Base64)');
+                    return ok(buffer);
+                } else {
+                    const errorMsg = data.errors?.[0]?.message || 'Unknown JSON error from Cloudflare TTS';
+                    return { ok: false, error: new Error(errorMsg) };
+                }
+            } else {
+                const arrayBuffer = await response.arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+                logger.info({ bytes: buffer.length, format: 'binary' }, 'Cloudflare TTS generation complete (binary)');
+                return ok(buffer);
+            }
+        } catch (err) {
+            logger.error({ err }, 'Cloudflare TTS network error');
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    /**
+     * callCloudflareMusicGen - Generates audio bytes from a text prompt.
+     */
+    public async callCloudflareMusicGen(params: { prompt: string; duration?: number }): Promise<Result<Buffer>> {
+        const accountId = this.config.cloudflareAccountId;
+        const apiToken = this.config.cloudflareApiToken;
+        const authEmail = this.config.cloudflareAuthEmail;
+        const modelId = '@cf/meta/musicgen';
+
+        if (!accountId || !apiToken) {
+            return {
+                ok: false,
+                error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) â€” cannot generate score.')
+            };
+        }
+
+        const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${modelId}`;
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json'
+        };
+
+        if (authEmail) {
+            headers['X-Auth-Email'] = authEmail;
+            headers['X-Auth-Key'] = apiToken;
+        } else {
+            headers['Authorization'] = `Bearer ${apiToken}`;
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    prompt: params.prompt,
+                    duration: params.duration || 20
+                }),
+                signal: AbortSignal.timeout(600_000) // 10m for music generation
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                logger.error({ status: response.status }, 'Cloudflare MusicGen error response');
+                return { ok: false, error: new Error(`Cloudflare MusicGen ${response.status}: ${errorText}`) };
+            }
+
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                const data = await response.json() as { result?: { audio?: string }, success: boolean, errors?: any[] };
+                if (data.success && data.result?.audio) {
+                    const buffer = Buffer.from(data.result.audio, 'base64');
+                    logger.info({ bytes: buffer.length, format: 'json-base64' }, 'Cloudflare MusicGen complete (decoded)');
+                    return ok(buffer);
+                } else {
+                    const errorMsg = data.errors?.[0]?.message || 'Unknown JSON error from Cloudflare MusicGen';
+                    return { ok: false, error: new Error(errorMsg) };
+                }
+            } else {
+                const arrayBuffer = await response.arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+                logger.info({ bytes: buffer.length, format: 'binary' }, 'Cloudflare MusicGen complete (binary)');
+                return ok(buffer);
+            }
+        } catch (err) {
+            logger.error({ err }, 'Cloudflare MusicGen network error');
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    /**
+     * callCloudflareImageGen - Generates image bytes from a text prompt.
+     * Supports Flux, Stable Diffusion, etc.
+     */
+    public async callCloudflareImageGen(params: { prompt: string; model?: string; num_steps?: number }): Promise<Result<Buffer>> {
+        const accountId = this.config.cloudflareAccountId;
+        const apiToken = this.config.cloudflareApiToken;
+        const authEmail = this.config.cloudflareAuthEmail;
+        const modelId = params.model || '@cf/black-forest-labs/flux-1-schnell';
+
+        if (!accountId || !apiToken) {
+            return {
+                ok: false,
+                error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) â€” cannot generate image.')
+            };
+        }
+
+        const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${modelId}`;
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json'
+        };
+
+        if (authEmail) {
+            headers['X-Auth-Email'] = authEmail;
+            headers['X-Auth-Key'] = apiToken;
+        } else {
+            headers['Authorization'] = `Bearer ${apiToken}`;
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    prompt: params.prompt,
+                    num_steps: params.num_steps || 20
+                }),
+                signal: AbortSignal.timeout(600_000) // 10m for image generation
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                logger.error({ status: response.status, modelId }, 'Cloudflare ImageGen error response');
+                return { ok: false, error: new Error(`Cloudflare ImageGen ${response.status}: ${errorText}`) };
+            }
+
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                const data = await response.json() as { result?: { image?: string }, success: boolean, errors?: any[] };
+                if (data.success && data.result?.image) {
+                    const buffer = Buffer.from(data.result.image, 'base64');
+                    logger.info({ bytes: buffer.length, format: 'json-base64' }, 'Cloudflare ImageGen complete (decoded)');
+                    return ok(buffer);
+                } else {
+                    const errorMsg = data.errors?.[0]?.message || 'Unknown JSON error from Cloudflare ImageGen';
+                    return { ok: false, error: new Error(errorMsg) };
+                }
+            } else {
+                const arrayBuffer = await response.arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+                logger.info({ bytes: buffer.length, format: 'binary' }, 'Cloudflare ImageGen complete (binary)');
+                return ok(buffer);
+            }
+        } catch (err) {
+            logger.error({ err }, 'Cloudflare ImageGen network error');
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    private async embedGemini(text: string): Promise<Result<Float32Array>> {
+        const apiKey = this.config.secondaryCloudApiKey;
+        if (!apiKey) return { ok: false, error: new Error('SECONDARY_CLOUD_API_KEY not set') };
+
+        // Tiered Embedding Fallback Sequence
+        const primaryModel = this.config.geminiEmbeddingModel;
+        const fallbackSequence = [
+            primaryModel,
+            'text-embedding-004',
+            'models/text-embedding-004',
+            'gemini-embedding-001',
+            'models/embedding-001'
+        ];
+
+        const uniqueSequence = Array.from(new Set(fallbackSequence));
+        let lastError: Error | undefined;
+
+        for (const modelId of uniqueSequence) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:embedContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: { parts: [{ text }] } })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    if (response.status === 404) {
+                        logger.warn({ modelId }, 'Gemini embedding model not found (404), trying next...');
+                        lastError = new Error(`Gemini embed 404: ${modelId} - ${errorText}`);
+                        continue;
+                    }
+                    return { ok: false, error: new Error(`Gemini embed error ${response.status}: ${errorText}`) };
+                }
+
+                const data = await response.json() as { embedding?: { values?: number[] } };
+                const values = data.embedding?.values ?? [];
+                if (values.length === 0) {
+                    lastError = new Error(`Gemini embed ${modelId} returned empty values.`);
+                    continue;
+                }
+
+                logger.debug({ modelId }, 'Gemini embedding complete');
+                return { ok: true, value: new Float32Array(values) };
+            } catch (err) {
+                logger.error({ err, modelId }, 'Gemini embedding network failure');
+                lastError = err as Error;
+            }
+        }
+
+        return { ok: false, error: lastError || new Error('All Gemini embedding attempts failed.') };
+    }
+
+    private async embedOllama(text: string, model: string): Promise<Result<Float32Array>> {
+        const url = `${this.config.ollamaBaseUrl}/api/embeddings`;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model, prompt: text }),
+                signal: AbortSignal.timeout(30_000)
+            });
+
+            if (!response.ok) {
+                return { ok: false, error: new Error(`Ollama embed error: ${response.status}`) };
+            }
+
+            const data = await response.json() as { embedding?: number[] };
+            const values = data.embedding ?? [];
+            return { ok: true, value: new Float32Array(values) };
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
+    }
+
+
+    async listModels(): Promise<string[]> {
+        try {
+            const response = await fetch(`${this.config.ollamaBaseUrl}/api/tags`);
+            if (!response.ok) return [];
+            const data = await response.json() as { models?: Array<{ name: string }> };
+            return data.models?.map(m => m.name) ?? [];
+        } catch {
+            return [];
+        }
+    }
+
+    async checkHealth(): Promise<{ online: boolean; version?: string }> {
+        try {
+            const response = await fetch(`${this.config.ollamaBaseUrl}/api/version`);
+            if (!response.ok) return { online: false };
+            const data = await response.json() as { version: string };
+            return { online: true, version: data.version };
+        } catch {
+            return { online: false };
+        }
+    }
+}

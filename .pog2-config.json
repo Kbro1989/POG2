@@ -1,0 +1,43 @@
+{
+  "mode": "hybrid",
+  "planningModel": "kimi-k2-thinking:cloud",
+  "codingModel": "qwen2.5-coder:14b-instruct-q5_K_M",
+  "orchestratorModel": "kimi-k2-thinking:cloud",
+  "visionModel": "moondream:latest",
+  "voiceModel": "tinyllama:latest",
+  "codingHeavyModel": "qwen2.5-coder:14b-instruct-q5_K_M",
+  "codingFastModel": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "embeddingModel": "qwen3-embedding:latest",
+  "criticModel": "kimi-k2-thinking:cloud",
+  "lightAuditorModel": "all-minilm:latest",
+  "masterReasoningModel": "kimi-k2-thinking:cloud",
+  "masterFallbackModel": "huggingface:openai-compat/kimi-k2.5-thinking",
+  "masterLocalModel": "qwen2.5-coder:14b-instruct-q5_K_M",
+  "executiveCoderModel": "qwen2.5-coder:14b-instruct-q5_K_M",
+  "reactiveAgentModel": "vibethinker:1.5b-q5_K_M",
+  "imageGenModel": "cloudflare:@cf/stabilityai/stable-diffusion-xl-base-1.0",
+  "huggingfaceFallbackModel": "huggingface:openai-compat/kimi-k2.5-thinking",
+  "localFallbackModel": "qwen2.5-coder:14b-instruct-q5_K_M",
+  "ollamaBaseUrl": "http://localhost:11434",
+  "projectId": "global",
+  "embeddingDimensions": 768,
+  "wsPort": -1,
+  "contextWindow": 16384,
+  "temperature": 0.7,
+  "topP": 0.9,
+  "repeatPenalty": 1.1,
+  "numCtx": 16384,
+  "stopSequences": [
+    "USER:"
+  ],
+  "outputFormat": "json",
+  "logLevel": "debug",
+  "youtube": {
+    "projectId": "pickofgods-8eb4b",
+    "apiKey": "YOUR_API_KEY",
+    "clientId": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+    "clientSecret": "YOUR_CLIENT_SECRET",
+    "channelId": "UCHzY_wIuP6U-a5ehJF7WJKg",
+    "youtubeId": "HzY_wIuP6U-a5ehJF7WJKg"
+  }
+}

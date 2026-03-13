@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build)",
+      "Bash(node dist/cli.js config set:*)",
+      "Bash(node:*)",
+      "Bash(cat:*)",
+      "Bash(start cmd:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

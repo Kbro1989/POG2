@@ -1,0 +1,47 @@
+﻿import type { ValidationResult, Validator } from '../core/models.js';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import pino from 'pino';
+
+const execAsync = promisify(exec);
+const logger = pino({ name: 'ValidationSystem', base: { hostname: 'POG2' } });
+
+/**
+ * ValidationSystem - Orchestrates the execution of multiple code validators.
+ */
+export class ValidationSystem {
+    private readonly validators: Validator[] = [];
+
+    constructor(validators: Validator[] = []) {
+        this.validators = validators;
+    }
+
+    addValidator(validator: Validator): void {
+        this.validators.push(validator);
+    }
+
+    async validateAll(output: string, context?: Record<string, unknown>): Promise<ValidationResult> {
+        for (const validator of this.validators) {
+            const result = await validator.validate(output, context);
+            if (!result.ok) return result;
+        }
+        return { ok: true, value: true };
+    }
+
+    async runProcessValidation(projectRoot: string): Promise<ValidationResult> {
+        logger.info({ projectRoot }, 'Running process-level validation (npm run typecheck)');
+        try {
+            await execAsync('npm run build', { cwd: projectRoot, timeout: 60000 });
+            return { ok: true, value: true };
+        } catch (error: any) {
+            const out = error.stdout || error.message || 'Build failed';
+            return {
+                ok: false,
+                error: {
+                    reason: 'TS/Build Validation Failed',
+                    suggestion: out.substring(0, 500)
+                }
+            };
+        }
+    }
+}

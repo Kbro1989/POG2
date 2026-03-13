@@ -1,0 +1,289 @@
+﻿import { type AICapability, type AITaskType } from '../../core/models.js';
+
+export const CatalogMetadata = {
+    tasks: {
+        "Image classification": 27,
+        "Object detection": 28,
+        "Text classification": 54,
+        "Entity extraction": 41,
+        "Image segmentation": 10,
+        "Image generation": 36,
+        "Text generation": 84,
+        "Image understanding": 27,
+        "Text embeddings": 23,
+        "Tabular classification": 13,
+        "Document processing": 13,
+        "Translation": 40,
+        "Image retrieval": 2,
+        "Video classification": 2,
+        "Open vocabulary detection": 3,
+        "Open vocabulary segmentation": 2,
+        "Radiology": 3,
+        "Health & Life Sciences": 8,
+        "Video generation": 15,
+        "Multimodal generation": 24,
+        "Pathology": 3,
+        "Dermatology": 3,
+        "Audio generation": 11,
+        "Text-to-speech": 3,
+        "Multimodal embeddings": 5,
+        "Speech recognition": 2,
+        "Video understanding": 1,
+        "Geospatial": 3
+    } as Record<string, number>,
+    providers: {
+        "Google": 123,
+        "Salesforce": 3,
+        "Meta": 22,
+        "Stability.ai": 4,
+        "Mistral AI": 9,
+        "Anthropic": 7,
+        "AI21": 1,
+        "CSM": 1,
+        "Qodo": 1,
+        "CAMB.AI": 1,
+        "Virtue AI": 1,
+        "Contextual AI": 1,
+        "Mongodb": 5,
+        "Writer": 1,
+        "NVIDIA": 3,
+        "Ai2": 1,
+        "Open source": 143,
+        "Notebook support": 144,
+        "API available": 5,
+        "Pipeline support": 3,
+        "One-click deployment": 108,
+        "Vertex AI Studio": 37,
+        "Deploy on GKE": 20,
+        "Demo available": 26
+    } as Record<string, number>
+};
+
+export const StaticModelRegistry: Record<string, AICapability> = {
+    'google_gemini_1_5_flash': {
+        id: 'google_gemini_1_5_flash',
+        name: 'Gemini 1.5 Flash',
+        serviceType: 'GEMINI',
+        taskType: 'TEXT',
+        modelId: 'gemini-1.5-flash',
+        description: 'Google Gemini 1.5 Flash - Fast, efficient, and reliable.',
+        passthroughEnabled: true
+    },
+    'google_gemini_1_5_pro': {
+        id: 'google_gemini_1_5_pro',
+        name: 'Gemini 1.5 Pro',
+        serviceType: 'GEMINI',
+        taskType: 'TEXT',
+        modelId: 'gemini-1.5-pro',
+        description: 'Google Gemini 1.5 Pro - High reasoning capability.',
+        passthroughEnabled: true
+    },
+    'gold_huggingface_kimi': {
+        id: 'gold_huggingface_kimi',
+        name: 'Kimi K2.5 Thinking (HuggingFace)',
+        serviceType: 'HUGGINGFACE',
+        taskType: 'TEXT',
+        modelId: 'kimi-k2.5-think',
+        description: 'TOP-TIER REASONING: Kimi K2.5 thinking model via HuggingFace.',
+        passthroughEnabled: true,
+        fallback: 'gold_ollama_kimi'
+    },
+    'gold_ollama_kimi': {
+        id: 'gold_ollama_kimi',
+        name: 'Kimi K2.5 Thinking (Local)',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'kimi-k2.5-think',
+        description: 'Local instance of Kimi Thinking.',
+        passthroughEnabled: true
+    },
+    'gold_qwen_2_5_coder_7b': {
+        id: 'gold_qwen_2_5_coder_7b',
+        name: 'Qwen 2.5 Coder 7B (Local)',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'qwen2.5-coder:7b-instruct-q4_K_M',
+        description: 'Standard local coding workhorse.',
+        passthroughEnabled: true
+    },
+    'gold_qwen_2_5_coder_14b': {
+        id: 'gold_qwen_2_5_coder_14b',
+        name: 'Qwen 2.5 Coder 14B (Local)',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'qwen2.5-coder:14b-instruct-q5_K_M',
+        description: 'Complex local coding tasks.',
+        passthroughEnabled: true
+    },
+    'moondream_vision': {
+        id: 'moondream_vision',
+        name: 'Moondream Vision',
+        serviceType: 'OLLAMA',
+        taskType: 'VISION',
+        modelId: 'moondream:latest',
+        description: 'Local computer vision.',
+        passthroughEnabled: true
+    },
+    'gold_deepseek_thinker': {
+        id: 'gold_deepseek_thinker',
+        name: 'Sovereign Thinker (Local)',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'qwen2.5-coder:14b-instruct-q5_K_M',
+        description: 'DEEP THOUGHT: local Coder/Thinker for orchestration.',
+        passthroughEnabled: true,
+        fallback: 'gold_qwen_2_5_coder_7b'
+    },
+    'gold_gemini_2_5_pro': {
+        id: 'gold_gemini_2_5_pro',
+        name: 'Sovereign Core (Local)',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'qwen2.5-coder:14b-instruct-q5_K_M',
+        description: 'PRIMARY REASONING: Local 14B planning and architectural core.',
+        passthroughEnabled: true,
+        fallback: 'gold_qwen_2_5_coder_7b'
+    },
+    'gold_cloudflare_llama_3_1': {
+        id: 'gold_cloudflare_llama_3_1',
+        name: 'Sovereign Edge (Local)',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'llama3.2:3b-instruct-q4_K_M',
+        description: 'UTILITY TIER: Local 3B edge logic.',
+        passthroughEnabled: true,
+        fallback: 'gold_qwen_2_5_coder_1_5b'
+    },
+    'gold_huggingface_mistral': {
+        id: 'gold_huggingface_mistral',
+        name: 'Sovereign Niche (Local)',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'mistral:7b-instruct-v0.3-q4_K_M',
+        description: 'NICHE TIER: Local Mistral for specialized NLP.',
+        passthroughEnabled: true,
+        fallback: 'gold_qwen_2_5_coder_7b'
+    },
+    'gold_sovereign_master': {
+        id: 'gold_sovereign_master',
+        name: 'Sovereign Master (Local DeepSeek)',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'deepseek-coder:33b-instruct-q4_K_M',
+        description: 'LOCAL MASTER: 19GB 33B local coder for peak sovereign reasoning.',
+        passthroughEnabled: true,
+        fallback: 'gold_qwen_2_5_coder_14b'
+    },
+    'gold_qwen_2_5_coder_latest': {
+        id: 'gold_qwen_2_5_coder_latest',
+        name: 'Qwen 2.5 Coder Latest',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'qwen2.5-coder:latest',
+        description: 'LOCAL TIER: Primary on-device coding and logic.',
+        passthroughEnabled: true,
+        fallback: 'gold_deepseek_coder_6_7b'
+    },
+    'gold_yi_coder_9b': {
+        id: 'gold_yi_coder_9b',
+        name: 'Yi-Coder 9B',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'yi-coder:9b-chat-q5_K_M',
+        description: 'LOCAL TIER: Balanced local chat and snapshotting.',
+        passthroughEnabled: true,
+        fallback: 'gold_qwen_2_5_coder_7b'
+    },
+    'gold_deepseek_coder_6_7b': {
+        id: 'gold_deepseek_coder_6_7b',
+        name: 'DeepSeek Coder 6.7B',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'deepseek-coder:6.7b-instruct-q4_K_M',
+        description: 'LOCAL TIER: High-fidelity code critique and validation.',
+        passthroughEnabled: true,
+        fallback: 'gold_qwen_2_5_coder_7b'
+    },
+    'side_tinyllama_latest': {
+        id: 'side_tinyllama_latest',
+        name: 'TinyLlama 1.1B (Monitor)',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'tinyllama:latest',
+        description: 'MONITOR TIER: Ultra-fast local monitoring and intent classification.',
+        passthroughEnabled: true
+    },
+    'side_qwen_2_5_coder_1_5b': {
+        id: 'side_qwen_2_5_coder_1_5b',
+        name: 'Qwen 2.5 Coder 1.5B',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'qwen2.5-coder:1.5b-instruct-q4_K_M',
+        description: 'SIDE TIER: Fast local intervention and small code tasks.',
+        passthroughEnabled: true
+    },
+    'gold_ollama_sovereign_admin': {
+        id: 'gold_ollama_sovereign_admin',
+        name: 'Sovereign Admin (Local Qwen)',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'qwen2.5-coder:14b-instruct-q5_K_M',
+        description: 'LOCAL ADMIN: Local thinking substrate for strategic oversight.',
+        passthroughEnabled: true,
+        fallback: 'gold_qwen_2_5_coder_7b'
+    },
+    'gold_ollama_flux': {
+        id: 'gold_ollama_flux',
+        name: 'Flux (Local Creative)',
+        serviceType: 'OLLAMA',
+        taskType: 'IMAGE',
+        modelId: 'flux',
+        description: 'LOCAL CREATIVE: High-fidelity image generation for sovereign creative ops.',
+        passthroughEnabled: true
+    },
+    'gold_ollama_llava': {
+        id: 'gold_ollama_llava',
+        name: 'LLaVA (Local Vision)',
+        serviceType: 'OLLAMA',
+        taskType: 'VISION',
+        modelId: 'llava:latest',
+        description: 'LOCAL VISION: Image understanding and analysis.',
+        passthroughEnabled: true
+    },
+    'deepseek-coder': {
+        id: 'deepseek-coder',
+        name: 'DeepSeek Coder (Monitor)',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        modelId: 'deepseek-coder:latest',
+        description: 'SIDE TIER: Rapid follower brain for real-time interaction and instant reactions.',
+        passthroughEnabled: true
+    },
+    'gold_llava_phi3': {
+        id: 'gold_llava_phi3',
+        name: 'LLava-Phi3 (Local Vision)',
+        serviceType: 'OLLAMA',
+        taskType: 'VISION',
+        modelId: 'llava-phi3:latest',
+        description: 'LOCAL VISION: Multimodal analysis for image-to-text and UI audit.',
+        passthroughEnabled: true
+    },
+    'gold_ollama_z_image': {
+        id: 'gold_ollama_z_image',
+        name: 'Z-Image-Turbo (Local Creative)',
+        serviceType: 'OLLAMA',
+        taskType: 'IMAGE',
+        modelId: 'x/z-image-turbo',
+        description: 'LOCAL CREATIVE: Photorealistic local image generation.',
+        passthroughEnabled: true
+    },
+    'gold_ollama_flux_klein': {
+        id: 'gold_ollama_flux_klein',
+        name: 'Flux.2 Klein (Local Creative)',
+        serviceType: 'OLLAMA',
+        taskType: 'IMAGE',
+        modelId: 'x/flux2-klein:4b-fp8',
+        description: 'LOCAL CREATIVE: High-fidelity image and text generation.',
+        passthroughEnabled: true
+    }
+};
