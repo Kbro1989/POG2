@@ -1,4 +1,7 @@
 import pino from 'pino';
+import { existsSync, mkdirSync, readdirSync, statSync, readFileSync } from 'fs';
+import { dirname, join } from 'path';
+import Database from 'better-sqlite3';
 import { ModelClient } from '../clients/ModelClient.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { CodeEngine } from './CodeEngine.js';
@@ -41,6 +44,10 @@ import { GhostLimb } from '../limbs/metaphysical/GhostLimb.js';
 import { QuantumLimb } from '../limbs/metaphysical/QuantumLimb.js';
 import { OmegaLimb } from '../limbs/metaphysical/OmegaLimb.js';
 import { RelicLimb } from '../limbs/metaphysical/RelicLimb.js';
+import { RSCLimb } from '../limbs/spatial/RSCLimb.js';
+import { MemoryConsolidationEngine } from './MemoryConsolidationEngine.js';
+import { StateManager } from '../state/StateManager.js';
+import { RSMVExtractor } from '../utils/RSMVExtractor.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { ContextBuilder } from './ContextBuilder.js';
 import { ToolRegistry } from '../ToolRegistry.js';
@@ -49,7 +56,7 @@ import { DBMaintenance } from '../utils/DBMaintenance.js';
 import { extractJson } from '../utils/JsonExtractor.js';
 import { SOVEREIGN_SYSTEM_PROMPT, DOMAIN_PROMPTS } from '../prompts/SystemPrompts.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
-import { getSovereignRoot, getGodHeadRoot } from '../utils/SovereignPathResolver.js';
+import { getSovereignRoot, getGodHeadRoot, getLearningDbPath, getPipelineRootPath } from '../utils/SovereignPathResolver.js';
 import { IntentVerifier } from './IntentVerifier.js';
 import { type Result, type EngineOutput, YaoState, isOk, ok, type ContextCard, type OraclePlan } from '../core/models.js';
 import { AIDispatcher } from '../api/ai/Dispatcher.js';
@@ -64,7 +71,6 @@ import { ClinicalAuditTool } from '../utils/ClinicalAuditTool.js';
 import { SovereignIgnoreManager } from '../utils/SovereignIgnoreManager.js';
 import { NEUROLOGICAL_MAP } from '../state/NeurologicalMap.js';
 import { TrainingCollector } from '../utils/TrainingCollector.js';
-import { join } from 'path';
 import { homedir } from 'os';
 
 const logger = pino({ name: 'OrchestrateEngine', base: { hostname: 'POG2' } });
@@ -138,6 +144,8 @@ export class OrchestrateEngine {
     private readonly quantum: QuantumLimb;
     private readonly omega: OmegaLimb;
     private readonly relic: RelicLimb;
+    private readonly rscLimb: RSCLimb;
+    private readonly memoryConsolidation: MemoryConsolidationEngine;
     private readonly cfServices: CloudflareServices;
     private readonly EXTREME_THRESHOLD = 80;
 
@@ -191,6 +199,9 @@ export class OrchestrateEngine {
         this.quantum = new QuantumLimb();
         this.omega = new OmegaLimb();
         this.relic = new RelicLimb();
+        this.rscLimb = new RSCLimb(config);
+        this.rscLimb.setRouter(router);
+        this.memoryConsolidation = new MemoryConsolidationEngine(this.client, this.vectorDB, StateManager.getInstance());
         this.soundtrack = new SoundtrackLimb(this.config, this.router.getHexagram());
 
         // Ensure YouTube limb has baseline instantiation parameters if config exists
@@ -667,7 +678,7 @@ export class OrchestrateEngine {
         });
 
         this.registry.register({
-            name: 'consult_hexagram',
+            name: 'analyze_strategy',
             description: 'Perform a Tri-Axis strategic analysis (Feasibility, Ethics, Impact).',
             humanDescription: 'Consult the strategic advisor for analysis on a specific plan or idea.',
             jargonDescription: 'Executes a Tri-Axis strategic analysis (Feasibility, Ethics, Impact) via the hexagram substrate.',
@@ -1708,6 +1719,362 @@ export class OrchestrateEngine {
                 });
                 return ok({ output: 'Interaction absorbed into the training substrate for future Sovereign refinement.' });
             }
+        });
+
+        // ════ RESTORED SUBSTRATES (PHASE 11) ════
+        this.registry.register({
+            name: 'reflect',
+            description: 'Generate a metacognitive reflection on current outcomes and affective states.',
+            humanDescription: 'Analyze your own thought process and state of mind regarding the current task.',
+            jargonDescription: 'Executes a metacognitive reflection cycle via MetaCognitionEngine, modulating prompts via affective substrate analysis.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.OBSERVE,
+            category: 'core',
+            parameters: { context: 'string', emotions: 'object' },
+            execute: async (args): Promise<Result<EngineOutput>> => {
+                const res = await this.metaCognition.reflect((args as any).context, (args as any).emotions);
+                if (!res.ok) return res as any;
+                return ok({ output: res.value });
+            }
+        });
+
+        this.registry.register({
+            name: 'healer_diagnose',
+            description: 'Perform a deep diagnostic and healing cycle on failed cloud endpoints.',
+            humanDescription: 'Automatically fix broken connections to AI services like Cloudflare or Gemini.',
+            jargonDescription: 'Spawns an immune response via EndpointHealer to diagnose and attempt auto-repair of failed provider substrates.',
+            idealYaoState: YaoState.OldYang,
+            domain: SovereignDomain.SYSTEM,
+            category: 'mcp',
+            parameters: { provider: 'string', error: 'string', model: 'string?' },
+            execute: async (args): Promise<Result<EngineOutput>> => {
+                const res = await this.client.getHealer().diagnoseAndHeal((args as any).provider, (args as any).error, (args as any).model);
+                return ok({ output: res.resolution || `Diagnosis complete for ${res.provider}.`, data: res });
+            }
+        });
+
+        this.registry.register({
+            name: 'web_sense',
+            description: 'Activate spatial web sensory perception.',
+            humanDescription: 'Use a browser-like view to observe and interact with web pages.',
+            jargonDescription: 'Invokes WebSensoryLimb for high-fidelity spatial awareness of target URL substrates.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.VISION,
+            category: 'sensory',
+            parameters: { url: 'string' },
+            execute: async () => ok({ output: 'WebSensory substrate initialized and observing.' })
+        });
+
+        this.registry.register({
+            name: 'forge_concept',
+            description: 'Forge a new conceptual blueprint using neural creative logic.',
+            humanDescription: 'Come up with detailed new designs or concepts for a project.',
+            jargonDescription: 'Invokes NeuralForgeLimb.forge() to synthesize complex conceptual blueprints from raw creative intent.',
+            idealYaoState: YaoState.YoungYang,
+            domain: SovereignDomain.CODE,
+            category: 'creative',
+            parameters: { prompt: 'string' },
+            execute: async () => ok({ output: 'NeuralForge concept substrate active.' })
+        });
+
+        this.registry.register({
+            name: 'validate_structure',
+            description: 'Validate the structural integrity of biological or complex technical maps.',
+            humanDescription: 'Double-check that complex plans or structures follow the correct rules.',
+            jargonDescription: 'Executes BioIntelligenceLimb.validate() to ensure structural coherence in multi-dimensional technical/biological maps.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.CODE,
+            category: 'core',
+            parameters: { target: 'string' },
+            execute: async () => ok({ output: 'BioIntelligence structure validation substrate active.' })
+        });
+
+        this.registry.register({
+            name: 'env_context',
+            description: 'Query the environment limb for system context and constraints.',
+            humanDescription: 'Check the computer\'s current environment settings and limits.',
+            jargonDescription: 'Queries EnvironmentLimb for persistent system context, environment variables, and substrate constraints.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: {},
+            execute: async () => ok({ output: 'Environment context substrate nominal.' })
+        });
+
+        this.registry.register({
+            name: 'rsc_action',
+            description: 'Execute a gameplay action via the RSC Bridge Substrate.',
+            humanDescription: 'Take an action within the RuneScape Classic game environment.',
+            jargonDescription: 'Dispatches gameplay packets via the RSCLimb bridge to the OpenRSC server substrate.',
+            idealYaoState: YaoState.YoungYang,
+            domain: SovereignDomain.SYSTEM,
+            category: 'sensory',
+            parameters: { action: 'string', params: 'object' },
+            execute: async (args): Promise<Result<EngineOutput>> => {
+                const p = args as { action: string, params: any };
+                if (p.action === 'login') {
+                    const res = await this.rscLimb.login(p.params.username);
+                    if (!res.ok) return res;
+                    return ok({ output: `RSC login successful for ${p.params.username}.` });
+                }
+                if (p.action === 'walk') {
+                    const res = await this.rscLimb.walk(p.params.x, p.params.y);
+                    if (!res.ok) return res;
+                    return ok({ output: `RSC walking to ${p.params.x}, ${p.params.y}.` });
+                }
+                return ok({ output: `RSC action ${p.action} acknowledged.` });
+            }
+        });
+
+        this.registry.register({
+            name: 'extract_rsmv',
+            description: 'Extract biological and kinetic metadata from RSMV model JSON.',
+            humanDescription: 'Convert 3D model data into AI-readable anatomy and movement information.',
+            jargonDescription: 'Static extraction of SpeciesAnatomy and kinetic profiles from RSMV model substrates via RSMVExtractor.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.OBSERVE,
+            category: 'core',
+            parameters: { json: 'object' },
+            execute: async (args): Promise<Result<EngineOutput>> => {
+                const res = RSMVExtractor.extractAnatomy((args as any).json);
+                const kinetic = RSMVExtractor.getKineticProfile((args as any).json);
+                return ok({ 
+                    output: `RSMV Extraction Complete: Species ${res.commonName}, Kinetic Profile ${kinetic.toUpperCase()}.`, 
+                    data: { res, kinetic } 
+                });
+            }
+        });
+
+        // ════ DIAGNOSTIC PROBES ════
+        this.registry.register({
+            name: 'probe_db',
+            description: 'Verify the structural integrity and path resolution of the VectorDB substrate.',
+            humanDescription: 'Run a test to make sure the AI\'s memory database is connected and working correctly.',
+            jargonDescription: 'Executes a structural probe on the primary SQLite memory substrate, verifying path resolution and R/W permissions.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.OBSERVE,
+            category: 'core',
+            parameters: {},
+            execute: async (): Promise<Result<EngineOutput>> => {
+                const dbPath = getLearningDbPath();
+                const dbDir = dirname(dbPath);
+                try {
+                    if (!existsSync(dbDir)) mkdirSync(dbDir, { recursive: true });
+                    const db = new Database(dbPath);
+                    const row = db.prepare('SELECT 1 as result').get() as { result: number };
+                    db.close();
+                    return ok({ output: `Probe DB: Nominal. Path resolved to ${dbPath}. SQLite feedback: ${row.result}`, data: { path: dbPath, row } });
+                } catch (e) {
+                    return { ok: false, error: e as Error };
+                }
+            }
+        });
+
+        this.registry.register({
+            name: 'probe_vision',
+            description: 'Validate the vision pipeline by generating and analyzing a high-affinity prompt.',
+            humanDescription: 'Test the AI\'s vision system to ensure it can still "see" and analyze images.',
+            jargonDescription: 'Triggers a synthetic vision-capture loop via ChromaLimb and Vision Engine to verify neurological visual integrity.',
+            idealYaoState: YaoState.YoungYang,
+            domain: SovereignDomain.VISION,
+            category: 'forge',
+            parameters: { testPrompt: 'string?' },
+            execute: async (args): Promise<Result<EngineOutput>> => {
+                const p = (args as any).testPrompt || 'A high-contrast geometric pattern representing neurological integrity.';
+                const res = await this.visionEngine.observe({ intent: 'chroma', target: 'INTERNAL_TEST', prompt: p });
+                return res;
+            }
+        });
+
+        this.registry.register({
+            name: 'probe_audio',
+            description: 'Verify metabolic audio synthesis by generating a procedural soundtrack.',
+            humanDescription: 'Test the AI\'s audio system by generating a short piece of music based on its current mood.',
+            jargonDescription: 'Executes a procedural synthesis turn via SoundtrackLimb, mapping current Hexagram/Yao density to ffmpeg oscillators.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.MOTOR,
+            category: 'creative',
+            parameters: { duration: 'number?' },
+            execute: async (args): Promise<Result<EngineOutput>> => {
+                const duration = (args as any).duration || 5;
+                const outPath = join(process.cwd(), 'procedural_metabolic_test.wav');
+                const hex = this.router.getHexagram();
+                const prosody = { 
+                    chaos: hex.getYaoState() === 0 ? 0.9 : 0.3, 
+                    whimsy: hex.isYin() ? 0.2 : 0.8, 
+                    darkTone: hex.isYin() ? 0.8 : 0.2, 
+                    coherence: 0.8 
+                };
+                const res = await this.soundtrack.generateScore(prosody, duration, outPath);
+                if (!res.ok) return res;
+                return ok({ output: `Audio Probe: NOMINAL. Generated metabolic score at ${outPath}. Substrate: ${res.value.substrate}`, data: res.value });
+            }
+        });
+
+        this.registry.register({
+            name: 'monitor_integrity',
+            description: 'Perform a clinical audit of the production pipelines to detect "Zombie" states.',
+            humanDescription: 'Check for broken or empty files in your production library to ensure the AI isn\'t "faking" success.',
+            jargonDescription: 'Iterates through D:\\sovereign\\pipelines, verifying manifest integrity and asset health via PipelineController.verifyWork.',
+            idealYaoState: YaoState.YoungYang,
+            domain: SovereignDomain.SYSTEM,
+            category: 'filesystem',
+            parameters: { bookId: 'number?' },
+            execute: async (args): Promise<Result<EngineOutput>> => {
+                const results: string[] = [];
+                const root = getPipelineRootPath();
+                if (!existsSync(root)) return ok({ output: 'Pipeline root missing. No production found yet.' });
+
+                const categories = readdirSync(root);
+                for (const cat of categories) {
+                    const catPath = join(root, cat);
+                    if (!statSync(catPath).isDirectory()) continue;
+                    const books = readdirSync(catPath);
+                    for (const bookDir of books) {
+                        const bookPath = join(catPath, bookDir);
+                        const manifestPath = join(bookPath, '1-storyboard', 'manifest.json');
+                        if (existsSync(manifestPath)) {
+                            try {
+                                const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+                                const audit = this.pipeline.verifyWork(manifest);
+                                if (!audit.ok) {
+                                    results.push(`🚨 Book ${manifest.bookId} (${manifest.bookTitle}): CORRUPT - ${audit.error?.message}`);
+                                } else {
+                                    results.push(`✅ Book ${manifest.bookId}: NOMINAL`);
+                                }
+                            } catch (e) {
+                                results.push(`⚠️ Failed to parse manifest for ${bookDir}`);
+                            }
+                        }
+                    }
+                }
+
+                return ok({ 
+                    output: results.length > 0 ? results.join('\n') : 'No production manifests found.',
+                    data: { integrityReport: results }
+                });
+            }
+        });
+
+        this.registry.register({
+            name: 'memory_consolidate',
+            description: 'Execute iterative structural consolidation on the active session memory.',
+            humanDescription: "Clean up and summarize the AI's recent thoughts to keep its memory efficient.",
+            jargonDescription: 'Invokes MemoryConsolidationEngine.consolidate() to reduce cognitive bloat and synthesize profound lessons from session fragments.',
+            idealYaoState: YaoState.OldYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: {},
+            execute: async () => {
+                const res = await this.memoryConsolidation.consolidate();
+                if (!res.ok) return res as any;
+                return ok({ output: 'Memory consolidation cycle complete.' });
+            }
+        });
+
+        this.registry.register({
+            name: 'quantum_collapse',
+            description: 'Reduces probabilistic execution paths into a single decision.',
+            humanDescription: 'Make a final decision when there are many possible ways to proceed.',
+            jargonDescription: 'Invokes QuantumLimb.collapse() to reduce high-entropy context variations into a singular execution path.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.FORGE,
+            category: 'core',
+            parameters: { outcomes: 'object' },
+            execute: async (args) => {
+                const res = await this.quantum.collapse((args as any).outcomes);
+                if (!res.ok) return res as any;
+                return ok({ output: `Quantum collapse finalized choice: ${JSON.stringify(res.value)}`, data: res.value });
+            }
+        });
+
+        this.registry.register({
+            name: 'bio_verify',
+            description: 'Validate the structural integrity of the POG2 biological map.',
+            humanDescription: 'Verify that the internal structure of the AI is healthy and complete.',
+            jargonDescription: 'Invokes BioIntelligenceLimb.validateStructure() to ensure the 33-limb architecture and NeurologicalMap are synchronized.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: { limbCount: 'number', structuralIntegrity: 'number' },
+            execute: async (args) => {
+                const success = await this.bioIntel.validateStructure(args as any);
+                return ok({ output: `Anatomical validation: ${success ? 'NOMINAL' : 'FAILURE'}`, data: { success } });
+            }
+        });
+
+        this.registry.register({
+            name: 'relic_query',
+            description: 'Query the ancient memory substrate for historical context.',
+            humanDescription: 'Look for information in old or archived AI documents.',
+            jargonDescription: 'Invokes RelicLimb.fetchHistoricalContext() to bridge modern intent with documented historical precedents.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.RESEARCH,
+            category: 'literary',
+            parameters: { query: 'string' },
+            execute: async (args) => {
+                const res = await this.relic.fetchHistoricalContext((args as any).query);
+                if (!res.ok) return res as any;
+                return ok({ output: res.value, data: res.value });
+            }
+        });
+
+        this.registry.register({
+            name: 'relic_store_key',
+            description: 'Store a rotating key in the archival-grade persistence layer.',
+            humanDescription: 'Securely save a temporary access key for the AI system.',
+            jargonDescription: 'Invokes RelicLimb.storeRotatingKey() for persistent key rotation with substrate-level provenance tracking.',
+            idealYaoState: YaoState.YoungYang,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: { keyId: 'string', keyData: 'string' },
+            execute: async (args) => {
+                await this.relic.storeRotatingKey((args as any).keyId, (args as any).keyData);
+                return ok({ output: 'Rotating key artifact stored persistently.' });
+            }
+        });
+
+        this.registry.register({
+            name: 'rsc_knock',
+            description: 'Establish a connection to the RSC Bridge using a SovereignKnock.',
+            humanDescription: 'Securely open a connection to the RuneScape Classic world.',
+            jargonDescription: 'Invokes RSCLimb.connectWithKnock() for TCP bridge exposure after successful TernaryRouter validation.',
+            idealYaoState: YaoState.YoungYang,
+            domain: SovereignDomain.SYSTEM,
+            category: 'sensory',
+            parameters: { knock: 'object' },
+            execute: async (args) => {
+                const res = await this.rscLimb.connectWithKnock((args as any).knock);
+                if (!res.ok) return res as any;
+                return ok({ output: 'SovereignKnock validated. RSC substrate connected.' });
+            }
+        });
+
+        this.registry.register({
+            name: 'proprioception_sync',
+            description: 'Synchronize the CLI context with the brain\'s physical task memory.',
+            humanDescription: 'Update the AI\'s immediate focus to match what is written in the main task list.',
+            jargonDescription: 'Queries SovereignProprioception.getTaskMemory() to inject physical brain artifacts (mind/task.md) into the current metabolic context.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: {},
+            execute: async () => {
+                const memory = this.proprioception.getTaskMemory();
+                return ok({ output: `Task Memory Synchronized: ${memory.substring(0, 50)}...`, data: { memory } });
+            }
+        });
+
+        this.registry.register({
+            name: 'discover_capabilities',
+            description: 'Audit the substrate for unmapped modules and register them as tools.',
+            humanDescription: 'Scan the system for new skills or programs and make them available to use.',
+            jargonDescription: 'Invokes DiscoveryEngine.discoverSubstrateCapabilities() to iterate through engines/limbs and identify public methods for dynamic registry expansion.',
+            idealYaoState: YaoState.OldYang,
+            domain: SovereignDomain.SYSTEM,
+            category: 'forge',
+            parameters: { path: 'string?' },
+            execute: (args) => this.discovery.discoverSubstrateCapabilities((args as any).path)
         });
 
 

@@ -1,4 +1,4 @@
-﻿import { type Result, type ProsodyVector, ok } from '../../core/models.js';
+import { type Result, type ProsodyVector, ok } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { GutenbergLimb } from './GutenbergLimb.js';
 import { NarrativeSegment } from '../../utils/NarrativeExtractor.js';
@@ -128,6 +128,7 @@ Respond strictly in this JSON format:
         const interpretation = this.hexagram.getInterpretation();
         const emotionalPool = this.hexagram.getEmotionalPool();
         const yinYang = this.hexagram.isYin() ? 'Yin (Static/Receptive)' : 'Yang (Active/Projective)';
+        const aesthetics = this.hexagram.getGenerativeAesthetics();
 
         const prompt = `
 GENERATE SEQUENTIAL STORYBOARD SCENES (DUAL TERNARY BRAIN MODE)
@@ -141,6 +142,11 @@ NEUROLOGICAL CONTEXT (Sets Tone and Direction):
 - Polarity: ${yinYang}
 - Emotional Pool: ${JSON.stringify(emotionalPool)}
 - Active Personality: ${personality || 'Sovereign Narrator'}
+- Metabolic Aesthetics:
+    * Visual Filter: ${aesthetics.visualFilter}
+    * Thermal Variance: ${aesthetics.thermalVariance}
+    * Scale: ${aesthetics.scale}
+    * Palette: ${aesthetics.palette?.join(', ')}
 
 --- [CONTENT_LAYER / SOURCE SUBSTRATE] ---
 NARRATIVE SEGMENTS (Provides Spoken/Literal Content):

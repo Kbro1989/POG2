@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { type Result, type EngineOutput, YaoState, ok, err, type ThinkingNexus, type ContextCard, CircuitState } from '../core/models.js';
 import { extractJson } from '../utils/JsonExtractor.js';
@@ -7,6 +7,7 @@ import { HexagramManager } from '../routing/HexagramManager.js';
 import { DiscoveryEngine } from './DiscoveryEngine.js';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
 
 const logger = pino({ name: 'MetabolicEngine', base: { hostname: 'POG2' } });
 
@@ -25,7 +26,7 @@ export class MetabolicEngine {
         private readonly cognitive?: CognitiveEngine,
         private readonly search?: DiscoveryEngine
     ) {
-        this.projectRoot = process.cwd();
+        this.projectRoot = getSovereignRoot();
     }
 
     /**
@@ -214,13 +215,12 @@ Respond in JSON: { "paths": string[] }
     private gatherSovereignContext(): string {
         const paths = [
             join(this.projectRoot, '.rules.md'),
-            join(this.projectRoot, '.pog2.md'),
-            join(this.projectRoot, '.manifest.md'),
-            // Legacy fallbacks
-            join(this.projectRoot, '.agent', 'rules', 'pog2-rules.md'),
             join(this.projectRoot, 'pog2.md'),
             join(this.projectRoot, 'manifest.md'),
-            join(this.projectRoot, 'POG2_KNOWLEDGEBASE.md')
+            join(this.projectRoot, 'POG2_KNOWLEDGEBASE.md'),
+            // Local fallback
+            join(process.cwd(), '.rules.md'),
+            join(process.cwd(), 'pog2.md')
         ];
 
         let context = '';

@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { type Result, ok } from '../core/models.js';
 import { StoryboardLimb, type StoryboardScene } from '../limbs/creative/StoryboardLimb.js';
 import { ChromanumberEngine } from './ChromanumberEngine.js';
@@ -12,6 +12,7 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync, unlinkSync, statSyn
 import { join, basename } from 'path';
 import { type PipelineCheckpoint } from '../types/pipeline.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
+import { GenerativeAesthetics, EmotionalState } from '../core/models.js';
 import { getPipelinePath, getPipelineRootPath } from '../utils/SovereignPathResolver.js';
 
 const logger = pino({ name: 'PipelineController', base: { hostname: 'POG2' } });
@@ -134,6 +135,9 @@ export class PipelineController {
         let startSceneIndex = 0;
         let loadedFromCheckpoint = false;
         let bookFromStyle: any = null;
+
+        const aesthetics = this.hexagram.getGenerativeAesthetics();
+        logger.info({ hexagram: this.hexagram.getInterpretation().name, aesthetics }, 'Metabolic Aesthetics captured for pipeline run.');
 
         const manifestPath = join(stage1Path, 'manifest.json');
 
@@ -438,7 +442,8 @@ export class PipelineController {
                     characterTraits,
                     outputPath: audioPath,
                     emotion: this.hexagram.getEmotionalState(),
-                    prosody: artifact.scene.prosody
+                    prosody: artifact.scene.prosody || aesthetics.prosody,
+                    aesthetics // Pass the full context
                 });
                 if (voiceRes.ok) {
                     artifact.voicePath = audioPath;

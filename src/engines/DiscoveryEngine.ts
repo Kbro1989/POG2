@@ -1,5 +1,8 @@
 import type { Result, EngineOutput } from '../core/models.js';
+import { ok } from '../core/models.js';
 import { Renderer } from '../ui/Renderer.js';
+import * as fs from 'fs';
+import * as path from 'path';
 import pino from 'pino';
 
 const logger = pino({ name: 'DiscoveryEngine', base: { hostname: 'POG2' } });
@@ -233,6 +236,64 @@ export class DiscoveryEngine {
             text.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
         if (mainMatch) text = mainMatch[1]!;
         return this.cleanHtml(text).replace(/\s+/g, ' ').trim();
+    }
+
+    /**
+     * discoverSubstrateCapabilities
+     * Scans the src/engines and src/limbs directories for potential tools.
+     * Uses the ToolRegistry to identify what's already mapped and what's orphaned.
+     */
+    public async discoverSubstrateCapabilities(targetPath?: string): Promise<Result<EngineOutput>> {
+        const root = targetPath || path.join(process.cwd(), 'src');
+        logger.info({ root }, 'Initiating substrate capability discovery scan...');
+
+        // In a full implementation, this would use ASTWatcher to parse files.
+        // For Phase 14, we perform a structural file-system audit.
+        
+        const enginesDir = path.join(root, 'engines');
+        const limbsDir = path.join(root, 'limbs');
+        
+        const discovery = [
+            `ðŸ”  SUBSTRATE DISCOVERY REPORT`,
+            `Root: ${root}`,
+            '---'
+        ];
+
+        try {
+            if (fs.existsSync(enginesDir)) {
+                const engines = fs.readdirSync(enginesDir).filter((f: string) => f.endsWith('.ts'));
+                discovery.push(`Engines Found (${engines.length}):`);
+                engines.forEach((e: string) => discovery.push(`  - ${e}`));
+            }
+
+            if (fs.existsSync(limbsDir)) {
+                // Recursive limb scan
+                const walk = (dir: string) => {
+                    const files = fs.readdirSync(dir);
+                    files.forEach((f: string) => {
+                        const p = path.join(dir, f);
+                        if (fs.statSync(p).isDirectory()) {
+                            walk(p);
+                        } else if (f.endsWith('.ts')) {
+                            discovery.push(`  - Limb: ${f} (${p.replace(limbsDir, '')})`);
+                        }
+                    });
+                };
+                discovery.push('\nLimbs Found:');
+                walk(limbsDir);
+            }
+
+            discovery.push('\n---');
+            discovery.push('Next Step: Use "pog2 /capabilities" to compare with registered toolsets.');
+
+            return ok({ 
+                output: discovery.join('\n'),
+                data: { root, enginesDir, limbsDir }
+            });
+
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
     }
 
     public healthCheck(): { online: boolean; details: string } {

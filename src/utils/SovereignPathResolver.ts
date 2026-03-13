@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SovereignPathResolver - Centralized TERNARY path resolution
  * 
  * Philosophy: True Ternary Architecture
@@ -24,7 +24,7 @@ export const enum PathTier {
 // Core Sovereign Locations
 // Core Sovereign Locations (ROOT ANCHORED per user setup)
 const SOVEREIGN_D_LAIR = 'D:\\sovereign';
-const SOVEREIGN_D_ROOT = join(SOVEREIGN_D_LAIR, 'pog2-sovereign');
+const SOVEREIGN_D_ROOT = SOVEREIGN_D_LAIR; // Aligned with user feedback: D:\sovereign is the root
 const SOVEREIGN_HOME_ROOT = join(homedir(), '.pog2-sovereign');
 
 // Model Storage (separate from config for size reasons)

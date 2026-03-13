@@ -1,5 +1,5 @@
-﻿import { EventEmitter } from 'events';
-import { Result, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, YaoState, Lesson, ContextCard, ok } from '../core/models.js';
+import { EventEmitter } from 'events';
+import { Result, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, YaoState, Lesson, ContextCard, GenerativeAesthetics, ok } from '../core/models.js';
 import { HEXAGRAM_REGISTRY, DEFAULT_HEXAGRAM, HexagramDefinition } from '../core/HexagramDefinitions.js';
 import { EmotionalState, SovereignTaxonomy } from '../core/models.js';
 import { ModelClient } from '../clients/ModelClient.js';
@@ -245,6 +245,28 @@ Respond in JSON ONLY:
     public getEmotionalState(): EmotionalState {
         const interpretation = this.getInterpretation();
         return interpretation.emotion || EmotionalState.Zen;
+    }
+
+    /**
+     * getGenerativeAesthetics - Returns the aesthetic vector for the current state.
+     */
+    public getGenerativeAesthetics(): GenerativeAesthetics {
+        const interpretation = this.getInterpretation();
+        const yao = this.getYaoState();
+
+        // Deep Synthesis: Merge Hexagram DNA with current Yao kinetic energy
+        const aesthetics = { ...interpretation.aesthetics };
+
+        // Bias thermal variance based on Yao state (Old states are more chaotic)
+        if (yao === YaoState.OldYang || yao === YaoState.OldYin || yao === YaoState.OldMixed) {
+            (aesthetics as any).thermalVariance = Math.min(1.0, aesthetics.thermalVariance + 0.2);
+            (aesthetics as any).prosody = {
+                ...aesthetics.prosody,
+                chaos: Math.min(1.0, aesthetics.prosody.chaos + 0.3)
+            };
+        }
+
+        return aesthetics;
     }
 
     public pushLine(line: ContextCard): void {

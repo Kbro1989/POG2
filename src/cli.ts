@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 /**
  * POG2-CLI — Sovereign Command Line Interface
  * 
@@ -436,6 +436,40 @@ export async function main(): Promise<void> {
                 severity: 20,
                 interaction: 'text',
                 yaoState: YaoState.YoungYang
+            });
+            handleResult(result, renderer, state);
+        });
+
+    sys
+        .command('registry')
+        .description('Show all registered tools and their domains in the sovereign substrate')
+        .action(async () => {
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const result = await engine.executePlan({
+                tool: 'diagnostic_nexus', // Will include registry status
+                parameters: { registryOnly: true },
+                reasoning: 'Manual registry audit.',
+                model: config.orchestratorModel,
+                severity: 5,
+                interaction: 'text',
+                yaoState: YaoState.YoungYin
+            });
+            handleResult(result, renderer, state);
+        });
+
+    sys
+        .command('capabilities')
+        .description('Deep scan the substrate for available engines and limbs (Discovery)')
+        .action(async () => {
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const result = await engine.executePlan({
+                tool: 'discover_capabilities',
+                parameters: {},
+                reasoning: 'Manual substrate discovery.',
+                model: config.orchestratorModel,
+                severity: 10,
+                interaction: 'text',
+                yaoState: YaoState.YoungYin
             });
             handleResult(result, renderer, state);
         });
@@ -1569,6 +1603,48 @@ export async function main(): Promise<void> {
             handleResult(result, renderer, state);
         });
 
+    program
+        .command('execute <toolName> [parameters]')
+        .description('Manually execute any registered tool in the substrate')
+        .action(async (toolName: string, parameters: string) => {
+            const engine = new OrchestrateEngine(config, router, renderer);
+            let parsedParams = {};
+            try {
+                if (parameters) parsedParams = JSON.parse(parameters);
+            } catch (e) {
+                renderer.error('Failed to parse parameters. Ensure they are valid JSON.');
+                return;
+            }
+
+            const result = await engine.executePlan({
+                tool: toolName,
+                parameters: parsedParams,
+                reasoning: `Manual direct tool execution: ${toolName}`,
+                model: config.orchestratorModel,
+                severity: 15,
+                interaction: 'text',
+                yaoState: YaoState.YoungYang
+            });
+            handleResult(result, renderer, state);
+        });
+
+    program
+        .command('capabilities')
+        .description('Alias for system capabilities')
+        .action(async () => {
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const result = await engine.executePlan({
+                tool: 'discover_capabilities',
+                parameters: {},
+                reasoning: 'Manual substrate discovery (alias).',
+                model: config.orchestratorModel,
+                severity: 10,
+                interaction: 'text',
+                yaoState: YaoState.YoungYin
+            });
+            handleResult(result, renderer, state);
+        });
+
     await program.parseAsync(process.argv);
 
     // For single-shot commands, automatically exit unless we are supposed to enter REPL
@@ -1647,7 +1723,13 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
 
             switch (slash?.toLowerCase()) {
                 case '/help':
-                    renderer.info('Slash Commands: /help, /status, /vision, /shadow, /memetics, /syntropy, /health, /clear, /pull [model], /vs [path], /exit');
+                    renderer.info('Slash Commands: /help, /status, /capabilities, /registry, /vision, /shadow, /memetics, /syntropy, /health, /clear, /pull [model], /vs [path], /exit');
+                    break;
+                case '/capabilities':
+                    await engine.run('discover all substrate capabilities and latent engines');
+                    break;
+                case '/registry':
+                    await engine.run('list all registered tools in the sovereign substrate');
                     break;
                 case '/shadow':
                     await engine.run('consult shadow substrate');

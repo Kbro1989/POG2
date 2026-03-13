@@ -1,7 +1,7 @@
 import { writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import pino from 'pino';
-import { type Result, type ProsodyVector, EmotionalState } from '../../core/models.js';
+import { type Result, type ProsodyVector, EmotionalState, GenerativeAesthetics } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { GhostLimb } from '../metaphysical/GhostLimb.js';
 import { CloudflareServices } from '../../services/CloudflareServices.js';
@@ -15,6 +15,7 @@ export interface NarrationOptions {
     prosody?: ProsodyVector;
     emotion?: EmotionalState;
     characterTraits?: string; // Autonomous trait alignment
+    aesthetics?: GenerativeAesthetics; // Metabolic injection
 }
 
 export interface NarrationResult {
@@ -43,7 +44,8 @@ export class VoiceLimb {
     /**
      * getEmotionalProsody - Maps Sovereign emotional states and per-scene prosody vectors to TTS parameters.
      */
-    private getEmotionalProsody(emotion?: EmotionalState, sceneProsody?: ProsodyVector, characterTraits?: string): { speed: number; pitch: number; jitterMult: number } {
+    private getEmotionalProsody(options: NarrationOptions): { speed: number; pitch: number; jitterMult: number } {
+        const { emotion, prosody: sceneProsody, characterTraits, aesthetics: aes } = options;
         let speed = 1.0;
         let pitch = 1.0;
         let jitterMult = 1.0;
@@ -81,7 +83,15 @@ export class VoiceLimb {
 
         // Clamp values
         speed = Math.max(0.5, Math.min(1.8, speed));
-        pitch = Math.max(0.6, Math.min(1.6, pitch));
+        // 4. Metabolic Aesthetics Override (Phase 13)
+        if (aes) {
+            // Scale influences pacing
+            if (aes.scale === 'Grand') speed *= 0.9; // Slightly more epic/slow
+            if (aes.scale === 'Abstract') jitterMult *= 1.3; // More erratic
+
+            // Thermal variance influences jitter/chaos directly
+            jitterMult += aes.thermalVariance * 0.5;
+        }
 
         return { speed, pitch, jitterMult };
     }
@@ -117,7 +127,7 @@ export class VoiceLimb {
     public async narrate(text: string, options: NarrationOptions = {}): Promise<Result<NarrationResult>> {
         const persona = options.personality || 'Sovereign Narrator';
         const segments = this.splitTextIntoSegments(text);
-        const baseProsody = this.getEmotionalProsody(options.emotion, options.prosody, options.characterTraits);
+        const baseProsody = this.getEmotionalProsody(options);
 
         logger.info({
             personality: persona,

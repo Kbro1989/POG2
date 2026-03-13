@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Core type definitions for pog2-sovereign.
  * Aggregator and Domain-Specific Taxonomy.
  */
@@ -220,6 +220,7 @@ export interface ContextCard {
     readonly importance: number;
     readonly reflection?: string;
     readonly weight?: number;
+    readonly aesthetics?: GenerativeAesthetics; // Bridging thought to output
     isPinned?: boolean;
 }
 
@@ -293,6 +294,14 @@ export interface ProsodyVector {
     readonly whimsy: number;
     readonly darkTone: number;
     readonly coherence: number;
+}
+
+export interface GenerativeAesthetics {
+    readonly visualFilter?: string;      // e.g., 'vibrant', 'noir', 'dreamy'
+    readonly thermalVariance: number;    // 0.0 to 1.0 (influence on temperature/chaos)
+    readonly scale: 'Grand' | 'Intimate' | 'Abstract';
+    readonly palette?: string[];         // Preferred colors
+    readonly prosody: ProsodyVector;
 }
 
 export interface SystemSensors {

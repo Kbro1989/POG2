@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { SovereignEye, type CaptureSource } from '../utils/SovereignEye.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
@@ -254,10 +254,14 @@ Forge result: `;
         logger.info({ prompt }, 'Attempting professional substrate generation via Flux...');
 
         try {
+            const aesthetics = this.hexagram.getGenerativeAesthetics();
             const response = await fetch(CLOUDFLARE_IMAGE_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt })
+                body: JSON.stringify({ 
+                    prompt: `${prompt}${modelOverride ? ` . Style: ${modelOverride}` : ''}`,
+                    aesthetics: aesthetics // Pass aesthetics to worker
+                })
             });
 
             if (response.ok) {
