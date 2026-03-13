@@ -1,4 +1,4 @@
-﻿
+
 export enum NeuralCategory {
     CNS = 'CNS (Central Nervous System)',
     PNS = 'PNS (Peripheral Nervous System)',
@@ -64,6 +64,14 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         path: 'src/cli.ts', role: 'Spinal Cord (Entry Point)', category: NeuralCategory.CNS,
         biologicalRole: { organ: 'Spinal Cord', input: 'Terminal input', output: 'Renderer output', constraints: 'Bootstraps entire system' }
     },
+    {
+        path: 'src/engines/CognitiveEngine.ts', role: 'Logical Reasoner (Cognitive)', category: NeuralCategory.CNS,
+        biologicalRole: { organ: 'Cerebral Cortex', input: 'Task history + context', output: 'Logical inferences', constraints: 'Ollama text models' }
+    },
+    {
+        path: 'src/engines/PipelineController.ts', role: 'Workflow Orchestrator', category: NeuralCategory.CNS,
+        biologicalRole: { organ: 'Central Nervous Center', input: 'Pipeline definitions', output: 'Executed production cycles', constraints: 'Sequential/Parallel execution' }
+    },
 
     // â•â•â• PNS (Peripheral Nervous System â€” Limbs) â•â•â•
     {
@@ -109,6 +117,14 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
     {
         path: 'src/limbs/spatial/RSCLimb.ts', role: 'Tactile Link (RSC)', category: NeuralCategory.PNS,
         biologicalRole: { organ: 'Tactile Nerve', input: 'RSC game data', output: 'Parsed game structures', constraints: 'Game-specific limb' }
+    },
+    {
+        path: 'src/limbs/creative/YouTubeLimb.ts', role: 'Visual Streamer (YouTube)', category: NeuralCategory.PNS,
+        biologicalRole: { organ: 'Optic Transmission', input: 'Video artifacts', output: 'YouTube uploads', constraints: 'OAuth2 required; RFC 8252' }
+    },
+    {
+        path: 'src/limbs/creative/VideoAssemblerLimb.ts', role: 'Muscle Coordination (Video)', category: NeuralCategory.PNS,
+        biologicalRole: { organ: 'Motor Control', input: 'Audio/Image components', output: 'Consolidated Video', constraints: 'Depends on FFmpeg' }
     },
     {
         path: 'src/limbs/creative/GutenbergLimb.ts', role: 'Literary Ingestion (Gutenberg)', category: NeuralCategory.PNS,
@@ -162,6 +178,14 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
     {
         path: 'src/limbs/spatial/ChromaLimb.ts', role: 'Color/Palette Extraction', category: NeuralCategory.SENSORY,
         biologicalRole: { organ: 'Color Vision', input: 'Image buffer', output: 'Chromanumber Palette', constraints: 'High precision' }
+    },
+    {
+        path: 'src/engines/DiscoveryEngine.ts', role: 'Information Forager (Wiki)', category: NeuralCategory.SENSORY,
+        biologicalRole: { organ: 'Exploratory Drive', input: 'Search terms', output: 'Wisdom context (Wikipedia)', constraints: 'Network dependent' }
+    },
+    {
+        path: 'src/engines/ShadowEngine.ts', role: 'Proprioception (External Repository)', category: NeuralCategory.SENSORY,
+        biologicalRole: { organ: 'Spatial Memory', input: 'Repository state', output: 'Active node maps', constraints: 'Tracks shadow substrate' }
     },
     {
         path: 'src/limbs/spatial/BioIntelligenceLimb.ts', role: 'Clinical/Biological Reasoning', category: NeuralCategory.PNS,
@@ -234,6 +258,14 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
     {
         path: 'src/engines/EmbedEngine.ts', role: 'Embedding Generator', category: NeuralCategory.MEMORY,
         biologicalRole: { organ: 'Memory Encoder', input: 'Text', output: 'Float32Array embeddings', constraints: 'Model-dependent; local or cloud' }
+    },
+    {
+        path: 'src/engines/MemoryConsolidationEngine.ts', role: 'Semantic Weaver', category: NeuralCategory.MEMORY,
+        biologicalRole: { organ: 'Synaptic Pruning', input: 'Raw Interactions', output: 'Consolidated Wisdom', constraints: 'Runs during metabolic slowdown' }
+    },
+    {
+        path: 'src/engines/MemeticEngine.ts', role: 'Cultural Record (Browser)', category: NeuralCategory.MEMORY,
+        biologicalRole: { organ: 'Learned Patterns', input: 'History/Bookmarks', output: 'Research Shards', constraints: 'Local profile dependent' }
     },
     { path: 'resources/cloudflare-templates', role: 'Knowledge:Cloudflare', category: NeuralCategory.MEMORY },
 
@@ -344,5 +376,17 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
     {
         path: 'src/routing/types.ts', role: 'Routing DNA', category: NeuralCategory.METABOLIC,
         biologicalRole: { organ: 'Routing Genes', input: 'Type definitions', output: 'Routing interfaces', constraints: 'Immutable routing types' }
+    },
+    {
+        path: 'src/engines/MetabolicEngine.ts', role: 'Catalyst (Thought Expansion)', category: NeuralCategory.METABOLIC,
+        biologicalRole: { organ: 'ATP Generator', input: 'Intent', output: 'Metabolic Nexus (6 thoughts)', constraints: 'I Ching structured' }
+    },
+    {
+        path: 'src/engines/SyntropyEngine.ts', role: 'Environment Harmonizer', category: NeuralCategory.METABOLIC,
+        biologicalRole: { organ: 'Homeostasis', input: 'External IDE/Agent state', output: 'Harmonized Context', constraints: 'Claude/Gemini/VSCode metadata' }
+    },
+    {
+        path: 'src/engines/MetaCognitionEngine.ts', role: 'Self-Observation (Monologue)', category: NeuralCategory.METABOLIC,
+        biologicalRole: { organ: 'Reflective Consciousness', input: 'Outcomes + Emotions', output: 'Internal Monologue', constraints: 'Affective modulation' }
     }
 ];

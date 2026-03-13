@@ -1660,6 +1660,7 @@ export async function main(): Promise<void> {
 
 async function startRepl(renderer: Renderer, config: SovereignConfig, router: TernaryRouter, client: ModelClient, state: StateManager, initialPrompt?: string): Promise<void> {
     renderer.showBanner();
+    renderer.greet();
     await checkSubstrate(renderer, config, client);
 
     const rl = readline.createInterface({
@@ -1676,16 +1677,16 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
 
     vectorDB.initialize();
 
-    const promptString = `\x1b[38;5;51mKimi\x1b[0m [\x1b[38;5;244m${config.projectId}\x1b[0m] > `;
+    const promptString = `\x1b[38;5;51mKimi\x1b[0m > `;
 
     const gracefulShutdown = async () => {
-        renderer.info('\nInitiating Sovereign Memory Consolidation... (Merging redundant nodes)');
+        renderer.info('\nI will consolidate our memories before leaving...');
         try {
             await consolidationEngine.consolidate();
         } catch (err) {
-            renderer.error('Memory Consolidation failed: ' + (err as Error).message);
+            renderer.warn('Memory Consolidation hit a snag: ' + (err as Error).message);
         }
-        renderer.info('Sovereign substrate powering down. Goodbye.');
+        renderer.info('Powering down now. I hope to see you again soon!');
         rl.close();
         process.exit(0);
     };
@@ -1723,7 +1724,7 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
 
             switch (slash?.toLowerCase()) {
                 case '/help':
-                    renderer.info('Slash Commands: /help, /status, /capabilities, /registry, /vision, /shadow, /memetics, /syntropy, /health, /clear, /pull [model], /vs [path], /exit');
+                    renderer.info('Here are the shortcuts I know: /help, /status, /capabilities, /registry, /vision, /shadow, /memetics, /syntropy, /health, /clear, /pull, /vs, /exit');
                     break;
                 case '/capabilities':
                     await engine.run('discover all substrate capabilities and latent engines');
@@ -1741,7 +1742,7 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
                     await engine.run('harmonize external metadata paradigms');
                     break;
                 case '/vs':
-                    renderer.info(`Opening Sovereign Workspace in VS Code: ${targetPath}...`);
+                    renderer.info(`Opening our workspace in VS Code...`);
                     import('child_process').then(cp => {
                         cp.exec(`code "${resolve(targetPath)}"`, (err) => {
                             if (err) renderer.error(`Failed to launch VS Code: ${err.message}`);
@@ -1753,7 +1754,7 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
                     if (!modelToPull) {
                         renderer.error('Usage: /pull [model_name]');
                     } else {
-                        renderer.info(`Initiating substrate acquisition: ${modelToPull}...`);
+                        renderer.info(`I'll start downloading that for you: ${modelToPull}...`);
                         await engine.run(`download and pull the ollama model: ${modelToPull}`);
                     }
                     break;
@@ -1797,7 +1798,7 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
                 case '/providers': {
                     const rolodexRef2 = router.getRolodex();
                     if (rolodexRef2) {
-                        renderer.info('🔍 Verifying provider identities...');
+                        renderer.info('Checking my connections to model providers...');
                         await rolodexRef2.refreshAll();
                         const statuses = rolodexRef2.getAllProviderStatuses();
                         const lines: string[] = ['═══ PROVIDER IDENTITY VERIFICATION ═══', ''];
@@ -1827,7 +1828,15 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
         }
 
         try {
-            renderer.info('Thinking...');
+            const thinkingMessages = [
+                'Give me a moment to think...',
+                'Analyzing that...',
+                'Let me see what I can find...',
+                'Processing your request...',
+                'Thinking it through...'
+            ];
+            const msg = thinkingMessages[Math.floor(Math.random() * thinkingMessages.length)];
+            renderer.info(msg);
             const result = await engine.run(intent);
             if (result.ok) {
                 state.updateMetrics({ turnCount: 1 });

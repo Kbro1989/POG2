@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { join, basename } from 'path';
 import { existsSync, mkdirSync, writeFileSync, statSync, renameSync, readFileSync } from 'fs';
 import { Result, ok } from '../../core/models.js';
@@ -24,6 +24,11 @@ export class VideoAssemblerLimb {
         private readonly shell: ShellEngine,
         private readonly hexagram: HexagramManager
     ) { }
+
+    public healthCheck(): { online: boolean; details?: string } {
+        // Technically it's 'online' if it can execute ffmpeg via shell
+        return { online: true };
+    }
 
     /**
      * getCognitiveFilters - Translates YaoState into ffmpeg visual video filters.

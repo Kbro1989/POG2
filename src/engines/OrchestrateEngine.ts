@@ -147,6 +147,7 @@ export class OrchestrateEngine {
     private readonly rscLimb: RSCLimb;
     private readonly memoryConsolidation: MemoryConsolidationEngine;
     private readonly cfServices: CloudflareServices;
+    private readonly ytLimb?: YouTubeLimb;
     private readonly EXTREME_THRESHOLD = 80;
 
     constructor(
@@ -205,9 +206,8 @@ export class OrchestrateEngine {
         this.soundtrack = new SoundtrackLimb(this.config, this.router.getHexagram());
 
         // Ensure YouTube limb has baseline instantiation parameters if config exists
-        let ytLimb: YouTubeLimb | undefined;
         if (config.youtube?.clientId && config.youtube?.clientSecret) {
-            ytLimb = new YouTubeLimb(
+            this.ytLimb = new YouTubeLimb(
                 config.youtube.clientId,
                 config.youtube.clientSecret,
                 config.youtube.apiKey,
@@ -224,7 +224,7 @@ export class OrchestrateEngine {
             new ShellEngine(this.renderer),
             this.router.getHexagram(),
             this.vectorDB,
-            ytLimb // Injected YouTubeLimb
+            this.ytLimb // Injected YouTubeLimb
         );
 
         this.verifier = new IntentVerifier(this.client, this.router.getHexagram());
@@ -325,7 +325,12 @@ export class OrchestrateEngine {
                 ClinicalAuditTool: this.clinicalAudit,
                 SovereignProprioception: this.proprioception,
                 MetabolicEngine: this.metabolic,
-                IntentVerifier: this.verifier
+                IntentVerifier: this.verifier,
+                RSCLimb: this.rscLimb,
+                YouTubeLimb: this.ytLimb,
+                PipelineController: this.pipeline,
+                CognitiveEngine: this.cognitive,
+                MemoryConsolidationEngine: this.memoryConsolidation
             }
         );
 
@@ -2270,18 +2275,18 @@ Mapping tool selection over to Y...
                 plan = interceptedPlan;
             } else {
                 // Thinking Phase: Expand metabolic reflections and identify bottlenecks
-                this.renderer.info('\x1b[38;5;154m[THINKING]\x1b[0m Expanding metabolic reflections...');
+                this.renderer.info('I am expanding my metabolic reflections...');
                 const nexusRes = await this.metabolic.expand(task);
                 if (nexusRes.ok) {
                     const nexus = nexusRes.value;
-                    this.renderer.success(`\x1b[38;5;154m[THINKING]\x1b[0m Bottlenecked Paths:`);
+                    this.renderer.success(`My current thinking paths:`);
                     (nexus.bottleneckPaths || []).forEach((p: string, i: number) => this.renderer.info(`  ${i + 1}. ${p}`));
-
+ 
                     if (nexus.curiosity) {
                         const frictionColor = (nexus.metabolicFriction || 0) > 0.5 ? '\x1b[38;5;196m' : '\x1b[38;5;220m';
-                        this.renderer.info(`${frictionColor}[CURIOSITY]\x1b[0m ${nexus.curiosity}`);
+                        this.renderer.info(`${frictionColor}[Curiosity]\x1b[0m ${nexus.curiosity}`);
                         if ((nexus.metabolicFriction || 0) > 0) {
-                            this.renderer.info(`${frictionColor}[FRICTION]\x1b[0m Deviance Weight: ${nexus.metabolicFriction}`);
+                            this.renderer.info(`${frictionColor}[Friction]\x1b[0m Deviance Weight: ${nexus.metabolicFriction}`);
                         }
                     }
 
@@ -2312,7 +2317,7 @@ Mapping tool selection over to Y...
             // Phase 38: Handle virtual converse tool gracefully
             if (plan.tool === 'converse') {
                 const msg = String(plan.parameters?.message || plan.reasoning || "Hello.");
-                this.renderer.success(`\x1b[38;5;141m[KIMI]\x1b[0m ${msg}`);
+                this.renderer.success(`[Kimi] ${msg}`);
                 return ok({
                     output: msg,
                     data: {
@@ -2339,15 +2344,15 @@ Mapping tool selection over to Y...
                     break;
                 }
 
-                const choice = await this.renderer.prompt('\x1b[38;5;220m[STRATEGY]\x1b[0m Proceed? [ (y)es / (d)iscuss / (n)o ]: ');
+                const choice = await this.renderer.prompt('\x1b[38;5;220m[Wait!]\x1b[0m What do you think about this plan? [ (y)es proceed / (d)iscuss / (n)o ]: ');
                 const lowerChoice = choice.trim().toLowerCase();
 
                 if (lowerChoice === 'y' || lowerChoice === 'yes' || lowerChoice === '') {
                     break;
                 } else if (lowerChoice === 'n' || lowerChoice === 'no' || lowerChoice === 'abort') {
-                    return { ok: false, error: new Error('Aborted by Sovereign Operator.') };
+                    return { ok: false, error: new Error('Action cancelled by user.') };
                 } else if (lowerChoice === 'd' || lowerChoice === 'discuss') {
-                    const feedback = await this.renderer.prompt('\x1b[38;5;39m[OPERATOR]\x1b[0m ');
+                    const feedback = await this.renderer.prompt('\x1b[38;5;39m[You]\x1b[0m ');
 
                     // True Natural Language Discuss Turn
                     const discussPrompt = `We are discussing the execution of a task.
@@ -2368,7 +2373,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
                     });
 
                     if (discussRes.ok && discussRes.value.response) {
-                        this.renderer.success(`\x1b[38;5;141m[KIMI]\x1b[0m ${discussRes.value.response}`);
+                        this.renderer.success(`[Kimi] ${discussRes.value.response}`);
                     }
 
                     // Feed the discussion back into a formal plan regeneration
@@ -2451,7 +2456,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
     }
 
     private async runGlobalRollback(completedTodos: Todo[]): Promise<void> {
-        this.renderer.info(`ðŸ”„ Rolling back ${completedTodos.length} steps...`);
+        this.renderer.info(`🔄 Rolling back ${completedTodos.length} steps...`);
         const shell = new ShellEngine(this.renderer);
 
         for (let i = completedTodos.length - 1; i >= 0; i--) {
@@ -2463,7 +2468,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
                 this.renderer.warn(`[ROLLBACK] ${todo.task}: No rollback command defined.`);
             }
         }
-        this.renderer.success('âœ… Rollback sequence complete.');
+        this.renderer.success('✔ Rollback sequence complete.');
     }
 
     private async narrate(task: string, result: string): Promise<string> {
@@ -2557,7 +2562,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
         const toolDomain = this.registry.getToolDomain(plan.tool);
         let finalResult: Result<EngineOutput> = result as Result<EngineOutput>;
         if ((plan.yaoState === YaoState.OldYang || plan.yaoState === YaoState.YoungYang) && toolDomain !== SovereignDomain.OBSERVE) {
-            this.renderer.info(`\x1b[38;5;196m[ADVERSARIAL]\x1b[0m High Yang complexity detected. Initiating refinement loop...`);
+            this.renderer.info(`[Adversarial Audit] High Yang complexity detected. Initiating refinement loop...`);
             finalResult = await this.runAdversarialRefinement(plan, result.value);
         }
 

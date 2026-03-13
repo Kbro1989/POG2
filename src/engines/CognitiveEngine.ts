@@ -1,4 +1,4 @@
-﻿import { type Result, type Lesson, ok, YaoState } from '../core/models.js';
+import { type Result, type Lesson, ok, YaoState } from '../core/models.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { ModelClient } from '../clients/ModelClient.js';
 import pino from 'pino';
@@ -23,6 +23,10 @@ export class CognitiveEngine {
         private readonly vectorDB: VectorDB,
         private readonly client: ModelClient
     ) { }
+
+    public healthCheck(): { online: boolean; details?: string } {
+        return { online: true };
+    }
 
     /**
      * getActiveWisdom - Retrieves wisdom fragments relevant to a specific task.

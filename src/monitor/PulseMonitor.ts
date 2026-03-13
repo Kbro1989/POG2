@@ -1,4 +1,4 @@
-﻿import { spawn, type ChildProcess } from 'child_process';
+import { spawn, type ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import pino from 'pino';
 import { join } from 'path';
@@ -284,5 +284,12 @@ export class PulseMonitor extends EventEmitter {
             logger.error({ error: err.message }, '[AIRGAP_TEST] Substrate failed offline validation.');
             return { success: false, error: { code: 'AIRGAP_FAILED', message: err.message, command: 'testSovereignKnockAirgap' }, timestamp: new Date() };
         }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: this.isRunning,
+            details: this.isRunning ? 'Biological heartbeat active.' : 'Heartbeat monitor stopped.'
+        };
     }
 }

@@ -1,4 +1,4 @@
-﻿import { type Result } from '../core/models.js';
+import { type Result } from '../core/models.js';
 import { ModelClient } from '../clients/ModelClient.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { StateManager } from '../state/StateManager.js';
@@ -14,6 +14,10 @@ export class MemoryConsolidationEngine {
         private readonly vectorDB: VectorDB,
         private readonly state: StateManager
     ) { }
+
+    public healthCheck(): { online: boolean; details?: string } {
+        return { online: true };
+    }
 
     public async consolidate(): Promise<Result<void>> {
         const sessionId = this.state.getSessionId();

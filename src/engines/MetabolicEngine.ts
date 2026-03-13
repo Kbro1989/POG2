@@ -242,4 +242,14 @@ Respond in JSON: { "paths": string[] }
         }
         return context || 'No Sovereign Context found.';
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        const rulesExists = existsSync(join(this.projectRoot, '.rules.md')) || existsSync(join(process.cwd(), '.rules.md'));
+        const manifestExists = existsSync(join(this.projectRoot, 'manifest.md')) || existsSync(join(process.cwd(), 'pog2.md'));
+
+        return {
+            online: rulesExists && manifestExists,
+            details: `Sovereign Context: Rules(${rulesExists}), Manifest(${manifestExists})`
+        };
+    }
 }

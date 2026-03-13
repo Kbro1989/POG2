@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 // @ts-ignore â€” googleapis types are bundled but TS can lag on resolution
 import { google, youtube_v3 } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
@@ -70,6 +70,13 @@ export class YouTubeLimb {
                 logger.warn({ err }, 'YouTube: Failed to load saved token. Re-auth required.');
             }
         }
+    }
+
+    public healthCheck(): { online: boolean; details?: string } {
+        return {
+            online: this.isAuthenticated(),
+            details: this.isAuthenticated() ? 'Authenticated' : 'Auth Required'
+        };
     }
 
     /**
