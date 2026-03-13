@@ -9,6 +9,10 @@ import type { TrainingCollector } from '../utils/TrainingCollector.js';
 import type { ModelRolodex } from '../api/ai/ModelRolodex.js';
 import { SovereignIgnoreManager } from '../utils/SovereignIgnoreManager.js';
 import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
+import type { SovereignKnock, ConcealmentState } from '../core/models.js';
+import type { ChromaLimb } from '../limbs/spatial/ChromaLimb.js';
+import type { BioIntelligenceLimb } from '../limbs/spatial/BioIntelligenceLimb.js';
+import type { MemoryConsolidationEngine } from '../engines/MemoryConsolidationEngine.js';
 
 const execAsync = promisify(exec);
 const logger = pino({ name: 'TernaryRouter', base: { hostname: 'POG2' } });
@@ -54,6 +58,9 @@ export class TernaryRouter {
     private contextBuilder?: ContextBuilder;
     private trainingCollector?: TrainingCollector;
     private rolodex?: ModelRolodex;
+    private chromaLimb?: ChromaLimb;
+    private bioIntelligence?: BioIntelligenceLimb;
+    private memoryConsolidation?: MemoryConsolidationEngine;
     private readonly decisionHistory: DecisionAuditRecord[] = [];
     private readonly executionMetrics: { totalTokens: number; fastPaths: number; deepPaths: number } = { totalTokens: 0, fastPaths: 0, deepPaths: 0 };
 
@@ -86,6 +93,53 @@ export class TernaryRouter {
 
     getRolodex(): ModelRolodex | undefined {
         return this.rolodex;
+    }
+
+    setChromaLimb(limb: ChromaLimb): void {
+        this.chromaLimb = limb;
+    }
+
+    setBioIntelligence(limb: BioIntelligenceLimb): void {
+        this.bioIntelligence = limb;
+    }
+
+    setMemoryConsolidationEngine(engine: MemoryConsolidationEngine): void {
+        this.memoryConsolidation = engine;
+    }
+
+    /**
+     * sovereignKnock - Core authentication primitive for Sovereign Substrate.
+     * Uses metaphysical and structural proofs to validate access.
+     */
+    public async sovereignKnock(knock: SovereignKnock): Promise<Result<ConcealmentState>> {
+        // 1. Hexagram validation
+        if (!knock.iChingSequence || knock.iChingSequence.length !== 6) {
+            return { ok: false, error: new Error('Invalid sequence: Require 6 Hexagrams') };
+        }
+        // In full impl, this validates the actual progression of the I Ching sequences
+        // against the current HexagramManager instance state.
+
+        // 2. Chroma verification
+        if (this.chromaLimb) {
+            const chromaValid = await this.chromaLimb.validateChromaticSoul(knock.chromaticSoul);
+            if (!chromaValid) return { ok: false, error: new Error('Chromatic mismatch') };
+        }
+
+        // 3. Temporal fingerprint (replay protection)
+        if (this.memoryConsolidation) {
+            const nonceValid = await this.memoryConsolidation.validateNonce(knock.temporalFingerprint);
+            if (!nonceValid) return { ok: false, error: new Error('Replay detected') };
+        }
+
+        // 4. Anatomical proof (33-limb consensus)
+        if (this.bioIntelligence) {
+            const anatomyValid = await this.bioIntelligence.validateStructure(knock.anatomicalProof);
+            if (!anatomyValid) return { ok: false, error: new Error('Structural failure: Anatomical proof invalid') };
+        }
+
+        // 5. State transition
+        logger.info('✨ SovereignKnock sequence validated successfully. Concealment state updated to: isnot');
+        return { ok: true, value: 'isnot' };
     }
 
     /**

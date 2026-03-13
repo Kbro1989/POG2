@@ -7,6 +7,8 @@ import pino from 'pino';
 const logger = pino({ name: 'MemoryConsolidation', base: { hostname: 'POG2' } });
 
 export class MemoryConsolidationEngine {
+    private readonly consumedNonces = new Set<string>();
+
     constructor(
         private readonly client: ModelClient,
         private readonly vectorDB: VectorDB,
@@ -99,5 +101,20 @@ Format:
             logger.error({ err }, 'Memory consolidation phase encountered metabolic friction.');
             return { ok: false, error: err as Error };
         }
+    }
+
+    /**
+     * validateNonce - Temporal fingerprint verification to prevent SovereignKnock replay attacks.
+     */
+    public async validateNonce(nonce: string): Promise<boolean> {
+        // Check if nonce has been used in this session locally
+        if (this.consumedNonces.has(nonce)) {
+            logger.warn({ nonce }, 'SovereignKnock Replay Attack detected: Nonce already consumed.');
+            return false;
+        }
+
+        // Record the nonce to prevent reuse
+        this.consumedNonces.add(nonce);
+        return true;
     }
 }

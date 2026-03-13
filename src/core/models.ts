@@ -420,3 +420,15 @@ export interface Validator {
     readonly name: string;
     validate(output: string, context?: any): Promise<ValidationResult>;
 }
+
+export type ConcealmentState = 'is' | 'isif' | 'isnot';
+
+export interface SovereignKnock {
+    iChingSequence: string[];
+    chromaticSoul: string;
+    temporalFingerprint: string;
+    anatomicalProof: {
+        limbCount: number;
+        structuralIntegrity: number;
+    };
+}

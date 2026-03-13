@@ -1,10 +1,11 @@
 ﻿import * as net from 'net';
 import { spawn, ChildProcess } from 'child_process';
 import { join } from 'path';
-import { Result, EngineOutput, YaoState } from '../../core/models.js';
+import { Result, EngineOutput, YaoState, type SovereignKnock, type ConcealmentState } from '../../core/models.js';
 import pino from 'pino';
 const logger = pino({ name: 'RSCLimb', base: { hostname: 'POG2' } });
 import { SovereignConfig } from '../../config/SovereignConfig.js';
+import type { TernaryRouter } from '../../routing/TernaryRouter.js';
 
 interface WorldState {
     player: { x: number; y: number; index: number };
@@ -25,8 +26,32 @@ export class RSCLimb {
         players: new Map(),
         objects: []
     };
+    private concealmentState: ConcealmentState = 'is'; // Concealed by default
+    private router?: TernaryRouter;
 
     constructor(private readonly config: SovereignConfig) { }
+
+    public setRouter(router: TernaryRouter): void {
+        this.router = router;
+    }
+
+    public async connectWithKnock(knock: SovereignKnock): Promise<Result<void>> {
+        if (!this.router) return { ok: false, error: new Error('TernaryRouter not injected into RSCLimb') };
+
+        // No TCP connection until knock validated
+        logger.info('Received SovereignKnock on RSC Bridge. Validating...');
+        const stateRes = await this.router.sovereignKnock(knock);
+
+        if (!stateRes.ok) {
+            logger.warn({ error: stateRes.error }, 'SovereignKnock REJECTED.');
+            return { ok: false, error: stateRes.error };
+        }
+
+        this.concealmentState = stateRes.value;
+        logger.info('SovereignKnock ACCEPTED. RSC Bridge exposed. Establishing connection...');
+
+        return this.startServer();
+    }
 
     public async startServer(): Promise<Result<void>> {
         if (this.serverProcess) return { ok: true, value: undefined };

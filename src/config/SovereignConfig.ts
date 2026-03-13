@@ -79,6 +79,14 @@ export interface SovereignConfig {
         channelId: string;
         youtubeId: string;
     };
+
+    // Phase 8: SovereignKnock Auth Settings
+    knock: {
+        enabled: boolean;
+        defaultSequence: string[];
+        ttlSeconds: number;
+        ghostFallback: boolean;
+    };
 }
 
 const DEFAULT_CONFIG: SovereignConfig = {
@@ -142,7 +150,15 @@ const DEFAULT_CONFIG: SovereignConfig = {
     stopSequences: ["USER:"],
     outputFormat: 'json',
     logLevel: 'debug',
-    enabledServices: []
+    enabledServices: [],
+
+    // Phase 8 SovereignKnock Defaults
+    knock: {
+        enabled: true,
+        defaultSequence: ['䷀', '䷁', '䷂', '䷃', '䷄', '䷅'],
+        ttlSeconds: 30,
+        ghostFallback: true
+    }
 };
 
 function loadEnvFile(envPath: string): void {

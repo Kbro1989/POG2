@@ -969,6 +969,29 @@ export async function main(): Promise<void> {
             }
         });
 
+    program
+        .command('knock-test <target>')
+        .description('Test SovereignKnock authentication')
+        .option('-s, --sequence <hexagrams>', '6 hexagrams comma-separated', config.knock?.defaultSequence?.join(', ') || '䷀, ䷁, ䷂, ䷃, ䷄, ䷅')
+        .action(async (target: string, opts: { sequence: string }) => {
+            const sequence = opts.sequence.split(',').map((h: string) => h.trim());
+            const chromaLimb = new (await import('./limbs/spatial/ChromaLimb.js')).ChromaLimb(config);
+
+            const knock = {
+                iChingSequence: sequence,
+                chromaticSoul: await chromaLimb.generateFromSequence(sequence),
+                temporalFingerprint: `test-nonce-${Date.now()}`,
+                anatomicalProof: { limbCount: 33, structuralIntegrity: 9 }
+            };
+
+            const result = await router.sovereignKnock(knock);
+            if (result.ok) {
+                renderer.success(`✨ Knock accepted: ${target} exposed [State: ${result.value}]`);
+            } else {
+                renderer.error(`🌑 Rejected: ${result.error instanceof Error ? result.error.message : String(result.error)}`);
+            }
+        });
+
     // GENERATE COMMANDS
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const gen = program.command('gen').description('Generative tasks â€” create from nothing or improve existing code');

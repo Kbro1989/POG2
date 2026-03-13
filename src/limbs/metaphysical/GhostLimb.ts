@@ -1,5 +1,5 @@
 import pino from 'pino';
-import { type Result, ok } from '../../core/models.js';
+import { type Result, ok, type SovereignKnock } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { exec } from 'child_process';
 import { existsSync } from 'fs';
@@ -107,5 +107,38 @@ export class GhostLimb {
             online: this.isObserving,
             awareness: this.awarenessScore
         };
+    }
+
+    /**
+     * verifyLocalKnock - Verifies a SovereignKnock offline using local Ollama model (airgap survival)
+     */
+    public async verifyLocalKnock(knock: SovereignKnock, client: ModelClient): Promise<Result<boolean>> {
+        logger.warn('[GHOST_VOICE][OFFLINE_KNOCK] Validating sequence locally without cloud dependencies...');
+        this.awaken();
+        this.awarenessScore = 0.9;
+
+        const prompt = `Validate hexagram sequence structural integrity: ${JSON.stringify(knock.iChingSequence)}
+Is this a valid 6-part I Ching sequence? Respond ONLY with "VALID" or "INVALID".`;
+
+        const res = await client.call({
+            model: 'qwen2.5-coder:14b-instruct-q5_K_M',
+            prompt,
+            tier: 'Executive',
+            temperature: 0.1
+        });
+
+        if (!res.ok) {
+            logger.error({ error: res.error }, 'GhostLimb offline validation failed to process.');
+            return { ok: false, error: res.error };
+        }
+
+        const isValid = res.value.response.includes('VALID') && !res.value.response.includes('INVALID');
+        if (isValid) {
+            logger.info('[GHOST_VOICE][OFFLINE_KNOCK] Local validation successful.');
+        } else {
+            logger.warn('[GHOST_VOICE][OFFLINE_KNOCK] Local validation REJECTED sequence.');
+        }
+
+        return ok(isValid);
     }
 }
