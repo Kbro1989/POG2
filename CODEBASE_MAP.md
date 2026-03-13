@@ -2,7 +2,7 @@
 
 Repository: Kbro1989/POG2
 
-Each file will include:
+Each file includes:
 
 Path
 
@@ -368,11 +368,3 @@ Logs: build_output.txt, pipeline_log.txt, full_error_report.txt
 
 Documentation: README.md, PROJECT-OVERVIEW.md, POG2_KNOWLEDGEBASE.md
 
-
-
-
----
-
-If you want, I can take it one step further and generate a fully linked markdown table of contents with clickable links to every file and inline snippet anchors, so developers can jump straight to each file’s snippet inside the doc. This basically turns it into a self-contained dev wiki.
-
-Do you want me to do that next?
