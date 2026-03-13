@@ -128,12 +128,12 @@ export class ModelRolodex {
     }
 
     /** Get best available models for a failover sequence, sorted by health */
-    getHealthyModelsForTier(tier: 'Master' | 'Executive' | 'Reactive'): string[] {
+    getHealthyModelsByTaskType(taskType: 'text' | 'image' | 'audio' | 'embedding' | 'vision'): string[] {
         const allModels = this.getAllModels();
 
-        // Filter by success rate and sort by health score
+        // Filter by task type and success rate, then sort by health score
         const scored = allModels
-            .filter(m => m.successCount + m.failureCount > 0) // Only models we've actually used
+            .filter(m => m.taskType === taskType && (m.successCount + m.failureCount > 0)) // Match task type and have history
             .map(m => ({
                 model: m,
                 healthScore: m.successCount / Math.max(1, m.successCount + m.failureCount),
@@ -352,6 +352,21 @@ export class ModelRolodex {
                 const geminiModels = geminiData.models || [];
                 providerState.models = geminiModels.map(m => m.name.replace('models/', ''));
 
+                // Explicitly anchor the Substrate's configured priority routing targets
+                const expectedSovereignTargets = [
+                    this.config.geminiFlashModel || 'gemini-1.5-flash',
+                    this.config.geminiProModel || 'gemini-1.5-pro',
+                    this.config.geminiEmbeddingModel || 'text-embedding-004',
+                    'gemini-1.5-flash-001'
+                ];
+
+                for (const target of expectedSovereignTargets) {
+                    if (!providerState.models.includes(target)) {
+                        providerState.models.push(target);
+                    }
+                }
+
+                // Register all dynamically discovered ones
                 for (const m of geminiModels) {
                     const modelId = m.name.replace('models/', '');
                     const key = `gemini:${modelId}`;
@@ -369,7 +384,25 @@ export class ModelRolodex {
                         this.state.models[key].lastSeen = Date.now();
                     }
                 }
-                logger.info({ count: geminiModels.length }, 'Gemini models discovered.');
+
+                // Register explicitly configured Sovereign priority ones if the REST API missed them
+                for (const target of expectedSovereignTargets) {
+                    const key = `gemini:${target}`;
+                    if (!this.state.models[key]) {
+                        this.state.models[key] = {
+                            id: target,
+                            name: target,
+                            provider: 'gemini',
+                            taskType: target.includes('embed') ? 'embedding' : 'text',
+                            lastSeen: Date.now(),
+                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0
+                        };
+                    } else {
+                        this.state.models[key].lastSeen = Date.now();
+                    }
+                }
+
+                logger.info({ count: providerState.models.length }, 'Gemini models discovered & anchored.');
             } else {
                 providerState.error = `Gemini API returned ${geminiResponse.status}`;
             }

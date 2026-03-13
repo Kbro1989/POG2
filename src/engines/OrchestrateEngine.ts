@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { CodeEngine } from './CodeEngine.js';
@@ -183,11 +183,11 @@ export class OrchestrateEngine {
         this.envLimb = new EnvironmentLimb();
         this.cfServices = new CloudflareServices(config);
         this.mediaForge = new MediaForgeLimb(this.client);
-        this.voice = new VoiceLimb(this.client, this.cfServices);
+        this.voice = new VoiceLimb(this.client, config, this.cfServices);
         this.neuralForge = new NeuralForgeLimb();
         this.webSensory = new WebSensoryLimb();
         this.bioIntel = new BioIntelligenceLimb();
-        this.ghost = new GhostLimb();
+        this.ghost = new GhostLimb(config);
         this.quantum = new QuantumLimb();
         this.omega = new OmegaLimb();
         this.relic = new RelicLimb();

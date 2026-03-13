@@ -1,10 +1,11 @@
-﻿import { writeFileSync } from 'fs';
+import { writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import pino from 'pino';
 import { type Result, type ProsodyVector, EmotionalState } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { GhostLimb } from '../metaphysical/GhostLimb.js';
 import { CloudflareServices } from '../../services/CloudflareServices.js';
+import type { SovereignConfig } from '../../config/SovereignConfig.js';
 
 const logger = pino({ name: 'VoiceLimb', base: { hostname: 'POG2' } });
 
@@ -35,6 +36,7 @@ export class VoiceLimb {
 
     constructor(
         private readonly client: ModelClient,
+        private readonly config: SovereignConfig,
         private readonly cfServices?: CloudflareServices
     ) { }
 
@@ -163,7 +165,7 @@ export class VoiceLimb {
 
                 if (!res.ok || !res.value || res.value.length < 100) {
                     logger.warn({ index: i, reason: !res.ok ? 'Error' : 'Empty/Small Buffer' }, 'Cloudflare TTS failed or returned invalid data. Dropping to Ghost Piper fallback.');
-                    const ghost = new GhostLimb();
+                    const ghost = new GhostLimb(this.config);
                     const segPath = join(tmpDir, `seg-${i}.wav`);
                     const fallbackRes = await ghost.executePiperFallback(segment.text, segPath);
                     if (!fallbackRes.ok) throw fallbackRes.error;
@@ -247,7 +249,7 @@ export class VoiceLimb {
             try { if (existsSync(tmpDir)) rmSync(tmpDir, { recursive: true, force: true }); } catch { }
 
             if (options.outputPath) {
-                const ghost = new GhostLimb();
+                const ghost = new GhostLimb(this.config);
                 const fallbackResult = await ghost.executePiperFallback(text, options.outputPath);
                 if (fallbackResult.ok) {
                     return {

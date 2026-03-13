@@ -3,6 +3,7 @@ import { type Result, ok, type SovereignKnock } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { exec } from 'child_process';
 import { existsSync } from 'fs';
+import type { SovereignConfig } from '../../config/SovereignConfig.js';
 
 const logger = pino({ name: 'GhostLimb', base: { hostname: 'POG2' } });
 
@@ -17,7 +18,7 @@ export class GhostLimb {
     private isObserving: boolean = false;
     private awarenessScore: number = 1.0;
 
-    constructor() { }
+    constructor(private readonly config: SovereignConfig) { }
 
     /**
      * awaken - Activates the observer cycle.
@@ -117,11 +118,41 @@ export class GhostLimb {
         this.awaken();
         this.awarenessScore = 0.9;
 
+        let targetModel = this.config.masterLocalModel || 'qwen2.5-coder:14b-instruct-q5_K_M'; // Default to config
+        const rolodex = client.getRolodex();
+        
+        if (rolodex) {
+            // Find all healthy local Ollama text models
+            const healthyText = rolodex.getHealthyModelsByTaskType('text');
+            const localModels = healthyText.filter(m => 
+                !m.startsWith('huggingface:') && 
+                !m.startsWith('@cf/') && 
+                !m.includes('cloudflare') && 
+                !m.startsWith('gemini:') && 
+                !m.startsWith('fireworks:') && 
+                !m.startsWith('openrouter:')
+            );
+            
+            // Prefer the configured Master Local Model if it's a thinker
+            const isConfigThinker = targetModel.includes('think') || targetModel.includes('r1') || targetModel.includes('reason');
+            
+            if (!isConfigThinker) {
+                // If config isn't a thinker, search local list for one
+                const thinker = localModels.find(m => m.includes('think') || m.includes('r1') || m.includes('reason'));
+                if (thinker) {
+                    targetModel = thinker;
+                    logger.info({ targetModel }, '[GHOST_VOICE][OFFLINE_KNOCK] Located better local offline thinker than configured default.');
+                }
+            } else {
+                logger.info({ targetModel }, '[GHOST_VOICE][OFFLINE_KNOCK] Using configured local thinker.');
+            }
+        }
+
         const prompt = `Validate hexagram sequence structural integrity: ${JSON.stringify(knock.iChingSequence)}
 Is this a valid 6-part I Ching sequence? Respond ONLY with "VALID" or "INVALID".`;
 
         const res = await client.call({
-            model: 'qwen2.5-coder:14b-instruct-q5_K_M',
+            model: targetModel,
             prompt,
             tier: 'Executive',
             temperature: 0.1

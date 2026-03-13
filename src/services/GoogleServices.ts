@@ -125,21 +125,31 @@ export class GoogleServices {
     }
 
     /**
-     * Placeholder for future cross-service Google discovery
+     * Audit active Google capabilities and presently applied model routing.
+     * Reflects the physical models used by ModelClient and the broader substrate.
      */
-    async auditAbilities(): Promise<Result<{ services: string[] }>> {
+    async auditAbilities(): Promise<Result<{ services: string[], models: string[] }>> {
         try {
-            logger.info('Auditing Google services abilities via environment...');
+            logger.info('Auditing Google services abilities and model routing via environment...');
             const services: string[] = [];
+            const models: string[] = [];
 
             // 1. Storage & CloudBuild rely on Application Credentials
             if (process.env['GOOGLE_APPLICATION_CREDENTIALS']) {
                 services.push('storage', 'cloudbuild', 'pubsub');
             }
 
-            // 2. Generative Language (Gemini) relies on API Key
+            // 2. Generative Language (Gemini) presently applied routing parameters
             if (this.config.apiKey) {
                 services.push('generativelanguage');
+                
+                // Active Gemini Routing paths used in ModelClient and embedding substrates
+                models.push(
+                    process.env.GEMINI_FLASH_MODEL || 'gemini-1.5-flash',
+                    process.env.GEMINI_PRO_MODEL || 'gemini-1.5-pro',
+                    'gemini-1.5-flash-001', // Explicit fallback in resilient routes
+                    process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004'
+                );
             }
 
             // 3. Region awareness
@@ -147,7 +157,12 @@ export class GoogleServices {
                 services.push(`region:${this.config.region}`);
             }
 
-            return { ok: true, value: { services } };
+            // Formally report both the sensory APIs and the actively routed neural models
+            if (this.visionClient) services.push('vision');
+            if (this.translateClient) services.push('translate');
+            if (this.nlClient) services.push('natural_language');
+
+            return { ok: true, value: { services, models } };
         } catch (error) {
             return { ok: false, error: error as Error };
         }

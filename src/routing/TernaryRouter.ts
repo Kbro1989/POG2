@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { type Ternary, type Result, YaoState, type DecisionAuditRecord, type RoutingComplexity, type ContextCard, EmotionalState } from '../core/models.js';
@@ -442,29 +442,29 @@ export class TernaryRouter {
         return decision!;
     }
 
-    public getFailoverSequence(tier: 'Master' | 'Executive' | 'Reactive'): string[] {
+    public getFailoverSequence(tier: 'Master' | 'Executive' | 'Reactive', taskType: 'text' | 'image' | 'audio' | 'embedding' | 'vision' = 'text'): string[] {
         let rawSequence: string[] = [];
         switch (tier) {
             case 'Master': // Deep Path
                 rawSequence = [
-                    this.config.masterLocalModel,
-                    this.config.deepPathModel,
                     this.config.masterReasoningModel,
+                    this.config.masterFallbackModel,
+                    this.config.deepPathModel,
                     'openrouter:deepseek/deepseek-r1',
                     'fireworks:deepseek-r1',
-                    this.config.masterFallbackModel,
-                    this.config.huggingfaceFallbackModel
+                    this.config.huggingfaceFallbackModel,
+                    this.config.masterLocalModel
                 ];
                 break;
             case 'Executive': // Mid Path
                 rawSequence = [
                     this.config.executiveCoderModel,
-                    this.config.localFallbackModel,
+                    this.config.codingHeavyModel,
                     this.config.midPathModel,
                     'fireworks:qwen2p5-coder-32b',
                     'openrouter:qwen/qwen-2.5-coder-32b-instruct',
-                    this.config.codingHeavyModel,
-                    this.config.huggingfaceFallbackModel
+                    this.config.huggingfaceFallbackModel,
+                    this.config.localFallbackModel
                 ];
                 break;
             case 'Reactive': // Fast Path
@@ -475,16 +475,17 @@ export class TernaryRouter {
                     'fireworks:fina-7b',
                     'openrouter:google/gemini-flash-1.5-8b',
                     this.config.lightAuditorModel,
-                    this.config.huggingfaceFallbackModel
+                    this.config.huggingfaceFallbackModel,
+                    this.config.localFallbackModel
                 ];
                 break;
             default:
                 rawSequence = [this.config.localFallbackModel];
         }
 
-        // Phase 6: Augment failover with Rolodex-discovered healthy models
+        // Phase 9: Augment failover with Rolodex-discovered healthy models of same task type
         if (this.rolodex) {
-            const rolodexModels = this.rolodex.getHealthyModelsForTier(tier);
+            const rolodexModels = this.rolodex.getHealthyModelsByTaskType(taskType);
             // Append rolodex models that aren't already in the sequence
             const existingSet = new Set(rawSequence);
             for (const rm of rolodexModels) {
@@ -498,13 +499,18 @@ export class TernaryRouter {
     }
 
     private sortModelsBySovereignPriority(models: string[]): string[] {
+        if (models.length === 0) return [];
         const unique = Array.from(new Set(models.filter(Boolean)));
+        
+        // The first model is considered the "preferred" target, keep it at [0] if it's healthy/available
+        const preferred = unique[0];
+        const rest = unique.slice(1);
 
         const local: string[] = [];
         const cloudflareHf: string[] = [];
         const others: string[] = [];
 
-        for (const m of unique) {
+        for (const m of rest) {
             if (m.startsWith('huggingface:') || m.startsWith('@cf/') || m.includes('cloudflare') || m.startsWith('fireworks:') || m.startsWith('openrouter:')) {
                 cloudflareHf.push(m);
             } else if (m.startsWith('gemini:') || m.includes('openai') || m.includes('anthropic') || m.includes(':cloud')) {
@@ -515,7 +521,19 @@ export class TernaryRouter {
             }
         }
 
-        return [...local, ...cloudflareHf, ...others];
+        // Optimal Cloud-First/Local-Fallback: 
+        // 1. Preferred target
+        // 2. Other Clouds / APIs
+        // 3. Local Substrate
+        // 4. Guaranteed universal Local Fallback
+        const result = [preferred, ...others, ...cloudflareHf, ...local];
+        
+        // Ensure the absolute sovereign local fallback is pushed to the very end if not already
+        const finalFallback = this.config.localFallbackModel;
+        const fallbackFiltered = result.filter(m => m !== finalFallback);
+        fallbackFiltered.push(finalFallback);
+
+        return Array.from(new Set(fallbackFiltered));
     }
 
     private isCloudModel(model: string): boolean {
