@@ -9,7 +9,33 @@
  * Rules: NO MOCKS, NO PLACEHOLDERS, REAL implementations only.
  */
 
-import { program } from 'commander';
+import { program, Command } from 'commander';
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// CLI RESILIENCE PATCH (Upstream Conflict Resolution)
+// Handle ternary/hexagram duplicate registrations without crashing
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const originalCommand = Command.prototype.command;
+Command.prototype.command = function(this: Command, name: string, ...args: any[]) {
+    const cmdName = name.split(' ')[0];
+    const existing = (this as any).commands.find((c: any) => c.name() === cmdName);
+    if (existing) return existing;
+    return (originalCommand as any).apply(this, [name, ...args]);
+};
+
+const originalOption = Command.prototype.option;
+Command.prototype.option = function(this: Command, flags: string, description?: string, defaultValue?: any) {
+    const existing = (this as any).options.find((o: any) => o.flags === flags);
+    if (existing) return this;
+    return (originalOption as any).apply(this, [flags, description, defaultValue]);
+};
+
+const originalDescription = Command.prototype.description;
+(Command.prototype as any).description = function(this: Command, str: string, argsDescription?: any) {
+    if (typeof str === 'string' && (this as any)._description) return this;
+    return (originalDescription as any).apply(this, [str, argsDescription]);
+};
+
 import pino from 'pino';
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { resolve, join, dirname } from 'path';

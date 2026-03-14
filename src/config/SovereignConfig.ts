@@ -185,35 +185,101 @@ function loadEnvFile(envPath: string): void {
     }
 }
 
+const ENV_VAR_MAP: Record<string, string> = {
+    mode: 'SOVEREIGN_MODE',
+    primaryCloudApiKey: 'PRIMARY_CLOUD_API_KEY',
+    secondaryCloudApiKey: 'SECONDARY_CLOUD_API_KEY',
+    cloudflareAccountId: 'CLOUDFLARE_ACCOUNT_ID',
+    cloudflareApiToken: 'CLOUDFLARE_API_TOKEN',
+    cloudflareAuthEmail: 'CLOUDFLARE_AUTH_EMAIL',
+    fireworksApiKey: 'FIREWORKS_API_KEY',
+    openRouterApiKey: 'OPENROUTER_API_KEY',
+    planningModel: 'PLANNING_MODEL',
+    codingModel: 'CODING_MODEL',
+    orchestratorModel: 'ORCHESTRATOR_MODEL',
+    visionModel: 'VISION_MODEL',
+    voiceModel: 'VOICE_MODEL',
+    codingHeavyModel: 'CODING_HEAVY_MODEL',
+    codingFastModel: 'CODING_FAST_MODEL',
+    embeddingModel: 'EMBEDDING_MODEL',
+    criticModel: 'CRITIC_MODEL',
+    lightAuditorModel: 'LIGHT_AUDITOR_MODEL',
+    geminiFlashModel: 'GEMINI_FLASH_MODEL',
+    geminiProModel: 'GEMINI_PRO_MODEL',
+    geminiEmbeddingModel: 'GEMINI_EMBEDDING_MODEL',
+    masterReasoningModel: 'MASTER_REASONING_MODEL',
+    executiveCoderModel: 'EXECUTIVE_CODER_MODEL',
+    reactiveAgentModel: 'REACTIVE_AGENT_MODEL',
+    fastPathModel: 'FAST_PATH_MODEL',
+    midPathModel: 'MID_PATH_MODEL',
+    deepPathModel: 'DEEP_PATH_MODEL',
+    masterFallbackModel: 'MASTER_FALLBACK_MODEL',
+    masterLocalModel: 'MASTER_LOCAL_MODEL',
+    imageGenModel: 'IMAGE_GEN_MODEL',
+    huggingfaceFallbackModel: 'HUGGINGFACE_FALLBACK_MODEL',
+    localFallbackModel: 'LOCAL_FALLBACK_MODEL',
+    ollamaBaseUrl: 'OLLAMA_BASE_URL',
+    projectId: 'PROJECT_ID',
+    embeddingDimensions: 'EMBEDDING_DIMENSIONS',
+    wsPort: 'WS_PORT',
+    contextWindow: 'CONTEXT_WINDOW',
+    temperature: 'TEMPERATURE',
+    topP: 'TOP_P',
+    repeatPenalty: 'REPEAT_PENALTY',
+    numCtx: 'NUM_CTX',
+    outputFormat: 'OUTPUT_FORMAT',
+    logLevel: 'LOG_LEVEL'
+};
+
 export function loadConfig(configPath: string): SovereignConfig {
     // 1. Force load user-specified environments to ensure API keys exist globally
     loadEnvFile('.env');
 
-    if (!existsSync(configPath)) {
-        bootstrapConfig(configPath);
-        return DEFAULT_CONFIG;
+    let fileConfig: Partial<SovereignConfig> = {};
+    if (existsSync(configPath)) {
+        try {
+            fileConfig = JSON.parse(readFileSync(configPath, 'utf8'));
+        } catch {
+            // Silently fall back to defaults if JSON is malformed
+        }
     }
 
-    try {
-        const data = JSON.parse(readFileSync(configPath, 'utf8'));
-        // Merge with defaults to ensure all fields exist
-        return {
-            ...DEFAULT_CONFIG,
-            ...data,
-            primaryCloudApiKey: process.env['PRIMARY_CLOUD_API_KEY'] ?? process.env['HUGGINGFACE_API_KEY'] ?? data.primaryCloudApiKey ?? data.huggingfaceApiKey,
-            secondaryCloudApiKey: process.env['SECONDARY_CLOUD_API_KEY'] ?? process.env['GOOGLE_API_KEY'] ?? data.secondaryCloudApiKey ?? data.geminiApiKey,
-            cloudflareAccountId: process.env['CLOUDFLARE_ACCOUNT_ID'] ?? data.cloudflareAccountId,
-            cloudflareApiToken: process.env['CLOUDFLARE_API_TOKEN'] ?? data.cloudflareApiToken,
-            cloudflareAuthEmail: process.env['CLOUDFLARE_AUTH_EMAIL'] ?? data.cloudflareAuthEmail,
-            fireworksApiKey: process.env['FIREWORKS_API_KEY'] ?? data.fireworksApiKey,
-            openRouterApiKey: process.env['OPENROUTER_API_KEY'] ?? data.openRouterApiKey,
-            geminiFlashModel: process.env['GEMINI_FLASH_MODEL'] ?? data.geminiFlashModel ?? DEFAULT_CONFIG.geminiFlashModel,
-            geminiProModel: process.env['GEMINI_PRO_MODEL'] ?? data.geminiProModel ?? DEFAULT_CONFIG.geminiProModel,
-            geminiEmbeddingModel: process.env['GEMINI_EMBEDDING_MODEL'] ?? data.geminiEmbeddingModel ?? DEFAULT_CONFIG.geminiEmbeddingModel
-        };
-    } catch {
-        return DEFAULT_CONFIG;
+    const config: any = { ...DEFAULT_CONFIG, ...fileConfig };
+
+    // 2. Apply Environment Variable Overrides
+    for (const [configKey, envKey] of Object.entries(ENV_VAR_MAP)) {
+        const envVal = process.env[envKey];
+        if (envVal !== undefined) {
+            // Handle Type Conversion
+            if (typeof (DEFAULT_CONFIG as any)[configKey] === 'number') {
+                config[configKey] = Number(envVal);
+            } else if (Array.isArray((DEFAULT_CONFIG as any)[configKey])) {
+                try {
+                    config[configKey] = JSON.parse(envVal);
+                } catch {
+                    // Maintain existing value if not valid JSON array
+                }
+            } else {
+                config[configKey] = envVal;
+            }
+        }
     }
+
+    config.primaryCloudApiKey = process.env['PRIMARY_CLOUD_API_KEY'] ?? process.env['HUGGINGFACE_API_KEY'] ?? config.primaryCloudApiKey;
+    config.secondaryCloudApiKey = process.env['SECONDARY_CLOUD_API_KEY'] ?? process.env['GOOGLE_API_KEY'] ?? config.secondaryCloudApiKey;
+
+    // Phase 105: Explicit YouTube Environment Mapping (Upstream Resilience)
+    if (process.env['YOUTUBE_CLIENT_ID'] || process.env['YOUTUBE_CLIENT_SECRET'] || process.env['YOUTUBE_API_KEY']) {
+        config.youtube = config.youtube || {};
+        config.youtube.clientId = process.env['YOUTUBE_CLIENT_ID'] ?? config.youtube.clientId;
+        config.youtube.clientSecret = process.env['YOUTUBE_CLIENT_SECRET'] ?? config.youtube.clientSecret;
+        config.youtube.apiKey = process.env['YOUTUBE_API_KEY'] ?? config.youtube.apiKey;
+        config.youtube.projectId = process.env['YOUTUBE_PROJECT_ID'] ?? config.youtube.projectId;
+        config.youtube.channelId = process.env['YOUTUBE_CHANNEL_ID'] ?? config.youtube.channelId;
+        config.youtube.youtubeId = process.env['YOUTUBE_YOUTUBE_ID'] ?? config.youtube.youtubeId;
+    }
+
+    return config as SovereignConfig;
 }
 
 export function getDefaultSovereignConfig(): SovereignConfig {

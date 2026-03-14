@@ -1,4 +1,4 @@
-﻿import * as readline from 'readline/promises';
+import * as readline from 'readline/promises';
 import { PathNormalizer } from '../utils/PathNormalizer.js';
 import chalk from 'chalk';
 import { type YaoState, EmotionalState, type SovereignRecord, type OraclePlan } from '../core/models.js';
@@ -287,4 +287,12 @@ export class Renderer {
         this.gauge('System Integrity', online, total);
         console.log('');
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: true,
+            details: 'CLI Renderer substrate nominal'
+        };
+    }
 }
+

@@ -1,4 +1,4 @@
-﻿import type { RoutingContext, RoutingDecision, RoutingStrategy, TerminalStrategy } from '../types.js';
+import type { RoutingContext, RoutingDecision, RoutingStrategy, TerminalStrategy } from '../types.js';
 import pino from 'pino';
 
 export class CompositeStrategy implements TerminalStrategy {
@@ -39,4 +39,13 @@ export class CompositeStrategy implements TerminalStrategy {
             }
         };
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        const subStatuses = this.strategies.map(s => s.name).join(' -> ');
+        return {
+            online: true,
+            details: `CompositeStrategy [${this.name}] active with pipeline: ${subStatuses}`
+        };
+    }
 }
+

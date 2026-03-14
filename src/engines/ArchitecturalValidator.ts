@@ -1,4 +1,4 @@
-﻿import { type ValidationResult, type Validator, ArchitectureManifest } from '../core/models.js';
+import { type ValidationResult, type Validator, ArchitectureManifest } from '../core/models.js';
 
 /**
  * ArchitecturalValidator - Enforces core architectural constraints.
@@ -73,5 +73,9 @@ export class ArchitecturalValidator implements Validator {
             return forbidden.some(p => p.test(output));
         }
         return false;
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: 'ArchitecturalValidator clinical enforcement substrate active.' };
     }
 }

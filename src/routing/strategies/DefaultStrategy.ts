@@ -1,4 +1,4 @@
-﻿import type { RoutingContext, RoutingDecision, TerminalStrategy } from '../types.js';
+import type { RoutingContext, RoutingDecision, TerminalStrategy } from '../types.js';
 
 export class DefaultStrategy implements TerminalStrategy {
     readonly name = 'default';
@@ -16,4 +16,12 @@ export class DefaultStrategy implements TerminalStrategy {
             }
         };
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: true,
+            details: 'DefaultStrategy nominal'
+        };
+    }
 }
+

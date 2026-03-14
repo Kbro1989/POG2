@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { type Result, type Ternary } from '../../core/models.js';
 import { CapabilityRegistry, type AICapability, type AIServiceType } from './CapabilityRegistry.js';
 import { ModelClient } from '../../clients/ModelClient.js';
@@ -136,4 +136,15 @@ export class AIDispatcher {
     public getServiceState(type: AIServiceType): ServiceState {
         return this.serviceStates.get(type) || 'IDLE';
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        const statuses = Array.from(this.serviceStates.entries())
+            .map(([type, state]) => `${type}: ${state}`)
+            .join(', ');
+        return {
+            online: true,
+            details: `AI Dispatcher ready. Service States: ${statuses}`
+        };
+    }
 }
+

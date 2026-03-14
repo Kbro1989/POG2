@@ -34,9 +34,9 @@
   "logLevel": "debug",
   "youtube": {
     "projectId": "pickofgods-8eb4b",
-    "apiKey": "YOUR_API_KEY",
-    "clientId": "YOUR_CLIENT_ID.apps.googleusercontent.com",
-    "clientSecret": "YOUR_CLIENT_SECRET",
+    "apiKey": "AIzaSyBa_4XW6eR7T-K1pY3N1Y3N1Y3N1Y3N",
+    "clientId": "69738697936-j2u08l6ll3hg1am1pecb9b4860rphtar.apps.googleusercontent.com",
+    "clientSecret": "GOCSPX-L-wFvWqU4B3Bw2D4vY4Z0p2Y4Y4",
     "channelId": "UCHzY_wIuP6U-a5ehJF7WJKg",
     "youtubeId": "HzY_wIuP6U-a5ehJF7WJKg"
   }

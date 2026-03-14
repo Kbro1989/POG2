@@ -1,4 +1,4 @@
-﻿import sqlite3 from 'sqlite3';
+import sqlite3 from 'sqlite3';
 import pino from 'pino';
 import { type Result } from '../core/models.js';
 import { getLearningDbPath } from './SovereignPathResolver.js';
@@ -138,4 +138,12 @@ export class DBMaintenance {
             return { ok: false, error: error as Error };
         }
     }
+    public healthCheck(): { online: boolean; details: string } {
+        const exists = fs.existsSync(this.dbPath);
+        return {
+            online: exists,
+            details: exists ? `Database found: ${this.dbPath}` : `Database substrate missing: ${this.dbPath}`
+        };
+    }
 }
+

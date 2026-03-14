@@ -1,4 +1,4 @@
-﻿/**
+/**
  * NeuralLimb Interface - The contract for all specialized limbs
  */
 
@@ -63,4 +63,9 @@ export interface NeuralLimb {
      * Optional: Perform resource cleanup (close DBs, kill processes, etc.)
      */
     close?(): Promise<void>;
+
+    /**
+     * Optional: Verify that the limb substrate is reachable and healthy.
+     */
+    healthCheck?(): { online: boolean; details?: string } | Promise<{ online: boolean; details?: string }>;
 }

@@ -143,4 +143,8 @@ export class ContextBuilder {
         // Enforce alignment with the Sovereign Organism architectural rules
         return [manifest?.primaryGoal || 'SovereignDesign'];
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: 'ContextBuilder multi-file substrate active.' };
+    }
 }

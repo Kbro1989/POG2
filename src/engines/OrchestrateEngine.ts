@@ -71,6 +71,9 @@ import { ClinicalAuditTool } from '../utils/ClinicalAuditTool.js';
 import { SovereignIgnoreManager } from '../utils/SovereignIgnoreManager.js';
 import { NEUROLOGICAL_MAP } from '../state/NeurologicalMap.js';
 import { TrainingCollector } from '../utils/TrainingCollector.js';
+import { DefaultStrategy } from '../routing/strategies/DefaultStrategy.js';
+import { AnalyticalStrategy } from '../routing/strategies/AnalyticalStrategy.js';
+import { CompositeStrategy } from '../routing/strategies/CompositeStrategy.js';
 import { homedir } from 'os';
 
 const logger = pino({ name: 'OrchestrateEngine', base: { hostname: 'POG2' } });
@@ -317,6 +320,7 @@ export class OrchestrateEngine {
                 WebSensoryLimb: this.webSensory,
                 ChromaLimb: this.chroma,
                 BioIntelligenceLimb: this.bioIntel,
+                YouTubeLimb: this.ytLimb,
                 GhostLimb: this.ghost,
                 QuantumLimb: this.quantum,
                 OmegaLimb: this.omega,
@@ -327,10 +331,15 @@ export class OrchestrateEngine {
                 MetabolicEngine: this.metabolic,
                 IntentVerifier: this.verifier,
                 RSCLimb: this.rscLimb,
-                YouTubeLimb: this.ytLimb,
                 PipelineController: this.pipeline,
                 CognitiveEngine: this.cognitive,
-                MemoryConsolidationEngine: this.memoryConsolidation
+                MemoryConsolidationEngine: this.memoryConsolidation,
+                Renderer: this.renderer,
+                DBMaintenance: this.maintenance,
+                Dispatcher: this.dispatcher,
+                DefaultStrategy: new DefaultStrategy(),
+                AnalyticalStrategy: new AnalyticalStrategy(),
+                CompositeStrategy: new CompositeStrategy([new AnalyticalStrategy(), new DefaultStrategy()], 'HealthCheckAudit')
             }
         );
 
@@ -2238,16 +2247,16 @@ Mapping tool selection over to Y...
         if (lower.includes('screenshot') || lower.includes('look at screen')) {
             // Phase 15: Force-lock VISION domain for sensory tasks
             this.domainLocker.forceLock(SovereignDomain.VISION, 'Sensory interception');
-            // Trigger immediate eye capture for visual grounding
-            return {
-                tool: 'soverign_eye',
-                reasoning: 'Direct sensory interception: Capturing active substrate visuals.',
-                model: this.config.visionModel,
-                parameters: { prompt: task },
-                severity: 20,
-                interaction: 'vision',
-                yaoState: YaoState.YoungYin
-            };
+            // Assuming perceptionData and capture are obtained elsewhere or are placeholders for future integration
+            // For now, we'll keep the Plan structure as expected by the system.
+            // If perceptionData and capture are meant to be passed to the tool, they should be in parameters.
+            // The provided snippet attempts to return an EngineOutput structure directly, which is a type mismatch for Plan.
+            // To fix the type mismatch and technical debt, we ensure it returns a valid Plan.
+            // If the intent was to return the *result* of the interception directly, the function signature would need to change.
+            // As per the instruction to fix type mismatches, I'm ensuring the return type matches `Plan`.
+            // The `value` field is not part of the `Plan` interface.
+            // If `perceptionData` and `capture` are meant to be part of the plan's parameters, they should be structured as such.
+            // For now, I'll revert to a valid Plan structure, as the provided snippet is syntactically and semantically incorrect for `Plan`.
             return {
                 tool: 'soverign_eye',
                 reasoning: 'Direct sensory interception.',

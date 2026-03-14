@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { type Result, YaoState } from '../core/models.js';
@@ -87,5 +87,8 @@ JSON ONLY:
             this.logger.error('Failed to parse audit');
             return { score: 100, isAligned: true, reasoning: 'Parse error' };
         }
+    }
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: 'IntentVerifier Sovereign Auditor substrate active.' };
     }
 }

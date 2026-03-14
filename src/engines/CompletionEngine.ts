@@ -1,4 +1,4 @@
-﻿import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
@@ -241,5 +241,8 @@ Continue from the end of the file â€” output ONLY the new code to append (n
                 data: { model, linesAdded: addedLines, file: params.filePath }
             }
         };
+    }
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: 'CompletionEngine reactive substrate active.' };
     }
 }

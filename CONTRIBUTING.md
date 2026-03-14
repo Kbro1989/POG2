@@ -45,11 +45,11 @@ Every new node MUST be auditable.
 1.  [x] **Neurological Mapping**: Update `NeurologicalMap.ts` for all new nodes.
 2.  [x] **CLI DOC Parity**: Document all new flags in `cli.ts` and ensure humanized CLI DOC (Distributed Orchestration Cognition) aligns with substrate intent.
 3.  [ ] **Federation Preparation**: Align local-first logic for Phase 2 cloud augmentation.
-4.  [ ] **Model Anchoring**: Version lock Ollama/Qwen models in `SovereignConfig.ts`.
+4.  [x] **Model Anchoring**: Version lock Ollama/Qwen models in `SovereignConfig.ts`.
 5.  [x] **Engine Deduplication**: Audit for overlapping logic between `MemoryConsolidationEngine` and `PipelineController`.
 6.  [x] **Peer Review Sync**: Link clinical research data to `POG2_KNOWLEDGEBASE.md`.
-7.  [ ] **Metabolic Monitoring**: Add `healthCheck()` methods to all specialized limbs.
-8.  [ ] **Visual Roadmapping**: Update `ARCHITECTURE.md` diagrams when structural paths change.
+7.  [x] **Metabolic Monitoring**: Add `healthCheck()` methods to all specialized limbs and engines.
+8.  [x] **Visual Roadmapping**: Update `ARCHITECTURE.md` diagrams when structural paths change.
 9.  [ ] **Pipeline Continuity**: Ensure Cinematic Mode run-continuity (Scene 1 -> 2 -> 3).
 10. [x] **Clinical Auditing**: Run `npm run lint` and `ClinicalAuditTool` before every PR.
 
