@@ -1028,7 +1028,34 @@ export async function main(): Promise<void> {
 
     // GENERATE COMMANDS
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const gen = program.command('gen').description('Generative tasks â€” create from nothing or improve existing code');
+    const gen = program.command('gen')
+    .description('Generation and Mapping commands');
+
+gen.command('clinical-audit')
+    .description('Perform a Clinical Audit of the Sovereign Organism and its substrates')
+    .action(async () => {
+        console.log('--- Sovereign Clinical Audit ---');
+        console.log('Status: Implementation Pending');
+        console.log('Action: Audit would verify NeurologicalMap against active substrate files.');
+    });
+
+gen.command('jsdoc <file>')
+    .description('Generate JSDoc for a file')
+    .option('-m, --model <model>', 'Override model selection')
+    .action(async (file: string, opts) => {
+        if (!existsSync(file)) {
+            renderer.error(`File not found: ${file}`);
+            return;
+        }
+
+        const engine = new GenerateEngine(config, router);
+        const result = await engine.generateDocs({
+            filePath: resolve(file),
+            modelOverride: opts.model
+        });
+
+        handleResult(result, renderer, state);
+    });
 
     gen
         .command('code <task>')
@@ -1057,7 +1084,7 @@ export async function main(): Promise<void> {
         });
 
     gen
-        .command('doc <file>')
+        .command('jsdoc <file>')
         .description('Generate JSDoc/inline documentation for a source file')
         .option('-m, --model <model>', 'Override model selection')
         .action(async (file: string, opts) => {

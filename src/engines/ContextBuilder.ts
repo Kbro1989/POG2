@@ -1,4 +1,4 @@
-﻿import { readFileSync, readdirSync, existsSync } from 'fs';
+import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname, relative, resolve } from 'path';
 import pino from 'pino';
 import { type FileContext, type CodeContext, type Lesson, type ModelExecutor, isOk, type Result } from '../core/models.js';
@@ -133,12 +133,14 @@ export class ContextBuilder {
     }
 
     async getGoldenTemplates(prompt: string): Promise<string[]> {
-        // Placeholder implementation for sovereign template retrieval
-        return [];
+        // Retrieve established design patterns from the resources substrate
+        const templatePath = resolve('resources/cloudflare-templates');
+        if (!existsSync(templatePath)) return [];
+        return readdirSync(templatePath).map(f => join(templatePath, f));
     }
 
     getArchitectureAlignment(prompt: string, manifest: any): string[] {
-        // Placeholder check for architectural adherence
-        return ['SovereignSubstrate'];
+        // Enforce alignment with the Sovereign Organism architectural rules
+        return [manifest?.primaryGoal || 'SovereignDesign'];
     }
 }

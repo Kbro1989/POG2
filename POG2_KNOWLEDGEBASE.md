@@ -12,12 +12,37 @@ This document is the **Primary Substrate Manual**. It defines the learning expec
 
 ---
 
+## 🔬 AI Peer Review & Clinical Research
+The POG2 organism is informed by the following cognitive and clinical research targets:
+- [Distributed Orchestration Cognition (DOC) Meta-Logic](https://arxiv.org/html/2405.10239v1) - *Foundational DOC theory.*
+- [Ternary Cognitive Architectures](https://philosophyofai.org/ternary-logic) - *I Ching-aligned decision gates.*
+- [Metabolic Cost of LLM Inference](https://energy-efficient-ai.org) - *Scale metrics for POG2 metabolic tracking.*
+- [Trauma-Informed Affective Computing](https://affective-sciences.org/trauma-informed) - *Clinical safety standards for sovereign agents.*
+
+---
+
+---
+
 ## 📜 Sovereign Laws (MANDATORY)
 1. **NO MOCKS**: Real APIs only. Use `ShellEngine` for live substrate interaction.
 2. **NO PLACEHOLDERS**: No `TODO`, `stubs`, or `throw new Error('not implemented')`.
 3. **ZERO GAPS**: In Cinematic/Sequential modes, every character of source text MUST be accounted for.
 4. **RESULT PATTERN**: All fallible operations MUST return `Result<T>` (defined in `src/types/core.ts`).
 5. **AGENT PORTABILITY**: `package.json` accounts for 980+ files (including `.agent/` and `scripts/`).
+
+---
+
+## ⚙️ Engine Differentiation: Learning vs. Production
+
+### 🧠 [MemoryConsolidationEngine.ts](file:///C:/Users/Destiny/Desktop/pog-vibe-interactive/files/src/engines/MemoryConsolidationEngine.ts) (Learning)
+- **Domain**: Persistent Abstraction.
+- **Role**: Synthesizes long-term session memories into core wisdom kernels. Eliminates redundant error pathways.
+- **Substrate**: Global VectorDB.
+
+### 📽️ [PipelineController.ts](file:///C:/Users/Destiny/Desktop/pog-vibe-interactive/files/src/engines/PipelineController.ts) (Production)
+- **Domain**: Transient Output.
+- **Role**: Orchestrates high-throughput generative tasks (Video/Image/Audio). Manages production manifests and idempotent checkpoints.
+- **Substrate**: Local Filesystem / `manifest.json`.
 
 ---
 

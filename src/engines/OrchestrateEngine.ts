@@ -2238,16 +2238,16 @@ Mapping tool selection over to Y...
         if (lower.includes('screenshot') || lower.includes('look at screen')) {
             // Phase 15: Force-lock VISION domain for sensory tasks
             this.domainLocker.forceLock(SovereignDomain.VISION, 'Sensory interception');
-            // Assuming perceptionData and capture are obtained elsewhere or are placeholders for future integration
-            // For now, we'll keep the Plan structure as expected by the system.
-            // If perceptionData and capture are meant to be passed to the tool, they should be in parameters.
-            // The provided snippet attempts to return an EngineOutput structure directly, which is a type mismatch for Plan.
-            // To fix the type mismatch and technical debt, we ensure it returns a valid Plan.
-            // If the intent was to return the *result* of the interception directly, the function signature would need to change.
-            // As per the instruction to fix type mismatches, I'm ensuring the return type matches `Plan`.
-            // The `value` field is not part of the `Plan` interface.
-            // If `perceptionData` and `capture` are meant to be part of the plan's parameters, they should be structured as such.
-            // For now, I'll revert to a valid Plan structure, as the provided snippet is syntactically and semantically incorrect for `Plan`.
+            // Trigger immediate eye capture for visual grounding
+            return {
+                tool: 'soverign_eye',
+                reasoning: 'Direct sensory interception: Capturing active substrate visuals.',
+                model: this.config.visionModel,
+                parameters: { prompt: task },
+                severity: 20,
+                interaction: 'vision',
+                yaoState: YaoState.YoungYin
+            };
             return {
                 tool: 'soverign_eye',
                 reasoning: 'Direct sensory interception.',

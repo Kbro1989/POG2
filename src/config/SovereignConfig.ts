@@ -1,4 +1,4 @@
-﻿import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
 
 export interface SovereignConfig {
@@ -87,17 +87,20 @@ export interface SovereignConfig {
         ttlSeconds: number;
         ghostFallback: boolean;
     };
+    // Phase 18: Resource & Metabolic Tracking
+    metabolicCostScale: number; // 0.0 - 1.0 multiplier for all cost logging
 }
 
 const DEFAULT_CONFIG: SovereignConfig = {
     mode: 'hybrid',
+    metabolicCostScale: 1.0,
     planningModel: 'kimi-k2.5:cloud',
     codingModel: 'qwen2.5-coder:14b-instruct-q5_K_M',
     orchestratorModel: 'kimi-k2.5:cloud',
-    visionModel: 'moondream:latest',
-    voiceModel: 'tinyllama:latest',
+    visionModel: 'moondream:1.8b-v2-q4_K_M',
+    voiceModel: 'tinyllama:1.1b-chat-v1.0-q4_K_M',
     codingHeavyModel: 'qwen2.5-coder:14b-instruct-q5_K_M',
-    codingFastModel: 'qwen2.5-coder:7b-instruct-q4_K_M', // Fallback to smaller Qwen if Yi is missing
+    codingFastModel: 'qwen2.5-coder:7b-instruct-q4_K_M', 
     embeddingModel: 'qwen3-embedding:latest',
     cloudflareAccountId: undefined,
     cloudflareApiToken: undefined,
@@ -119,10 +122,10 @@ const DEFAULT_CONFIG: SovereignConfig = {
     // Phase 71 Hierarchy Defaults
     masterReasoningModel: 'kimi-k2.5:cloud',
     executiveCoderModel: 'qwen2.5-coder:14b-instruct-q5_K_M',
-    reactiveAgentModel: 'qwen2.5-coder:latest',
+    reactiveAgentModel: 'qwen2.5-coder:7b-instruct-q4_K_M',
 
     // Phase 78 Economic Budget Paths (Layer 3)
-    fastPathModel: 'qwen2.5-coder:latest',
+    fastPathModel: 'qwen2.5-coder:7b-instruct-q4_K_M',
     midPathModel: 'qwen2.5-coder:14b-instruct-q5_K_M',
     deepPathModel: 'kimi-k2.5:cloud',
 

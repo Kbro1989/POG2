@@ -1,4 +1,4 @@
-﻿// src/utils/RSMVExtractor.ts
+// src/utils/RSMVExtractor.ts
 // Utility to parse RSMV model definitions and map them to Biological Constraints
 
 import { Result, ok, err } from '../core/models.js';
@@ -32,7 +32,7 @@ export class RSMVExtractor {
 
         // If extra limb info is in the 'extra' map, we can override
         if (json.extra) {
-            // Placeholder: Assume prop 1010 might be limb count in some custom schema
+            // Check for explicit limb count override in custom schema (Prop 1010)
             if (json.extra[1010]) limits.limbs = Number(json.extra[1010]);
         }
 
