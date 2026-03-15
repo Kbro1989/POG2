@@ -6,6 +6,8 @@ import { join, dirname } from 'path';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
 import type { AIServiceType } from '../../core/models.js';
 
+import { $ } from '../../utils/shell.js';
+
 const execAsync = promisify(exec);
 const logger = pino({ name: 'ModelRolodex', base: { hostname: 'POG2' } });
 
@@ -338,8 +340,8 @@ export class ModelRolodex {
         }
 
         try {
-            // Identity check via wrangler whoami
-            const { stdout: whoami } = await execAsync('npx wrangler whoami 2>&1', { timeout: 15000 });
+            // Identity check via wrangler whoami (direct execution)
+            const { stdout: whoami } = await $`wrangler whoami 2>&1`;
             const accountMatch = whoami.match(/Account ID:\s*(\S+)/i) || whoami.match(/(\w{32})/);
             const emailMatch = whoami.match(/Email:\s*(\S+)/i) || whoami.match(/[\w.-]+@[\w.-]+\.\w+/);
 
@@ -351,7 +353,7 @@ export class ModelRolodex {
             const cfApiUrl = `https://api.cloudflare.com/client/v4/accounts/${this.config.cloudflareAccountId}/ai/models/search`;
             const cfResponse = await fetch(cfApiUrl, {
                 headers: { 'Authorization': `Bearer ${this.config.cloudflareApiToken}` },
-                signal: AbortSignal.timeout(60000) // Increased to 60s
+                signal: AbortSignal.timeout(60000)
             });
 
             if (cfResponse.ok) {

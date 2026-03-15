@@ -34,8 +34,8 @@ export class ShellLibrary {
             logger.warn({ command }, 'Command failed, launching diagnostic fallback...');
             const whoami = await this.shell.execute({ command: 'whoami', silent: true });
 
-            // Extract base executable name (e.g. 'npx wrangler' -> 'npx wrangler', 'git' -> 'git')
-            const baseCmd = command.split(' ').slice(0, command.startsWith('npx ') ? 2 : 1).join(' ');
+            // Extract base executable name (e.g. 'wrangler', 'git')
+            const baseCmd = command.split(' ')[0];
             const help = await this.shell.execute({ command: `${baseCmd} ${helpFlag}`, silent: true });
 
             const errorMsg = result.error instanceof Error ? result.error.message : String(result.error);
@@ -79,7 +79,7 @@ Please analyze this context and construct a corrected command or deployment conf
     }
 
     async wrangler(args: { command: string }): Promise<Result<EngineOutput>> {
-        return this.executeWithDiagnostics(`npx wrangler ${args.command}`);
+        return this.executeWithDiagnostics(`wrangler ${args.command}`);
     }
 
     async npm(args: { command: string }): Promise<Result<EngineOutput>> {

@@ -13,6 +13,8 @@ import type { ShellEngine } from '../engines/ShellEngine.js';
 const execAsync = promisify(exec);
 const logger = pino({ name: 'EndpointHealer', base: { hostname: 'POG2' } });
 
+import { $ } from './shell.js';
+
 export interface HealerDiagnostic {
     provider: string;
     checks: DiagnosticCheck[];
@@ -165,14 +167,14 @@ export class EndpointHealer {
     // â•â•â• Cloudflare Diagnostics â•â•â•
 
     private async diagnoseCloudflare(diag: HealerDiagnostic): Promise<void> {
-        const whoami = await this.runCheck('Wrangler Auth', 'npx wrangler whoami');
+        const whoami = await this.runCheck('Wrangler Auth', 'wrangler whoami');
         diag.checks.push(whoami);
 
         const envCheck = await this.runCheck('CF API Token', 'echo %CLOUDFLARE_API_TOKEN%');
         diag.checks.push(envCheck);
 
         if (!whoami.passed) {
-            diag.resolution = 'Cloudflare auth failed. Run "npx wrangler login" to re-authenticate.';
+            diag.resolution = 'Cloudflare auth failed. Run "wrangler login" to re-authenticate.';
         }
     }
 

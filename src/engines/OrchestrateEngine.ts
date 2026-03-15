@@ -147,6 +147,8 @@ export class OrchestrateEngine {
     private readonly quotaTracker: QuotaTracker;
     private readonly chromaLimb: ChromaLimb; // Phase 108 - Metaphysical color signature
     private readonly EXTREME_THRESHOLD = 80;
+    private initialized = false;
+    private initPromise: Promise<void> | null = null;
 
     constructor(
         private readonly config: SovereignConfig,
@@ -313,8 +315,34 @@ export class OrchestrateEngine {
         // Phase 48: Awaken the Ghost (Adversarial Reflection)
         this.ghost.awaken();
 
-        logger.debug('OrchestrateEngine initialization complete.');
         this.initializeTools();
+    }
+
+    /**
+     * Phase 259: Explicitly awaken the Sovereign Substrate.
+     * This awaits all critical neural links (MCP, DB, etc.) before execution begins.
+     */
+    public async initialize(): Promise<void> {
+        if (this.initialized) return;
+        if (this.initPromise) return this.initPromise;
+
+        this.initPromise = (async () => {
+            logger.debug('Awakening Sovereign Substrate...');
+            
+            // Await critical local substrates
+            const dbInit = this.vectorDB.initialize();
+            if (!dbInit.ok) {
+                logger.error({ err: dbInit.error }, 'Failed to initialize VectorDB Substrate');
+            }
+
+            // Await external neural links (MCP)
+            await this.mcpEngine.initialize();
+            
+            this.initialized = true;
+            logger.info('Sovereign Substrate AWAKE.');
+        })();
+
+        return this.initPromise;
     }
 
     /**
@@ -2219,11 +2247,6 @@ export class OrchestrateEngine {
             parameters: { path: 'string?' },
             execute: (args) => this.discovery.discoverSubstrateCapabilities((args as any).path)
         });
-
-
-        this.mcpEngine.initialize().catch(err => {
-            logger.warn({ error: err.message }, 'MCP Initialization error');
-        });
     }
 
     async getPlan(task: string, memoryContext?: string): Promise<Result<Plan>> {
@@ -2439,6 +2462,7 @@ Mapping tool selection over to Y...
     }
 
     async run(task: string): Promise<Result<EngineOutput>> {
+        await this.initialize();
         // Phase 15: Lock domain for this task
         const transition = this.domainLocker.lockDomain(task);
         this.renderer.showDomainTransition(transition.from, transition.to);
@@ -2688,6 +2712,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
     }
 
     async executePlan(plan: Plan): Promise<Result<EngineOutput>> {
+        await this.initialize();
         if (!plan.tool) {
             return { ok: false, error: new Error('Execution plan is missing a tool.') };
         }
@@ -2838,6 +2863,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         intent: string;
         modelOverride?: string;
     }): Promise<Result<{ commit: string; hexagram: string; linesGenerated: number }>> {
+        await this.initialize();
         const startTime = Date.now();
         const hexagram = this.router.getHexagram();
         const shell = new ShellEngine(this.renderer);

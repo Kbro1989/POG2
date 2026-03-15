@@ -1,8 +1,8 @@
 import { execSync } from 'child_process';
 import pino from 'pino';
-import { type Result } from '../core/models.js';
+import { type Result, YaoState } from '../core/models.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
-import { YaoState } from '../core/models.js';
+import { $ } from '../utils/shell.js';
 
 const logger = pino({
     name: 'CloudflareServices',
@@ -55,14 +55,14 @@ export class CloudflareServices {
             // If missing accountId or email, try to get it from wrangler
             if (!this.accountId || !this.authEmail) {
                 logger.info('Attempting to complete Cloudflare context via wrangler...');
-                const output = execSync('wrangler whoami').toString();
+                const { stdout: whoami } = await $`wrangler whoami 2>&1`;
 
-                const match = output.match(/Account ID:\s+([a-f0-9]+)/i);
+                const match = whoami.match(/Account ID:\s+([a-f0-9]+)/i);
                 if (match && match[1]) {
                     this.accountId = match[1].trim();
                 }
 
-                const emailMatch = output.match(/associated with the email\s+([^\s]+)/i);
+                const emailMatch = whoami.match(/associated with the email\s+([^\s]+)/i);
                 if (emailMatch && emailMatch[1]) {
                     // Remove trailing dot if present (common in "email@domain.com.")
                     this.authEmail = emailMatch[1].trim().replace(/\.$/, '');
@@ -338,12 +338,11 @@ export class CloudflareServices {
             const contentTypeFlag = contentType ? ` --content-type "${contentType}"` : '';
             // Dominant Decision: Use shell execution to bypass project scope .env conflicts
             // Pattern: wrangler --global pattern (SovereignShell fallback style)
-            const command = `wrangler r2 object put ${bucket}/${key}${contentTypeFlag} --file -`;
+            const { stderr } = await $`wrangler r2 object put ${bucket}/${key}${contentTypeFlag} --file -`;
 
-            logger.info({ bucket, key, command }, 'Executing Dominant Shell-Op for R2');
-
-            // Note: In a real POG setup, we use execSync with specific env or child_process for --global effect
-            execSync(command, { input: data, stdio: 'pipe' });
+            if (stderr.toLowerCase().includes('error')) {
+                throw new Error(stderr);
+            }
 
             // Pin Storage Hex Card (Line 6: Culmination)
             if (this.hexagramManager) {
@@ -362,9 +361,11 @@ export class CloudflareServices {
 
     async getObject(bucket: string, key: string): Promise<Result<string>> {
         try {
-            const command = `wrangler r2 object get ${bucket}/${key}`;
-            logger.info({ bucket, key, command }, 'Executing Dominant Shell-Op for R2');
-            const output = execSync(command).toString();
+            const { stdout: output, stderr } = await $`wrangler r2 object get ${bucket}/${key}`;
+            
+            if (stderr.toLowerCase().includes('error') && !output) {
+                throw new Error(stderr);
+            }
 
             if (this.hexagramManager) {
                 void this.hexagramManager.pinCard(6, 'R2 Storage Retrieval', `Retrieved ${key} from ${bucket}`, YaoState.YoungYang);

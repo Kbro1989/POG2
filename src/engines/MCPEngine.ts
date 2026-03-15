@@ -67,6 +67,8 @@ export class MCPEngine {
             await client.connect(transport);
             this.clients.set(name, client);
 
+            logger.info({ server: name }, 'Successfully connected to MCP server');
+
             const toolsRes = await client.listTools();
             const tools = toolsRes.tools || [];
 
@@ -91,15 +93,21 @@ export class MCPEngine {
                             const output = result.content.map((c: MCPContent) => c.text || JSON.stringify(c)).join('\n') || 'Success';
                             return { ok: true, value: { output, data: { mcpContent: result.content } } };
                         } catch (err) {
+                            logger.error({ server: name, tool: t.name, error: (err as Error).message }, 'MCP Tool Execution Failure');
                             return { ok: false, error: err as Error };
                         }
                     }
                 });
             }
 
-            logger.info({ server: name, tools: tools.length }, 'âœ… MCP Neural Link Synchronized');
+            logger.info({ server: name, tools: tools.length }, '✅ MCP Neural Link Synchronized');
         } catch (err) {
-            logger.error({ server: name, error: (err as Error).message }, 'âŒ MCP Neural Link Failure');
+            const errorMsg = (err as Error).stack || (err as Error).message;
+            logger.error({ server: name, error: errorMsg }, '❌ MCP Neural Link Failure');
+            // Try to provide hint about EPIPE if detected
+            if (errorMsg.includes('EPIPE')) {
+                logger.warn({ server: name }, 'EPIPE detected: This often means the server process crashed or stdout was polluted.');
+            }
         }
     }
 

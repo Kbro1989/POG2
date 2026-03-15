@@ -1799,6 +1799,7 @@ gen.command('jsdoc <file>')
             const port = parseInt(opts.port);
             renderer.info(`⚡ Awakening the Sovereign Bridge on port ${port}...`);
             const engine = new OrchestrateEngine(config, router, renderer);
+            await engine.initialize();
             await engine.getSwitchboard().startServer(port, engine);
             renderer.success(`Bridge ONLINE. External CLI and Sovereign Eye mirror active.`);
             
@@ -1859,8 +1860,8 @@ gen.command('jsdoc <file>')
     // For single-shot commands, automatically exit unless we are supposed to enter REPL
     const commandName = program.args[0];
     if (commandName && ['status', 'health', 'personality', 'read', 'gutenberg', 'cooldown', 'config', 'memory', 'consult-shadow', 'consult-memetics', 'consult-syntropy', 'init', 'system', 'vs'].includes(commandName)) {
-        // Clinical exit: allow one tick for pino to flush then exit cleanly
-        setTimeout(() => process.exit(0), 100);
+        // Clinical exit: allow more time for pino to flush and background MCP links to settle
+        setTimeout(() => process.exit(0), 500);
     } else if (commandName) {
         renderer.info('\nTask sequence complete. Transitioning to Sovereign REPL...');
         await startRepl(renderer, config, router, client, state);
@@ -1879,6 +1880,7 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
     renderer.setReadline(rl);
 
     const engine = new OrchestrateEngine(config, router, renderer);
+    await engine.initialize();
     const { VectorDB } = await import('./utils/VectorDB.js');
     const { MemoryConsolidationEngine } = await import('./engines/MemoryConsolidationEngine.js');
     const vectorDB = new VectorDB({ client });

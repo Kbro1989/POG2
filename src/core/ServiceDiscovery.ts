@@ -445,7 +445,7 @@ export class ServiceDiscovery {
 
         const gitVersion = await check('git', ['--version']);
         const psVersion = await check('pwsh', ['-v']) || await check('powershell', ['-Command', '$PSVersionTable.PSVersion.ToString()']);
-        const wranglerVersion = await check('wrangler', ['--version']) || await check('npx wrangler', ['--version']);
+        const wranglerVersion = await check('wrangler', ['--version']);
         const gcloudVersion = await check('gcloud', ['--version']);
 
         return [

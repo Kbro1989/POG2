@@ -3,6 +3,7 @@
     "everything": {
       "command": "npx",
       "args": [
+        "--no-install",
         "-y",
         "@modelcontextprotocol/server-everything"
       ],
