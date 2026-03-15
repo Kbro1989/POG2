@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import Database from 'better-sqlite3';
 import { copyFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
 import { join } from 'path';
@@ -31,6 +31,16 @@ export class MemeticEngine {
         // Phase 107.5: Normalize to project-relative browser profile
         const root = getSovereignRoot(PathTier.Home);
         this.profilePath = join(root, 'guest', 'browser-profile', 'Default');
+        
+        // Auto-initialize guest substrate if it's within the sovereign home
+        if (this.profilePath.includes('guest') && !existsSync(this.profilePath)) {
+            try {
+                mkdirSync(this.profilePath, { recursive: true });
+                logger.info({ path: this.profilePath }, 'Initialized missing guest browser profile substrate.');
+            } catch (e) {
+                logger.error({ err: (e as Error).message }, 'Failed to initialize guest browser profile.');
+            }
+        }
     }
 
     /**

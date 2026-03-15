@@ -1,9 +1,11 @@
-﻿import { exec } from 'child_process';
+import { exec } from 'child_process';
 import { promisify } from 'util';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';
+import { EventEmitter } from 'events';
 import pino from 'pino';
 import type { Result } from '../core/models.js';
+import { getDashboardPath } from './SovereignPathResolver.js';
 
 const execAsync = promisify(exec);
 
@@ -13,11 +15,12 @@ const logger = pino({
 });
 
 /**
- * Capture source definition â€” what the Sovereign Eye is looking at.
+ * Capture source definition — what the Sovereign Eye is looking at.
  */
 export type CaptureSource =
     | { type: 'url'; target: string }           // http://localhost:3000, wrangler dev, etc.
     | { type: 'html'; target: string }          // Path to .html file
+    | { type: 'rsc'; target: 'game_client' }    // RSC client — delegates to RSCLimb state
     | { type: 'window'; target: string }        // OS window title match
     | { type: 'file'; target: string };          // Existing screenshot/image file
 
@@ -43,19 +46,19 @@ export interface ViewportConfig {
 const DEFAULT_VIEWPORT: ViewportConfig = { width: 1280, height: 720 };
 
 /**
- * SovereignEye â€” Universal capture engine.
+ * SovereignEye — Universal capture engine.
  * 
  * Captures visual and textual state from ANY source: localhost dev servers,
  * wrangler dev environments, HTML files, OS windows, and existing images.
  * 
- * NO MOCKS â€” All captures come from real, running environments.
+ * NO MOCKS — All captures come from real, running environments.
  */
-export class SovereignEye {
+export class SovereignEye extends EventEmitter {
     private readonly captureDir: string;
 
-    constructor() {
-        // Phase 20: Enforce isolated memory location on the Sovereign Drive
-        this.captureDir = 'D:\\sovereign\\memory\\captures';
+    constructor(projectId: string = 'guest') {
+        super();
+        this.captureDir = join(getDashboardPath(projectId), 'sovereign_eye');
         if (!existsSync(this.captureDir)) {
             mkdirSync(this.captureDir, { recursive: true });
         }
@@ -65,13 +68,15 @@ export class SovereignEye {
      * Universal capture entry point.
      */
     async capture(source: CaptureSource, viewport: ViewportConfig = DEFAULT_VIEWPORT): Promise<Result<CaptureResult>> {
-        logger.info({ sourceType: source.type, target: (source as any).target }, 'Sovereign Eye capturing');
+        logger.info({ sourceType: source.type, target: source.target }, 'Sovereign Eye capturing');
 
         switch (source.type) {
             case 'url':
                 return this.captureUrl(source.target, viewport);
             case 'html':
                 return this.captureHtmlFile(source.target, viewport);
+            case 'rsc':
+                return this.captureRSC();
             case 'window':
                 return this.captureWindow(source.target);
             case 'file':
@@ -97,6 +102,7 @@ export class SovereignEye {
             try {
                 const response = await fetch(url);
                 textContent = await response.text();
+                // Trim for AI context
                 if (textContent.length > 10000) {
                     textContent = textContent.substring(0, 10000) + '\n... [truncated]';
                 }
@@ -104,15 +110,19 @@ export class SovereignEye {
                 logger.warn({ err: fetchErr }, 'Text fetch failed, screenshot-only mode');
             }
 
+            const result: CaptureResult = {
+                imagePath: screenshotResult.ok ? screenshotPath : null,
+                textContent,
+                sourceType: 'url',
+                metadata: { url, viewport, hasScreenshot: screenshotResult.ok },
+                timestamp
+            };
+
+            this.emit('capture', result);
+
             return {
                 ok: true,
-                value: {
-                    imagePath: screenshotResult.ok ? screenshotPath : null,
-                    textContent,
-                    sourceType: 'url',
-                    metadata: { url, viewport, hasScreenshot: screenshotResult.ok },
-                    timestamp
-                }
+                value: result
             };
         } catch (err) {
             return { ok: false, error: err as Error };
@@ -136,17 +146,21 @@ export class SovereignEye {
             const fileUrl = `file:///${absPath.replace(/\\/g, '/')}`;
             const screenshotResult = await this.headlessScreenshot(fileUrl, screenshotPath, viewport);
 
+            const result: CaptureResult = {
+                imagePath: screenshotResult.ok ? screenshotPath : null,
+                textContent: textContent.length > 10000
+                    ? textContent.substring(0, 10000) + '\n... [truncated]'
+                    : textContent,
+                sourceType: 'html',
+                metadata: { filePath: absPath, hasScreenshot: screenshotResult.ok },
+                timestamp
+            };
+
+            this.emit('capture', result);
+
             return {
                 ok: true,
-                value: {
-                    imagePath: screenshotResult.ok ? screenshotPath : null,
-                    textContent: textContent.length > 10000
-                        ? textContent.substring(0, 10000) + '\n... [truncated]'
-                        : textContent,
-                    sourceType: 'html',
-                    metadata: { filePath: absPath, hasScreenshot: screenshotResult.ok },
-                    timestamp
-                }
+                value: result
             };
         } catch (err) {
             return { ok: false, error: err as Error };
@@ -154,7 +168,23 @@ export class SovereignEye {
     }
 
     /**
-     * Capture an OS window by title match using PowerShell.
+     * Capture RSC game state — text-based via RSCLimb state.
+     */
+    private async captureRSC(): Promise<Result<CaptureResult>> {
+        return {
+            ok: true,
+            value: {
+                imagePath: null,
+                textContent: '[RSC State] Use play-rsc command or RSCLimb.getWorldState() for real-time game perception.',
+                sourceType: 'rsc',
+                metadata: { protocol: 'tcp', port: 43594 },
+                timestamp: Date.now()
+            }
+        };
+    }
+
+    /**
+     * Capture an OS window by title match.
      */
     private async captureWindow(windowTitle: string): Promise<Result<CaptureResult>> {
         const timestamp = Date.now();
@@ -164,14 +194,8 @@ export class SovereignEye {
             const psScript = `
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms
-
 $procs = Get-Process | Where-Object { $_.MainWindowTitle -like "*${windowTitle.replace(/"/g, '`"')}*" } | Select-Object -First 1
-
-if (-not $procs) {
-    Write-Error "No window found matching '${windowTitle}'"
-    exit 1
-}
-
+if (-not $procs) { exit 1 }
 Add-Type @"
 using System;
 using System.Runtime.InteropServices;
@@ -181,39 +205,35 @@ public class Win32 {
     [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
 }
 "@
-
 $hwnd = $procs.MainWindowHandle
 [Win32]::SetForegroundWindow($hwnd) | Out-Null
 Start-Sleep -Milliseconds 200
-
 $rect = New-Object Win32+RECT
 [Win32]::GetWindowRect($hwnd, [ref]$rect) | Out-Null
-
 $width = $rect.Right - $rect.Left
 $height = $rect.Bottom - $rect.Top
-
 $bitmap = New-Object System.Drawing.Bitmap($width, $height)
 $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
 $graphics.CopyFromScreen($rect.Left, $rect.Top, 0, 0, [System.Drawing.Size]::new($width, $height))
 $bitmap.Save("${screenshotPath.replace(/\\/g, '\\\\')}")
 $graphics.Dispose()
 $bitmap.Dispose()
-
-Write-Output "Captured: $width x $height"
 `;
-            const { stdout } = await execAsync(`powershell -NoProfile -Command "${psScript.replace(/\n/g, '; ').replace(/"/g, '\\"')}"`, {
-                timeout: 10000
-            });
+            await execAsync(`powershell -NoProfile -Command "${psScript.replace(/\n/g, '; ').replace(/"/g, '\\"')}"`, { timeout: 10000 });
+
+            const result: CaptureResult = {
+                imagePath: screenshotPath,
+                textContent: `Window capture: "${windowTitle}"`,
+                sourceType: 'window',
+                metadata: { windowTitle },
+                timestamp
+            };
+
+            this.emit('capture', result);
 
             return {
                 ok: true,
-                value: {
-                    imagePath: screenshotPath,
-                    textContent: `Window capture: "${windowTitle}" â€” ${stdout.trim()}`,
-                    sourceType: 'window',
-                    metadata: { windowTitle, dimensions: stdout.trim() },
-                    timestamp
-                }
+                value: result
             };
         } catch (err) {
             return { ok: false, error: new Error(`Window capture failed: ${(err as Error).message}`) };

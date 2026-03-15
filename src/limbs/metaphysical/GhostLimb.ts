@@ -1,6 +1,8 @@
 import pino from 'pino';
 import { type Result, ok, type SovereignKnock } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
+import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
+import { join } from 'path';
 import { exec } from 'child_process';
 import { existsSync } from 'fs';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
@@ -67,7 +69,7 @@ export class GhostLimb {
 
         return new Promise((resolve) => {
             // Check common paths for piper
-            const explicitPath = 'D:\\STORAGE\\piper\\piper.exe';
+            const explicitPath = join(getSovereignRoot(), 'STORAGE', 'piper', 'piper.exe');
             const piperBin = existsSync(explicitPath) ? `"${explicitPath}"` : 'piper';
 
             // Escape double quotes and remove newlines for CLI safety

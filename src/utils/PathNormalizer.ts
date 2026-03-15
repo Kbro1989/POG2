@@ -1,8 +1,9 @@
-﻿import { relative, resolve, sep } from 'path';
+import { relative, resolve, sep } from 'path';
 import { homedir } from 'os';
+import { getSystemRoot } from './SovereignPathResolver.js';
 
 /**
- * PathNormalizer â€” Sovereign Path Aesthetic Processor.
+ * PathNormalizer — Sovereign Path Aesthetic Processor.
  * 
  * Philosophy: Absolute system paths are exposing and cluttered. 
  * This utility converts absolute system paths into ./... or ~/... or POG2://
@@ -10,7 +11,6 @@ import { homedir } from 'os';
 export class PathNormalizer {
     private static projectRoot: string = process.cwd();
     private static home: string = homedir();
-    private static sovereignLair: string = 'D:\\sovereign';
 
     /**
      * Set the current project root (Tier -1).
@@ -27,6 +27,7 @@ export class PathNormalizer {
         if (!path) return path;
 
         const absolute = resolve(path);
+        const sovereignRoot = getSystemRoot();
 
         // 1. Project-Relative
         if (absolute.startsWith(this.projectRoot)) {
@@ -34,9 +35,9 @@ export class PathNormalizer {
             return rel === '' ? '.' : `.${sep}${rel}`;
         }
 
-        // 2. Sovereign-Relative (D:\sovereign)
-        if (absolute.toLowerCase().startsWith(this.sovereignLair.toLowerCase())) {
-            const rel = absolute.substring(this.sovereignLair.length);
+        // 2. Sovereign-Relative (Dynamic Sovereign Root)
+        if (absolute.toLowerCase().startsWith(sovereignRoot.toLowerCase())) {
+            const rel = absolute.substring(sovereignRoot.length);
             return `POG2://${rel.replace(/^[\\/]/, '').replace(/\\/g, '/')}`;
         }
 

@@ -5,7 +5,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { createReadStream, existsSync, readFileSync, writeFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { type Result, ok } from '../../core/models.js';
-import { getGutenbergPath } from '../../utils/SovereignPathResolver.js';
+import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
 import http from 'http';
 import url from 'url';
 
@@ -14,7 +14,7 @@ const logger = pino({ name: 'YouTubeLimb', base: { hostname: 'POG2' } });
 // â•â•â• YouTube Upload Config â•â•â•
 const SCOPES = ['https://www.googleapis.com/auth/youtube.upload'];
 const REDIRECT_URI = 'https://chromanumber-auth.kristain33rs.workers.dev/youtube/callback';
-const TOKEN_PATH = join('D:\\sovereign', 'youtube_token.json');
+const TOKEN_PATH = join(getSovereignRoot(), 'youtube_token.json');
 
 export interface YouTubeUploadRequest {
     videoPath: string;
@@ -309,7 +309,7 @@ export class YouTubeLimb {
 
     private saveToken(token: any): void {
         try {
-            const dir = join('D:\\sovereign');
+            const dir = getSovereignRoot();
             writeFileSync(TOKEN_PATH, JSON.stringify(token, null, 2));
             logger.info({ path: TOKEN_PATH }, 'YouTube: Token saved.');
         } catch (err) {

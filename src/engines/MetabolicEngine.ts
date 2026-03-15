@@ -98,10 +98,12 @@ Each card must include:
 - weight: 0.0 to 1.0
 
 ADDITIONAL MANDATORY FIELD: "curiosity"
-Perform a "Deep Reflection" on the Sovereign Context provided. 
+Perform a "Deep Reflection" on the Sovereign Context and literal wisdom provided. 
 - Are there any potential rule violations in the planned action?
-- How does this task align with the long-term "Sovereign Edition" goals?
-- Flag "metabolicFriction" (0.0 to 1.0) if any deviance from SOVEREIGN_LAWS is detected.
+- MANDATORY: Search for any clinical violations (Mocks, Placeholders, Weak Typing, Stubbed APIs).
+- How does this task align with the long-term "AI Hive Mind" hierarchy?
+- Flag "metabolicFriction" (0.0 to 1.0) if ANY deviance from SOVEREIGN_LAWS or clinical prerequisites is detected.
+- If a task involves "Yang" complexity but lacks an adversarial audit turn, flag it here.
 
 Respond in JSON ONLY with structure:
 {

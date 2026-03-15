@@ -1,4 +1,4 @@
-﻿import { writeFileSync, appendFileSync, existsSync, readFileSync } from 'fs';
+import { writeFileSync, appendFileSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import pino from 'pino';
 import { YaoState } from '../core/models.js';
@@ -79,5 +79,12 @@ export class SovereignProprioception {
         } catch (err) {
             logger.error({ err }, 'Failed to append reflection');
         }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { 
+            online: true, 
+            details: 'SovereignProprioception active: Reflective memory artifacts accessible.' 
+        };
     }
 }

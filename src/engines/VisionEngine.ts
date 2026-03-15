@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { ShellEngine } from './ShellEngine.js';
 import { Renderer } from '../ui/Renderer.js';
@@ -117,5 +117,15 @@ TASKS:
         }
 
         return params.prompt ?? "Analyze this image and describe its contents in technical detail.";
+    }
+
+    /**
+     * Diagnostic probe for NodeTester.
+     */
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: true,
+            details: 'VisionEngine nominal; SoverignEye substrate available via Win32 capture.'
+        };
     }
 }

@@ -1,7 +1,7 @@
 import * as readline from 'readline/promises';
 import { PathNormalizer } from '../utils/PathNormalizer.js';
 import chalk from 'chalk';
-import { type YaoState, EmotionalState, type SovereignRecord, type OraclePlan } from '../core/models.js';
+import { YaoState, EmotionalState, type SovereignRecord, type OraclePlan } from '../core/models.js';
 import type { HexagramManager } from '../routing/HexagramManager.js';
 import { SovereignDomain } from '../types/SovereignDomain.js';
 import type { NodeHealth } from '../monitor/NodeTester.js';
@@ -13,6 +13,7 @@ import type { NodeHealth } from '../monitor/NodeTester.js';
 export class Renderer {
     private rl?: readline.Interface;
     private isSilent = false;
+    private listeners: ((payload: { message: string, type: string, data?: any }) => void)[] = [];
 
     constructor() { }
 
@@ -24,14 +25,23 @@ export class Renderer {
         this.isSilent = silent;
     }
 
+    public onOutput(callback: (payload: { message: string, type: string, data?: any }) => void): void {
+        this.listeners.push(callback);
+    }
+
+    private dispatch(message: string, type: string, data?: any): void {
+        const normalized = data?.skipNormalization ? message : PathNormalizer.normalizeString(message);
+        this.listeners.forEach(cb => cb({ message: normalized, type, data }));
+    }
+
     public showBanner(): void {
         console.log('\x1b[38;5;51m');
         console.log('  ██████╗  ██████╗  ██████╗     ██████╗ ██████╗ ██████╗ ███████╗██████╗ ');
-        console.log('  ██╔══██╗██╔═══██╗██╔════╝     ██╔════╝██╔═══██╗██╔══██╗██╔════╝██╔══██╗');
+        console.log('  ██╔══██╗██╔═══██╗██╔════╝     ██╔════╝██╔═██╗██╔══██╗██╔════╝██╔══██╗');
         console.log('  ██████╔╝██║   ██║██║  ███╗    ██║     ██║   ██║██║  ██║█████╗  ██████╔╝');
         console.log('  ██╔═══╝ ██║   ██║██║   ██║    ██║     ██║   ██║██║  ██║██╔══╝  ██╔══██╗');
         console.log('  ██║     ╚██████╔╝╚██████╔╝    ╚██████╗╚██████╔╝██████╔╝███████╗██║  ██║');
-        console.log('  ╚═╝      ╚═════╝  ╚═════╝      ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝');
+        console.log('  ╚═╝      ╚═════╝  ╚═════╝      ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚══╝  ╚═╝');
         console.log('\x1b[0m');
         console.log('        [ P O G 2 - S O V E R E I G N  E D I T I O N ]');
         console.log('               Your AI partner in creation.');
@@ -50,21 +60,25 @@ export class Renderer {
     public info(message: string, data?: any): void {
         const normalized = data?.skipNormalization ? message : PathNormalizer.normalizeString(message);
         console.log(`\x1b[38;5;39m(i)\x1b[0m ${normalized}`);
+        this.dispatch(message, 'info', data);
     }
 
     public success(message: string, data?: any): void {
         const normalized = data?.skipNormalization ? message : PathNormalizer.normalizeString(message);
         console.log(`\x1b[38;5;46m✔\x1b[0m ${normalized}`);
+        this.dispatch(message, 'success', data);
     }
 
     public warn(message: string, data?: any): void {
         const normalized = data?.skipNormalization ? message : PathNormalizer.normalizeString(message);
         console.log(`\x1b[38;5;220m!\x1b[0m ${normalized}`);
+        this.dispatch(message, 'warn', data);
     }
 
     public error(message: string, data?: any): void {
         const normalized = data?.skipNormalization ? message : PathNormalizer.normalizeString(message);
         console.log(`\x1b[38;5;196m✘\x1b[0m ${normalized}`);
+        this.dispatch(message, 'error', data);
     }
 
     public json(data: unknown): void {
@@ -151,14 +165,16 @@ export class Renderer {
     }
 
     public showYaoCard(state: YaoState): void {
-        const cards: Record<number, { symbol: string, label: string, color: string }> = {
-            [2]: { symbol: '⚊', label: 'Balanced Energy', color: '\x1b[38;5;46m' },
-            [0]: { symbol: '⚋', label: 'Receptive State', color: '\x1b[38;5;39m' },
-            [3]: { symbol: '◯', label: 'Active Change', color: '\x1b[38;5;196m' },
-            [1]: { symbol: '✕', label: 'Gentle Transition', color: '\x1b[38;5;208m' },
+        const cards: Record<YaoState, { symbol: string, label: string, color: string }> = {
+            [YaoState.YoungYang]: { symbol: '⚊', label: 'Balanced Energy', color: '\x1b[38;5;46m' },
+            [YaoState.YoungYin]: { symbol: '⚋', label: 'Receptive State', color: '\x1b[38;5;39m' },
+            [YaoState.OldYang]: { symbol: '◯', label: 'Active Change', color: '\x1b[38;5;196m' },
+            [YaoState.OldYin]: { symbol: '✕', label: 'Gentle Transition', color: '\x1b[38;5;208m' },
+            [YaoState.YoungMixed]: { symbol: '⚎', label: 'Emerging Potential', color: '\x1b[38;5;213m' },
+            [YaoState.OldMixed]: { symbol: '⚏', label: 'Chaotic Flux', color: '\x1b[38;5;141m' },
         };
 
-        const card = cards[state as number];
+        const card = cards[state];
         if (!card) return;
         console.log(`\n  ${card.color}┌────────────────────┐\x1b[0m`);
         console.log(`  ${card.color}│      [ ${card.symbol} ]       │\x1b[0m`);
@@ -169,19 +185,21 @@ export class Renderer {
     public showHexagram(manager: HexagramManager): void {
         const lines = manager.getLines();
         const interpretation = manager.getInterpretation();
-        const colors = {
-            [0]: '\x1b[38;5;196m',
-            [2]: '\x1b[38;5;46m',
-            [3]: '\x1b[38;5;208m',
-            [1]: '\x1b[38;5;39m',
+        const colors: Record<YaoState, string> = {
+            [YaoState.YoungYang]: '\x1b[38;5;46m',   // Stable
+            [YaoState.OldYang]: '\x1b[38;5;196m',     // Active
+            [YaoState.YoungYin]: '\x1b[38;5;39m',      // Receptive
+            [YaoState.OldYin]: '\x1b[38;5;208m',       // Changing
+            [YaoState.YoungMixed]: '\x1b[38;5;213m',
+            [YaoState.OldMixed]: '\x1b[38;5;141m'
         };
 
         console.log('\x1b[38;5;51m\n  ─── [ Current Strategic Archetype ] ───\x1b[0m');
         for (let i = 5; i >= 0; i--) {
             const line = lines[i]!;
-            const symbol = line.state === 2 || line.state === 3 ? '━━━━━━━' : '━━━   ━━━';
-            const mark = line.state === 3 ? '◯' : line.state === 1 ? '✕' : ' ';
-            console.log(`  L${i + 1}: ${colors[line.state as keyof typeof colors]}${symbol} ${mark} \x1b[0m`);
+            const symbol = line.state === YaoState.YoungYang || line.state === YaoState.OldYang ? '━━━━━━━' : '━━━   ━━━';
+            const mark = line.state === YaoState.OldYang ? '◯' : line.state === YaoState.OldYin ? '✕' : ' ';
+            console.log(`  L${i + 1}: ${colors[line.state as YaoState] ?? '\x1b[0m'}${symbol} ${mark} \x1b[0m`);
         }
         console.log(`  \x1b[38;5;51mArchetype: ${interpretation.name} \x1b[0m`);
         console.log(`  \x1b[38;5;250mPhilosophy: ${interpretation.description || ''} \x1b[0m`);

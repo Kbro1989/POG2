@@ -13,6 +13,7 @@ import type { SovereignKnock, ConcealmentState } from '../core/models.js';
 import type { ChromaLimb } from '../limbs/spatial/ChromaLimb.js';
 import type { BioIntelligenceLimb } from '../limbs/spatial/BioIntelligenceLimb.js';
 import type { MemoryConsolidationEngine } from '../engines/MemoryConsolidationEngine.js';
+import type { QuotaTracker, QuotaProvider } from '../utils/QuotaTracker.js';
 
 const execAsync = promisify(exec);
 const logger = pino({ name: 'TernaryRouter', base: { hostname: 'POG2' } });
@@ -61,6 +62,7 @@ export class TernaryRouter {
     private chromaLimb?: ChromaLimb;
     private bioIntelligence?: BioIntelligenceLimb;
     private memoryConsolidation?: MemoryConsolidationEngine;
+    private quotaTracker?: QuotaTracker;
     private readonly decisionHistory: DecisionAuditRecord[] = [];
     private readonly executionMetrics: { totalTokens: number; fastPaths: number; deepPaths: number } = { totalTokens: 0, fastPaths: 0, deepPaths: 0 };
 
@@ -105,6 +107,15 @@ export class TernaryRouter {
 
     setMemoryConsolidationEngine(engine: MemoryConsolidationEngine): void {
         this.memoryConsolidation = engine;
+    }
+
+    /** Inject QuotaTracker for free-tier FinOps gating */
+    setQuotaTracker(qt: QuotaTracker): void {
+        this.quotaTracker = qt;
+    }
+
+    getQuotaTracker(): QuotaTracker | undefined {
+        return this.quotaTracker;
     }
 
     /**
@@ -549,6 +560,14 @@ export class TernaryRouter {
     private findWorkingModel(preferred: string, fallbacks: string[]): string {
         const sorted = this.sortModelsBySovereignPriority([preferred, ...fallbacks, this.config.localFallbackModel]);
         for (const m of sorted) {
+            // Sovereign FinOps: Skip exhausted cloud providers
+            if (this.quotaTracker && this.isCloudModel(m)) {
+                const provider = this.detectProvider(m);
+                if (provider && this.quotaTracker.isProviderExhausted(provider)) {
+                    logger.debug({ model: m, provider }, 'Skipping model: provider quota exhausted');
+                    continue;
+                }
+            }
             if (this.isModelAvailableAndHealthy(m)) return m;
             // Cloud models are assumed available unless explicitly marked failing
             if (this.isCloudModel(m) && !this.isModelFailing(m)) return m;
@@ -576,6 +595,16 @@ export class TernaryRouter {
 
     private isModelFailing(model: string): boolean {
         return (this.modelFailures.get(model) ?? 0) >= this.MAX_FAILURES;
+    }
+
+    /** Detect provider from model string for quota lookups */
+    private detectProvider(model: string): QuotaProvider | null {
+        if (model.startsWith('gemini:')) return 'gemini';
+        if (model.startsWith('huggingface:')) return 'huggingface';
+        if (model.startsWith('fireworks:')) return 'fireworks';
+        if (model.startsWith('openrouter:')) return 'openrouter';
+        if (model.startsWith('@cf/') || model.includes('cloudflare')) return 'cloudflare';
+        return null; // local/ollama — no quota
     }
 
     private async syncLocalModels(): Promise<void> {

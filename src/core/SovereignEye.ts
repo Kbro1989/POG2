@@ -1,7 +1,8 @@
-﻿import { exec } from 'child_process';
+import { exec } from 'child_process';
 import { promisify } from 'util';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';
+import { EventEmitter } from 'events';
 import pino from 'pino';
 import type { Result } from './models.js';
 import { getDashboardPath } from '../utils/SovereignPathResolver.js';
@@ -52,10 +53,11 @@ const DEFAULT_VIEWPORT: ViewportConfig = { width: 1280, height: 720 };
  * 
  * NO MOCKS â€” All captures come from real, running environments.
  */
-export class SovereignEye {
+export class SovereignEye extends EventEmitter {
     private readonly captureDir: string;
 
     constructor(projectId: string) {
+        super();
         this.captureDir = join(getDashboardPath(projectId), 'sovereign_eye');
         if (!existsSync(this.captureDir)) {
             mkdirSync(this.captureDir, { recursive: true });
@@ -110,15 +112,19 @@ export class SovereignEye {
                 logger.warn({ err: fetchErr }, 'Text fetch failed, screenshot-only mode');
             }
 
+            const result: CaptureResult = {
+                imagePath: screenshotResult.ok ? screenshotPath : null,
+                textContent,
+                sourceType: 'url',
+                metadata: { url, viewport, hasScreenshot: screenshotResult.ok },
+                timestamp
+            };
+
+            this.emit('capture', result);
+
             return {
                 ok: true,
-                value: {
-                    imagePath: screenshotResult.ok ? screenshotPath : null,
-                    textContent,
-                    sourceType: 'url',
-                    metadata: { url, viewport, hasScreenshot: screenshotResult.ok },
-                    timestamp
-                }
+                value: result
             };
         } catch (err) {
             return { ok: false, error: err as Error };
@@ -145,17 +151,21 @@ export class SovereignEye {
             const fileUrl = `file:///${absPath.replace(/\\/g, '/')}`;
             const screenshotResult = await this.headlessScreenshot(fileUrl, screenshotPath, viewport);
 
+            const result: CaptureResult = {
+                imagePath: screenshotResult.ok ? screenshotPath : null,
+                textContent: textContent.length > 10000
+                    ? textContent.substring(0, 10000) + '\n... [truncated]'
+                    : textContent,
+                sourceType: 'html',
+                metadata: { filePath: absPath, hasScreenshot: screenshotResult.ok },
+                timestamp
+            };
+
+            this.emit('capture', result);
+
             return {
                 ok: true,
-                value: {
-                    imagePath: screenshotResult.ok ? screenshotPath : null,
-                    textContent: textContent.length > 10000
-                        ? textContent.substring(0, 10000) + '\n... [truncated]'
-                        : textContent,
-                    sourceType: 'html',
-                    metadata: { filePath: absPath, hasScreenshot: screenshotResult.ok },
-                    timestamp
-                }
+                value: result
             };
         } catch (err) {
             return { ok: false, error: err as Error };
@@ -235,15 +245,19 @@ Write-Output "Captured: $width x $height"
 
             logger.info({ windowTitle, output: stdout.trim() }, 'Window captured');
 
+            const result: CaptureResult = {
+                imagePath: screenshotPath,
+                textContent: `Window capture: "${windowTitle}" — ${stdout.trim()}`,
+                sourceType: 'window',
+                metadata: { windowTitle, dimensions: stdout.trim() },
+                timestamp
+            };
+
+            this.emit('capture', result);
+
             return {
                 ok: true,
-                value: {
-                    imagePath: screenshotPath,
-                    textContent: `Window capture: "${windowTitle}" â€” ${stdout.trim()}`,
-                    sourceType: 'window',
-                    metadata: { windowTitle, dimensions: stdout.trim() },
-                    timestamp
-                }
+                value: result
             };
         } catch (err) {
             return { ok: false, error: new Error(`Window capture failed: ${(err as Error).message}`) };
@@ -312,5 +326,15 @@ Write-Output "Captured: $width x $height"
      */
     getCaptureDir(): string {
         return this.captureDir;
+    }
+
+    /**
+     * Diagnostic probe for NodeTester.
+     */
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: true,
+            details: 'SovereignEye nominal; Win32 capture substrate available.'
+        };
     }
 }

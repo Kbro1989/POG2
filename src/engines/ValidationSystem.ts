@@ -1,4 +1,4 @@
-﻿import type { ValidationResult, Validator } from '../core/models.js';
+import type { ValidationResult, Validator } from '../core/models.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import pino from 'pino';
@@ -43,5 +43,9 @@ export class ValidationSystem {
                 }
             };
         }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: `ValidationSystem active with ${this.validators.length} validators.` };
     }
 }

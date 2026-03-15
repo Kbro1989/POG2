@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import type { Result, EngineOutput, SovereignRecord } from '../core/models.js';
@@ -261,5 +261,12 @@ export class MultiModelExecutor {
         } catch (err) {
             return { ok: false, error: err as Error };
         }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { 
+            online: true, 
+            details: 'MultiModelExecutor parallel muscle fibers active.' 
+        };
     }
 }

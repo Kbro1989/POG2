@@ -17,7 +17,7 @@ export class DBMaintenance {
     private readonly dbPath: string;
 
     constructor() {
-        this.dbPath = 'D:\\sovereign\\learning\\learning.db';
+        this.dbPath = getLearningDbPath();
     }
 
     /**

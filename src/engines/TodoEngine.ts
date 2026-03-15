@@ -1,20 +1,8 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { Renderer } from '../ui/Renderer.js';
-import type { Result } from '../core/models.js';
+import { type Todo, type TodoStatus, ok } from '../core/models.js';
 import { SovereignProprioception } from '../utils/SovereignProprioception.js';
 import { join } from 'path';
-import { homedir } from 'os';
-
-const logger = pino({ name: 'TodoEngine', base: { hostname: 'POG2' } });
-
-export type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
-
-export interface Todo {
-    id: string;
-    task: string;
-    status: TodoStatus;
-    rollback?: string;
-}
 
 /**
  * TodoEngine â€” Real task management and checklisting substrate.
@@ -61,5 +49,12 @@ export class TodoEngine {
             case 'cancelled': return '\x1b[31m[x]\x1b[0m';
             default: return '[ ]';
         }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: true,
+            details: `TodoEngine substrate active: ${this.todos.length} items in metabolic checklist.`
+        };
     }
 }

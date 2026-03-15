@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { type Result, ok } from '../core/models.js';
 import { readFile, readdir, stat } from 'fs/promises';
 import { join, extname } from 'path';
@@ -149,5 +149,12 @@ export class ClinicalAuditTool {
         }
 
         return lines.join('\n');
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { 
+            online: true, 
+            details: 'ClinicalAuditTool substrate active; Sovereign Law enforced.' 
+        };
     }
 }

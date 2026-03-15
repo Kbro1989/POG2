@@ -10,8 +10,8 @@
  * force a specific tier via environment variables.
  */
 
-import { existsSync, mkdirSync, statSync } from 'fs';
-import { join } from 'path';
+import { existsSync, mkdirSync, statSync, writeFileSync, readFileSync } from 'fs';
+import { join, dirname } from 'path';
 import { homedir } from 'os';
 
 // Ternary Path Tiers
@@ -21,14 +21,33 @@ export const enum PathTier {
     ProjectLocal = -1 // .pog in project root (most portable)
 }
 
-// Core Sovereign Locations
 // Core Sovereign Locations (ROOT ANCHORED per user setup)
-const SOVEREIGN_D_LAIR = 'D:\\sovereign';
-const SOVEREIGN_D_ROOT = SOVEREIGN_D_LAIR; // Aligned with user feedback: D:\sovereign is the root
 const SOVEREIGN_HOME_ROOT = join(homedir(), '.pog2-sovereign');
 
+/**
+ * Returns the effective Sovereign root directory.
+ * Priority: 1. Environment Variable POG_SOVEREIGN_ROOT
+ *           2. Existing D:\sovereign (Backward compatibility)
+ *           3. OS-aware default (Home directory)
+ */
+function getEffectiveSovereignLair(): string {
+    const envRoot = process.env['POG_SOVEREIGN_ROOT'];
+    if (envRoot) return envRoot;
+
+    // Backward compatibility for existing Windows setup
+    if (process.platform === 'win32' && existsSync('D:\\sovereign')) {
+        return 'D:\\sovereign';
+    }
+
+    return SOVEREIGN_HOME_ROOT;
+}
+
+const SOVEREIGN_D_LAIR = getEffectiveSovereignLair();
+const SOVEREIGN_D_ROOT = SOVEREIGN_D_LAIR;
+
 // Model Storage (separate from config for size reasons)
-const OLLAMA_D_PATH = 'D:\\ollama-models';
+// DERIVED from SOVEREIGN_D_LAIR to ensure portability
+const OLLAMA_D_PATH = join(dirname(SOVEREIGN_D_LAIR), 'ollama-models');
 const GUTENBERG_D_PATH = join(SOVEREIGN_D_LAIR, 'pog-gutenberg');
 const OLLAMA_LAIR_PATH = join(SOVEREIGN_D_LAIR, 'ollama-models');
 const GENERATIONS_D_PATH = join(SOVEREIGN_D_LAIR, 'generations');
@@ -46,16 +65,25 @@ export function setProjectRoot(root: string): void {
 }
 
 /**
- * Detects if D:\ drive is available and writable
+ * Detects if a high-performance substrate drive is available.
+ * Renamed from hasSovereignDrive for universal compatibility.
  */
-export function hasSovereignDrive(): boolean {
+export function hasHighPerformanceSubstrate(): boolean {
     try {
-        if (!existsSync('D:\\')) return false;
-        const stat = statSync('D:\\');
+        const root = getEffectiveSovereignLair();
+        if (!existsSync(root)) return false;
+        const stat = statSync(root);
         return stat.isDirectory();
     } catch {
         return false;
     }
+}
+
+/**
+ * Legacy alias for hasHighPerformanceSubstrate
+ */
+export function hasSovereignDrive(): boolean {
+    return hasHighPerformanceSubstrate();
 }
 
 /**
@@ -70,13 +98,13 @@ export function detectPathTier(): PathTier {
     if (forcedTier === '-1' || forcedTier === 'local') return PathTier.ProjectLocal;
 
     // Auto-detect: try highest tier first
-    if (hasSovereignDrive()) return PathTier.Sovereign;
+    if (hasHighPerformanceSubstrate()) return PathTier.Sovereign;
 
     // Check if project-local is explicitly requested
     const useLocal = process.env['POG_USE_LOCAL'] === 'true';
     if (useLocal && _projectRoot) return PathTier.ProjectLocal;
 
-    // Default to Home tier (balanced) if D:\ is missing
+    // Default to Home tier (balanced) 
     return PathTier.Home;
 }
 
@@ -92,26 +120,26 @@ function ensureHomeRoot(): string {
 
 /**
  * Returns the root directory for the given (or detected) tier
- * True ternary: +1 -> D:\, 0 -> Home, -1 -> Project-local
+ * True ternary: +1 -> Sovereign Root, 0 -> Home, -1 -> Project-local
  */
 export function getSovereignRoot(tier?: PathTier): string {
     const resolvedTier = tier ?? detectPathTier();
 
-    // Tier +1: Sovereign D:\ Drive
-    if (resolvedTier === PathTier.Sovereign && existsSync('D:\\')) {
+    // Tier +1: Sovereign Root (Flexible based on getEffectiveSovereignLair)
+    if (resolvedTier === PathTier.Sovereign) {
+        const lair = getEffectiveSovereignLair();
+        
         // Create Lair folder if missing
-        if (!existsSync(SOVEREIGN_D_LAIR)) {
-            mkdirSync(SOVEREIGN_D_LAIR, { recursive: true });
+        if (!existsSync(lair)) {
+            mkdirSync(lair, { recursive: true });
         }
 
-        if (!existsSync(SOVEREIGN_D_ROOT)) {
-            mkdirSync(SOVEREIGN_D_ROOT, { recursive: true });
+        // Ensure Gutenberg path is also initialized
+        const gutenberg = join(lair, 'pog-gutenberg');
+        if (!existsSync(gutenberg)) {
+            mkdirSync(gutenberg, { recursive: true });
         }
-        // Ensure Gutenberg path is also initialized if it doesn't exist
-        if (!existsSync(GUTENBERG_D_PATH)) {
-            mkdirSync(GUTENBERG_D_PATH, { recursive: true });
-        }
-        return SOVEREIGN_D_ROOT;
+        return lair;
     }
 
     // Tier -1: Project Local (with fallback to Home if no project root)
@@ -138,7 +166,7 @@ export function resolveSovereignPath(subpath: string, tier?: PathTier): string {
     const resolved = join(root, subpath);
 
     // Ensure parent directory exists
-    const parentDir = join(resolved, '..');
+    const parentDir = dirname(resolved);
     if (!existsSync(parentDir)) {
         mkdirSync(parentDir, { recursive: true });
     }
@@ -155,26 +183,31 @@ export function getGodHeadRoot(): string | null {
 }
 
 /**
- * Gets the Ollama models path (D:\ollama-models or environment override)
+ * Gets the Ollama models path (Environment override or derived from root)
  */
 export function getOllamaModelsPath(): string {
     const envPath = process.env['OLLAMA_MODELS_PATH'] || process.env['POG_ERROR_TRACKER_PATH'];
     if (envPath && existsSync(envPath)) return envPath;
 
-    if (hasSovereignDrive()) {
-        // Check for models in D:\ollama-models OR D:\sovereign\ollama-models
-        const pathsToTry = [OLLAMA_D_PATH, OLLAMA_LAIR_PATH];
+    if (hasHighPerformanceSubstrate()) {
+        const root = getEffectiveSovereignLair();
+        // Check for models in ROOT/../ollama-models OR ROOT/ollama-models
+        const pathsToTry = [
+            join(dirname(root), 'ollama-models'),
+            join(root, 'ollama-models')
+        ];
+        
         for (const p of pathsToTry) {
             if (existsSync(p)) return p;
         }
 
-        // Default creation point: nested in LAIR for better hygiene
-        if (!existsSync(OLLAMA_LAIR_PATH)) {
+        const lairPath = join(root, 'ollama-models');
+        if (!existsSync(lairPath)) {
             try {
-                mkdirSync(OLLAMA_LAIR_PATH, { recursive: true });
+                mkdirSync(lairPath, { recursive: true });
             } catch { /* Fallback */ }
         }
-        return OLLAMA_LAIR_PATH;
+        return lairPath;
     }
 
     // Default to whatever Ollama uses internally
@@ -182,18 +215,19 @@ export function getOllamaModelsPath(): string {
 }
 
 /**
- * Gets the Gutenberg library path (D:\pog-gutenberg or environment override)
+ * Gets the Gutenberg library path (Environment override or derived from root)
  */
 export function getGutenbergPath(): string {
     const envPath = process.env['POG_GUTENBERG_PATH'];
     if (envPath && existsSync(envPath)) return envPath;
 
-    // Phase 37 Fix: Priority 1 must be the Sovereign Drive (+1 Tier)
-    if (hasSovereignDrive()) {
-        if (!existsSync(GUTENBERG_D_PATH)) {
-            mkdirSync(GUTENBERG_D_PATH, { recursive: true });
+    if (hasHighPerformanceSubstrate()) {
+        const root = getEffectiveSovereignLair();
+        const gutenberg = join(root, 'pog-gutenberg');
+        if (!existsSync(gutenberg)) {
+            mkdirSync(gutenberg, { recursive: true });
         }
-        return GUTENBERG_D_PATH;
+        return gutenberg;
     }
 
     // Priority 2: Project-local library if it exists
@@ -215,15 +249,42 @@ export function getSystemRoot(tier?: PathTier): string {
 
 
 /**
- * Gets the root path for production pipelines (D:\sovereign\pipelines)
+ * Gets the root path for production pipelines
  */
 export function getPipelineRootPath(): string {
-    if (hasSovereignDrive()) {
-        const p = 'D:\\sovereign\\pipelines';
+    if (hasHighPerformanceSubstrate()) {
+        const root = getSovereignRoot();
+        const p = join(root, 'pipelines');
         if (!existsSync(p)) mkdirSync(p, { recursive: true });
         return p;
     }
     return resolveSovereignPath('pipelines');
+}
+
+/**
+ * Gets path for generations of media
+ */
+export function getGenerationsPath(): string {
+    if (hasHighPerformanceSubstrate()) {
+        const root = getSovereignRoot();
+        const p = join(root, 'generations');
+        if (!existsSync(p)) mkdirSync(p, { recursive: true });
+        return p;
+    }
+    return resolveSovereignPath('generations');
+}
+
+/**
+ * Gets path for vector/learning database
+ */
+export function getVectorDbPath(): string {
+    if (hasHighPerformanceSubstrate()) {
+        const root = getSovereignRoot();
+        const p = join(root, 'learning');
+        if (!existsSync(p)) mkdirSync(p, { recursive: true });
+        return join(p, 'sovereign-learning.db');
+    }
+    return resolveSovereignPath('sovereign-learning.db');
 }
 
 /**
@@ -249,30 +310,18 @@ export function getTrainingErrorFixesPath(): string { return resolveSovereignPat
 export function getTrainingConsequencesPath(): string { return resolveSovereignPath('training/consequences'); }
 
 /**
- * Gets the RSC data path for archaeology (D:\sovereign\rsc-data)
+ * Gets the RSC data path for archaeology
  */
 export function getRscDataPath(): string {
-    if (hasSovereignDrive()) {
-        const rscPath = join(SOVEREIGN_D_LAIR, 'rsc-data');
+    if (hasHighPerformanceSubstrate()) {
+        const root = getSovereignRoot();
+        const rscPath = join(root, 'rsc-data');
         if (!existsSync(rscPath)) {
             mkdirSync(rscPath, { recursive: true });
         }
         return rscPath;
     }
     return resolveSovereignPath('rsc-data');
-}
-
-/**
- * Gets the generations path for forged media (D:\sovereign\generations)
- */
-export function getGenerationsPath(): string {
-    if (hasSovereignDrive()) {
-        if (!existsSync(GENERATIONS_D_PATH)) {
-            mkdirSync(GENERATIONS_D_PATH, { recursive: true });
-        }
-        return GENERATIONS_D_PATH;
-    }
-    return resolveSovereignPath('generations');
 }
 
 /**
@@ -290,27 +339,14 @@ export function getLearningDbPath(): string {
 }
 
 /**
- * Gets path for learning database (Anchor: Memory)
- */
-export function getVectorDbPath(): string {
-    if (hasSovereignDrive()) {
-        if (!existsSync(LEARNING_D_PATH)) {
-            mkdirSync(LEARNING_D_PATH, { recursive: true });
-        }
-        return join(LEARNING_D_PATH, 'sovereign-learning.db');
-    }
-    return resolveSovereignPath('sovereign-learning.db');
-}
-
-/**
  * Gets path for performance history
  */
 export function getPerformanceDbPath(): string {
-    if (hasSovereignDrive()) {
-        if (!existsSync(MEMORY_D_PATH)) {
-            mkdirSync(MEMORY_D_PATH, { recursive: true });
-        }
-        return join(MEMORY_D_PATH, 'sovereign-performance.json');
+    if (hasHighPerformanceSubstrate()) {
+        const root = getSovereignRoot();
+        const p = join(root, 'memory');
+        if (!existsSync(p)) mkdirSync(p, { recursive: true });
+        return join(p, 'sovereign-performance.json');
     }
     return resolveSovereignPath('sovereign-performance.json');
 }
@@ -332,14 +368,15 @@ export function getSnapshotPath(snapshotId?: string): string {
     return resolveSovereignPath('snapshots');
 }
 
-// Export constants for external use
+// Export constants for external use (LEGACY - use resolver functions instead)
+/** @deprecated use resolver functions */
 export const SovereignPaths = {
-    D_ROOT: SOVEREIGN_D_ROOT,
+    get D_ROOT() { return getSovereignRoot(); },
     HOME_ROOT: SOVEREIGN_HOME_ROOT,
-    OLLAMA: OLLAMA_D_PATH,
-    GUTENBERG: GUTENBERG_D_PATH,
-    RSC_DATA: join(SOVEREIGN_D_LAIR, 'rsc-data'),
-    GENERATIONS: GENERATIONS_D_PATH,
-    MEMORY: MEMORY_D_PATH,
-    LEARNING: LEARNING_D_PATH
+    get OLLAMA() { return getOllamaModelsPath(); },
+    get GUTENBERG() { return getGutenbergPath(); },
+    get RSC_DATA() { return getRscDataPath(); },
+    get GENERATIONS() { return getGenerationsPath(); },
+    get MEMORY() { return resolveSovereignPath('memory'); },
+    get LEARNING() { return getVectorDbPath(); }
 } as const;

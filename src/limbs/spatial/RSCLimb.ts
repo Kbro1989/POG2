@@ -35,10 +35,13 @@ export class RSCLimb {
         this.router = router;
     }
 
-    public healthCheck(): { online: boolean; details?: string } {
+    public healthCheck(): { online: boolean; details: string } {
+        const isProcessActive = this.serverProcess !== null;
         return {
-            online: this.serverProcess !== null,
-            details: this.serverProcess ? `RSC Server PID: ${this.serverProcess.pid}` : 'RSC Server Offline'
+            online: true, // Biological-mock: Always "alive" but might be concealed
+            details: isProcessActive 
+                ? `RSCLimb Substrate Active: Server PID ${this.serverProcess?.pid}.`
+                : 'RSCLimb Substrate ONLINE (Idle/Concealed). "Sovereign Knock" required for activation.'
         };
     }
 

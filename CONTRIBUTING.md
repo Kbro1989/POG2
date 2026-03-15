@@ -12,7 +12,7 @@ Before writing code, identify where the new component fits in the `NeurologicalM
 - **MEMORY**: Key-value stores, vector databases, context management.
 - **SENSORY**: External probes, monitoring, vision, and shell interaction.
 - **MOTOR**: Generative output, code application, and renderer operations.
-- **REGISTRY**: All new limbs/engines must be registered in [NeurologicalMap.ts](file:///C:/Users/Destiny/Desktop/pog-vibe-interactive/files/src/state/NeurologicalMap.ts) AND added to the [CODEBASE_MAP.md](file:///C:/Users/Destiny/Desktop/pog-vibe-interactive/files/CODEBASE_MAP.md).
+- **REGISTRY**: All new limbs/engines must be registered in [NeurologicalMap.ts](src/state/NeurologicalMap.ts) AND added to the [CODEBASE_MAP.md](CODEBASE_MAP.md).
 
 ### 2. Clinical Planning 📝
 Use the Kimi orchestrator to design the implementation.
@@ -25,7 +25,7 @@ Implement the logic against real substrates.
 - No stubbed APIs.
 - Mandatory `Result<T>` pattern for all fallible calls.
 - Strict type safety (Zero TSC errors).
-- **Trauma-Informed Logic**: Follow safety rules (Circuit Breaker, Reasoning Traces) in [ARCHITECTURE.md](file:///C:/Users/Destiny/Desktop/pog-vibe-interactive/files/ARCHITECTURE.md#%F0%9F%9B%A1%EF%B8%8F-trauma-informed-development-rules).
+- **Trauma-Informed Logic**: Follow safety rules (Circuit Breaker, Reasoning Traces) in [ARCHITECTURE.md](ARCHITECTURE.md#%F0%9F%9B%A1%EF%B8%8F-trauma-informed-development-rules).
 
 ### 4. Neurological Auditing 🔬
 Every new node MUST be auditable.

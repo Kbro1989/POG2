@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { appendFile } from 'fs/promises';
 import { existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
@@ -12,7 +12,7 @@ import {
     getTrainingErrorFixesPath,
     getTrainingConsequencesPath
 } from './SovereignPathResolver.js';
-import { type ThinkingNexus, type DecisionAuditRecord } from '../core/models.js';
+import { type ThinkingNexus, type DecisionAuditRecord, YaoState } from '../core/models.js';
 
 const logger = pino({ name: 'TrainingCollector', base: { hostname: 'POG2' } });
 
@@ -98,6 +98,8 @@ export class TrainingCollector {
     private readonly sessionId: string;
     private interactionCount = 0;
     private errorCount = 0;
+    private globeStateLimb?: any; // Avoid circular deep import, functionally typed
+    private hexagramManager?: any;
 
     private static instance: TrainingCollector;
 
@@ -126,6 +128,33 @@ export class TrainingCollector {
 
     getStats(): { interactions: number; errors: number } {
         return { interactions: this.interactionCount, errors: this.errorCount };
+    }
+
+    /**
+     * Sovereign FinOps / Hive Mind: Attach the durable GlobeStateLimb for broadcasting training events.
+     */
+    public setGlobeStateLimb(limb: any): void {
+        this.globeStateLimb = limb;
+    }
+
+    /**
+     * Sovereign FinOps / Hive Mind: Attach HexagramManager to filter outbound events.
+     */
+    public setHexagramManager(hex: any): void {
+        this.hexagramManager = hex;
+    }
+
+    private shouldBroadcast(eventType: string): boolean {
+        if (!this.hexagramManager) return true; // Default to allow if immune system offline
+        
+        const yao = this.hexagramManager.getYaoState?.();
+        // If the node is in complete chaos (OldMixed), do not broadcast panic to the Swarm,
+        // EXCEPT for error fixes which might be a desperate survival mechanism.
+        if (yao === YaoState.OldMixed && eventType !== 'error_fix_event') {
+             logger.warn({ eventType }, 'Cognitive Immunology: Blocked outbound broadcast due to local OldMixed chaotic state.');
+             return false;
+        }
+        return true;
     }
 
     // â•â•â• Interaction Recording â•â•â•
@@ -157,6 +186,13 @@ export class TrainingCollector {
         const dir = getTrainingDecisionsPath();
         const fileName = `${this.getDatePrefix()}.jsonl`;
         await this.appendJsonl(join(dir, fileName), full);
+        
+        // Broadcast high-level routing evolution to the swarm
+        if (this.globeStateLimb && this.shouldBroadcast('routing_event')) {
+            this.globeStateLimb.pushNodeState('routing_event', full).catch((err: any) => {
+                logger.debug({ err: err.message }, 'Globe broadcast failed for routing_event');
+            });
+        }
     }
 
     // â•â•â• Session History Recording â•â•â•
@@ -201,6 +237,13 @@ export class TrainingCollector {
         const dir = getTrainingThinkingPath();
         const fileName = `${this.getDatePrefix()}.jsonl`;
         await this.appendJsonl(join(dir, fileName), full);
+
+        // Broadcast deep thinking chains to the swarm
+        if (this.globeStateLimb && this.shouldBroadcast('thinking_event')) {
+            this.globeStateLimb.pushNodeState('thinking_event', full).catch((err: any) => {
+                logger.debug({ err: err.message }, 'Globe broadcast failed for thinking_event');
+            });
+        }
     }
 
     // â•â•â• FPRAG Decision Recording â•â•â•
@@ -215,6 +258,13 @@ export class TrainingCollector {
         const fileName = `${this.getDatePrefix()}.jsonl`;
         await this.appendJsonl(join(dir, fileName), full);
         logger.debug({ model: audit.selectedModel, directive: audit.directive }, 'FPRAG decision recorded to training substrate');
+
+        // Broadcast ethical/directive validations to the swarm
+        if (this.globeStateLimb && this.shouldBroadcast('fprag_event')) {
+            this.globeStateLimb.pushNodeState('fprag_event', full).catch((err: any) => {
+                logger.debug({ err: err.message }, 'Globe broadcast failed for fprag_event');
+            });
+        }
     }
 
     // â•â•â• Error-Fix Pair Recording â•â•â•
@@ -229,6 +279,13 @@ export class TrainingCollector {
         const dir = getTrainingErrorFixesPath();
         const fileName = `${this.getDatePrefix()}.jsonl`;
         await this.appendJsonl(join(dir, fileName), full);
+
+        // Broadcast self-healing methodologies to the swarm
+        if (this.globeStateLimb && this.shouldBroadcast('error_fix_event')) {
+            this.globeStateLimb.pushNodeState('error_fix_event', full).catch((err: any) => {
+                logger.debug({ err: err.message }, 'Globe broadcast failed for error_fix_event');
+            });
+        }
     }
 
     // â•â•â• Consequence/Outcome Recording â•â•â•

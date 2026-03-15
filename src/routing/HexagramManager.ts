@@ -1,7 +1,6 @@
 import { EventEmitter } from 'events';
-import { Result, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, YaoState, Lesson, ContextCard, GenerativeAesthetics, ok } from '../core/models.js';
+import { Result, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, YaoState, Lesson, ContextCard, GenerativeAesthetics, ok, EmotionalState } from '../core/models.js';
 import { HEXAGRAM_REGISTRY, DEFAULT_HEXAGRAM, HexagramDefinition } from '../core/HexagramDefinitions.js';
-import { EmotionalState, SovereignTaxonomy } from '../core/models.js';
 import { ModelClient } from '../clients/ModelClient.js';
 
 interface HexagramRow {
@@ -11,8 +10,6 @@ interface HexagramRow {
     importance: number;
     state: number;
 }
-
-
 
 export interface SystemState {
     buildPass: BuildStatus;
@@ -247,17 +244,11 @@ Respond in JSON ONLY:
         return interpretation.emotion || EmotionalState.Zen;
     }
 
-    /**
-     * getGenerativeAesthetics - Returns the aesthetic vector for the current state.
-     */
     public getGenerativeAesthetics(): GenerativeAesthetics {
         const interpretation = this.getInterpretation();
         const yao = this.getYaoState();
-
-        // Deep Synthesis: Merge Hexagram DNA with current Yao kinetic energy
         const aesthetics = { ...interpretation.aesthetics };
 
-        // Bias thermal variance based on Yao state (Old states are more chaotic)
         if (yao === YaoState.OldYang || yao === YaoState.OldYin || yao === YaoState.OldMixed) {
             (aesthetics as any).thermalVariance = Math.min(1.0, aesthetics.thermalVariance + 0.2);
             (aesthetics as any).prosody = {
@@ -265,7 +256,6 @@ Respond in JSON ONLY:
                 chaos: Math.min(1.0, aesthetics.prosody.chaos + 0.3)
             };
         }
-
         return aesthetics;
     }
 
@@ -281,43 +271,38 @@ Respond in JSON ONLY:
         return [...this.lines];
     }
 
-    /**
-     * getYaoState - Returns the dominant YaoState of the current organism.
-     * Calculated by the average/mode of the 6 lines.
-     */
     public getYaoState(): YaoState {
         if (this.lines.length === 0) return YaoState.YoungYang;
-        const counts: Record<number, number> = {};
+        const counts: Record<number, number> = {
+            [YaoState.YoungYang]: 0,
+            [YaoState.YoungYin]: 0,
+            [YaoState.YoungMixed]: 0
+        };
         this.lines.forEach(l => {
-            counts[l.state] = (counts[l.state] || 0) + 1;
+            if (l.state === YaoState.YoungYang || l.state === YaoState.OldYang) {
+                counts[YaoState.YoungYang]++;
+            } else if (l.state === YaoState.YoungYin || l.state === YaoState.OldYin) {
+                counts[YaoState.YoungYin]++;
+            } else {
+                counts[YaoState.YoungMixed]++;
+            }
         });
-        const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
-        return parseInt(dominant, 10) as YaoState;
+        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        return parseInt(sorted[0][0], 10) as YaoState;
     }
 
-    /**
-     * isYin - Returns true if the current hexagram is predominantly Yin.
-     */
     public isYin(): boolean {
         const interpretation = this.getInterpretation();
         const yinCount = (interpretation.binary.match(/0/g) || []).length;
         return yinCount >= 3;
     }
 
-    /**
-     * getEmotionalPool - Returns the density of current active emotions.
-     */
     public getEmotionalPool(): Record<string, number> {
         const interpretation = this.getInterpretation();
-        const pool: Record<string, number> = {
+        return {
             [interpretation.emotion]: 1.0,
             [EmotionalState.Zen]: 0.5
         };
-        // Aggregate from lines
-        this.lines.forEach(line => {
-            // Future: Map line states to emerging emotions
-        });
-        return pool;
     }
 
     private calculateHexagramId(cards: ContextCard[], future: boolean): string {
@@ -325,13 +310,23 @@ Respond in JSON ONLY:
         for (let i = 1; i <= 6; i++) {
             const card = (cards || []).find(c => c && c.lineIndex === i);
             const state = card ? (card.state ?? YaoState.YoungYang) : YaoState.YoungYang;
-            let isYang = (state === YaoState.OldYang || state === YaoState.YoungYang);
+            let isYang: boolean;
+
             if (future) {
                 if (state === YaoState.OldYang) isYang = false;
-                if (state === YaoState.OldYin) isYang = true;
+                else if (state === YaoState.OldYin) isYang = true;
+                else isYang = (state === YaoState.YoungYang || state === YaoState.YoungMixed);
+            } else {
+                isYang = (state === YaoState.YoungYang || state === YaoState.OldYang || state === YaoState.YoungMixed || state === YaoState.OldMixed);
             }
             binary = (isYang ? '1' : '0') + binary;
         }
         return binary;
+    }
+
+    private getYaoSymbol(state: YaoState): string {
+        if (state === YaoState.OldYang || state === YaoState.YoungYang) return '⚊';
+        if (state === YaoState.OldYin || state === YaoState.YoungYin) return '⚋';
+        return 'Balanced';
     }
 }

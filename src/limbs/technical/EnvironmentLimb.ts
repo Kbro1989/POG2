@@ -18,7 +18,7 @@ export class EnvironmentLimb {
         return ok(process.env[key]);
     }
 
-    public healthCheck(): { online: boolean } {
-        return { online: true };
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: 'Environment context bridge active.' };
     }
 }

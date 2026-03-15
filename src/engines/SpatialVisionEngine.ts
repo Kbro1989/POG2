@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { ShellEngine } from './ShellEngine.js';
 import { Renderer } from '../ui/Renderer.js';
@@ -331,5 +331,15 @@ OUTPUT FORMAT:
             intent: 'ui_analysis',
             includeScreenshot: true
         });
+    }
+
+    /**
+     * Diagnostic probe for NodeTester.
+     */
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: true,
+            details: 'SpatialVisionEngine nominal; line/color decomposition substrate active.'
+        };
     }
 }

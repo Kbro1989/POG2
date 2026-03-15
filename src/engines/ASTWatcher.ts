@@ -1,4 +1,4 @@
-﻿import { EventEmitter } from 'events';
+import { EventEmitter } from 'events';
 import * as chokidar from 'chokidar';
 import { readFileSync, existsSync } from 'fs';
 import { createHash } from 'crypto';
@@ -72,5 +72,12 @@ export class ASTWatcher extends EventEmitter {
     async stop(): Promise<void> {
         if (this.watcher) await this.watcher.close();
         this.removeAllListeners();
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: !!this.watcher,
+            details: this.watcher ? `ASTWatcher active; monitoring ${this.fileHashes.size} files.` : 'ASTWatcher inactive.'
+        };
     }
 }

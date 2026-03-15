@@ -1,10 +1,13 @@
-﻿import { spawn, exec } from 'child_process';
+import { spawn, exec } from 'child_process';
 import { promisify } from 'util';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
-import type { Result, EngineOutput } from '../core/models.js';
+import pino from 'pino';
+import { TernaryRouter } from '../routing/TernaryRouter.js';
+import { type Result, type EngineOutput, YaoState } from '../core/models.js';
 import type { Renderer } from '../ui/Renderer.js';
 
 const execAsync = promisify(exec);
+const logger = pino({ name: 'VSCodeEngine', base: { hostname: 'POG2' } });
 
 export interface VSCodeParams {
     action: 'open' | 'edit' | 'read' | 'write' | 'command' | 'getWorkspace' | 'setPosition';
@@ -31,11 +34,15 @@ export interface WorkspaceState {
 }
 
 /**
- * VSCodeEngine â€” Sovereign integration with VS Code editor
+ * VSCodeEngine — Sovereign integration with VS Code editor
  * Provides Kimi with direct access to edit, read, and navigate code
+ * Integrated with TernaryRouter for metabolic context in the IDE.
  */
 export class VSCodeEngine {
-    constructor(private readonly renderer: Renderer) { }
+    constructor(
+        private readonly renderer: Renderer,
+        private readonly router?: TernaryRouter
+    ) { }
 
     async execute(params: VSCodeParams): Promise<Result<EngineOutput>> {
         switch (params.action) {
@@ -54,7 +61,8 @@ export class VSCodeEngine {
             case 'setPosition':
                 return this.setCursorPosition(params.filePath!, params.line!, params.column!);
             default:
-                return { ok: false, error: new Error(`Unknown VS Code action: ${params.action}`) };
+                const action: string = params.action;
+                return { ok: false, error: new Error(`Unknown VS Code action: ${action}`) };
         }
     }
 
@@ -248,5 +256,12 @@ export class VSCodeEngine {
         } catch {
             return [];
         }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: true,
+            details: 'VSCodeEngine active; ready for coordinated workspace operations.'
+        };
     }
 }

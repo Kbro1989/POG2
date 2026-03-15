@@ -1,4 +1,4 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { Agent } from 'undici';
@@ -18,6 +18,7 @@ import type { TernaryRouter } from '../routing/TernaryRouter.js';
 import { TrainingCollector, type ErrorFixRecord } from '../utils/TrainingCollector.js';
 import { EndpointHealer } from '../utils/EndpointHealer.js';
 import { ModelRolodex } from '../api/ai/ModelRolodex.js';
+import type { QuotaTracker, QuotaProvider } from '../utils/QuotaTracker.js';
 
 import { ArchitectureDigest } from '../core/ArchitectureDigest.js';
 
@@ -34,6 +35,7 @@ export class ModelClient implements ModelExecutor {
     private readonly digest: ArchitectureDigest;
     private readonly customAgent: Agent;
     private rolodex?: ModelRolodex;
+    private quotaTracker?: QuotaTracker;
 
     public async execute(params: ModelCallParams): Promise<Result<string>> {
         const result = await this.call(params);
@@ -78,6 +80,10 @@ export class ModelClient implements ModelExecutor {
     /** Inject or retrieve the ModelRolodex for dynamic model discovery */
     public setRolodex(rolodex: ModelRolodex): void { this.rolodex = rolodex; }
     public getRolodex(): ModelRolodex | undefined { return this.rolodex; }
+
+    /** Inject QuotaTracker for free-tier FinOps tracking */
+    public setQuotaTracker(qt: QuotaTracker): void { this.quotaTracker = qt; }
+    public getQuotaTracker(): QuotaTracker | undefined { return this.quotaTracker; }
 
     /**
      * Implements ModelExecutor.callModel
@@ -153,6 +159,13 @@ export class ModelClient implements ModelExecutor {
                 latency,
                 result.ok ? result.value.tokensUsed : undefined
             );
+        }
+
+        // Sovereign FinOps: Record quota usage
+        if (this.quotaTracker) {
+            const quotaProvider = provider as QuotaProvider;
+            const tokensUsed = result.ok ? (result.value.tokensUsed ?? 0) : 0;
+            this.quotaTracker.recordUsage(quotaProvider, tokensUsed, 1);
         }
 
         return result;
@@ -1025,7 +1038,7 @@ export class ModelClient implements ModelExecutor {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ model, prompt: text }),
-                signal: AbortSignal.timeout(30_000)
+                signal: AbortSignal.timeout(120_000)
             });
 
             if (!response.ok) {

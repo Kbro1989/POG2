@@ -26,7 +26,10 @@ export class ChromaLimb {
         return `CHROMA-${sequence.join('')}`;
     }
 
-    public healthCheck(): { online: boolean; resonance: number } {
-        return { online: true, resonance: 1.0 };
+    public healthCheck(): { online: boolean; details: string } {
+        return { 
+            online: true, 
+            details: 'ChromaLimb active: Resonance calibrated at 1.0.' 
+        };
     }
 }

@@ -1,4 +1,4 @@
-﻿import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -112,6 +112,12 @@ export class MCPEngine {
                 logger.error({ server: name, error: (e as Error).message }, 'Failed to close MCP link');
             }
         }
-        this.clients.clear();
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { 
+            online: this.clients.size > 0 || existsSync(join(process.cwd(), 'POG2-mcp.json')),
+            details: `MCP Substrate: ${this.clients.size} active neural links.` 
+        };
     }
 }

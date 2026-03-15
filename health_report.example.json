@@ -1,0 +1,54 @@
+{
+  "skipNormalization": true,
+  "skipReflection": true,
+  "healthResults": [
+    {
+      "path": "src/routing/HexagramManager.ts",
+      "role": "Brainstem Life Support",
+      "category": "CNS (Central Nervous System)",
+      "docDomain": "META",
+      "metabolicBaseCost": 5,
+      "biologicalRole": {
+        "organ": "Brainstem",
+        "input": "SystemSensors",
+        "output": "YaoState[6]",
+        "constraints": "Always running; crash = death"
+      },
+      "status": "ONLINE",
+      "yaoState": 2,
+      "details": "I Ching Router Online"
+    },
+    {
+      "path": "src/engines/OrchestrateEngine.ts",
+      "role": "Prefrontal Cortex (Control)",
+      "category": "CNS (Central Nervous System)",
+      "docDomain": "SYSTEM",
+      "metabolicBaseCost": 20,
+      "biologicalRole": {
+        "organ": "Prefrontal Cortex",
+        "input": "Task string",
+        "output": "EngineOutput",
+        "constraints": "Must await plan approval; rollback on failure"
+      },
+      "status": "ONLINE",
+      "yaoState": 2,
+      "details": "Substrate verified on disk"
+    },
+    {
+      "path": "src/monitor/NodeTester.ts",
+      "role": "Nerve Conduction Test",
+      "category": "Sensory (Perception)",
+      "docDomain": "SYSTEM",
+      "metabolicBaseCost": 10,
+      "biologicalRole": {
+        "organ": "Diagnostic Sensor",
+        "input": "System State",
+        "output": "Health Summary",
+        "constraints": "Clinical audit enforcement"
+      },
+      "status": "ONLINE",
+      "yaoState": 2,
+      "details": "Diagnostic sensors nominal."
+    }
+  ]
+}

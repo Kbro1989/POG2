@@ -56,7 +56,7 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
     },
     {
         path: 'src/clients/ModelClient.ts', role: 'Neural Axon (API Layer)', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 10,
-        biologicalRole: { organ: 'Axon', input: 'ModelCallParams', output: 'ModelResponse', constraints: 'Records to D:\\ training; invokes EndpointHealer on failure' }
+        biologicalRole: { organ: 'Axon', input: 'ModelCallParams', output: 'ModelResponse', constraints: 'Records to training substrate; invokes EndpointHealer on failure' }
     },
     {
         path: 'src/ToolRegistry.ts', role: 'Motor Cortex Registry', category: NeuralCategory.CNS, docDomain: 'CODE', metabolicBaseCost: 5,
@@ -210,6 +210,10 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Ancient Memory', input: 'Legacy query', output: 'Historical context', constraints: 'Read-only archival' }
     },
     {
+        path: 'src/limbs/spatial/GlobeStateLimb.ts', role: 'Durable State Hub', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Hippocampal Link', input: 'Neurological state data', output: 'Global durable persistence', constraints: 'Partyserver-backed' }
+    },
+    {
         path: 'src/engines/VSCodeEngine.ts', role: 'IDE Nerve Bridge', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 10,
         biologicalRole: { organ: 'Finger', input: 'VSCode commands', output: 'Editor state changes', constraints: 'VSCode API dependent' }
     },
@@ -255,11 +259,15 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
     },
     {
         path: 'src/utils/TrainingCollector.ts', role: 'Training Corpus', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 5,
-        biologicalRole: { organ: 'Long-term Memory', input: 'Interactions + decisions + YaoState + metrics', output: 'JSONL training files', constraints: 'D:\\ sovereign; never in project folder' }
+        biologicalRole: { organ: 'Long-term Memory', input: 'Interactions + decisions + YaoState + metrics', output: 'JSONL training files', constraints: 'Sovereign root; never in project folder' }
     },
     {
         path: 'src/engines/EmbedEngine.ts', role: 'Embedding Generator', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 15,
         biologicalRole: { organ: 'Memory Encoder', input: 'Text', output: 'Float32Array embeddings', constraints: 'Model-dependent; local or cloud' }
+    },
+    {
+        path: 'src/utils/QuotaTracker.ts', role: 'Metabolic Budget (FinOps)', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'Adrenal Gland', input: 'Provider usage metrics', output: 'Quota health + routing gates', constraints: 'Free-tier ceilings; daily UTC reset' }
     },
     {
         path: 'src/engines/MemoryConsolidationEngine.ts', role: 'Semantic Weaver', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 20,
@@ -311,7 +319,7 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Synapse', input: 'Natural language', output: 'Structured intent', constraints: 'Translation layer' }
     },
     {
-        path: 'src/types/core.ts', role: 'DNA Substrate', category: NeuralCategory.METABOLIC, docDomain: 'META', metabolicBaseCost: 1,
+        path: 'src/core/models.ts', role: 'DNA Substrate', category: NeuralCategory.METABOLIC, docDomain: 'META', metabolicBaseCost: 1,
         biologicalRole: { organ: 'DNA', input: 'Type definitions', output: 'Shared interfaces', constraints: 'Immutable base types' }
     },
     {
@@ -324,7 +332,7 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
     },
     {
         path: 'src/utils/SovereignPathResolver.ts', role: 'Vascular System', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 5,
-        biologicalRole: { organ: 'Arteries', input: 'Path tier + subpath', output: 'Resolved D:\\ / home / project path', constraints: 'D:\\ sovereign preferred; auto-creates dirs' }
+        biologicalRole: { organ: 'Arteries', input: 'Path tier + subpath', output: 'Resolved sovereign root / home / project path', constraints: 'Sovereign root preferred; auto-creates dirs' }
     },
     {
         path: 'src/utils/CodeExtractor.ts', role: 'Enzyme', category: NeuralCategory.METABOLIC, docDomain: 'CODE', metabolicBaseCost: 5,

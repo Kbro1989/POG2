@@ -1,4 +1,4 @@
-﻿import type { Result, EngineOutput } from '../core/models.js';
+import type { Result, EngineOutput } from '../core/models.js';
 import { Renderer } from '../ui/Renderer.js';
 
 export interface WebSearchParams {
@@ -249,5 +249,12 @@ export class WebSearchEngine {
         return this.cleanHtml(text)
             .replace(/\s+/g, ' ')
             .trim();
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { 
+            online: true, 
+            details: 'WebSearchEngine free-tier substrate active.' 
+        };
     }
 }

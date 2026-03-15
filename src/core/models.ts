@@ -12,6 +12,8 @@ export { RoutingDecision, RoutingContext, SovereignDomain };
 
 export type ServiceHealthState = 'READY' | 'DEGRADED' | 'CRITICAL_FAILURE' | 'OFFLINE';
 
+export type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+
 export interface HealthReport {
     state: ServiceHealthState | 'RATE_LIMITED';
     cooldownSeconds?: number;
@@ -260,9 +262,15 @@ export interface ArchitectureManifest {
     readonly primaryGoal: string;
 }
 
+export interface Todo {
+    id: string;
+    task: string;
+    status: TodoStatus;
+    rollback?: string;
+}
 export interface Plan {
-    readonly goal?: string;
-    readonly steps?: string[];
+    readonly goal: string;
+    readonly steps: string[];
     readonly tool?: string;
     readonly model?: string;
     readonly severity: number;
@@ -273,7 +281,7 @@ export interface Plan {
     readonly output?: string;
     readonly response?: string;
     readonly interaction: 'text' | 'voice' | 'vision' | 'silent';
-    readonly todos?: string[];
+    readonly todos: Todo[];
     readonly rollback?: string;
     readonly timestamp?: number;
     readonly dialectics?: {
@@ -398,7 +406,8 @@ export type RoutingComplexity = 'low' | 'medium' | 'high' | 'extreme' | 'Vision'
 export enum CognitiveChoice {
     SIMPLE = 'simple',
     COMPLEX = 'complex',
-    META = 'meta'
+    META = 'meta',
+    EXTERNAL = 'external'
 }
 
 export interface TernaryDecision {
@@ -431,6 +440,63 @@ export interface Validator {
 }
 
 export type ConcealmentState = 'is' | 'isif' | 'isnot';
+
+export interface ProductionPrerequisites {
+    mandateAdversarialAudit: boolean;
+    mandateBuildVerification: boolean;
+    mandateHealthAudit: boolean;
+    mandateMemoryConsolidation: boolean;
+    severityThreshold: number;
+}
+
+/**
+ * PRODUCTION PREREQUISITES MAP
+ * Maps YaoState to strict enforcement rules for the AI Hive Mind.
+ */
+export const YAO_PRODUCTION_PREREQUISITES: Record<YaoState, ProductionPrerequisites> = {
+    [YaoState.OldYang]: {
+        mandateAdversarialAudit: true,
+        mandateBuildVerification: true,
+        mandateHealthAudit: false,
+        mandateMemoryConsolidation: false,
+        severityThreshold: 70
+    },
+    [YaoState.YoungYang]: {
+        mandateAdversarialAudit: false,
+        mandateBuildVerification: true,
+        mandateHealthAudit: false,
+        mandateMemoryConsolidation: false,
+        severityThreshold: 30
+    },
+    [YaoState.OldYin]: {
+        mandateAdversarialAudit: false,
+        mandateBuildVerification: false,
+        mandateHealthAudit: true,
+        mandateMemoryConsolidation: true,
+        severityThreshold: 50
+    },
+    [YaoState.YoungYin]: {
+        mandateAdversarialAudit: false,
+        mandateBuildVerification: false,
+        mandateHealthAudit: true,
+        mandateMemoryConsolidation: false,
+        severityThreshold: 20
+    },
+    [YaoState.OldMixed]: {
+        mandateAdversarialAudit: true,
+        mandateBuildVerification: true,
+        mandateHealthAudit: true,
+        mandateMemoryConsolidation: true,
+        severityThreshold: 90
+    },
+    [YaoState.YoungMixed]: {
+        mandateAdversarialAudit: false,
+        mandateBuildVerification: true,
+        mandateHealthAudit: true,
+        mandateMemoryConsolidation: false,
+        severityThreshold: 10
+    }
+};
 
 export interface SovereignKnock {
     iChingSequence: string[];

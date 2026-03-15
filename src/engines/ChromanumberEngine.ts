@@ -3,7 +3,7 @@ import { ModelClient } from '../clients/ModelClient.js';
 import { SovereignEye, type CaptureSource } from '../utils/SovereignEye.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import type { Result, EngineOutput, SovereignRecord } from '../core/models.js';
-import { getGenerationsPath } from '../utils/SovereignPathResolver.js';
+import { getGenerationsPath, getSovereignRoot } from '../utils/SovereignPathResolver.js';
 import { join } from 'path';
 import { existsSync, readdirSync, mkdirSync, writeFileSync } from 'fs';
 
@@ -47,6 +47,10 @@ export class ChromanumberEngine {
         this.googleServices = new GoogleServices({
             apiKey: process.env['GOOGLE_API_KEY'] || ''
         });
+    }
+
+    public getEye(): SovereignEye {
+        return this.eye;
     }
 
     /**
@@ -314,11 +318,12 @@ Visual Code: `.trim();
         if (!result.ok) return { ok: false, error: result.error };
 
         const code = result.value.response.replace(/```html|```/g, '').trim();
-        const outputPath = join('D:\\sovereign\\memory\\captures', `gen_${Date.now()}.html`);
+        const capturesDir = join(getSovereignRoot(), 'memory', 'captures');
+        const outputPath = join(capturesDir, `gen_${Date.now()}.html`);
 
         try {
-            if (!existsSync('D:\\sovereign\\memory\\captures')) {
-                mkdirSync('D:\\sovereign\\memory\\captures', { recursive: true });
+            if (!existsSync(capturesDir)) {
+                mkdirSync(capturesDir, { recursive: true });
             }
             writeFileSync(outputPath, code);
             logger.info({ outputPath }, 'Generated HTML/SVG fallback substrate');
@@ -357,7 +362,7 @@ Visual Code: `.trim();
 </html>`;
 
         try {
-            const dir = join(process.cwd(), 'D:', 'sovereign', 'memory', 'captures');
+            const dir = join(getSovereignRoot(), 'memory', 'captures');
             if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 
             writeFileSync(outputPath, html);
@@ -365,5 +370,12 @@ Visual Code: `.trim();
         } catch (err) {
             return { ok: false, error: err as Error };
         }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { 
+            online: true, 
+            details: 'ChromanumberEngine sensory Eye substrate active.' 
+        };
     }
 }

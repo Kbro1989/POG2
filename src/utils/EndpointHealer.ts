@@ -1,10 +1,14 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import type { TrainingCollector } from './TrainingCollector.js';
 
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { YaoState } from '../core/models.js';
+
+// Biological Limbs for Somatic Recovery
+import type { CodeEngine } from '../engines/CodeEngine.js';
+import type { ShellEngine } from '../engines/ShellEngine.js';
 
 const execAsync = promisify(exec);
 const logger = pino({ name: 'EndpointHealer', base: { hostname: 'POG2' } });
@@ -32,11 +36,29 @@ interface DiagnosticCheck {
 export class EndpointHealer {
     constructor(
         private readonly hexagram: HexagramManager,
-        private readonly collector?: TrainingCollector
+        private readonly collector?: TrainingCollector,
+        // Optional Biological Limbs
+        private readonly codeEngine?: CodeEngine,
+        private readonly shellEngine?: ShellEngine
     ) { }
 
     async diagnoseAndHeal(provider: string, error: string, model?: string): Promise<HealerDiagnostic> {
         logger.info({ provider, error, model }, 'Endpoint healer activated');
+
+        const yao = this.hexagram.getYaoState?.() || YaoState.YoungYang;
+
+        // Cognitive Immunology Phase 1: Deep Dormancy & Chaos Restraints
+        if (yao === YaoState.OldYin || yao === YaoState.OldMixed) {
+            logger.warn({ provider, yao }, 'Immunology Restraint: Endpoint Healer refusing active shell recovery due to dormant/chaotic state.');
+            await this.hexagram.pushLine({
+                lineIndex: 0,
+                importance: 0.9,
+                title: 'Healer Suppressed',
+                content: `Refused aggressive restart of ${provider}. Operating in local/dormant state.`,
+                state: yao
+            });
+            return { provider, checks: [], resolved: false, resolution: `Suppressed recovery loop: Cognitive state is ${yao}.` };
+        }
 
         // Pin diagnostic start to Hexagram
         await this.hexagram.pushLine({

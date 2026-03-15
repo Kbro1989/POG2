@@ -38,7 +38,7 @@ const originalDescription = Command.prototype.description;
 
 import pino from 'pino';
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
-import { resolve, join, dirname } from 'path';
+import { resolve, join, dirname, sep } from 'path';
 import { homedir } from 'os';
 import * as readline from 'readline/promises';
 import { StateManager } from './state/StateManager.js';
@@ -58,7 +58,13 @@ import { PathNormalizer } from './utils/PathNormalizer.js';
 import { DBMaintenance } from './utils/DBMaintenance.js';
 import { type Result, YaoState } from './core/models.js';
 import { HexagramManager } from './routing/HexagramManager.js';
-import { setProjectRoot as setSovereignRoot } from './utils/SovereignPathResolver.js';
+import {
+    getGodHeadRoot,
+    getGutenbergPath,
+    getPipelineRootPath,
+    getSovereignRoot,
+    setProjectRoot as setSovereignRoot
+} from './utils/SovereignPathResolver.js';
 
 const POG_MD_TEMPLATE = `# ðŸ§¬ Sovereign Workspace: [Project Name]
 - Status: Initialized
@@ -202,10 +208,37 @@ export async function main(): Promise<void> {
 
     program
         .command('init')
-        .description('Initialize or repair Sovereign Context files in current directory')
-        .action(() => {
+        .description('Initialize or repair Sovereign Context files and environmental substrates')
+        .option('--force', 'Force re-initialization of core directories', false)
+        .action(async (opts) => {
             bootstrapWorkspace(renderer);
-            renderer.success('Sovereign Context synchronized.');
+            
+            const root = getSovereignRoot();
+            renderer.info(`Sovereign Root: ${root}`);
+            
+            const coreDirs = [
+                'memory',
+                'memory/vectors',
+                'memory/learning',
+                'memory/captures',
+                'pipelines',
+                'library',
+                'backups'
+            ];
+
+            let created = 0;
+            for (const dir of coreDirs) {
+                const target = join(root, dir);
+                if (!existsSync(target)) {
+                    mkdirSync(target, { recursive: true });
+                    created++;
+                }
+            }
+
+            if (created > 0) {
+                renderer.success(`Initialized ${created} substrate directories.`);
+            }
+            renderer.success('Sovereign Substrate synchronized.');
         });
 
     program
@@ -225,13 +258,16 @@ export async function main(): Promise<void> {
         .action(async (intent: string) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Execute metabolic reflection: ${intent}`,
+                steps: ["Identifying bottleneck paths"],
                 tool: 'think',
                 parameters: { intent },
                 reasoning: 'Manual metabolic reflection request.',
                 model: config.orchestratorModel,
                 severity: 5,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -243,13 +279,16 @@ export async function main(): Promise<void> {
         .action(async (capabilityId: string, payload: string, opts) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Invoke capability: ${capabilityId}`,
+                steps: ["Direct substrate dispatch"],
                 tool: 'dispatch',
                 parameters: { capabilityId, payload, modelOverride: opts.model },
                 reasoning: 'Manual direct capability dispatch.',
                 model: config.orchestratorModel,
                 severity: 30,
                 interaction: 'text',
-                yaoState: YaoState.YoungYang
+                yaoState: YaoState.YoungYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -260,13 +299,16 @@ export async function main(): Promise<void> {
         .action(async (projectId?: string) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Consult shadow maps: ${projectId || 'all'}`,
+                steps: ["Fetching external architectural data"],
                 tool: 'consult_shadow',
                 parameters: { projectId },
                 reasoning: 'Manual shadow consultation.',
                 model: config.orchestratorModel,
                 severity: 10,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -278,13 +320,16 @@ export async function main(): Promise<void> {
         .action(async (query: string | undefined, opts) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Consult memetic substrate: ${query || 'recent'}`,
+                steps: ["Researching browser kernels"],
                 tool: 'consult_memetics',
                 parameters: { query, limit: parseInt(opts.limit) },
                 reasoning: 'Manual memetic consultation.',
                 model: config.orchestratorModel,
                 severity: 10,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -296,13 +341,16 @@ export async function main(): Promise<void> {
         .action(async (opts) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Harmonize syntropy: ${opts.type}`,
+                steps: ["Aggregating external metadata"],
                 tool: 'consult_syntropy',
                 parameters: { type: opts.type },
                 reasoning: 'Manual syntropy consultation.',
                 model: config.orchestratorModel,
                 severity: 10,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -317,13 +365,16 @@ export async function main(): Promise<void> {
         .action(async (opts) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: 'Clinical health audit',
+                steps: ["Auditing neurological nodes"],
                 tool: 'check_node_health',
                 parameters: {},
                 reasoning: 'Top-level health alias.',
                 model: config.orchestratorModel,
                 severity: 5,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             if (opts.json && result.ok) {
                 renderer.json(result.value.data);
@@ -338,13 +389,16 @@ export async function main(): Promise<void> {
         .action(async () => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: 'Audit personality archetypes',
+                steps: ["Fetching cognitive influences"],
                 tool: 'personality',
                 parameters: {},
                 reasoning: 'Top-level personality alias.',
                 model: config.orchestratorModel,
                 severity: 10,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -399,13 +453,16 @@ export async function main(): Promise<void> {
             }
 
             const result = await engine.executePlan({
+                goal: 'Status check',
+                steps: ["Clinical neurological status"],
                 tool: 'check_node_health',
                 parameters: {},
                 reasoning: 'Manual status check.',
                 model: config.orchestratorModel,
                 severity: 5,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -417,13 +474,16 @@ export async function main(): Promise<void> {
         .action(async (opts) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: 'Detailed health audit',
+                steps: ["Exposing diagnostic details"],
                 tool: 'check_node_health',
                 parameters: {},
                 reasoning: 'Manual clinical neurological audit.',
                 model: config.orchestratorModel,
                 severity: 5,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             if (opts.json && result.ok) {
                 renderer.json(result.value.data);
@@ -438,13 +498,16 @@ export async function main(): Promise<void> {
         .action(async () => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: 'Nexus diagnostic report',
+                steps: ["Calculating efficiency metrics"],
                 tool: 'diagnostic_nexus',
                 parameters: {},
                 reasoning: 'Manual nexus diagnostic.',
                 model: config.orchestratorModel,
                 severity: 5,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -455,13 +518,16 @@ export async function main(): Promise<void> {
         .action(async (target: string) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Clinical audit of: ${target}`,
+                steps: ["Scanning for substrate violations"],
                 tool: 'clinical_audit',
                 parameters: { target },
                 reasoning: 'Manual clinical audit.',
                 model: config.orchestratorModel,
                 severity: 20,
                 interaction: 'text',
-                yaoState: YaoState.YoungYang
+                yaoState: YaoState.YoungYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -472,13 +538,16 @@ export async function main(): Promise<void> {
         .action(async () => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: 'Substrate tool registry audit',
+                steps: ["Enumerating registered clinical tools"],
                 tool: 'diagnostic_nexus', // Will include registry status
                 parameters: { registryOnly: true },
                 reasoning: 'Manual registry audit.',
                 model: config.orchestratorModel,
                 severity: 5,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -489,13 +558,16 @@ export async function main(): Promise<void> {
         .action(async () => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: 'Substrate capability discovery',
+                steps: ["Probing latent cognitive limbs"],
                 tool: 'discover_capabilities',
                 parameters: {},
                 reasoning: 'Manual substrate discovery.',
                 model: config.orchestratorModel,
                 severity: 10,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -508,13 +580,16 @@ export async function main(): Promise<void> {
         .action(async () => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: 'Personality archetype audit',
+                steps: ["Fetching active cognitive profiles"],
                 tool: 'personality',
                 parameters: {},
                 reasoning: 'Manual personality audit.',
                 model: config.orchestratorModel,
                 severity: 10,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -525,13 +600,16 @@ export async function main(): Promise<void> {
         .action(async (archetype: string) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Set personality archetype: ${archetype}`,
+                steps: ["Binding cognitive influence"],
                 tool: 'personality_set',
                 parameters: { archetype },
                 reasoning: 'Manual personality pining.',
                 model: config.orchestratorModel,
                 severity: 15,
                 interaction: 'text',
-                yaoState: YaoState.YoungYang
+                yaoState: YaoState.YoungYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -542,13 +620,16 @@ export async function main(): Promise<void> {
         .action(async (id: string) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Bind literary style: Book ${id}`,
+                steps: ["Analyzing Gutenberg style substrate"],
                 tool: 'personality_book',
                 parameters: { bookId: parseInt(id) },
                 reasoning: 'Manual Gutenberg literary personality binding.',
                 model: config.orchestratorModel,
                 severity: 20,
                 interaction: 'text',
-                yaoState: YaoState.OldYin
+                yaoState: YaoState.OldYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -559,13 +640,16 @@ export async function main(): Promise<void> {
         .action(async (bookId: string) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Absorb wisdom: Book ${bookId}`,
+                steps: ["Ingesting literary cognitive context"],
                 tool: 'absorb_wisdom',
                 parameters: { bookId: parseInt(bookId) },
                 reasoning: 'Manual wisdom absorption.',
                 model: config.orchestratorModel,
                 severity: 20,
                 interaction: 'text',
-                yaoState: YaoState.YoungYang
+                yaoState: YaoState.YoungYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -592,13 +676,16 @@ export async function main(): Promise<void> {
         .action(async () => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: 'Workspace status audit',
+                steps: ["Querying VS Code substrate for open files and folders"],
                 tool: 'vscode_status',
                 parameters: {},
                 reasoning: 'Manual workspace status check.',
                 model: config.orchestratorModel,
                 severity: 5,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -609,13 +696,16 @@ export async function main(): Promise<void> {
         .action(async (file: string) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Read file: ${file}`,
+                steps: ["Accessing VS Code file buffer"],
                 tool: 'vscode_read',
                 parameters: { filePath: resolve(file) },
                 reasoning: 'Manual file read via VS Code substrate.',
                 model: config.orchestratorModel,
                 severity: 5,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -628,6 +718,8 @@ export async function main(): Promise<void> {
         .action(async (file: string, text: string, opts) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Quick edit: ${file}`,
+                steps: ["Injecting content into active editor"],
                 tool: 'vscode_edit',
                 parameters: {
                     filePath: resolve(file),
@@ -639,7 +731,8 @@ export async function main(): Promise<void> {
                 model: config.orchestratorModel,
                 severity: 15,
                 interaction: 'text',
-                yaoState: YaoState.YoungYang
+                yaoState: YaoState.YoungYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -655,13 +748,16 @@ export async function main(): Promise<void> {
 
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Navigate to: ${target}`,
+                steps: ["Directing editor cursor to target substrate"],
                 tool: 'vscode_goto',
                 parameters: { filePath, line, column },
                 reasoning: 'Manual editor navigation.',
                 model: config.orchestratorModel,
                 severity: 5,
                 interaction: 'text',
-                yaoState: YaoState.YoungYang
+                yaoState: YaoState.YoungYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -677,13 +773,16 @@ export async function main(): Promise<void> {
         .action(async () => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: 'Library audit',
+                steps: ["Enumerating local Gutenberg substrate"],
                 tool: 'gutenberg_list',
                 parameters: {},
                 reasoning: 'Manual library audit.',
                 model: config.orchestratorModel,
                 severity: 5,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -694,13 +793,16 @@ export async function main(): Promise<void> {
         .action(async (query: string) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Library search: ${query}`,
+                steps: ["Querying global Gutenberg catalog"],
                 tool: 'gutenberg_search',
                 parameters: { query },
                 reasoning: 'Manual library search.',
                 model: config.orchestratorModel,
                 severity: 5,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -712,13 +814,16 @@ export async function main(): Promise<void> {
         .action(async (id: string, title: string, author: string, opts) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Ingest book: ${title}`,
+                steps: ["Downloading and storing intellectual substrate"],
                 tool: 'gutenberg_ingest',
                 parameters: { id: parseInt(id), title, author, domain: opts.domain },
                 reasoning: 'Manual library ingestion.',
                 model: config.orchestratorModel,
                 severity: 20,
                 interaction: 'text',
-                yaoState: YaoState.OldYang
+                yaoState: YaoState.OldYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -729,13 +834,16 @@ export async function main(): Promise<void> {
         .action(async (id: string) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Wisdom extraction: Book ${id}`,
+                steps: ["Analyzing literary style and extracting ontologies"],
                 tool: 'gutenberg_read',
                 parameters: { bookId: parseInt(id) },
                 reasoning: 'Manual wisdom extraction.',
                 model: config.orchestratorModel,
                 severity: 20,
                 interaction: 'text',
-                yaoState: YaoState.OldYang
+                yaoState: YaoState.OldYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -746,13 +854,16 @@ export async function main(): Promise<void> {
         .action(async () => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: 'Library substrate sync',
+                steps: ["Reconciling local metadata with physical files"],
                 tool: 'gutenberg_sync',
                 parameters: {},
                 reasoning: 'Manual library synchronization and self-healing.',
                 model: config.orchestratorModel,
                 severity: 5,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -763,13 +874,16 @@ export async function main(): Promise<void> {
         .action(async () => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: 'Library organization',
+                steps: ["Categorizing unorganized books into genre substrates"],
                 tool: 'gutenberg_organize',
                 parameters: {},
                 reasoning: 'Manual AI-driven library categorization.',
                 model: config.orchestratorModel,
                 severity: 25,
                 interaction: 'text',
-                yaoState: YaoState.OldYang
+                yaoState: YaoState.OldYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -781,13 +895,16 @@ export async function main(): Promise<void> {
         .action(async (id: string, opts) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Storyboard generation: Book ${id}`,
+                steps: ["Generating narrative scenes and visual prompts"],
                 tool: 'generate_storyboard',
                 parameters: { bookId: parseInt(id), sceneCount: parseInt(opts.scenes) },
                 reasoning: 'Gutenberg storyboard generation request.',
                 model: config.orchestratorModel,
                 severity: 30,
                 interaction: 'text',
-                yaoState: YaoState.OldYang
+                yaoState: YaoState.OldYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -808,6 +925,8 @@ export async function main(): Promise<void> {
             const sceneCount = options.scenes === 'all' ? -1 : parseInt(options.scenes);
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Run pipeline: Book ${bookId}`,
+                steps: ["Executing story-to-media autonomous pipeline"],
                 tool: 'run_pipeline',
                 parameters: {
                     bookId: parseInt(bookId),
@@ -821,7 +940,8 @@ export async function main(): Promise<void> {
                 model: config.orchestratorModel,
                 severity: 50,
                 interaction: 'text',
-                yaoState: YaoState.OldYang
+                yaoState: YaoState.OldYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -837,6 +957,8 @@ export async function main(): Promise<void> {
             const sceneCount = options.scenes === 'all' ? -1 : parseInt(options.scenes);
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: 'Run batch pipeline',
+                steps: ["Iterating global library for cinema generation"],
                 tool: 'run_batch_pipeline',
                 parameters: {
                     sceneCount,
@@ -848,7 +970,8 @@ export async function main(): Promise<void> {
                 model: config.orchestratorModel,
                 severity: 100,
                 interaction: 'text',
-                yaoState: YaoState.OldYang
+                yaoState: YaoState.OldYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -857,7 +980,7 @@ export async function main(): Promise<void> {
         .command('queue')
         .description('List active and completed pipelines in the sovereign substrate')
         .action(async () => {
-            const pipePath = 'D:\\sovereign\\pipelines';
+            const pipePath = join(getSovereignRoot(), 'pipelines');
             if (!existsSync(pipePath)) {
                 renderer.info('No pipeline substrate detected.');
                 return;
@@ -866,7 +989,7 @@ export async function main(): Promise<void> {
             const { readdirSync, statSync } = await import('fs');
             readdirSync(pipePath);
 
-            renderer.info(`â•â•â• SOVEREIGN PIPELINES (D:\\sovereign\\pipelines) â•â•â•`);
+            renderer.info(`â•â•â• SOVEREIGN PIPELINES (${pipePath}) â•â•â•`);
 
             const processedBooks = new Set<string>();
 
@@ -889,7 +1012,7 @@ export async function main(): Promise<void> {
                             try {
                                 const manifest = JSON.parse(readFileSync(mPath, 'utf-8'));
                                 const statusColor = manifest.status === 'complete' ? '\x1b[38;5;154m' : '\x1b[38;5;208m';
-                                const relativePath = fullPath.replace(pipePath + '\\', '');
+                                const relativePath = fullPath.replace(pipePath + sep, '');
                                 renderer.log(`${statusColor}[${manifest.status.toUpperCase()}]\x1b[0m ${relativePath} - Book ${manifest.bookId}: ${manifest.bookTitle} (${manifest.successfulImages}/${manifest.totalScenes} scenes)`);
                                 processedBooks.add(fullPath);
                                 manifestFound = true;
@@ -904,7 +1027,7 @@ export async function main(): Promise<void> {
                         // Recurse into categories
                         scanDir(fullPath, depth + 1);
                     } else if (!manifestFound && depth === 1 && !processedBooks.has(fullPath)) {
-                        renderer.log(`\x1b[38;5;244m[INCOMPLETE]\x1b[0m ${fullPath.replace(pipePath + '\\', '')}`);
+                        renderer.log(`\x1b[38;5;244m[INCOMPLETE]\x1b[0m ${fullPath.replace(pipePath + sep, '')}`);
                     }
                 }
             };
@@ -925,24 +1048,30 @@ export async function main(): Promise<void> {
 
             if (isId) {
                 const result = await engine.executePlan({
+                    goal: `Dispatched read: Gutenberg ID ${target}`,
+                    steps: ["Accessing Project Gutenberg substrate"],
                     tool: 'gutenberg_read',
                     parameters: { bookId: parseInt(target) },
                     reasoning: 'Dispatched read: Gutenberg ID detected.',
                     model: config.orchestratorModel,
                     severity: 20,
                     interaction: 'text',
-                    yaoState: YaoState.OldYang
+                    yaoState: YaoState.OldYang,
+                    todos: []
                 });
                 handleResult(result, renderer, state);
             } else {
                 const result = await engine.executePlan({
+                    goal: `Dispatched read: File ${target}`,
+                    steps: ["Accessing VS Code file buffer"],
                     tool: 'vscode_read',
                     parameters: { filePath: resolve(target) },
                     reasoning: 'Dispatched read: File path detected.',
                     model: config.orchestratorModel,
                     severity: 5,
                     interaction: 'text',
-                    yaoState: YaoState.YoungYin
+                    yaoState: YaoState.YoungYin,
+                    todos: []
                 });
                 handleResult(result, renderer, state);
             }
@@ -1281,7 +1410,7 @@ gen.command('jsdoc <file>')
                 return;
             }
 
-            const engine = new EmbedEngine(config, renderer);
+            const engine = new EmbedEngine(config, renderer, router);
             const result = await engine.index({
                 path: resolve(path),
                 projectId: opts.project || config.projectId,
@@ -1298,7 +1427,7 @@ gen.command('jsdoc <file>')
         .option('-t, --threshold <score>', 'Minimum similarity score (0.0-1.0)', '0.0')
         .option('--project <id>', 'Filter by project ID')
         .action(async (query: string, opts) => {
-            const engine = new EmbedEngine(config, renderer);
+            const engine = new EmbedEngine(config, renderer, router);
             const result = await engine.search({
                 query,
                 topK: parseInt(opts.limit),
@@ -1317,7 +1446,7 @@ gen.command('jsdoc <file>')
             if (!existsSync(fileA)) { renderer.error(`File not found: ${fileA}`); process.exit(1); }
             if (!existsSync(fileB)) { renderer.error(`File not found: ${fileB}`); process.exit(1); }
 
-            const engine = new EmbedEngine(config, renderer);
+            const engine = new EmbedEngine(config, renderer, router);
             const result = await engine.similarity({
                 fileA: resolve(fileA),
                 fileB: resolve(fileB),
@@ -1331,7 +1460,7 @@ gen.command('jsdoc <file>')
         .command('list')
         .description('List all indexed projects and file counts')
         .action(async () => {
-            const engine = new EmbedEngine(config, renderer);
+            const engine = new EmbedEngine(config, renderer, router);
             const result = await engine.listProjects();
             handleResult(result, renderer, state);
         });
@@ -1340,7 +1469,7 @@ gen.command('jsdoc <file>')
         .command('delete <project>')
         .description('Delete all embeddings for a specific project')
         .action(async (project: string) => {
-            const engine = new EmbedEngine(config, renderer);
+            const engine = new EmbedEngine(config, renderer, router);
             const result = await engine.deleteProject(project);
             handleResult(result, renderer, state);
         });
@@ -1475,6 +1604,8 @@ gen.command('jsdoc <file>')
         .action(async (prompt: string, opts) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Scaffold webapp: ${prompt}`,
+                steps: ["Planning application architecture", "Synthesizing patterns / Templates", "Generating cognitive assets"],
                 tool: 'scaffold_webapp',
                 parameters: {
                     prompt,
@@ -1486,7 +1617,8 @@ gen.command('jsdoc <file>')
                 model: config.orchestratorModel,
                 severity: 50,
                 interaction: 'silent',
-                yaoState: YaoState.YoungYang
+                yaoState: YaoState.YoungYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -1645,15 +1777,33 @@ gen.command('jsdoc <file>')
         .action(async (prompt: string, response: string, opts) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: `Absorb training interaction: ${opts.category}`,
+                steps: ["Injecting clinical samples into substrate"],
                 tool: 'model_train',
                 parameters: { prompt, response, category: opts.category },
                 reasoning: 'Manual training absorption.',
                 model: config.masterLocalModel,
                 severity: 10,
                 interaction: 'silent',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
+        });
+
+    program
+        .command('serve')
+        .description('Start the external Switchboard Bridge for remote orchestration and visual feedback')
+        .option('-p, --port <number>', 'Port to listen on', config.wsPort.toString())
+        .action(async (opts) => {
+            const port = parseInt(opts.port);
+            renderer.info(`⚡ Awakening the Sovereign Bridge on port ${port}...`);
+            const engine = new OrchestrateEngine(config, router, renderer);
+            await engine.getSwitchboard().startServer(port, engine);
+            renderer.success(`Bridge ONLINE. External CLI and Sovereign Eye mirror active.`);
+            
+            // Keep process alive
+            process.stdin.resume();
         });
 
     program
@@ -1670,13 +1820,16 @@ gen.command('jsdoc <file>')
             }
 
             const result = await engine.executePlan({
+                goal: `Manual tool execution: ${toolName}`,
+                steps: ["Direct substrate intervention"],
                 tool: toolName,
                 parameters: parsedParams,
                 reasoning: `Manual direct tool execution: ${toolName}`,
                 model: config.orchestratorModel,
                 severity: 15,
                 interaction: 'text',
-                yaoState: YaoState.YoungYang
+                yaoState: YaoState.YoungYang,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -1687,13 +1840,16 @@ gen.command('jsdoc <file>')
         .action(async () => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
+                goal: 'Substrate discovery',
+                steps: ["Enumerating latent capabilities"],
                 tool: 'discover_capabilities',
                 parameters: {},
                 reasoning: 'Manual substrate discovery (alias).',
                 model: config.orchestratorModel,
                 severity: 10,
                 interaction: 'text',
-                yaoState: YaoState.YoungYin
+                yaoState: YaoState.YoungYin,
+                todos: []
             });
             handleResult(result, renderer, state);
         });
@@ -1739,6 +1895,15 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
         } catch (err) {
             renderer.warn('Memory Consolidation hit a snag: ' + (err as Error).message);
         }
+
+        renderer.info('Compressing database substrate...');
+        try {
+            const maintenance = new DBMaintenance();
+            await maintenance.compress(); // Triggers DELETE old + VACUUM
+        } catch (err) {
+            renderer.warn('DB Maintenance failed: ' + (err as Error).message);
+        }
+
         renderer.info('Powering down now. I hope to see you again soon!');
         rl.close();
         process.exit(0);

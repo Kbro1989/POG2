@@ -1,4 +1,4 @@
-﻿import { type Result, YaoState } from '../../core/models.js';
+import { type Result, YaoState } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { VectorDB } from '../../utils/VectorDB.js';
 import { StyleAnalyzer, type StyleProfile } from '../../utils/StyleAnalyzer.js';
@@ -260,12 +260,12 @@ export class GutenbergLimb {
 
     public syncLibrary(): Result<string> {
         try {
-            logger.info('Initiating library synchronization with D:\\ substrate alignment...');
+            logger.info('Initiating library synchronization with substrate alignment...');
             const domainsPath = join(this.cachePath, 'domains');
-            const sovereignPath = 'D:\\sovereign\\pog-gutenberg\\domains'; // User's high-performance substrate
+            const sovereignPath = join(getGutenbergPath(), 'domains'); 
 
             const searchPaths = [domainsPath];
-            if (existsSync(sovereignPath)) searchPaths.push(sovereignPath);
+            if (existsSync(sovereignPath) && sovereignPath !== domainsPath) searchPaths.push(sovereignPath);
 
             const activeFiles: string[] = [];
             for (const root of searchPaths) {
@@ -296,19 +296,20 @@ export class GutenbergLimb {
                     continue;
                 }
 
-                // Align path if it shifted between C: and D:
+                // Align path if it shifted between substrates
                 if (!existsSync(book.path)) {
-                    // Phase 107.5: Align using generic relative fragments
-                    const altPath = book.path.includes('sovereign')
-                        ? book.path.replace('D:\\sovereign\\pog-gutenberg\\', 'gutenberg\\')
-                        : book.path.replace('gutenberg\\', 'D:\\sovereign\\pog-gutenberg\\');
-
-                    if (existsSync(altPath)) {
-                        book.path = altPath;
-                        updatedCount++;
-                    } else {
-                        removedCount++;
-                        continue;
+                    // Try to align using the current active gutenberg path
+                    const currentGutenberg = getGutenbergPath();
+                    const fileName = book.path.split(/[\\/]/).pop();
+                    if (fileName) {
+                        const potentialPath = join(currentGutenberg, 'domains', book.domain, fileName);
+                        if (existsSync(potentialPath)) {
+                            book.path = potentialPath;
+                            updatedCount++;
+                        } else {
+                            removedCount++;
+                            continue;
+                        }
                     }
                 }
 

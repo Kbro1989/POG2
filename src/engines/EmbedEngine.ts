@@ -1,4 +1,4 @@
-﻿import { readFileSync, readdirSync, statSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, readdirSync, statSync, existsSync, mkdirSync } from 'fs';
 import { join, relative, extname } from 'path';
 import { createHash } from 'crypto';
 import Database from 'better-sqlite3';
@@ -6,13 +6,14 @@ import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { Renderer } from '../ui/Renderer.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
-import { type Result, type EngineOutput } from '../core/models.js';
+import { TernaryRouter } from '../routing/TernaryRouter.js';
+import { type Result, type EngineOutput, YaoState } from '../core/models.js';
 import { SovereignIgnoreManager } from '../utils/SovereignIgnoreManager.js';
 import { getSystemRoot } from '../utils/SovereignPathResolver.js';
 
 const logger = pino({ name: 'EmbedEngine', base: { hostname: 'POG2' } });
 
-const DB_DIR = 'D:\\sovereign\\learning';
+const DB_DIR = join(getSystemRoot(), 'learning');
 const DB_PATH = join(DB_DIR, 'embeddings.db');
 // Maximum file size to read (200KB) - checked before reading
 const MAX_FILE_SIZE = 200_000;
@@ -55,8 +56,9 @@ interface EmbeddingRow {
 }
 
 /**
- * EmbedEngine â€” Real local VectorDB operations using SQLite + cosine similarity.
+ * EmbedEngine — Real local VectorDB operations using SQLite + cosine similarity.
  * NO MOCKS. All embeddings computed via real Ollama/Gemini APIs.
+ * Integrated with TernaryRouter for metabolic scaling.
  */
 export class EmbedEngine {
     private readonly client: ModelClient;
@@ -65,9 +67,10 @@ export class EmbedEngine {
 
     constructor(
         private readonly config: SovereignConfig,
-        private readonly renderer: Renderer
+        private readonly renderer: Renderer,
+        private readonly router: TernaryRouter
     ) {
-        this.client = new ModelClient(config);
+        this.client = new ModelClient(config, router);
         this.initDb();
     }
 
@@ -201,11 +204,29 @@ export class EmbedEngine {
     async search(params: SearchParams): Promise<Result<EngineOutput>> {
         if (!this.db) return { ok: false, error: new Error('DB not initialized') };
 
+        const hex = this.router.getHexagram();
+        const yao = hex.getYaoState();
+        const directive = this.router.getHexagram().getInterpretation().strategy;
+
+        // Metabolic Scaling of Search Parameters
+        let topK = params.topK;
+        let threshold = params.threshold ?? 0.0;
+
+        if (yao === YaoState.OldYang) {
+            topK += 2; // Expansive discovery in high-metabolism states
+            threshold = Math.max(0, threshold - 0.05);
+            logger.info({ yao, directive }, 'Metabolic Scaling: Increasing search breadth (+2 topK, -0.05 threshold)');
+        } else if (yao === YaoState.OldYin) {
+            threshold = Math.min(1.0, threshold + 0.1); // Precision pruning in decay states
+            logger.info({ yao, directive }, 'Metabolic Scaling: Increasing search precision (+0.1 threshold)');
+        } else if (yao === YaoState.OldMixed) {
+            logger.warn({ yao, directive }, 'Semantic Density Warning: Unstable substrate detected. Results may be incoherent.');
+        }
+
         const embedResult = await this.client.embed(params.query);
         if (!embedResult.ok) return embedResult as any;
 
         const queryVec = embedResult.value;
-        const threshold = params.threshold ?? 0.0;
 
         const rows = this.db.prepare(
             'SELECT * FROM embeddings WHERE project_id = ? ORDER BY indexed_at DESC LIMIT 1000'
@@ -234,7 +255,7 @@ export class EmbedEngine {
         }).filter((r): r is { path: string; score: number; snippet: string; metadata: any } => r !== null && r.score >= threshold);
 
         scored.sort((a, b) => b.score - a.score);
-        const top = scored.slice(0, params.topK);
+        const top = scored.slice(0, topK);
 
         const output = top.length > 0
             ? top.map((r, i) => `[${i + 1}] ${r.path} (score: ${r.score.toFixed(3)})\n    ${r.snippet}`).join('\n\n')
@@ -244,7 +265,7 @@ export class EmbedEngine {
             ok: true,
             value: {
                 output,
-                data: { results: top }
+                data: { results: top, yaoState: yao, directive }
             }
         };
     }

@@ -5,7 +5,7 @@ import { join } from 'path';
 import { existsSync, statSync } from 'fs';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { NEUROLOGICAL_MAP } from '../state/NeurologicalMap.js';
-import { type SystemSensors } from '../core/models.js';
+import { type SystemSensors, YaoState } from '../core/models.js';
 import { hasSovereignDrive, getSovereignRoot } from '../utils/SovereignPathResolver.js';
 import { ClinicalLogger } from './ClinicalLogger.js';
 import type { DiskSubstrate, NeuralNode, DiagnosticResult } from '../types/diagnostic.js';
@@ -61,6 +61,14 @@ export class PulseMonitor extends EventEmitter {
     }
 
     private async pulse(): Promise<void> {
+        const yao = this.hexagramManager.getYaoState?.();
+        
+        // Cognitive Immunology Restraint: Suspend heartbeat/telemetry during chaotic shifts or deep dormancy
+        if (yao === YaoState.OldYin || yao === YaoState.OldMixed) {
+             logger.debug({ yao }, 'Immunology Restraint: Suspending heavy Win32 background telemetry pulse due to dormant/chaotic state.');
+             return;
+        }
+
         const sensors = await this.sense();
         this.hexagramManager.updateState(sensors);
     }

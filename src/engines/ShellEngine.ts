@@ -1,9 +1,10 @@
-﻿import { exec } from 'child_process';
+import { exec } from 'child_process';
 import { promisify } from 'util';
 import { loadavg, totalmem, freemem } from 'os';
 import pino from 'pino';
 import { Renderer } from '../ui/Renderer.js';
-import type { Result, EngineOutput } from '../core/models.js';
+import { TernaryRouter } from '../routing/TernaryRouter.js';
+import { type Result, type EngineOutput, YaoState } from '../core/models.js';
 
 const execAsync = promisify(exec);
 const logger = pino({ name: 'ShellEngine', base: { hostname: 'POG2' } });
@@ -16,17 +17,43 @@ export interface ShellParams {
 }
 
 /**
- * ShellEngine â€” Real command execution substrate.
+ * ShellEngine — Real command execution substrate.
  * Binary absolute: command succeeds or returns a detailed error.
- * Integrates with conversational approval via Renderer.
+ * Integrated with TernaryRouter for metabolic safety gating.
  */
 export class ShellEngine {
-    constructor(private readonly renderer: Renderer) { }
+    constructor(
+        private readonly renderer: Renderer,
+        private readonly router?: TernaryRouter
+    ) { }
 
     async execute(params: ShellParams): Promise<Result<EngineOutput>> {
         const cwd = params.cwd ?? process.cwd();
         const startMem = freemem();
         const startTime = performance.now();
+
+        // Ternary Safety Gating
+        if (this.router) {
+            const hex = this.router.getHexagram();
+            const yao = hex.getYaoState();
+            const directive = hex.getInterpretation().strategy;
+
+            const destructivePatterns = /\b(rm\s+-[rf]|git\s+push\s+-f|del\s+\/q|rd\s+\/s|format\b|shred\b)/i;
+            if (destructivePatterns.test(params.command)) {
+                // YaoState genre check: YoungYin (0) covers both YoungYin and OldYin (retreat/decay)
+                // OldMixed (4) or the genre-normalized YoungMixed (5) in some contexts covers chaos
+                if (yao === YaoState.YoungYin || yao === YaoState.OldYin || yao === YaoState.OldMixed) {
+                    const msg = `❌ COGNITIVE BLOCK: Destructive command rejected due to unstable/retreating state (${yao}). Strategy: ${directive}`;
+                    logger.warn({ command: params.command, yao, directive }, msg);
+                    this.renderer.error(msg);
+                    return { ok: false, error: new Error(msg) };
+                }
+            }
+
+            if (yao === YaoState.OldYang) {
+                logger.info({ command: params.command, directive }, 'PROJECTIVE EXECUTION: High-metabolism metabolic burst detected.');
+            }
+        }
 
         logger.info({ command: params.command, cwd }, 'Executing shell command');
 

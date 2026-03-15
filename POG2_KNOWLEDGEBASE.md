@@ -34,12 +34,12 @@ The POG2 organism is informed by the following cognitive and clinical research t
 
 ## ⚙️ Engine Differentiation: Learning vs. Production
 
-### 🧠 [MemoryConsolidationEngine.ts](file:///C:/Users/Destiny/Desktop/pog-vibe-interactive/files/src/engines/MemoryConsolidationEngine.ts) (Learning)
+### 🧠 [MemoryConsolidationEngine.ts](src/engines/MemoryConsolidationEngine.ts) (Learning)
 - **Domain**: Persistent Abstraction.
 - **Role**: Synthesizes long-term session memories into core wisdom kernels. Eliminates redundant error pathways.
 - **Substrate**: Global VectorDB.
 
-### 📽️ [PipelineController.ts](file:///C:/Users/Destiny/Desktop/pog-vibe-interactive/files/src/engines/PipelineController.ts) (Production)
+### 📽️ [PipelineController.ts](src/engines/PipelineController.ts) (Production)
 - **Domain**: Transient Output.
 - **Role**: Orchestrates high-throughput generative tasks (Video/Image/Audio). Manages production manifests and idempotent checkpoints.
 - **Substrate**: Local Filesystem / `manifest.json`.

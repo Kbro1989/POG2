@@ -1,19 +1,24 @@
-﻿import pino from 'pino';
+import pino from 'pino';
 import { ShellEngine } from './ShellEngine.js';
 import { Renderer } from '../ui/Renderer.js';
-import type { Result, EngineOutput } from '../core/models.js';
+import { TernaryRouter } from '../routing/TernaryRouter.js';
+import { type Result, type EngineOutput, YaoState } from '../core/models.js';
 
 const logger = pino({ name: 'ShellLibrary', base: { hostname: 'POG2' } });
 
 /**
- * ShellLibrary â€” Specialized command wrappers for the Brain.
+ * ShellLibrary — Specialized command wrappers for the Brain.
  * Ported/Integrated capabilities for gcloud, wrangler, node, python, etc.
+ * Integrated with TernaryRouter for metabolic command modulation.
  */
 export class ShellLibrary {
     private readonly shell: ShellEngine;
 
-    constructor(private readonly renderer: Renderer) {
-        this.shell = new ShellEngine(renderer);
+    constructor(
+        private readonly renderer: Renderer,
+        private readonly router?: TernaryRouter
+    ) {
+        this.shell = new ShellEngine(renderer, router);
     }
 
     private async executeWithDiagnostics(command: string, helpFlag: string = '--help'): Promise<Result<EngineOutput>> {
@@ -108,7 +113,15 @@ Please analyze this context and construct a corrected command or deployment conf
     async gitCommit(args: { message: string }): Promise<Result<EngineOutput>> {
         const add = await this.shell.execute({ command: 'git add .' });
         if (!add.ok) return add;
-        return this.executeWithDiagnostics(`git commit -m "[Sovereign] ${args.message}"`);
+
+        let prefix = '[Sovereign]';
+        if (this.router) {
+            const hex = this.router.getHexagram();
+            const directive = hex.getInterpretation().strategy;
+            prefix = `[Sovereign][${directive}]`;
+        }
+
+        return this.executeWithDiagnostics(`git commit -m "${prefix} ${args.message}"`);
     }
 
     async gitPush(): Promise<Result<EngineOutput>> {
@@ -120,6 +133,12 @@ Please analyze this context and construct a corrected command or deployment conf
     }
 
     async npmInstall(args: { packages?: string[]; saveDev?: boolean }): Promise<Result<EngineOutput>> {
+        if (this.router) {
+            const yao = this.router.getHexagram().getYaoState();
+            if (yao === YaoState.OldMixed || yao === YaoState.OldYin) {
+                this.renderer.warn(`⚠️ METABOLIC WARNING: Performing npm install in unstable state (${yao}). Dependency flux detected.`);
+            }
+        }
         const pkgStr = args.packages?.join(' ') || '';
         const devStr = args.saveDev ? '--save-dev' : '';
         return this.executeWithDiagnostics(`npm install ${pkgStr} ${devStr}`);
@@ -151,5 +170,12 @@ Please analyze this context and construct a corrected command or deployment conf
         } catch (error) {
             return { ok: false, error: error as Error };
         }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: true,
+            details: 'ShellLibrary active; binary wrappers (gcloud, wrangler, git) primed.'
+        };
     }
 }

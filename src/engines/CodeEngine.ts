@@ -1,4 +1,4 @@
-﻿import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
@@ -218,7 +218,13 @@ Be precise and technical. Assume the reader is an expert developer.`;
         const route = await this.router.route('YinYang', 'fix');
         const model = params.modelOverride ?? route.model;
 
+        const hexagram = this.router.getHexagram();
+        const interpretation = hexagram.getInterpretation();
+        const yao = hexagram.getYaoState();
+        const cognitiveBias = `\nCOGNITIVE STRATEGY: ${interpretation.strategy}\nYAO_STATE: ${yao}`;
+
         const prompt = `Fix ALL TypeScript errors, lint violations, and code quality issues in this file.
+${cognitiveBias}
 
 Rules:
 1. Fix every error â€” no leaving partial fixes
@@ -284,7 +290,13 @@ Output the COMPLETE fixed file:`;
             ? `\nADDITIONAL RULES:\n${params.additionalRules.map(r => `- ${r}`).join('\n')}`
             : '';
 
+        const hexagram = this.router.getHexagram();
+        const interpretation = hexagram.getInterpretation();
+        const yao = hexagram.getYaoState();
+        const cognitiveBias = `\nCOGNITIVE STRATEGY: ${interpretation.strategy}\nYAO_STATE: ${yao}`;
+
         const prompt = `Refactor this file to meet sovereign architectural standards.
+${cognitiveBias}
 
 SOVEREIGN LAWS:
 1. NO MOCKS or faked data â€” only real implementations

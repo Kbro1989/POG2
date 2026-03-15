@@ -5,6 +5,7 @@ import { HealthStatus } from './models.js';
 import { SovereignConfig } from '../config/SovereignConfig.js';
 import { NeuralLimb } from '../limbs/core/NeuralLimb.js';
 import { CloudflareServices, CloudflareConfig } from '../services/CloudflareServices.js';
+import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
 import pino from 'pino';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -102,8 +103,8 @@ export class ServiceDiscovery {
         results.push(this.withHealth(await this.checkGhostLimb()));
         if (!this.isRunning) return results;
 
-        // 6. Audit System Substrate (D: Drive)
-        results.push(this.withHealth(await this.checkDrives()));
+        // 6. Audit System Substrate (Sovereign Root)
+        results.push(this.withHealth(await this.checkSovereignSubstrate()));
         if (!this.isRunning) return results;
 
         // 7. Audit Shell Tools (Git/PowerShell)
@@ -394,28 +395,22 @@ export class ServiceDiscovery {
         };
     }
 
-    private async checkDrives(): Promise<Omit<ServiceStatus, 'health'>> {
-        if (!this.isRunning) return { id: 'drive_d', name: 'Sovereign Drive (D:)', status: 'INACTIVE', type: 'EXTENSION', details: 'Audit stopped' };
+    private async checkSovereignSubstrate(): Promise<Omit<ServiceStatus, 'health'>> {
+        if (!this.isRunning) return { id: 'sovereign_root', name: 'Sovereign Substrate', status: 'INACTIVE', type: 'EXTENSION', details: 'Audit stopped' };
 
-        const isWindows = process.platform === 'win32';
-        const driveD = 'D:\\';
+        const root = getSovereignRoot();
         let exists = false;
 
         try {
-            if (isWindows) {
-                exists = fs.existsSync(driveD);
-            } else {
-                // Approximate for non-windows if needed, but project is windows-first
-                exists = fs.existsSync('/mnt/d') || fs.existsSync('/media/d');
-            }
+            exists = fs.existsSync(root);
         } catch { exists = false; }
 
         return {
-            id: 'drive_d',
-            name: 'Sovereign Drive (D:)',
+            id: 'sovereign_root',
+            name: 'Sovereign Substrate',
             status: exists ? 'ACTIVE' : 'INACTIVE',
             type: 'EXTENSION',
-            details: exists ? 'Mounted: Sovereign Substrate & Gutenberg Corpus' : 'Not found. Substrate disconnected.'
+            details: exists ? `Path: ${root}` : 'Not found. Substrate disconnected.'
         };
     }
 

@@ -89,6 +89,66 @@ export class ModelRolodex {
         return { models: {}, providers, lastRefresh: 0, version: '1.0.0' };
     }
 
+    /** 
+     * Sovereign FinOps / Hive Mind: Merge incoming state from the Globe substrate.
+     * Aggregates success/failure counts instead of overwriting, allowing multiple 
+     * instances to share learned reputation scores offline and online.
+     */
+    public deserializeAndMerge(remoteState: RolodexState): void {
+        let mergedCount = 0;
+        
+        // Merge Models (The Reputation Score)
+        for (const [key, remoteModel] of Object.entries(remoteState.models)) {
+            if (!this.state.models[key]) {
+                this.state.models[key] = { ...remoteModel };
+                mergedCount++;
+            } else {
+                const localModel = this.state.models[key];
+                // Only aggregate if the remote state has actually seen usage
+                if (remoteModel.successCount + remoteModel.failureCount > 0) {
+                    // We don't want to double-count our own updates if they echo back.
+                    // A true CRDT is better, but a simplistic Max(local, remote) or addition 
+                    // works for basic reputation sharing until we build an event-sourced log.
+                    // For now, if remote has higher total interaction, we absorb the difference.
+                    const localTotal = localModel.successCount + localModel.failureCount;
+                    const remoteTotal = remoteModel.successCount + remoteModel.failureCount;
+                    
+                    if (remoteTotal > localTotal) {
+                        localModel.successCount = Math.max(localModel.successCount, remoteModel.successCount);
+                        localModel.failureCount = Math.max(localModel.failureCount, remoteModel.failureCount);
+                        localModel.totalTokensUsed = Math.max(localModel.totalTokensUsed, remoteModel.totalTokensUsed);
+                        localModel.avgLatencyMs = Math.round((localModel.avgLatencyMs + remoteModel.avgLatencyMs) / 2);
+                        mergedCount++;
+                    }
+                }
+                // Always sync the lastSeen timestamp if remote is newer
+                if (remoteModel.lastSeen > localModel.lastSeen) {
+                    localModel.lastSeen = remoteModel.lastSeen;
+                }
+            }
+        }
+
+        // Merge Providers (Auth status and discovered models)
+        for (const [key, remoteIdentity] of Object.entries(remoteState.providers)) {
+            const pKey = key as RolodexProvider;
+            const localIdentity = this.state.providers[pKey];
+            
+            // If remote is authenticated and we aren't, absorb their model list (but not their account/email/keys)
+            // This allows an offline node to know what models exist on a provider even if it can't reach the discovery API.
+            if (remoteIdentity.authenticated) {
+                const newModels = remoteIdentity.models.filter(m => !localIdentity.models.includes(m));
+                if (newModels.length > 0) {
+                    localIdentity.models.push(...newModels);
+                }
+            }
+        }
+
+        if (mergedCount > 0) {
+            logger.debug({ mergedModels: mergedCount }, 'Rolodex merged state from Hive Mind');
+            this.persist(); // Save to local disk immediately upon beneficial merge
+        }
+    }
+
     // ═══ PUBLIC API ═══
 
     /** Get all models for a specific provider */
@@ -215,7 +275,8 @@ export class ModelRolodex {
         const providerState = this.state.providers.ollama;
         try {
             const baseUrl = this.config.ollamaBaseUrl || 'http://localhost:11434';
-            const response = await fetch(`${baseUrl}/api/tags`, { signal: AbortSignal.timeout(5000) });
+            // Increase timeout to 60s for massive substrates
+            const response = await fetch(`${baseUrl}/api/tags`, { signal: AbortSignal.timeout(120000) });
             if (!response.ok) throw new Error(`Ollama API returned ${response.status}`);
 
             const data = await response.json() as { models?: { name: string; size?: number; details?: { parameter_size?: string; quantization_level?: string; family?: string } }[] };
@@ -248,11 +309,20 @@ export class ModelRolodex {
 
             logger.info({ count: models.length }, 'Ollama models discovered.');
         } catch (err: any) {
-            providerState.authenticated = false;
-            providerState.error = err.message;
+            // For timeouts: Preserve authentication and model list if we already have data
+            const isTimeout = err.name === 'TimeoutError' || err.message.includes('timeout') || err.message.includes('aborted');
+            
+            if (isTimeout && providerState.models.length > 0) {
+                logger.warn({ error: err.message, cachedModels: providerState.models.length }, 'Ollama discovery timed out. Preserving cached model state.');
+                providerState.error = `DISCOVERY_TIMEOUT: ${err.message}`; // Mark as busy/timeout but keep authenticated
+            } else {
+                providerState.authenticated = false;
+                providerState.error = err.message;
+                logger.warn({ error: err.message }, 'Ollama discovery failed.');
+            }
+            
             providerState.latencyMs = Date.now() - start;
             providerState.lastChecked = Date.now();
-            logger.warn({ error: err.message }, 'Ollama discovery failed.');
         }
     }
 
@@ -277,11 +347,11 @@ export class ModelRolodex {
             providerState.account = accountMatch?.[1] || this.config.cloudflareAccountId;
             providerState.email = emailMatch?.[0] || this.config.cloudflareAuthEmail;
 
-            // Model discovery via REST API (more reliable than wrangler ai models)
+            // Model discovery via REST API
             const cfApiUrl = `https://api.cloudflare.com/client/v4/accounts/${this.config.cloudflareAccountId}/ai/models/search`;
             const cfResponse = await fetch(cfApiUrl, {
                 headers: { 'Authorization': `Bearer ${this.config.cloudflareApiToken}` },
-                signal: AbortSignal.timeout(10000)
+                signal: AbortSignal.timeout(60000) // Increased to 60s
             });
 
             if (cfResponse.ok) {
@@ -345,7 +415,7 @@ export class ModelRolodex {
 
             // Gemini model list via REST API
             const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-            const geminiResponse = await fetch(geminiUrl, { signal: AbortSignal.timeout(10000) });
+            const geminiResponse = await fetch(geminiUrl, { signal: AbortSignal.timeout(120000) }); // Increased to 120s
 
             if (geminiResponse.ok) {
                 const geminiData = await geminiResponse.json() as { models?: { name: string; displayName?: string; supportedGenerationMethods?: string[] }[] };
@@ -436,7 +506,7 @@ export class ModelRolodex {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ inputs: 'test', parameters: { max_new_tokens: 1 } }),
-                signal: AbortSignal.timeout(10000)
+                signal: AbortSignal.timeout(60000) // Increased to 60s
             });
 
             providerState.authenticated = hfResponse.status !== 401 && hfResponse.status !== 403;
@@ -499,12 +569,28 @@ export class ModelRolodex {
         return map[provider] || 'ollama';
     }
 
-    /** Persist state to disk */
+    private globeStateLimb?: any; // Avoiding circular deep imports, typed functionally
+
+    /**
+     * Sovereign FinOps / Hive Mind: Attach the durable GlobeStateLimb for broadcasting.
+     */
+    public setGlobeStateLimb(limb: any): void {
+        this.globeStateLimb = limb;
+    }
+
+    /** Persist state to disk and broadcast to the Hive Mind */
     persist(): void {
         try {
             const dir = dirname(this.persistPath);
             if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
             writeFileSync(this.persistPath, JSON.stringify(this.state, null, 2));
+
+            // Broadcast to the swarm if connected
+            if (this.globeStateLimb) {
+                this.globeStateLimb.pushNodeState('rolodex_v1', this.state).catch((err: any) => {
+                    logger.debug({ err: err.message }, 'Failed to broadcast rolodex to Globe (likely offline)');
+                });
+            }
         } catch (err: any) {
             logger.warn({ error: err.message }, 'Failed to persist rolodex state.');
         }

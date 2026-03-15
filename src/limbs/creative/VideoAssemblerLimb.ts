@@ -25,9 +25,12 @@ export class VideoAssemblerLimb {
         private readonly hexagram: HexagramManager
     ) { }
 
-    public healthCheck(): { online: boolean; details?: string } {
+    public healthCheck(): { online: boolean; details: string } {
         // Technically it's 'online' if it can execute ffmpeg via shell
-        return { online: true };
+        return { 
+            online: true, 
+            details: 'VideoAssembler substrate active; ffmpeg pipeline primed.' 
+        };
     }
 
     /**

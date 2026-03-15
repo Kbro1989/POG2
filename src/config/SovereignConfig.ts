@@ -56,6 +56,7 @@ export interface SovereignConfig {
     projectRoot: string;
     pog2Dir: string;
     gutenbergPath: string;
+    sovereignRoot: string;
 
     // Advanced Model Parameters
     contextWindow: number;
@@ -89,6 +90,7 @@ export interface SovereignConfig {
     };
     // Phase 18: Resource & Metabolic Tracking
     metabolicCostScale: number; // 0.0 - 1.0 multiplier for all cost logging
+    globeEndpoint?: string;    // Phase 107: Live Durable State Hub
 }
 
 const DEFAULT_CONFIG: SovereignConfig = {
@@ -143,6 +145,7 @@ const DEFAULT_CONFIG: SovereignConfig = {
     projectRoot: process.cwd(),
     pog2Dir: process.env['POG2_DIR'] || process.cwd(),
     gutenbergPath: process.env['GUTENBERG_PATH'] || '',
+    sovereignRoot: process.env['POG_SOVEREIGN_ROOT'] || '',
 
     // Performance & Precision
     contextWindow: 16384,
@@ -161,7 +164,8 @@ const DEFAULT_CONFIG: SovereignConfig = {
         defaultSequence: ['䷀', '䷁', '䷂', '䷃', '䷄', '䷅'],
         ttlSeconds: 30,
         ghostFallback: true
-    }
+    },
+    globeEndpoint: 'wss://multiplayer-globe-template.kristain33rs.workers.dev/parties/globe/pog2-sovereign'
 };
 
 function loadEnvFile(envPath: string): void {
@@ -228,7 +232,9 @@ const ENV_VAR_MAP: Record<string, string> = {
     repeatPenalty: 'REPEAT_PENALTY',
     numCtx: 'NUM_CTX',
     outputFormat: 'OUTPUT_FORMAT',
-    logLevel: 'LOG_LEVEL'
+    logLevel: 'LOG_LEVEL',
+    globeEndpoint: 'POG2_GLOBE_ENDPOINT',
+    sovereignRoot: 'POG_SOVEREIGN_ROOT'
 };
 
 export function loadConfig(configPath: string): SovereignConfig {
@@ -277,6 +283,11 @@ export function loadConfig(configPath: string): SovereignConfig {
         config.youtube.projectId = process.env['YOUTUBE_PROJECT_ID'] ?? config.youtube.projectId;
         config.youtube.channelId = process.env['YOUTUBE_CHANNEL_ID'] ?? config.youtube.channelId;
         config.youtube.youtubeId = process.env['YOUTUBE_YOUTUBE_ID'] ?? config.youtube.youtubeId;
+    }
+
+    // Phase 106: Normalize wsPort defaults (Default to 8765 if -1 or missing)
+    if (config.wsPort === -1 || config.wsPort === undefined) {
+        config.wsPort = 8765;
     }
 
     return config as SovereignConfig;

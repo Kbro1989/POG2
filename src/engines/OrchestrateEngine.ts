@@ -11,7 +11,8 @@ import { GenerateEngine, type GenerateCodeParams } from './GenerateEngine.js';
 import { ShellEngine, type ShellParams } from './ShellEngine.js';
 import { ShellLibrary } from './ShellLibrary.js';
 import { SpatialVisionEngine } from './SpatialVisionEngine.js';
-import { TodoEngine, type Todo } from './TodoEngine.js';
+import { VisionEngine } from './VisionEngine.js';
+import { TodoEngine } from './TodoEngine.js';
 import { MCPEngine } from './MCPEngine.js';
 import { ChromanumberEngine } from './ChromanumberEngine.js';
 import { MetabolicEngine } from './MetabolicEngine.js';
@@ -28,6 +29,7 @@ import { SoundtrackLimb } from '../limbs/creative/SoundtrackLimb.js';
 import { YouTubeLimb } from '../limbs/creative/YouTubeLimb.js';
 import { PipelineController, type PipelineRequest } from './PipelineController.js';
 import { DiscoveryEngine, type WebSearchParams } from './DiscoveryEngine.js';
+import { WebSearchEngine } from './WebSearchEngine.js';
 import { VSCodeEngine, type VSCodeParams } from './VSCodeEngine.js';
 import { SelfHealingEngine } from './SelfHealingEngine.js';
 import { MetaCognitionEngine } from './MetaCognitionEngine.js';
@@ -45,6 +47,7 @@ import { QuantumLimb } from '../limbs/metaphysical/QuantumLimb.js';
 import { OmegaLimb } from '../limbs/metaphysical/OmegaLimb.js';
 import { RelicLimb } from '../limbs/metaphysical/RelicLimb.js';
 import { RSCLimb } from '../limbs/spatial/RSCLimb.js';
+import { GlobeStateLimb } from '../limbs/spatial/GlobeStateLimb.js';
 import { MemoryConsolidationEngine } from './MemoryConsolidationEngine.js';
 import { StateManager } from '../state/StateManager.js';
 import { RSMVExtractor } from '../utils/RSMVExtractor.js';
@@ -55,12 +58,16 @@ import { Renderer } from '../ui/Renderer.js';
 import { DBMaintenance } from '../utils/DBMaintenance.js';
 import { extractJson } from '../utils/JsonExtractor.js';
 import { SOVEREIGN_SYSTEM_PROMPT, DOMAIN_PROMPTS } from '../prompts/SystemPrompts.js';
+import { ValidationSystem } from './ValidationSystem.js';
+import { ArchitecturalValidator } from './ArchitecturalValidator.js';
+import { ASTWatcher } from './ASTWatcher.js';
+import { ChromaLimb } from '../limbs/spatial/ChromaLimb.js';
+import { VideoAssemblerLimb } from '../limbs/creative/VideoAssemblerLimb.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import { getSovereignRoot, getGodHeadRoot, getLearningDbPath, getPipelineRootPath } from '../utils/SovereignPathResolver.js';
 import { IntentVerifier } from './IntentVerifier.js';
-import { type Result, type EngineOutput, YaoState, isOk, ok, type ContextCard, type OraclePlan } from '../core/models.js';
+import { type Result, type EngineOutput, YaoState, isOk, ok, err, type ThinkingNexus, type ContextCard, type Todo, type TodoStatus, CircuitState, YAO_PRODUCTION_PREREQUISITES, type Plan, type OraclePlan, type ArchitectureManifest, SovereignDomain, BuildStatus, HealthStatus, ResourcePressure, UserEngagement } from '../core/models.js';
 import { AIDispatcher } from '../api/ai/Dispatcher.js';
-import { SovereignDomain } from '../types/SovereignDomain.js';
 import { DomainLocker, DomainViolationError } from '../routing/DomainLocker.js';
 import { WorkforceManifest } from '../routing/WorkforceManifest.js';
 import { SovereignProprioception } from '../utils/SovereignProprioception.js';
@@ -75,26 +82,10 @@ import { DefaultStrategy } from '../routing/strategies/DefaultStrategy.js';
 import { AnalyticalStrategy } from '../routing/strategies/AnalyticalStrategy.js';
 import { CompositeStrategy } from '../routing/strategies/CompositeStrategy.js';
 import { homedir } from 'os';
+import { QuotaTracker } from '../utils/QuotaTracker.js';
 
 const logger = pino({ name: 'OrchestrateEngine', base: { hostname: 'POG2' } });
 
-export interface Plan {
-    tool: string;
-    reasoning: string;
-    model: string;
-    parameters: Record<string, unknown>;
-    todos?: Todo[];
-    rollback?: string;
-    severity: number; // 0-100 score
-    interaction: 'text' | 'voice' | 'vision' | 'silent';
-    yaoState: YaoState;
-    archetype?: string;
-    timestamp?: number;
-    dialectics?: {
-        kimi: string;   // The Brain's intent
-        agent: string;  // The sub-agent's potential pushback or efficiency check
-    };
-}
 
 /**
  * OrchestrateEngine â€” Kimi's domain.
@@ -105,6 +96,7 @@ export class OrchestrateEngine {
     private readonly registry: ToolRegistry;
     private readonly todoEngine: TodoEngine;
     private readonly visionEngine: SpatialVisionEngine;
+    private readonly vision: VisionEngine;
     private readonly mcpEngine: MCPEngine;
     private readonly chroma: ChromanumberEngine;
     private readonly verifier: IntentVerifier;
@@ -148,9 +140,12 @@ export class OrchestrateEngine {
     private readonly omega: OmegaLimb;
     private readonly relic: RelicLimb;
     private readonly rscLimb: RSCLimb;
+    private readonly globeState: GlobeStateLimb;
     private readonly memoryConsolidation: MemoryConsolidationEngine;
     private readonly cfServices: CloudflareServices;
     private readonly ytLimb?: YouTubeLimb;
+    private readonly quotaTracker: QuotaTracker;
+    private readonly chromaLimb: ChromaLimb; // Phase 108 - Metaphysical color signature
     private readonly EXTREME_THRESHOLD = 80;
 
     constructor(
@@ -160,14 +155,15 @@ export class OrchestrateEngine {
     ) {
         logger.debug('Initializing Orchestrate Engines...');
         this.client = new ModelClient(config, router);
-        this.vscode = new VSCodeEngine(renderer);
+        this.vscode = new VSCodeEngine(renderer, router);
         this.registry = new ToolRegistry();
         this.todoEngine = new TodoEngine(renderer);
         this.visionEngine = new SpatialVisionEngine(config, renderer);
+        this.vision = new VisionEngine(config, renderer);
         this.mcpEngine = new MCPEngine(config, this.registry);
         this.chroma = new ChromanumberEngine(this.client, this.config, this.router.getHexagram());
         this.maintenance = new DBMaintenance();
-        this.embedEngine = new EmbedEngine(config, renderer);
+        this.embedEngine = new EmbedEngine(config, renderer, router);
 
         logger.debug('Initializing Memory Substrates...');
         this.vectorDB = new VectorDB({ client: this.client });
@@ -205,8 +201,13 @@ export class OrchestrateEngine {
         this.relic = new RelicLimb();
         this.rscLimb = new RSCLimb(config);
         this.rscLimb.setRouter(router);
+        this.globeState = new GlobeStateLimb(config);
         this.memoryConsolidation = new MemoryConsolidationEngine(this.client, this.vectorDB, StateManager.getInstance());
         this.soundtrack = new SoundtrackLimb(this.config, this.router.getHexagram());
+        this.chromaLimb = new ChromaLimb(this.config); // Phase 108
+
+        // Wire substrates to Switchboard Bridge for remote mirroring
+        this.switchboard.connectToSubstrates(this.renderer, this.chroma.getEye());
 
         // Ensure YouTube limb has baseline instantiation parameters if config exists
         if (config.youtube?.clientId && config.youtube?.clientSecret) {
@@ -224,7 +225,7 @@ export class OrchestrateEngine {
             this.chroma,
             this.voice,
             this.soundtrack,
-            new ShellEngine(this.renderer),
+            new ShellEngine(this.renderer, this.router),
             this.router.getHexagram(),
             this.vectorDB,
             this.ytLimb // Injected YouTubeLimb
@@ -241,8 +242,48 @@ export class OrchestrateEngine {
             logger.error({ err }, 'PulseMonitor failed to start, but substrate continues.');
         });
 
+        // Phase 107: Connect to live Durable State Hub
+        this.globeState.connect().catch(err => {
+            logger.warn({ err }, 'Failed to connect to live Globe substrate, but continuing in local-only mode.');
+        });
+
+        // Sovereign AI Hive Mind: Wire Rolodex state sharing
+        const rolodex = this.client.getRolodex();
+        if (rolodex) {
+            rolodex.setGlobeStateLimb(this.globeState);
+            this.globeState.onStateUpdate('rolodex_v1', (incomingState) => {
+                this.assimilateHiveEvent('rolodex', incomingState, rolodex);
+            });
+        }
+
+        // Sovereign FinOps: Instantiate QuotaTracker and wire into substrates
+        this.quotaTracker = new QuotaTracker();
+        this.client.setQuotaTracker(this.quotaTracker);
+        this.router.setQuotaTracker(this.quotaTracker);
+
+        // Restore persisted quota state from Globe if available
+        const savedQuota = this.globeState.loadQuotaState();
+        if (savedQuota) {
+            this.quotaTracker.deserialize(savedQuota);
+            logger.info('Restored quota state from Globe substrate.');
+        }
+
         this.clinicalAudit = new ClinicalAuditTool();
         this.trainingCollector = TrainingCollector.getInstance();
+
+        // Sovereign AI Hive Mind: Wire hippocampus (TrainingCollector) state sharing
+        this.trainingCollector.setGlobeStateLimb(this.globeState);
+        this.trainingCollector.setHexagramManager(this.router.getHexagram());
+
+        // Assimilate successful self-healing and ethical FPRAG overrides from the swarm
+        // ONLY if they pass Cognitive Immunology
+        this.globeState.onStateUpdate('error_fix_event', (incomingFix) => {
+            this.assimilateHiveEvent('error_fix', incomingFix);
+        });
+
+        this.globeState.onStateUpdate('fprag_event', (incomingEthical) => {
+            this.assimilateHiveEvent('fprag', incomingEthical);
+        });
 
         // Phase 25: Initialize Proprioception
         logger.debug('Initializing Proprioception...');
@@ -276,12 +317,65 @@ export class OrchestrateEngine {
         this.initializeTools();
     }
 
+    /**
+     * Phase 5: Cognitive Immunology 
+     * Passes incoming global Hive Mind events through the local biological Hexagram filter.
+     */
+    private assimilateHiveEvent(type: 'rolodex' | 'error_fix' | 'fprag', payload: any, rolodex?: any): void {
+        const hex = this.router.getHexagram();
+        const yao = hex.getYaoState();
+        const isYin = hex.isYin(); // Receptive
+        
+        logger.debug({ type, yao, isYin }, 'Cognitive Immunology: Filtering incoming Hive event');
+
+        // Unstable transition state (OldMixed) drops external philosophy/reputation changes, but might accept error fixes.
+        if (yao === YaoState.OldMixed && type !== 'error_fix') {
+            logger.warn({ type }, 'Cognitive Immunology: Philosophy/Reputation Event rejected due to internal chaos (OldMixed).');
+            hex.pinPulse(YaoState.OldMixed, `Rejected hive mind ${type} event due to chaotic transition. Maintaining local boundaries.`);
+            return;
+        }
+
+        if (!isYin && type === 'fprag') {
+            // Node is heavily Yang (Projective, assertive). It resists external instruction unless it's a critical error fix.
+            if (yao === YaoState.OldYang || yao === YaoState.YoungYang) {
+                 logger.warn('Cognitive Immunology: FPRAG directive rejected. Sovereign node is heavily Projective/Yang and refuses protocol override.');
+                 hex.pinPulse(YaoState.OldYang, `Rejected foreign FPRAG directive. Asserting current unified architecture.`);
+                 return;
+            }
+        }
+
+        // Acceptance
+        if (type === 'rolodex' && rolodex) {
+            logger.debug('Cognitive Immunology: Assimilating Hive Mind reputation.');
+            rolodex.deserializeAndMerge(payload);
+        } else if (type === 'error_fix') {
+            logger.debug({ remoteError: payload.errorMessage }, 'Cognitive Immunology: Assimilating Hive Mind self-healing methodology.');
+            this.trainingCollector.recordErrorFix(payload).catch(() => {});
+        } else if (type === 'fprag') {
+            logger.debug({ directive: payload.directive }, 'Cognitive Immunology: Assimilating Hive Mind FPRAG philosophical threshold.');
+            this.trainingCollector.recordFPRAGDecision(payload).catch(() => {});
+        }
+    }
+
     private initializeTools(): void {
         const gen = new GenerateEngine(this.config, this.router);
         const code = new CodeEngine(this.config, this.router);
-        const shell = new ShellEngine(this.renderer);
-        const lib = new ShellLibrary(this.renderer);
+        const shell = new ShellEngine(this.renderer, this.router);
+        const lib = new ShellLibrary(this.renderer, this.router);
         const search = this.discovery;
+
+        const defaultManifest: ArchitectureManifest = {
+            domainModel: {},
+            dependencyRules: {
+                engines: ['core', 'utils', 'types'],
+                limbs: ['core', 'utils', 'types', 'engines'],
+                routing: ['core', 'types', 'utils']
+            },
+            primaryGoal: 'Sovereign Autonomy (NO MOCKS)'
+        };
+
+        const watcher = new ASTWatcher(getGodHeadRoot() ?? process.cwd());
+        watcher.initialize();
 
         const nodeTester = new NodeTester(
             getGodHeadRoot() ?? process.cwd(),
@@ -300,15 +394,28 @@ export class OrchestrateEngine {
                 SyntropyEngine: this.syntropy,
                 DiscoveryEngine: this.discovery,
                 EndpointHealer: this.client.getHealer(),
-                SelfHealingEngine: new SelfHealingEngine(process.cwd(), this.client, this.router.getHexagram(), this.config.masterLocalModel),
+                SelfHealingEngine: new SelfHealingEngine(
+                    process.cwd(),
+                    this.client,
+                    this.router.getHexagram(),
+                    this.config.masterLocalModel,
+                    this.vision,
+                    this.visionEngine,
+                    this.chroma,
+                    this.code,
+                    shell
+                ),
                 CodeEngine: this.code,
                 GenerateEngine: this.codeGen,
                 ShellEngine: shell,
+                ShellLibrary: lib,
+                WebSearchEngine: new WebSearchEngine(this.renderer),
                 CompletionEngine: new CompletionEngine(this.config, this.router),
                 TodoEngine: this.todoEngine,
                 MCPEngine: this.mcpEngine,
                 VSCodeEngine: this.vscode,
                 SpatialVisionEngine: this.visionEngine,
+                VisionEngine: this.vision,
                 AILimb: this.aiLimb,
                 ControlPlaneLimb: this.controlPlane,
                 SwitchboardLimb: this.switchboard,
@@ -318,7 +425,8 @@ export class OrchestrateEngine {
                 VoiceLimb: this.voice,
                 NeuralForgeLimb: this.neuralForge,
                 WebSensoryLimb: this.webSensory,
-                ChromaLimb: this.chroma,
+                ChromanumberEngine: this.chroma,
+                ChromaLimb: this.chromaLimb,
                 BioIntelligenceLimb: this.bioIntel,
                 YouTubeLimb: this.ytLimb,
                 GhostLimb: this.ghost,
@@ -331,6 +439,7 @@ export class OrchestrateEngine {
                 MetabolicEngine: this.metabolic,
                 IntentVerifier: this.verifier,
                 RSCLimb: this.rscLimb,
+                GlobeStateLimb: this.globeState,
                 PipelineController: this.pipeline,
                 CognitiveEngine: this.cognitive,
                 MemoryConsolidationEngine: this.memoryConsolidation,
@@ -339,9 +448,23 @@ export class OrchestrateEngine {
                 Dispatcher: this.dispatcher,
                 DefaultStrategy: new DefaultStrategy(),
                 AnalyticalStrategy: new AnalyticalStrategy(),
-                CompositeStrategy: new CompositeStrategy([new AnalyticalStrategy(), new DefaultStrategy()], 'HealthCheckAudit')
+                CompositeStrategy: new CompositeStrategy([new AnalyticalStrategy(), new DefaultStrategy()], 'HealthCheckAudit'),
+                ValidationSystem: new ValidationSystem(),
+                ArchitecturalValidator: new ArchitecturalValidator(defaultManifest),
+                ASTWatcher: watcher,
+                VideoAssemblerLimb: new VideoAssemblerLimb(shell, this.router.getHexagram()),
+                MultiModelExecutor: new MultiModelExecutor(this.config, this.renderer),
+                ContextBuilder: new ContextBuilder(this.vectorDB, getGodHeadRoot() ?? process.cwd(), 'pog2-sovereign', this.client),
+                TrainingCollector: this.trainingCollector,
+                NodeTester: undefined // Self-registration will be handled via class name matching if needed, but we provide it here as part of the registry
             }
         );
+
+        nodeTester.registerLimbs({ NodeTester: nodeTester });
+        nodeTester.registerLimbs({ QuotaTracker: this.quotaTracker });
+        nodeTester.registerLimbs({ OrchestrateEngine: this });
+        nodeTester.registerLimbs({ ChromaLimb: this.chromaLimb });
+        nodeTester.registerLimbs({ SwitchboardLimb: this.switchboard });
 
         // â•â•â• OBSERVE DOMAIN â•â•â•
         this.registry.register({
@@ -470,10 +593,16 @@ export class OrchestrateEngine {
             execute: async () => {
                 const results = await nodeTester.auditNeuralNodes();
                 const healthy = results.filter(r => r.status === 'ONLINE').length;
+                const output = `Neurological Health: ${healthy}/${results.length} nodes ONLINE.\n\n` +
+                    results.map(r => {
+                        const icon = r.status === 'ONLINE' ? '✅' : (r.status === 'DEGRADED' ? '⚠️' : '❌');
+                        const details = r.details ? ` — ${r.details}` : '';
+                        return `${icon} [${r.category}] ${r.role}: ${r.status}${details}`;
+                    }).join('\n');
+
                 return ok({
-                    output: `Neurological Health: ${healthy}/${results.length} nodes ONLINE.\n\n` +
-                        results.map(r => `${r.status === 'ONLINE' ? 'âœ…' : 'âŒ'} [${r.category}] ${r.role}: ${r.status}`).join('\n'),
-                    data: { skipNormalization: true, skipReflection: true }
+                    output,
+                    data: { skipNormalization: true, skipReflection: true, healthResults: results }
                 });
             }
         });
@@ -1468,7 +1597,7 @@ export class OrchestrateEngine {
             name: 'gutenberg_sync',
             description: 'Synchronize the local Gutenberg library metadata with the physical files on disk.',
             humanDescription: 'Scan the local storage drive for books and fix any broken paths or duplicates.',
-            jargonDescription: 'Initiates a recursive file system crawl of the Sovereign D:\\ substrate to heal metadata drift and eliminate records of lost/moved items.',
+            jargonDescription: 'Initiates a recursive file system crawl of the primary Sovereign substrate to heal metadata drift and eliminate records of lost/moved items.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
             category: 'literary',
@@ -1560,7 +1689,7 @@ export class OrchestrateEngine {
             execute: async (args): Promise<Result<EngineOutput>> => {
                 const text = args.text as string;
                 if (!text) return { ok: false, error: new Error('voice_narrate requires "text".') };
-                const outputPath = (args.outputPath as string) || join('D:\\sovereign\\memory\\captures', `voice_${Date.now()}.wav`);
+                const outputPath = (args.outputPath as string) || join(getSovereignRoot(), 'memory', 'captures', `voice_${Date.now()}.wav`);
                 const res = await this.voice.narrate(text, {
                     personality: args.personality as string,
                     outputPath,
@@ -1686,7 +1815,7 @@ export class OrchestrateEngine {
             execute: async (args) => {
                 const prompt = args.prompt as string;
                 const duration = Number(args.duration) || 10;
-                const outPath = join('D:\\sovereign\\memory\\captures', `score_${Date.now()}.wav`);
+                const outPath = join(getSovereignRoot(), 'memory', 'captures', `score_${Date.now()}.wav`);
 
                 // Real implementation: map prompt to prosody (simplistic for now)
                 const prosody = { chaos: 0.5, whimsy: 0.5, darkTone: 0.5, coherence: 0.8 };
@@ -1716,7 +1845,7 @@ export class OrchestrateEngine {
             name: 'model_train',
             description: 'Absorb contextual information into the Sovereign memory substrate for future fine-tuning.',
             humanDescription: 'Help the AI learn new information or patterns from your feedback or code.',
-            jargonDescription: 'Executes a context-absorption cycle, recording interaction pairs and metadata into the D:\\sovereign\\training substrate.',
+            jargonDescription: 'Executes a context-absorption cycle, recording interaction pairs and metadata into the Sovereign training substrate.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.OBSERVE,
             category: 'core',
@@ -1852,9 +1981,9 @@ export class OrchestrateEngine {
             execute: async (args): Promise<Result<EngineOutput>> => {
                 const res = RSMVExtractor.extractAnatomy((args as any).json);
                 const kinetic = RSMVExtractor.getKineticProfile((args as any).json);
-                return ok({ 
-                    output: `RSMV Extraction Complete: Species ${res.commonName}, Kinetic Profile ${kinetic.toUpperCase()}.`, 
-                    data: { res, kinetic } 
+                return ok({
+                    output: `RSMV Extraction Complete: Species ${res.commonName}, Kinetic Profile ${kinetic.toUpperCase()}.`,
+                    data: { res, kinetic }
                 });
             }
         });
@@ -1913,11 +2042,11 @@ export class OrchestrateEngine {
                 const duration = (args as any).duration || 5;
                 const outPath = join(process.cwd(), 'procedural_metabolic_test.wav');
                 const hex = this.router.getHexagram();
-                const prosody = { 
-                    chaos: hex.getYaoState() === 0 ? 0.9 : 0.3, 
-                    whimsy: hex.isYin() ? 0.2 : 0.8, 
-                    darkTone: hex.isYin() ? 0.8 : 0.2, 
-                    coherence: 0.8 
+                const prosody = {
+                    chaos: hex.getYaoState() === 0 ? 0.9 : 0.3,
+                    whimsy: hex.isYin() ? 0.2 : 0.8,
+                    darkTone: hex.isYin() ? 0.8 : 0.2,
+                    coherence: 0.8
                 };
                 const res = await this.soundtrack.generateScore(prosody, duration, outPath);
                 if (!res.ok) return res;
@@ -1963,7 +2092,7 @@ export class OrchestrateEngine {
                     }
                 }
 
-                return ok({ 
+                return ok({
                     output: results.length > 0 ? results.join('\n') : 'No production manifests found.',
                     data: { integrityReport: results }
                 });
@@ -2159,7 +2288,7 @@ ${proprioceptiveInjection}
                 RULES:
                 1. Assign SEVERITY(0 - 100).
                 2. JSON ONLY representing the execution plan.
-                3. MANDATORY: Assign yState(0 - 3). 0: OldYang, 1: YoungYin, 2: YoungYang, 3: OldYin.
+                3. MANDATORY: Assign yState(0 - 3). 0: YoungYin, 1: OldYin, 2: YoungYang, 3: OldYang.
                 4. ATOMIC MANIFEST: When using todos, each step MUST have a "rollback" string (bash/powershell command) to revert the action if it fails.
                 5. ONLY select tools from the CAPABILITIES list above (or the virtual 'converse' tool). Do NOT invent tool names.
                 6. BIOLOGICAL MANDATE: Before outputting the JSON plan, you MUST think inside a <reflection>...</reflection> block. 
@@ -2175,13 +2304,16 @@ Assessing task... The memory indicates we did this earlier by calling X...
 Mapping tool selection over to Y...
 </reflection>
 {
+    "goal": "description of the goal",
+    "steps": ["step 1", "step 2"],
     "tool": "tool_name",
     "reasoning": "strategy",
     "model": "model_id",
     "severity": 0 - 100,
     "interaction": "text|voice|vision|silent",
     "yState": 0 - 3,
-    "parameters": { ... }
+    "parameters": { ... },
+    "todos": []
 }
 `.trim();
 
@@ -2220,8 +2352,12 @@ Mapping tool selection over to Y...
 
             const interpretation = hexManager.getInterpretation();
 
+            const { goal: pGoal, steps: pSteps, todos: pTodos, ...rest } = planRaw as any;
             const plan: Plan = {
-                ...planRaw,
+                goal: pGoal || task,
+                steps: pSteps || ["Executing identified plan"],
+                todos: pTodos || [],
+                ...rest,
                 yaoState: yState,
                 archetype: interpretation.name
             };
@@ -2258,16 +2394,48 @@ Mapping tool selection over to Y...
             // If `perceptionData` and `capture` are meant to be part of the plan's parameters, they should be structured as such.
             // For now, I'll revert to a valid Plan structure, as the provided snippet is syntactically and semantically incorrect for `Plan`.
             return {
+                goal: `Direct sensory interception: ${task}`,
+                steps: ["Capture screenshot/vision data"],
                 tool: 'soverign_eye',
                 reasoning: 'Direct sensory interception.',
                 model: this.config.visionModel,
                 parameters: { prompt: task }, // Add any relevant data here if it's an input to the tool
                 severity: 30, // Assuming these are still relevant for the plan
                 interaction: 'vision', // Assuming these are still relevant for the plan
-                yaoState: YaoState.YoungYin // Assuming these are still relevant for the plan
+                yaoState: YaoState.YoungYin, // Assuming these are still relevant for the plan
+                todos: []
             };
         }
         return null;
+    }
+
+    private async applyTernaryHandoffs(plan: Plan): Promise<void> {
+        const prerequisites = YAO_PRODUCTION_PREREQUISITES[plan.yaoState];
+        if (!prerequisites) return;
+
+        this.renderer.info(`[Ternary Handoff] State: ${YaoState[plan.yaoState]} -> Enforcing Prerequisites`);
+
+        if (prerequisites.mandateHealthAudit) {
+            this.renderer.info('🛡️ Mandating Neuro-Health Audit...');
+            const health = await this.healthCheck();
+            if (!health.online) {
+                throw new Error(`Prerequisite Failure: Neuro-Health Audit FAILED. Details: ${health.details}`);
+            }
+            this.renderer.success('✅ Neuro-Health Audit Passed.');
+        }
+
+        if (prerequisites.mandateMemoryConsolidation) {
+            this.renderer.info('🛡️ Mandating Memory Consolidation...');
+            const res = await this.memoryConsolidation.consolidate();
+            if (!res.ok) {
+                throw new Error(`Prerequisite Failure: Memory Consolidation FAILED. Error: ${res.error.message}`);
+            }
+            this.renderer.success('✅ Memory Consolidation Complete.');
+        }
+
+        // Adversarial and Build checks are handled AFTER execution for Yang states in this loop,
+        // or can be pre-flighted here if they represent environmental readiness.
+        // For OldYang, we enforce following adversarial audit later in executePlan.
     }
 
     async run(task: string): Promise<Result<EngineOutput>> {
@@ -2290,7 +2458,7 @@ Mapping tool selection over to Y...
                     const nexus = nexusRes.value;
                     this.renderer.success(`My current thinking paths:`);
                     (nexus.bottleneckPaths || []).forEach((p: string, i: number) => this.renderer.info(`  ${i + 1}. ${p}`));
- 
+
                     if (nexus.curiosity) {
                         const frictionColor = (nexus.metabolicFriction || 0) > 0.5 ? '\x1b[38;5;196m' : '\x1b[38;5;220m';
                         this.renderer.info(`${frictionColor}[Curiosity]\x1b[0m ${nexus.curiosity}`);
@@ -2323,6 +2491,13 @@ Mapping tool selection over to Y...
                 plan = planResult.value;
             }
 
+            // Phase 90: ENFORCE TERNARY HANDOFF PREREQUISITES
+            try {
+                await this.applyTernaryHandoffs(plan);
+            } catch (err: any) {
+                return { ok: false, error: err };
+            }
+
             // Phase 38: Handle virtual converse tool gracefully
             if (plan.tool === 'converse') {
                 const msg = String(plan.parameters?.message || plan.reasoning || "Hello.");
@@ -2339,7 +2514,7 @@ Mapping tool selection over to Y...
                 });
             }
 
-            this.renderer.showPlan(plan as unknown as OraclePlan);
+            this.renderer.showPlan(plan);
             if (Math.random() > 0.7) {
                 this.renderer.showHexagram(this.router.getHexagram());
             }
@@ -2390,7 +2565,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
                     const refinedPlanResult = await this.getPlan(currentTaskContext);
                     if (!refinedPlanResult.ok) return refinedPlanResult as Result<EngineOutput>;
                     plan = refinedPlanResult.value;
-                    this.renderer.showPlan(plan as unknown as OraclePlan);
+                    this.renderer.showPlan(plan);
                 } else {
                     this.renderer.warn('Invalid input. Use y, d, or n.');
                 }
@@ -2419,7 +2594,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
             const completedTodos: Todo[] = [];
 
             for (let i = 0; i < todos.length; i++) {
-                const currentTodo = todos[i]!;
+                const currentTodo = todos[i];
                 this.renderer.info(`[Step ${i + 1}/${todos.length}] ${currentTodo.task} `);
 
                 const stepPlanResult = await this.getStepPlan(currentTodo.task, lastOutput);
@@ -2506,13 +2681,16 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
                 importance: 1
             });
 
-            return { ok: true, value: { ...planRaw, yaoState: yState } };
+            return { ok: true, value: { ...planRaw, yaoState: yState } as Plan };
         } catch (err: any) {
             return { ok: false, error: new Error('Malformed step plan.') };
         }
     }
 
     async executePlan(plan: Plan): Promise<Result<EngineOutput>> {
+        if (!plan.tool) {
+            return { ok: false, error: new Error('Execution plan is missing a tool.') };
+        }
         // Phase 38: Wait/Pass dispatch â€” Kimi routes, workers execute
         const verdict = this.domainLocker.dispatchCheck(plan.tool);
         if (verdict.action === 'WAIT') {
@@ -2523,18 +2701,21 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
         // If the Brain directs a tool, ensure we use a specialized local worker for execution.
         let executionModel = plan.model;
         if (!executionModel || executionModel === this.config.orchestratorModel || executionModel === this.config.huggingfaceFallbackModel) {
-            const authorizedWorkers = this.workforce.getWorkersForDomain(this.registry.getToolDomain(plan.tool) || SovereignDomain.SYSTEM);
-            const bestWorker = authorizedWorkers.find(w => w.authorizedTools.includes(plan.tool));
+            const domain = this.registry.getToolDomain(plan.tool) || SovereignDomain.SYSTEM;
+            const authorizedWorkers = this.workforce.getWorkersForDomain(domain);
+            const toolName = plan.tool;
+            const bestWorker = authorizedWorkers.find(w => w.authorizedTools.includes(toolName));
             if (bestWorker) {
                 executionModel = bestWorker.id;
                 this.renderer.info(`\x1b[38;5;208m[DISPATCH]\x1b[0m Task delegated to specialized worker: \x1b[1m${bestWorker.role}\x1b[0m (${executionModel})`);
             }
         }
 
-        const worker = this.workforce.getWorker(executionModel);
+        const modelId = executionModel || this.config.huggingfaceFallbackModel || 'ollama';
+        const worker = this.workforce.getWorker(modelId);
         if (worker && worker.authorizedTools.length > 0 && !worker.authorizedTools.includes(plan.tool)) {
-            const error = new Error(`Tool Authorization Failed: Worker '${worker.role}' (${executionModel}) is not authorized for tool '${plan.tool}'.`);
-            logger.error({ model: executionModel, tool: plan.tool, authorized: worker.authorizedTools }, error.message);
+            const error = new Error(`Tool Authorization Failed: Worker '${worker.role}' (${modelId}) is not authorized for tool '${plan.tool}'.`);
+            logger.error({ model: modelId, tool: plan.tool, authorized: worker.authorizedTools }, error.message);
             return { ok: false, error };
         }
 
@@ -2543,7 +2724,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
             this.pulseMonitor.recordError();
             return { ok: false, error: new Error(`Unknown tool: ${plan.tool}`) };
         }
-        const result = await tool.execute({ ...(plan.parameters ?? {}), model: executionModel });
+        const result = await tool.execute({ ...(plan.parameters || {}), model: modelId } as any);
 
         // Metabolic Feedback Loop - Drive hexagram from outcomes
         const hex = this.router.getHexagram();
@@ -2579,7 +2760,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
         if (plan.timestamp) {
             this.trainingCollector.recordConsequence({
                 decisionId: String(plan.timestamp),
-                tool: plan.tool,
+                tool: plan.tool || 'unknown_tool',
                 args: plan.parameters || {},
                 output: finalResult.ok ? finalResult.value.output : (finalResult.error?.message || 'Unknown Error'),
                 success: finalResult.ok,
@@ -2589,9 +2770,10 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
         }
 
         // Phase 53: Meta-Cognitive Reflection Engine
+        const toolId = String(plan.tool);
         const skipReflection = plan.interaction === 'silent' ||
             (result.ok && result.value.data?.skipReflection) ||
-            this.registry.getToolDomain(plan.tool) === SovereignDomain.OBSERVE;
+            this.registry.getToolDomain(toolId) === SovereignDomain.OBSERVE;
 
         if (finalResult.ok && plan.reasoning && !skipReflection) {
             // Background reflection removed as MetaCognitionEngine was pruned. 
@@ -2718,7 +2900,8 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
             this.embedEngine,
             this.pulseMonitor,
             hexagram,
-            this.trainingCollector
+            this.trainingCollector,
+            { GlobeStateLimb: this.globeState }
         );
         const beforeHealth = await nodeTester.auditNeuralNodes();
         const beforeOffline = beforeHealth.filter(h => h.status !== 'ONLINE').length;
@@ -2804,6 +2987,10 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         }, 'SOVEREIGN SELF-MODIFICATION: Complete.');
 
         return { ok: true, value: { commit, hexagram: sym, linesGenerated } };
+    }
+
+    public getSwitchboard(): SwitchboardLimb {
+        return this.switchboard;
     }
 
     public healthCheck(): { online: boolean; details: string } {
