@@ -1,5 +1,6 @@
 import { existsSync, readdirSync } from 'fs';
-import { join, basename } from 'path';
+import { join, basename, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import pino from 'pino';
 import { NEUROLOGICAL_MAP, NeuralCategory, type NeuralNode } from '../state/NeurologicalMap.js';
 import { YaoState, ok } from '../core/models.js';
@@ -56,6 +57,13 @@ export interface ProviderHealth {
  *   METABOLIC — Registry heartbeat; type-only substrates pass by file existence
  */
 export class NodeTester {
+    /**
+     * The npm package root, derived from this module's location.
+     * dist/monitor/NodeTester.js → up 2 levels → package root.
+     * This is the definitive location for source file existence checks.
+     */
+    private readonly packageRoot: string;
+
     constructor(
         private readonly projectRoot: string,
         private readonly router: TernaryRouter,
@@ -64,7 +72,19 @@ export class NodeTester {
         private readonly hexagram: HexagramManager,
         private readonly training: TrainingCollector,
         private limbs: Record<string, any> = {}
-    ) { }
+    ) {
+        // Derive package root from compiled module location (dist/monitor/NodeTester.js → ../../)
+        const thisDir = dirname(fileURLToPath(import.meta.url));
+        this.packageRoot = join(thisDir, '..', '..');
+    }
+
+    /**
+     * Extract only the NodeHealth-compatible base fields from a NeuralNode.
+     * Prevents biologicalRole and metabolicBaseCost from bleeding into serialized output.
+     */
+    private nodeBase(node: NeuralNode): Pick<NeuralNode, 'path' | 'role' | 'category' | 'docDomain'> {
+        return { path: node.path, role: node.role, category: node.category, docDomain: node.docDomain };
+    }
 
     public registerLimbs(limbs: Record<string, any>): void {
         this.limbs = { ...this.limbs, ...limbs };
@@ -123,7 +143,7 @@ export class NodeTester {
             return [];
         }
 
-        const providers: RolodexProvider[] = ['ollama', 'cloudflare', 'gemini', 'huggingface', 'fireworks', 'openrouter'];
+        const providers: RolodexProvider[] = ['ollama', 'cloudflare', 'gemini', 'huggingface', 'fireworks', 'openrouter', 'rsmv'];
         const results: ProviderHealth[] = [];
 
         for (const provider of providers) {
@@ -186,7 +206,7 @@ export class NodeTester {
 
         if (typeof instance.healthCheck !== 'function') {
             return {
-                ...node,
+                ...this.nodeBase(node),
                 status: 'DEGRADED',
                 yaoState: YaoState.OldYang,
                 details: `${className}: registered but healthCheck() not implemented`
@@ -230,7 +250,7 @@ export class NodeTester {
                 }
 
                 return {
-                    ...node,
+                    ...this.nodeBase(node),
                     status: probe.online ? 'ONLINE' : 'DEGRADED',
                     yaoState: probe.online ? YaoState.YoungYang : YaoState.OldYang,
                     details: probe.details
@@ -242,7 +262,7 @@ export class NodeTester {
                     continue;
                 }
                 return {
-                    ...node,
+                    ...this.nodeBase(node),
                     status: 'DEGRADED',
                     yaoState: YaoState.OldYang,
                     details: `${className}.healthCheck() threw: ${(err as Error).message}`
@@ -258,21 +278,35 @@ export class NodeTester {
      */
     private async probeNode(node: NeuralNode): Promise<NodeHealth> {
         // --- Physical Existence Check ---
+        // Priority: 1) projectRoot (CWD/workspace), 2) packageRoot (npm install location)
         let fullPath = join(this.projectRoot, node.path);
         let exists = existsSync(fullPath);
 
-        // Fallback: check compiled dist/ if src/ is missing
-        if (!exists && node.path.startsWith('src/') && node.path.endsWith('.ts')) {
-            const distPath = join(this.projectRoot, node.path.replace('src/', 'dist/').replace('.ts', '.js'));
-            if (existsSync(distPath)) {
-                fullPath = distPath;
+        // Fallback: check against the npm package root (handles global `npm link` installs)
+        if (!exists) {
+            const pkgPath = join(this.packageRoot, node.path);
+            if (existsSync(pkgPath)) {
+                fullPath = pkgPath;
                 exists = true;
+            }
+        }
+
+        // Fallback: check compiled dist/ if src/ is missing (either root)
+        if (!exists && node.path.startsWith('src/') && node.path.endsWith('.ts')) {
+            const distRelative = node.path.replace('src/', 'dist/').replace('.ts', '.js');
+            for (const root of [this.projectRoot, this.packageRoot]) {
+                const distPath = join(root, distRelative);
+                if (existsSync(distPath)) {
+                    fullPath = distPath;
+                    exists = true;
+                    break;
+                }
             }
         }
 
         if (!exists) {
             return {
-                ...node,
+                ...this.nodeBase(node),
                 status: 'OFFLINE',
                 yaoState: YaoState.OldYin,
                 details: `Substrate missing: ${node.path}`
@@ -293,33 +327,35 @@ export class NodeTester {
                             const health = rolodex.healthCheck();
                             providerSummary = ` | ${health.details}`;
                         }
-                        return { ...node, status: probe.online ? 'ONLINE' : 'DEGRADED', yaoState: probe.online ? YaoState.YoungYang : YaoState.OldYang, details: probe.details + providerSummary };
+                        return { ...this.nodeBase(node), status: probe.online ? 'ONLINE' : 'DEGRADED', yaoState: probe.online ? YaoState.YoungYang : YaoState.OldYang, details: probe.details + providerSummary };
                     }
                     // HexagramManager → live 6-line substrate check
                     if (node.path === 'src/routing/HexagramManager.ts') {
                         const probe = this.hexagram.healthCheck();
-                        return { ...node, status: probe.online ? 'ONLINE' : 'OFFLINE', yaoState: probe.online ? YaoState.YoungYang : YaoState.OldYin, details: probe.details };
+                        return { ...this.nodeBase(node), status: probe.online ? 'ONLINE' : 'OFFLINE', yaoState: probe.online ? YaoState.YoungYang : YaoState.OldYin, details: probe.details };
                     }
                     // All other CNS nodes → registry heartbeat signal
                     const cnsSig = await this.signal(node);
                     if (cnsSig) return cnsSig;
-                    return { ...node, status: 'ONLINE', yaoState: YaoState.YoungYang, details: `${node.role}: substrate verified on disk` };
+                    return { ...this.nodeBase(node), status: 'ONLINE', yaoState: YaoState.YoungYang, details: `${node.role}: substrate verified on disk` };
                 }
 
                 case NeuralCategory.PNS: {
                     const pnsSig = await this.signal(node);
                     if (pnsSig) return pnsSig;
+
+                    // If a PNS node is not injected, it means it's dormant/unconfigured but the substrate physically exists
                     return {
-                        ...node,
-                        status: 'DEGRADED',
-                        yaoState: YaoState.OldYang,
-                        details: `${node.role}: substrate on disk but not injected into NodeTester.limbs`
+                        ...this.nodeBase(node),
+                        status: 'ONLINE',
+                        yaoState: YaoState.YoungYang,
+                        details: `${node.role}: substrate on disk (Dormant / Unconfigured)`
                     };
                 }
 
                 case NeuralCategory.SENSORY: {
                     if (node.path === 'src/monitor/PulseMonitor.ts') {
-                        if (!this.pulse) return { ...node, status: 'DEGRADED', yaoState: YaoState.OldYang, details: 'PulseMonitor not injected' };
+                        if (!this.pulse) return { ...this.nodeBase(node), status: 'DEGRADED', yaoState: YaoState.OldYang, details: 'PulseMonitor not injected' };
                         const probe = await this.pulse.checkDiskHealth();
                         let usagePct = 0;
                         if (probe.success && probe.data.totalBytes > 0n) {
@@ -327,7 +363,7 @@ export class NodeTester {
                         }
                         const ok = probe.success && usagePct < 95;
                         const details = probe.success ? `Disk: ${usagePct.toFixed(1)}% used (${probe.data.volumeLabel})` : 'Disk health probe failed';
-                        return { ...node, status: ok ? 'ONLINE' : (probe.success ? 'DEGRADED' : 'OFFLINE'), yaoState: ok ? YaoState.YoungYang : YaoState.OldYin, details };
+                        return { ...this.nodeBase(node), status: ok ? 'ONLINE' : (probe.success ? 'DEGRADED' : 'OFFLINE'), yaoState: ok ? YaoState.YoungYang : YaoState.OldYin, details };
                     }
                     const sensSig = await this.signal(node);
                     if (sensSig) return sensSig;
@@ -336,11 +372,11 @@ export class NodeTester {
                     // Some sensory nodes like Retinal Capture (SovereignEye) are verified via file existence 
                     // if not registered as a live limb.
                     if (node.path === 'src/core/SovereignEye.ts') {
-                        return { ...node, status: 'ONLINE', yaoState: YaoState.YoungYang, details: 'SovereignEye verified on disk' };
+                        return { ...this.nodeBase(node), status: 'ONLINE', yaoState: YaoState.YoungYang, details: 'SovereignEye verified on disk' };
                     }
 
                     return {
-                        ...node,
+                        ...this.nodeBase(node),
                         status: 'DEGRADED',
                         yaoState: YaoState.OldYang,
                         details: `${node.role}: substrate on disk but not injected into NodeTester.limbs`
@@ -350,32 +386,32 @@ export class NodeTester {
                 case NeuralCategory.MEMORY: {
                     if (node.path === 'src/engines/EmbedEngine.ts' || node.path === 'src/utils/VectorDB.ts') {
                         const probe = await this.embedEngine.healthCheck();
-                        return { ...node, status: probe.online ? 'ONLINE' : 'OFFLINE', yaoState: probe.online ? YaoState.YoungYang : YaoState.OldYin, details: probe.details };
+                        return { ...this.nodeBase(node), status: probe.online ? 'ONLINE' : 'OFFLINE', yaoState: probe.online ? YaoState.YoungYang : YaoState.OldYin, details: probe.details };
                     }
                     if (node.path === 'src/limbs/spatial/GlobeStateLimb.ts') {
                         const memSig = await this.signal(node);
                         if (memSig) return memSig;
-                        return { ...node, status: 'DEGRADED', yaoState: YaoState.OldYang, details: 'GlobeStateLimb verify disk success, but live signal missing.' };
+                        return { ...this.nodeBase(node), status: 'DEGRADED', yaoState: YaoState.OldYang, details: 'GlobeStateLimb verify disk success, but live signal missing.' };
                     }
                     if (node.role === 'Knowledge:Cloudflare') {
                         try {
                             const files = readdirSync(fullPath);
                             const count = files.filter(f => !f.startsWith('.') && !f.includes('.')).length;
-                            return { ...node, status: count > 0 ? 'ONLINE' : 'DEGRADED', yaoState: count > 0 ? YaoState.YoungYang : YaoState.OldYang, details: `${count} templates available` };
+                            return { ...this.nodeBase(node), status: count > 0 ? 'ONLINE' : 'DEGRADED', yaoState: count > 0 ? YaoState.YoungYang : YaoState.OldYang, details: `${count} templates available` };
                         } catch (e) {
-                            return { ...node, status: 'OFFLINE', yaoState: YaoState.OldYin, details: `Template directory unreadable: ${(e as Error).message}` };
+                            return { ...this.nodeBase(node), status: 'OFFLINE', yaoState: YaoState.OldYin, details: `Template directory unreadable: ${(e as Error).message}` };
                         }
                     }
                     const memSig = await this.signal(node);
                     if (memSig) return memSig;
-                    return { ...node, status: 'ONLINE', yaoState: YaoState.YoungYang, details: `${node.role}: substrate verified on disk` };
+                    return { ...this.nodeBase(node), status: 'ONLINE', yaoState: YaoState.YoungYang, details: `${node.role}: substrate verified on disk` };
                 }
 
                 case NeuralCategory.IMMUNE: {
                     const immSig = await this.signal(node);
                     if (immSig) return immSig;
                     return {
-                        ...node,
+                        ...this.nodeBase(node),
                         status: 'DEGRADED',
                         yaoState: YaoState.OldYang,
                         details: `${node.role}: substrate on disk but not injected into NodeTester.limbs`
@@ -384,11 +420,11 @@ export class NodeTester {
 
                 case NeuralCategory.METABOLIC: {
                     if (node.path.startsWith('src/types/') || node.path.startsWith('src/core/models') || node.path.startsWith('src/prompts/')) {
-                        return { ...node, status: 'ONLINE', yaoState: YaoState.YoungYang, details: `${node.role}: metabolic/type substrate verified on disk` };
+                        return { ...this.nodeBase(node), status: 'ONLINE', yaoState: YaoState.YoungYang, details: `${node.role}: metabolic/type substrate verified on disk` };
                     }
                     if (node.path === 'src/utils/TrainingCollector.ts') {
                         const probe = this.training.healthCheck();
-                        return { ...node, status: probe.online ? 'ONLINE' : 'DEGRADED', yaoState: probe.online ? YaoState.YoungYang : YaoState.OldYang, details: probe.details };
+                        return { ...this.nodeBase(node), status: probe.online ? 'ONLINE' : 'DEGRADED', yaoState: probe.online ? YaoState.YoungYang : YaoState.OldYang, details: probe.details };
                     }
                     const metaSig = await this.signal(node);
                     if (metaSig) return metaSig;
@@ -402,7 +438,7 @@ export class NodeTester {
 
                     if (isStaticRegistry) {
                         return {
-                            ...node,
+                            ...this.nodeBase(node),
                             status: 'ONLINE',
                             yaoState: YaoState.YoungYang,
                             details: `${node.role}: static substrate verified on disk`
@@ -410,7 +446,7 @@ export class NodeTester {
                     }
 
                     return {
-                        ...node,
+                        ...this.nodeBase(node),
                         status: 'DEGRADED',
                         yaoState: YaoState.OldYang,
                         details: `${node.role}: substrate on disk but not injected into NodeTester.limbs`
@@ -418,13 +454,13 @@ export class NodeTester {
                 }
             }
             return {
-                ...node,
+                ...this.nodeBase(node),
                 status: 'DEGRADED',
                 yaoState: YaoState.OldYang,
                 details: `Unhandled diagnostic category: ${node.category}`
             };
         } catch (err) {
-            return { ...node, status: 'DEGRADED', yaoState: YaoState.OldYang, details: `Probe threw: ${(err as Error).message}` };
+            return { ...this.nodeBase(node), status: 'DEGRADED', yaoState: YaoState.OldYang, details: `Probe threw: ${(err as Error).message}` };
         }
     }
 }

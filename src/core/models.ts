@@ -388,6 +388,8 @@ export interface ModelCallParams {
     format?: 'text' | 'json';
     images?: string[];
     tier?: 'Master' | 'Executive' | 'Reactive';
+    yaoState?: YaoState;
+    signal?: AbortSignal;
 }
 
 export interface ModelExecutor {

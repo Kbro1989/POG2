@@ -13,7 +13,7 @@ const logger = pino({ name: 'ModelRolodex', base: { hostname: 'POG2' } });
 
 // ═══ TYPES ═══
 
-export type RolodexProvider = 'ollama' | 'cloudflare' | 'gemini' | 'huggingface' | 'fireworks' | 'openrouter';
+export type RolodexProvider = 'ollama' | 'cloudflare' | 'gemini' | 'huggingface' | 'fireworks' | 'openrouter' | 'rsmv';
 
 export interface RolodexModel {
     id: string;
@@ -86,7 +86,8 @@ export class ModelRolodex {
             gemini: { provider: 'gemini', authenticated: false, models: [], latencyMs: 0, lastChecked: 0 },
             huggingface: { provider: 'huggingface', authenticated: false, models: [], latencyMs: 0, lastChecked: 0 },
             fireworks: { provider: 'fireworks', authenticated: false, models: [], latencyMs: 0, lastChecked: 0 },
-            openrouter: { provider: 'openrouter', authenticated: false, models: [], latencyMs: 0, lastChecked: 0 }
+            openrouter: { provider: 'openrouter', authenticated: false, models: [], latencyMs: 0, lastChecked: 0 },
+            rsmv: { provider: 'rsmv', authenticated: true, models: ['rsmv-substrate'], latencyMs: 0, lastChecked: Date.now() }
         };
         return { models: {}, providers, lastRefresh: 0, version: '1.0.0' };
     }
@@ -98,7 +99,7 @@ export class ModelRolodex {
      */
     public deserializeAndMerge(remoteState: RolodexState): void {
         let mergedCount = 0;
-        
+
         // Merge Models (The Reputation Score)
         for (const [key, remoteModel] of Object.entries(remoteState.models)) {
             if (!this.state.models[key]) {
@@ -114,7 +115,7 @@ export class ModelRolodex {
                     // For now, if remote has higher total interaction, we absorb the difference.
                     const localTotal = localModel.successCount + localModel.failureCount;
                     const remoteTotal = remoteModel.successCount + remoteModel.failureCount;
-                    
+
                     if (remoteTotal > localTotal) {
                         localModel.successCount = Math.max(localModel.successCount, remoteModel.successCount);
                         localModel.failureCount = Math.max(localModel.failureCount, remoteModel.failureCount);
@@ -134,7 +135,7 @@ export class ModelRolodex {
         for (const [key, remoteIdentity] of Object.entries(remoteState.providers)) {
             const pKey = key as RolodexProvider;
             const localIdentity = this.state.providers[pKey];
-            
+
             // If remote is authenticated and we aren't, absorb their model list (but not their account/email/keys)
             // This allows an offline node to know what models exist on a provider even if it can't reach the discovery API.
             if (remoteIdentity.authenticated) {
@@ -189,18 +190,42 @@ export class ModelRolodex {
         return status.authenticated && status.models.length > 0;
     }
 
-    /** Get best available models for a failover sequence, sorted by health */
+    /** Get best available models for a failover sequence, sorted by health and capability. */
     getHealthyModelsByTaskType(taskType: 'text' | 'image' | 'audio' | 'embedding' | 'vision'): string[] {
         const allModels = this.getAllModels();
 
-        // Filter by task type and success rate, then sort by health score
+        // Filter by task type and calculate a health score
         const scored = allModels
-            .filter(m => m.taskType === taskType && (m.successCount + m.failureCount > 0)) // Match task type and have history
-            .map(m => ({
-                model: m,
-                healthScore: m.successCount / Math.max(1, m.successCount + m.failureCount),
-                prefixedId: this.toPrefixedModelId(m)
-            }))
+            .filter(m => m.taskType === taskType)
+            .map(m => {
+                const totalCalls = m.successCount + m.failureCount;
+                let healthScore = totalCalls > 0
+                    ? m.successCount / totalCalls
+                    : 0.5; // Neutral starting point for new models
+
+                // Cold Start / Capability Bias: 
+                // Reward models with known large parameter counts even if they have 0 history
+                if (totalCalls === 0 && m.parameterSize) {
+                    const size = parseInt(m.parameterSize);
+                    if (!isNaN(size)) {
+                        if (size >= 30) healthScore += 0.3;      // 30b+ is likely very capable
+                        else if (size >= 14) healthScore += 0.2; // 14b+ is a strong mid-tier
+                        else if (size >= 7) healthScore += 0.1;  // 7b+ is standard
+                    }
+                }
+
+                // Latency Penalty:
+                // Heavily penalize models that are consistently slow (> 30s avg)
+                if (m.avgLatencyMs > 30000) {
+                    healthScore -= 0.4;
+                }
+
+                return {
+                    model: m,
+                    healthScore,
+                    prefixedId: this.toPrefixedModelId(m)
+                };
+            })
             .sort((a, b) => b.healthScore - a.healthScore);
 
         return scored.map(s => s.prefixedId);
@@ -259,7 +284,9 @@ export class ModelRolodex {
             this.discoverOllama(),
             this.discoverCloudflare(),
             this.discoverGemini(),
-            this.discoverHuggingFace()
+            this.discoverHuggingFace(),
+            this.discoverOpenRouter(),
+            this.discoverFireworks()
         ]);
 
         this.state.lastRefresh = Date.now();
@@ -313,7 +340,7 @@ export class ModelRolodex {
         } catch (err: any) {
             // For timeouts: Preserve authentication and model list if we already have data
             const isTimeout = err.name === 'TimeoutError' || err.message.includes('timeout') || err.message.includes('aborted');
-            
+
             if (isTimeout && providerState.models.length > 0) {
                 logger.warn({ error: err.message, cachedModels: providerState.models.length }, 'Ollama discovery timed out. Preserving cached model state.');
                 providerState.error = `DISCOVERY_TIMEOUT: ${err.message}`; // Mark as busy/timeout but keep authenticated
@@ -322,7 +349,7 @@ export class ModelRolodex {
                 providerState.error = err.message;
                 logger.warn({ error: err.message }, 'Ollama discovery failed.');
             }
-            
+
             providerState.latencyMs = Date.now() - start;
             providerState.lastChecked = Date.now();
         }
@@ -547,6 +574,118 @@ export class ModelRolodex {
         }
     }
 
+    /** Discover OpenRouter models via REST API */
+    private async discoverOpenRouter(): Promise<void> {
+        const start = Date.now();
+        const providerState = this.state.providers.openrouter;
+        const apiKey = this.config.openRouterApiKey || process.env['OPENROUTER_API_KEY'];
+
+        if (!apiKey) {
+            providerState.error = 'Missing OPENROUTER_API_KEY';
+            providerState.lastChecked = Date.now();
+            return;
+        }
+
+        try {
+            const response = await fetch('https://openrouter.ai/api/v1/models', {
+                headers: { 'Authorization': `Bearer ${apiKey}` },
+                signal: AbortSignal.timeout(60000)
+            });
+
+            if (response.ok) {
+                const data = await response.json() as { data?: any[] };
+                const models = data.data || [];
+                providerState.authenticated = true;
+                providerState.models = models.map(m => m.id);
+
+                for (const m of models) {
+                    const key = `openrouter:${m.id}`;
+                    if (!this.state.models[key]) {
+                        const modality = m.architecture?.modality || '';
+                        this.state.models[key] = {
+                            id: m.id,
+                            name: m.name || m.id,
+                            provider: 'openrouter',
+                            taskType: modality.includes('vision') ? 'vision' : modality.includes('image') ? 'image' : 'text',
+                            lastSeen: Date.now(),
+                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0
+                        };
+                    } else {
+                        this.state.models[key].lastSeen = Date.now();
+                    }
+                }
+                logger.info({ count: models.length }, 'OpenRouter models discovered.');
+            } else {
+                providerState.error = `OpenRouter API returned ${response.status}`;
+            }
+
+            providerState.latencyMs = Date.now() - start;
+            providerState.lastChecked = Date.now();
+            providerState.error = response.ok ? undefined : providerState.error;
+        } catch (err: any) {
+            providerState.error = err.message;
+            providerState.latencyMs = Date.now() - start;
+            providerState.lastChecked = Date.now();
+            logger.warn({ error: err.message }, 'OpenRouter discovery failed.');
+        }
+    }
+
+    /** Discover Fireworks models via REST API */
+    private async discoverFireworks(): Promise<void> {
+        const start = Date.now();
+        const providerState = this.state.providers.fireworks;
+        const apiKey = this.config.fireworksApiKey || process.env['FIREWORKS_API_KEY'];
+
+        if (!apiKey) {
+            providerState.error = 'Missing FIREWORKS_API_KEY';
+            providerState.lastChecked = Date.now();
+            return;
+        }
+
+        try {
+            const response = await fetch('https://api.fireworks.ai/inference/v1/models', {
+                headers: { 'Authorization': `Bearer ${apiKey}` },
+                signal: AbortSignal.timeout(60000)
+            });
+
+            if (response.ok) {
+                const data = await response.json() as { data?: any[] };
+                const models = data.data || [];
+                providerState.authenticated = true;
+                providerState.models = models.map(m => m.id);
+
+                for (const m of models) {
+                    const key = `fireworks:${m.id}`;
+                    if (!this.state.models[key]) {
+                        const id = m.id.toLowerCase();
+                        this.state.models[key] = {
+                            id: m.id,
+                            name: m.id.split('/').pop() || m.id,
+                            provider: 'fireworks',
+                            taskType: id.includes('vision') || id.includes('llava') || id.includes('moondream') ? 'vision' : 'text',
+                            lastSeen: Date.now(),
+                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0
+                        };
+                    } else {
+                        this.state.models[key].lastSeen = Date.now();
+                    }
+                }
+                logger.info({ count: models.length }, 'Fireworks models discovered.');
+            } else {
+                providerState.error = `Fireworks API returned ${response.status}`;
+            }
+
+            providerState.latencyMs = Date.now() - start;
+            providerState.lastChecked = Date.now();
+            providerState.error = response.ok ? undefined : providerState.error;
+        } catch (err: any) {
+            providerState.error = err.message;
+            providerState.latencyMs = Date.now() - start;
+            providerState.lastChecked = Date.now();
+            logger.warn({ error: err.message }, 'Fireworks discovery failed.');
+        }
+    }
+
     // ═══ UTILITIES ═══
 
     /** Convert a RolodexModel to a prefixed model ID usable by ModelClient */
@@ -632,10 +771,13 @@ export class ModelRolodex {
     /** Functional health probe for NodeTester */
     healthCheck(): { online: boolean; details: string } {
         const totalModels = Object.keys(this.state.models).length;
-        const onlineProviders = Object.values(this.state.providers).filter(p => p.authenticated).length;
+        const providers = Object.values(this.state.providers);
+        const onlineProviders = providers.filter(p => p.authenticated).length;
+        const rsmvOnline = this.state.providers.rsmv?.authenticated ? 'Aligned' : 'Disconnected';
+        
         return {
-            online: totalModels > 0,
-            details: `Rolodex: ${totalModels} models across ${onlineProviders}/6 providers. Last refresh: ${this.state.lastRefresh ? new Date(this.state.lastRefresh).toLocaleTimeString() : 'Never'}`
+            online: totalModels > 0 || this.state.providers.rsmv?.authenticated,
+            details: `Rolodex: ${totalModels} models across ${onlineProviders}/7 providers. [RSMV: ${rsmvOnline}]. Last refresh: ${this.state.lastRefresh ? new Date(this.state.lastRefresh).toLocaleTimeString() : 'Never'}`
         };
     }
 }

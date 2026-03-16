@@ -1,4 +1,4 @@
-﻿import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
 import { resolve, extname, join } from 'path';
 import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
@@ -255,7 +255,9 @@ Generate a complete, runnable test file:`;
         let iteration = 0;
 
         // The high-reasoning model puppets the coder
-        const masterModel = this.config.deepPathModel; // Phase 78: Deep Path (Sovereignty) for audits
+        // First choice: Dynamic route for Orchestrator/Master tier
+        const masterRoute = await this.router.route('Orchestrator');
+        const masterModel = masterRoute.model || this.config.deepPathModel;
 
         while (iteration < maxIterations) {
             iteration++;
@@ -293,8 +295,7 @@ If it's perfect (SCORE >= 90), just say SCORE: [n] and "It's clean, move out."`,
             }
             this.router.recordSuccess(masterModel);
 
-            const scoreMatch = criticResult.value.response.match(/SCORE:\s*(\d+)/);
-            const score = scoreMatch?.[1] ? parseInt(scoreMatch[1]) : 50;
+            const score = this.extractAdversarialScore(criticResult.value.response);
 
             // Binary absolute: 90+ is passing â€” below requires regeneration
             if (score >= 90) {
@@ -409,6 +410,31 @@ Requirements:
 
 Output ONLY the improved code:`;
     }
+
+    /**
+     * Robust extractor for the adversarial critic score. 
+     * Supports multiple formats and provides an intelligent fallback.
+     */
+    private extractAdversarialScore(response: string): number {
+        // 1. Primary Pattern: SCORE: N
+        const primaryMatch = response.match(/SCORE:\s*\[?(\d+)\]?/i);
+        if (primaryMatch?.[1]) return parseInt(primaryMatch[1]);
+
+        // 2. Secondary Pattern: [N/100]
+        const secondaryMatch = response.match(/\[(\d+)\/100\]/);
+        if (secondaryMatch?.[1]) return parseInt(secondaryMatch[1]);
+
+        // 3. Tertiary: Any lone digit >= 90 or specific success phrases
+        if (response.toLowerCase().includes("it's clean, move out")) return 95;
+        if (response.toLowerCase().includes("integrity verified")) return 90;
+
+        // 4. Intelligent Fallback: 
+        // If the model gave a long explanation but we can't find a score, 
+        // give it a 75 (passing logic but not excellence) to prevent infinite loop.
+        // If the response is very short, it's likely a failure (0).
+        return response.length > 100 ? 75 : 0;
+    }
+
     public healthCheck(): { online: boolean; details: string } {
         const clientOk = !!this.client;
         const routerOk = !!this.router;

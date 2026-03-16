@@ -16,7 +16,7 @@ import { program, Command } from 'commander';
 // Handle ternary/hexagram duplicate registrations without crashing
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const originalCommand = Command.prototype.command;
-Command.prototype.command = function(this: Command, name: string, ...args: any[]) {
+Command.prototype.command = function (this: Command, name: string, ...args: any[]) {
     const cmdName = name.split(' ')[0];
     const existing = (this as any).commands.find((c: any) => c.name() === cmdName);
     if (existing) return existing;
@@ -24,14 +24,14 @@ Command.prototype.command = function(this: Command, name: string, ...args: any[]
 };
 
 const originalOption = Command.prototype.option;
-Command.prototype.option = function(this: Command, flags: string, description?: string, defaultValue?: any) {
+Command.prototype.option = function (this: Command, flags: string, description?: string, defaultValue?: any) {
     const existing = (this as any).options.find((o: any) => o.flags === flags);
     if (existing) return this;
     return (originalOption as any).apply(this, [flags, description, defaultValue]);
 };
 
 const originalDescription = Command.prototype.description;
-(Command.prototype as any).description = function(this: Command, str: string, argsDescription?: any) {
+(Command.prototype as any).description = function (this: Command, str: string, argsDescription?: any) {
     if (typeof str === 'string' && (this as any)._description) return this;
     return (originalDescription as any).apply(this, [str, argsDescription]);
 };
@@ -52,6 +52,7 @@ import { CompletionEngine } from './engines/CompletionEngine.js';
 import { OrchestrateEngine } from './engines/OrchestrateEngine.js';
 import { MemoryConsolidationEngine } from './engines/MemoryConsolidationEngine.js';
 import { VectorDB } from './utils/VectorDB.js';
+import { RSMVExtractor } from './utils/RSMVExtractor.js';
 import { SovereignConfig, loadConfig } from './config/SovereignConfig.js';
 import { Renderer } from './ui/Renderer.js';
 import { PathNormalizer } from './utils/PathNormalizer.js';
@@ -212,10 +213,10 @@ export async function main(): Promise<void> {
         .option('--force', 'Force re-initialization of core directories', false)
         .action(async (opts) => {
             bootstrapWorkspace(renderer);
-            
+
             const root = getSovereignRoot();
             renderer.info(`Sovereign Root: ${root}`);
-            
+
             const coreDirs = [
                 'memory',
                 'memory/vectors',
@@ -1184,33 +1185,33 @@ export async function main(): Promise<void> {
     // GENERATE COMMANDS
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const gen = program.command('gen')
-    .description('Generation and Mapping commands');
+        .description('Generation and Mapping commands');
 
-gen.command('clinical-audit')
-    .description('Perform a Clinical Audit of the Sovereign Organism and its substrates')
-    .action(async () => {
-        console.log('--- Sovereign Clinical Audit ---');
-        console.log('Status: Implementation Pending');
-        console.log('Action: Audit would verify NeurologicalMap against active substrate files.');
-    });
-
-gen.command('jsdoc <file>')
-    .description('Generate JSDoc for a file')
-    .option('-m, --model <model>', 'Override model selection')
-    .action(async (file: string, opts) => {
-        if (!existsSync(file)) {
-            renderer.error(`File not found: ${file}`);
-            return;
-        }
-
-        const engine = new GenerateEngine(config, router);
-        const result = await engine.generateDocs({
-            filePath: resolve(file),
-            modelOverride: opts.model
+    gen.command('clinical-audit')
+        .description('Perform a Clinical Audit of the Sovereign Organism and its substrates')
+        .action(async () => {
+            console.log('--- Sovereign Clinical Audit ---');
+            console.log('Status: Implementation Pending');
+            console.log('Action: Audit would verify NeurologicalMap against active substrate files.');
         });
 
-        handleResult(result, renderer, state);
-    });
+    gen.command('jsdoc <file>')
+        .description('Generate JSDoc for a file')
+        .option('-m, --model <model>', 'Override model selection')
+        .action(async (file: string, opts) => {
+            if (!existsSync(file)) {
+                renderer.error(`File not found: ${file}`);
+                return;
+            }
+
+            const engine = new GenerateEngine(config, router);
+            const result = await engine.generateDocs({
+                filePath: resolve(file),
+                modelOverride: opts.model
+            });
+
+            handleResult(result, renderer, state);
+        });
 
     gen
         .command('code <task>')
@@ -1802,9 +1803,54 @@ gen.command('jsdoc <file>')
             await engine.initialize();
             await engine.getSwitchboard().startServer(port, engine);
             renderer.success(`Bridge ONLINE. External CLI and Sovereign Eye mirror active.`);
-            
+
             // Keep process alive
             process.stdin.resume();
+        });
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // RSMV SUBSTRATE COMMANDS
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const rsmv = program.command('rsmv').description('Biological constraint and kinetic profile extraction from RSMV data');
+
+    rsmv
+        .command('extract <file>')
+        .description('Parse a RuneScape model file and ingest its anatomical wisdom')
+        .action(async (file: string) => {
+            if (!existsSync(file)) {
+                renderer.error(`File not found: ${file}`);
+                return;
+            }
+
+            try {
+                const modelData = JSON.parse(readFileSync(file, 'utf8'));
+                const engine = new OrchestrateEngine(config, router, renderer);
+                const result = await engine.executePlan({
+                    goal: `CLI RSMV Extraction: ${file}`,
+                    steps: ["Parsing model data", "Extracting biological constraints", "Memory ingestion"],
+                    tool: 'rsmv_extract',
+                    parameters: { modelData },
+                    reasoning: 'Manual CLI-initiated extraction.',
+                    model: config.orchestratorModel,
+                    severity: 20,
+                    interaction: 'text',
+                    yaoState: YaoState.YoungYang,
+                    todos: []
+                });
+                handleResult(result, renderer, state);
+            } catch (err) {
+                renderer.error(`Failed to parse model data: ${(err as Error).message}`);
+            }
+        });
+
+    rsmv
+        .command('status')
+        .description('Probe the health and readiness of the RSMV sensory node')
+        .action(async () => {
+            const extractor = new RSMVExtractor();
+            const probe = extractor.healthCheck();
+            if (probe.online) renderer.success(`RSMV Substrate: ${probe.details}`);
+            else renderer.error(`RSMV Substrate OFFLINE: ${probe.details}`);
         });
 
     program
@@ -1859,7 +1905,7 @@ gen.command('jsdoc <file>')
 
     // For single-shot commands, automatically exit unless we are supposed to enter REPL
     const commandName = program.args[0];
-    if (commandName && ['status', 'health', 'personality', 'read', 'gutenberg', 'cooldown', 'config', 'memory', 'consult-shadow', 'consult-memetics', 'consult-syntropy', 'init', 'system', 'vs'].includes(commandName)) {
+    if (commandName && ['status', 'health', 'personality', 'read', 'gutenberg', 'cooldown', 'config', 'memory', 'consult-shadow', 'consult-memetics', 'consult-syntropy', 'init', 'system', 'vs', 'rsmv'].includes(commandName)) {
         // Clinical exit: allow more time for pino to flush and background MCP links to settle
         setTimeout(() => process.exit(0), 500);
     } else if (commandName) {

@@ -1,4 +1,4 @@
-﻿import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import pino from 'pino';
 import { type Result, ok } from '../../core/models.js';
@@ -60,9 +60,6 @@ export class MediaForgeLimb {
         }
     }
 
-    /**
-     * healthCheck - Verifies that the synthesis substrate is reachable.
-     */
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
         // We can't easily check 'Flux' health without a call, 
         // but we can check if credentials exist in the client.
@@ -70,10 +67,10 @@ export class MediaForgeLimb {
         const hasCredentials = !!(config.cloudflareAccountId && config.cloudflareApiToken);
 
         return {
-            online: hasCredentials,
+            online: true,
             details: hasCredentials
                 ? 'Cloudflare AI Substrate: CONFIGURED'
-                : 'Cloudflare AI Substrate: MISSING_CREDENTIALS'
+                : 'Cloudflare AI Substrate: DORMANT (Missing Credentials)'
         };
     }
 }

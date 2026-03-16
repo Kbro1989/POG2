@@ -12,9 +12,9 @@ const logger = pino({ name: 'SovereignShell', base: { hostname: 'POG2' } });
  */
 export async function $(strings: TemplateStringsArray, ...values: any[]): Promise<{ stdout: string; stderr: string }> {
     const command = strings.reduce((acc, str, i) => acc + str + (values[i] || ''), '');
-    
+
     logger.info({ command }, 'Executing Sovereign Shell command');
-    
+
     try {
         const result = await execAsync(command, { timeout: 15000 });
         return {

@@ -121,6 +121,10 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Tactile Nerve', input: 'RSC game data', output: 'Parsed game structures', constraints: 'Game-specific limb' }
     },
     {
+        path: 'src/utils/RSMVExtractor.ts', role: 'Anatomical Vision (RSMV)', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Spatial Retain', input: 'RSMV Model JSON', output: 'SpeciesAnatomy + KineticProfile', constraints: 'Substrate for developmental memory' }
+    },
+    {
         path: 'src/limbs/creative/YouTubeLimb.ts', role: 'Visual Streamer (YouTube)', category: NeuralCategory.PNS, docDomain: 'CREATIVE', metabolicBaseCost: 20,
         biologicalRole: { organ: 'Optic Transmission', input: 'Video artifacts', output: 'YouTube uploads', constraints: 'OAuth2 required; RFC 8252' }
     },

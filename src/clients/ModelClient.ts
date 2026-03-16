@@ -12,7 +12,8 @@ import {
     ok,
     type AICapability,
     type AITaskType,
-    type AIServiceType
+    type AIServiceType,
+    YaoState
 } from '../core/models.js';
 import type { TernaryRouter } from '../routing/TernaryRouter.js';
 import { TrainingCollector, type ErrorFixRecord } from '../utils/TrainingCollector.js';
@@ -57,10 +58,10 @@ export class ModelClient implements ModelExecutor {
 
         // Massive local contexts (33b+) may take over 5 mins to load into VRAM or stream.
         // Node's default fetch relies on Undici which enforces a strict 300_000ms headers timeout.
-        // We override this to 4 hours (14,400,000ms) for high-fidelity local perseverance.
+        // We override this to 24 hours (86,400,000ms) for high-fidelity local perseverance until complete.
         this.customAgent = new Agent({
-            headersTimeout: 14_400_000,
-            bodyTimeout: 14_400_000,
+            headersTimeout: 86_400_000,
+            bodyTimeout: 86_400_000,
             connectTimeout: 120_000
         });
     }
@@ -164,11 +165,32 @@ export class ModelClient implements ModelExecutor {
         // Sovereign FinOps: Record quota usage
         if (this.quotaTracker) {
             const quotaProvider = provider as QuotaProvider;
-            const tokensUsed = result.ok ? (result.value.tokensUsed ?? 0) : 0;
-            this.quotaTracker.recordUsage(quotaProvider, tokensUsed, 1);
+            const tokensUsed = result.ok ? (result.value.tokensUsed ?? 0) : 0;            this.quotaTracker.recordUsage(quotaProvider, tokensUsed, 1);
         }
 
         return result;
+    }
+
+    private getTimeoutByYaoState(yaoState?: YaoState): number {
+        if (yaoState === undefined && (globalThis as any).yaoState !== undefined) {
+            yaoState = (globalThis as any).yaoState;
+        }
+        if (yaoState === undefined) return 300_000; // Default 5 mins
+
+        switch (yaoState) {
+            case YaoState.OldYang:   // 3: Deep metamorphic change
+            case YaoState.OldMixed:  // 4: Chaotic complexity
+                return 1_200_000;   // 20 mins for deep reasoning
+            case YaoState.YoungYin:
+                return 180_000; // 3m fast response
+            case YaoState.YoungYang: // 2: Stable expansion
+            case YaoState.OldYin:    // 1: Structural break
+                return 600_000;     // 10 mins
+            case YaoState.YoungMixed:// 5: Emerging
+                return 300_000;     // 5 mins
+            default:
+                return 300_000;
+        }
     }
 
     /**
@@ -322,7 +344,8 @@ export class ModelClient implements ModelExecutor {
                 let response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    body: JSON.stringify(body),
+                    signal: AbortSignal.timeout(this.getTimeoutByYaoState(params.yaoState))
                 });
 
                 if (!response.ok) {
@@ -348,7 +371,8 @@ export class ModelClient implements ModelExecutor {
                                     'Content-Type': 'application/json',
                                     'Authorization': `Bearer ${token}`
                                 },
-                                body: JSON.stringify(body)
+                                body: JSON.stringify(body),
+                                signal: AbortSignal.timeout(this.getTimeoutByYaoState(params.yaoState))
                             });
 
                             if (!response.ok) {
@@ -422,22 +446,31 @@ export class ModelClient implements ModelExecutor {
         };
 
         try {
+            const controller = new AbortController();
+            const signal = params.signal || AbortSignal.timeout(86_400_000); // 24 hours
+            const combinedSignal = AbortSignal.any([signal, controller.signal]);
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
                 // Massive local timeout: natively handled by Undici dispatcher
                 dispatcher: this.customAgent,
-                signal: AbortSignal.timeout(14_400_000)
+                signal: combinedSignal
             } as RequestInit & { dispatcher: any });
 
             // LOGGING LOOP: The Persistence Heartbeat
+
             const persistenceInterval = setInterval(() => {
                 const elapsed = Math.floor((Date.now() - startTime) / 1000);
                 const minutes = Math.floor(elapsed / 60);
                 const seconds = elapsed % 60;
-                logger.info({ model: params.model, elapsed: `${minutes}m ${seconds}s` }, 'Neural Perseverance: Local substrate calculation in progress...');
-            }, 60000);
+                logger.info({
+                    model: params.model,
+                    elapsed: `${minutes}m ${seconds}s`,
+                    pulse: 'STILL_REASONING'
+                }, 'Γ¥ÿ Neural Pulse: Deep substrate calculation actively thinking...');
+            }, 30000); // Pulse every 30s instead of 60s
 
             try {
                 if (!response.ok) {
@@ -530,7 +563,7 @@ export class ModelClient implements ModelExecutor {
                     'Authorization': `Bearer ${apiKey}`
                 },
                 body: JSON.stringify(body),
-                signal: AbortSignal.timeout(300_000)
+                signal: AbortSignal.timeout(this.getTimeoutByYaoState(params.yaoState))
             });
 
             if (!response.ok) {
@@ -623,7 +656,7 @@ export class ModelClient implements ModelExecutor {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(body),
-                signal: AbortSignal.timeout(300_000) // 5m timeout for cloud
+                signal: AbortSignal.timeout(this.getTimeoutByYaoState(params.yaoState))
             });
 
             if (!response.ok) {
@@ -687,7 +720,7 @@ export class ModelClient implements ModelExecutor {
                     max_tokens: params.maxTokens ?? 4096,
                     temperature: params.temperature ?? 0.7
                 }),
-                signal: AbortSignal.timeout(300_000)
+                signal: AbortSignal.timeout(this.getTimeoutByYaoState(params.yaoState))
             });
 
             if (!response.ok) {
@@ -742,7 +775,7 @@ export class ModelClient implements ModelExecutor {
                     max_tokens: params.maxTokens ?? 4096,
                     temperature: params.temperature ?? 0.7
                 }),
-                signal: AbortSignal.timeout(300_000)
+                signal: AbortSignal.timeout(this.getTimeoutByYaoState(params.yaoState))
             });
 
             if (!response.ok) {
@@ -999,7 +1032,8 @@ export class ModelClient implements ModelExecutor {
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: { parts: [{ text }] } })
+                    body: JSON.stringify({ content: { parts: [{ text }] } }),
+                    signal: AbortSignal.timeout(this.getTimeoutByYaoState())
                 });
 
                 if (!response.ok) {
@@ -1037,8 +1071,15 @@ export class ModelClient implements ModelExecutor {
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model, prompt: text }),
-                signal: AbortSignal.timeout(120_000)
+                body: JSON.stringify({
+                    model,
+                    prompt: text,
+                    options: {
+                        num_ctx: this.config.numCtx,
+                        temperature: 0.0 // Embeddings should generally be completely deterministic
+                    }
+                }),
+                signal: AbortSignal.timeout(this.getTimeoutByYaoState())
             });
 
             if (!response.ok) {

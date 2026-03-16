@@ -262,7 +262,7 @@ export class GutenbergLimb {
         try {
             logger.info('Initiating library synchronization with substrate alignment...');
             const domainsPath = join(this.cachePath, 'domains');
-            const sovereignPath = join(getGutenbergPath(), 'domains'); 
+            const sovereignPath = join(getGutenbergPath(), 'domains');
 
             const searchPaths = [domainsPath];
             if (existsSync(sovereignPath) && sovereignPath !== domainsPath) searchPaths.push(sovereignPath);
@@ -460,5 +460,65 @@ export class GutenbergLimb {
             online: exists,
             details: exists ? `${books.length} books in library.` : 'Gutenberg cache substrate missing.'
         };
+    }
+    public getCacheSize(): Result<{ totalBytes: number; bookCount: number; formatted: string }> {
+        try {
+            const books = this.loadMetadata();
+            let total = 0;
+            for (const book of books) {
+                if (existsSync(book.path)) {
+                    total += statSync(book.path).size;
+                }
+            }
+
+            const format = (bytes: number) => {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            };
+
+            return { ok: true, value: { totalBytes: total, bookCount: books.length, formatted: format(total) } };
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    /**
+     * updateMetadataCache - Performs an atomic re-scan and checksum verification of all books.
+     * Reclaims the substrate by removing entries for missing files.
+     */
+    public updateMetadataCache(): Result < { removed: number; healthy: number } > {
+        logger.info('Performing atomic metadata cache update and integrity check...');
+        const books = this.loadMetadata();
+        const healthy: BookMetadata[] = [];
+        let removed = 0;
+
+        for(const book of books) {
+            if (existsSync(book.path)) {
+                // Verify checksum integrity
+                try {
+                    const content = readFileSync(book.path, 'utf8');
+                    const currentHash = createHash('sha256').update(content).digest('hex');
+                    if (currentHash === book.checksum) {
+                        healthy.push(book);
+                    } else {
+                        logger.warn({ id: book.id, title: book.title }, 'Checksum mismatch detected. Updating metadata.');
+                        book.checksum = currentHash;
+                        healthy.push(book);
+                    }
+                } catch (e) {
+                    logger.error({ id: book.id }, 'Health check failed for book substrate.');
+                    removed++;
+                }
+            } else {
+                logger.warn({ id: book.id, title: book.title }, 'Substrate missing during audit. Removing from cache.');
+                removed++;
+            }
+        }
+
+        this.saveMetadata(healthy);
+        return { ok: true, value: { removed, healthy: healthy.length } };
     }
 }

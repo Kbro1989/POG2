@@ -45,7 +45,8 @@ const COMPLEXITY_KEYWORDS: Record<string, RegExp> = {
     Voice: /\b(speak|say|listen|voice|audio)\b/i,
     Orchestrator: /\b(plan|orchestrate|decide|manage|coordinate)\b/i,
     Chromanumber: /\b(decompile|color map|hex code|pixel|lines between colors|palette)\b/i,
-    SovereignEye: /\b(windows process|screenshot current|view screen|full screen|api search result)\b/i
+    SovereignEye: /\b(windows process|screenshot current|view screen|full screen|api search result)\b/i,
+    Telemetry: /\b(telemetry|heartbeat|pulse|monitor|stream|audit|clinical|medical|stream)\b/i
 };
 
 export class TernaryRouter {
@@ -497,11 +498,18 @@ export class TernaryRouter {
         // Phase 9: Augment failover with Rolodex-discovered healthy models of same task type
         if (this.rolodex) {
             const rolodexModels = this.rolodex.getHealthyModelsByTaskType(taskType);
-            // Append rolodex models that aren't already in the sequence
             const existingSet = new Set(rawSequence);
-            for (const rm of rolodexModels) {
-                if (!existingSet.has(rm)) {
-                    rawSequence.push(rm);
+            
+            // If the task IS NOT text, we PREPEND specialized models to avoid Master reasoning hijacking
+            if (taskType !== 'text') {
+                const specialized = rolodexModels.filter(rm => !existingSet.has(rm));
+                rawSequence = [...specialized, ...rawSequence];
+            } else {
+                // For text, we append them as fallback to our high-level Config choices
+                for (const rm of rolodexModels) {
+                    if (!existingSet.has(rm)) {
+                        rawSequence.push(rm);
+                    }
                 }
             }
         }
@@ -568,7 +576,17 @@ export class TernaryRouter {
                     continue;
                 }
             }
-            if (this.isModelAvailableAndHealthy(m)) return m;
+            if (this.isModelAvailableAndHealthy(m)) {
+                // Phase 2: Latency Check for Fast Path
+                if (preferred === this.config.fastPathModel && this.rolodex) {
+                    const modelStats = this.rolodex.getAllModels().find(rm => rm.id === m || `ollama:${rm.id}` === m);
+                    if (modelStats && modelStats.avgLatencyMs > 10000) {
+                        logger.debug({ model: m }, 'Skipping model for fast path: high latency');
+                        continue;
+                    }
+                }
+                return m;
+            }
             // Cloud models are assumed available unless explicitly marked failing
             if (this.isCloudModel(m) && !this.isModelFailing(m)) return m;
         }
