@@ -1,12 +1,12 @@
 ﻿import { writeFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
-import pino from 'pino';
 import { type Result, ok, type ProsodyVector } from '../../core/models.js';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
 
 import { HexagramManager } from '../../routing/HexagramManager.js';
+import { createLogger } from "../../utils/logger.js";
 
-const logger = pino({ name: 'SoundtrackLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('SoundtrackLimb');
 
 export interface SoundtrackResult {
     path: string;

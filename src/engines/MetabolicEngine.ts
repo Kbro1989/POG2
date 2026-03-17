@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { type Result, type EngineOutput, YaoState, ok, err, type ThinkingNexus, type ContextCard, CircuitState } from '../core/models.js';
 import { extractJson } from '../utils/JsonExtractor.js';
@@ -8,8 +7,9 @@ import { DiscoveryEngine } from './DiscoveryEngine.js';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'MetabolicEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('MetabolicEngine');
 
 /**
  * MetabolicEngine
@@ -34,6 +34,37 @@ export class MetabolicEngine {
      * Plus Curiosity-driven reflection on Sovereign Laws.
      */
     async expand(intent: string): Promise<Result<ThinkingNexus>> {
+        // --- PHASE 14 SHORT-CIRCUIT: Internal Substrate Commands ---
+        const lowerIntent = intent.toLowerCase().trim();
+        const isInternalCommand = lowerIntent.startsWith('pog2 ') || 
+                                  lowerIntent.startsWith('/') || 
+                                  ['pipeline', 'health', 'status', 'ping', 'memory'].some(cmd => lowerIntent.includes(cmd));
+        
+        if (isInternalCommand) {
+            logger.debug({ intent }, 'Stage 0 internal command detected: bypassing semantic expansion & Wiki fallback.');
+            return ok({
+                yao: YaoState.YoungYang,
+                emotionalValence: 0.5,
+                metabolicPressure: 0.1,
+                substrateHealth: CircuitState.Stable,
+                originalIntent: intent,
+                thoughts: [{
+                    lineIndex: 0,
+                    title: 'System Diagnostic',
+                    content: 'Executing Stage 0 bypass.',
+                    state: YaoState.YoungYang,
+                    reflection: 'Immediate resolution path chosen.',
+                    importance: 1.0,
+                    weight: 1.0
+                }],
+                emotionalPool: { focused: 1.0 } as any,
+                curiosity: 0, // 0 = No curiosity metric for internal operations
+                metabolicFriction: 0.0,
+                bottleneckPaths: [intent]
+            });
+        }
+        // -----------------------------------------------------------
+
         const sovereignContext = this.gatherSovereignContext();
 
         let wisdomContext = '';
@@ -42,9 +73,17 @@ export class MetabolicEngine {
             if (wisdomRes.ok) wisdomContext = wisdomRes.value;
         }
 
-        // Phase 72: Search-driven Informational Recovery
-        if (!wisdomContext && this.search) {
-            logger.info({ intent }, 'Primary wisdom missing. Triggering Discovery Substrate recovery (Wiki)...');
+        // Phase 72/114: Search-driven Informational Recovery
+        // Only trigger Wiki search if the intent lacks wisdom AND appears to be a knowledge query
+        const isKnowledgeQuery = !isInternalCommand && 
+                                 (lowerIntent.includes('what') || 
+                                  lowerIntent.includes('who') || 
+                                  lowerIntent.includes('explain') || 
+                                  lowerIntent.includes('research') ||
+                                  lowerIntent.split(' ').length > 4); // Complex sentences might need context
+
+        if (!wisdomContext && this.search && isKnowledgeQuery) {
+            logger.info({ intent }, 'Primary wisdom missing for knowledge query. Triggering Discovery Substrate recovery (Wiki)...');
 
             // Extract core subject noun to avoid searching Wikipedia for conversational padding
             let wikiQuery = intent;
@@ -67,6 +106,8 @@ export class MetabolicEngine {
             } else {
                 logger.warn({ wikiQuery, error: searchRes.error?.message }, 'Wiki recovery failed, proceeding without literal wisdom');
             }
+        } else if (!wisdomContext) {
+            logger.debug({ intent }, 'Primary wisdom missing, but intent does not warrant Wiki recovery. Proceeding with raw intent.');
         }
 
         logger.info({ intent }, 'Expanding intent into metabolic nexus with Sovereign Curiosity and Literary Wisdom');

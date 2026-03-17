@@ -11,7 +11,7 @@ export class AnalyticalStrategy implements RoutingStrategy {
 
         if (complexity === 'Yin') return null;
 
-        const bestModel = availableModels.sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0))[0]?.model || 'qwen2.5-coder:7b';
+        const bestModel = availableModels.sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0))[0]?.model || 'deepseek-r1:8b';
 
         return {
             model: bestModel,

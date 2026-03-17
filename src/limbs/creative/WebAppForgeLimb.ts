@@ -1,18 +1,17 @@
-﻿import { type Result, type Lesson, ok, err } from '../../core/models.js';
+import { type Result, type Lesson, ok, err } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { GHOST_LIMB_APP_TSX, SOVEREIGN_TAILWIND_CONFIG, SOVEREIGN_MAIN_CSS } from '../../utils/SovereignUI.js';
 import { existsSync, mkdirSync, writeFileSync, readdirSync, lstatSync, copyFileSync, readFileSync } from 'fs';
 import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import pino from 'pino';
-
 import { HexagramManager } from '../../routing/HexagramManager.js';
 
-const logger = pino({ name: 'WebAppForgeLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('WebAppForgeLimb');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 import { SOVEREIGN_COMPONENTS } from '../../utils/SovereignLibrary.js';
+import { createLogger } from "../../utils/logger.js";
 
 export interface AppBlueprint {
     name: string;
@@ -144,7 +143,7 @@ REQUIREMENT: NO PLACEHOLDERS. NO MOCKS.
 The component will be saved in ${componentName}.tsx.`;
 
         const result = await this.client.call({
-            model: 'qwen2.5-coder:14b-instruct-q5_K_M',
+            model: 'deepseek-r1:8b',
             prompt: uiPrompt,
             temperature: 0.3
         });
@@ -189,7 +188,7 @@ OUTPUT FORMAT: JSON ONLY
 `;
 
         const res = await this.client.call({
-            model: 'qwen2.5-coder:14b-instruct-q5_K_M',
+            model: 'deepseek-r1:8b',
             prompt: `${systemPrompt}\n\nProject Prompt: "${blueprint.name}"\nFeatures: ${blueprint.features.join(', ')}`,
             temperature: 0.3
         });
@@ -239,7 +238,7 @@ Respond in JSON ONLY:
 `;
 
         const res = await this.client.call({
-            model: 'qwen2.5-coder:14b-instruct-q5_K_M',
+            model: 'deepseek-r1:8b',
             prompt: `${systemPrompt}\n\nUser Prompt: "${prompt}"`,
             temperature: 0.2
         });

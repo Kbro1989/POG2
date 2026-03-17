@@ -2,7 +2,6 @@ import { readFileSync, readdirSync, statSync, existsSync, mkdirSync } from 'fs';
 import { join, relative, extname } from 'path';
 import { createHash } from 'crypto';
 import Database from 'better-sqlite3';
-import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { Renderer } from '../ui/Renderer.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
@@ -10,8 +9,9 @@ import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { type Result, type EngineOutput, YaoState } from '../core/models.js';
 import { SovereignIgnoreManager } from '../utils/SovereignIgnoreManager.js';
 import { getSystemRoot } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'EmbedEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('EmbedEngine');
 
 const DB_DIR = join(getSystemRoot(), 'learning');
 const DB_PATH = join(DB_DIR, 'embeddings.db');

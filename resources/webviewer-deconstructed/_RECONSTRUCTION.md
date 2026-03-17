@@ -1,0 +1,1 @@
+# Module Reconstruction Information\n\n## Summary\n- Total Modules: 109\n- Total Size: 1.00 MB\n\n## Categories\n- json-comment-parser: 0 modules\n- property-descriptor: 25 modules\n- syntax-error: 2 modules\n- lodash-style: 2 modules\n- core-js: 3 modules\n- unidentified: 77 modules\n

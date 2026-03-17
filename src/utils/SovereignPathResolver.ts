@@ -129,16 +129,9 @@ export function getSovereignRoot(tier?: PathTier): string {
     if (resolvedTier === PathTier.Sovereign) {
         const lair = getEffectiveSovereignLair();
         
-        // Create Lair folder if missing
-        if (!existsSync(lair)) {
-            mkdirSync(lair, { recursive: true });
-        }
-
-        // Ensure Gutenberg path is also initialized
-        const gutenberg = join(lair, 'pog-gutenberg');
-        if (!existsSync(gutenberg)) {
-            mkdirSync(gutenberg, { recursive: true });
-        }
+        // Phase 14: Eagerly bootstrap the entire 12-directory sovereign substrate
+        bootstrapSovereignSubstrate(lair);
+        
         return lair;
     }
 
@@ -172,6 +165,49 @@ export function resolveSovereignPath(subpath: string, tier?: PathTier): string {
     }
 
     return resolved;
+}
+
+/**
+ * Bootstraps the 12 core directories required for training, pipelines, and memory.
+ * Ensures the substrate is fully initialized and directories are not missing.
+ */
+function bootstrapSovereignSubstrate(root: string): void {
+    const requiredDirs = [
+        'training/interactions',
+        'training/decisions',
+        'training/history',
+        'training/metrics',
+        'training/thinking',
+        'training/fprag',
+        'training/error_fixes',
+        'training/consequences',
+        'pipelines',
+        'memory',
+        'snapshots',
+        'generations',
+        'pog-gutenberg'
+    ];
+
+    if (!existsSync(root)) {
+        mkdirSync(root, { recursive: true });
+    }
+
+    for (const dir of requiredDirs) {
+        const p = join(root, dir);
+        if (!existsSync(p)) {
+            mkdirSync(p, { recursive: true });
+        }
+    }
+}
+
+/**
+ * Returns the formal structural path to the local Jagex/RuneScape cache.
+ * Governs the vision bridge's access to underlying model data.
+ */
+export function getRSMVCachePath(): string {
+    return process.env['POG_RSMV_CACHE_DIR'] || (process.platform === 'win32' 
+        ? 'C:\\ProgramData\\Jagex\\RuneScape'
+        : join(homedir(), 'Jagex', 'RuneScape'));
 }
 
 /**

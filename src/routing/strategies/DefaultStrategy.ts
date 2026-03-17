@@ -5,7 +5,7 @@ export class DefaultStrategy implements TerminalStrategy {
 
     async route(context: RoutingContext): Promise<RoutingDecision> {
         const startTime = performance.now();
-        const model = context.availableModels?.[0]?.name || 'qwen2.5-coder:7b';
+        const model = context.availableModels?.[0]?.name || 'deepseek-r1:8b';
 
         return {
             model,

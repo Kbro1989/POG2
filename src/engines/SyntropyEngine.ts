@@ -1,13 +1,13 @@
-﻿import pino from 'pino';
-import { readFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
+﻿import { readFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import type { Result } from '../core/models.js';
 import { ok, err } from '../core/models.js';
 import { getSovereignRoot, PathTier } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'SyntropyEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('SyntropyEngine');
 
 export interface ClaudeHistoryEntry {
     display: string;

@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { join, basename } from 'path';
 import { existsSync, mkdirSync, writeFileSync, statSync, renameSync, readFileSync } from 'fs';
 import { Result, ok } from '../../core/models.js';
@@ -7,8 +6,9 @@ import type { PipelineManifest, SceneArtifact } from '../../engines/PipelineCont
 
 import { HexagramManager } from '../../routing/HexagramManager.js';
 import { YaoState } from '../../core/models.js';
+import { createLogger } from "../../utils/logger.js";
 
-const logger = pino({ name: 'VideoAssemblerLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('VideoAssemblerLimb');
 
 export interface VideoAssemblerOptions {
     frameRate?: number;

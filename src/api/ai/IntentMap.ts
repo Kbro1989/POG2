@@ -1,4 +1,4 @@
-﻿export interface IntentPathway {
+export interface IntentPathway {
     id: string;
     description: string;
     targetCapabilityId: string;
@@ -20,7 +20,7 @@ export const IntentMap: Record<string, IntentPathway[]> = {
         {
             id: 'lua_scripting',
             description: 'Game modding script generation',
-            targetCapabilityId: 'qwen2.5-coder:7b',
+            targetCapabilityId: 'deepseek-r1:8b',
             keywords: ['lua', 'morrowind', 'mod', 'script'],
             reasoning: 'Qwen is excellent for specialized scripting.'
         }

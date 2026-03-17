@@ -1,6 +1,5 @@
-import pino from 'pino';
-import { appendFile } from 'fs/promises';
-import { existsSync, mkdirSync } from 'fs';
+import { appendFile, readFile } from 'fs/promises';
+import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import {
     getTrainingInteractionsPath,
@@ -13,8 +12,10 @@ import {
     getTrainingConsequencesPath
 } from './SovereignPathResolver.js';
 import { type ThinkingNexus, type DecisionAuditRecord, YaoState } from '../core/models.js';
+import { EventBus } from '../events/EventBus.js';
+import { createLogger } from "./logger.js";
 
-const logger = pino({ name: 'TrainingCollector', base: { hostname: 'POG2' } });
+const logger = createLogger('TrainingCollector');
 
 // â•â•â• Training Data Interfaces â•â•â•
 
@@ -146,13 +147,13 @@ export class TrainingCollector {
 
     private shouldBroadcast(eventType: string): boolean {
         if (!this.hexagramManager) return true; // Default to allow if immune system offline
-        
+
         const yao = this.hexagramManager.getYaoState?.();
         // If the node is in complete chaos (OldMixed), do not broadcast panic to the Swarm,
         // EXCEPT for error fixes which might be a desperate survival mechanism.
         if (yao === YaoState.OldMixed && eventType !== 'error_fix_event') {
-             logger.warn({ eventType }, 'Cognitive Immunology: Blocked outbound broadcast due to local OldMixed chaotic state.');
-             return false;
+            logger.warn({ eventType }, 'Cognitive Immunology: Blocked outbound broadcast due to local OldMixed chaotic state.');
+            return false;
         }
         return true;
     }
@@ -169,9 +170,38 @@ export class TrainingCollector {
         this.interactionCount++;
         if (!record.success) this.errorCount++;
 
+        EventBus.getInstance().publish({
+            type: 'interaction',
+            source: 'TrainingCollector',
+            payload: full
+        });
+    }
+
+    /**
+     * Get recent interactions for diagnostic or evolutionary sweep.
+     * Reads from the current day's log file.
+     */
+    public async getRecentInteractions(count: number = 20): Promise<InteractionRecord[]> {
         const dir = getTrainingInteractionsPath();
         const fileName = `${this.getDatePrefix()}.jsonl`;
-        await this.appendJsonl(join(dir, fileName), full);
+        const filePath = join(dir, fileName);
+
+        if (!existsSync(filePath)) return [];
+
+        try {
+            const raw = readFileSync(filePath, 'utf-8');
+            const lines = raw.trim().split('\n');
+            const records: InteractionRecord[] = lines
+                .map((line: string) => {
+                    try { return JSON.parse(line); } catch { return null; }
+                })
+                .filter((r: any): r is InteractionRecord => r !== null);
+
+            return records.slice(-count);
+        } catch (error) {
+            logger.warn({ filePath, error: (error as Error).message }, 'Failed to read interactions');
+            return [];
+        }
     }
 
     // â•â•â• Routing Decision Recording â•â•â•
@@ -183,10 +213,12 @@ export class TrainingCollector {
             sessionId: this.sessionId
         };
 
-        const dir = getTrainingDecisionsPath();
-        const fileName = `${this.getDatePrefix()}.jsonl`;
-        await this.appendJsonl(join(dir, fileName), full);
-        
+        EventBus.getInstance().publish({
+            type: 'decision.routing',
+            source: 'TrainingCollector',
+            payload: full
+        });
+
         // Broadcast high-level routing evolution to the swarm
         if (this.globeStateLimb && this.shouldBroadcast('routing_event')) {
             this.globeStateLimb.pushNodeState('routing_event', full).catch((err: any) => {
@@ -206,9 +238,11 @@ export class TrainingCollector {
             metadata
         };
 
-        const dir = getTrainingHistoryPath();
-        const fileName = `${this.getDatePrefix()}.jsonl`;
-        await this.appendJsonl(join(dir, fileName), record);
+        EventBus.getInstance().publish({
+            type: 'history',
+            source: 'TrainingCollector',
+            payload: record
+        });
     }
 
     // â•â•â• Metric Recording â•â•â•
@@ -220,9 +254,11 @@ export class TrainingCollector {
             sessionId: this.sessionId
         };
 
-        const dir = getTrainingMetricsPath();
-        const fileName = `${this.getDatePrefix()}.jsonl`;
-        await this.appendJsonl(join(dir, fileName), full);
+        EventBus.getInstance().publish({
+            type: 'metric',
+            source: 'TrainingCollector',
+            payload: full
+        });
     }
 
     // â•â•â• Thinking Nexus Recording â•â•â•
@@ -234,9 +270,11 @@ export class TrainingCollector {
             sessionId: this.sessionId
         };
 
-        const dir = getTrainingThinkingPath();
-        const fileName = `${this.getDatePrefix()}.jsonl`;
-        await this.appendJsonl(join(dir, fileName), full);
+        EventBus.getInstance().publish({
+            type: 'thinking',
+            source: 'TrainingCollector',
+            payload: full
+        });
 
         // Broadcast deep thinking chains to the swarm
         if (this.globeStateLimb && this.shouldBroadcast('thinking_event')) {
@@ -254,10 +292,12 @@ export class TrainingCollector {
             sessionId: this.sessionId
         };
 
-        const dir = getTrainingFPRAGPath();
-        const fileName = `${this.getDatePrefix()}.jsonl`;
-        await this.appendJsonl(join(dir, fileName), full);
-        logger.debug({ model: audit.selectedModel, directive: audit.directive }, 'FPRAG decision recorded to training substrate');
+        EventBus.getInstance().publish({
+            type: 'decision.fprag',
+            source: 'TrainingCollector',
+            payload: full
+        });
+        logger.debug({ model: audit.selectedModel, directive: audit.directive }, 'FPRAG decision assigned to EventBus');
 
         // Broadcast ethical/directive validations to the swarm
         if (this.globeStateLimb && this.shouldBroadcast('fprag_event')) {
@@ -276,9 +316,11 @@ export class TrainingCollector {
             sessionId: this.sessionId
         };
 
-        const dir = getTrainingErrorFixesPath();
-        const fileName = `${this.getDatePrefix()}.jsonl`;
-        await this.appendJsonl(join(dir, fileName), full);
+        EventBus.getInstance().publish({
+            type: 'error.fix',
+            source: 'TrainingCollector',
+            payload: full
+        });
 
         // Broadcast self-healing methodologies to the swarm
         if (this.globeStateLimb && this.shouldBroadcast('error_fix_event')) {
@@ -297,9 +339,11 @@ export class TrainingCollector {
             sessionId: this.sessionId
         };
 
-        const dir = getTrainingConsequencesPath();
-        const fileName = `${this.getDatePrefix()}.jsonl`;
-        await this.appendJsonl(join(dir, fileName), full);
+        EventBus.getInstance().publish({
+            type: 'consequence',
+            source: 'TrainingCollector',
+            payload: full
+        });
     }
 
     // â•â•â• Health Check (for NodeTester) â•â•â•
@@ -324,15 +368,5 @@ export class TrainingCollector {
 
     private getDatePrefix(): string {
         return new Date().toISOString().split('T')[0]!;
-    }
-
-    private async appendJsonl(filePath: string, data: unknown): Promise<void> {
-        try {
-            mkdirSync(dirname(filePath), { recursive: true });
-            const line = JSON.stringify(data) + '\n';
-            await appendFile(filePath, line, 'utf-8');
-        } catch (error) {
-            logger.warn({ filePath, error: (error as Error).message }, 'Failed to write training data');
-        }
     }
 }

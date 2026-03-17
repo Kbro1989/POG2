@@ -55,6 +55,43 @@ graph LR
 
 ---
 
+## 🏎️ The Capability Cascade (Phase 10 Formalization)
+
+POG2 operates on a **5-Stage Metabolic Cascade**. This architecture ensures that cognitive resources are spent with maximum precision—only a fraction of tasks ever escalate to the high-cost cloud tier.
+
+| Stage | Logic Tier | Infrastructure | Metabolic Cost |
+| :--- | :--- | :--- | :--- |
+| **Stage 0** | **Deterministic** | Regex, `CodeExtractor`, `JsonExtractor` | 0.1ms / $0 |
+| **Stage 1** | **Contextual** | `VectorDB`, `queryLessons`, Memory Retrieval | 5-20ms / $0 |
+| **Stage 2** | **Micro/Local** | Phi, VibeThinker, TinyLlama (Sub-3B) | 200-600ms / VRAM |
+| **Stage 3** | **Mid-Tier Structural** | Llama 3, DeepSeek-Coder-32B, Qwen | 1-5s / VRAM-GPU |
+| **Stage 4** | **Cloud Escalation** | Kimi, Gemini, GPT (External APIs) | 3-15s / Token Cost |
+
+### 🛠️ The Operational Reality
+- **Target Efficiency**: 80-90% of tasks are handled by **Stages 0-3**.
+- **The "Doc Loop"**: The TernaryRouter evaluates the "uncertainty" of a task. If Stage 2 fails or provides low-confidence results, the system cascades to Stage 3 and then Stage 4 only as a last resort.
+- **Economic Intelligence**: This cascade enables a **60% reduction in API operational costs** without sacrificing reasoning quality.
+
+---
+
+## 🧬 Autonomous Evolutionary Feedback (Phase 11)
+
+The POG2 CNS is now a **closed-loop learning system**. It does not just execute; it learns from its own metabolisms through an autopoietic feedback circuit.
+
+### 🔄 The Evolution Loop (Limb-to-Reputation)
+1. **Outcome Scoring**: `OutcomeScorer.ts` audits every response for syntax integrity (brace balance, JSON validity) and semantic alignment.
+2. **Drift Detection**: `StrategyAdvisor.ts` analyzes historical interactions in the `TrainingCollector`. If a model's performance (score/success rate) drops below baseline, a **Strategy Mutation** is proposed.
+3. **Sovereign Approval**: Mutations (tactical demotions or weight adjustments) are held in an **Approval Gate** for human oversight before being applied to the `ModelRolodex`.
+4. **Adaptive Reputation**: The `ModelRolodex` reputation score is mutated, directly affecting the `TernaryRouter`'s future selection probabilities.
+
+| Feedback Type | Mechanism | Threshold | Tactical Action |
+| :--- | :--- | :--- | :--- |
+| **Metabolic Drift** | `StrategyAdvisor` | Fail Rate > 30% | Tactical Demotion (Reputation Cut) |
+| **Cognitive Fatigue** | `OutcomeScorer` | Low semantic score | Tier Swap (Escalation to Cloud) |
+| **Structural Healing** | `TernaryRouter` | Error-Fix pairs | Reputation Recovery |
+
+---
+
 ## ⚖️ Substrate-Aware Development Rules
 
 > [!WARNING]

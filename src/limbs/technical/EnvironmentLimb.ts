@@ -1,7 +1,7 @@
-import pino from 'pino';
 import { type Result, ok } from '../../core/models.js';
+import { createLogger } from "../../utils/logger.js";
 
-const logger = pino({ name: 'EnvironmentLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('EnvironmentLimb');
 
 /**
  * EnvironmentLimb - OS Context Bridge

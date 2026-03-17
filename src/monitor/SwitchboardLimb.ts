@@ -1,11 +1,11 @@
-import pino from 'pino';
 import { type Result, ok } from '../core/models.js';
 import { WebSocketServer, WebSocket } from 'ws';
 import express from 'express';
 import { createServer, Server as HttpServer } from 'http';
 import { join } from 'path';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'SwitchboardLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('SwitchboardLimb');
 
 /**
  * SwitchboardLimb - Dynamic Resource Routing

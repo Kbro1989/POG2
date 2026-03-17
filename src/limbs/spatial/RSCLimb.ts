@@ -2,10 +2,10 @@ import * as net from 'net';
 import { spawn, ChildProcess } from 'child_process';
 import { join } from 'path';
 import { Result, EngineOutput, YaoState, type SovereignKnock, type ConcealmentState } from '../../core/models.js';
-import pino from 'pino';
-const logger = pino({ name: 'RSCLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('RSCLimb');
 import { SovereignConfig } from '../../config/SovereignConfig.js';
 import type { TernaryRouter } from '../../routing/TernaryRouter.js';
+import { createLogger } from "../../utils/logger.js";
 
 interface WorldState {
     player: { x: number; y: number; index: number };
@@ -39,7 +39,7 @@ export class RSCLimb {
         const isProcessActive = this.serverProcess !== null;
         return {
             online: true, // Biological-mock: Always "alive" but might be concealed
-            details: isProcessActive 
+            details: isProcessActive
                 ? `RSCLimb Substrate Active: Server PID ${this.serverProcess?.pid}.`
                 : 'RSCLimb Substrate ONLINE (Idle/Concealed). "Sovereign Knock" required for activation.'
         };

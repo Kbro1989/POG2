@@ -7,9 +7,9 @@ import { NarrativeExtractor, type NarrativeSegment } from '../../utils/Narrative
 import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync, readdirSync, statSync, renameSync } from 'fs';
 import { join } from 'path';
 import { createHash } from 'crypto';
-import pino from 'pino';
+import { createLogger } from "../../utils/logger.js";
 
-const logger = pino({ name: 'GutenbergLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('GutenbergLimb');
 
 export interface BookMetadata {
     id: number;
@@ -489,13 +489,13 @@ export class GutenbergLimb {
      * updateMetadataCache - Performs an atomic re-scan and checksum verification of all books.
      * Reclaims the substrate by removing entries for missing files.
      */
-    public updateMetadataCache(): Result < { removed: number; healthy: number } > {
+    public updateMetadataCache(): Result<{ removed: number; healthy: number }> {
         logger.info('Performing atomic metadata cache update and integrity check...');
         const books = this.loadMetadata();
         const healthy: BookMetadata[] = [];
         let removed = 0;
 
-        for(const book of books) {
+        for (const book of books) {
             if (existsSync(book.path)) {
                 // Verify checksum integrity
                 try {

@@ -1,12 +1,9 @@
-import pino from 'pino';
 import { type Result, type Ternary } from '../../core/models.js';
 import { CapabilityRegistry, type AICapability, type AIServiceType } from './CapabilityRegistry.js';
 import { ModelClient } from '../../clients/ModelClient.js';
+import { createLogger } from "../../utils/logger.js";
 
-const logger = pino({
-    name: 'AIDispatcher',
-    base: { hostname: 'POG2' }
-});
+const logger = createLogger('AIDispatcher');
 
 export type ServiceState = 'IDLE' | 'CONNECTING' | 'READY' | 'ERROR';
 
@@ -69,10 +66,10 @@ export class AIDispatcher {
         if (!model) {
             switch (capability.serviceType) {
                 case 'GEMINI': model = `gemini:${this.client.config.geminiProModel}`; break;
-                case 'OLLAMA': model = 'qwen2.5-coder:7b'; break;
+                case 'OLLAMA': model = 'deepseek-r1:8b'; break;
                 case 'CLOUDFLARE': model = '@cf/meta/llama-3.1-8b-instruct'; break;
                 case 'HUGGINGFACE': model = 'huggingface:openai-compat/kimi-k2.5-thinking'; break;
-                default: model = 'qwen2.5-coder:7b';
+                default: model = 'deepseek-r1:8b';
             }
         }
 

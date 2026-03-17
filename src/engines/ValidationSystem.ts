@@ -1,10 +1,10 @@
 import type { ValidationResult, Validator } from '../core/models.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import pino from 'pino';
+import { createLogger } from "../utils/logger.js";
 
 const execAsync = promisify(exec);
-const logger = pino({ name: 'ValidationSystem', base: { hostname: 'POG2' } });
+const logger = createLogger('ValidationSystem');
 
 /**
  * ValidationSystem - Orchestrates the execution of multiple code validators.

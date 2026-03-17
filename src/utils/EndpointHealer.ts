@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import type { TrainingCollector } from './TrainingCollector.js';
@@ -11,9 +10,10 @@ import type { CodeEngine } from '../engines/CodeEngine.js';
 import type { ShellEngine } from '../engines/ShellEngine.js';
 
 const execAsync = promisify(exec);
-const logger = pino({ name: 'EndpointHealer', base: { hostname: 'POG2' } });
+const logger = createLogger('EndpointHealer');
 
 import { $ } from './shell.js';
+import { createLogger } from "./logger.js";
 
 export interface HealerDiagnostic {
     provider: string;

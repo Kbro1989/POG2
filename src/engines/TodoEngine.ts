@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { Renderer } from '../ui/Renderer.js';
 import { type Todo, type TodoStatus, ok } from '../core/models.js';
 import { SovereignProprioception } from '../utils/SovereignProprioception.js';

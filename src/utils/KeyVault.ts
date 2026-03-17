@@ -10,12 +10,9 @@ import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypt
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
-import pino from 'pino';
+import { createLogger } from "./logger.js";
 
-const logger = pino({
-    name: 'KeyVault',
-    base: { hostname: 'POG2' }
-});
+const logger = createLogger('KeyVault');
 
 interface KeyEntry {
     name: string;

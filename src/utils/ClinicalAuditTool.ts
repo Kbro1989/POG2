@@ -1,11 +1,11 @@
-import pino from 'pino';
 import { type Result, ok } from '../core/models.js';
 import { readFile, readdir, stat } from 'fs/promises';
 import { join, extname } from 'path';
 import { SovereignIgnoreManager } from './SovereignIgnoreManager.js';
 import { getSystemRoot } from './SovereignPathResolver.js';
+import { createLogger } from "./logger.js";
 
-const logger = pino({ name: 'ClinicalAuditTool', base: { hostname: 'POG2' } });
+const logger = createLogger('ClinicalAuditTool');
 
 export interface AuditViolation {
     pattern: string;

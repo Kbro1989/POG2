@@ -1,13 +1,10 @@
 import { execSync } from 'child_process';
-import pino from 'pino';
 import { type Result, YaoState } from '../core/models.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { $ } from '../utils/shell.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({
-    name: 'CloudflareServices',
-    base: { hostname: 'POG2' }
-});
+const logger = createLogger('CloudflareServices');
 
 export interface CloudflareConfig {
     accountId?: string;

@@ -1,10 +1,11 @@
-import pino from 'pino';
 import { type Result, ok } from '../../core/models.js';
 import { WebSocket } from 'ws';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
 import type { QuotaTracker, QuotaState } from '../../utils/QuotaTracker.js';
+import { EventBus, SovereignEvent } from '../../events/EventBus.js';
+import { createLogger } from "../../utils/logger.js";
 
-const logger = pino({ name: 'GlobeStateLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('GlobeStateLimb');
 
 export interface GlobeState {
     id: string;
@@ -25,18 +26,42 @@ export class GlobeStateLimb {
         nodes: {},
         lastSync: Date.now()
     };
-    private endpoint: string = 'ws://localhost:8787/party/globe'; 
+    private endpoint: string = 'ws://localhost:8787/party/globe';
     private subscribers: Map<string, Array<(data: any) => void>> = new Map();
     private connectPromise: Promise<Result<boolean>> | null = null;
 
-    constructor(config?: SovereignConfig) { 
+    constructor(config?: SovereignConfig) {
         if (config?.globeEndpoint) {
             this.endpoint = config.globeEndpoint;
         }
+
+        // Tap into the cognitive stream
+        EventBus.getInstance().subscribeAll(this.streamEventData.bind(this));
     }
 
     public setEndpoint(url: string): void {
         this.endpoint = url;
+    }
+
+    /**
+     * Directly stream an EventBus telemetry packet to the WebGL globe
+     */
+    private streamEventData(event: SovereignEvent): void {
+        this.state.lastSync = Date.now();
+
+        if (this.ws?.readyState === WebSocket.OPEN) {
+            // Strip large payloads if needed, or send the whole event envelope
+            this.ws.send(JSON.stringify({
+                type: 'event',
+                id: event.id,
+                eventType: event.type,
+                source: event.source,
+                traceId: event.traceId,
+                timestamp: event.timestamp,
+                // Include latency if it's a metric or embedded in payload
+                latency: event.payload?.latencyMs,
+            }), (err) => { if (err) logger.debug({ err }, 'Failed to stream telemetry packet'); });
+        }
     }
 
     /**
@@ -69,7 +94,7 @@ export class GlobeStateLimb {
                         if (msg.type === 'state-sync') {
                             this.state = msg.state;
                             logger.debug('State synchronized from Globe');
-                            
+
                             // Notify subscribers of the new state
                             for (const [nodeId, nodeData] of Object.entries(this.state.nodes)) {
                                 const callbacks = this.subscribers.get(nodeId);
@@ -157,7 +182,7 @@ export class GlobeStateLimb {
         return {
             online: isOnline,
             retryable: isConnecting,
-            details: isOnline 
+            details: isOnline
                 ? `Globe Substrate Active: ${Object.keys(this.state.nodes).length} nodes synced.`
                 : (isConnecting ? 'Globe Substrate Offline: Waiting for connection.' : 'Globe Substrate Offline: Connection failed or closed.')
         };

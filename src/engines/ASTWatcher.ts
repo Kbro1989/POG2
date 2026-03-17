@@ -2,10 +2,10 @@ import { EventEmitter } from 'events';
 import * as chokidar from 'chokidar';
 import { readFileSync, existsSync } from 'fs';
 import { createHash } from 'crypto';
-import pino from 'pino';
 import { SovereignIgnoreManager } from '../utils/SovereignIgnoreManager.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'ASTWatcher', base: { hostname: 'POG2' } });
+const logger = createLogger('ASTWatcher');
 
 export interface WatcherEvents {
     fileChanged: (data: { filePath: string; hasStructuralChange: boolean }) => void;

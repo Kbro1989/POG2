@@ -1,6 +1,6 @@
-import pino from 'pino';
+import { createLogger } from "./logger.js";
 
-const logger = pino({ name: 'QuotaTracker', base: { hostname: 'POG2' } });
+const logger = createLogger('QuotaTracker');
 
 // ═══ TYPES ═══
 

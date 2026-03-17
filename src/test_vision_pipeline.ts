@@ -1,5 +1,6 @@
-﻿import { OrchestrateEngine } from './engines/OrchestrateEngine.js';
+import { OrchestrateEngine } from './engines/OrchestrateEngine.js';
 import { TernaryRouter } from './routing/TernaryRouter.js';
+import { ModelClient } from './clients/ModelClient.js';
 import { SovereignConfig, loadConfig } from './config/SovereignConfig.js';
 import { Renderer } from './ui/Renderer.js';
 import { join } from 'path';
@@ -11,6 +12,8 @@ async function test() {
     const config = loadConfig(configPath);
     const renderer = new Renderer();
     const router = new TernaryRouter(config);
+    const client = new ModelClient(config, router);
+    router.setModelClient(client);
     const engine = new OrchestrateEngine(config, router, renderer);
 
     // Set auto-proceed for internal logic

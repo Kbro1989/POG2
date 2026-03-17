@@ -1,13 +1,13 @@
 import { spawn, exec } from 'child_process';
 import { promisify } from 'util';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
-import pino from 'pino';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { type Result, type EngineOutput, YaoState } from '../core/models.js';
 import type { Renderer } from '../ui/Renderer.js';
+import { createLogger } from "../utils/logger.js";
 
 const execAsync = promisify(exec);
-const logger = pino({ name: 'VSCodeEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('VSCodeEngine');
 
 export interface VSCodeParams {
     action: 'open' | 'edit' | 'read' | 'write' | 'command' | 'getWorkspace' | 'setPosition';

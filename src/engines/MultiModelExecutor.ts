@@ -1,10 +1,10 @@
-import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import type { Result, EngineOutput, SovereignRecord } from '../core/models.js';
 import type { Renderer } from '../ui/Renderer.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'MultiModelExecutor', base: { hostname: 'POG2' } });
+const logger = createLogger('MultiModelExecutor');
 
 export interface TaskAssignment {
     id: string;

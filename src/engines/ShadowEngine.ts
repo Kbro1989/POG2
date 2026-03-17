@@ -1,11 +1,11 @@
-﻿import pino from 'pino';
-import { readdirSync, readFileSync, existsSync } from 'fs';
+﻿import { readdirSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import { type Result, ok, err } from '../core/models.js';
 import { getSovereignRoot, PathTier } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'ShadowEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('ShadowEngine');
 
 export interface ShadowProject {
     id: string;

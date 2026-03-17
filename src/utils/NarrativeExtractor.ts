@@ -1,6 +1,6 @@
-﻿import pino from 'pino';
+import { createLogger } from "./logger.js";
 
-const logger = pino({ name: 'NarrativeExtractor', base: { hostname: 'POG2' } });
+const logger = createLogger('NarrativeExtractor');
 
 export interface NarrativeSegment {
     location: string;

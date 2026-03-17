@@ -1,6 +1,5 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
 import { resolve, extname, join } from 'path';
-import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { extractCodeBlock } from '../utils/CodeExtractor.js';
@@ -9,8 +8,9 @@ import type { SovereignConfig } from '../config/SovereignConfig.js';
 import { type Result, type Ternary, type EngineOutput, type YaoState, type ArchitectureManifest, type RoutingComplexity } from '../core/models.js';
 import { ValidationSystem } from './ValidationSystem.js';
 import { ArchitecturalValidator } from './ArchitecturalValidator.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'GenerateEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('GenerateEngine');
 
 export interface GenerateCodeParams {
     task: string;

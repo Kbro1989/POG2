@@ -63,6 +63,7 @@ import {
     getGodHeadRoot,
     getGutenbergPath,
     getPipelineRootPath,
+    getRSMVCachePath,
     getSovereignRoot,
     setProjectRoot as setSovereignRoot
 } from './utils/SovereignPathResolver.js';
@@ -178,6 +179,7 @@ export async function main(): Promise<void> {
 
     const router = new TernaryRouter(config);
     const client = new ModelClient(config, router);
+    router.setModelClient(client);
 
     // Phase 6: Initialize ModelRolodex and inject into router + client
     const rolodex = new ModelRolodex(config);
@@ -908,6 +910,33 @@ export async function main(): Promise<void> {
                 todos: []
             });
             handleResult(result, renderer, state);
+        });
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // RSMV INTEGRATION Loop
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    program
+        .command('rsmv')
+        .description('RSMV inspection & one-shot CLI access')
+        .option('--view <modelId>', 'View model via RSMV')
+        .action(async (options) => {
+            const modelId = options.view;
+            if (!modelId) return console.error('No modelId provided');
+
+            // Spawn one-shot RSMV process
+            const { spawn } = await import('child_process');
+            const cachePath = getRSMVCachePath();
+            const subprocess = spawn('npx', ['tsx', 'tmp_rsmv_inspect/index.ts', '--model', modelId, '--cache', cachePath], {
+                stdio: 'inherit',
+            });
+
+            // Safety timeout: 5 minutes
+            const timeout = setTimeout(() => {
+                subprocess.kill('SIGTERM');
+                console.warn('[RSMV] One-shot process timed out and was terminated.');
+            }, 5 * 60 * 1000);
+
+            subprocess.on('exit', () => clearTimeout(timeout));
         });
 
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -2153,7 +2182,7 @@ function resetConfig(configPath: string): Result<void> {
         writeFileSync(configPath, JSON.stringify({
             mode: 'hybrid',
             planningModel: 'kimi-k2.5:cloud',
-            codingModel: 'qwen2.5-coder:14b-instruct-q5_K_M',
+            codingModel: 'deepseek-r1:8b',
             embeddingModel: 'nomic-embed-text',
             criticModel: 'kimi-k2.5:cloud',
             projectId: 'global',

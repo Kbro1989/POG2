@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { Agent } from 'undici';
@@ -16,15 +15,17 @@ import {
     YaoState
 } from '../core/models.js';
 import type { TernaryRouter } from '../routing/TernaryRouter.js';
+import { TaskScheduler } from '../routing/TaskScheduler.js';
 import { TrainingCollector, type ErrorFixRecord } from '../utils/TrainingCollector.js';
 import { EndpointHealer } from '../utils/EndpointHealer.js';
 import { ModelRolodex } from '../api/ai/ModelRolodex.js';
 import type { QuotaTracker, QuotaProvider } from '../utils/QuotaTracker.js';
 
 import { ArchitectureDigest } from '../core/ArchitectureDigest.js';
+import { createLogger } from "../utils/logger.js";
 
 const execAsync = promisify(exec);
-const logger = pino({ name: 'ModelClient', base: { hostname: 'POG2' } });
+const logger = createLogger('ModelClient');
 
 /**
  * ModelClient — Real API calls to local and cloud-based neural substrates.
@@ -109,50 +110,66 @@ export class ModelClient implements ModelExecutor {
 
         let result: Result<ModelResponse>;
 
-        if (enforcedParams.model.startsWith('gemini:')) {
-            provider = 'gemini';
-            result = await this.callGemini(enforcedParams, startTime);
-        } else if (enforcedParams.model.startsWith('huggingface:')) {
-            provider = 'huggingface';
-            result = await this.callHuggingFace(enforcedParams, startTime);
-        } else if (enforcedParams.model.startsWith('fireworks:')) {
-            provider = 'fireworks';
-            result = await this.callFireworks(enforcedParams, startTime);
-        } else if (enforcedParams.model.startsWith('openrouter:')) {
-            provider = 'openrouter';
-            result = await this.callOpenRouter(enforcedParams, startTime);
-        } else if (enforcedParams.model.startsWith('@cf/') || enforcedParams.model.includes('cloudflare')) {
-            provider = 'cloudflare';
-            result = await this.callCloudflare(enforcedParams, startTime);
-        } else {
-            provider = 'ollama';
-            result = await this.callOllama(enforcedParams, startTime);
+        const detectProvider = (model: string): string => {
+            if (model.startsWith('gemini:')) return 'gemini';
+            if (model.startsWith('huggingface:')) return 'huggingface';
+            if (model.startsWith('fireworks:')) return 'fireworks';
+            if (model.startsWith('openrouter:')) return 'openrouter';
+            if (model.startsWith('@cf/') || model.includes('cloudflare')) return 'cloudflare';
+            return 'ollama';
+        };
+
+        provider = detectProvider(enforcedParams.model) as any;
+        const priority = TaskScheduler.mapPriority(enforcedParams.yaoState || (globalThis as any).yaoState || YaoState.YoungYang);
+        const timeout = this.getTimeoutByYaoState(enforcedParams.yaoState);
+
+        result = await TaskScheduler.getInstance().schedule(
+            provider,
+            priority,
+            async () => {
+                if (provider === 'gemini') {
+                    return await this.callGemini(enforcedParams, startTime);
+                } else if (provider === 'huggingface') {
+                    return await this.callHuggingFace(enforcedParams, startTime);
+                } else if (provider === 'fireworks') {
+                    return await this.callFireworks(enforcedParams, startTime);
+                } else if (provider === 'openrouter') {
+                    return await this.callOpenRouter(enforcedParams, startTime);
+                } else if (provider === 'cloudflare') {
+                    return await this.callCloudflare(enforcedParams, startTime);
+                } else {
+                    return await this.callOllama(enforcedParams, startTime);
+                }
+            },
+            timeout
+        );
+
+        // Record interaction to D:\ training substrate (Skip for System Pulse)
+        const latency = Date.now() - startTime;
+        if (!enforcedParams.isSystemPulse) {
+            this.trainingCollector.recordInteraction({
+                model: enforcedParams.model,
+                provider,
+                category: enforcedParams.category as any,
+                prompt: enforcedParams.prompt.substring(0, 2000),
+                response: result.ok ? result.value.response.substring(0, 2000) : '',
+                latencyMs: latency,
+                tokenCount: result.ok ? result.value.tokensUsed : undefined,
+                success: result.ok,
+                error: result.ok ? undefined : result.error?.message
+            }).catch(() => { /* non-blocking */ });
+
+            this.trainingCollector.recordMetric({
+                model: enforcedParams.model,
+                provider,
+                latencyMs: latency,
+                success: result.ok,
+                tokenCount: result.ok ? result.value.tokensUsed : undefined
+            }).catch(() => { /* non-blocking */ });
         }
 
-        // Record interaction to D:\ training substrate
-        const latency = Date.now() - startTime;
-        this.trainingCollector.recordInteraction({
-            model: enforcedParams.model,
-            provider,
-            category: enforcedParams.category as any,
-            prompt: enforcedParams.prompt.substring(0, 2000),
-            response: result.ok ? result.value.response.substring(0, 2000) : '',
-            latencyMs: latency,
-            tokenCount: result.ok ? result.value.tokensUsed : undefined,
-            success: result.ok,
-            error: result.ok ? undefined : result.error?.message
-        }).catch(() => { /* non-blocking */ });
-
-        this.trainingCollector.recordMetric({
-            model: enforcedParams.model,
-            provider,
-            latencyMs: latency,
-            success: result.ok,
-            tokenCount: result.ok ? result.value.tokensUsed : undefined
-        }).catch(() => { /* non-blocking */ });
-
-        // Phase 6: Update ModelRolodex with call metrics
-        if (this.rolodex) {
+        // Phase 6: Update ModelRolodex with call metrics (Skip for System Pulse)
+        if (this.rolodex && !enforcedParams.isSystemPulse) {
             this.rolodex.recordCallResult(
                 enforcedParams.model,
                 ModelRolodex.toRolodexProvider(provider),
@@ -291,11 +308,20 @@ export class ModelClient implements ModelExecutor {
             result = await this.embedGemini(text);
         } else {
             result = await this.embedOllama(text, model);
-        }
-
-        // Phase 108: Resilient Embedding (Forced Local Sovereignty)
-        if (!result.ok) {
-            logger.error({ model, error: result.error?.message }, 'Primary local embedding failed. Gemini fallback disabled (quota exhausted).');
+            
+            // Phase 108/114: Real Resilient Embedding Fallback
+            if (!result.ok && this.config.secondaryCloudApiKey) {
+                logger.warn({ model, error: result.error?.message }, 'Primary local embedding failed. Attempting Gemini fallback substrate...');
+                const geminiFallback = await this.embedGemini(text);
+                if (geminiFallback.ok) {
+                    logger.info('Gemini embedding fallback successful.');
+                    return geminiFallback;
+                } else {
+                    logger.error({ error: geminiFallback.error?.message }, 'Gemini embedding fallback also failed (Quota exhausted or network down).');
+                }
+            } else if (!result.ok) {
+                 logger.error({ model, error: result.error?.message }, 'Primary local embedding failed. Gemini fallback disabled (No API Key).');
+            }
         }
 
         return result;
@@ -802,141 +828,155 @@ export class ModelClient implements ModelExecutor {
         }
     }
 
-    async callCloudflareTTS(text: string, options: { speed?: number; pitch?: number } = {}): Promise<Result<Buffer>> {
-        const accountId = this.config.cloudflareAccountId;
-        const apiToken = this.config.cloudflareApiToken;
-        const authEmail = this.config.cloudflareAuthEmail;
-        const modelId = '@cf/myshell-ai/melotts'; // Known documented TTS model
+    public async callCloudflareTTS(text: string, options: { speed?: number; pitch?: number } = {}): Promise<Result<Buffer>> {
+        return TaskScheduler.getInstance().schedule(
+            'cloudflare',
+            3, // Normal Priority (YoungYang)
+            async () => {
+                const accountId = this.config.cloudflareAccountId;
+                const apiToken = this.config.cloudflareApiToken;
+                const authEmail = this.config.cloudflareAuthEmail;
+                const modelId = '@cf/myshell-ai/melotts'; // Known documented TTS model
 
-        if (!accountId || !apiToken) {
-            return {
-                ok: false,
-                error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) â€” cannot generate TTS.')
-            };
-        }
-
-        const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${modelId}`;
-
-        // Phase 95: Support Global API Key (X-Auth headers) or Scoped Token (Bearer)
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json'
-        };
-        if (authEmail) {
-            headers['X-Auth-Email'] = authEmail;
-            headers['X-Auth-Key'] = apiToken;
-        } else {
-            headers['Authorization'] = `Bearer ${apiToken}`;
-        }
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                    text: text, // MeloTTS uses 'text', not 'prompt'
-                    speaker: 'en-us-male-1', // Required speaker ID
-                    speed: options.speed || 1.0,
-                    pitch: options.pitch || 1.0
-                }),
-                signal: AbortSignal.timeout(300_000)
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                logger.error({ status: response.status }, 'Cloudflare TTS error response');
-                return { ok: false, error: new Error(`Cloudflare TTS ${response.status}: ${errorText}`) };
-            }
-
-            const contentType = response.headers.get('content-type') || '';
-
-            if (contentType.includes('application/json')) {
-                const data = await response.json() as { result?: { audio?: string }, success: boolean, errors?: any[] };
-                if (data.success && data.result?.audio) {
-                    const buffer = Buffer.from(data.result.audio, 'base64');
-                    logger.info({ bytes: buffer.length, format: 'json-base64' }, 'Cloudflare TTS generation complete (decoded from Base64)');
-                    return ok(buffer);
-                } else {
-                    const errorMsg = data.errors?.[0]?.message || 'Unknown JSON error from Cloudflare TTS';
-                    return { ok: false, error: new Error(errorMsg) };
+                if (!accountId || !apiToken) {
+                    return {
+                        ok: false,
+                        error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) â€” cannot generate TTS.')
+                    };
                 }
-            } else {
-                const arrayBuffer = await response.arrayBuffer();
-                const buffer = Buffer.from(arrayBuffer);
-                logger.info({ bytes: buffer.length, format: 'binary' }, 'Cloudflare TTS generation complete (binary)');
-                return ok(buffer);
-            }
-        } catch (err) {
-            logger.error({ err }, 'Cloudflare TTS network error');
-            return { ok: false, error: err as Error };
-        }
+
+                const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${modelId}`;
+
+                // Phase 95: Support Global API Key (X-Auth headers) or Scoped Token (Bearer)
+                const headers: Record<string, string> = {
+                    'Content-Type': 'application/json'
+                };
+                if (authEmail) {
+                    headers['X-Auth-Email'] = authEmail;
+                    headers['X-Auth-Key'] = apiToken;
+                } else {
+                    headers['Authorization'] = `Bearer ${apiToken}`;
+                }
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                            text: text, // MeloTTS uses 'text', not 'prompt'
+                            speaker: 'en-us-male-1', // Required speaker ID
+                            speed: options.speed || 1.0,
+                            pitch: options.pitch || 1.0
+                        }),
+                        signal: AbortSignal.timeout(300_000)
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        logger.error({ status: response.status }, 'Cloudflare TTS error response');
+                        return { ok: false, error: new Error(`Cloudflare TTS ${response.status}: ${errorText}`) };
+                    }
+
+                    const contentType = response.headers.get('content-type') || '';
+
+                    if (contentType.includes('application/json')) {
+                        const data = await response.json() as { result?: { audio?: string }, success: boolean, errors?: any[] };
+                        if (data.success && data.result?.audio) {
+                            const buffer = Buffer.from(data.result.audio, 'base64');
+                            logger.info({ bytes: buffer.length, format: 'json-base64' }, 'Cloudflare TTS generation complete (decoded from Base64)');
+                            return ok(buffer);
+                        } else {
+                            const errorMsg = data.errors?.[0]?.message || 'Unknown JSON error from Cloudflare TTS';
+                            return { ok: false, error: new Error(errorMsg) };
+                        }
+                    } else {
+                        const arrayBuffer = await response.arrayBuffer();
+                        const buffer = Buffer.from(arrayBuffer);
+                        logger.info({ bytes: buffer.length, format: 'binary' }, 'Cloudflare TTS generation complete (binary)');
+                        return ok(buffer);
+                    }
+                } catch (err) {
+                    logger.error({ err }, 'Cloudflare TTS network error');
+                    return { ok: false, error: err as Error };
+                }
+            },
+            300_000
+        );
     }
 
     /**
      * callCloudflareMusicGen - Generates audio bytes from a text prompt.
      */
     public async callCloudflareMusicGen(params: { prompt: string; duration?: number }): Promise<Result<Buffer>> {
-        const accountId = this.config.cloudflareAccountId;
-        const apiToken = this.config.cloudflareApiToken;
-        const authEmail = this.config.cloudflareAuthEmail;
-        const modelId = '@cf/meta/musicgen';
+        return TaskScheduler.getInstance().schedule(
+            'cloudflare',
+            3, // Normal Priority
+            async () => {
+                const accountId = this.config.cloudflareAccountId;
+                const apiToken = this.config.cloudflareApiToken;
+                const authEmail = this.config.cloudflareAuthEmail;
+                const modelId = '@cf/meta/musicgen';
 
-        if (!accountId || !apiToken) {
-            return {
-                ok: false,
-                error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) â€” cannot generate score.')
-            };
-        }
-
-        const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${modelId}`;
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json'
-        };
-
-        if (authEmail) {
-            headers['X-Auth-Email'] = authEmail;
-            headers['X-Auth-Key'] = apiToken;
-        } else {
-            headers['Authorization'] = `Bearer ${apiToken}`;
-        }
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                    prompt: params.prompt,
-                    duration: params.duration || 20
-                }),
-                signal: AbortSignal.timeout(600_000) // 10m for music generation
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                logger.error({ status: response.status }, 'Cloudflare MusicGen error response');
-                return { ok: false, error: new Error(`Cloudflare MusicGen ${response.status}: ${errorText}`) };
-            }
-
-            const contentType = response.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
-                const data = await response.json() as { result?: { audio?: string }, success: boolean, errors?: any[] };
-                if (data.success && data.result?.audio) {
-                    const buffer = Buffer.from(data.result.audio, 'base64');
-                    logger.info({ bytes: buffer.length, format: 'json-base64' }, 'Cloudflare MusicGen complete (decoded)');
-                    return ok(buffer);
-                } else {
-                    const errorMsg = data.errors?.[0]?.message || 'Unknown JSON error from Cloudflare MusicGen';
-                    return { ok: false, error: new Error(errorMsg) };
+                if (!accountId || !apiToken) {
+                    return {
+                        ok: false,
+                        error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) â€” cannot generate score.')
+                    };
                 }
-            } else {
-                const arrayBuffer = await response.arrayBuffer();
-                const buffer = Buffer.from(arrayBuffer);
-                logger.info({ bytes: buffer.length, format: 'binary' }, 'Cloudflare MusicGen complete (binary)');
-                return ok(buffer);
-            }
-        } catch (err) {
-            logger.error({ err }, 'Cloudflare MusicGen network error');
-            return { ok: false, error: err as Error };
-        }
+
+                const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${modelId}`;
+                const headers: Record<string, string> = {
+                    'Content-Type': 'application/json'
+                };
+
+                if (authEmail) {
+                    headers['X-Auth-Email'] = authEmail;
+                    headers['X-Auth-Key'] = apiToken;
+                } else {
+                    headers['Authorization'] = `Bearer ${apiToken}`;
+                }
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                            prompt: params.prompt,
+                            duration: params.duration || 20
+                        }),
+                        signal: AbortSignal.timeout(600_000) // 10m for music generation
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        logger.error({ status: response.status }, 'Cloudflare MusicGen error response');
+                        return { ok: false, error: new Error(`Cloudflare MusicGen ${response.status}: ${errorText}`) };
+                    }
+
+                    const contentType = response.headers.get('content-type') || '';
+                    if (contentType.includes('application/json')) {
+                        const data = await response.json() as { result?: { audio?: string }, success: boolean, errors?: any[] };
+                        if (data.success && data.result?.audio) {
+                            const buffer = Buffer.from(data.result.audio, 'base64');
+                            logger.info({ bytes: buffer.length, format: 'json-base64' }, 'Cloudflare MusicGen complete (decoded)');
+                            return ok(buffer);
+                        } else {
+                            const errorMsg = data.errors?.[0]?.message || 'Unknown JSON error from Cloudflare MusicGen';
+                            return { ok: false, error: new Error(errorMsg) };
+                        }
+                    } else {
+                        const arrayBuffer = await response.arrayBuffer();
+                        const buffer = Buffer.from(arrayBuffer);
+                        logger.info({ bytes: buffer.length, format: 'binary' }, 'Cloudflare MusicGen complete (binary)');
+                        return ok(buffer);
+                    }
+                } catch (err) {
+                    logger.error({ err }, 'Cloudflare MusicGen network error');
+                    return { ok: false, error: err as Error };
+                }
+            },
+            600_000
+        );
     }
 
     /**
@@ -944,68 +984,75 @@ export class ModelClient implements ModelExecutor {
      * Supports Flux, Stable Diffusion, etc.
      */
     public async callCloudflareImageGen(params: { prompt: string; model?: string; num_steps?: number }): Promise<Result<Buffer>> {
-        const accountId = this.config.cloudflareAccountId;
-        const apiToken = this.config.cloudflareApiToken;
-        const authEmail = this.config.cloudflareAuthEmail;
-        const modelId = params.model || '@cf/black-forest-labs/flux-1-schnell';
+        return TaskScheduler.getInstance().schedule(
+            'cloudflare',
+            3, // Normal Priority
+            async () => {
+                const accountId = this.config.cloudflareAccountId;
+                const apiToken = this.config.cloudflareApiToken;
+                const authEmail = this.config.cloudflareAuthEmail;
+                const modelId = params.model || '@cf/black-forest-labs/flux-1-schnell';
 
-        if (!accountId || !apiToken) {
-            return {
-                ok: false,
-                error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) â€” cannot generate image.')
-            };
-        }
-
-        const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${modelId}`;
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json'
-        };
-
-        if (authEmail) {
-            headers['X-Auth-Email'] = authEmail;
-            headers['X-Auth-Key'] = apiToken;
-        } else {
-            headers['Authorization'] = `Bearer ${apiToken}`;
-        }
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                    prompt: params.prompt,
-                    num_steps: params.num_steps || 20
-                }),
-                signal: AbortSignal.timeout(600_000) // 10m for image generation
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                logger.error({ status: response.status, modelId }, 'Cloudflare ImageGen error response');
-                return { ok: false, error: new Error(`Cloudflare ImageGen ${response.status}: ${errorText}`) };
-            }
-
-            const contentType = response.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
-                const data = await response.json() as { result?: { image?: string }, success: boolean, errors?: any[] };
-                if (data.success && data.result?.image) {
-                    const buffer = Buffer.from(data.result.image, 'base64');
-                    logger.info({ bytes: buffer.length, format: 'json-base64' }, 'Cloudflare ImageGen complete (decoded)');
-                    return ok(buffer);
-                } else {
-                    const errorMsg = data.errors?.[0]?.message || 'Unknown JSON error from Cloudflare ImageGen';
-                    return { ok: false, error: new Error(errorMsg) };
+                if (!accountId || !apiToken) {
+                    return {
+                        ok: false,
+                        error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) â€” cannot generate image.')
+                    };
                 }
-            } else {
-                const arrayBuffer = await response.arrayBuffer();
-                const buffer = Buffer.from(arrayBuffer);
-                logger.info({ bytes: buffer.length, format: 'binary' }, 'Cloudflare ImageGen complete (binary)');
-                return ok(buffer);
-            }
-        } catch (err) {
-            logger.error({ err }, 'Cloudflare ImageGen network error');
-            return { ok: false, error: err as Error };
-        }
+
+                const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${modelId}`;
+                const headers: Record<string, string> = {
+                    'Content-Type': 'application/json'
+                };
+
+                if (authEmail) {
+                    headers['X-Auth-Email'] = authEmail;
+                    headers['X-Auth-Key'] = apiToken;
+                } else {
+                    headers['Authorization'] = `Bearer ${apiToken}`;
+                }
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                            prompt: params.prompt,
+                            num_steps: params.num_steps || 20
+                        }),
+                        signal: AbortSignal.timeout(600_000) // 10m for image generation
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        logger.error({ status: response.status, modelId }, 'Cloudflare ImageGen error response');
+                        return { ok: false, error: new Error(`Cloudflare ImageGen ${response.status}: ${errorText}`) };
+                    }
+
+                    const contentType = response.headers.get('content-type') || '';
+                    if (contentType.includes('application/json')) {
+                        const data = await response.json() as { result?: { image?: string }, success: boolean, errors?: any[] };
+                        if (data.success && data.result?.image) {
+                            const buffer = Buffer.from(data.result.image, 'base64');
+                            logger.info({ bytes: buffer.length, format: 'json-base64' }, 'Cloudflare ImageGen complete (decoded)');
+                            return ok(buffer);
+                        } else {
+                            const errorMsg = data.errors?.[0]?.message || 'Unknown JSON error from Cloudflare ImageGen';
+                            return { ok: false, error: new Error(errorMsg) };
+                        }
+                    } else {
+                        const arrayBuffer = await response.arrayBuffer();
+                        const buffer = Buffer.from(arrayBuffer);
+                        logger.info({ bytes: buffer.length, format: 'binary' }, 'Cloudflare ImageGen complete (binary)');
+                        return ok(buffer);
+                    }
+                } catch (err) {
+                    logger.error({ err }, 'Cloudflare ImageGen network error');
+                    return { ok: false, error: err as Error };
+                }
+            },
+            600_000
+        );
     }
 
     private async embedGemini(text: string): Promise<Result<Float32Array>> {

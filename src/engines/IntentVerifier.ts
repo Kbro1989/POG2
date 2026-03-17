@@ -1,4 +1,4 @@
-import pino from 'pino';
+import { createLogger } from '../utils/logger.js';
 import { ModelClient } from '../clients/ModelClient.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { type Result, YaoState } from '../core/models.js';
@@ -15,13 +15,13 @@ export interface VerificationResult {
  * IntentVerifier - The Sovereign Auditor.
  */
 export class IntentVerifier {
-    private readonly logger: pino.Logger;
+    private readonly logger: ReturnType<typeof createLogger>;
 
     constructor(
         private readonly client: ModelClient,
         private readonly hexagramManager: HexagramManager
     ) {
-        this.logger = pino({ name: 'IntentVerifier', base: { hostname: 'POG2' } });
+        this.logger = createLogger('IntentVerifier');
     }
 
     async verify(

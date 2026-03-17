@@ -6,12 +6,12 @@ import { SovereignConfig } from '../config/SovereignConfig.js';
 import { NeuralLimb } from '../limbs/core/NeuralLimb.js';
 import { CloudflareServices, CloudflareConfig } from '../services/CloudflareServices.js';
 import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
-import pino from 'pino';
+import { createLogger } from "../utils/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const coreRoot = join(__dirname, '../..');
-const logger = pino({ name: 'ServiceDiscovery', base: { hostname: 'POG2' } });
+const logger = createLogger('ServiceDiscovery');
 
 export interface ServiceStatus {
     readonly id: string;

@@ -1,10 +1,10 @@
-import pino from 'pino';
 import { ShellEngine } from './ShellEngine.js';
 import { Renderer } from '../ui/Renderer.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { type Result, type EngineOutput, YaoState } from '../core/models.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'ShellLibrary', base: { hostname: 'POG2' } });
+const logger = createLogger('ShellLibrary');
 
 /**
  * ShellLibrary — Specialized command wrappers for the Brain.

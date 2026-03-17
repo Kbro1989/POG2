@@ -1,9 +1,9 @@
 import { writeFileSync, appendFileSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
-import pino from 'pino';
 import { YaoState } from '../core/models.js';
+import { createLogger } from "./logger.js";
 
-const logger = pino({ name: 'SovereignProprioception', base: { hostname: 'POG2' } });
+const logger = createLogger('SovereignProprioception');
 
 /**
  * SovereignProprioception
@@ -82,9 +82,9 @@ export class SovereignProprioception {
     }
 
     public healthCheck(): { online: boolean; details: string } {
-        return { 
-            online: true, 
-            details: 'SovereignProprioception active: Reflective memory artifacts accessible.' 
+        return {
+            online: true,
+            details: 'SovereignProprioception active: Reflective memory artifacts accessible.'
         };
     }
 }

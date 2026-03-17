@@ -3,16 +3,13 @@ import { promisify } from 'util';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';
 import { EventEmitter } from 'events';
-import pino from 'pino';
 import type { Result } from './models.js';
 import { getDashboardPath } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
 
 const execAsync = promisify(exec);
 
-const logger = pino({
-    name: 'SovereignEye',
-    base: { hostname: 'POG2' }
-});
+const logger = createLogger('SovereignEye');
 
 /**
  * Capture source definition â€” what the Sovereign Eye is looking at.

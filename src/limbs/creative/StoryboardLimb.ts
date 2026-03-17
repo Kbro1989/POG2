@@ -5,11 +5,10 @@ import { NarrativeSegment } from '../../utils/NarrativeExtractor.js';
 
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import pino from 'pino';
-
 import { HexagramManager } from '../../routing/HexagramManager.js';
+import { createLogger } from "../../utils/logger.js";
 
-const logger = pino({ name: 'StoryboardLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('StoryboardLimb');
 
 export interface StoryboardScene {
     index: number;
@@ -25,7 +24,7 @@ export class StoryboardLimb {
         private readonly client: ModelClient,
         private readonly gutenberg: GutenbergLimb,
         private readonly hexagram: HexagramManager,
-        private readonly modelName: string = 'qwen2.5-coder:14b-instruct-q5_K_M'
+        private readonly modelName: string = 'deepseek-r1:8b'
     ) { }
 
     /**

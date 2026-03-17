@@ -212,6 +212,50 @@ export interface EngineOutput {
     readonly execution?: Execution;
     readonly data?: any;               // Added for cross-substrate compatibility
     readonly metadata?: Record<string, any>;
+    readonly actuation?: ActuationIntent; // Phase 15: Link perception to action
+}
+
+/**
+ * ActuationIntent — CNS-driven structural or environmental change.
+ */
+export interface ActuationIntent {
+    readonly action: 'mutate_shader' | 'capture_frame' | 'update_model' | 'ui_actuate' | 'rsmv_control';
+    readonly target: string;
+    readonly parameters: Record<string, any>;
+    readonly reasoning?: string;
+}
+
+/**
+ * ActuationResult — Feedback from the motor/vision substrate after actuation.
+ */
+export interface ActuationResult {
+    readonly success: boolean;
+    readonly details?: string;
+    readonly data?: any;
+}
+
+/**
+ * PedagogyProfile — Distilled metrics from professional production assets.
+ * Used for "Training" the AI on pro-level 3D standards.
+ */
+export interface PedagogyProfile {
+    readonly id: string;
+    readonly name: string;
+    readonly type: 'NPC' | 'OBJECT' | 'ITEM';
+    readonly metrics: {
+        readonly polyCount: number;
+        readonly boneCount: number;
+        readonly materialComplexity: number;
+        readonly rigLogic: 'SKELETAL' | 'VERTEX_ANIM' | 'STATIC';
+        readonly surfaceArea?: number;
+    };
+    readonly semantics: {
+        readonly role: string;
+        readonly race?: string;
+        readonly intent: string; // e.g., "Hero NPC", "Background Prop"
+        readonly wikiUrl?: string;
+    };
+    readonly timestamp: number;
 }
 
 export interface ContextCard {
@@ -390,6 +434,7 @@ export interface ModelCallParams {
     tier?: 'Master' | 'Executive' | 'Reactive';
     yaoState?: YaoState;
     signal?: AbortSignal;
+    isSystemPulse?: boolean;
 }
 
 export interface ModelExecutor {

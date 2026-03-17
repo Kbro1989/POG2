@@ -1,12 +1,15 @@
-import pino from 'pino';
+import { createLogger } from '../utils/logger.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { type Ternary, type Result, YaoState, type DecisionAuditRecord, type RoutingComplexity, type ContextCard, EmotionalState } from '../core/models.js';
+import { type Ternary, type Result, YaoState, type DecisionAuditRecord, type RoutingComplexity, type ContextCard, EmotionalState, type AIServiceType } from '../core/models.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import { HexagramManager } from './HexagramManager.js';
+import type { ModelClient } from '../clients/ModelClient.js';
 import type { ContextBuilder } from '../engines/ContextBuilder.js';
 import type { TrainingCollector } from '../utils/TrainingCollector.js';
-import type { ModelRolodex } from '../api/ai/ModelRolodex.js';
+import { ModelRolodex } from '../api/ai/ModelRolodex.js';
+
+type TaskType = 'text' | 'image' | 'audio' | 'embedding' | 'vision' | 'unknown';
 import { SovereignIgnoreManager } from '../utils/SovereignIgnoreManager.js';
 import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
 import type { SovereignKnock, ConcealmentState } from '../core/models.js';
@@ -14,9 +17,11 @@ import type { ChromaLimb } from '../limbs/spatial/ChromaLimb.js';
 import type { BioIntelligenceLimb } from '../limbs/spatial/BioIntelligenceLimb.js';
 import type { MemoryConsolidationEngine } from '../engines/MemoryConsolidationEngine.js';
 import type { QuotaTracker, QuotaProvider } from '../utils/QuotaTracker.js';
+import { OutcomeScorer, type OutcomeScore } from './evolution/OutcomeScorer.js';
+import { StrategyAdvisor, type StrategyMutation } from './evolution/StrategyAdvisor.js';
 
 const execAsync = promisify(exec);
-const logger = pino({ name: 'TernaryRouter', base: { hostname: 'POG2' } });
+const logger = createLogger('TernaryRouter');
 
 /**
  * Ternary routing decisions:
@@ -55,17 +60,23 @@ export class TernaryRouter {
     private readonly availableLocalModels: Set<string> = new Set();
     private readonly modelFailures: Map<string, number> = new Map();
     private lastSyncAt = 0;
+    private isSyncing = false;
     private readonly SYNC_INTERVAL_MS = 60_000;
     private readonly MAX_FAILURES = 3;
     private contextBuilder?: ContextBuilder;
+    private lastConfidence = 0.5;
     private trainingCollector?: TrainingCollector;
     private rolodex?: ModelRolodex;
+    private modelClient?: ModelClient;
     private chromaLimb?: ChromaLimb;
     private bioIntelligence?: BioIntelligenceLimb;
     private memoryConsolidation?: MemoryConsolidationEngine;
     private quotaTracker?: QuotaTracker;
     private readonly decisionHistory: DecisionAuditRecord[] = [];
     private readonly executionMetrics: { totalTokens: number; fastPaths: number; deepPaths: number } = { totalTokens: 0, fastPaths: 0, deepPaths: 0 };
+    private outcomeScorer?: OutcomeScorer;
+    private strategyAdvisor?: StrategyAdvisor;
+    private proposedMutations: StrategyMutation[] = [];
 
     // Cooldown tracking for Kimi endpoints (Ollama vs HF 61-min alternating)
     private ollamaCooldownUntil = 0;
@@ -77,6 +88,8 @@ export class TernaryRouter {
     constructor(config: SovereignConfig) {
         this.config = config;
         this.hexagram = HexagramManager.getInstance();
+        this.outcomeScorer = new OutcomeScorer();
+        this.strategyAdvisor = new StrategyAdvisor();
     }
 
     /** Inject ContextBuilder for FPRAG retrieval (called after construction) */
@@ -96,6 +109,68 @@ export class TernaryRouter {
 
     getRolodex(): ModelRolodex | undefined {
         return this.rolodex;
+    }
+
+    /** Inject ModelClient for Two-Phase Routing (Cheap Triage) */
+    setModelClient(client: ModelClient): void {
+        this.modelClient = client;
+        if (this.outcomeScorer) this.outcomeScorer.setClient(client);
+    }
+
+    /** 🧬 Evolutionary Sweep - Audit historical interactions and propose mutations */
+    public async evolutionarySweep(sampleSize: number = 20): Promise<StrategyMutation[]> {
+        if (!this.trainingCollector || !this.outcomeScorer || !this.strategyAdvisor) {
+            logger.warn('Evolution components not fully initialized, skipping sweep.');
+            return [];
+        }
+
+        logger.info({ sampleSize }, '🧬 Starting CNS evolutionary sweep...');
+        
+        // 1. Get raw history from substrate
+        // TrainingCollector needs a method to get recent interactions
+        const history = await (this.trainingCollector as any).getRecentInteractions(sampleSize);
+        if (!history || history.length === 0) {
+            logger.info('No recent interactions found for sweep.');
+            return [];
+        }
+
+        // 2. Grade outcomes
+        const scores: OutcomeScore[] = [];
+        for (const record of history) {
+            const result = await this.outcomeScorer.grade(record);
+            if (result.ok) scores.push(result.value);
+        }
+
+        // 3. Analyze drift and propose mutations
+        const mutations = await this.strategyAdvisor.analyzeMetabolicDrift(history, scores);
+        this.proposedMutations = [...this.proposedMutations, ...mutations];
+
+        logger.info({ proposedMutations: mutations.length }, '🧬 Sweep complete. Proposals registered.');
+        return mutations;
+    }
+
+    /** 🧬 Apply Mutation - Sovereign Approval Gate */
+    public applyMutation(mutationId: string): Result<void> {
+        const index = this.proposedMutations.findIndex(m => m.id === mutationId);
+        if (index === -1) return { ok: false, error: new Error('Mutation not found') };
+
+        const mutation = this.proposedMutations[index];
+        if (!this.rolodex) return { ok: false, error: new Error('Rolodex not available') };
+
+        logger.info({ mutationId, model: mutation.model }, '🧬 Applying sovereign approved mutation...');
+        
+        const provider = ModelRolodex.toRolodexProvider(mutation.model.split(':')[0] || 'ollama');
+        const modelId = mutation.model.includes(':') ? mutation.model.split(':').slice(1).join(':') : mutation.model;
+
+        this.rolodex.mutateReputation(modelId, provider, mutation.weightAdjustment);
+        
+        mutation.approved = true;
+        // Optionally remove from list or keep as audited
+        return { ok: true, value: undefined };
+    }
+
+    public getProposedMutations(): StrategyMutation[] {
+        return this.proposedMutations;
     }
 
     setChromaLimb(limb: ChromaLimb): void {
@@ -216,6 +291,70 @@ export class TernaryRouter {
     }
 
     /**
+     * Nervous System v2: Two-Phase Routing Gate (Cheap Triage)
+     * Offloads the exact task classification to a fast, cheap model before committing to a heavy Master tier.
+     */
+    async classifyTaskDynamically(prompt: string): Promise<TaskType> {
+        if (!this.modelClient) return 'text'; // Fallback if not injected
+
+        // If it clearly contains image paths or vision keywords, fast-fail to vision
+        if (/\.(png|jpg|jpeg|webp|gif)/i.test(prompt) || COMPLEXITY_KEYWORDS.Vision.test(prompt)) {
+            return 'vision';
+        }
+
+        try {
+            // Use the absolute cheapest fast model available in the system
+            const triageModel = this.config.fastPathModel || 'deepseek-r1:8b'; 
+            
+            // Bypass the router itself (prevent infinite loops) by calling the provider directly, 
+            // or we configure ModelClient to allow a direct model override.
+            // For now, we simulate the structure.
+            const classificationPrompt = `Classify this task exactly into one of these words: [simple, complex, vision, coding, embedding, orchestration]. Task: ${prompt.substring(0, 500)}`;
+            
+            const result = await this.modelClient.call({
+                model: triageModel,
+                prompt: classificationPrompt,
+                maxTokens: 20,
+                temperature: 0.1,
+                isSystemPulse: true // Phase 8.2: Prevent triage from poisoning reputation
+            });
+            
+            if (!result.ok) {
+                this.lastConfidence = 0.3;
+                return 'text';
+            }
+
+            const response = result.value.response.toLowerCase();
+            if (response.includes('trivial')) {
+                this.lastConfidence = 0.9;
+                return 'text';
+            }
+            if (response.includes('simple')) {
+                this.lastConfidence = 0.7;
+                return 'text';
+            }
+            if (response.includes('complex') || response.includes('coding')) {
+                this.lastConfidence = 0.5;
+                return 'text';
+            }
+            if (response.includes('vision')) {
+                this.lastConfidence = 0.7; // Vision is usually specific and well-defined
+                return 'vision';
+            }
+            if (response.includes('embedding')) {
+                this.lastConfidence = 0.9;
+                return 'embedding';
+            }
+            
+            this.lastConfidence = 0.3;
+            return 'text'; 
+        } catch (err) {
+            logger.debug({ err }, 'Dynamic classification failed, falling back to heuristic text route');
+            return 'text';
+        }
+    }
+
+    /**
      * Determine if a task qualifies for the "Fast Path" (bypassing heavy sync/retrieval).
      */
     private isFastPath(prompt: string): boolean {
@@ -276,8 +415,26 @@ export class TernaryRouter {
         // === FAST PATH OPTIMIZATION ===
         const fastPath = prompt ? this.isFastPath(prompt) : false;
 
+        // === NERVOUS SYSTEM V2: DYNAMIC TRIAGE ===
+        // If we have a prompt and it's NOT a guaranteed fast path, do a cheap triage to discover the exact task type
+        let dynamicTaskType: TaskType = 'text';
+        if (prompt && !fastPath && this.modelClient) {
+            dynamicTaskType = await this.classifyTaskDynamically(prompt);
+            // If the triage determined it's vision, but the heuristic missed it, upgrade the complexity
+            if (dynamicTaskType === 'vision' && complexity !== 'Vision') {
+                complexity = 'Vision';
+            }
+            // If the triage determined it's embedding, upgrade complexity if needed (though usually embedding is explicit)
+            if (dynamicTaskType === 'embedding' && complexity !== 'Yang') {
+                 // Embedding tasks are usually part of Yang (Deep Path) or specific sub-routines
+            }
+        }
+        
+        // Use the dynamic type if none was provided by the Engine
+        const finalTaskType = (taskType || dynamicTaskType) as TaskType;
+
         if (!fastPath) {
-            await this.syncLocalModels();
+            this.syncLocalModels(); // Phase 8.2: Non-blocking sync
         } else {
             this.executionMetrics.fastPaths++;
         }
@@ -313,14 +470,14 @@ export class TernaryRouter {
 
         // 1. Specialized Substrate Routing
         if (complexity === 'Chromanumber') {
-            decision = { model: this.config.imageGenModel, complexity: 'Chromanumber', tier: 'Reactive', reasoning: 'Chromanumber substrate: Visual metabolic mapping', yaoState: YaoState.YoungYin, fallbackUsed: false, timestamp: routeStartTime };
+            decision = { model: this.config.imageGenModel, complexity: 'Chromanumber', tier: 'Reactive', reasoning: 'Stage 2 (Local) - Chromanumber substrate: Visual metabolic mapping', yaoState: YaoState.YoungYin, fallbackUsed: false, timestamp: routeStartTime };
         } else if (complexity === 'SovereignEye') {
-            decision = { model: this.config.visionModel, complexity: 'SovereignEye', tier: 'Executive', reasoning: 'SovereignEye substrate: Sensory proprioception', yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
+            decision = { model: this.config.visionModel, complexity: 'SovereignEye', tier: 'Executive', reasoning: 'Stage 3 (Structural) - SovereignEye substrate: Sensory proprioception', yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
         } else if (complexity === 'Vision') {
-            const model = this.findWorkingModel(this.config.visionModel, ['moondream', 'llava']);
-            decision = { model, complexity: 'Vision', tier: 'Executive', reasoning: 'Visual task routed via Sensory limb', yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
+            const model = this.findWorkingModel(this.config.visionModel, ['moondream', 'llava'], 'vision');
+            decision = { model, complexity: 'Vision', tier: 'Executive', reasoning: 'Stage 3 (Structural) - Visual task routed via Sensory limb', yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
         } else if (complexity === 'Voice') {
-            decision = { model: this.config.voiceModel, complexity: 'Voice', tier: 'Reactive', reasoning: 'Audio task routed via Motor limb', yaoState: YaoState.YoungYin, fallbackUsed: false, timestamp: routeStartTime };
+            decision = { model: this.config.voiceModel, complexity: 'Voice', tier: 'Reactive', reasoning: 'Stage 2 (Local) - Audio task routed via Motor limb', yaoState: YaoState.YoungYin, fallbackUsed: false, timestamp: routeStartTime };
         }
 
         // 2. Orchestration Routing (Kimi)
@@ -335,7 +492,7 @@ export class TernaryRouter {
                     model: this.config.huggingfaceFallbackModel,
                     complexity: 'Orchestrator',
                     tier: 'Master',
-                    reasoning: `Primary Neural Substrate on cooldown (${status.ollamaRemainingMinutes}m left) â€” failing over to Secondary Substrate`,
+                    reasoning: `Stage 4 (Cloud Escalation) - Primary Neural Substrate on cooldown (${status.ollamaRemainingMinutes}m left)`,
                     yaoState: YaoState.OldYang,
                     fallbackUsed: true,
                     fallbackReason: `Primary Substrate cooldown (${status.ollamaRemainingMinutes}m remaining)`,
@@ -346,7 +503,7 @@ export class TernaryRouter {
                     model: this.config.localFallbackModel,
                     complexity: 'Orchestrator',
                     tier: 'Master',
-                    reasoning: `CRITICAL: Both cloud endpoints exhausted. Local brain (${this.config.localFallbackModel}) taking over.`,
+                    reasoning: `Stage 3 (Structural Fallback) - CRITICAL: Both cloud endpoints exhausted. Local brain taking over.`,
                     yaoState: YaoState.OldYang,
                     fallbackUsed: true,
                     fallbackReason: 'CRITICAL: Both Ollama cloud and HF rate limited â€” local fallback active',
@@ -357,7 +514,7 @@ export class TernaryRouter {
                     model: this.config.orchestratorModel,
                     complexity: 'Orchestrator',
                     tier: 'Master',
-                    reasoning: 'Strategic Brain active, coordinating specialized sub-agents',
+                    reasoning: 'Stage 4 (Cloud) - Strategic Brain active, coordinating specialized sub-agents',
                     yaoState: YaoState.YoungYang,
                     fallbackUsed: false,
                     timestamp: routeStartTime
@@ -372,35 +529,36 @@ export class TernaryRouter {
             if (complexity === 'Yang') {
                 const model = this.findWorkingModel(
                     this.config.deepPathModel, // Phase 78: Deep Path (Sovereignty)
-                    [this.config.masterLocalModel, 'deepseek-coder:33b', 'qwen2.5-coder:32b', this.config.localFallbackModel]
+                    [this.config.masterLocalModel, 'deepseek-coder:33b', 'deepseek-r1:8b', this.config.localFallbackModel],
+                    finalTaskType
                 );
                 decision = {
                     model,
                     complexity: 'Yang',
                     tier: 'Master',
-                    reasoning: 'Deep Path (Sovereignty) activated for heavy structural manipulation or architectural intent',
+                    reasoning: 'Stage 4 (Cloud/Deep) - Deep Path (Sovereignty) activated for heavy structural manipulation',
                     yaoState: yao,
                     fallbackUsed: false,
                     timestamp: routeStartTime
                 };
             } else if (complexity === 'YinYang') {
-                const model = this.findWorkingModel(this.config.midPathModel, [this.config.codingHeavyModel, this.config.localFallbackModel]);
+                const model = this.findWorkingModel(this.config.midPathModel, [this.config.codingHeavyModel, this.config.localFallbackModel], finalTaskType);
                 decision = {
                     model,
                     complexity: 'YinYang',
                     tier: 'Executive',
-                    reasoning: 'Mid Path (Execution) activated for multi-step reasoning and file modifications',
+                    reasoning: 'Stage 3 (Structural) - Mid Path (Execution) activated for multi-step reasoning',
                     yaoState: yao,
                     fallbackUsed: false,
                     timestamp: routeStartTime
                 };
             } else {
-                const model = this.findWorkingModel(this.config.fastPathModel, ['moondream:1.8b', 'qwen2.5-coder:latest', this.config.reactiveAgentModel]);
+                const model = this.findWorkingModel(this.config.fastPathModel, ['moondream:1.8b', 'deepseek-r1:8b', this.config.reactiveAgentModel], finalTaskType);
                 decision = {
                     model,
                     complexity: 'Yin',
                     tier: 'Reactive',
-                    reasoning: 'Fast Path (Reflex) mapped for sub-3s latency task classification & syntax logic',
+                    reasoning: 'Stage 2 (Micro/Local) - Fast Path (Reflex) mapped for low-latency task resolution',
                     yaoState: yao,
                     fallbackUsed: false,
                     timestamp: routeStartTime
@@ -424,7 +582,9 @@ export class TernaryRouter {
         // FPRAG: Record decision audit trail
         if (prompt) {
             if (decision) {
-                this.trainingCollector?.recordFPRAGDecision({
+                // Determine actual fallback state
+                const wasFallback = decision.fallbackUsed || (decision.model === this.config.localFallbackModel && !this.isFastPath(prompt));
+                this.recordDecisionAudit({
                     task: prompt.substring(0, 100),
                     input: prompt,
                     route: decision as any,
@@ -440,13 +600,13 @@ export class TernaryRouter {
                         auditSync: true
                     },
                     hexagram: this.hexagram.getInterpretation().name,
-                    directive: (decision as any).directive, // Use decision.directive
+                    directive: decision!.directive ?? 'Execute',
                     selectedModel: decision.model,
                     complexity: decision.complexity,
                     strategySource: 'TernaryRouter',
                     latencyMs: Date.now() - routeStartTime,
                     timestamp: Date.now(),
-                    fallbackUsed: decision.fallbackUsed
+                    fallbackUsed: wasFallback
                 });
             }
         }
@@ -565,8 +725,41 @@ export class TernaryRouter {
             model.includes(':cloud');
     }
 
-    private findWorkingModel(preferred: string, fallbacks: string[]): string {
-        const sorted = this.sortModelsBySovereignPriority([preferred, ...fallbacks, this.config.localFallbackModel]);
+    private readonly BASE_EXPLORATION_EPSILON = 0.15;
+
+    private findWorkingModel(preferred: string, fallbacks: string[], taskType: TaskType = 'text'): string {
+        const rawList = [preferred, ...fallbacks, this.config.localFallbackModel];
+        const unique = Array.from(new Set(rawList.filter(Boolean)));
+        
+        // 🧬 Nervous System v2: Scored Routing (Phase 9)
+        const allModels = this.rolodex?.getAllModels() || [];
+        const scored = unique
+            .filter(mId => this.isModelAvailableAndHealthy(mId) && this.isModalityCompatible(mId, taskType))
+            .map(mId => {
+                // Find matching model in rolodex
+                const mData = allModels.find(m => m.id === mId || `${m.provider}:${m.id}` === mId);
+                const rep = mData?.reputation ?? 1.0;
+                const avgLatency = mData?.avgLatencyMs ?? 500;
+                const expectedLatency = Math.max(avgLatency, 50);
+                
+                // score = rep / log(1 + expectedLatency)
+                const score = rep / Math.log(1 + expectedLatency);
+                return { id: mId, score };
+            })
+            .sort((a, b) => b.score - a.score);
+
+        const sorted = scored.map(s => s.id);
+        if (sorted.length === 0) return this.config.localFallbackModel;
+
+        // 🧬 Nervous System v2: ε-greedy Adaptive Exploration (Phase 9)
+        const epsilon = 0.25 - (this.lastConfidence * 0.20);
+        if (Math.random() < epsilon && sorted.length > 1) {
+            const randomIndex = Math.floor(Math.random() * (sorted.length - 1)) + 1; // Pick non-primary
+            const exploredModel = sorted[randomIndex];
+            logger.info({ model: exploredModel, epsilon, taskType }, '🧬 CNS ε-greedy: Exploration triggered');
+            return exploredModel;
+        }
+
         for (const m of sorted) {
             // Sovereign FinOps: Skip exhausted cloud providers
             if (this.quotaTracker && this.isCloudModel(m)) {
@@ -576,6 +769,12 @@ export class TernaryRouter {
                     continue;
                 }
             }
+
+            // Phase 8: Modality Check
+            if (!this.isModalityCompatible(m, taskType)) {
+                continue;
+            }
+
             if (this.isModelAvailableAndHealthy(m)) {
                 // Phase 2: Latency Check for Fast Path
                 if (preferred === this.config.fastPathModel && this.rolodex) {
@@ -593,11 +792,43 @@ export class TernaryRouter {
         return this.config.localFallbackModel;
     }
 
+    /** Phase 8: Verify model supports the requested modality */
+    private isModalityCompatible(modelId: string, taskType: TaskType): boolean {
+        if (!this.rolodex) return true; // Can't verify without rolodex
+
+        const allModels = this.rolodex.getAllModels();
+        // Phase 8.2: Flexible matching to handle version tags like :latest
+        const model = allModels.find(m => {
+            const normalizedMId = m.id.split(':')[0];
+            const normalizedModelId = modelId.includes(':') ? modelId.split(':')[1] : modelId;
+            const pureTarget = normalizedModelId.split(':')[0];
+            
+            return m.id === modelId || 
+                   `${m.provider}:${m.id}` === modelId || 
+                   (m.provider === 'ollama' && (modelId === m.id || pureTarget === normalizedMId));
+        });
+        
+        if (!model) return true; // Unknown model - assume compatible (whitelist strategy)
+
+        if (taskType === 'vision' && !model.isVision) return false;
+        if (taskType === 'embedding' && !model.isEmbedding) return false;
+        if (taskType === 'image' && !model.isVision) return false; // Image tasks usually need vision or specialized flags
+        if (taskType === 'text' && !model.isText) return false;
+
+        return true;
+    }
+
     private isModelAvailableAndHealthy(model: string): boolean {
+        // Phase 8.2: Normalize for failure lookup (remove version tags)
+        const pureModel = model.split(':')[0];
+        
+        if (this.isModelFailing(model) || this.isModelFailing(pureModel)) return false;
+
         // Strict local check - must exist in Ollama output
-        if (this.availableLocalModels.has(model) && !this.isModelFailing(model)) return true;
-        const match = Array.from(this.availableLocalModels).find(m => m.includes(model));
-        return !!match && !this.isModelFailing(match);
+        if (this.availableLocalModels.has(model)) return true;
+        
+        const match = Array.from(this.availableLocalModels).find(m => m === model || m.split(':')[0] === pureModel);
+        return !!match;
     }
 
     recordSuccess(model: string): void {
@@ -612,7 +843,12 @@ export class TernaryRouter {
     }
 
     private isModelFailing(model: string): boolean {
-        return (this.modelFailures.get(model) ?? 0) >= this.MAX_FAILURES;
+        // Check both full name and pure name (e.g., phi:latest and phi)
+        const failures = this.modelFailures.get(model) ?? 0;
+        const pureModel = model.split(':')[0];
+        const pureFailures = model.includes(':') ? (this.modelFailures.get(pureModel) ?? 0) : 0;
+        
+        return (failures + pureFailures) >= this.MAX_FAILURES;
     }
 
     /** Detect provider from model string for quota lookups */
@@ -627,10 +863,13 @@ export class TernaryRouter {
 
     private async syncLocalModels(): Promise<void> {
         const now = Date.now();
-        if (now - this.lastSyncAt < this.SYNC_INTERVAL_MS) return;
+        if (now - this.lastSyncAt < this.SYNC_INTERVAL_MS || this.isSyncing) return;
+        
+        this.isSyncing = true;
         this.lastSyncAt = now;
 
         try {
+            // Use execAsync but don't await the parent if called from non-blocking context
             const { stdout } = await execAsync('ollama list');
             const lines = stdout.split('\n').slice(1);
             this.availableLocalModels.clear();
@@ -639,7 +878,9 @@ export class TernaryRouter {
                 if (modelName) this.availableLocalModels.add(modelName);
             }
         } catch {
-            logger.debug('Ollama not available');
+            logger.debug('Ollama not available or hung');
+        } finally {
+            this.isSyncing = false;
         }
     }
 

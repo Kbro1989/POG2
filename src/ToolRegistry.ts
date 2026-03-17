@@ -1,8 +1,8 @@
-﻿import pino from 'pino';
-import { type Result, type EngineOutput, YaoState } from './core/models.js';
+﻿import { type Result, type EngineOutput, YaoState } from './core/models.js';
 import { SovereignDomain, DOMAIN_ADJACENCY } from './types/SovereignDomain.js';
+import { createLogger } from "./utils/logger.js";
 
-const logger = pino({ name: 'ToolRegistry', base: { hostname: 'POG2' } });
+const logger = createLogger('ToolRegistry');
 
 export interface ToolDefinition {
     name: string;

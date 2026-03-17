@@ -1,5 +1,4 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
-import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { extractCodeBlock } from '../utils/CodeExtractor.js';
@@ -10,8 +9,9 @@ import { YaoState } from '../core/models.js';
 import { SmartEdit, type SmartEditParams as SEParams, type SmartEditResult } from '../utils/SmartEdit.js';
 import { ValidationSystem } from './ValidationSystem.js';
 import { ArchitecturalValidator } from './ArchitecturalValidator.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'CodeEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('CodeEngine');
 
 export interface ReviewParams {
     filePath: string;

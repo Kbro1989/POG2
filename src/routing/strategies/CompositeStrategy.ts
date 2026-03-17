@@ -1,10 +1,10 @@
 import type { RoutingContext, RoutingDecision, RoutingStrategy, TerminalStrategy } from '../types.js';
-import pino from 'pino';
+import { createLogger } from "../../utils/logger.js";
 
 export class CompositeStrategy implements TerminalStrategy {
     readonly name: string;
     private readonly strategies: [...RoutingStrategy[], TerminalStrategy];
-    private readonly logger = pino({ name: 'CompositeStrategy' });
+    private readonly logger = createLogger('CompositeStrategy');
 
     constructor(strategies: [...RoutingStrategy[], TerminalStrategy], name: string = 'composite') {
         this.strategies = strategies;

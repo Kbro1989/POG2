@@ -1,16 +1,19 @@
-import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { SovereignEye, type CaptureSource } from '../utils/SovereignEye.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
-import type { Result, EngineOutput, SovereignRecord } from '../core/models.js';
+import type { Result, EngineOutput, SovereignRecord, ActuationIntent, PedagogyProfile } from '../core/models.js';
 import { getGenerationsPath, getSovereignRoot } from '../utils/SovereignPathResolver.js';
+import { RSMVController } from '../vision/RSMVController.js';
+import { ShaderInjector } from '../vision/ShaderInjector.js';
+import { TransientObserver } from '../vision/TransientObserver.js';
 import { join } from 'path';
 import { existsSync, readdirSync, mkdirSync, writeFileSync } from 'fs';
 
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { GoogleServices } from '../services/GoogleServices.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'ChromanumberEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('ChromanumberEngine');
 
 export interface CaptureParams {
     sourceType: 'url' | 'html' | 'window' | 'file';
@@ -37,6 +40,9 @@ export interface VisionParams {
 export class ChromanumberEngine {
     private readonly eye: SovereignEye;
     private readonly googleServices: GoogleServices;
+    private readonly rsmv: RSMVController;
+    private readonly injector: ShaderInjector;
+    private readonly observer: TransientObserver;
 
     constructor(
         private readonly client: ModelClient,
@@ -47,6 +53,9 @@ export class ChromanumberEngine {
         this.googleServices = new GoogleServices({
             apiKey: process.env['GOOGLE_API_KEY'] || ''
         });
+        this.rsmv = new RSMVController();
+        this.injector = new ShaderInjector();
+        this.observer = new TransientObserver();
     }
 
     public getEye(): SovereignEye {
@@ -218,14 +227,19 @@ TASK: You are auditing a sequence of images for movement integrity.
     /**
      * Forge Components based on analyzed style
      */
-    async forgeComponent(prompt: string, modelOverride?: string): Promise<Result<EngineOutput>> {
+    async forgeComponent(prompt: string, modelOverride?: string, dominantColors?: string[]): Promise<Result<EngineOutput>> {
+        const colorContext = dominantColors && dominantColors.length > 0
+            ? `\nSUBSTRATE DOMINANT COLORS (HEX): ${dominantColors.join(', ')}`
+            : '';
+
         const forgingPrompt = `You are a POG2 - SOVEREIGN forge engine.
-    Prompt: ${prompt}
+    Prompt: ${prompt}${colorContext}
 
 RULES:
 - Maintain high-density, rich aesthetics.
 - Use Vanilla CSS or Tailwind as appropriate.
 - Output FULL production-ready code.
+- If colors are provided, use them as primary/secondary anchors unless instructed otherwise.
 
 Forge result: `;
 
@@ -239,11 +253,49 @@ Forge result: `;
 
         if (!result.ok) return result;
 
+        // Strip markdown backticks if present
+        let cleanResponse = result.value.response;
+        if (cleanResponse.includes('```')) {
+            const matches = cleanResponse.match(/```(?:typescript|glsl|javascript)?([\s\S]*?)```/);
+            if (matches && matches[1]) {
+                cleanResponse = matches[1].trim();
+            } else {
+                cleanResponse = cleanResponse.replace(/```[a-z]*\n?/gi, '').replace(/```/g, '').trim();
+            }
+        }
+
+        // Phase 15: Structural Intent Detection
+        let actuation: ActuationIntent | undefined;
+        if (prompt.toLowerCase().includes('mutate') || prompt.toLowerCase().includes('shader')) {
+            // Priority: provided target or default to test substrate/procedural target
+            // Use absolute path resolution to avoid ENOENT in the injector
+            const relativeTarget = prompt.includes('test_substrate')
+                ? join('tmp_rsmv_inspect', 'src', '3d', 'test_substrate.ts')
+                : join('tmp_rsmv_inspect', 'src', '3d', 'proceduraltexture.ts');
+
+            const target = join(process.cwd(), relativeTarget);
+
+            actuation = {
+                action: 'mutate_shader',
+                target,
+                parameters: { code: cleanResponse },
+                reasoning: 'Forged component requires live shader mutation.'
+            };
+        } else if (prompt.toLowerCase().includes('view') || prompt.toLowerCase().includes('model')) {
+            actuation = {
+                action: 'rsmv_control',
+                target: 'RSMV Inspector',
+                parameters: { modelId: 'auto' }, // To be resolved by context
+                reasoning: 'User requested visual inspection of the forged model.'
+            };
+        }
+
         return {
             ok: true,
             value: {
                 output: result.value.response,
-                data: { prompt }
+                data: { prompt },
+                actuation
             }
         };
     }
@@ -377,5 +429,13 @@ Visual Code: `.trim();
             online: true, 
             details: 'ChromanumberEngine sensory Eye substrate active.' 
         };
+    }
+
+    /**
+     * Pedagogy Study — Distills professional standards from a cache asset.
+     */
+    public async study(modelId: string): Promise<Result<PedagogyProfile>> {
+        logger.info({ modelId }, 'Initiating pedagogy study loop');
+        return await this.observer.study(modelId);
     }
 }

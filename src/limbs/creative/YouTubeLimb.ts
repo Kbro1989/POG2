@@ -1,4 +1,3 @@
-import pino from 'pino';
 // @ts-ignore â€” googleapis types are bundled but TS can lag on resolution
 import { google, youtube_v3 } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
@@ -8,8 +7,9 @@ import { type Result, ok } from '../../core/models.js';
 import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
 import http from 'http';
 import url from 'url';
+import { createLogger } from "../../utils/logger.js";
 
-const logger = pino({ name: 'YouTubeLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('YouTubeLimb');
 
 // â•â•â• YouTube Upload Config â•â•â•
 const SCOPES = ['https://www.googleapis.com/auth/youtube.upload'];

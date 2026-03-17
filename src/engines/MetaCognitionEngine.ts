@@ -1,7 +1,7 @@
-import pino from 'pino';
 import { type Result, ok } from '../core/models.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'MetaCognitionEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('MetaCognitionEngine');
 
 /**
  * MetaCognitionEngine - Layer 3: Affective Substrate

@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { type Result, ok } from '../core/models.js';
 import { StoryboardLimb, type StoryboardScene } from '../limbs/creative/StoryboardLimb.js';
 import { ChromanumberEngine } from './ChromanumberEngine.js';
@@ -14,8 +13,10 @@ import { type PipelineCheckpoint } from '../types/pipeline.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { GenerativeAesthetics, EmotionalState } from '../core/models.js';
 import { getPipelinePath, getPipelineRootPath } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
+import { TaskScheduler } from '../routing/TaskScheduler.js';
 
-const logger = pino({ name: 'PipelineController', base: { hostname: 'POG2' } });
+const logger = createLogger('PipelineController');
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // Pipeline Types
@@ -92,11 +93,15 @@ export class PipelineController {
      * Takes a book ID, generates scenes, images, voice, and assembles everything.
      */
     public async run(request: PipelineRequest): Promise<Result<PipelineResult>> {
-        const { bookId, sceneCount = 5, personality, voiceGeneration = 'Auto', videoAssembly = 'Auto', youtubeUpload = 'Auto' } = request;
+        return TaskScheduler.getInstance().schedule(
+            'pipeline',
+            2, // YoungYin Priority
+            async () => {
+                const { bookId, sceneCount = 5, personality, voiceGeneration = 'Auto', videoAssembly = 'Auto', youtubeUpload = 'Auto' } = request;
 
-        const skipVoice = voiceGeneration === 'Skip';
-        const skipVideo = videoAssembly === 'Skip';
-        const skipYoutube = youtubeUpload === 'Skip';
+                const skipVoice = voiceGeneration === 'Skip';
+                const skipVideo = videoAssembly === 'Skip';
+                const skipYoutube = youtubeUpload === 'Skip';
 
         const storageRes = this.gutenberg.getBookStorageInfo(bookId);
         if (!storageRes.ok) return storageRes as any;
@@ -588,6 +593,9 @@ export class PipelineController {
         };
 
         return ok({ manifest, output: JSON.stringify(summaryJson, null, 2) });
+            },
+            3600_000 // 1 hour timeout for full production
+        );
     }
 
     /**

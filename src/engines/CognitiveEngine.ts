@@ -1,9 +1,9 @@
 import { type Result, type Lesson, ok, YaoState } from '../core/models.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { ModelClient } from '../clients/ModelClient.js';
-import pino from 'pino';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'CognitiveEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('CognitiveEngine');
 
 export interface PersonalityArchetype {
     name: string;

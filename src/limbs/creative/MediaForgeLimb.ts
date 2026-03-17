@@ -1,10 +1,10 @@
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
-import pino from 'pino';
 import { type Result, ok } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
+import { createLogger } from "../../utils/logger.js";
 
-const logger = pino({ name: 'MediaForgeLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('MediaForgeLimb');
 
 export interface MediaForgeOptions {
     prompt: string;

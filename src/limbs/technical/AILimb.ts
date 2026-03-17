@@ -1,8 +1,8 @@
-import pino from 'pino';
 import { type Result, ok } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
+import { createLogger } from "../../utils/logger.js";
 
-const logger = pino({ name: 'AILimb', base: { hostname: 'POG2' } });
+const logger = createLogger('AILimb');
 
 /**
  * AILimb - Neural Orchestration Interface
@@ -19,7 +19,7 @@ export class AILimb {
 
         // Orchestration logic: Maps high-level intent to specific neural pathways.
         const response = await this.client.execute({
-            model: 'qwen2.5-coder:7b',
+            model: 'deepseek-r1:8b',
             prompt: `Execute capability: ${request.capability} with input: ${JSON.stringify(request.input)}`
         });
 

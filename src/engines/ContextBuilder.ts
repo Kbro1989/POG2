@@ -1,11 +1,11 @@
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname, relative, resolve } from 'path';
-import pino from 'pino';
 import { type FileContext, type CodeContext, type Lesson, type ModelExecutor, isOk, type Result } from '../core/models.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { SovereignIgnoreManager } from '../utils/SovereignIgnoreManager.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'ContextBuilder', base: { hostname: 'POG2' } });
+const logger = createLogger('ContextBuilder');
 
 /**
  * ContextBuilder - Smart multi-file context assembly.

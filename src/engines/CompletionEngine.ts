@@ -1,13 +1,13 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
-import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { extractCodeBlock } from '../utils/CodeExtractor.js';
 import { SOVEREIGN_SYSTEM_PROMPT } from '../prompts/SystemPrompts.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import type { Result, EngineOutput } from '../core/models.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'CompletionEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('CompletionEngine');
 
 export interface CursorParams {
     filePath: string;

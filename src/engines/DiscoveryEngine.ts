@@ -3,9 +3,9 @@ import { ok } from '../core/models.js';
 import { Renderer } from '../ui/Renderer.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import pino from 'pino';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'DiscoveryEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('DiscoveryEngine');
 
 export interface WebSearchParams {
     query: string;

@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { existsSync, mkdirSync, readdirSync, statSync, readFileSync } from 'fs';
 import { dirname, join } from 'path';
 import Database from 'better-sqlite3';
@@ -83,8 +82,9 @@ import { AnalyticalStrategy } from '../routing/strategies/AnalyticalStrategy.js'
 import { CompositeStrategy } from '../routing/strategies/CompositeStrategy.js';
 import { homedir } from 'os';
 import { QuotaTracker } from '../utils/QuotaTracker.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'OrchestrateEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('OrchestrateEngine');
 
 
 /**

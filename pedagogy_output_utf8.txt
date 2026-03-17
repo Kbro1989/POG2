@@ -1,0 +1,26 @@
+﻿{"level":30,"time":1773717473106,"hostname":"POG2","name":"PedagogyTest","msg":"Starting Pedagogy Loop Test"}
+{"level":30,"time":1773717473107,"hostname":"POG2","name":"TransientObserver","modelId":"npc:0","msg":"Starting production pedagogy study"}
+{"level":30,"time":1773717473107,"hostname":"POG2","name":"WikiEnricher","name":"Hans","msg":"Fetching wiki context"}
+{"level":30,"time":1773717477006,"hostname":"POG2","name":"TransientObserver","modelId":"npc:0","polyCount":1583,"msg":"Pedagogy study complete"}
+{"level":30,"time":1773717477006,"hostname":"POG2","name":"PedagogyTest","id":"npc:0","name":"npc:0","type":"NPC","metrics":{"polyCount":1583,"boneCount":241,"materialComplexity":1,"rigLogic":"SKELETAL","surfaceArea":1237},"semantics":{"role":"Interactive NPC","race":"Human","intent":"High-fidelity rigged humanoid","wikiUrl":"https://runescape.wiki/w/Hans"},"timestamp":1773717476902,"msg":"Pedagogy Study Success"}
+
+--- Pedagogy Profile (Lessons Learned) ---
+{
+  "id": "npc:0",
+  "name": "npc:0",
+  "type": "NPC",
+  "metrics": {
+    "polyCount": 1583,
+    "boneCount": 241,
+    "materialComplexity": 1,
+    "rigLogic": "SKELETAL",
+    "surfaceArea": 1237
+  },
+  "semantics": {
+    "role": "Interactive NPC",
+    "race": "Human",
+    "intent": "High-fidelity rigged humanoid",
+    "wikiUrl": "https://runescape.wiki/w/Hans"
+  },
+  "timestamp": 1773717476902
+}

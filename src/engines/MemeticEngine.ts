@@ -1,4 +1,3 @@
-import pino from 'pino';
 import Database from 'better-sqlite3';
 import { copyFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
 import { join } from 'path';
@@ -7,8 +6,9 @@ import type { SovereignConfig } from '../config/SovereignConfig.js';
 import type { Result, SovereignRecord } from '../core/models.js';
 import { ok, err } from '../core/models.js';
 import { getSovereignRoot, PathTier } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'MemeticEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('MemeticEngine');
 
 export interface MemeticEntry {
     title: string;

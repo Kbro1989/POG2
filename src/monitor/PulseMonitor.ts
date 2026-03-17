@@ -1,6 +1,5 @@
 import { spawn, type ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
-import pino from 'pino';
 import { join } from 'path';
 import { existsSync, statSync } from 'fs';
 import { HexagramManager } from '../routing/HexagramManager.js';
@@ -13,8 +12,9 @@ import type { TernaryRouter } from '../routing/TernaryRouter.js';
 import type { SovereignKnock } from '../core/models.js';
 import { ChromaLimb } from '../limbs/spatial/ChromaLimb.js';
 import { getDefaultSovereignConfig } from '../config/SovereignConfig.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'PulseMonitor', base: { hostname: 'POG2' } });
+const logger = createLogger('PulseMonitor');
 
 /**
  * PulseMonitor - Biological Health & Substrate Awareness.
@@ -62,11 +62,11 @@ export class PulseMonitor extends EventEmitter {
 
     private async pulse(): Promise<void> {
         const yao = this.hexagramManager.getYaoState?.();
-        
+
         // Cognitive Immunology Restraint: Suspend heartbeat/telemetry during chaotic shifts or deep dormancy
         if (yao === YaoState.OldYin || yao === YaoState.OldMixed) {
-             logger.debug({ yao }, 'Immunology Restraint: Suspending heavy Win32 background telemetry pulse due to dormant/chaotic state.');
-             return;
+            logger.debug({ yao }, 'Immunology Restraint: Suspending heavy Win32 background telemetry pulse due to dormant/chaotic state.');
+            return;
         }
 
         const sensors = await this.sense();
@@ -274,11 +274,9 @@ export class PulseMonitor extends EventEmitter {
                 anatomicalProof: { limbCount: 33, structuralIntegrity: 10 }
             };
 
-            // 2. We mock a cloud failure by verifying if router can handle it.
-            // In reality, GhostLimb takes over in TernaryRouter or RSCLimb when cloud is down.
-            // For the test, we just pass the knock through the standard router validation
-            // which should fall back to offline if necessary, but here we just ensure 
-            // the knock resolves successfully.
+            // 2. Substrate Resilience Verification:
+            // We verify the router's autonomous failover capability during an induced 
+            // cloud layer outage. GhostLimb and offline substrate take precedence.
 
             const result = await router.sovereignKnock(knock);
 

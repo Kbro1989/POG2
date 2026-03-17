@@ -1,7 +1,6 @@
 import { existsSync, readdirSync } from 'fs';
 import { join, basename, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import pino from 'pino';
 import { NEUROLOGICAL_MAP, NeuralCategory, type NeuralNode } from '../state/NeurologicalMap.js';
 import { YaoState, ok } from '../core/models.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
@@ -11,8 +10,9 @@ import { HexagramManager } from '../routing/HexagramManager.js';
 import { TrainingCollector } from '../utils/TrainingCollector.js';
 import type { ModelRolodex, ProviderIdentity, RolodexProvider } from '../api/ai/ModelRolodex.js';
 import type { QuotaTracker, QuotaProvider } from '../utils/QuotaTracker.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'NodeTester', base: { hostname: 'POG2' } });
+const logger = createLogger('NodeTester');
 
 export interface NodeHealth {
     path: string;
@@ -108,20 +108,20 @@ export class NodeTester {
 
         // Phase 112: Visual Workflow Organ Grouping
         // Hardened: Includes explicit vision-domain engines and limbs
-        const visionNodes = results.filter(r => 
-            r.docDomain === 'VISION' || 
-            r.path.toLowerCase().includes('vision') || 
+        const visionNodes = results.filter(r =>
+            r.docDomain === 'VISION' ||
+            r.path.toLowerCase().includes('vision') ||
             r.role.toLowerCase().includes('vision') ||
             r.path.includes('Chroma') ||
             r.path.includes('Eye')
         );
         const visionOnline = visionNodes.filter(v => v.status === 'ONLINE').length;
-        
+
         if (visionNodes.length > 0) {
             const statusSummary = visionOnline === visionNodes.length ? 'VERIFIED' : (visionOnline > 0 ? 'DEGRADED' : 'OFFLINE');
-            logger.info({ 
-                organ: 'Visual Workflow', 
-                total: visionNodes.length, 
+            logger.info({
+                organ: 'Visual Workflow',
+                total: visionNodes.length,
                 online: visionOnline,
                 status: statusSummary
             }, 'Organ state clarified.');
@@ -143,7 +143,7 @@ export class NodeTester {
             return [];
         }
 
-        const providers: RolodexProvider[] = ['ollama', 'cloudflare', 'gemini', 'huggingface', 'fireworks', 'openrouter', 'rsmv'];
+        const providers: RolodexProvider[] = ['ollama', 'cloudflare', 'gemini', 'huggingface', 'fireworks', 'openrouter'];
         const results: ProviderHealth[] = [];
 
         for (const provider of providers) {
@@ -185,7 +185,7 @@ export class NodeTester {
 
         // Phase 112: Robust registration matching
         let instance = this.limbs[className];
-        
+
         // Secondary check: look for the instance in the registry if not found by direct classname
         if (instance === undefined) {
             // Priority 1: Exact case-insensitive match
@@ -194,8 +194,8 @@ export class NodeTester {
                 instance = this.limbs[exactKey];
             } else {
                 // Priority 2: Registry key is a prefix or suffix of the class name (e.g., RSC matching RSCLimb)
-                const fuzzyKey = Object.keys(this.limbs).find(k => 
-                    className.toLowerCase().includes(k.toLowerCase()) || 
+                const fuzzyKey = Object.keys(this.limbs).find(k =>
+                    className.toLowerCase().includes(k.toLowerCase()) ||
                     k.toLowerCase().includes(className.toLowerCase())
                 );
                 if (fuzzyKey) instance = this.limbs[fuzzyKey];
@@ -220,7 +220,7 @@ export class NodeTester {
             try {
                 // Specific logic for testing SwitchboardLimb server
                 let probe = await instance.healthCheck() as { online: boolean; details: string; retryable?: boolean };
-                
+
                 // If it's not already running, try to start a test instance so we can audit its capability
                 if (!probe.online && className === 'SwitchboardLimb' && typeof instance.startServer === 'function') {
                     try {

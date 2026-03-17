@@ -37,7 +37,7 @@ export interface SovereignConfig {
     reactiveAgentModel: string;
 
     // Resource Budgeting Tiers (Phase 78) - The 3 Paths
-    fastPathModel: string; // Reflexes, <3s response (moondream, qwen2.5-coder:latest)
+    fastPathModel: string; // Reflexes, <3s response (moondream, deepseek-r1:8b)
     midPathModel: string;  // Execution, 3-10s response (7b-14b)
     deepPathModel: string; // Sovereignty, 10-60s response (33b+, Kimi)
 
@@ -91,19 +91,24 @@ export interface SovereignConfig {
     // Phase 18: Resource & Metabolic Tracking
     metabolicCostScale: number; // 0.0 - 1.0 multiplier for all cost logging
     globeEndpoint?: string;    // Phase 107: Live Durable State Hub
+
+    // Phase 9: Stabilization Mechanics
+    reputationDecayRate: number; // Rate at which reputation drifts back to 1.0 per hour
+    baseExplorationEpsilon: number; // Starting point for epsilon-greedy routing
+    laneAwareWeighting: boolean; // Whether to weight routing by lane congestion (wait times)
 }
 
 const DEFAULT_CONFIG: SovereignConfig = {
     mode: 'hybrid',
     metabolicCostScale: 1.0,
     planningModel: 'kimi-k2.5:cloud',
-    codingModel: 'qwen2.5-coder:14b-instruct-q5_K_M',
+    codingModel: 'deepseek-r1:8b', // Upgraded to thinking model
     orchestratorModel: 'kimi-k2.5:cloud',
     visionModel: 'moondream:1.8b-v2-q4_K_M',
     voiceModel: 'tinyllama:1.1b-chat-v1.0-q4_K_M',
-    codingHeavyModel: 'qwen2.5-coder:14b-instruct-q5_K_M',
-    codingFastModel: 'qwen2.5-coder:7b-instruct-q4_K_M', 
-    embeddingModel: 'qwen3-embedding:latest',
+    codingHeavyModel: 'deepseek-r1:8b',
+    codingFastModel: 'deepseek-r1:8b', 
+    embeddingModel: 'qwen3-embedding:latest', // Upgraded to actual embedding node
     cloudflareAccountId: undefined,
     cloudflareApiToken: undefined,
     cloudflareAuthEmail: undefined,
@@ -114,30 +119,30 @@ const DEFAULT_CONFIG: SovereignConfig = {
     geminiEmbeddingModel: 'text-embedding-004',
 
     // specialized Generation Defaults (Phase 104)
-    storyboardModel: 'qwen2.5-coder:14b-instruct-q5_K_M',
+    storyboardModel: 'deepseek-r1:8b',
     vocalAnalysisModel: 'yi-coder:9b-chat-q5_K_M',
     imagePromptModel: 'deepseek-coder:6.7b-instruct-q4_K_M',
     // Back to 7b for rapid processing speeds over the 14b CPU latency.
-    soulIngestionModel: 'qwen2.5-coder:7b-instruct-q4_K_M',
-    memoryConsolidationModel: 'qwen2.5-coder:7b-instruct-q4_K_M',
+    soulIngestionModel: 'deepseek-r1:8b',
+    memoryConsolidationModel: 'deepseek-r1:8b',
 
     // Phase 71 Hierarchy Defaults
     masterReasoningModel: 'kimi-k2.5:cloud',
-    executiveCoderModel: 'qwen2.5-coder:14b-instruct-q5_K_M',
-    reactiveAgentModel: 'qwen2.5-coder:7b-instruct-q4_K_M',
+    executiveCoderModel: 'deepseek-r1:8b',
+    reactiveAgentModel: 'vibethinker:1.5b-q5_K_M',
 
     // Phase 78 Economic Budget Paths (Layer 3)
-    fastPathModel: 'qwen2.5-coder:7b-instruct-q4_K_M',
-    midPathModel: 'qwen2.5-coder:14b-instruct-q5_K_M',
+    fastPathModel: 'vibethinker:1.5b-q5_K_M',
+    midPathModel: 'deepseek-r1:8b',
     deepPathModel: 'kimi-k2.5:cloud',
 
     // Phase 72 Failover & Specialized Defaults
     masterFallbackModel: 'huggingface:openai-compat/kimi-k2.5-thinking',
-    masterLocalModel: 'qwen2.5-coder:14b-instruct-q5_K_M',
+    masterLocalModel: 'deepseek-r1:8b',
     imageGenModel: 'cloudflare:@cf/stabilityai/stable-diffusion-xl-base-1.0',
 
     huggingfaceFallbackModel: 'huggingface:openai-compat/kimi-k2.5-thinking',
-    localFallbackModel: 'qwen2.5-coder:14b-instruct-q5_K_M',
+    localFallbackModel: 'deepseek-r1:8b',
     ollamaBaseUrl: 'http://localhost:11434',
     projectId: 'global',
     embeddingDimensions: 768,
@@ -165,7 +170,12 @@ const DEFAULT_CONFIG: SovereignConfig = {
         ttlSeconds: 30,
         ghostFallback: true
     },
-    globeEndpoint: 'wss://multiplayer-globe-template.kristain33rs.workers.dev/parties/globe/pog2-sovereign'
+    globeEndpoint: 'wss://multiplayer-globe-template.kristain33rs.workers.dev/parties/globe/pog2-sovereign',
+    
+    // Phase 9 Defaults
+    reputationDecayRate: 0.1, // 10% recovery toward 1.0 per hour
+    baseExplorationEpsilon: 0.15,
+    laneAwareWeighting: true
 };
 
 function loadEnvFile(envPath: string): void {
@@ -234,7 +244,10 @@ const ENV_VAR_MAP: Record<string, string> = {
     outputFormat: 'OUTPUT_FORMAT',
     logLevel: 'LOG_LEVEL',
     globeEndpoint: 'POG2_GLOBE_ENDPOINT',
-    sovereignRoot: 'POG_SOVEREIGN_ROOT'
+    sovereignRoot: 'POG_SOVEREIGN_ROOT',
+    reputationDecayRate: 'REPUTATION_DECAY_RATE',
+    baseExplorationEpsilon: 'EXPLORATION_EPSILON',
+    laneAwareWeighting: 'LANE_AWARE_WEIGHTING'
 };
 
 export function loadConfig(configPath: string): SovereignConfig {

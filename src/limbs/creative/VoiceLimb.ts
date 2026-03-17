@@ -1,13 +1,13 @@
 import { writeFileSync } from 'fs';
 import { join, dirname } from 'path';
-import pino from 'pino';
 import { type Result, type ProsodyVector, EmotionalState, GenerativeAesthetics } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { GhostLimb } from '../metaphysical/GhostLimb.js';
 import { CloudflareServices } from '../../services/CloudflareServices.js';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
+import { createLogger } from "../../utils/logger.js";
 
-const logger = pino({ name: 'VoiceLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('VoiceLimb');
 
 export interface NarrationOptions {
     personality?: string;

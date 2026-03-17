@@ -2,13 +2,13 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import pino from 'pino';
 import type { Result, EngineOutput, MCPToolResult, MCPContent } from '../core/models.js';
 import { SovereignDomain } from '../types/SovereignDomain.js';
 import type { ToolRegistry } from '../ToolRegistry.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'MCPEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('MCPEngine');
 
 interface MCPServerConfig {
     command: string;

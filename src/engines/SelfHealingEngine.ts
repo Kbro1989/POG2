@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { type TSCError, CognitiveChoice, YaoState, BuildStatus, HealthStatus, type ExecutionPlan } from '../core/models.js';
@@ -13,13 +12,11 @@ import type { SpatialVisionEngine } from './SpatialVisionEngine.js';
 import type { ChromanumberEngine } from './ChromanumberEngine.js';
 import type { CodeEngine } from './CodeEngine.js';
 import type { ShellEngine } from './ShellEngine.js';
+import { createLogger } from "../utils/logger.js";
 
 const execAsync = promisify(exec);
 
-const logger = pino({
-    name: 'SelfHealingEngine',
-    base: { hostname: 'POG2' }
-});
+const logger = createLogger('SelfHealingEngine');
 
 /**
  * SelfHealingEngine - Codifies ternary diagnostic logic for project errors.
@@ -31,7 +28,7 @@ export class SelfHealingEngine {
         projectRoot: string,
         private readonly executor: ModelExecutor,
         private readonly hexagramManager: HexagramManager,
-        private readonly correctionModel: string = 'qwen2.5-coder:7b-instruct-q4_K_M',
+        private readonly correctionModel: string = 'deepseek-r1:8b',
         // Optional Biological Limbs
         private readonly visionEngine?: VisionEngine,
         private readonly spatialVisionEngine?: SpatialVisionEngine,

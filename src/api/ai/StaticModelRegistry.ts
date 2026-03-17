@@ -1,4 +1,4 @@
-﻿import { type AICapability, type AITaskType } from '../../core/models.js';
+import { type AICapability, type AITaskType } from '../../core/models.js';
 
 export const CatalogMetadata = {
     tasks: {
@@ -102,7 +102,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Qwen 2.5 Coder 7B (Local)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'qwen2.5-coder:7b-instruct-q4_K_M',
+        modelId: 'deepseek-r1:8b',
         description: 'Standard local coding workhorse.',
         passthroughEnabled: true
     },
@@ -111,7 +111,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Qwen 2.5 Coder 14B (Local)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'qwen2.5-coder:14b-instruct-q5_K_M',
+        modelId: 'deepseek-r1:8b',
         description: 'Complex local coding tasks.',
         passthroughEnabled: true
     },
@@ -129,7 +129,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Sovereign Thinker (Local)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'qwen2.5-coder:14b-instruct-q5_K_M',
+        modelId: 'deepseek-r1:8b',
         description: 'DEEP THOUGHT: local Coder/Thinker for orchestration.',
         passthroughEnabled: true,
         fallback: 'gold_qwen_2_5_coder_7b'
@@ -139,7 +139,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Sovereign Core (Local)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'qwen2.5-coder:14b-instruct-q5_K_M',
+        modelId: 'deepseek-r1:8b',
         description: 'PRIMARY REASONING: Local 14B planning and architectural core.',
         passthroughEnabled: true,
         fallback: 'gold_qwen_2_5_coder_7b'
@@ -179,7 +179,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Qwen 2.5 Coder Latest',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'qwen2.5-coder:latest',
+        modelId: 'deepseek-r1:8b',
         description: 'LOCAL TIER: Primary on-device coding and logic.',
         passthroughEnabled: true,
         fallback: 'gold_deepseek_coder_6_7b'
@@ -218,7 +218,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Qwen 2.5 Coder 1.5B',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'qwen2.5-coder:1.5b-instruct-q4_K_M',
+        modelId: 'deepseek-r1:8b',
         description: 'SIDE TIER: Fast local intervention and small code tasks.',
         passthroughEnabled: true
     },
@@ -227,7 +227,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Sovereign Admin (Local Qwen)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'qwen2.5-coder:14b-instruct-q5_K_M',
+        modelId: 'deepseek-r1:8b',
         description: 'LOCAL ADMIN: Local thinking substrate for strategic oversight.',
         passthroughEnabled: true,
         fallback: 'gold_qwen_2_5_coder_7b'

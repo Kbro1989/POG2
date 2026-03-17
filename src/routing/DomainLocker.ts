@@ -1,7 +1,7 @@
-﻿import pino from 'pino';
-import { SovereignDomain, classifyDomain, TOOL_DOMAIN_MAP } from '../types/SovereignDomain.js';
+﻿import { SovereignDomain, classifyDomain, TOOL_DOMAIN_MAP } from '../types/SovereignDomain.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'DomainLocker', base: { hostname: 'POG2' } });
+const logger = createLogger('DomainLocker');
 
 /**
  * DomainTransition â€” Record of domain context switches for audit trail.

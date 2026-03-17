@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { ModelClient } from '../clients/ModelClient.js';
 import { ShellEngine } from './ShellEngine.js';
 import { Renderer } from '../ui/Renderer.js';
@@ -7,8 +6,9 @@ import type { Result, EngineOutput } from '../core/models.js';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'SpatialVisionEngine', base: { hostname: 'POG2' } });
+const logger = createLogger('SpatialVisionEngine');
 
 export interface SpatialVisionParams {
     intent: 'chroma' | 'eye' | 'spatial_map' | 'ui_analysis' | 'code_view';

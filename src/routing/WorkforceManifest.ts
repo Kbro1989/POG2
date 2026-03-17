@@ -1,9 +1,9 @@
-﻿import pino from 'pino';
 import { SovereignDomain, DOMAIN_ADJACENCY } from '../types/SovereignDomain.js';
 import { YaoState } from '../core/models.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'WorkforceManifest', base: { hostname: 'POG2' } });
+const logger = createLogger('WorkforceManifest');
 
 /**
  * WorkerDefinition â€” A frozen model in the Sovereign Workforce.
@@ -79,7 +79,7 @@ You produce complete, production-grade implementations. No mocks.`,
 
             // â•â•â• WORKER 3: Smart-Edit Specialist â•â•â•
             {
-                id: 'qwen2.5-coder:1.5b-instruct-q4_K_M',
+                id: 'deepseek-r1:8b',
                 configKey: 'codingFastModel',
                 role: 'Smart-Edit Specialist â€” hyper-local, precise modifications',
                 domains: [SovereignDomain.CODE],
@@ -161,7 +161,7 @@ Analyze screenshots and visual layouts. Extract colors (Chromanumber).`,
 
             // â•â•â• WORKER 9: System Specialist â•â•â•
             {
-                id: 'qwen2.5-coder:7b-instruct-q4_K_M',
+                id: 'deepseek-r1:8b',
                 configKey: 'codingModel',
                 role: 'System Specialist â€” shell, git, deployment',
                 domains: [SovereignDomain.SYSTEM, SovereignDomain.RESEARCH],
@@ -227,7 +227,7 @@ AUTHORIZED TOOLS: shell_command, git_status, wrangler, web_search, fetch_url.`,
 
             // â•â•â• WORKER 14: Fast Prototyper â•â•â•
             {
-                id: 'qwen2.5-coder:latest',
+                id: 'deepseek-r1:8b',
                 configKey: 'prototypeModel',
                 role: 'Fast Prototyper â€” rapid iteration',
                 domains: [SovereignDomain.CODE, SovereignDomain.RESEARCH],

@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
@@ -7,9 +6,10 @@ import type { SovereignConfig } from '../../config/SovereignConfig.js';
 import type { AIServiceType } from '../../core/models.js';
 
 import { $ } from '../../utils/shell.js';
+import { createLogger } from "../../utils/logger.js";
 
 const execAsync = promisify(exec);
-const logger = pino({ name: 'ModelRolodex', base: { hostname: 'POG2' } });
+const logger = createLogger('ModelRolodex');
 
 // ═══ TYPES ═══
 
@@ -28,6 +28,10 @@ export interface RolodexModel {
     totalTokensUsed: number;
     avgLatencyMs: number;
     latencySamples: number;
+    reputation: number;             // 0.0 to 1.0 score
+    isVision?: boolean;
+    isText?: boolean;
+    isEmbedding?: boolean;
 }
 
 export interface ProviderIdentity {
@@ -77,6 +81,12 @@ export class ModelRolodex {
         } else {
             this.state = this.createEmptyState();
         }
+
+        // Phase 9: Start Reputation Decay Interval
+        const decayRate = config.reputationDecayRate || 0.05;
+        // Interval: 1 hour in production, 1 minute in development/test
+        const intervalMs = process.env.NODE_ENV === 'test' ? 60000 : 3600000;
+        setInterval(() => this.applyReputationDecay(decayRate), intervalMs);
     }
 
     private createEmptyState(): RolodexState {
@@ -190,45 +200,16 @@ export class ModelRolodex {
         return status.authenticated && status.models.length > 0;
     }
 
-    /** Get best available models for a failover sequence, sorted by health and capability. */
+    /** Get best available models for a failover sequence, sorted by learned reputation. */
     getHealthyModelsByTaskType(taskType: 'text' | 'image' | 'audio' | 'embedding' | 'vision'): string[] {
         const allModels = this.getAllModels();
 
-        // Filter by task type and calculate a health score
+        // Filter by task type and sort by learned reputation
         const scored = allModels
             .filter(m => m.taskType === taskType)
-            .map(m => {
-                const totalCalls = m.successCount + m.failureCount;
-                let healthScore = totalCalls > 0
-                    ? m.successCount / totalCalls
-                    : 0.5; // Neutral starting point for new models
+            .sort((a, b) => b.reputation - a.reputation);
 
-                // Cold Start / Capability Bias: 
-                // Reward models with known large parameter counts even if they have 0 history
-                if (totalCalls === 0 && m.parameterSize) {
-                    const size = parseInt(m.parameterSize);
-                    if (!isNaN(size)) {
-                        if (size >= 30) healthScore += 0.3;      // 30b+ is likely very capable
-                        else if (size >= 14) healthScore += 0.2; // 14b+ is a strong mid-tier
-                        else if (size >= 7) healthScore += 0.1;  // 7b+ is standard
-                    }
-                }
-
-                // Latency Penalty:
-                // Heavily penalize models that are consistently slow (> 30s avg)
-                if (m.avgLatencyMs > 30000) {
-                    healthScore -= 0.4;
-                }
-
-                return {
-                    model: m,
-                    healthScore,
-                    prefixedId: this.toPrefixedModelId(m)
-                };
-            })
-            .sort((a, b) => b.healthScore - a.healthScore);
-
-        return scored.map(s => s.prefixedId);
+        return scored.map(m => this.toPrefixedModelId(m));
     }
 
     /** Record a model call result (called by ModelClient after each call) */
@@ -245,7 +226,9 @@ export class ModelRolodex {
                 failureCount: 0,
                 totalTokensUsed: 0,
                 avgLatencyMs: 0,
-                latencySamples: 0
+                latencySamples: 0,
+                reputation: 1.0,
+                isText: true // Default
             };
         }
 
@@ -262,10 +245,55 @@ export class ModelRolodex {
         entry.latencySamples++;
         entry.avgLatencyMs = entry.avgLatencyMs + (latencyMs - entry.avgLatencyMs) / entry.latencySamples;
 
+        // 🧬 Update reputation score
+        entry.reputation = this.computeReputation(entry);
+
         // Persist periodically (every 10 calls)
-        if ((entry.successCount + entry.failureCount) % 10 === 0) {
+        const totalInteractions = entry.successCount + entry.failureCount;
+        if (totalInteractions % 10 === 0) {
             this.persist();
         }
+
+        // Global Reputation Decay is now handled by an interval
+    }
+
+    /** 🧬 Evolutionary Mutation - Manually adjust reputation based on strategy advisor */
+    public mutateReputation(modelId: string, provider: RolodexProvider, adjustment: number): void {
+        const key = `${provider}:${modelId}`;
+        const entry = this.state.models[key];
+        if (!entry) return;
+
+        const oldRep = entry.reputation;
+        entry.reputation = Math.max(0, Math.min(1.0, entry.reputation + adjustment));
+        
+        logger.info({ 
+            model: modelId, 
+            provider, 
+            oldRep: oldRep.toFixed(4), 
+            newRep: entry.reputation.toFixed(4),
+            adjustment 
+        }, '🧬 Model reputation mutated by strategy advisor.');
+        
+        this.persist();
+    }
+
+    /** 🧬 Reputation Scoring Algorithm - Research Grade */
+    private computeReputation(m: RolodexModel): number {
+        const totalCalls = m.successCount + m.failureCount;
+        if (totalCalls === 0) return 1.0;
+
+        // 1. Success Rate Component (60%)
+        const successRate = m.successCount / totalCalls;
+        
+        // 2. Latency Component (30%) - Normalized (0.1 effectively infinite, 1.0 instant)
+        // Assume 50ms is "instant" and 5000ms is "stalled"
+        const latencyFactor = Math.max(0, 1 - (m.avgLatencyMs / 5000));
+        
+        // 3. Cost/Token Penalty (10%) - Discourage massive token burns without success
+        const tokenPenalty = Math.min(0.1, (m.totalTokensUsed / 1_000_000) * 0.1);
+
+        const score = (successRate * 0.6) + (latencyFactor * 0.3) + 0.1 - tokenPenalty;
+        return Math.max(0, Math.min(1, score));
     }
 
     // ═══ DISCOVERY ═══
@@ -328,7 +356,12 @@ export class ModelRolodex {
                         parameterSize: m.details?.parameter_size,
                         quantization: m.details?.quantization_level,
                         lastSeen: Date.now(),
-                        successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0
+                        successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, 
+                        latencySamples: 0, 
+                        reputation: 1.0,
+                        isEmbedding: m.name.includes('embed'),
+                        isVision: m.name.includes('llava') || m.name.includes('moondream'),
+                        isText: !m.name.includes('embed')
                     };
                 } else {
                     this.state.models[key].lastSeen = Date.now();
@@ -398,7 +431,10 @@ export class ModelRolodex {
                             provider: 'cloudflare',
                             taskType: taskName.includes('image') ? 'image' : taskName.includes('embed') ? 'embedding' : taskName.includes('audio') || taskName.includes('speech') ? 'audio' : 'text',
                             lastSeen: Date.now(),
-                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0
+                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0, reputation: 1.0,
+                            isVision: taskName.includes('image') || taskName.includes('vision'),
+                            isEmbedding: taskName.includes('embed'),
+                            isText: !taskName.includes('image') && !taskName.includes('embed') && !taskName.includes('audio') && !taskName.includes('vision')
                         };
                     } else {
                         this.state.models[key].lastSeen = Date.now();
@@ -477,7 +513,9 @@ export class ModelRolodex {
                             provider: 'gemini',
                             taskType: methods.includes('embedContent') ? 'embedding' : 'text',
                             lastSeen: Date.now(),
-                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0
+                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0, reputation: 1.0,
+                            isEmbedding: methods.includes('embedContent'),
+                            isText: !methods.includes('embedContent')
                         };
                     } else {
                         this.state.models[key].lastSeen = Date.now();
@@ -494,7 +532,9 @@ export class ModelRolodex {
                             provider: 'gemini',
                             taskType: target.includes('embed') ? 'embedding' : 'text',
                             lastSeen: Date.now(),
-                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0
+                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0, reputation: 1.0,
+                            isEmbedding: target.includes('embed'),
+                            isText: !target.includes('embed')
                         };
                     } else {
                         this.state.models[key].lastSeen = Date.now();
@@ -557,8 +597,8 @@ export class ModelRolodex {
                     if (!this.state.models[key]) {
                         this.state.models[key] = {
                             id: modelId, name: modelId, provider: 'huggingface', taskType: 'text',
-                            lastSeen: Date.now(), successCount: 0, failureCount: 0,
-                            totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0
+                            lastSeen: Date.now(),
+                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0, reputation: 1.0
                         };
                     }
                 }
@@ -608,7 +648,9 @@ export class ModelRolodex {
                             provider: 'openrouter',
                             taskType: modality.includes('vision') ? 'vision' : modality.includes('image') ? 'image' : 'text',
                             lastSeen: Date.now(),
-                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0
+                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0, reputation: 1.0,
+                            isVision: modality.includes('vision') || modality.includes('image'),
+                            isText: !modality.includes('image') && !modality.includes('vision')
                         };
                     } else {
                         this.state.models[key].lastSeen = Date.now();
@@ -664,7 +706,9 @@ export class ModelRolodex {
                             provider: 'fireworks',
                             taskType: id.includes('vision') || id.includes('llava') || id.includes('moondream') ? 'vision' : 'text',
                             lastSeen: Date.now(),
-                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0
+                            successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, latencySamples: 0, reputation: 1.0,
+                            isVision: id.includes('vision') || id.includes('llava') || id.includes('moondream'),
+                            isText: !id.includes('vision') && !id.includes('llava') && !id.includes('moondream')
                         };
                     } else {
                         this.state.models[key].lastSeen = Date.now();
@@ -768,13 +812,46 @@ export class ModelRolodex {
         return lines.join('\n');
     }
 
+    /** 🧬 Reputation Decay - Exponential Convergence toward baseline 1.0 */
+    public applyReputationDecay(decayRate: number): void {
+        const count = Object.keys(this.state.models).length;
+        if (count === 0) return;
+
+        for (const model of Object.values(this.state.models)) {
+            // formula: rep = rep + (1 - rep) * decayRate
+            model.reputation = model.reputation + (1.0 - model.reputation) * decayRate;
+        }
+        
+        logger.debug({ decayRate, count }, '🧬 Reputation decay applied: All models drifted toward baseline.');
+        this.persist();
+    }
+
+    /** Increment active load counter for a model on a provider (used by stress test) */
+    incrementLoad(_provider: string, _model: string): void {
+        // Load tracking stub — future: track concurrent requests per model
+    }
+
+    /** Decrement active load counter for a model on a provider (used by stress test) */
+    decrementLoad(_provider: string, _model: string): void {
+        // Load tracking stub — future: track concurrent requests per model
+    }
+
+    /** 
+     * canAcceptCall - Load gating / Backpressure check.
+     * Returns true if the model/provider can accept more parallel work.
+     */
+    canAcceptCall(_provider: string, _model: string): boolean {
+        // Backpressure stub — future: check against maxParallelCalls from config
+        return true; 
+    }
+
     /** Functional health probe for NodeTester */
     healthCheck(): { online: boolean; details: string } {
         const totalModels = Object.keys(this.state.models).length;
         const providers = Object.values(this.state.providers);
         const onlineProviders = providers.filter(p => p.authenticated).length;
         const rsmvOnline = this.state.providers.rsmv?.authenticated ? 'Aligned' : 'Disconnected';
-        
+
         return {
             online: totalModels > 0 || this.state.providers.rsmv?.authenticated,
             details: `Rolodex: ${totalModels} models across ${onlineProviders}/7 providers. [RSMV: ${rsmvOnline}]. Last refresh: ${this.state.lastRefresh ? new Date(this.state.lastRefresh).toLocaleTimeString() : 'Never'}`

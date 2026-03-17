@@ -1,10 +1,6 @@
-import pino from 'pino';
 import { type Result } from '../core/models.js';
 
-const logger = pino({
-    name: 'GoogleServices',
-    base: { hostname: 'POG2' }
-});
+const logger = createLogger('GoogleServices');
 
 export interface GoogleServiceConfig {
     apiKey: string;
@@ -16,6 +12,7 @@ import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { v2 } from '@google-cloud/translate';
 const { Translate } = v2;
 import { LanguageServiceClient } from '@google-cloud/language';
+import { createLogger } from "../utils/logger.js";
 
 /**
  * GoogleServices - Unified Google API Substrate

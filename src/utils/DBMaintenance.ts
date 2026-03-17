@@ -1,14 +1,11 @@
 import sqlite3 from 'sqlite3';
-import pino from 'pino';
 import { type Result } from '../core/models.js';
 import { getLearningDbPath } from './SovereignPathResolver.js';
 import * as fs from 'fs';
 import { join, dirname } from 'path';
+import { createLogger } from "./logger.js";
 
-const logger = pino({
-    name: 'DBMaintenance',
-    base: { hostname: 'POG2' }
-});
+const logger = createLogger('DBMaintenance');
 
 /**
  * DBMaintenance - Utilities for SQLite long-term health.

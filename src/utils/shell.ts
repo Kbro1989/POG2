@@ -1,9 +1,9 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import pino from 'pino';
+import { createLogger } from "./logger.js";
 
 const execAsync = promisify(exec);
-const logger = pino({ name: 'SovereignShell', base: { hostname: 'POG2' } });
+const logger = createLogger('SovereignShell');
 
 /**
  * $ — The Sovereign Shell Utility.

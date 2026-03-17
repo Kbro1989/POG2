@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { type Result, ok, type SovereignKnock } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
@@ -6,8 +5,9 @@ import { join } from 'path';
 import { exec } from 'child_process';
 import { existsSync } from 'fs';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
+import { createLogger } from "../../utils/logger.js";
 
-const logger = pino({ name: 'GhostLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('GhostLimb');
 
 /**
  * GhostLimb - The Observer Mind (Backup Consciousness)
@@ -120,7 +120,7 @@ export class GhostLimb {
         this.awaken();
         this.awarenessScore = 0.9;
 
-        let targetModel = this.config.masterLocalModel || 'qwen2.5-coder:14b-instruct-q5_K_M'; // Default to config
+        let targetModel = this.config.masterLocalModel || 'deepseek-r1:8b'; // Default to config
         const rolodex = client.getRolodex();
         
         if (rolodex) {

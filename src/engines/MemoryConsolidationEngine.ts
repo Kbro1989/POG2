@@ -2,9 +2,9 @@ import { type Result } from '../core/models.js';
 import { ModelClient } from '../clients/ModelClient.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { StateManager } from '../state/StateManager.js';
-import pino from 'pino';
+import { createLogger } from "../utils/logger.js";
 
-const logger = pino({ name: 'MemoryConsolidation', base: { hostname: 'POG2' } });
+const logger = createLogger('MemoryConsolidation');
 
 export class MemoryConsolidationEngine {
     private readonly consumedNonces = new Set<string>();

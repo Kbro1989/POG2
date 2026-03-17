@@ -1,5 +1,4 @@
 ﻿import Database from 'better-sqlite3';
-import pino from 'pino';
 import { type Result, type Lesson, ok } from '../core/models.js';
 import { getLearningDbPath } from './SovereignPathResolver.js';
 import { createHash } from 'crypto';
@@ -7,11 +6,9 @@ import { readFileSync, existsSync } from 'fs';
 import { ModelClient } from '../clients/ModelClient.js';
 import { SovereignIgnoreManager } from './SovereignIgnoreManager.js';
 import { getSystemRoot } from './SovereignPathResolver.js';
+import { createLogger } from "./logger.js";
 
-const logger = pino({
-    name: 'VectorDB',
-    base: { hostname: 'POG2' }
-});
+const logger = createLogger('VectorDB');
 
 interface LessonRow {
     id: string;

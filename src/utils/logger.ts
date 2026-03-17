@@ -1,7 +1,13 @@
-﻿import pino from 'pino';
+import pino, { Logger } from 'pino';
 
-export const logger = pino({
-    name: 'POG2-CORE',
-    level: process.env['POG_LOG_LEVEL'] || 'info',
-    base: { hostname: 'POG2-Substrate' }
-});
+export const SOVEREIGN_IDENTITY = 'POG2';
+
+export function createLogger(name: string): Logger {
+    return pino({
+        name,
+        level: process.env['POG_LOG_LEVEL'] || 'info',
+        base: { hostname: SOVEREIGN_IDENTITY }
+    });
+}
+
+export const logger = createLogger('POG2-CORE');

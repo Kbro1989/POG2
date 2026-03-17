@@ -1,8 +1,8 @@
-import pino from 'pino';
 import { type Result, ok, err } from '../../core/models.js';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
+import { createLogger } from "../../utils/logger.js";
 
-const logger = pino({ name: 'ChromaLimb', base: { hostname: 'POG2' } });
+const logger = createLogger('ChromaLimb');
 
 /**
  * ChromaLimb - Spatial/Visual Chromanumber Intelligence
