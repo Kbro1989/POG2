@@ -1,7 +1,7 @@
 import { createLogger } from '../utils/logger.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { type Ternary, type Result, YaoState, type DecisionAuditRecord, type RoutingComplexity, type ContextCard, EmotionalState, type AIServiceType } from '../core/models.js';
+import { type Ternary, type Result, YaoState, type DecisionAuditRecord, type RoutingComplexity, type ContextCard, EmotionalState, type AIServiceType, type ActuationResult } from '../core/models.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import { HexagramManager } from './HexagramManager.js';
 import type { ModelClient } from '../clients/ModelClient.js';
@@ -840,6 +840,34 @@ export class TernaryRouter {
         const current = this.modelFailures.get(model) ?? 0;
         this.modelFailures.set(model, current + 1);
         logger.warn({ model, failureCount: current + 1 }, 'Model failure recorded');
+    }
+
+    /**
+     * 🧬 Proprioceptive Reinforcement Loop (Phase 24)
+     * Directly adjusts model reputation based on sensory verification of actuation.
+     */
+    public recordActuationReinforcement(verification: ActuationResult): void {
+        if (!this.rolodex || !verification.modelId) return;
+
+        const { modelId, success, details } = verification;
+        const providerStr = modelId.split(':')[0] || 'ollama';
+        const modelName = modelId.includes(':') ? modelId.split(':').slice(1).join(':') : modelId;
+        const provider = ModelRolodex.toRolodexProvider(providerStr);
+
+        // Success gives a small boost (+0.05), failure gives a significant penalty (-0.15)
+        const adjustment = success ? 0.05 : -0.15;
+        
+        logger.info({ modelId, success, adjustment, details }, '🧬 CNS: Applying proprioceptive reinforcement');
+        this.rolodex.mutateReputation(modelName, provider, adjustment);
+        
+        // Push to Hexagram line 4 (Metabolic Stability)
+        this.hexagram.pushLine({
+            lineIndex: 4,
+            title: success ? 'Reinforcement: Positive' : 'Reinforcement: Negative',
+            content: `Proprioception ${success ? 'confirmed' : 'rejected'} actuation for ${modelId}`,
+            state: success ? YaoState.YoungYang : YaoState.OldYin,
+            importance: 2
+        });
     }
 
     private isModelFailing(model: string): boolean {

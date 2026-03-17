@@ -1,4 +1,4 @@
-﻿import Database from 'better-sqlite3';
+import Database from 'better-sqlite3';
 import { type Result, type Lesson, ok } from '../core/models.js';
 import { getLearningDbPath } from './SovereignPathResolver.js';
 import { createHash } from 'crypto';
@@ -19,6 +19,8 @@ interface LessonRow {
     domainNamespace: string;
     errorType?: string | null;
     createdAt: number;
+    lastAccessed?: number | null;
+    usageCount: number;
     regretLikelihood: number;
     metadata: string;
     hash?: string | null;
@@ -87,6 +89,8 @@ export class VectorDB {
                 domainNamespace TEXT NOT NULL DEFAULT 'global',
                 errorType TEXT,
                 createdAt INTEGER NOT NULL,
+                lastAccessed INTEGER,
+                usageCount INTEGER DEFAULT 0,
                 regretLikelihood REAL DEFAULT 0,
                 metadata TEXT,
                 hash TEXT,
@@ -117,6 +121,12 @@ export class VectorDB {
         if (!columnNames.includes('type')) {
             this.db.exec('ALTER TABLE lessons ADD COLUMN type TEXT');
         }
+        if (!columnNames.includes('usageCount')) {
+            this.db.exec('ALTER TABLE lessons ADD COLUMN usageCount INTEGER DEFAULT 0');
+        }
+        if (!columnNames.includes('lastAccessed')) {
+            this.db.exec('ALTER TABLE lessons ADD COLUMN lastAccessed INTEGER');
+        }
     }
 
     public addLesson(lesson: Lesson & { projectId: string; domainNamespace?: string; hash?: string; type?: string }): Result<void> {
@@ -138,6 +148,8 @@ export class VectorDB {
                 lesson.domainNamespace || 'global',
                 lesson.errorType || null,
                 lesson.createdAt,
+                lesson.createdAt, // initial lastAccessed
+                0, // initial usageCount
                 lesson.regretLikelihood || 0,
                 JSON.stringify(lesson.metadata),
                 lesson.hash || null,
@@ -167,8 +179,18 @@ export class VectorDB {
                     embeddingBuffer.byteLength / 4
                 );
 
-                const similarityValue = this.cosineSimilarity(queryEmbedding, embedding);
-                let finalSimilarity = similarityValue;
+                 const similarityValue = this.cosineSimilarity(queryEmbedding, embedding);
+                
+                // --- Phase 25: Cognitive Evolution Logic ---
+                const now = Date.now();
+                const ageSeconds = (now - row.createdAt) / 1000;
+                const tau = 7 * 24 * 60 * 60; // 7-day half-life for memory decay (in seconds)
+                const temporalDecay = Math.exp(-ageSeconds / tau);
+                
+                // Reinforcement Boost: usageCount increases relevance physics
+                const usageBoost = Math.min(row.usageCount * 0.05, 0.5); // Cap boost at +0.5
+                
+                let finalSimilarity = (similarityValue * temporalDecay) + usageBoost;
 
                 if (projectId && row.projectId === projectId) finalSimilarity += 0.1;
 
@@ -237,6 +259,25 @@ export class VectorDB {
             return ok(undefined);
         } catch (err) {
             logger.error({ err }, 'Failed to delete deprecated lessons.');
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    /**
+     * Phase 25: Reinforce a specific lesson.
+     * Increases usageCount and updates lastAccessed.
+     */
+    public reinforceLesson(id: string, strength: number = 1): Result<void> {
+        if (!this.db) return { ok: false, error: new Error('Database not initialized') };
+        try {
+            this.db.prepare(`
+                UPDATE lessons 
+                SET usageCount = usageCount + ?, lastAccessed = ? 
+                WHERE id = ?
+            `).run(strength, Date.now(), id);
+            return ok(undefined);
+        } catch (err) {
+            logger.error({ id, err }, 'Failed to reinforce lesson');
             return { ok: false, error: err as Error };
         }
     }

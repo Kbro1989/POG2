@@ -1,15 +1,14 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { ModelClient } from './src/clients/ModelClient.js';
 import { TernaryRouter } from './src/routing/TernaryRouter.js';
-import { SovereignConfig } from './src/config/SovereignConfig.js';
+import { SovereignConfig, loadConfig } from './src/config/SovereignConfig.js';
 import { SOVEREIGN_SYSTEM_PROMPT } from './src/prompts/SystemPrompts.js';
 
 (async () => {
     try {
-        const config = new SovereignConfig();
-        const router = new TernaryRouter(config, process.cwd());
+        const config = loadConfig(process.env['POG2_CONFIG'] || 'pog2-config.json');
+        const router = new TernaryRouter(config);
         const client = new ModelClient(config, router);
-        await router.initialize();
         
         const task = "system health";
         const route = await router.route('Orchestrator', task, task);

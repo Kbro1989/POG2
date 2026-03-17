@@ -4,6 +4,11 @@
 import { Result, ok, err } from '../core/models.js';
 import { AnatomyLimits, SpeciesAnatomy } from '../constants/AnatomyRegistry.js';
 import { ModelReference } from '../constants/ModelRegistry.js';
+import { readFileSync, readdirSync, statSync } from 'fs';
+import { join } from 'path';
+import { createLogger } from './logger.js';
+
+const logger = createLogger('RSMVExtractor');
 
 export interface RSMVModelJSON {
     name: string;
@@ -22,7 +27,7 @@ export class RSMVExtractor {
      * Functional probe for RSMV substrate health.
      */
     public healthCheck(): { online: boolean; details: string } {
-        return { online: true, details: 'RSMV Sensory substrate nominal. Extraction logic optimized.' };
+        return { online: true, details: 'RSMV Sensory substrate nominal. Headless batch mode enabled.' };
     }
 
     /**
@@ -37,17 +42,27 @@ export class RSMVExtractor {
             joints: { elbow: 1, knee: 1 }
         };
 
-        // If extra limb info is in the 'extra' map, we can override
+        // Opcode 1010: Explicit limb count override
+        // Opcode 1011: Eye count
+        // Opcode 1012: Joint complexity bitmask
         if (json.extra) {
-            // Check for explicit limb count override in custom schema (Prop 1010)
             if (json.extra[1010]) limits.limbs = Number(json.extra[1010]);
+            if (json.extra[1011]) limits.eyes = Number(json.extra[1011]);
+            
+            if (json.extra[1012]) {
+                const joints = Number(json.extra[1012]);
+                if (!limits.joints) limits.joints = {};
+                if (joints & 1) limits.joints.wrist = 1;
+                if (joints & 2) limits.joints.ankle = 1;
+                if (joints & 4) limits.joints.neck = 1;
+            }
         }
 
         return {
             species: json.name.toLowerCase().replace(/\s+/g, '_'),
             commonName: json.name,
             limits,
-            notes: `Derived from RSMV Model (BoundSize: ${json.boundSize || 'unknown'})`
+            notes: `Derived from RSMV Model (BoundSize: ${json.boundSize || 'unknown'}, AnimGroup: ${json.animation_group || 'none'})`
         };
     }
 
@@ -87,5 +102,45 @@ export class RSMVExtractor {
                 kineticProfile
             }
         };
+    }
+
+    /**
+     * Phase 25: Headless Batch Ingestion
+     * Recursively scans a directory for RSMV JSONs and yields knowledge packets.
+     */
+    public *batchProcessModels(directory: string): Generator<any> {
+        const files = readdirSync(directory);
+
+        for (const file of files) {
+            const fullPath = join(directory, file);
+            const stat = statSync(fullPath);
+
+            if (stat.isDirectory()) {
+                yield* this.batchProcessModels(fullPath);
+            } else if (file.endsWith('.json')) {
+                try {
+                    const content = readFileSync(fullPath, 'utf8');
+                    const json = JSON.parse(content) as RSMVModelJSON;
+                    
+                    if (!json.name) continue;
+
+                    const anatomy = RSMVExtractor.extractAnatomy(json);
+                    const kinetic = RSMVExtractor.getKineticProfile(json);
+                    
+                    // Synthetic reference for the knowledge packet
+                    const ref: ModelReference = {
+                        id: `rsmv-${json.name.toLowerCase().replace(/\s+/g, '-')}`,
+                        name: json.name,
+                        species: anatomy.species,
+                        meshCount: (json.models?.length || 0) + (json.headModels?.length || 0),
+                        metadata: { boundSize: json.boundSize }
+                    };
+
+                    yield RSMVExtractor.toKnowledgePacket(ref, anatomy, kinetic);
+                } catch (e) {
+                    logger.error({ file, error: (e as Error).message }, 'Failed to parse RSMV model');
+                }
+            }
+        }
     }
 }

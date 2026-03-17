@@ -1,6 +1,8 @@
 import { type Result, type Ternary } from '../../core/models.js';
 import { CapabilityRegistry, type AICapability, type AIServiceType } from './CapabilityRegistry.js';
 import { ModelClient } from '../../clients/ModelClient.js';
+import { WorkforceManifest } from '../../routing/WorkforceManifest.js';
+import { SovereignDomain } from '../../types/SovereignDomain.js';
 import { createLogger } from "../../utils/logger.js";
 
 const logger = createLogger('AIDispatcher');
@@ -32,7 +34,10 @@ export interface DispatchResponse {
 export class AIDispatcher {
     private readonly serviceStates: Map<AIServiceType, ServiceState> = new Map();
 
-    constructor(private readonly client: ModelClient) {
+    constructor(
+        private readonly client: ModelClient,
+        private readonly workforce: WorkforceManifest
+    ) {
         // Initialize service states
         const types: AIServiceType[] = ['GEMINI', 'CLOUDFLARE', 'OLLAMA', 'HUGGINGFACE'];
         types.forEach(t => this.serviceStates.set(t, 'IDLE'));
@@ -62,14 +67,24 @@ export class AIDispatcher {
             else if (capability.serviceType === 'CLOUDFLARE') model = `cloudflare:${model}`;
         }
 
-        // If no modelId specified, use service defaults
+        // If no modelId specified, use workforce defaults for the domain
         if (!model) {
-            switch (capability.serviceType) {
-                case 'GEMINI': model = `gemini:${this.client.config.geminiProModel}`; break;
-                case 'OLLAMA': model = 'deepseek-r1:8b'; break;
-                case 'CLOUDFLARE': model = '@cf/meta/llama-3.1-8b-instruct'; break;
-                case 'HUGGINGFACE': model = 'huggingface:openai-compat/kimi-k2.5-thinking'; break;
-                default: model = 'deepseek-r1:8b';
+            const domain = capability.domain || SovereignDomain.CODE;
+            const workers = this.workforce.getWorkersForDomain(domain);
+            
+            if (workers.length > 0) {
+                model = workers[0].id; // Pick the first authorized specialist
+                logger.info({ capabilityId: request.capabilityId, model, domain }, 'Workforce selected specialist for dispatch');
+            } else {
+                // Last-resort fallback to config defaults if no worker found
+                switch (capability.serviceType) {
+                    case 'GEMINI': model = `gemini:${this.client.config.geminiProModel}`; break;
+                    case 'OLLAMA': model = this.client.config.codingModel; break;
+                    case 'CLOUDFLARE': model = '@cf/meta/llama-3.1-8b-instruct'; break;
+                    case 'HUGGINGFACE': model = `huggingface:${this.client.config.huggingfaceFallbackModel}`; break;
+                    default: model = this.client.config.orchestratorModel;
+                }
+                logger.warn({ capabilityId: request.capabilityId, model }, 'No specialized worker found for domain. Using service default.');
             }
         }
 

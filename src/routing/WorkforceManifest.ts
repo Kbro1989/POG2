@@ -79,7 +79,7 @@ You produce complete, production-grade implementations. No mocks.`,
 
             // â•â•â• WORKER 3: Smart-Edit Specialist â•â•â•
             {
-                id: 'deepseek-r1:8b',
+                id: config.codingFastModel,
                 configKey: 'codingFastModel',
                 role: 'Smart-Edit Specialist â€” hyper-local, precise modifications',
                 domains: [SovereignDomain.CODE],
@@ -109,7 +109,7 @@ Analyze screenshots and visual layouts. Extract colors (Chromanumber).`,
 
             // â•â•â• WORKER 5: Voice/UI Feedback Agent â•â•â•
             {
-                id: 'tinyllama:latest',
+                id: config.voiceModel,
                 configKey: 'voiceModel',
                 role: 'Voice/UI Feedback Agent â€” read-only response formatting',
                 domains: [SovereignDomain.OBSERVE],
@@ -122,7 +122,7 @@ Analyze screenshots and visual layouts. Extract colors (Chromanumber).`,
 
             // â•â•â• WORKER 6: Vector Maestro â•â•â•
             {
-                id: 'qwen3-embedding:latest',
+                id: config.embeddingModel,
                 configKey: 'embeddingModel',
                 role: 'Vector Maestro â€” high-density embedding generation',
                 domains: [SovereignDomain.OBSERVE],
@@ -135,7 +135,7 @@ Analyze screenshots and visual layouts. Extract colors (Chromanumber).`,
 
             // â•â•â• WORKER 7: Quality Auditor â•â•â•
             {
-                id: 'deepseek-coder:33b-instruct-q4_K_M',
+                id: config.criticModel,
                 configKey: 'criticModel',
                 role: 'Quality Auditor â€” verification, security audit, and scoring',
                 domains: [SovereignDomain.CODE, SovereignDomain.FORGE],
@@ -148,7 +148,7 @@ Analyze screenshots and visual layouts. Extract colors (Chromanumber).`,
 
             // â•â•â• WORKER 8: Project Architect â•â•â•
             {
-                id: 'qwen3-coder:480b-cloud',
+                id: config.planningModel,
                 configKey: 'planningModel',
                 role: 'Project Architect â€” ultra-high complexity design',
                 domains: [SovereignDomain.CODE, SovereignDomain.SYSTEM, SovereignDomain.FORGE],
@@ -161,7 +161,7 @@ Analyze screenshots and visual layouts. Extract colors (Chromanumber).`,
 
             // â•â•â• WORKER 9: System Specialist â•â•â•
             {
-                id: 'deepseek-r1:8b',
+                id: config.codingModel,
                 configKey: 'codingModel',
                 role: 'System Specialist â€” shell, git, deployment',
                 domains: [SovereignDomain.SYSTEM, SovereignDomain.RESEARCH],
@@ -188,7 +188,7 @@ AUTHORIZED TOOLS: shell_command, git_status, wrangler, web_search, fetch_url.`,
 
             // â•â•â• WORKER 11: Self-Healer â•â•â•
             {
-                id: 'deepseek-coder:6.7b-instruct-q4_K_M',
+                id: config.correctionModel,
                 configKey: 'correctionModel',
                 role: 'Self-Healer â€” build repair and debugging',
                 domains: [SovereignDomain.CODE, SovereignDomain.SYSTEM],
@@ -201,7 +201,7 @@ AUTHORIZED TOOLS: shell_command, git_status, wrangler, web_search, fetch_url.`,
 
             // â•â•â• WORKER 12: Optimization Forge â•â•â•
             {
-                id: 'yi-coder:9b-chat-q5_K_M',
+                id: config.optimizationModel,
                 configKey: 'optimizationModel',
                 role: 'Optimization Forge â€” performance and refactoring',
                 domains: [SovereignDomain.CODE, SovereignDomain.FORGE],
@@ -214,7 +214,7 @@ AUTHORIZED TOOLS: shell_command, git_status, wrangler, web_search, fetch_url.`,
 
             // â•â•â• WORKER 13: Legacy Maintainer â•â•â•
             {
-                id: 'deepseek-coder:latest',
+                id: config.legacyModel,
                 configKey: 'legacyModel',
                 role: 'Legacy Maintainer â€” support for older modules',
                 domains: [SovereignDomain.CODE],
@@ -227,7 +227,7 @@ AUTHORIZED TOOLS: shell_command, git_status, wrangler, web_search, fetch_url.`,
 
             // â•â•â• WORKER 14: Fast Prototyper â•â•â•
             {
-                id: 'deepseek-r1:8b',
+                id: config.prototypeModel,
                 configKey: 'prototypeModel',
                 role: 'Fast Prototyper â€” rapid iteration',
                 domains: [SovereignDomain.CODE, SovereignDomain.RESEARCH],
@@ -240,7 +240,7 @@ AUTHORIZED TOOLS: shell_command, git_status, wrangler, web_search, fetch_url.`,
 
             // â•â•â• WORKER 15: RSC Specialist â•â•â•
             {
-                id: 'moondream:latest', // Vision-capable for game state
+                id: config.rscModel,
                 configKey: 'rscModel',
                 role: 'RSC Specialist â€” gameplay interaction, socket management, visual verification',
                 domains: [SovereignDomain.SOCIAL, SovereignDomain.VISION],
@@ -253,7 +253,7 @@ AUTHORIZED TOOLS: shell_command, git_status, wrangler, web_search, fetch_url.`,
 
             // â•â•â• WORKER 16: Bio Intelligence â•â•â•
             {
-                id: 'medgemma:latest',
+                id: config.bioModel,
                 configKey: 'bioModel',
                 role: 'Bio Intelligence â€” clinical reasoning and medical analysis',
                 domains: [SovereignDomain.RESEARCH],
@@ -279,7 +279,7 @@ AUTHORIZED TOOLS: shell_command, git_status, wrangler, web_search, fetch_url.`,
 
             // â•â•â• WORKER 18: Fast Vision â•â•â•
             {
-                id: 'moondream:1.8b',
+                id: config.visionFastModel,
                 configKey: 'visionFastModel',
                 role: 'Fast Vision â€” rapid sensory snapshots',
                 domains: [SovereignDomain.VISION],
@@ -297,7 +297,7 @@ AUTHORIZED TOOLS: shell_command, git_status, wrangler, web_search, fetch_url.`,
             this.workers.set(worker.configKey, worker);
         }
 
-        logger.info({ count: roster.length }, 'Workforce manifest expanded â€” 14 specialized workers ACTIVE');
+        logger.info({ count: roster.length }, `Workforce manifest expanded â€” ${roster.length} specialized workers ACTIVE`);
     }
 
     /**

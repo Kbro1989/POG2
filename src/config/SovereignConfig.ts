@@ -96,6 +96,15 @@ export interface SovereignConfig {
     reputationDecayRate: number; // Rate at which reputation drifts back to 1.0 per hour
     baseExplorationEpsilon: number; // Starting point for epsilon-greedy routing
     laneAwareWeighting: boolean; // Whether to weight routing by lane congestion (wait times)
+
+    // Phase 23: Specialized Worker Keys
+    correctionModel: string;
+    optimizationModel: string;
+    legacyModel: string;
+    prototypeModel: string;
+    rscModel: string;
+    bioModel: string;
+    visionFastModel: string;
 }
 
 const DEFAULT_CONFIG: SovereignConfig = {
@@ -175,7 +184,16 @@ const DEFAULT_CONFIG: SovereignConfig = {
     // Phase 9 Defaults
     reputationDecayRate: 0.1, // 10% recovery toward 1.0 per hour
     baseExplorationEpsilon: 0.15,
-    laneAwareWeighting: true
+    laneAwareWeighting: true,
+
+    // Phase 23 Defaults
+    correctionModel: 'deepseek-coder:6.7b-instruct-q4_K_M',
+    optimizationModel: 'yi-coder:9b-chat-q5_K_M',
+    legacyModel: 'deepseek-coder:latest',
+    prototypeModel: 'deepseek-r1:8b',
+    rscModel: 'moondream:latest',
+    bioModel: 'medgemma:latest',
+    visionFastModel: 'moondream:1.8b'
 };
 
 function loadEnvFile(envPath: string): void {
@@ -247,7 +265,14 @@ const ENV_VAR_MAP: Record<string, string> = {
     sovereignRoot: 'POG_SOVEREIGN_ROOT',
     reputationDecayRate: 'REPUTATION_DECAY_RATE',
     baseExplorationEpsilon: 'EXPLORATION_EPSILON',
-    laneAwareWeighting: 'LANE_AWARE_WEIGHTING'
+    laneAwareWeighting: 'LANE_AWARE_WEIGHTING',
+    correctionModel: 'CORRECTION_MODEL',
+    optimizationModel: 'OPTIMIZATION_MODEL',
+    legacyModel: 'LEGACY_MODEL',
+    prototypeModel: 'PROTOTYPE_MODEL',
+    rscModel: 'RSC_MODEL',
+    bioModel: 'BIO_MODEL',
+    visionFastModel: 'VISION_FAST_MODEL'
 };
 
 export function loadConfig(configPath: string): SovereignConfig {

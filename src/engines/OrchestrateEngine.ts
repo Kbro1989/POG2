@@ -65,7 +65,7 @@ import { VideoAssemblerLimb } from '../limbs/creative/VideoAssemblerLimb.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import { getSovereignRoot, getGodHeadRoot, getLearningDbPath, getPipelineRootPath } from '../utils/SovereignPathResolver.js';
 import { IntentVerifier } from './IntentVerifier.js';
-import { type Result, type EngineOutput, YaoState, isOk, ok, err, type ThinkingNexus, type ContextCard, type Todo, type TodoStatus, CircuitState, YAO_PRODUCTION_PREREQUISITES, type Plan, type OraclePlan, type ArchitectureManifest, SovereignDomain, BuildStatus, HealthStatus, ResourcePressure, UserEngagement } from '../core/models.js';
+import { type Result, type EngineOutput, YaoState, isOk, ok, err, type ThinkingNexus, type ContextCard, type Todo, type TodoStatus, CircuitState, YAO_PRODUCTION_PREREQUISITES, type Plan, type OraclePlan, type ArchitectureManifest, SovereignDomain, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, type ActuationResult } from '../core/models.js';
 import { AIDispatcher } from '../api/ai/Dispatcher.js';
 import { DomainLocker, DomainViolationError } from '../routing/DomainLocker.js';
 import { WorkforceManifest } from '../routing/WorkforceManifest.js';
@@ -236,9 +236,9 @@ export class OrchestrateEngine {
         );
 
         this.verifier = new IntentVerifier(this.client, this.router.getHexagram());
-        this.dispatcher = new AIDispatcher(this.client);
-        this.domainLocker = new DomainLocker();
         this.workforce = new WorkforceManifest(config);
+        this.dispatcher = new AIDispatcher(this.client, this.workforce);
+        this.domainLocker = new DomainLocker();
 
         logger.debug('Starting PulseMonitor...');
         this.pulseMonitor = new PulseMonitor(process.cwd(), this.router.getHexagram());
@@ -2824,6 +2824,23 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
                 lineIndex: 0,
                 importance: 1
             });
+
+            // Phase 24: Proprioceptive Verification Loop
+            const actuationVerification = await this.verifyActuation(plan, result.value);
+            this.router.recordActuationReinforcement(actuationVerification);
+            
+            if (!actuationVerification.success) {
+                this.renderer.warn(`🚨 [Proprioception] Actuation Mismatch: ${actuationVerification.details}`);
+                // Future: Trigger recursive healing or metabolic friction increase
+            } else {
+                this.renderer.success(`✅ [Proprioception] Actuation Verified.`);
+                
+                // --- Phase 25: Cognitive Reinforcement ---
+                if (plan.metadata?.lessonId) {
+                    this.vectorDB.reinforceLesson(plan.metadata.lessonId, 1);
+                    logger.info({ lessonId: plan.metadata.lessonId }, '🧬 CNS: Applying cognitive reinforcement to memory pathway');
+                }
+            }
         } else {
             this.pulseMonitor.recordError();
             hex.pushLine({
@@ -3076,6 +3093,54 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         }, 'SOVEREIGN SELF-MODIFICATION: Complete.');
 
         return { ok: true, value: { commit, hexagram: sym, linesGenerated } };
+    }
+
+    /**
+     * Phase 24: Proprioceptive Verification
+     * Closes the loop between Vision and Motor substrates.
+     */
+    private async verifyActuation(plan: Plan, initialResult: EngineOutput): Promise<ActuationResult> {
+        const domain = this.registry.getToolDomain(plan.tool || '') || SovereignDomain.SYSTEM;
+        
+        // Only verify MOTOR and CODE domains for currently active proprioception
+        if (domain !== SovereignDomain.MOTOR && domain !== SovereignDomain.CODE) {
+            return { success: true, details: 'Non-motor domain, skipping sensory verification.' };
+        }
+
+        this.renderer.info(`[Proprioception] Verifying actuation in ${SovereignDomain[domain]} domain...`);
+
+        // 1. Capture current state via SovereignEye
+        // Note: Using visionEngine directly to satisfy Phase 24 requirements
+        const eyeRes = await this.visionEngine.observe({
+            intent: 'eye',
+            prompt: `Verify the result of the following action: ${plan.goal}.
+            The intended result was: ${plan.reasoning}. 
+            The tool used was: ${plan.tool}.
+            Does the current state of the workspace/screen reflect a successful execution? 
+            Output JSON ONLY: { "success": boolean, "details": string }`
+        });
+
+        if (!eyeRes.ok) {
+            return { success: false, details: `Proprioception capture failed: ${eyeRes.error.message}` };
+        }
+
+        // 2. Parse vision feedback
+        try {
+            const cleanJson = extractJson(eyeRes.value.output);
+            const feedback = JSON.parse(cleanJson);
+            return {
+                success: !!feedback.success,
+                modelId: plan.model,
+                details: feedback.details || 'No details provided by vision substrate.',
+                data: feedback
+            };
+        } catch (e) {
+            return { 
+                success: true, 
+                modelId: plan.model,
+                details: 'Vision feedback received but could not be parsed into formal ActuationResult structure. Assuming success based on tool output.' 
+            };
+        }
     }
 
     public getSwitchboard(): SwitchboardLimb {

@@ -209,6 +209,38 @@ export const CapabilityRegistry: Record<string, AICapability> = {
         passthroughEnabled: true,
         fallback: 'gold_gemini_2_5_pro'
     },
+    'correction': {
+        id: 'correction',
+        name: 'Sovereign Self-Healer',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        description: 'Auto-repair and debugging substrate.',
+        passthroughEnabled: true
+    },
+    'optimization': {
+        id: 'optimization',
+        name: 'Optimization Forge',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        description: 'Performance and refactoring forge.',
+        passthroughEnabled: true
+    },
+    'security_audit': {
+        id: 'security_audit',
+        name: 'Security Auditor',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        description: 'Deep security and quality audit.',
+        passthroughEnabled: true
+    },
+    'rsc_command': {
+        id: 'rsc_command',
+        name: 'RSC Specialist',
+        serviceType: 'OLLAMA',
+        taskType: 'TEXT',
+        description: 'RSC gameplay and protocol interaction.',
+        passthroughEnabled: true
+    },
     ...StaticModelRegistry,
     ...CloudflareModelRegistry
 };

@@ -447,10 +447,17 @@ export class ModelRolodex {
             providerState.lastChecked = Date.now();
             providerState.error = undefined;
         } catch (err: any) {
-            providerState.error = err.message;
+            const isTimeout = this.isTimeoutError(err);
+            if (isTimeout && providerState.models.length > 0) {
+                logger.warn({ error: err.message, cachedModels: providerState.models.length }, 'Cloudflare discovery timed out. Preserving cached model state.');
+                providerState.error = `DISCOVERY_TIMEOUT: ${err.message}`;
+            } else {
+                providerState.error = err.message;
+                providerState.authenticated = false;
+                logger.warn({ error: err.message }, 'Cloudflare discovery failed.');
+            }
             providerState.latencyMs = Date.now() - start;
             providerState.lastChecked = Date.now();
-            logger.warn({ error: err.message }, 'Cloudflare discovery failed.');
         }
     }
 
@@ -549,10 +556,17 @@ export class ModelRolodex {
             providerState.latencyMs = Date.now() - start;
             providerState.lastChecked = Date.now();
         } catch (err: any) {
-            providerState.error = err.message;
+            const isTimeout = this.isTimeoutError(err);
+            if (isTimeout && providerState.models.length > 0) {
+                logger.warn({ error: err.message, cachedModels: providerState.models.length }, 'Gemini discovery timed out. Preserving cached model state.');
+                providerState.error = `DISCOVERY_TIMEOUT: ${err.message}`;
+            } else {
+                providerState.error = err.message;
+                providerState.authenticated = false;
+                logger.warn({ error: err.message }, 'Gemini discovery failed.');
+            }
             providerState.latencyMs = Date.now() - start;
             providerState.lastChecked = Date.now();
-            logger.warn({ error: err.message }, 'Gemini discovery failed.');
         }
     }
 
@@ -607,10 +621,17 @@ export class ModelRolodex {
                 providerState.error = `HuggingFace auth failed (HTTP ${hfResponse.status})`;
             }
         } catch (err: any) {
-            providerState.error = err.message;
+            const isTimeout = this.isTimeoutError(err);
+            if (isTimeout && providerState.models.length > 0) {
+                logger.warn({ error: err.message, cachedModels: providerState.models.length }, 'HuggingFace discovery timed out. Preserving cached model state.');
+                providerState.error = `DISCOVERY_TIMEOUT: ${err.message}`;
+            } else {
+                providerState.error = err.message;
+                providerState.authenticated = false;
+                logger.warn({ error: err.message }, 'HuggingFace discovery failed.');
+            }
             providerState.latencyMs = Date.now() - start;
             providerState.lastChecked = Date.now();
-            logger.warn({ error: err.message }, 'HuggingFace discovery failed.');
         }
     }
 
@@ -629,7 +650,7 @@ export class ModelRolodex {
         try {
             const response = await fetch('https://openrouter.ai/api/v1/models', {
                 headers: { 'Authorization': `Bearer ${apiKey}` },
-                signal: AbortSignal.timeout(60000)
+                signal: AbortSignal.timeout(120000)
             });
 
             if (response.ok) {
@@ -665,10 +686,17 @@ export class ModelRolodex {
             providerState.lastChecked = Date.now();
             providerState.error = response.ok ? undefined : providerState.error;
         } catch (err: any) {
-            providerState.error = err.message;
+            const isTimeout = this.isTimeoutError(err);
+            if (isTimeout && providerState.models.length > 0) {
+                logger.warn({ error: err.message, cachedModels: providerState.models.length }, 'OpenRouter discovery timed out. Preserving cached model state.');
+                providerState.error = `DISCOVERY_TIMEOUT: ${err.message}`;
+            } else {
+                providerState.error = err.message;
+                providerState.authenticated = false;
+                logger.warn({ error: err.message }, 'OpenRouter discovery failed.');
+            }
             providerState.latencyMs = Date.now() - start;
             providerState.lastChecked = Date.now();
-            logger.warn({ error: err.message }, 'OpenRouter discovery failed.');
         }
     }
 
@@ -723,10 +751,17 @@ export class ModelRolodex {
             providerState.lastChecked = Date.now();
             providerState.error = response.ok ? undefined : providerState.error;
         } catch (err: any) {
-            providerState.error = err.message;
+            const isTimeout = this.isTimeoutError(err);
+            if (isTimeout && providerState.models.length > 0) {
+                logger.warn({ error: err.message, cachedModels: providerState.models.length }, 'Fireworks discovery timed out. Preserving cached model state.');
+                providerState.error = `DISCOVERY_TIMEOUT: ${err.message}`;
+            } else {
+                providerState.error = err.message;
+                providerState.authenticated = false;
+                logger.warn({ error: err.message }, 'Fireworks discovery failed.');
+            }
             providerState.latencyMs = Date.now() - start;
             providerState.lastChecked = Date.now();
-            logger.warn({ error: err.message }, 'Fireworks discovery failed.');
         }
     }
 
@@ -752,6 +787,14 @@ export class ModelRolodex {
             cloudflare: 'cloudflare', fireworks: 'fireworks', openrouter: 'openrouter'
         };
         return map[provider] || 'ollama';
+    }
+
+    /** Check if an error is a fetch timeout or abortion */
+    private isTimeoutError(err: any): boolean {
+        return err.name === 'TimeoutError' || 
+               err.message?.includes('timeout') || 
+               err.message?.includes('aborted') ||
+               err.code === 'ETIMEDOUT';
     }
 
     private globeStateLimb?: any; // Avoiding circular deep imports, typed functionally

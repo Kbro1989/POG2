@@ -230,6 +230,7 @@ export interface ActuationIntent {
  */
 export interface ActuationResult {
     readonly success: boolean;
+    readonly modelId?: string; // Phase 24: Trace feedback to specific substrate
     readonly details?: string;
     readonly data?: any;
 }
@@ -328,6 +329,7 @@ export interface Plan {
     readonly todos: Todo[];
     readonly rollback?: string;
     readonly timestamp?: number;
+    readonly metadata?: Record<string, any>; // Phase 25: Memory & Tracing
     readonly dialectics?: {
         kimi: string;
         agent: string;
@@ -417,6 +419,7 @@ export interface AICapability {
     taskType: AITaskType;
     description: string;
     passthroughEnabled: boolean;
+    domain?: SovereignDomain;
     modelId?: string;
     fallback?: string;
 }

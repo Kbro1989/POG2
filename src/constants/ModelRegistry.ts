@@ -1,8 +1,8 @@
-﻿// src/constants/ModelRegistry.ts
+// src/constants/ModelRegistry.ts
 // Maps 3D Model IDs and Entity names to Species and Anatomical Constraints
 
 export interface ModelReference {
-    id?: number;
+    id?: string | number;
     name: string;
     species: string; // Key in AnatomyRegistry
     rsmvPath?: string; // Path to .jsonc or .stl files
