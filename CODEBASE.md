@@ -6,6 +6,50 @@ This document provides a structured, clickable map of the POG2 substrate. Use it
 
 ---
 
+</details>
+
+---
+
+<details>
+<summary>📂 .agent/ (AI Workflows & Rules)</summary>
+
+- [rules/](https://github.com/Kbro1989/POG2/tree/main/.agent/rules)
+- [workflows/pog2-sovereign.md](https://github.com/Kbro1989/POG2/blob/main/.agent/workflows/pog2-sovereign.md)
+
+</details>
+
+---
+
+<details>
+<summary>📂 .agents/ (Neuro-Instructions)</summary>
+
+- [rules/pogrules.md](https://github.com/Kbro1989/POG2/blob/main/.agents/rules/pogrules.md)
+- [workflows/pog2-knowledgebase.md](https://github.com/Kbro1989/POG2/blob/main/.agents/workflows/pog2-knowledgebase.md)
+
+</details>
+
+---
+
+<details>
+<summary>📂 resources/ (Deconstructed Assets)</summary>
+
+- [webviewer-deconstructed/](https://github.com/Kbro1989/POG2/tree/main/resources/webviewer-deconstructed)
+- [_analysis-report.json](https://github.com/Kbro1989/POG2/blob/main/resources/webviewer-deconstructed/_analysis-report.json)
+
+</details>
+
+---
+
+<details>
+<summary>📂 tmp_rsmv_inspect/ (RSMV Substrate)</summary>
+
+- [src/opcode_reader.ts](https://github.com/Kbro1989/POG2/blob/main/tmp_rsmv_inspect/src/opcode_reader.ts)
+- [package.json](https://github.com/Kbro1989/POG2/blob/main/tmp_rsmv_inspect/package.json)
+
+</details>
+
+---
+
 <details>
 <summary>📂 src/ (Root Files)</summary>
 
@@ -235,12 +279,19 @@ This document provides a structured, clickable map of the POG2 substrate. Use it
 
 ---
 
+</details>
+
+---
+
 <details>
-<summary>📂 src/scripts (3 files)</summary>
+<summary>📂 src/scripts (6 files)</summary>
 
 - [cascadeDiagnostic.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/cascadeDiagnostic.ts)
 - [evolutionDiagnostic.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/evolutionDiagnostic.ts)
+- [liveVisionLoop.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/liveVisionLoop.ts)
+- [pullHans.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/pullHans.ts)
 - [stressTest.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/stressTest.ts)
+- [testActuation.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/testActuation.ts)
 
 </details>
 
@@ -309,11 +360,11 @@ This document provides a structured, clickable map of the POG2 substrate. Use it
 - [SovereignLibrary.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/SovereignLibrary.ts)
 - [SovereignPathResolver.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/SovereignPathResolver.ts)
 - [SovereignProprioception.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/SovereignProprioception.ts)
-- [SovereignUI.ts](https://github.com/Kbro1989/POG2/blob/master/src/utils/SovereignUI.ts)
-- [StyleAnalyzer.ts](https://github.com/Kbro1989/POG2/blob/master/src/utils/StyleAnalyzer.ts)
-- [TrainingCollector.ts](https://github.com/Kbro1989/POG2/blob/master/src/utils/TrainingCollector.ts)
-- [VectorDB.ts](https://github.com/Kbro1989/POG2/blob/master/src/utils/VectorDB.ts)
-- [WikiEnricher.ts](https://github.com/Kbro1989/POG2/blob/master/src/utils/WikiEnricher.ts)
+- [SovereignUI.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/SovereignUI.ts)
+- [StyleAnalyzer.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/StyleAnalyzer.ts)
+- [TrainingCollector.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/TrainingCollector.ts)
+- [VectorDB.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/VectorDB.ts)
+- [WikiEnricher.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/WikiEnricher.ts)
 
 </details>
 

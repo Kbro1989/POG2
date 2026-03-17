@@ -9,11 +9,25 @@ This registry provides absolute GitHub links to all neurological substrates with
 ## 📂 Root (`src/`)
 *Entry points and standalone scripts.*
 
-- [cli.ts](https://github.com/Kbro1989/POG2/blob/main/src/cli.ts)
-- [db_test.ts](https://github.com/Kbro1989/POG2/blob/main/src/db_test.ts)
-- [test_vision_pipeline.ts](https://github.com/Kbro1989/POG2/blob/main/src/test_vision_pipeline.ts)
-- [ToolRegistry.ts](https://github.com/Kbro1989/POG2/blob/main/src/ToolRegistry.ts)
 - [verify_advanced_audio.ts](https://github.com/Kbro1989/POG2/blob/main/src/verify_advanced_audio.ts)
+
+---
+
+## 📂 AI Instruction Substrate (`.agent/`, `.agents/`)
+*Hidden neurological workflows and sovereign rules.*
+
+- [.agent/rules/](https://github.com/Kbro1989/POG2/tree/main/.agent/rules)
+- [.agent/workflows/pog2-sovereign.md](https://github.com/Kbro1989/POG2/blob/main/.agent/workflows/pog2-sovereign.md)
+- [.agents/rules/pogrules.md](https://github.com/Kbro1989/POG2/blob/main/.agents/rules/pogrules.md)
+- [.agents/workflows/pog2-knowledgebase.md](https://github.com/Kbro1989/POG2/blob/main/.agents/workflows/pog2-knowledgebase.md)
+
+---
+
+## 📂 Resources & Deconstructed Assets (`resources/`)
+*Deconstructed webviewer modules and reconstruction reports.*
+
+- [webviewer-deconstructed/](https://github.com/Kbro1989/POG2/tree/main/resources/webviewer-deconstructed)
+- [_analysis-report.json](https://github.com/Kbro1989/POG2/blob/main/resources/webviewer-deconstructed/_analysis-report.json)
 
 ---
 
@@ -196,7 +210,10 @@ This registry provides absolute GitHub links to all neurological substrates with
 
 - [cascadeDiagnostic.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/cascadeDiagnostic.ts)
 - [evolutionDiagnostic.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/evolutionDiagnostic.ts)
+- [liveVisionLoop.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/liveVisionLoop.ts)
+- [pullHans.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/pullHans.ts)
 - [stressTest.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/stressTest.ts)
+- [testActuation.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/testActuation.ts)
 
 ---
 
