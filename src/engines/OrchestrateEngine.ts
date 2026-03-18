@@ -1192,7 +1192,7 @@ export class OrchestrateEngine {
 
                 // 1. Generate Substrate
                 this.renderer.info(`Generating visual substrate for: "${prompt}"...`);
-                const genRes = await this.chroma.generateVisualSubstrate(prompt);
+                const genRes = await this.chroma.generateVisualSubstrate(prompt, undefined, YaoState.OldYang);
                 if (!genRes.ok) return genRes;
 
                 // 2. Capture and Analyze via Vision
@@ -1200,7 +1200,8 @@ export class OrchestrateEngine {
                 const visionRes = await this.visionEngine.observe({
                     intent: 'chroma',
                     target: genRes.value.path,
-                    prompt: analysisPrompt
+                    prompt: analysisPrompt,
+                    yaoState: YaoState.OldYang
                 });
 
                 return visionRes;

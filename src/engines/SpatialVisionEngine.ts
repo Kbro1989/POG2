@@ -2,7 +2,7 @@ import { ModelClient } from '../clients/ModelClient.js';
 import { ShellEngine } from './ShellEngine.js';
 import { Renderer } from '../ui/Renderer.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
-import type { Result, EngineOutput } from '../core/models.js';
+import type { Result, EngineOutput, YaoState } from '../core/models.js';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -16,6 +16,7 @@ export interface SpatialVisionParams {
     prompt?: string;
     includeScreenshot?: boolean;
     modelOverride?: string;
+    yaoState?: YaoState;
 }
 
 export interface SpatialMap {
@@ -86,7 +87,8 @@ export class SpatialVisionEngine {
         const result = await this.client.call({
             model: this.config.visionModel,
             prompt: modelPrompt,
-            images: [base64Image]
+            images: [base64Image],
+            yaoState: params.yaoState
         });
 
         if (!result.ok) return result;

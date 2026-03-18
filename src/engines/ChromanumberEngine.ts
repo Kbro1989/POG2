@@ -1,7 +1,7 @@
 import { ModelClient } from '../clients/ModelClient.js';
 import { SovereignEye, type CaptureSource } from '../utils/SovereignEye.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
-import type { Result, EngineOutput, SovereignRecord, ActuationIntent, PedagogyProfile } from '../core/models.js';
+import type { Result, EngineOutput, SovereignRecord, ActuationIntent, PedagogyProfile, YaoState } from '../core/models.js';
 import { getGenerationsPath, getSovereignRoot } from '../utils/SovereignPathResolver.js';
 import { RSMVController } from '../vision/RSMVController.js';
 import { ShaderInjector } from '../vision/ShaderInjector.js';
@@ -304,7 +304,7 @@ Forge result: `;
      * Generate Visual Substrate (Creative Image Forging)
      * Prioritizes professional Cloudflare Flux API, falls back to HTML/SVG-based substrate.
      */
-    async generateVisualSubstrate(prompt: string, modelOverride?: string): Promise<Result<{ path: string }>> {
+    async generateVisualSubstrate(prompt: string, modelOverride?: string, yaoState?: YaoState): Promise<Result<{ path: string }>> {
         const CLOUDFLARE_IMAGE_ENDPOINT = process.env['CLOUDFLARE_IMAGE_ENDPOINT'] || 'https://chromanumber-api.kristain33rs.workers.dev/ai/generate-image';
 
         logger.info({ prompt }, 'Attempting professional substrate generation via Flux...');
@@ -364,7 +364,8 @@ Visual Code: `.trim();
         const result = await this.client.resilientCall({
             model: modelToUse,
             prompt: generationPrompt,
-            category: 'chromanumber'
+            category: 'chromanumber',
+            yaoState
         });
 
         if (!result.ok) return { ok: false, error: result.error };
