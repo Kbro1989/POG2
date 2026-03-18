@@ -90,7 +90,8 @@ export class MetabolicEngine {
             const queryRes = await this.client.resilientCall({
                 model: this.client.config.fastPathModel,
                 prompt: `Extract the single most important Wikipedia search subject/noun from this intent. Return ONLY the search term, nothing else. No conversational text.\nIntent: "${intent}"`,
-                temperature: 0.1
+                temperature: 0.1,
+                yaoState: YaoState.YoungYang
             });
 
             if (queryRes.ok) {
@@ -159,7 +160,8 @@ Respond in JSON ONLY with structure:
             model: this.client.config.midPathModel, // Phase 78: Mid Path (Execution / Validation)
             prompt,
             temperature: 0.7,
-            format: 'json'
+            format: 'json',
+            yaoState: YaoState.YoungYang
         });
 
         if (!res.ok) {

@@ -20,7 +20,7 @@ async function run() {
     for (const f of outputs) {
         const p = path.resolve(f);
         if (existsSync(p)) {
-            require('fs').unlinkSync(p);
+            import('fs').then(fs => fs.unlinkSync(p));
             logger.info({ file: f }, 'Cleaned previous output');
         }
     }

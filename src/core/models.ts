@@ -246,9 +246,19 @@ export interface PedagogyProfile {
     readonly metrics: {
         readonly polyCount: number;
         readonly boneCount: number;
+        readonly nodeCount: number;
+        readonly jointCount: number;
         readonly materialComplexity: number;
         readonly rigLogic: 'SKELETAL' | 'VERTEX_ANIM' | 'STATIC';
         readonly surfaceArea?: number;
+        readonly dimensions?: { x: number, y: number, z: number };
+    };
+    readonly structure?: {
+        readonly meshCount: number;
+        readonly animationCount: number;
+        readonly nodeHierarchyDepth?: number;
+        readonly bones: string[];
+        readonly materials: { name: string, type: string }[];
     };
     readonly semantics: {
         readonly role: string;

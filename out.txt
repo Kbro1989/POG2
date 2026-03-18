@@ -1,0 +1,156 @@
+﻿{"level":30,"time":1773819125327,"hostname":"POG2","name":"PullHans","msg":"Commencing NPC Pull Verification: Hans (NPC ID 0)"}
+{"level":30,"time":1773819125328,"hostname":"POG2","name":"RSMVController","modelId":"npc:0","msg":"Requesting RSMV model view"}
+{"level":30,"time":1773819125328,"hostname":"POG2","name":"PullHans","file":"model.png","msg":"Cleaned previous output"}
+{"level":30,"time":1773819125328,"hostname":"POG2","name":"PullHans","file":"model.glb","msg":"Cleaned previous output"}
+{"level":30,"time":1773819125353,"hostname":"POG2","name":"PullHans","msg":"RSMV pull triggered successfully. Waiting for output..."}
+ended reading opcode struct at end of file without 0x00 opcode
+ended reading opcode struct at end of file without 0x00 opcode
+ended reading opcode struct at end of file without 0x00 opcode
+ended reading opcode struct at end of file without 0x00 opcode
+ended reading opcode struct at end of file without 0x00 opcode
+ended reading opcode struct at end of file without 0x00 opcode
+ended reading opcode struct at end of file without 0x00 opcode
+ended reading opcode struct at end of file without 0x00 opcode
+ended reading opcode struct at end of file without 0x00 opcode
+using generated cache index file meta, crc size and version missing
+detectedtexture mode. dds
+node.exe : THREE.WebGLRenderer: The property .useLegacyLights has been deprecated. Migrate your 
+lighting according to the following guide: 
+https://discourse.threejs.org/t/updates-to-lighting-in-three-js-r155/53733.
+At C:\nvm4w\nodejs\npx.ps1:16 char:5
++     & "$basedir/node$exe"  "$basedir/node_modules/npm/bin/npx-cli.js" ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (THREE.WebGLRend...-js-r155/53733.:String) [], RemoteExcept 
+   ion
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+waiting for model to load...
+bytes left over after decoding file: 2
+merged bones: 28
+model loaded. setting camera...
+skipped 76 bone animations since the model didn't have them
+exporting gltf...
+gltf exported. size: 1266364
+taking picture...
+THREE.WebGLProgram: Shader Error 0 - VALIDATE_STATUS false
+
+Material Name: 
+Material Type: MeshStandardMaterial
+
+Program Info Log: ∩┐╜&∩┐╜
+VERTEX
+
+ERROR: 0:316: 'textureSize' : no matching overloaded function found 
+ERROR: 0:316: 'x' :  field selection requires structure or vector on left hand side 
+ERROR: 0:316: '=' :  cannot convert from 'const float' to 'highp int'
+ERROR: 0:318: '%' : integer modulus operator supported in GLSL ES 3.00 only  
+ERROR: 0:320: 'texelFetch' : no matching overloaded function found 
+ERROR: 0:320: '=' :  cannot convert from 'const float' to 'highp 4-component vector of float'
+ERROR: 0:321: 'texelFetch' : no matching overloaded function found 
+ERROR: 0:321: '=' :  cannot convert from 'const float' to 'highp 4-component vector of float'
+ERROR: 0:322: 'texelFetch' : no matching overloaded function found 
+ERROR: 0:322: '=' :  cannot convert from 'const float' to 'highp 4-component vector of float'
+ERROR: 0:323: 'texelFetch' : no matching overloaded function found 
+ERROR: 0:323: '=' :  cannot convert from 'const float' to 'highp 4-component vector of float'
+
+  311: #ifdef USE_SKINNING
+  312: 	uniform mat4 bindMatrix;
+  313: 	uniform mat4 bindMatrixInverse;
+  314: 	uniform highp sampler2D boneTexture;
+  315: 	mat4 getBoneMatrix( const in float i ) {
+> 316: 		int size = textureSize( boneTexture, 0 ).x;
+  317: 		int j = int( i ) * 4;
+  318: 		int x = j % size;
+  319: 		int y = j / size;
+  320: 		vec4 v1 = texelFetch( boneTexture, ivec2( x, y ), 0 );
+  321: 		vec4 v2 = texelFetch( boneTexture, ivec2( x + 1, y ), 0 );
+  322: 		vec4 v3 = texelFetch( boneTexture, ivec2( x + 2, y ), 0 );
+
+THREE.WebGLProgram: Shader Error 1282 - VALIDATE_STATUS false
+
+Material Name: 
+Material Type: MeshStandardMaterial
+
+Program Info Log: 
+VERTEX
+
+ERROR: 0:318: 'textureSize' : no matching overloaded function found 
+ERROR: 0:318: 'x' :  field selection requires structure or vector on left hand side 
+ERROR: 0:318: '=' :  cannot convert from 'const float' to 'highp int'
+ERROR: 0:320: '%' : integer modulus operator supported in GLSL ES 3.00 only  
+ERROR: 0:322: 'texelFetch' : no matching overloaded function found 
+ERROR: 0:322: '=' :  cannot convert from 'const float' to 'highp 4-component vector of float'
+ERROR: 0:323: 'texelFetch' : no matching overloaded function found 
+ERROR: 0:323: '=' :  cannot convert from 'const float' to 'highp 4-component vector of float'
+ERROR: 0:324: 'texelFetch' : no matching overloaded function found 
+ERROR: 0:324: '=' :  cannot convert from 'const float' to 'highp 4-component vector of float'
+ERROR: 0:325: 'texelFetch' : no matching overloaded function found 
+ERROR: 0:325: '=' :  cannot convert from 'const float' to 'highp 4-component vector of float'
+
+  313: #ifdef USE_SKINNING
+  314: 	uniform mat4 bindMatrix;
+  315: 	uniform mat4 bindMatrixInverse;
+  316: 	uniform highp sampler2D boneTexture;
+  317: 	mat4 getBoneMatrix( const in float i ) {
+> 318: 		int size = textureSize( boneTexture, 0 ).x;
+  319: 		int j = int( i ) * 4;
+  320: 		int x = j % size;
+  321: 		int y = j / size;
+  322: 		vec4 v1 = texelFetch( boneTexture, ivec2( x, y ), 0 );
+  323: 		vec4 v2 = texelFetch( boneTexture, ivec2( x + 1, y ), 0 );
+  324: 		vec4 v3 = texelFetch( boneTexture, ivec2( x + 2, y ), 0 );
+
+THREE.WebGLProgram: Shader Error 1282 - VALIDATE_STATUS false
+
+Material Name: 
+Material Type: MeshStandardMaterial
+
+Program Info Log: ∩┐╜∩┐╜\ 
+VERTEX
+
+ERROR: 0:318: 'textureSize' : no matching overloaded function found 
+ERROR: 0:318: 'x' :  field selection requires structure or vector on left hand side 
+ERROR: 0:318: '=' :  cannot convert from 'const float' to 'highp int'
+ERROR: 0:320: '%' : integer modulus operator supported in GLSL ES 3.00 only  
+ERROR: 0:322: 'texelFetch' : no matching overloaded function found 
+ERROR: 0:322: '=' :  cannot convert from 'const float' to 'highp 4-component vector of float'
+ERROR: 0:323: 'texelFetch' : no matching overloaded function found 
+ERROR: 0:323: '=' :  cannot convert from 'const float' to 'highp 4-component vector of float'
+ERROR: 0:324: 'texelFetch' : no matching overloaded function found 
+ERROR: 0:324: '=' :  cannot convert from 'const float' to 'highp 4-component vector of float'
+ERROR: 0:325: 'texelFetch' : no matching overloaded function found 
+ERROR: 0:325: '=' :  cannot convert from 'const float' to 'highp 4-component vector of float'
+
+  313: #ifdef USE_SKINNING
+  314: 	uniform mat4 bindMatrix;
+  315: 	uniform mat4 bindMatrixInverse;
+  316: 	uniform highp sampler2D boneTexture;
+  317: 	mat4 getBoneMatrix( const in float i ) {
+> 318: 		int size = textureSize( boneTexture, 0 ).x;
+  319: 		int j = int( i ) * 4;
+  320: 		int x = j % size;
+  321: 		int y = j / size;
+  322: 		vec4 v1 = texelFetch( boneTexture, ivec2( x, y ), 0 );
+  323: 		vec4 v2 = texelFetch( boneTexture, ivec2( x + 1, y ), 0 );
+  324: 		vec4 v3 = texelFetch( boneTexture, ivec2( x + 2, y ), 0 );
+
+picture taken. size: 1400000
+image compressed. size: 1458
+render.dispose failed (ignoring): TypeError: Cannot read properties of null (reading 
+'cancelAnimationFrame')
+    at Object.stop (C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\node_modules\th
+ree\build\three.cjs:13403:12)
+    at WebGLRenderer.dispose (C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\node_
+modules\three\build\three.cjs:29335:14)
+    at ThreeJsRenderer.dispose (C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\src
+\viewer\threejsrender.ts:712:17)
+    at renderAppearance 
+(C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\src\headless\api.ts:203:10)
+    at async Object.handler 
+(C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\src\headless\cli.ts:174:11)
+    at async Object.run (C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\node_modul
+es\cmd-ts\src\command.ts:186:24)
+    at async Object.runSafely (C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\node
+_modules\cmd-ts\src\runner.ts:59:20)
+{"level":30,"time":1773819128382,"hostname":"POG2","name":"RSMVController","code":0,"msg":"RSMV process exited"}
+{"level":30,"time":1773819128394,"hostname":"POG2","name":"PullHans","pngPath":"C:\\Users\\Destiny\\Desktop\\pog-vibe-interactive\\files\\model.png","glbPath":"C:\\Users\\Destiny\\Desktop\\pog-vibe-interactive\\files\\model.glb","msg":"SUCCESS: Hans NPC pulled from cache."}
