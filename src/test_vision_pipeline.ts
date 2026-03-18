@@ -1,5 +1,6 @@
 import { OrchestrateEngine } from './engines/OrchestrateEngine.js';
 import { TernaryRouter } from './routing/TernaryRouter.js';
+import { HexagramManager } from './routing/HexagramManager.js';
 import { ModelClient } from './clients/ModelClient.js';
 import { SovereignConfig, loadConfig } from './config/SovereignConfig.js';
 import { Renderer } from './ui/Renderer.js';
@@ -11,6 +12,7 @@ async function test() {
     const configPath = join(homedir(), '.POG2-cli', 'config.json');
     const config = loadConfig(configPath);
     const renderer = new Renderer();
+    new HexagramManager(null, 'test_vision_pipeline');
     const router = new TernaryRouter(config);
     const client = new ModelClient(config, router);
     router.setModelClient(client);

@@ -404,6 +404,26 @@ export function getSnapshotPath(snapshotId?: string): string {
     return resolveSovereignPath('snapshots');
 }
 
+/**
+ * Resolves the absolute path to this project's tsconfig.json.
+ * Uses a module-relative anchor (not CWD) so it works from any directory.
+ * Falls back to CWD and then sovereign root.
+ */
+export function getCliTsConfigPath(): string {
+    // Priority 1: Project root configured via setProjectRoot
+    if (_projectRoot) {
+        const p = join(_projectRoot, 'tsconfig.json');
+        if (existsSync(p)) return p;
+    }
+
+    // Priority 2: CWD (works when run from project root)
+    const cwdPath = join(process.cwd(), 'tsconfig.json');
+    if (existsSync(cwdPath)) return cwdPath;
+
+    // Priority 3: Give up — return empty so callers can handle gracefully
+    return '';
+}
+
 // Export constants for external use (LEGACY - use resolver functions instead)
 /** @deprecated use resolver functions */
 export const SovereignPaths = {

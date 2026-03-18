@@ -236,9 +236,9 @@ TASK: You are auditing a sequence of images for movement integrity.
     Prompt: ${prompt}${colorContext}
 
 RULES:
-- Maintain high-density, rich aesthetics.
-- Use Vanilla CSS or Tailwind as appropriate.
-- Output FULL production-ready code.
+- ONLY output a valid Hex Color code or CSS Color name.
+- Do NOT output full code. Do NOT output markdown code blocks.
+- Your entire response MUST just be the color string (e.g., #DC143C or crimson).
 - If colors are provided, use them as primary/secondary anchors unless instructed otherwise.
 
 Forge result: `;

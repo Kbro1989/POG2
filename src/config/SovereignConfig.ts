@@ -1,5 +1,6 @@
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
-import { dirname } from 'path';
+import { dirname, join } from 'path';
+import { homedir } from 'os';
 
 export interface SovereignConfig {
     mode: 'hybrid' | 'local' | 'sovereign';
@@ -157,7 +158,7 @@ const DEFAULT_CONFIG: SovereignConfig = {
     embeddingDimensions: 768,
     wsPort: -1,
     projectRoot: process.cwd(),
-    pog2Dir: process.env['POG2_DIR'] || process.cwd(),
+    pog2Dir: process.env['POG2_DIR'] || join(homedir(), '.pog2-sovereign'),
     gutenbergPath: process.env['GUTENBERG_PATH'] || '',
     sovereignRoot: process.env['POG_SOVEREIGN_ROOT'] || '',
 
