@@ -2563,6 +2563,12 @@ Mapping tool selection over to Y...
 
                     // Update task context with bottlenecked wisdom
                     task = `Task: ${task}\n\nMetabolic Bottleneck Paths:\n${(nexus.bottleneckPaths || []).join('\n')}`;
+
+                    // Phase 1.5: Resonance & Friction Routing
+                    if ((nexus.metabolicFriction || 0) > 0.6) {
+                        this.renderer.warn(`[🧠 Dissonance] High Cognitive Friction Detected (${nexus.metabolicFriction}). Injecting reflection mandate...`);
+                        task += `\n\n[🚨 HIGH COGNITIVE FRICTION 🚨]\nThe Metabolic Substrate detected intense dissonance between the proposed action and the current Structural Emotion, OR a Sovereign Law violation. You MUST heavily scrutinize this in your <reflection> and consider using the 'converse' tool to ask the Operator for clarification before calling any other tool.`;
+                    }
                 }
 
                 const planResult = await this.getPlan(task);

@@ -4,7 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -12,7 +12,9 @@
     "declaration": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "cache_*.ts",
+    "tmp_rsmv_inspect/src/**/*"
   ],
   "exclude": [
     "node_modules",

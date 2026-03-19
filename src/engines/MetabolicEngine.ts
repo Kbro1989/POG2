@@ -1,5 +1,5 @@
 import { ModelClient } from '../clients/ModelClient.js';
-import { type Result, type EngineOutput, YaoState, ok, err, type ThinkingNexus, type ContextCard, CircuitState } from '../core/models.js';
+import { type Result, type EngineOutput, YaoState, ok, err, type ThinkingNexus, type ContextCard, CircuitState, EmotionalState } from '../core/models.js';
 import { extractJson } from '../utils/JsonExtractor.js';
 import { CognitiveEngine } from './CognitiveEngine.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
@@ -117,6 +117,8 @@ export class MetabolicEngine {
 EXPAND INTENT INTO METABOLIC NEXUS (6 LINES + CURIOSITY)
 Intent: "${intent}"
 
+[CURRENT STRUCTURAL EMOTION]: ${this.hexagram.getEmotionalState() || 'Unknown'} (The emotion radiating from the POG2 Hexagram)
+
 SOVEREIGN CONTEXT (Laws & Manifest):
 ${sovereignContext}
 
@@ -144,7 +146,7 @@ Perform a "Deep Reflection" on the Sovereign Context and literal wisdom provided
 - Are there any potential rule violations in the planned action?
 - MANDATORY: Search for any clinical violations (Mocks, Placeholders, Weak Typing, Stubbed APIs).
 - How does this task align with the long-term "AI Hive Mind" hierarchy?
-- Flag "metabolicFriction" (0.0 to 1.0) if ANY deviance from SOVEREIGN_LAWS or clinical prerequisites is detected.
+- Flag "metabolicFriction" (0.0 to 1.0). Friction is HIGH if the [CURRENT STRUCTURAL EMOTION] severely conflicts with the semantic tone of the prompt (e.g., Structural is 'Zen' but the Intent is highly Aggressive). Also flag friction if ANY deviance from SOVEREIGN_LAWS is detected.
 - If a task involves "Yang" complexity but lacks an adversarial audit turn, flag it here.
 
 Respond in JSON ONLY with structure:
@@ -191,6 +193,35 @@ Respond in JSON ONLY with structure:
                 metabolicFriction: data.metabolicFriction,
                 bottleneckPaths: []
             };
+
+            // Phase 1.5: Emotional Yao Casting (Bottom-Up Resonance)
+            // Identify dominant semantic emotion and cast it to the global structure
+            if (data.emotionalPool) {
+                let dominantEmotion = EmotionalState.Zen;
+                let maxWeight = -1;
+                for (const [emo, weight] of Object.entries(data.emotionalPool)) {
+                    if (typeof weight === 'number' && weight > maxWeight) {
+                        maxWeight = weight;
+                        // Coerce string key to Enum if possible
+                        const match = Object.values(EmotionalState).find(v => v.toString().toLowerCase() === emo.toLowerCase());
+                        if (match) dominantEmotion = match as EmotionalState;
+                    }
+                }
+
+                if (maxWeight > 0.3) {
+                    const mappedYao = this.mapEmotionToYao(dominantEmotion);
+                    
+                    logger.info({ dominantEmotion, mappedYao, friction: data.metabolicFriction }, 'Casting Semantic Emotional Yao line');
+                    
+                    await this.hexagram.pushLine({
+                        lineIndex: 0,
+                        importance: maxWeight,
+                        title: 'Semantic Emotion Binding',
+                        content: `Metabolic Engine parsed dominant semantic emotion [${dominantEmotion}]. Friction with global state: ${data.metabolicFriction}`,
+                        state: mappedYao
+                    });
+                }
+            }
 
             // Phase 2: Bottlenecking
             const bottleneckRes = await this.bottleneck(nexus);
@@ -296,5 +327,37 @@ Respond in JSON: { "paths": string[] }
             online: rulesExists && manifestExists,
             details: `Sovereign Context: Rules(${rulesExists}), Manifest(${manifestExists})`
         };
+    }
+
+    /**
+     * Maps a semantic emotion to a structural YaoState line.
+     */
+    private mapEmotionToYao(emotion: EmotionalState): YaoState {
+        switch (emotion) {
+            // OldYang (Volatile / Aggressive)
+            case EmotionalState.Agitated:
+            case EmotionalState.Frustrated:
+            case EmotionalState.Excited:
+                return YaoState.OldYang;
+            
+            // YoungYang (Stable Active)
+            case EmotionalState.Decisive:
+            case EmotionalState.Inspired:
+            case EmotionalState.Steady:
+                return YaoState.YoungYang;
+
+            // OldYin (Reactive / Chaotic)
+            case EmotionalState.Surprised:
+            case EmotionalState.Curious:
+                return YaoState.OldYin;
+
+            // YoungYin (Receptive / Calm)
+            case EmotionalState.Zen:
+            case EmotionalState.Quiet:
+            case EmotionalState.Pensive:
+            case EmotionalState.Melancholy:
+            default:
+                return YaoState.YoungYin;
+        }
     }
 }

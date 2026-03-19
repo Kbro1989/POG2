@@ -59,6 +59,9 @@ import { PathNormalizer } from './utils/PathNormalizer.js';
 import { DBMaintenance } from './utils/DBMaintenance.js';
 import { type Result, YaoState } from './core/models.js';
 import { HexagramManager } from './routing/HexagramManager.js';
+import { EntityLimb } from './limbs/technical/EntityLimb.js';
+import { HiScoreLimb } from './limbs/technical/HiScoreLimb.js';
+import { RSMVController } from './vision/RSMVController.js';
 import {
     getGodHeadRoot,
     getGutenbergPath,
@@ -1069,6 +1072,129 @@ export async function main(): Promise<void> {
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // SMART DISPATCHER
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // PLAYER & NPC BEHAVIORAL ENGINE
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const player = program.command('player').description('Player (POG2) Cognitive Substrate management');
+    const npc = program.command('npc').description('NPC Interaction & Target management');
+
+    [player, npc].forEach(cmd => {
+        cmd
+            .command('interact <id>')
+            .description('Inject an experience into the entity\'s memory')
+            .requiredOption('-t, --type <type>', 'Memory type (combat | skilling | drop | reward | threat)')
+            .option('-c, --content <text>', 'Specific event pattern', 'Manual interaction')
+            .option('-w, --weight <float>', 'Experience intensity', '1.0')
+            .action(async (id: string, opts) => {
+                const limb = new EntityLimb();
+                const memory = {
+                    type: opts.type,
+                    content: opts.content,
+                    weight: parseFloat(opts.weight),
+                    timestamp: Date.now()
+                };
+
+                renderer.info(`Injecting ${opts.type} stimulus into ${id}...`);
+                const res = await limb.addMemory(id, memory);
+                if (res.ok) {
+                    const vibeRes = await limb.updateVibeFromMemory(id, memory);
+                    if (vibeRes.ok) {
+                        renderer.success(`Stimulus anchored. Vibe Snapshot: ${JSON.stringify(vibeRes.value)}`);
+                    } else {
+                        renderer.success(`Memory anchored, but vibe mutation failed: ${vibeRes.error?.message}`);
+                    }
+                } else {
+                    renderer.error(`Injection failed: ${res.error?.message}`);
+                }
+            });
+
+        cmd
+            .command('decide <id>')
+            .description('Trigger the Behavioral Decision Engine to produce a player/npc action bias')
+            .action(async (id: string) => {
+                const limb = new EntityLimb();
+                renderer.info(`Querying Behavioral Engine for ${id}...`);
+                
+                const decisionRes = await limb.decideAction(id);
+                if (decisionRes.ok) {
+                    const { action, yao, reasoning } = decisionRes.value;
+                    const yaoSymbol = yao === YaoState.OldYang ? 'â•²' : (yao === YaoState.OldYin ? 'â•¹' : (yao === YaoState.YoungYang ? 'â• ' : 'â•‹'));
+                    
+                    renderer.log(`\n\x1b[38;5;154m[DECISION]\x1b[0m \x1b[1m${action.toUpperCase()}\x1b[0m`);
+                    renderer.log(`\x1b[38;5;244mReasoning:\x1b[0m ${reasoning}`);
+                    renderer.log(`\x1b[38;5;208mCognitive State:\x1b[0m ${yaoSymbol} [Yao: ${ YaoState[yao] }]`);
+
+                    // Close the loop
+                    renderer.info(`Executing and reinforcing pattern...`);
+                    await limb.executeAction(id, action);
+                    renderer.success('Behavioral loop closed.');
+                } else {
+                    renderer.error(`Decision engine failed: ${decisionRes.error?.message}`);
+                }
+            });
+
+        cmd
+            .command('pull <name>')
+            .description('Fetch character model from Jagex avatar service and render via RSMV')
+            .action(async (name: string) => {
+                const limb = new EntityLimb();
+                const rsmv = new RSMVController();
+                const id = 'pog2:player';
+
+                renderer.info(`Pulling character model for ${name}...`);
+                const modelId = `player:${name}`;
+                const res = await rsmv.viewModel(modelId);
+
+                if (res.ok) {
+                    renderer.success(`RSMV pull triggered for ${name}. Model will be rendered in the background.`);
+                    await limb.updatePlayerIdentity(id, { name, modelPath: 'model.glb' });
+                    renderer.success(`Identity bound to ${name} in substrate.`);
+                } else {
+                    renderer.error(`Pull failed: ${res.error?.message}`);
+                }
+            });
+
+        cmd
+            .command('stats <name>')
+            .description('Fetch real-time HiScore data for a player')
+            .action(async (name: string) => {
+                const hiscore = new HiScoreLimb();
+                const limb = new EntityLimb();
+                const id = 'pog2:player';
+
+                renderer.info(`Fetching HiScores for ${name}...`);
+                const res = await hiscore.fetchStats(name);
+                
+                if (res.ok) {
+                    renderer.json(res.value);
+                    await limb.updatePlayerIdentity(id, { name, stats: res.value });
+                    renderer.success(`Stats synced to substrate for ${id}.`);
+                } else {
+                    renderer.error(`HiScore fetch failed: ${res.error?.message}`);
+                }
+            });
+
+        cmd
+            .command('status [id]')
+            .description('Expose current attention, vibe, and identity state')
+            .action(async (idArg: string | undefined) => {
+                const id = idArg || 'pog2:player';
+                const limb = new EntityLimb();
+                const res = await limb.getEntityState(id);
+                const identityRes = await limb.getPlayerIdentity(id);
+
+                if (res.ok) {
+                    const output = {
+                        ...res.value,
+                        identity: identityRes.ok ? identityRes.value : null
+                    };
+                    renderer.json(output);
+                } else {
+                    renderer.error(res.error?.message);
+                }
+            });
+    });
+
     program
         .command('read <target>')
         .description('Intelligent read dispatcher (ID = Gutenberg, Path = VS Code)')
@@ -1934,7 +2060,7 @@ export async function main(): Promise<void> {
 
     // For single-shot commands, automatically exit unless we are supposed to enter REPL
     const commandName = program.args[0];
-    if (commandName && ['status', 'health', 'personality', 'read', 'gutenberg', 'cooldown', 'config', 'memory', 'consult-shadow', 'consult-memetics', 'consult-syntropy', 'init', 'system', 'vs', 'rsmv'].includes(commandName)) {
+    if (commandName && ['player', 'npc', 'status', 'health', 'personality', 'read', 'gutenberg', 'cooldown', 'config', 'memory', 'consult-shadow', 'consult-memetics', 'consult-syntropy', 'init', 'system', 'vs', 'rsmv'].includes(commandName)) {
         // Clinical exit: allow more time for pino to flush and background MCP links to settle
         setTimeout(() => process.exit(0), 500);
     } else if (commandName) {

@@ -23,7 +23,12 @@ export class RSMVController {
         try {
             const cachePath = getRSMVCachePath();
             // Use the headless CLI for automated rendering
-            const subprocess = spawn('npx', ['tsx', 'tmp_rsmv_inspect/src/headless/cli.ts', '--model', modelId, '--source', `cache:${cachePath}`], {
+            const subprocess = spawn('npx', [
+                'tsx', 'tmp_rsmv_inspect/src/headless/cli.ts',
+                '--model', modelId, 
+                '--source', `cache:${cachePath}`,
+                '--analyze'
+            ], {
                 stdio: 'inherit',
                 shell: true,
                 env: { ...process.env, POG_RSMV_CACHE_DIR: cachePath }
@@ -55,9 +60,10 @@ export class RSMVController {
             const cachePath = getRSMVCachePath();
             // Use the headless CLI with proper source mapping
             const subprocess = spawn('npx', [
-                'tsx', 'tmp_rsmv_inspect/src/headless/cli.ts', 
+                'tsx', 'tmp_rsmv_inspect/src/headless/cli.ts',
                 '--model', modelId, 
-                '--source', `cache:${cachePath}`
+                '--source', `cache:${cachePath}`,
+                '--analyze'
             ], {
                 stdio: 'inherit',
                 shell: true,
