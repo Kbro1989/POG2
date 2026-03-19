@@ -242,16 +242,23 @@ export interface ActuationResult {
 export interface PedagogyProfile {
     readonly id: string;
     readonly name: string;
-    readonly type: 'NPC' | 'OBJECT' | 'ITEM';
+    readonly type: 'NPC' | 'OBJECT' | 'ITEM' | 'GROUP' | 'KINEMATIC' | 'DYNAMIC';
     readonly metrics: {
         readonly polyCount: number;
         readonly boneCount: number;
-        readonly nodeCount: number;
-        readonly jointCount: number;
+        readonly nodeCount?: number;
+        readonly jointCount?: number;
         readonly materialComplexity: number;
-        readonly rigLogic: 'SKELETAL' | 'VERTEX_ANIM' | 'STATIC';
+        readonly rigLogic?: 'SKELETAL' | 'VERTEX_ANIM' | 'STATIC';
         readonly surfaceArea?: number;
         readonly dimensions?: { x: number, y: number, z: number };
+        readonly vertexCount?: number;
+        readonly topologySummary?: any[];
+        // Kinematic Metrics
+        readonly frameCount?: number;
+        readonly durationSeconds?: number;
+        readonly isSkeletal?: boolean;
+        readonly jointDensity?: number;
     };
     readonly structure?: {
         readonly meshCount: number;

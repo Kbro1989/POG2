@@ -135,14 +135,17 @@ export class VectorDB {
         try {
             const query = `
                 INSERT OR REPLACE INTO lessons 
-                (id, text, embedding, sessionId, projectId, domainNamespace, errorType, createdAt, regretLikelihood, metadata, hash, type) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, text, embedding, sessionId, projectId, domainNamespace, errorType, createdAt, lastAccessed, usageCount, regretLikelihood, metadata, hash, type) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
+
+            const embeddingBlob = new Uint8Array(lesson.embedding.buffer, lesson.embedding.byteOffset, lesson.embedding.byteLength);
+            logger.debug({ id: lesson.id, blobSize: embeddingBlob.length }, 'Adding lesson to substrate');
 
             this.db.prepare(query).run(
                 lesson.id,
                 lesson.text,
-                Buffer.from(lesson.embedding.buffer),
+                embeddingBlob,
                 lesson.sessionId || null,
                 lesson.projectId,
                 lesson.domainNamespace || 'global',
@@ -158,7 +161,7 @@ export class VectorDB {
 
             return ok(undefined);
         } catch (err) {
-            logger.error({ err }, 'Failed to add lesson to substrate');
+            logger.error({ id: lesson.id, err: (err as Error).message, stack: (err as Error).stack }, 'Failed to add lesson to substrate');
             return { ok: false, error: err as Error };
         }
     }

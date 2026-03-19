@@ -51,11 +51,12 @@ export class TopologyLimb {
         if (!this.cache) return err(new Error('Cache connection offline.'));
 
         try {
-            // Major 7 = Models Archive
-            const buffer = await this.cache.getFile(7, modelId);
+            // Major 47 = Models Archive (for RS3/NXT)
+            // Note: Archive 7 is used for "Old Models" in some legacy/OSRS contexts.
+            const buffer = await this.cache.getFile(47, modelId);
             if (!buffer) {
-                logger.warn({ modelId }, 'Model not found in archive 7');
-                return err(new Error(`Model ${modelId} not found in archive 7.`));
+                logger.warn({ modelId }, 'Model not found in archive 47');
+                return err(new Error(`Model ${modelId} not found in archive 47.`));
             }
 
             logger.debug({ modelId, bufferLength: buffer.length }, 'Model buffer acquired. Parsing...');
