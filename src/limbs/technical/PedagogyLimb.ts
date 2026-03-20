@@ -340,6 +340,37 @@ The second should define its cinematic intent.
         return err(new Error('analyzeGroup implementation in progress.'));
     }
 
+    /**
+     * Captures and archives an abstract sovereign principle into the pedagogy substrate.
+     * This is used for cross-modal learnings that don't map to a single NPC or Item.
+     */
+    public async storePrinciple(principle: string, source: string, confidence: number): Promise<Result<PedagogyProfile>> {
+        logger.info({ principle, source, confidence }, 'Archiving Sovereign Principle');
+
+        const profile: PedagogyProfile = {
+            id: `PRINCIPLE_${principle.toUpperCase().replace(/\s+/g, '_')}`,
+            name: `Sovereign Principle: ${principle}`,
+            type: 'GROUP', // Principles are categorized as groups of related modal knowledge
+            metrics: {
+                polyCount: 0,
+                vertexCount: 0,
+                boneCount: 0,
+                materialComplexity: 0,
+                topologySummary: []
+            },
+            semantics: {
+                role: `Abstract design principle: ${principle}. Extracted from substrate: ${source}.`,
+                intent: 'architectural_standard',
+                emotionalCharge: confidence,
+                affectiveResonance: EmotionalState.Decisive
+            },
+            timestamp: Date.now()
+        };
+
+        this.anchorToMemory(profile);
+        return ok(profile);
+    }
+
     public close(): void {
         this.topology.close();
         this.forensics.close();

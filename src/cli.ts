@@ -60,6 +60,7 @@ import { DBMaintenance } from './utils/DBMaintenance.js';
 import { type Result, YaoState } from './core/models.js';
 import { HexagramManager } from './routing/HexagramManager.js';
 import { EntityLimb } from './limbs/technical/EntityLimb.js';
+import { PedagogyLimb } from './limbs/technical/PedagogyLimb.js';
 import { HiScoreLimb } from './limbs/technical/HiScoreLimb.js';
 import { RSMVController } from './vision/RSMVController.js';
 import {
@@ -1213,6 +1214,28 @@ export async function main(): Promise<void> {
                 }
             });
     });
+
+    const ped = program.command('pedagogy').description('Cognitive Curation & Sovereign Principle Archiving');
+
+    ped
+        .command('store')
+        .description('Archive an abstract design principle into the pedagogy substrate')
+        .requiredOption('-p, --principle <name>', 'Name of the principle to archive')
+        .requiredOption('-s, --source <substrate>', 'Source of the wisdom (e.g., phase_6_complete)')
+        .option('-c, --confidence <float>', 'Clinical confidence level (0.0-1.0)', '0.99')
+        .action(async (opts) => {
+            const vectorDB = new VectorDB({ client });
+            const limb = new PedagogyLimb(router, vectorDB, client);
+            
+            renderer.info(`Archiving Principle: ${opts.principle}...`);
+            const res = await limb.storePrinciple(opts.principle, opts.source, parseFloat(opts.confidence));
+            
+            if (res.ok) {
+                renderer.success(`Principle anchored to neurological memory: ${res.value.id}`);
+            } else {
+                renderer.error(`Failed to anchor principle: ${res.error?.message}`);
+            }
+        });
 
     program
         .command('read <target>')

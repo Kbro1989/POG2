@@ -1,4 +1,5 @@
 import { writeFileSync, existsSync } from 'fs';
+import { join } from 'path';
 import { execSync } from 'child_process';
 import { type Result, ok, type ProsodyVector } from '../../core/models.js';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
@@ -7,6 +8,20 @@ import { HexagramManager } from '../../routing/HexagramManager.js';
 import { createLogger } from "../../utils/logger.js";
 
 const logger = createLogger('SoundtrackLimb');
+
+export interface AudioCue {
+  timeMs: number;
+  intensity: number;
+  type: 'ROAR_PEAK' | 'ROAR_BUILD';
+}
+
+export interface SoundtrackParams {
+    prompt: string;
+    duration: number;
+    keyframes?: AudioCue[];
+    channels?: number;
+    outputPath?: string;
+}
 
 export interface SoundtrackResult {
     path: string;
@@ -40,6 +55,45 @@ export class SoundtrackLimb {
     ): Promise<Result<SoundtrackResult>> {
         const cappedDuration = Math.min(duration, 30);
         return this.generateViaFfmpeg(prosody, cappedDuration, outputPath);
+    }
+
+    /**
+     * generate - Unified multi-modal synthesis entry point.
+     * Supports kinematic keyframes for synchronized effects (like KBD roars).
+     */
+    public async generate(params: SoundtrackParams): Promise<Result<SoundtrackResult>> {
+        const { duration, keyframes = [], outputPath = join(process.cwd(), 'audit_output', 'kbd_roar.wav') } = params;
+        
+        logger.info({ duration, keyframeCount: keyframes.length }, 'Initiating Kinematic Audio Synthesis');
+
+        // Logic to translate keyframes into volume modulation for ffmpeg
+        // We'll create a volume filter based on the timings
+        let volFilter = 'volume=1.0';
+        if (keyframes.length > 0) {
+            const points = keyframes.map(k => `volume='if(between(t,${(k.timeMs/1000).toFixed(3)},${((k.timeMs+100)/1000).toFixed(3)}),${(0.5 + k.intensity).toFixed(2)},1.0)'`).join(',');
+            volFilter = points; // This is a bit naive for many points, but works for peaks
+        }
+
+        const cappedDuration = Math.max(0.1, duration);
+        const channels = params.channels === 5.1 ? 6 : 1;
+
+        try {
+            // Reusing basic procedural synth but adding the keyframe volume modulation
+            const baseGraph = `aevalsrc='0.1*sin(2*PI*440*t)':s=44100:d=${cappedDuration}`;
+            const cmd = `ffmpeg -y -f lavfi -i "${baseGraph}" -af "${volFilter}" -ac ${channels} "${outputPath}"`;
+
+            execSync(cmd, { timeout: 30_000, stdio: 'pipe', windowsHide: true });
+            
+            return ok({
+                path: outputPath,
+                duration: cappedDuration,
+                prompt: params.prompt,
+                substrate: 'ffmpeg-procedural'
+            });
+        } catch (err) {
+            logger.error({ err }, 'Kinematic synthesis failed.');
+            return { ok: false, error: err as Error };
+        }
     }
 
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
