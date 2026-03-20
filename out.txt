@@ -138,19 +138,19 @@ picture taken. size: 1400000
 image compressed. size: 1458
 render.dispose failed (ignoring): TypeError: Cannot read properties of null (reading 
 'cancelAnimationFrame')
-    at Object.stop (C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\node_modules\th
+    at Object.stop (\tmp_rsmv_inspect\node_modules\th
 ree\build\three.cjs:13403:12)
-    at WebGLRenderer.dispose (C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\node_
+    at WebGLRenderer.dispose (\tmp_rsmv_inspect\node_
 modules\three\build\three.cjs:29335:14)
-    at ThreeJsRenderer.dispose (C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\src
+    at ThreeJsRenderer.dispose (\tmp_rsmv_inspect\src
 \viewer\threejsrender.ts:712:17)
     at renderAppearance 
-(C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\src\headless\api.ts:203:10)
+(\tmp_rsmv_inspect\src\headless\api.ts:203:10)
     at async Object.handler 
-(C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\src\headless\cli.ts:174:11)
-    at async Object.run (C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\node_modul
+(\tmp_rsmv_inspect\src\headless\cli.ts:174:11)
+    at async Object.run (\tmp_rsmv_inspect\node_modul
 es\cmd-ts\src\command.ts:186:24)
-    at async Object.runSafely (C:\Users\Destiny\Desktop\pog-vibe-interactive\files\tmp_rsmv_inspect\node
+    at async Object.runSafely (\tmp_rsmv_inspect\node
 _modules\cmd-ts\src\runner.ts:59:20)
 {"level":30,"time":1773819128382,"hostname":"POG2","name":"RSMVController","code":0,"msg":"RSMV process exited"}
 {"level":30,"time":1773819128394,"hostname":"POG2","name":"PullHans","pngPath":"C:\\Users\\Destiny\\Desktop\\pog-vibe-interactive\\files\\model.png","glbPath":"C:\\Users\\Destiny\\Desktop\\pog-vibe-interactive\\files\\model.glb","msg":"SUCCESS: Hans NPC pulled from cache."}

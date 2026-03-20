@@ -25,12 +25,17 @@ export class VideoAssemblerLimb {
         private readonly hexagram: HexagramManager
     ) { }
 
-    public healthCheck(): { online: boolean; details: string } {
-        // Technically it's 'online' if it can execute ffmpeg via shell
-        return { 
-            online: true, 
-            details: 'VideoAssembler substrate active; ffmpeg pipeline primed.' 
-        };
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        try {
+            const result = await this.shell.execute({ command: 'ffmpeg -version', silent: true });
+            const online = result.ok;
+            return { 
+                online, 
+                details: `Video Assembler: ${online ? 'ONLINE' : 'OFFLINE'} (ffmpeg pipeline ${online ? 'primed' : 'MISSING'})` 
+            };
+        } catch (e) {
+            return { online: false, details: `Video Assembler: OFFLINE (ffmpeg probe failed)` };
+        }
     }
 
     /**

@@ -205,9 +205,15 @@ function bootstrapSovereignSubstrate(root: string): void {
  * Governs the vision bridge's access to underlying model data.
  */
 export function getRSMVCachePath(): string {
-    return process.env['POG_RSMV_CACHE_DIR'] || (process.platform === 'win32' 
-        ? 'C:\\ProgramData\\Jagex\\RuneScape'
-        : join(homedir(), 'Jagex', 'RuneScape'));
+    if (process.env['POG_RSMV_CACHE_DIR']) return process.env['POG_RSMV_CACHE_DIR'];
+    
+    if (process.platform === 'win32') {
+        const rs3Path = 'C:\\ProgramData\\Jagex\\RuneScape';
+        if (existsSync(rs3Path)) return rs3Path;
+        return 'C:\\ProgramData\\Jagex';
+    }
+    
+    return join(homedir(), 'Jagex', 'RuneScape');
 }
 
 /**

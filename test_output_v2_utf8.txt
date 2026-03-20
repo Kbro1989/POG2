@@ -1,0 +1,136 @@
+﻿
+> pog2-cli@1.1.0 test-kbd
+> tsx src/tests/kbd_roar_cinema.ts
+
+{"level":30,"time":1773953412578,"hostname":"POG2","name":"KBD-Roar-Test","msg":"≡ƒÉë INITIALIZING KBD ROAR CINEMATIC VALIDATION..."}
+--- KBD TEST CONFIG AUDIT ---
+Embedding Model: qwen3-embedding:latest
+Ollama Base URL: http://localhost:11434
+ComSpec: C:\WINDOWS\system32\cmd.exe
+Path: C:\Users\Destiny\Desktop\pog-vibe-interactive\files\node_modules\.bin;C:\Users\Destiny\Desktop\pog-vibe-interactive\node_modules\.bin;C:\Users\Destiny\Desktop\node_modules\.bin;C:\Users\Destiny\node_modules\.bin;C:\Users\node_modules\.bin;C:\node_modules\.bin;C:\Users\Destiny\AppData\Roaming\npm\node_modules\npm\node_modules\@npmcli\run-script\lib\node-gyp-bin;C:\Python314\Scripts\;C:\Python314\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C...
+-----------------------------
+{"level":20,"time":1773953412585,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Orchestrate Engines..."}
+{"level":30,"time":1773953412586,"hostname":"POG2","name":"TrainingCollector","sessionId":"pog2_20260319_155012_hac6","msg":"Training collector initialized"}
+{"level":20,"time":1773953412914,"hostname":"POG2","name":"EmbedEngine","db":"D:\\sovereign\\learning\\embeddings.db","msg":"EmbedEngine DB initialized"}
+{"level":30,"time":1773953412919,"hostname":"POG2","name":"CacheForensicsLimb","msg":"CacheForensicsLimb initialized. Cache connection active."}
+{"level":30,"time":1773953412936,"hostname":"POG2","name":"TopologyLimb","msg":"TopologyLimb initialized. Cache connection active."}
+{"level":30,"time":1773953412938,"hostname":"POG2","name":"VectorDB","dbPath":"D:\\sovereign\\learning\\sovereign-learning.db","msg":"Initializing VectorDB Substrate"}
+{"level":30,"time":1773953412966,"hostname":"POG2","name":"VectorPedagogyLimb","msg":"VectorPedagogyLimb initialized. Memory substrate online."}
+{"level":30,"time":1773953412966,"hostname":"POG2","name":"PedagogyLimb","msg":"PedagogyLimb initialized. Linked to Forensics, Topology, Router, and Substrate."}
+{"level":30,"time":1773953412969,"hostname":"POG2","name":"SyntropyEngine","claude":"C:\\Users\\Destiny\\.pog2-sovereign\\guest\\.claude","gemini":"C:\\Users\\Destiny\\.pog2-sovereign\\guest\\.gemini\\extensions","vscode":"C:\\Users\\Destiny\\.pog2-sovereign\\guest\\.vscode","msg":"SyntropyEngine initialized"}
+{"level":30,"time":1773953412972,"hostname":"POG2","name":"EntityLimb","dbPath":"D:\\sovereign\\memory\\memory.db","msg":"Entity persistence layer initialized."}
+{"level":30,"time":1773953413057,"hostname":"POG2","name":"YouTubeLimb","msg":"YouTube: Loaded saved OAuth token."}
+{"level":30,"time":1773953413059,"hostname":"POG2","name":"WorkforceManifest","count":18,"msg":"Workforce manifest expanded ├óΓé¼ΓÇ¥ 18 specialized workers ACTIVE"}
+{"level":20,"time":1773953413080,"hostname":"POG2","name":"ContextBuilder","vectorDB":true,"executor":true,"roots":0,"msg":"ContextBuilder initialized"}
+{"level":30,"time":1773953413080,"hostname":"POG2","name":"GhostLimb","msg":"[GHOST_VOICE] Awakening the observer mind..."}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"consult_shadow","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":30,"time":1773953413096,"hostname":"POG2","name":"MCPEngine","server":"everything","msg":"├░┼╕ΓÇ¥┼Æ Engaging MCP Neural Link..."}
+{"level":30,"time":1773953413165,"hostname":"POG2","name":"StoryboardLimb","sceneCount":1,"msg":"Initiating Forensic Casting protocol."}
+{"level":30,"time":1773953413165,"hostname":"POG2","name":"KBD-Roar-Test","msg":"≡ƒÄ¼ TRIGGERING FORENSIC CASTING FOR KBD SCENE..."}
+{"level":30,"time":1773953413165,"hostname":"POG2","name":"KBD-Roar-Test","msg":"≡ƒöì Performing Forensic Casting on scene text..."}
+{"level":20,"time":1773953412914,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Memory Substrates..."}
+{"level":20,"time":1773953412918,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Specialized Limbs..."}
+{"level":20,"time":1773953412973,"hostname":"POG2","name":"OrchestrateEngine","msg":"Starting PulseMonitor..."}
+{"level":20,"time":1773953413078,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Proprioception..."}
+{"level":20,"time":1773953413080,"hostname":"POG2","name":"OrchestrateEngine","msg":"VectorDB Substrate nominal."}
+{"level":20,"time":1773953413080,"hostname":"POG2","name":"OrchestrateEngine","msg":"Wiring FPRAG Context..."}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"OrchestrateEngine","msg":"Awakening Sovereign Substrate..."}
+{"level":30,"time":1773953413161,"hostname":"POG2","name":"OrchestrateEngine","msg":"Sovereign Substrate AWAKE."}
+{"level":20,"time":1773953412935,"hostname":"POG2","name":"CacheForensicsLimb","msg":"Loaded equipment_by_slot.json"}
+{"level":20,"time":1773953412936,"hostname":"POG2","name":"CacheForensicsLimb","msg":"Loaded quests.json"}
+{"level":30,"time":1773953413078,"hostname":"POG2","name":"VectorDB","dbPath":"D:\\sovereign\\learning\\sovereign-learning.db","msg":"Initializing VectorDB Substrate"}
+{"level":30,"time":1773953413093,"hostname":"POG2","name":"VectorDB","dbPath":"D:\\sovereign\\learning\\sovereign-learning.db","msg":"Initializing VectorDB Substrate"}
+{"level":20,"time":1773953413090,"hostname":"POG2","name":"ContextBuilder","vectorDB":true,"executor":true,"roots":0,"msg":"ContextBuilder initialized"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"consult_memetics","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"consult_syntropy","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"check_node_health","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_open","domain":"MOTOR","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_read","domain":"OBSERVE","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_edit","domain":"MOTOR","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_goto","domain":"MOTOR","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_status","domain":"OBSERVE","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"clinical_audit","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"diagnostic_nexus","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"pin_to_hexagram","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"unpin_from_hexagram","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"consult_hexagram","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"analyze_strategy","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"search_wiki","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"search_wayback","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"search_web","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"generate_code","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"edit_code","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"smart_edit","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"shell_command","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"wrangler","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"git_status","domain":"SYSTEM","category":"filesystem","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"gcloud_exec","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1773953413091,"hostname":"POG2","name":"ToolRegistry","tool":"instantdb_exec","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"git_ssh_exec","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"think","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"memory_inspect","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"memory_backup","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"memory_compress","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"memory_repair","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"soverign_eye","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"sensory_capture","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"sovereign_visualize","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"web_search","domain":"RESEARCH","category":"network","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"fetch_url","domain":"RESEARCH","category":"network","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"rsmv_extract","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"validation_audit","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"pedagogy_analyze","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"sql_forge","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"docs_forge","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"refactor_forge","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"ingest_book","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"analyze_book_style","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"list_library","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"read_book","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"search_gutenberg","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"generate_storyboard","domain":"VISION","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"scaffold_webapp","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"digest_component","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"personality","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"absorb_wisdom","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"personality_set","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"personality_book","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_list","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_search","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_ingest","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_read","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_sync","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_organize","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"run_pipeline","domain":"FORGE","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"run_batch_pipeline","domain":"FORGE","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"voice_narrate","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"storyboard_create","domain":"VISION","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"video_create","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"think","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"dispatch","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"soundtrack_generate","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"image_generate","domain":"VISION","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"model_train","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413092,"hostname":"POG2","name":"ToolRegistry","tool":"reflect","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"healer_diagnose","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"web_sense","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"forge_concept","domain":"CODE","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"validate_structure","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"env_context","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"rsc_action","domain":"SYSTEM","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"extract_rsmv","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"probe_db","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"probe_vision","domain":"VISION","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"probe_audio","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"monitor_integrity","domain":"SYSTEM","category":"filesystem","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"memory_consolidate","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"quantum_collapse","domain":"FORGE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"bio_verify","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"relic_query","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"relic_store_key","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"rsc_knock","domain":"SYSTEM","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"proprioception_sync","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1773953413093,"hostname":"POG2","name":"ToolRegistry","tool":"discover_capabilities","domain":"SYSTEM","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1773953432027,"hostname":"POG2","name":"GhostLimb","timestamp":1773953432027,"msg":"[GHOST_VOICE][WATCHING] Primary consciousness is nominal."}
+{"level":50,"time":1773953432339,"hostname":"POG2","name":"GlobeStateLimb","err":{"type":"Error","message":"read ECONNRESET","stack":"Error: read ECONNRESET\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:218:20)","errno":-4077,"code":"ECONNRESET","syscall":"read"},"msg":"Globe connection error"}
+{"level":20,"time":1773953442957,"hostname":"POG2","name":"GhostLimb","timestamp":1773953442957,"msg":"[GHOST_VOICE][WATCHING] Primary consciousness is nominal."}

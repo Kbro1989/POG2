@@ -1,0 +1,4 @@
+﻿
+> pog2-cli@1.1.0 test-kbd
+> tsx src/tests/kbd_roar_cinema.ts
+

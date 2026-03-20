@@ -87,6 +87,39 @@ export class ModelClient implements ModelExecutor {
     public setQuotaTracker(qt: QuotaTracker): void { this.quotaTracker = qt; }
     public getQuotaTracker(): QuotaTracker | undefined { return this.quotaTracker; }
 
+    /** Check if the Ollama substrate is online */
+    async checkHealth(): Promise<{ online: boolean; version: string }> {
+        try {
+            const resp = await fetch(`${this.config.ollamaBaseUrl}/api/version`, {
+                signal: AbortSignal.timeout(5000)
+            });
+            if (resp.ok) {
+                const data = await resp.json() as { version?: string };
+                return { online: true, version: data.version || 'unknown' };
+            }
+            return { online: false, version: 'offline' };
+        } catch {
+            return { online: false, version: 'unreachable' };
+        }
+    }
+
+    /** List locally available Ollama models */
+    async listModels(): Promise<string[]> {
+        try {
+            const resp = await fetch(`${this.config.ollamaBaseUrl}/api/tags`, {
+                signal: AbortSignal.timeout(5000)
+            });
+            if (resp.ok) {
+                const data = await resp.json() as { models?: Array<{ name: string }> };
+                return (data.models || []).map(m => m.name);
+            }
+            return [];
+        } catch {
+            return [];
+        }
+    }
+
+
     /**
      * Implements ModelExecutor.callModel
      */
@@ -301,10 +334,10 @@ export class ModelClient implements ModelExecutor {
     }
 
     async embed(text: string, modelOverride?: string): Promise<Result<Float32Array>> {
-        const model = modelOverride ?? this.config.embeddingModel;
+        const model = modelOverride || this.config.embeddingModel || 'qwen3-embedding:latest';
 
         let result: Result<Float32Array>;
-        if (model.startsWith('gemini:')) {
+        if (model && model.startsWith('gemini:')) {
             result = await this.embedGemini(text);
         } else {
             result = await this.embedOllama(text, model);
@@ -1142,25 +1175,31 @@ export class ModelClient implements ModelExecutor {
     }
 
 
-    async listModels(): Promise<string[]> {
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        const ollamaBase = this.config.ollamaBaseUrl || 'http://localhost:11434';
+        let ollamaOnline = false;
+        let modelCount = 0;
         try {
-            const response = await fetch(`${this.config.ollamaBaseUrl}/api/tags`);
-            if (!response.ok) return [];
-            const data = await response.json() as { models?: Array<{ name: string }> };
-            return data.models?.map(m => m.name) ?? [];
-        } catch {
-            return [];
+            const response = await fetch(`${ollamaBase}/api/tags`, { signal: AbortSignal.timeout(5000) });
+            if (response.ok) {
+                const data = await response.json() as { models?: any[] };
+                modelCount = data.models?.length || 0;
+                ollamaOnline = true;
+            }
+        } catch (e) {
+            ollamaOnline = false;
         }
-    }
 
-    async checkHealth(): Promise<{ online: boolean; version?: string }> {
-        try {
-            const response = await fetch(`${this.config.ollamaBaseUrl}/api/version`);
-            if (!response.ok) return { online: false };
-            const data = await response.json() as { version: string };
-            return { online: true, version: data.version };
-        } catch {
-            return { online: false };
-        }
+        const cloudKeys = [
+            { name: 'Gemini', key: this.config.secondaryCloudApiKey },
+            { name: 'HuggingFace', key: this.config.primaryCloudApiKey },
+            { name: 'Cloudflare', key: this.config.cloudflareApiToken }
+        ];
+        const activeCloud = cloudKeys.filter(k => !!k.key).map(k => k.name).join(', ');
+
+        return {
+            online: ollamaOnline, 
+            details: `ModelClient: ${ollamaOnline ? 'ONLINE' : 'DEGRADED'} (Local: ${modelCount} models | Cloud: ${activeCloud || 'None'})`
+        };
     }
 }

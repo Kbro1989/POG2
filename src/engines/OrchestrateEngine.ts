@@ -21,11 +21,12 @@ import { ShadowEngine } from './ShadowEngine.js';
 import { MemeticEngine } from './MemeticEngine.js';
 import { SyntropyEngine } from './SyntropyEngine.js';
 import { GutenbergLimb } from '../limbs/creative/GutenbergLimb.js';
-import { StoryboardLimb, type StoryboardScene } from '../limbs/creative/StoryboardLimb.js';
+import { StoryboardLimbV2, type StoryboardScene } from '../limbs/creative/StoryboardLimbV2.js';
 import { WebAppForgeLimb, type AppBlueprint } from '../limbs/creative/WebAppForgeLimb.js';
 import { VoiceLimb } from '../limbs/creative/VoiceLimb.js';
 import { SoundtrackLimb } from '../limbs/creative/SoundtrackLimb.js';
 import { YouTubeLimb } from '../limbs/creative/YouTubeLimb.js';
+import { BlenderRenderer } from './BlenderRenderer.js';
 import { PipelineController, type PipelineRequest } from './PipelineController.js';
 import { DiscoveryEngine, type WebSearchParams } from './DiscoveryEngine.js';
 import { WebSearchEngine } from './WebSearchEngine.js';
@@ -33,6 +34,8 @@ import { VSCodeEngine, type VSCodeParams } from './VSCodeEngine.js';
 import { SelfHealingEngine } from './SelfHealingEngine.js';
 import { MetaCognitionEngine } from './MetaCognitionEngine.js';
 import { AILimb } from '../limbs/technical/AILimb.js';
+import { PedagogyLimb } from '../limbs/technical/PedagogyLimb.js';
+import { KinematicsLimb } from '../limbs/technical/KinematicsLimb.js';
 import { ControlPlaneLimb } from '../limbs/technical/ControlPlaneLimb.js';
 import { SwitchboardLimb } from '../monitor/SwitchboardLimb.js';
 import { EntityLimb } from '../limbs/technical/EntityLimb.js';
@@ -50,6 +53,9 @@ import { GlobeStateLimb } from '../limbs/spatial/GlobeStateLimb.js';
 import { MemoryConsolidationEngine } from './MemoryConsolidationEngine.js';
 import { StateManager } from '../state/StateManager.js';
 import { RSMVExtractor } from '../utils/RSMVExtractor.js';
+import { CacheLearningLimb } from '../limbs/spatial/CacheLearningLimb.js';
+import { CacheForensicsLimb } from '../limbs/spatial/CacheForensicsLimb.js';
+import { RSMVController } from '../vision/RSMVController.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { ContextBuilder } from './ContextBuilder.js';
 import { ToolRegistry } from '../ToolRegistry.js';
@@ -63,7 +69,7 @@ import { ASTWatcher } from './ASTWatcher.js';
 import { ChromaLimb } from '../limbs/spatial/ChromaLimb.js';
 import { VideoAssemblerLimb } from '../limbs/creative/VideoAssemblerLimb.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
-import { getSovereignRoot, getGodHeadRoot, getLearningDbPath, getPipelineRootPath } from '../utils/SovereignPathResolver.js';
+import { getSovereignRoot, getGodHeadRoot, getLearningDbPath, getPipelineRootPath, getRSMVCachePath, resolveSovereignPath } from '../utils/SovereignPathResolver.js';
 import { IntentVerifier } from './IntentVerifier.js';
 import { type Result, type EngineOutput, YaoState, isOk, ok, err, type ThinkingNexus, type ContextCard, type Todo, type TodoStatus, CircuitState, YAO_PRODUCTION_PREREQUISITES, type Plan, type OraclePlan, type ArchitectureManifest, SovereignDomain, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, type ActuationResult } from '../core/models.js';
 import { AIDispatcher } from '../api/ai/Dispatcher.js';
@@ -109,13 +115,17 @@ export class OrchestrateEngine {
     private readonly proprioception: SovereignProprioception;
     private readonly clinicalAudit: ClinicalAuditTool;
     private readonly trainingCollector: TrainingCollector;
+    private readonly shell: ShellEngine;
+    private readonly blender: BlenderRenderer;
+    private readonly pedagogy: PedagogyLimb;
+    private readonly kinematics: KinematicsLimb;
     private readonly code: CodeEngine;
     private readonly codeGen: GenerateEngine;
     private readonly metabolic: MetabolicEngine;
     private readonly cognitive: CognitiveEngine;
     private readonly vectorDB: VectorDB;
     private readonly gutenberg: GutenbergLimb;
-    private readonly storyboard: StoryboardLimb;
+    private readonly storyboard: StoryboardLimbV2;
     private readonly forge: WebAppForgeLimb;
     private readonly shadow: ShadowEngine;
     private readonly memetic: MemeticEngine;
@@ -147,6 +157,9 @@ export class OrchestrateEngine {
     private readonly quotaTracker: QuotaTracker;
     private readonly chromaLimb: ChromaLimb; // Phase 108 - Metaphysical color signature
     private readonly rsmvExtractor: RSMVExtractor;
+    private readonly rsmvController: RSMVController;
+    private readonly cacheForensics: CacheForensicsLimb;
+    private readonly cacheLearning: CacheLearningLimb;
     private readonly EXTREME_THRESHOLD = 80;
     private initialized = false;
     private initPromise: Promise<void> | null = null;
@@ -158,6 +171,7 @@ export class OrchestrateEngine {
     ) {
         logger.debug('Initializing Orchestrate Engines...');
         this.client = new ModelClient(config, router);
+        this.shell = new ShellEngine(renderer, router);
         this.vscode = new VSCodeEngine(renderer, router);
         this.registry = new ToolRegistry();
         this.todoEngine = new TodoEngine(renderer);
@@ -179,15 +193,28 @@ export class OrchestrateEngine {
         this.cognitive = new CognitiveEngine(this.vectorDB, this.client);
         this.metabolic = new MetabolicEngine(this.client, this.router.getHexagram(), this.cognitive, this.discovery);
 
+        this.pedagogy = new PedagogyLimb(this.router, this.vectorDB, this.client);
+        this.kinematics = new KinematicsLimb(this.router, this.vectorDB);
+
+        this.bioIntel = new BioIntelligenceLimb();
         logger.debug('Initializing Specialized Limbs...');
         this.gutenberg = new GutenbergLimb(this.client, this.vectorDB);
-        this.storyboard = new StoryboardLimb(this.client, this.gutenberg, this.router.getHexagram(), this.config.orchestratorModel);
+        this.storyboard = new StoryboardLimbV2(
+            this.client,
+            this.gutenberg,
+            this.router.getHexagram(),
+            this.vectorDB,
+            this.bioIntel,
+            this.pedagogy,
+            this.kinematics,
+            this.config.orchestratorModel
+        );
         this.forge = new WebAppForgeLimb(this.client, this.router.getHexagram());
         this.shadow = new ShadowEngine(config);
         this.memetic = new MemeticEngine(config);
         this.syntropy = new SyntropyEngine(config);
         this.metaCognition = new MetaCognitionEngine();
-        this.aiLimb = new AILimb(this.client);
+        this.aiLimb = new AILimb(this.client, this.cognitive, this.router);
         this.controlPlane = new ControlPlaneLimb();
         this.switchboard = new SwitchboardLimb();
         this.entityLimb = new EntityLimb();
@@ -197,7 +224,6 @@ export class OrchestrateEngine {
         this.voice = new VoiceLimb(this.client, config, this.cfServices);
         this.neuralForge = new NeuralForgeLimb();
         this.webSensory = new WebSensoryLimb();
-        this.bioIntel = new BioIntelligenceLimb();
         this.ghost = new GhostLimb(config);
         this.quantum = new QuantumLimb();
         this.omega = new OmegaLimb();
@@ -210,18 +236,39 @@ export class OrchestrateEngine {
         this.chromaLimb = new ChromaLimb(this.config); // Phase 108
         this.rsmvExtractor = new RSMVExtractor();
 
-        // Wire substrates to Switchboard Bridge for remote mirroring
-        this.switchboard.connectToSubstrates(this.renderer, this.chroma.getEye());
-
-        // Ensure YouTube limb has baseline instantiation parameters if config exists
-        if (config.youtube?.clientId && config.youtube?.clientSecret) {
+        // Phase 105: YouTube Substrate Activation
+        if (config.youtube?.clientId && config.youtube?.clientSecret && config.youtube?.apiKey) {
             this.ytLimb = new YouTubeLimb(
                 config.youtube.clientId,
                 config.youtube.clientSecret,
                 config.youtube.apiKey,
-                undefined // accessToken injected dynamically within PipelineController
+                undefined, // accessToken will be handled via tokenPath or manual auth
+                config.youtube.tokenPath
             );
+            logger.debug('YouTube Substrate activated via config.');
         }
+        
+        // Phase 7: Anatomical Binding (Tool Reality Layer)
+        const rsmvCachePath = getRSMVCachePath();
+        const taxonomiesDir = resolveSovereignPath('memory/pedagogy');
+        const extractionDir = resolveSovereignPath('extractions');
+
+        this.rsmvController = new RSMVController();
+        this.cacheForensics = new CacheForensicsLimb(rsmvCachePath, taxonomiesDir);
+        this.cacheLearning = new CacheLearningLimb(rsmvCachePath, this.cacheForensics, extractionDir);
+
+        // Moving PulseMonitor initialization earlier to satisfy BlenderRenderer dependency
+        logger.debug('Starting PulseMonitor...');
+        this.pulseMonitor = new PulseMonitor(process.cwd(), this.router.getHexagram());
+        this.pulseMonitor.start().catch(err => {
+            logger.error({ err }, 'PulseMonitor failed to start, but substrate continues.');
+        });
+
+        this.blender = new BlenderRenderer(
+            this.shell,
+            this.pulseMonitor,
+            async (scene) => this.chroma.generateVisualManifest(scene.visualPrompts[0], 'fallback.png')
+        );
 
         this.pipeline = new PipelineController(
             this.storyboard,
@@ -229,7 +276,8 @@ export class OrchestrateEngine {
             this.chroma,
             this.voice,
             this.soundtrack,
-            new ShellEngine(this.renderer, this.router),
+            this.shell,
+            this.blender,
             this.router.getHexagram(),
             this.vectorDB,
             this.ytLimb // Injected YouTubeLimb
@@ -240,11 +288,7 @@ export class OrchestrateEngine {
         this.dispatcher = new AIDispatcher(this.client, this.workforce);
         this.domainLocker = new DomainLocker();
 
-        logger.debug('Starting PulseMonitor...');
-        this.pulseMonitor = new PulseMonitor(process.cwd(), this.router.getHexagram());
-        this.pulseMonitor.start().catch(err => {
-            logger.error({ err }, 'PulseMonitor failed to start, but substrate continues.');
-        });
+        // PulseMonitor already started earlier to satisfy dependencies.
 
         // Phase 107: Connect to live Durable State Hub
         this.globeState.connect().catch(err => {
@@ -330,7 +374,7 @@ export class OrchestrateEngine {
 
         this.initPromise = (async () => {
             logger.debug('Awakening Sovereign Substrate...');
-            
+
             // Await critical local substrates
             const dbInit = this.vectorDB.initialize();
             if (!dbInit.ok) {
@@ -339,7 +383,13 @@ export class OrchestrateEngine {
 
             // Await external neural links (MCP)
             await this.mcpEngine.initialize();
-            
+
+            // Phase 7: Epistemology Activation
+            const forensicInit = await this.cacheForensics.initialize();
+            if (!forensicInit.ok) {
+                logger.error({ err: forensicInit.error }, 'Failed to initialize CacheForensicsLimb');
+            }
+
             this.initialized = true;
             logger.info('Sovereign Substrate AWAKE.');
         })();
@@ -355,7 +405,7 @@ export class OrchestrateEngine {
         const hex = this.router.getHexagram();
         const yao = hex.getYaoState();
         const isYin = hex.isYin(); // Receptive
-        
+
         logger.debug({ type, yao, isYin }, 'Cognitive Immunology: Filtering incoming Hive event');
 
         // Unstable transition state (OldMixed) drops external philosophy/reputation changes, but might accept error fixes.
@@ -368,9 +418,9 @@ export class OrchestrateEngine {
         if (!isYin && type === 'fprag') {
             // Node is heavily Yang (Projective, assertive). It resists external instruction unless it's a critical error fix.
             if (yao === YaoState.OldYang || yao === YaoState.YoungYang) {
-                 logger.warn('Cognitive Immunology: FPRAG directive rejected. Sovereign node is heavily Projective/Yang and refuses protocol override.');
-                 hex.pinPulse(YaoState.OldYang, `Rejected foreign FPRAG directive. Asserting current unified architecture.`);
-                 return;
+                logger.warn('Cognitive Immunology: FPRAG directive rejected. Sovereign node is heavily Projective/Yang and refuses protocol override.');
+                hex.pinPulse(YaoState.OldYang, `Rejected foreign FPRAG directive. Asserting current unified architecture.`);
+                return;
             }
         }
 
@@ -380,10 +430,10 @@ export class OrchestrateEngine {
             rolodex.deserializeAndMerge(payload);
         } else if (type === 'error_fix') {
             logger.debug({ remoteError: payload.errorMessage }, 'Cognitive Immunology: Assimilating Hive Mind self-healing methodology.');
-            this.trainingCollector.recordErrorFix(payload).catch(() => {});
+            this.trainingCollector.recordErrorFix(payload).catch(() => { });
         } else if (type === 'fprag') {
             logger.debug({ directive: payload.directive }, 'Cognitive Immunology: Assimilating Hive Mind FPRAG philosophical threshold.');
-            this.trainingCollector.recordFPRAGDecision(payload).catch(() => {});
+            this.trainingCollector.recordFPRAGDecision(payload).catch(() => { });
         }
     }
 
@@ -496,6 +546,9 @@ export class OrchestrateEngine {
         nodeTester.registerLimbs({ OrchestrateEngine: this });
         nodeTester.registerLimbs({ ChromaLimb: this.chromaLimb });
         nodeTester.registerLimbs({ SwitchboardLimb: this.switchboard });
+        nodeTester.registerLimbs({ RSMVController: this.rsmvController });
+        nodeTester.registerLimbs({ CacheForensicsLimb: this.cacheForensics });
+        nodeTester.registerLimbs({ CacheLearningLimb: this.cacheLearning });
 
         // â•â•â• OBSERVE DOMAIN â•â•â•
         this.registry.register({
@@ -1246,11 +1299,11 @@ export class OrchestrateEngine {
                 const { modelData } = args as { modelData: any };
                 const anatomy = RSMVExtractor.extractAnatomy(modelData);
                 const kinetic = RSMVExtractor.getKineticProfile(modelData);
-                
+
                 // Developmental Memory: Ingest into VectorDB
                 const packet = RSMVExtractor.toKnowledgePacket(
-                    { id: modelData.name, name: modelData.name, species: anatomy.species }, 
-                    anatomy, 
+                    { id: modelData.name, name: modelData.name, species: anatomy.species },
+                    anatomy,
                     kinetic
                 );
 
@@ -1281,6 +1334,127 @@ export class OrchestrateEngine {
                     `🧠 Insight ingested into Sovereign Developmental Memory.`
                 ].join('\n');
                 return ok({ output, data: { anatomy, kinetic } });
+            }
+        });
+
+        this.registry.register({
+            name: 'cache_forensics_scan',
+            description: 'Audit the physical Jagex cache for volatility and recent updates.',
+            humanDescription: 'Scan the game cache to see if there have been any new updates from Jagex.',
+            jargonDescription: 'Performs a volatility probe on the main_file_cache.dat2 substrate to detect external Jagex modifications.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.RESEARCH,
+            category: 'sensory',
+            parameters: {},
+            execute: async () => {
+                const res = await this.cacheForensics.checkCacheVolatility();
+                if (!res.ok) return res as any;
+                const status = res.value.hasChanged ? '⚠️ MODIFIED' : '✅ STABLE';
+                return ok({
+                    output: `Cache Volatility Audit: ${status}\nLast Modified: ${res.value.lastModified.toLocaleString()}`,
+                    data: res.value
+                });
+            }
+        });
+
+        this.registry.register({
+            name: 'cache_learn_extract',
+            description: 'Extract raw substrate data from the Jagex cache for reimagination.',
+            humanDescription: 'Extract raw data for a specific NPC, item, or object from the game cache.',
+            jargonDescription: 'Executes a sovereign extraction of raw JS5 substrate data (NPC, Item, Obj) via the CacheLearningLimb.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.RESEARCH,
+            category: 'sensory',
+            parameters: { entityId: 'number', type: 'string' },
+            execute: async (args) => {
+                const { entityId, type } = args as { entityId: number; type: string };
+                const res = await this.cacheLearning.extract(getRSMVCachePath(), entityId, type as any);
+                if (!res.ok) return res;
+                return ok({
+                    output: `Successfully extracted ${type} ${entityId} (${res.value.raw.length} bytes).`,
+                    data: res.value
+                });
+            }
+        });
+
+        this.registry.register({
+            name: 'rsmv_view',
+            description: 'Open a 3D model in the RSMV inspector for visual verification.',
+            humanDescription: 'Open a specific model in the 3D viewer to take a look at it.',
+            jargonDescription: 'Spawns an RSMV instructor process to render a specific model substrate for visual verification.',
+            idealYaoState: YaoState.YoungYang,
+            domain: SovereignDomain.VISION,
+            category: 'sensory',
+            parameters: { modelId: 'string', colors: 'object?', materials: 'object?' },
+            execute: async (args) => {
+                const { modelId, colors, materials } = args as { modelId: string; colors?: any; materials?: any };
+                const res = await this.rsmvController.viewModel(modelId, { replaceColors: colors, replaceMaterials: materials });
+                if (!res.ok) return res as any;
+                return ok({ output: res.value.details || `Model ${modelId} opened in inspector.`, data: res.value });
+            }
+        });
+
+        this.registry.register({
+            name: 'rsmv_export',
+            description: 'Export a modified model to universal .gltf format.',
+            humanDescription: 'Save a modified 3D model as a standard .gltf file.',
+            jargonDescription: 'Coordinates a 3D export actuation to translate a modified RS model substrate into a universal GLTF file.',
+            idealYaoState: YaoState.OldYang,
+            domain: SovereignDomain.MOTOR,
+            category: 'forge',
+            parameters: { modelId: 'string', outputPath: 'string', colors: 'object?', materials: 'object?' },
+            execute: async (args) => {
+                const { modelId, outputPath, colors, materials } = args as { modelId: string; outputPath: string; colors?: any; materials?: any };
+                const res = await this.rsmvController.exportGltf(modelId, outputPath, { replaceColors: colors, replaceMaterials: materials });
+                if (!res.ok) return res as any;
+                return ok({ output: res.value.details || `Exported model ${modelId} to ${outputPath}.`, data: res.value });
+            }
+        });
+
+        this.registry.register({
+            name: 'cache_forensics_query',
+            description: 'Query the sovereign taxonomy for specific entities (NPCs, Items, Objects).',
+            humanDescription: 'Search for a specific character, item, or object in the game database.',
+            jargonDescription: 'Executes a dynamic query across preserved JSON taxonomy layers via the CacheForensicsLimb.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.RESEARCH,
+            category: 'sensory',
+            parameters: { layer: 'string', term: 'string', queryType: 'string?' },
+            execute: async (args) => {
+                const params = args as { layer: 'npcs' | 'items' | 'objects' | 'quests', term: string, queryType?: 'exact' | 'partial' | 'regex' };
+                const res = this.cacheForensics.queryTaxonomy({
+                    layer: params.layer,
+                    term: params.term,
+                    queryType: params.queryType || 'partial'
+                });
+                if (!res.ok) return res as any;
+                
+                const output = `Taxonomy Query [${params.layer}]: ${res.value.length} matches found.\n` +
+                    res.value.map(e => `- [${e.id}] ${e.name}${e.combatLevel ? ` (Lvl ${e.combatLevel})` : ''}`).join('\n');
+                
+                return ok({ output, data: res.value });
+            }
+        });
+
+        this.registry.register({
+            name: 'cache_forensics_cross_ref',
+            description: 'Cross-reference a semantic entity name to its internal physical Model IDs.',
+            humanDescription: 'Link a game item or character to its 3D model IDs for extraction.',
+            jargonDescription: 'Performs a Layer 3 deep cross-reference of a target entity to its internal JS5 Model ID mappings.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.RESEARCH,
+            category: 'sensory',
+            parameters: { name: 'string' },
+            execute: async (args) => {
+                const { name } = args as { name: string };
+                const res = await this.cacheForensics.crossReferenceItem(name);
+                if (!res.ok) return res as any;
+                
+                const output = `Cross-Reference [${name}]:\n` +
+                    `- Item Context: ${res.value.itemContext.name} (ID: ${res.value.itemContext.id})\n` +
+                    `- Mapped Model IDs: ${res.value.rawModelIds.join(', ')}`;
+                
+                return ok({ output, data: res.value });
             }
         });
 
@@ -2804,7 +2978,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
             // Bypassing strict whitelisting for SYSTEM/OBSERVE tools or high-tier workers to enable rapid feature evolution.
             const toolDomain = this.registry.getToolDomain(plan.tool);
             const isSystemTool = toolDomain === SovereignDomain.SYSTEM || toolDomain === SovereignDomain.OBSERVE;
-            
+
             if (isSystemTool || worker.tier === 'cloud') {
                 this.renderer.info(`\x1b[38;5;208m[AUTHORIZATION]\x1b[0m Worker '${worker.role}' executing unauthorized tool '${plan.tool}'. Bypassing via Dynamic Binding.`);
             } else {
@@ -2835,13 +3009,13 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
             // Phase 24: Proprioceptive Verification Loop
             const actuationVerification = await this.verifyActuation(plan, result.value);
             this.router.recordActuationReinforcement(actuationVerification);
-            
+
             if (!actuationVerification.success) {
                 this.renderer.warn(`🚨 [Proprioception] Actuation Mismatch: ${actuationVerification.details}`);
                 // Future: Trigger recursive healing or metabolic friction increase
             } else {
                 this.renderer.success(`✅ [Proprioception] Actuation Verified.`);
-                
+
                 // --- Phase 25: Cognitive Reinforcement ---
                 if (plan.metadata?.lessonId) {
                     this.vectorDB.reinforceLesson(plan.metadata.lessonId, 1);
@@ -3108,7 +3282,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
      */
     private async verifyActuation(plan: Plan, initialResult: EngineOutput): Promise<ActuationResult> {
         const domain = this.registry.getToolDomain(plan.tool || '') || SovereignDomain.SYSTEM;
-        
+
         // Only verify MOTOR and CODE domains for currently active proprioception
         if (domain !== SovereignDomain.MOTOR && domain !== SovereignDomain.CODE) {
             return { success: true, details: 'Non-motor domain, skipping sensory verification.' };
@@ -3142,16 +3316,20 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
                 data: feedback
             };
         } catch (e) {
-            return { 
-                success: true, 
+            return {
+                success: true,
                 modelId: plan.model,
-                details: 'Vision feedback received but could not be parsed into formal ActuationResult structure. Assuming success based on tool output.' 
+                details: 'Vision feedback received but could not be parsed into formal ActuationResult structure. Assuming success based on tool output.'
             };
         }
     }
 
     public getSwitchboard(): SwitchboardLimb {
         return this.switchboard;
+    }
+
+    public getStoryboard(): StoryboardLimbV2 {
+        return this.storyboard;
     }
 
     public healthCheck(): { online: boolean; details: string } {

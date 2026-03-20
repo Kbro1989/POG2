@@ -23,10 +23,12 @@ export class ControlPlaneLimb {
         });
     }
 
-    public healthCheck(): { online: boolean; status: string } {
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        const reg = await this.regulate();
+        const ok = reg.ok && reg.value.status === 'STABLE';
         return {
-            online: true,
-            status: 'REGULATORY_NOMINAL'
+            online: ok,
+            details: `Control Plane: ${ok ? 'ONLINE' : 'DEGRADED'} (Drift: ${reg.ok ? reg.value.driftScore : 'N/A'})`
         };
     }
 }

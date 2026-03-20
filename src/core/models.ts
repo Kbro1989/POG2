@@ -42,6 +42,12 @@ export enum YaoState {
     YinYao = 0      // Alias
 }
 
+export enum TemporalState {
+    PAST = 'PAST',
+    PRESENT = 'PRESENT',
+    FUTURE = 'FUTURE'
+}
+
 export enum EmotionalState {
     Inspired = 'INSPIRED',
     Steady = 'STEADY',
@@ -272,6 +278,17 @@ export interface PedagogyProfile {
         readonly race?: string;
         readonly intent: string; // e.g., "Hero NPC", "Background Prop"
         readonly wikiUrl?: string;
+        readonly wikiLore?: string;
+        readonly affectiveResonance?: EmotionalState;
+        readonly emotionalCharge?: number;
+    };
+    readonly spatial?: {
+        readonly spawnX: number;
+        readonly spawnY: number;
+        readonly spawnZ?: number;
+        readonly walkRadius?: number;
+        readonly patrolPath?: { x: number, y: number }[];
+        readonly locationName?: string;
     };
     readonly timestamp: number;
 }
@@ -513,6 +530,7 @@ export interface ProductionPrerequisites {
     mandateBuildVerification: boolean;
     mandateHealthAudit: boolean;
     mandateMemoryConsolidation: boolean;
+    mandateSovereignAudit: boolean; // Phase 7: ValidationLimb Antibody Gate
     severityThreshold: number;
 }
 
@@ -526,6 +544,7 @@ export const YAO_PRODUCTION_PREREQUISITES: Record<YaoState, ProductionPrerequisi
         mandateBuildVerification: true,
         mandateHealthAudit: false,
         mandateMemoryConsolidation: false,
+        mandateSovereignAudit: true,
         severityThreshold: 70
     },
     [YaoState.YoungYang]: {
@@ -533,6 +552,7 @@ export const YAO_PRODUCTION_PREREQUISITES: Record<YaoState, ProductionPrerequisi
         mandateBuildVerification: true,
         mandateHealthAudit: false,
         mandateMemoryConsolidation: false,
+        mandateSovereignAudit: false,
         severityThreshold: 30
     },
     [YaoState.OldYin]: {
@@ -540,6 +560,7 @@ export const YAO_PRODUCTION_PREREQUISITES: Record<YaoState, ProductionPrerequisi
         mandateBuildVerification: false,
         mandateHealthAudit: true,
         mandateMemoryConsolidation: true,
+        mandateSovereignAudit: true,
         severityThreshold: 50
     },
     [YaoState.YoungYin]: {
@@ -547,6 +568,7 @@ export const YAO_PRODUCTION_PREREQUISITES: Record<YaoState, ProductionPrerequisi
         mandateBuildVerification: false,
         mandateHealthAudit: true,
         mandateMemoryConsolidation: false,
+        mandateSovereignAudit: false,
         severityThreshold: 20
     },
     [YaoState.OldMixed]: {
@@ -554,6 +576,7 @@ export const YAO_PRODUCTION_PREREQUISITES: Record<YaoState, ProductionPrerequisi
         mandateBuildVerification: true,
         mandateHealthAudit: true,
         mandateMemoryConsolidation: true,
+        mandateSovereignAudit: true,
         severityThreshold: 90
     },
     [YaoState.YoungMixed]: {
@@ -561,6 +584,7 @@ export const YAO_PRODUCTION_PREREQUISITES: Record<YaoState, ProductionPrerequisi
         mandateBuildVerification: true,
         mandateHealthAudit: true,
         mandateMemoryConsolidation: false,
+        mandateSovereignAudit: true,
         severityThreshold: 10
     }
 };
@@ -574,3 +598,59 @@ export interface SovereignKnock {
         structuralIntegrity: number;
     };
 }
+
+export interface SovereignViolation {
+    type: 'PLACEHOLDER_DETECTED' | 'MISSING_PEDAGOGY_REFERENCE' | 'EPHEMERAL_CODE';
+    file: string;
+    line: number;
+    severity: 'CRITICAL' | 'WARNING' | 'ERROR';
+    context?: string;
+}
+
+export interface MetabolicAudit {
+    timestamp: number;
+    violations: SovereignViolation[];
+    metabolicScore: number; // 0-1, must be >0.9
+    consolidationRecommendations: string[];
+}
+
+export interface SessionLog {
+    modifiedFiles: string[];
+    completedTasks: Array<{ id: string; referencesPedagogyId: string | null }>;
+}
+
+export interface DesignPrinciple {
+    id: string;
+    text: string;
+    sourceHash?: string;
+    domain: string;
+}
+
+export interface CinematicArtifact {
+    type: string;
+    prompt: string;
+    principleId: string;
+    renderedOutput?: string;
+    sovereignCompliant: boolean;
+}
+
+export type DataType = 'npc' | 'obj' | 'item' | 'map' | 'skeleton';
+
+export interface CacheData {
+    raw: Buffer;
+    crc: number;
+    version: number;
+    parsed: any;
+    substrate: string;
+}
+
+export interface ReimaginationSpec {
+    sourceCachePath: string;
+    entityId: number;
+    dataType: DataType;
+    domain: string;
+    themes: string[];
+    outputType: string;
+}
+
+

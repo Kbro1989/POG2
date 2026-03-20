@@ -19,7 +19,11 @@ export class MemoryConsolidationEngine {
         return { online: true };
     }
 
-    public async consolidate(): Promise<Result<void>> {
+    /**
+     * consolidate - Synthesizes raw session memories into profound generative rules.
+     * Can be focused on specific Sovereign Law repairs if violations are detected.
+     */
+    public async consolidate(sessionLog?: any, options?: { focus: string; violations: any[] }): Promise<Result<void>> {
         const sessionId = this.state.getSessionId();
         if (!sessionId) return { ok: false, error: new Error('No active Session ID.') };
 
@@ -28,40 +32,52 @@ export class MemoryConsolidationEngine {
         if (!fetchRes.ok) return fetchRes as Result<void>;
 
         const lessons = fetchRes.value;
-        if (lessons.length < 3) {
+        if (lessons.length < 3 && !options?.violations?.length) {
             // Not enough data to warrant a complex structural merge
             logger.debug({ lessons: lessons.length }, 'Insufficient memory density for structural consolidation. Keeping exact references.');
             return { ok: true, value: undefined };
         }
 
         try {
-            // 2. Classify and Group Redundant Knowledge/Errors
+            // 2. Classify and Group Redundant Knowledge/Errors/Insights
+            let focusContext = '';
+            if (options?.focus === 'SOVEREIGN_LAW_REPAIR' && options.violations) {
+                focusContext = `
+[SOVEREIGN LAW REPAIR MODE ACTIVE]
+The following Clinical Violations (Placeholders/Mocks) were detected during this session:
+${JSON.stringify(options.violations, null, 2)}
+YOUR PRIMARY GOAL: Synthesize rules that specifically address and prevent these violations in future creative cycles.
+                `;
+            }
+
             const prompt = `
-You are the MemoryConsolidation Substrate for POG2.
-Below is the raw cognitive exhaust (memories, errors, meta-reflections) from the current localized session.
+You are the MemoryConsolidation Substrate for POG2, transforming into an autonomous Sovereign Game & Cinematic Creation AI.
+Below is the raw cognitive exhaust (memories, errors, structural data, and meta-reflections) from the current localized session.
+
+${focusContext}
 
 YOUR TASK:
-Group identical/highly-repetitive errors into singular "Core Lessons".
-If the knowledge is unique, DO NOT delete or merge it. Simply ignore it.
-If multiple nodes represent the exact same failure loop, summarize them into one profound learning.
+1. Group identical/highly-repetitive errors into singular profound "Core Software Engineering Lessons".
+2. Synthesize ambient structural data into profound "Game Design & Cinematic paradigms" (e.g., how to scale an MMO, how to architect 3D cinema).
+3. If Sovereign Violations were provided, enforce strong architectural typing and clinical precision.
 
-RAW DATA (JSON containing { id, text, errorType }):
+DATA (JSON):
 ${JSON.stringify(lessons.map(l => ({ id: l.id, text: l.text, errorType: l.errorType })), null, 2)}
 
-Return a strict JSON object mapping the raw IDs to delete to the NEW synthesized overarching lesson, if consolidation is necessary. If no consolidation is needed, return empty arrays.
+Return a strict JSON object mapping the raw IDs to delete to the NEW synthesized overarching generative lesson.
 Format:
 {
   "consolidations": [
     {
       "idsToDelete": ["id1", "id2"],
-      "synthesizedLesson": "Comprehensive rule derived from the repeated failure."
+      "synthesizedLesson": "Comprehensive generative game design or software rule derived from the data."
     }
   ]
 }
 `;
 
             const res = await this.client.call({
-                model: this.client.config.memoryConsolidationModel, // Must be reliable
+                model: this.client.config.memoryConsolidationModel,
                 prompt,
                 systemPrompt: 'You are the POG2 Subconscious Memory Processor. Eliminate bloat, retain wisdom.',
                 temperature: 0.1

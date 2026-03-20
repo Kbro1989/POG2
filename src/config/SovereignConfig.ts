@@ -80,6 +80,7 @@ export interface SovereignConfig {
         clientSecret: string;
         channelId: string;
         youtubeId: string;
+        tokenPath?: string;
     };
 
     // Phase 8: SovereignKnock Auth Settings
@@ -227,15 +228,15 @@ const ENV_VAR_MAP: Record<string, string> = {
     cloudflareAuthEmail: 'CLOUDFLARE_AUTH_EMAIL',
     fireworksApiKey: 'FIREWORKS_API_KEY',
     openRouterApiKey: 'OPENROUTER_API_KEY',
-    planningModel: 'PLANNING_MODEL',
-    codingModel: 'CODING_MODEL',
-    orchestratorModel: 'ORCHESTRATOR_MODEL',
-    visionModel: 'VISION_MODEL',
-    voiceModel: 'VOICE_MODEL',
-    codingHeavyModel: 'CODING_HEAVY_MODEL',
-    codingFastModel: 'CODING_FAST_MODEL',
-    embeddingModel: 'EMBEDDING_MODEL',
-    criticModel: 'CRITIC_MODEL',
+    planningModel: 'POG2_PLANNING_MODEL',
+    codingModel: 'POG2_CODING_MODEL',
+    orchestratorModel: 'POG2_ORCHESTRATOR_MODEL',
+    visionModel: 'POG2_VISION_MODEL',
+    voiceModel: 'POG2_VOICE_MODEL',
+    codingHeavyModel: 'POG2_CODING_HEAVY_MODEL',
+    codingFastModel: 'POG2_CODING_FAST_MODEL',
+    embeddingModel: 'POG2_EMBEDDING_MODEL',
+    criticModel: 'POG2_CRITIC_MODEL',
     lightAuditorModel: 'LIGHT_AUDITOR_MODEL',
     geminiFlashModel: 'GEMINI_FLASH_MODEL',
     geminiProModel: 'GEMINI_PRO_MODEL',
@@ -314,7 +315,7 @@ export function loadConfig(configPath: string): SovereignConfig {
     config.secondaryCloudApiKey = process.env['SECONDARY_CLOUD_API_KEY'] ?? process.env['GOOGLE_API_KEY'] ?? config.secondaryCloudApiKey;
 
     // Phase 105: Explicit YouTube Environment Mapping (Upstream Resilience)
-    if (process.env['YOUTUBE_CLIENT_ID'] || process.env['YOUTUBE_CLIENT_SECRET'] || process.env['YOUTUBE_API_KEY']) {
+    if (process.env['YOUTUBE_CLIENT_ID'] || process.env['YOUTUBE_CLIENT_SECRET'] || process.env['YOUTUBE_API_KEY'] || process.env['YOUTUBE_TOKEN_PATH']) {
         config.youtube = config.youtube || {};
         config.youtube.clientId = process.env['YOUTUBE_CLIENT_ID'] ?? config.youtube.clientId;
         config.youtube.clientSecret = process.env['YOUTUBE_CLIENT_SECRET'] ?? config.youtube.clientSecret;
@@ -322,6 +323,7 @@ export function loadConfig(configPath: string): SovereignConfig {
         config.youtube.projectId = process.env['YOUTUBE_PROJECT_ID'] ?? config.youtube.projectId;
         config.youtube.channelId = process.env['YOUTUBE_CHANNEL_ID'] ?? config.youtube.channelId;
         config.youtube.youtubeId = process.env['YOUTUBE_YOUTUBE_ID'] ?? config.youtube.youtubeId;
+        config.youtube.tokenPath = process.env['YOUTUBE_TOKEN_PATH'] ?? config.youtube.tokenPath;
     }
 
     // Phase 106: Normalize wsPort defaults (Default to 8765 if -1 or missing)

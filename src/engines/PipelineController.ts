@@ -1,9 +1,10 @@
 import { type Result, ok } from '../core/models.js';
-import { StoryboardLimb, type StoryboardScene } from '../limbs/creative/StoryboardLimb.js';
+import { StoryboardLimbV2, type StoryboardScene } from '../limbs/creative/StoryboardLimbV2.js';
 import { ChromanumberEngine } from './ChromanumberEngine.js';
 import { VoiceLimb } from '../limbs/creative/VoiceLimb.js';
 import { SoundtrackLimb } from '../limbs/creative/SoundtrackLimb.js';
 import { VideoAssemblerLimb } from '../limbs/creative/VideoAssemblerLimb.js';
+import { BlenderRenderer, type Clip } from './BlenderRenderer.js';
 import { ShellEngine } from './ShellEngine.js';
 import { GutenbergLimb } from '../limbs/creative/GutenbergLimb.js';
 import { YouTubeLimb } from '../limbs/creative/YouTubeLimb.js';
@@ -30,6 +31,7 @@ export interface PipelineRequest {
     videoAssembly?: 'Execute' | 'Skip' | 'Auto';
     feedbackLoop?: 'Engage' | 'Skip' | 'Auto';
     youtubeUpload?: 'Upload' | 'Skip' | 'Auto';
+    dimension?: '2D' | '3D'; // Stage 2.5 toggle
 }
 
 export interface SceneArtifact {
@@ -42,6 +44,7 @@ export interface SceneArtifact {
     soundtrackPath?: string;
     soundtrackStatus?: 'success' | 'failed' | 'skipped' | 'pending';
     feedbackScore?: number;
+    clip?: Clip; // Stage 2.5 artifact
     metadata?: Record<string, any>;
 }
 
@@ -72,12 +75,13 @@ export class PipelineController {
     private readonly assembler: VideoAssemblerLimb;
 
     constructor(
-        private readonly storyboard: StoryboardLimb,
+        private readonly storyboard: StoryboardLimbV2,
         private readonly gutenberg: GutenbergLimb,
         private readonly chroma: ChromanumberEngine,
         private readonly voice: VoiceLimb,
         private readonly soundtrack: SoundtrackLimb,
         private readonly shell: ShellEngine,
+        private readonly blender: BlenderRenderer,
         private readonly hexagram: HexagramManager,
         private readonly vectorDB?: any, // Made optional for backwards compatibility during refactor
         private readonly youtubeLimb?: YouTubeLimb // Injected for dependency handling
@@ -97,7 +101,7 @@ export class PipelineController {
             'pipeline',
             2, // YoungYin Priority
             async () => {
-                const { bookId, sceneCount = 5, personality, voiceGeneration = 'Auto', videoAssembly = 'Auto', youtubeUpload = 'Auto' } = request;
+                const { bookId, sceneCount = 5, personality, voiceGeneration = 'Auto', videoAssembly = 'Auto', youtubeUpload = 'Auto', dimension = '2D' } = request;
 
                 const skipVoice = voiceGeneration === 'Skip';
                 const skipVideo = videoAssembly === 'Skip';
@@ -410,6 +414,19 @@ export class PipelineController {
             writeFileSync(join(stage1Path, `scene_${scene.index}.json`), JSON.stringify(scene, null, 2));
 
             artifacts[i] = artifact;
+
+            // â”€â”€â”€ STAGE 2.5: 3D Render (Blender Cinema) â”€â”€â”€
+            if (dimension === '3D' && artifact.imageStatus !== 'failed') {
+                logger.info({ index: scene.index }, 'Stage 2.5: Triggering Sovereign 3D Render...');
+                const renderRes = await this.blender.render(scene, pipelinePath);
+                if (renderRes.ok) {
+                    artifact.clip = renderRes.value;
+                    logger.info({ index: scene.index, type: renderRes.value.type }, 'Stage 2.5: Render complete.');
+                } else {
+                    logger.warn({ index: scene.index, error: renderRes.error.message }, 'Stage 2.5: Render failed. Sticking with 2D substrate.');
+                }
+            }
+
             this.saveCheckpoint(bookId, request, { ...manifest!, scenes: artifacts }, 'images', i + 1, stage1Path);
         }
 
@@ -526,51 +543,38 @@ export class PipelineController {
         }
 
         // â”€â”€â”€ STAGE 5: YouTube Upload (Optional) â”€â”€â”€
-        if (!skipYoutube && manifest.videoPath && existsSync(manifest.videoPath)) {
+        if (!skipYoutube && manifest.videoPath && existsSync(manifest.videoPath) && this.youtubeLimb) {
             try {
-                const config = JSON.parse(readFileSync('.pog2-config.json', 'utf8'));
-                if (config.youtube?.clientId && config.youtube?.clientSecret) {
-                    // â”€â”€â”€ POG2 OAUTH SUBSTRATE: Attempt to ingest token from gcloud CLI â”€â”€â”€
-                    let accessToken: string | undefined;
-                    try {
-                        const { execSync } = await import('child_process');
-                        accessToken = execSync(`gcloud auth print-access-token --project ${config.youtube.projectId || 'pickofgods-8eb4b'}`).toString().trim();
-                        logger.info('YouTube: Ingested authentication token from gcloud substrate.');
-                    } catch (err) {
-                        logger.warn('YouTube: Failed to ingest token from gcloud CLI. Falling back to local storage.');
-                    }
+                const yt = this.youtubeLimb;
+                const bookMeta = this.gutenberg.getLibrary().find(b => b.id === bookId);
+                const isAdultContent = bookMeta?.subjects?.some(s =>
+                    s.toLowerCase().includes('erotica') ||
+                    s.toLowerCase().includes('adult') ||
+                    s.toLowerCase().includes('horror') ||
+                    s.toLowerCase().includes('violence') ||
+                    s.toLowerCase().includes('gore')
+                ) || false;
 
-                    const yt = new YouTubeLimb(config.youtube.clientId, config.youtube.clientSecret, config.youtube.apiKey, accessToken);
-                    const bookMeta = this.gutenberg.getLibrary().find(b => b.id === bookId);
-                    const isAdultContent = bookMeta?.subjects?.some(s =>
-                        s.toLowerCase().includes('erotica') ||
-                        s.toLowerCase().includes('adult') ||
-                        s.toLowerCase().includes('horror') ||
-                        s.toLowerCase().includes('violence') ||
-                        s.toLowerCase().includes('gore')
-                    ) || false;
-
-                    const uploadRes = await yt.upload({
-                        videoPath: manifest.videoPath,
-                        title: `${manifest.bookTitle} â€” AI Narrated Audiobook`,
-                        description: `Generated by POG2 Sovereign Pipeline from Project Gutenberg #${bookId}.\n\nAuthor: ${bookMeta?.author || 'Unknown'}\nCategory: ${bookMeta?.domain || 'uncategorized'}`,
-                        tags: [...(bookMeta?.subjects || []).slice(0, 10), 'audiobook', 'ai-narrated', 'project-gutenberg'],
-                        categoryId: '27',
-                        privacyStatus: 'unlisted',
-                        thumbnailPath: manifest.scenes[0]?.imagePaths?.[0],
-                        playlistTitle: bookMeta?.domain ? `POG2: ${bookMeta.domain}` : undefined,
-                        containsSyntheticMedia: 'Yes',
-                        videoAgeGating: isAdultContent ? { restricted: true } : undefined
-                    });
-                    if (uploadRes.ok) {
-                        logger.info({ videoId: uploadRes.value.videoId, url: uploadRes.value.videoUrl }, 'ðŸŽ¬ YouTube upload complete!');
-                        (manifest as any).youtubeUrl = uploadRes.value.videoUrl;
-                    } else {
-                        logger.warn({ error: uploadRes.error }, 'YouTube upload failed. Video saved locally.');
-                    }
+                const uploadRes = await yt.upload({
+                    videoPath: manifest.videoPath,
+                    title: `${manifest.bookTitle} â€” AI Narrated Audiobook`,
+                    description: `Generated by POG2 Sovereign Pipeline from Project Gutenberg #${bookId}.\n\nAuthor: ${bookMeta?.author || 'Unknown'}\nCategory: ${bookMeta?.domain || 'uncategorized'}`,
+                    tags: [...(bookMeta?.subjects || []).slice(0, 10), 'audiobook', 'ai-narrated', 'project-gutenberg'],
+                    categoryId: '27',
+                    privacyStatus: 'unlisted',
+                    thumbnailPath: manifest.scenes[0]?.imagePaths?.[0],
+                    playlistTitle: bookMeta?.domain ? `POG2: ${bookMeta.domain}` : undefined,
+                    containsSyntheticMedia: 'Yes',
+                    videoAgeGating: isAdultContent ? { restricted: true } : undefined
+                });
+                if (uploadRes.ok) {
+                    logger.info({ videoId: uploadRes.value.videoId, url: uploadRes.value.videoUrl }, 'ðŸŽ¬ YouTube upload complete!');
+                    (manifest as any).youtubeUrl = uploadRes.value.videoUrl;
+                } else {
+                    logger.warn({ error: uploadRes.error }, 'YouTube upload failed. Video saved locally.');
                 }
             } catch (err) {
-                logger.warn({ err }, 'YouTube integration skipped (config or auth issue).');
+                logger.warn({ err }, 'YouTube integration skipped (upload error).');
             }
         }
 

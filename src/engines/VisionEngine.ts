@@ -122,10 +122,13 @@ TASKS:
     /**
      * Diagnostic probe for NodeTester.
      */
-    public healthCheck(): { online: boolean; details: string } {
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        const screenshotPath = join(tmpdir(), `POG2_probe_${Date.now()}.png`);
+        const capture = await this.captureScreen(screenshotPath);
+        const online = capture.ok;
         return {
-            online: true,
-            details: 'VisionEngine nominal; SoverignEye substrate available via Win32 capture.'
+            online,
+            details: `Vision Substrate: ${online ? 'ONLINE' : 'OFFLINE'} (SoverignEye Win32 capture: ${online ? 'SUCCESS' : 'FAILED'})`
         };
     }
 }

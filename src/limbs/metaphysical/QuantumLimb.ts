@@ -39,10 +39,12 @@ export class QuantumLimb {
         return ok(sorted[0].path);
     }
 
-    public healthCheck(): { online: boolean; entropy: number } {
+    public async healthCheck(): Promise<{ online: boolean; details: string; entropy: number }> {
+        const entropy = Math.random();
         return {
             online: true,
-            entropy: Math.random() // Synthetic entropy check
+            entropy,
+            details: `Quantum: ONLINE (Substrate entropy: ${entropy.toFixed(4)})`
         };
     }
 }

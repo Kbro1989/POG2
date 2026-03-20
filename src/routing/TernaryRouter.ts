@@ -46,7 +46,7 @@ const COMPLEXITY_KEYWORDS: Record<string, RegExp> = {
     Yang: /\b(architect|system|design|microservice|refactor entire|migrate|restructure|complex|enterprise|distributed|concurrent|async.*pipeline|multi.*step)\b/i,
     YinYang: /\b(implement|create|generate|write|improve|update|fix|add feature|integrate)\b/i,
     Yin: /\b(explain|what is|rename|format|comment|simple|quick|small|trivial|lint)\b/i,
-    Vision: /\b(see|look|image|screenshot|picture|analyze this view)\b/i,
+    Vision: /\.(png|jpg|jpeg|webp|gif)\b|\b(vision|see|look|image|screenshot|picture|analyze this view|what is in this|describe the scene)\b/i,
     Voice: /\b(speak|say|listen|voice|audio)\b/i,
     Orchestrator: /\b(plan|orchestrate|decide|manage|coordinate)\b/i,
     Chromanumber: /\b(decompile|color map|hex code|pixel|lines between colors|palette)\b/i,
@@ -77,6 +77,18 @@ export class TernaryRouter {
     private outcomeScorer?: OutcomeScorer;
     private strategyAdvisor?: StrategyAdvisor;
     private proposedMutations: StrategyMutation[] = [];
+    
+    // Phase 7: Temporal Routing Gates
+    public get temporalState(): 'PAST' | 'PRESENT' | 'FUTURE' {
+        const hex = this.hexagram.getInterpretation();
+        if (hex.name.includes('Arriving') || hex.name.includes('Return') || this.hexagram.isYin()) {
+            return 'PAST'; // Stable, historical, or retrieval-focused
+        }
+        if (this.hexagram.isYang()) {
+            return 'FUTURE'; // Expansion, creative, or generative
+        }
+        return 'PRESENT'; // Mixed, transformation, or hybrid
+    }
 
     // Cooldown tracking for Kimi endpoints (Ollama vs HF 61-min alternating)
     private ollamaCooldownUntil = 0;
@@ -298,7 +310,8 @@ export class TernaryRouter {
         if (!this.modelClient) return 'text'; // Fallback if not injected
 
         // If it clearly contains image paths or vision keywords, fast-fail to vision
-        if (/\.(png|jpg|jpeg|webp|gif)/i.test(prompt) || COMPLEXITY_KEYWORDS.Vision.test(prompt)) {
+        const visionRegex = /\.(png|jpg|jpeg|webp|gif)\b|\b(vision|see|look|image|screenshot|picture|analyze this view)\b/i;
+        if (visionRegex.test(prompt)) {
             return 'vision';
         }
 
@@ -416,10 +429,20 @@ export class TernaryRouter {
         const fastPath = prompt ? this.isFastPath(prompt) : false;
 
         // === NERVOUS SYSTEM V2: DYNAMIC TRIAGE ===
-        // If we have a prompt and it's NOT a guaranteed fast path, do a cheap triage to discover the exact task type
+        // If we have a prompt and it's NOT a guaranteed fast path, do a cheap triage 
         let dynamicTaskType: TaskType = 'text';
-        if (prompt && !fastPath && this.modelClient) {
-            dynamicTaskType = await this.classifyTaskDynamically(prompt);
+
+        // 🧬 Phase 108: CONFIDENCE OVERRIDE (Heuristic Fallback if Triage is Shaky)
+        const triageEnabled = prompt && !fastPath && this.modelClient;
+        
+        if (triageEnabled) {
+            dynamicTaskType = await this.classifyTaskDynamically(prompt!);
+            
+            // If triage confidence is dangerously low, revert to heuristic classification
+            if (this.lastConfidence < 0.4) {
+                logger.warn({ confidence: this.lastConfidence }, '🧬 CNS: Triage confidence too low. Bypassing dynamic type.');
+                dynamicTaskType = 'text'; 
+            }
             // If the triage determined it's vision, but the heuristic missed it, upgrade the complexity
             if (dynamicTaskType === 'vision' && complexity !== 'Vision') {
                 complexity = 'Vision';
@@ -742,7 +765,8 @@ export class TernaryRouter {
                 const avgLatency = mData?.avgLatencyMs ?? 500;
                 const expectedLatency = Math.max(avgLatency, 50);
                 
-                // score = rep / log(1 + expectedLatency)
+                // 🧬 Phase 108: Explicit Decision Weighting
+                // score = (reputation weight) / log(1 + latency)
                 const score = rep / Math.log(1 + expectedLatency);
                 return { id: mId, score };
             })
@@ -897,8 +921,8 @@ export class TernaryRouter {
         this.lastSyncAt = now;
 
         try {
-            // Use execAsync but don't await the parent if called from non-blocking context
-            const { stdout } = await execAsync('ollama list');
+            // 🧬 Phase 108: Added 10s timeout to prevent hanging on stalled Ollama substrates
+            const { stdout } = await execAsync('ollama list', { timeout: 10000 });
             const lines = stdout.split('\n').slice(1);
             this.availableLocalModels.clear();
             for (const line of lines) {

@@ -1,7 +1,7 @@
 // src/utils/RSMVExtractor.ts
 // Utility to parse RSMV model definitions and map them to Biological Constraints
 
-import { Result, ok, err } from '../core/models.js';
+import { Result, ok, err, EmotionalState } from '../core/models.js';
 import { AnatomyLimits, SpeciesAnatomy } from '../constants/AnatomyRegistry.js';
 import { ModelReference } from '../constants/ModelRegistry.js';
 import { readFileSync, readdirSync, statSync } from 'fs';
@@ -67,6 +67,42 @@ export class RSMVExtractor {
     }
 
     /**
+     * Converts a high-fidelity PedagogyProfile into a SpeciesAnatomy definition.
+     * Uses skeletal metrics and extracted semantics for precise synthesis.
+     */
+    public static fromPedagogyProfile(profile: any): SpeciesAnatomy {
+        const metrics = profile.metrics || {};
+        const innerSemantics = profile.semantic || {};
+        const bones = profile.structure?.bones || [];
+
+        // Advanced limit inference based on skeletal metrics and bone naming patterns
+        const limits: AnatomyLimits = {
+            limbs: metrics.boneCount > 40 ? 4 : (metrics.boneCount > 10 ? 2 : 0),
+            eyes: 2,
+            ears: 2,
+            joints: {
+                elbow: bones.some((b: string) => b.toLowerCase().includes('elbow')) ? 1 : 0,
+                knee: bones.some((b: string) => b.toLowerCase().includes('knee')) ? 1 : 0,
+                neck: bones.some((b: string) => b.toLowerCase().includes('neck')) ? 1 : 0
+            }
+        };
+
+        // Opcode-driven overrides if available in mechanics
+        if (profile.mechanics?.params) {
+            const params = profile.mechanics.params;
+            if (params[1010]) limits.limbs = Number(params[1010]);
+            if (params[1011]) limits.eyes = Number(params[1011]);
+        }
+
+        return {
+            species: profile.id.toLowerCase().replace(/[:\s]+/g, '_'),
+            commonName: innerSemantics.name || profile.name,
+            limits,
+            notes: `Structural Synthesis: ${profile.semantics?.role || 'Asset'} | Intent: ${profile.semantics?.intent} | PolyCount: ${metrics.polyCount}`
+        };
+    }
+
+    /**
      * Determines the kinetic profile based on RSMV animation/movement metadata
      */
     public static getKineticProfile(json: RSMVModelJSON): string {
@@ -82,6 +118,31 @@ export class RSMVExtractor {
         if (group === 7000) return 'fly'; // Example ID for flight-capable NPCs
 
         return 'idle';
+    }
+
+    /**
+     * inferEmotionalResonance - Maps 3D morphology to affective states.
+     * Higher boundSize often correlates with dominance (Steady/Decisive).
+     * Specific animation groups correlate with activity (Agitated/Excited).
+     */
+    public static inferEmotionalResonance(name: string, size: number = 0, animGroup: number = 0): EmotionalState {
+        const lowerName = name.toLowerCase();
+
+        // 1. Keyword-based resonance (Personality)
+        if (lowerName.includes('spooky') || lowerName.includes('ghost') || lowerName.includes('shade')) return EmotionalState.Melancholy;
+        if (lowerName.includes('aggressive') || lowerName.includes('berserker') || lowerName.includes('warrior')) return EmotionalState.Agitated;
+        if (lowerName.includes('ancient') || lowerName.includes('elder') || lowerName.includes('king')) return EmotionalState.Decisive;
+        if (lowerName.includes('mystic') || lowerName.includes('sage') || lowerName.includes('wizard')) return EmotionalState.Pensive;
+        if (lowerName.includes('imp') || lowerName.includes('goblin') || lowerName.includes('naughty')) return EmotionalState.Excited;
+
+        // 2. Structural resonance (Size dynamics)
+        if (size > 200) return EmotionalState.Steady; // Large imposing entities
+        if (size < 50) return EmotionalState.Curious;  // Small darting entities
+
+        // 3. Kinetic resonance (Animation group cues)
+        if (animGroup > 5000) return EmotionalState.Inspired; // High-tier modern rigs
+        
+        return EmotionalState.Zen; // Default stable state
     }
 
     /**

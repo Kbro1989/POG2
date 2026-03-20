@@ -36,7 +36,8 @@ export class WikiEnricher {
         logger.info({ name }, 'Fetching wiki context');
 
         try {
-            const params = new URLSearchParams({
+            // 1. Search for the best page match
+            const searchParams = new URLSearchParams({
                 action: 'query',
                 format: 'json',
                 list: 'search',
@@ -45,10 +46,10 @@ export class WikiEnricher {
                 origin: '*'
             });
 
-            const response = await fetch(`${this.API_URL}?${params.toString()}`);
-            const data = await response.json() as any;
+            const searchResponse = await fetch(`${this.API_URL}?${searchParams.toString()}`);
+            const searchData = await searchResponse.json() as any;
 
-            const searchResult = data.query?.search?.[0];
+            const searchResult = searchData.query?.search?.[0];
             if (!searchResult) {
                 return {
                     ok: true,
@@ -62,18 +63,44 @@ export class WikiEnricher {
             }
 
             const pageTitle = searchResult.title;
+            
+            // 2. Fetch the actual content extract (Summary)
+            const contentParams = new URLSearchParams({
+                action: 'query',
+                format: 'json',
+                prop: 'extracts',
+                exintro: '1',
+                explaintext: '1',
+                titles: pageTitle,
+                origin: '*'
+            });
+
+            const contentResponse = await fetch(`${this.API_URL}?${contentParams.toString()}`);
+            const contentData = await contentResponse.json() as any;
+            
+            const pages = contentData.query?.pages || {};
+            const pageId = Object.keys(pages)[0];
+            const extract = pages[pageId]?.extract || '';
+
             const url = `https://runescape.wiki/w/${encodeURIComponent(pageTitle)}`;
 
-            // Heuristic-based intent detection (can be expanded)
+            // Heuristic-based intent detection using the extract
             let role = 'Environmental Object';
-            let intent = 'Static production asset';
+            let intent = extract.substring(0, 500); // Feed the wiki summary into intent
             let race: string | undefined;
 
-            if (pageTitle.toLowerCase().includes('npc') || name.toLowerCase().includes('hans')) {
+            const lowerExtract = extract.toLowerCase();
+            if (lowerExtract.includes('npc') || lowerExtract.includes('character') || lowerExtract.includes('boss')) {
                 role = 'Interactive NPC';
-                intent = 'High-fidelity rigged humanoid';
-                race = 'Human'; // Default for Hans-like entities
+            } else if (lowerExtract.includes('item') || lowerExtract.includes('equipment')) {
+                role = 'ITEM';
             }
+
+            // Race detection
+            if (lowerExtract.includes('human')) race = 'Human';
+            else if (lowerExtract.includes('dragon')) race = 'Dragon';
+            else if (lowerExtract.includes('demon')) race = 'Demon';
+            else if (lowerExtract.includes('beast')) race = 'Beast';
 
             return {
                 ok: true,
@@ -89,5 +116,19 @@ export class WikiEnricher {
             logger.error({ err, name }, 'Wiki enrichment failed');
             return { ok: false, error: err as Error };
         }
+    }
+
+    /**
+     * Specialized enrichment for NPCs.
+     */
+    public static async enrichNpc(name: string): Promise<Result<WikiData>> {
+        return this.enrich(name);
+    }
+
+    /**
+     * Specialized enrichment for Items.
+     */
+    public static async enrichItem(name: string): Promise<Result<WikiData>> {
+        return this.enrich(name);
     }
 }

@@ -24,8 +24,14 @@ export class CognitiveEngine {
         private readonly client: ModelClient
     ) { }
 
-    public healthCheck(): { online: boolean; details?: string } {
-        return { online: true };
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        const vCheck = this.vectorDB.healthCheck();
+        const cCheck = await this.client.healthCheck();
+        const isOnline = vCheck.online && cCheck.online;
+        return {
+            online: isOnline,
+            details: `Cognitive: ${isOnline ? 'ONLINE' : 'DEGRADED'} (Vector: ${vCheck.details}, Client: ${cCheck.details})`
+        };
     }
 
     /**
@@ -51,6 +57,29 @@ export class CognitiveEngine {
             .join('\n\n');
 
         return ok(wisdom || 'No specific literary wisdom activated for this substrate query.');
+    }
+
+    /**
+     * getGenerativeWisdom - Retrieves profound Game/Cinematic Design principles extracted from session exhaust and topological pedagogy.
+     */
+    public async getGenerativeWisdom(task: string, limit = 5): Promise<Result<string>> {
+        logger.info({ task }, 'Synthesizing generative Game/Cinematic Design principles for architecture cognition');
+
+        const embedRes = await this.client.embed(task);
+        if (!embedRes.ok) return embedRes as any;
+
+        // Search VectorDB for generative paradigms across the sovereign substrate
+        const searchRes = await this.vectorDB.searchSimilar(embedRes.value, limit, 'global-generative-engine', 'game-design-pedagogy');
+        if (!searchRes.ok) return searchRes as any;
+
+        const wisdom = searchRes.value
+            .filter(l => l.type === 'generative_design_principle' || l.type === 'condensed_lesson')
+            .map(l => {
+                return `[GENERATIVE VECTOR]: ${l.text}`;
+            })
+            .join('\n\n');
+
+        return ok(wisdom || 'No generative design paradigms actively synthesized yet.');
     }
 
     /**

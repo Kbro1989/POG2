@@ -306,10 +306,10 @@ export class Renderer {
         console.log('');
     }
 
-    public healthCheck(): { online: boolean; details: string } {
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
         return {
             online: true,
-            details: 'CLI Renderer substrate nominal'
+            details: 'CLI Renderer: ONLINE (Interactive substrate nominal)'
         };
     }
 }

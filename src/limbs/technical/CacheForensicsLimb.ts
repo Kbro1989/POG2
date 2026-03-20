@@ -1,6 +1,6 @@
 import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
+import { getSovereignRoot, getRSMVCachePath } from '../../utils/SovereignPathResolver.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -17,7 +17,7 @@ const logger = createLogger('CacheForensicsLimb');
  * Connects the POG2 nervous system to the RS3 cache via forensic decompilers.
  */
 export class CacheForensicsLimb {
-    private readonly cachePath = 'C:\\ProgramData\\Jagex\\RuneScape';
+    private readonly cachePath = getRSMVCachePath();
     private cache: any | null = null;
 
     private readonly rootDir = path.resolve(process.cwd()); // pog-vibe-interactive/files
@@ -57,19 +57,18 @@ export class CacheForensicsLimb {
         }
     }
 
-    public healthCheck(): { online: boolean; details: string; cacheValid: boolean } {
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
         const cacheValid = this.cache !== null;
         let details = cacheValid 
             ? `Cache connection active at ${this.cachePath}`
             : 'Cache connection FAILED.';
         
-        details += ` | Equipment maps loaded: ${this.equipmentBySlot ? 'Yes' : 'No'}`;
-        details += ` | Quest maps loaded: ${this.quests ? 'Yes' : 'No'}`;
+        details += ` | Equipment maps: ${this.equipmentBySlot ? 'READY' : 'MISSING'}`;
+        details += ` | Quest maps: ${this.quests ? 'READY' : 'MISSING'}`;
 
         return {
             online: cacheValid,
-            details,
-            cacheValid
+            details
         };
     }
 

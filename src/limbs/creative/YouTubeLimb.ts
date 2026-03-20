@@ -14,7 +14,7 @@ const logger = createLogger('YouTubeLimb');
 // â•â•â• YouTube Upload Config â•â•â•
 const SCOPES = ['https://www.googleapis.com/auth/youtube.upload'];
 const REDIRECT_URI = 'https://chromanumber-auth.kristain33rs.workers.dev/youtube/callback';
-const TOKEN_PATH = join(getSovereignRoot(), 'youtube_token.json');
+const DEFAULT_TOKEN_PATH = process.env.YOUTUBE_TOKEN_PATH || join(getSovereignRoot(), 'youtube_token.json');
 
 export interface YouTubeUploadRequest {
     videoPath: string;
@@ -39,12 +39,16 @@ export class YouTubeLimb {
     private oauth2Client: OAuth2Client;
     private youtube: youtube_v3.Youtube | null = null;
 
+    private readonly tokenPath: string;
+
     constructor(
         private readonly clientId: string,
         private readonly clientSecret: string,
         private readonly apiKey: string,
-        private readonly accessToken?: string
+        private readonly accessToken?: string,
+        tokenPath?: string
     ) {
+        this.tokenPath = tokenPath || DEFAULT_TOKEN_PATH;
         this.oauth2Client = new google.auth.OAuth2(
             clientId,
             clientSecret,
@@ -55,9 +59,9 @@ export class YouTubeLimb {
             this.oauth2Client.setCredentials({ access_token: this.accessToken });
             this.youtube = google.youtube({ version: 'v3', auth: this.oauth2Client });
             logger.info('YouTube: Using provided access token.');
-        } else if (existsSync(TOKEN_PATH)) {
+        } else if (existsSync(this.tokenPath)) {
             try {
-                const tokenStr = readFileSync(TOKEN_PATH, 'utf8');
+                const tokenStr = readFileSync(this.tokenPath, 'utf8');
                 if (tokenStr && tokenStr.trim()) {
                     const token = JSON.parse(tokenStr);
                     if (token) {
@@ -72,10 +76,21 @@ export class YouTubeLimb {
         }
     }
 
-    public healthCheck(): { online: boolean; details?: string } {
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        const authenticated = this.isAuthenticated();
+        const tokenExists = existsSync(this.tokenPath);
+        
+        let details = `YouTube Substrate: ${authenticated ? 'AUTHENTICATED' : 'AUTH_REQUIRED'}`;
+        
+        if (tokenExists && !authenticated) {
+            details += ' (Token found but invalid/expired)';
+        } else if (!tokenExists) {
+            details += ' (No token found)';
+        }
+
         return {
-            online: this.isAuthenticated(),
-            details: this.isAuthenticated() ? 'Authenticated' : 'Auth Required'
+            online: authenticated,
+            details
         };
     }
 
@@ -148,7 +163,7 @@ export class YouTubeLimb {
                         this.saveToken(tokens);
                         this.youtube = google.youtube({ version: 'v3', auth: this.oauth2Client });
                         logger.info('YouTube: OAuth2 authentication complete via Cloudflare.');
-                        return ok(`Authenticated successfully. Token saved to ${TOKEN_PATH}`);
+                        return ok(`Authenticated successfully. Token saved to ${this.tokenPath}`);
                     }
                 }
             } catch (err) {
@@ -310,8 +325,8 @@ export class YouTubeLimb {
     private saveToken(token: any): void {
         try {
             const dir = getSovereignRoot();
-            writeFileSync(TOKEN_PATH, JSON.stringify(token, null, 2));
-            logger.info({ path: TOKEN_PATH }, 'YouTube: Token saved.');
+            writeFileSync(this.tokenPath, JSON.stringify(token, null, 2));
+            logger.info({ path: this.tokenPath }, 'YouTube: Token saved.');
         } catch (err) {
             logger.error({ err }, 'YouTube: Failed to save token.');
         }

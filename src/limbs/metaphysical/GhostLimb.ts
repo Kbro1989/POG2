@@ -105,10 +105,13 @@ export class GhostLimb {
     /**
      * healthCheck - Confirms the observer is awake.
      */
-    public healthCheck(): { online: boolean; awareness: number } {
+    public async healthCheck(): Promise<{ online: boolean; details: string; awareness: number }> {
+        // Observer self-audit
+        const heartBeat = this.isObserving;
         return {
-            online: this.isObserving,
-            awareness: this.awarenessScore
+            online: heartBeat,
+            awareness: this.awarenessScore,
+            details: `Ghost: ${heartBeat ? 'AWAKE' : 'DORMANT'} (Awareness: ${this.awarenessScore.toFixed(2)})`
         };
     }
 

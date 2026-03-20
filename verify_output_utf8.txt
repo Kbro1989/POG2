@@ -1,0 +1,22 @@
+﻿{"level":30,"time":1773830945943,"hostname":"POG2","name":"EntityLimb","dbPath":"D:\\sovereign\\memory\\memory.db","msg":"Entity persistence layer initialized."}
+
+--- NPC Behavioral Loop Verification ---
+
+[1] Initializing Entity...
+Initial Vibe: { aggression: 0.4, affinity: 0, fear: 0 }
+
+[2] Injecting Combat Stimulus (Aggression +0.2)...
+Post-Combat Vibe: { aggression: 0.6000000000000001, affinity: 0, fear: 0 }
+
+[3] Querying Decision Engine...
+DECISION: IDLE
+Reasoning: Maintaining baseline stability.
+Yao State: YinYao
+
+[4] Executing & Reinforcing...
+Action Memory Anchored: YES
+Reinforcement Level: 2.5
+
+--- Verification Complete ---
+{"level":30,"time":1773830945952,"hostname":"POG2","name":"EntityLimb","id":"npc:verification","msg":"Entity registered successfully."}
+

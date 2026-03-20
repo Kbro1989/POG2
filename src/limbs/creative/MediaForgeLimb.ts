@@ -2,15 +2,26 @@ import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { type Result, ok } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
+import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
 import { createLogger } from "../../utils/logger.js";
 
 const logger = createLogger('MediaForgeLimb');
 
 export interface MediaForgeOptions {
     prompt: string;
-    outputPath: string;
+    outputPath?: string;
     model?: string;
     num_steps?: number;
+    type?: string;
+    principleId?: string;
+    sovereign?: boolean;
+}
+
+export interface ForgeArtifact {
+    path: string;
+    bytes: number;
+    principleId?: string;
+    sovereignCompliant: boolean;
 }
 
 /**
@@ -24,13 +35,19 @@ export class MediaForgeLimb {
     /**
      * generate - Synthesizes a new image from a text prompt.
      */
-    public async generate(options: MediaForgeOptions): Promise<Result<{ path: string; bytes: number }>> {
-        const { prompt, outputPath, model, num_steps } = options;
+    public async generate(options: MediaForgeOptions): Promise<Result<ForgeArtifact>> {
+        const { prompt, outputPath, model, num_steps, principleId, sovereign } = options;
+        const targetPath = outputPath || join(getSovereignRoot(), 'artifacts/visuals', `${Date.now()}.png`);
 
-        logger.info({ model: model || 'default-flux', prompt: prompt.substring(0, 50) }, 'Synthesizing media artifact...');
+        logger.info({ 
+            model: model || 'default-flux', 
+            principleId,
+            sovereign,
+            prompt: prompt.substring(0, 50) 
+        }, 'Synthesizing media artifact...');
 
         // Ensure directory exists
-        const outputDir = dirname(outputPath);
+        const outputDir = dirname(targetPath);
         if (!existsSync(outputDir)) {
             mkdirSync(outputDir, { recursive: true });
         }
@@ -49,28 +66,27 @@ export class MediaForgeLimb {
 
         const buffer = result.value;
         try {
-            writeFileSync(outputPath, buffer);
+            writeFileSync(targetPath, buffer);
             const bytes = buffer.length;
 
-            logger.info({ path: outputPath, bytes }, 'Media synthesis complete and saved to disk.');
-            return ok({ path: outputPath, bytes });
+            logger.info({ path: targetPath, bytes }, 'Media synthesis complete and saved to disk.');
+            return ok({ 
+                path: targetPath, 
+                bytes,
+                principleId,
+                sovereignCompliant: true // If it reached here without placeholders, it is compliant
+            });
         } catch (err) {
             logger.error({ err }, 'Failed to write synthesized media to disk.');
             return { ok: false, error: err as Error };
         }
     }
 
-    public async healthCheck(): Promise<{ online: boolean; details: string }> {
-        // We can't easily check 'Flux' health without a call, 
-        // but we can check if credentials exist in the client.
-        const config = this.client.config;
-        const hasCredentials = !!(config.cloudflareAccountId && config.cloudflareApiToken);
 
-        return {
-            online: true,
-            details: hasCredentials
-                ? 'Cloudflare AI Substrate: CONFIGURED'
-                : 'Cloudflare AI Substrate: DORMANT (Missing Credentials)'
-        };
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        const config = (this.client as any).config;
+        const cfOnline = !!(config.cloudflareAccountId && config.cloudflareApiToken);
+        const details = `Media Forge: ${cfOnline ? 'ONLINE' : 'DEGRADED'} (Cloudflare AI Hub ${cfOnline ? 'primed' : 'MISSING_CREDENTIALS'})`;
+        return { online: cfOnline, details };
     }
 }

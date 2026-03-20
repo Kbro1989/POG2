@@ -453,13 +453,29 @@ export class GutenbergLimb {
         }
     }
 
-    public healthCheck(): { online: boolean; details: string } {
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
         const books = this.getLibrary();
         const exists = existsSync(this.cachePath);
-        return {
-            online: exists,
-            details: exists ? `${books.length} books in library.` : 'Gutenberg cache substrate missing.'
-        };
+        const metadataExists = existsSync(this.metadataPath);
+        
+        if (!exists) {
+            return { online: false, details: 'Gutenberg: OFFLINE (Cache substrate missing)' };
+        }
+        
+        let details = `Gutenberg: ONLINE (${books.length} books in library)`;
+        if (!metadataExists) {
+            details += ' (Warning: metadata.json missing, identity fragmented)';
+        }
+        
+        // Soft probe: check if first book exists if library not empty
+        if (books.length > 0) {
+            const firstBook = books[0];
+            if (!existsSync(firstBook.path)) {
+                return { online: true, details: `${details} (Substrate degradation detected: Sample book missing)` };
+            }
+        }
+
+        return { online: true, details };
     }
     public getCacheSize(): Result<{ totalBytes: number; bookCount: number; formatted: string }> {
         try {

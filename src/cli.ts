@@ -257,6 +257,25 @@ export async function main(): Promise<void> {
             const result = await engine.run(intent);
             handleResult(result, renderer, state);
         });
+    program
+        .command('reimagine <cacheSubject> <gutenbergTheme>')
+        .description('Synthesize a physical RS Cache asset with a Gutenberg narrative emotion into a .gltf rendering')
+        .action(async (cacheSubject: string, gutenbergTheme: string) => {
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const result = await engine.executePlan({
+                goal: `Reimagine: ${cacheSubject} via ${gutenbergTheme}`,
+                steps: ["Extracting physical WebGL geometry", "Infusing emotional Gutenberg signature", "Synthesizing YinYang Substrate"],
+                tool: 'reimagine_concept',
+                parameters: { cacheSubject, gutenbergTheme },
+                reasoning: 'Manual Reimagination execution.',
+                model: config.orchestratorModel,
+                severity: 20,
+                interaction: 'text',
+                yaoState: YaoState.OldYin,
+                todos: []
+            });
+            handleResult(result, renderer, state);
+        });
 
     program
         .command('think <intent>')

@@ -35,12 +35,11 @@ export class TopologyLimb {
         }
     }
 
-    public healthCheck(): { online: boolean; details: string; cacheValid: boolean } {
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
         const cacheValid = this.cache !== null;
         return {
             online: cacheValid,
-            details: cacheValid ? `Cache active at ${this.cachePath}` : 'Cache connection FAILED.',
-            cacheValid
+            details: cacheValid ? `Topology Substrate: ONLINE (Archive 47 bound)` : 'Topology Substrate: OFFLINE (Cache unreachable)'
         };
     }
 

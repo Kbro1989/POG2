@@ -5,6 +5,9 @@ import { GameCacheLoader } from '../../../tmp_rsmv_inspect/src/cache/sqlite.js';
 import { parse } from '../../../tmp_rsmv_inspect/src/opdecoder.js';
 import { cacheMajors } from '../../../tmp_rsmv_inspect/src/constants.js';
 
+import { TernaryRouter } from '../../routing/TernaryRouter.js';
+import { VectorDB } from '../../utils/VectorDB.js';
+
 const logger = createLogger('KinematicsLimb');
 
 /**
@@ -14,16 +17,38 @@ const logger = createLogger('KinematicsLimb');
  */
 export class KinematicsLimb {
     private loader: GameCacheLoader;
+    private router: TernaryRouter;
+    private vectorDB: VectorDB;
 
-    constructor() {
+    constructor(router: TernaryRouter, vectorDB: VectorDB) {
         this.loader = new GameCacheLoader();
+        this.router = router;
+        this.vectorDB = vectorDB;
+    }
+
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        const loaderHealth = !!this.loader;
+        return {
+            online: loaderHealth,
+            details: `Kinematics: ${loaderHealth ? 'ONLINE' : 'OFFLINE'} (Archive 25 mapped)`
+        };
     }
 
     /**
      * Extracts a pedagogical profile for a specific animation sequence.
      */
     public async extractKinematics(sequenceId: number): Promise<Result<PedagogyProfile>> {
-        logger.info({ sequenceId }, 'Extracting Kinematic Profile');
+        const state = this.router.temporalState;
+        logger.info({ sequenceId, state }, 'Extracting Kinematic Profile');
+
+        if (state === 'PAST') {
+            // Use cached vector embeddings (offline/Ghost mode)
+            const cached = this.vectorDB.queryLocal(`kinematic-${sequenceId}`);
+            if (cached.ok && cached.value) {
+                logger.info({ sequenceId }, 'Retrieved Kinematic Profile from PAST substrate.');
+                return ok(cached.value.metadata as PedagogyProfile);
+            }
+        }
 
         try {
             const buffer = await this.loader.getFile(cacheMajors.sequences, sequenceId);

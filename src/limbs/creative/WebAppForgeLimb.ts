@@ -254,12 +254,13 @@ Respond in JSON ONLY:
         }
     }
 
-    public healthCheck(): { online: boolean; details: string } {
-        const templateCount = this.listAvailableTemplates().length;
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        const templates = this.listAvailableTemplates();
         const exists = existsSync(this.templatesPath);
+        const online = exists && templates.length > 0;
         return {
-            online: exists && templateCount > 0,
-            details: exists ? `${templateCount} specialized templates available.` : 'Template substrate missing.'
+            online,
+            details: `WebApp Forge: ${online ? 'ONLINE' : 'DEGRADED'} (${templates.length} templates primed at ${this.templatesPath})`
         };
     }
 }

@@ -1,6 +1,7 @@
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import { loadavg, totalmem, freemem } from 'os';
+import { existsSync } from 'fs';
 import { Renderer } from '../ui/Renderer.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { type Result, type EngineOutput, YaoState } from '../core/models.js';
@@ -62,26 +63,53 @@ export class ShellEngine {
         }
 
         try {
-            const { stdout, stderr } = await execAsync(params.command, {
+            // High-fidelity migration to spawn for reliable shell substrate access on Windows
+            const shell = process.env.ComSpec || 'cmd.exe';
+            const child = spawn(params.command, {
                 cwd,
-                env: { ...process.env, POG2_ACTIVE: '1' }
+                env: { 
+                    ...process.env, 
+                    SystemRoot: process.env.SystemRoot || 'C:\\Windows',
+                    SystemDrive: process.env.SystemDrive || 'C:',
+                    POG2_ACTIVE: '1' 
+                },
+                shell: true
+            });
+
+            let stdout = '';
+            let stderr = '';
+
+            child.stdout?.on('data', (data: Buffer) => { stdout += data.toString(); });
+            child.stderr?.on('data', (data: Buffer) => { stderr += data.toString(); });
+
+            const exitCode = await new Promise<number | null>((resolve) => {
+                child.on('close', (code) => resolve(code));
             });
 
             const endTime = performance.now();
+            const duration = (endTime - startTime) / 1000;
             const endMem = freemem();
             const memDelta = Math.abs(startMem - endMem);
-            const duration = endTime - startTime;
+
+            if (exitCode !== 0) {
+                logger.error({ error: stderr, exitCode, command: params.command }, 'Shell Error');
+                return { 
+                    ok: false, 
+                    error: new Error(stderr || `Process exited with code ${exitCode}`)
+                };
+            }
 
             return {
                 ok: true,
                 value: {
                     output: stdout || '(empty output)',
                     data: {
-                        command: params.command,
-                        cwd,
-                        stderr: stderr || null,
+                        stdout,
+                        stderr,
+                        exitCode: exitCode ?? 0,
+                        memoryDelta: memDelta,
                         telemetry: {
-                            durationMs: Math.round(duration),
+                            durationMs: Math.round(duration * 1000),
                             memDeltaBytes: memDelta,
                             cpuLoad: loadavg()
                         }
@@ -109,12 +137,15 @@ export class ShellEngine {
         };
     }
 
-    public healthCheck(): { online: boolean; details: string } {
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
         const load = loadavg()[0].toFixed(2);
-        const free = (freemem() / (1024 * 1024 * 1024)).toFixed(1);
+        const free = (freemem() / (1024 * 1024 * 1024)).toFixed(2);
+        const total = (totalmem() / (1024 * 1024 * 1024)).toFixed(2);
+        const uptime = (process.uptime() / 3600).toFixed(1);
+        
         return {
             online: true,
-            details: `Shell Substrate: Load(${load}), FreeMem(${free}GB)`
+            details: `Shell Engine: ONLINE (Load: ${load}, Free: ${free}GB / ${total}GB, Uptime: ${uptime}h)`
         };
     }
 }

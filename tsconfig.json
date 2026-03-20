@@ -13,13 +13,13 @@
   },
   "include": [
     "src/**/*",
-    "cache_*.ts",
-    "tmp_rsmv_inspect/src/**/*"
+    "cache_*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
     "resources",
-    "logs"
+    "logs",
+    "tmp_rsmv_inspect"
   ]
 }

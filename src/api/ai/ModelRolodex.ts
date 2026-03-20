@@ -264,7 +264,8 @@ export class ModelRolodex {
         if (!entry) return;
 
         const oldRep = entry.reputation;
-        entry.reputation = Math.max(0, Math.min(1.0, entry.reputation + adjustment));
+        // 🧬 Phase 108: Physiological clamping (Prevent drift chaos)
+        entry.reputation = Math.max(0.2, Math.min(2.0, entry.reputation + adjustment));
         
         logger.info({ 
             model: modelId, 
@@ -293,7 +294,8 @@ export class ModelRolodex {
         const tokenPenalty = Math.min(0.1, (m.totalTokensUsed / 1_000_000) * 0.1);
 
         const score = (successRate * 0.6) + (latencyFactor * 0.3) + 0.1 - tokenPenalty;
-        return Math.max(0, Math.min(1, score));
+        // 🧬 Phase 108: Clamping to physiological bounds (0.2 to 2.0)
+        return Math.max(0.2, Math.min(2.0, score));
     }
 
     // ═══ DISCOVERY ═══

@@ -1,10 +1,25 @@
 import { ModelClient } from '../clients/ModelClient.js';
-import { type Result, type EngineOutput, YaoState, ok, err, type ThinkingNexus, type ContextCard, CircuitState, EmotionalState } from '../core/models.js';
+import { 
+    type Result, 
+    type EngineOutput, 
+    YaoState, 
+    ok, 
+    err, 
+    type ThinkingNexus, 
+    type ContextCard, 
+    CircuitState, 
+    EmotionalState,
+    type SessionLog,
+    type MetabolicAudit,
+    type SovereignViolation
+} from '../core/models.js';
 import { extractJson } from '../utils/JsonExtractor.js';
 import { CognitiveEngine } from './CognitiveEngine.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { DiscoveryEngine } from './DiscoveryEngine.js';
+import { MemoryConsolidationEngine } from './MemoryConsolidationEngine.js';
 import { readFileSync, existsSync } from 'fs';
+import { promises as fs } from 'fs';
 import { join } from 'path';
 import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
 import { createLogger } from "../utils/logger.js";
@@ -15,18 +30,97 @@ const logger = createLogger('MetabolicEngine');
  * MetabolicEngine
  * 
  * Expands a single intent into a 6-line directional reflection nexus.
- * Bottlenecks expanded thoughts into consolidated strategic paths.
+ * Enforces Sovereign Law through clinical audits and placeholder detection.
  */
 export class MetabolicEngine {
     private readonly projectRoot: string;
+    private readonly PLACEHOLDER_PATTERNS = [
+        /TODO|FIXME|XXX|HACK|placeholder|temp|temporary/gi,
+        /console\.log\(.*\)/g, // Debug artifacts in production
+        /any\s*=\s*any/g, // TypeScript abdication
+        /\/\/.*/g // Comments that explain bad code instead of fixing it
+    ];
 
     constructor(
         private readonly client: ModelClient,
         private readonly hexagram: HexagramManager,
         private readonly cognitive?: CognitiveEngine,
-        private readonly search?: DiscoveryEngine
+        private readonly search?: DiscoveryEngine,
+        private readonly consolidation?: MemoryConsolidationEngine
     ) {
         this.projectRoot = getSovereignRoot();
+    }
+
+    /**
+     * reflect - Sovereign Law Enforcement.
+     * Scans session exhaust for clinical violations and pedagogical gaps.
+     */
+    async reflect(sessionLog: SessionLog): Promise<MetabolicAudit> {
+        logger.info({ modifiedCount: sessionLog.modifiedFiles.length }, 'Commencing clinical metabolic audit...');
+        const violations: SovereignViolation[] = [];
+        
+        // 1. Clinical Audit: Scan all touched files for placeholders/mocks
+        for (const file of sessionLog.modifiedFiles) {
+            try {
+                if (!existsSync(file)) continue;
+                const content = await fs.readFile(file, 'utf8');
+                const lines = content.split('\n');
+                
+                lines.forEach((line, idx) => {
+                    if (this.PLACEHOLDER_PATTERNS.some(p => p.test(line))) {
+                        violations.push({
+                            type: 'PLACEHOLDER_DETECTED',
+                            file,
+                            line: idx + 1,
+                            severity: 'CRITICAL',
+                            context: line.trim()
+                        });
+                    }
+                });
+            } catch (err) {
+                logger.warn({ file, err }, 'Failed to audit file for Sovereign Law');
+            }
+        }
+
+        // 2. Pedagogical Audit: Verify tasks referenced VectorDB principles
+        for (const task of sessionLog.completedTasks) {
+            if (!task.referencesPedagogyId) {
+                violations.push({
+                    type: 'MISSING_PEDAGOGY_REFERENCE',
+                    file: 'N/A', // Task-level violation
+                    line: 0,
+                    severity: 'WARNING',
+                    context: `Task ID: ${task.id}`
+                });
+            }
+        }
+
+        const metabolicScore = Math.max(0, 1 - (violations.filter(v => v.severity === 'CRITICAL').length * 0.2));
+
+        // 3. Auto-trigger consolidation if significant violations found
+        if (violations.length > 0 && this.consolidation) {
+            logger.warn({ violationCount: violations.length }, 'Sovereign Law violations detected. Triggering Repair Consolidation.');
+            await this.consolidation.consolidate(sessionLog, { 
+                focus: 'SOVEREIGN_LAW_REPAIR',
+                violations 
+            } as any);
+        }
+
+        return {
+            timestamp: Date.now(),
+            violations,
+            metabolicScore,
+            consolidationRecommendations: this.generateRemediations(violations)
+        };
+    }
+
+    private generateRemediations(violations: SovereignViolation[]): string[] {
+        return violations.map(v => {
+            if (v.type === 'PLACEHOLDER_DETECTED') {
+                return `SOVEREIGN LAW VIOLATION: ${v.file}:${v.line} contains ephemeral code. Implement or excise.`;
+            }
+            return `Review ${v.context} for pedagogical grounding.`;
+        });
     }
 
     /**

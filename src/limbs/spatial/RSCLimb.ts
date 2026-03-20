@@ -35,13 +35,24 @@ export class RSCLimb {
         this.router = router;
     }
 
-    public healthCheck(): { online: boolean; details: string } {
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
         const isProcessActive = this.serverProcess !== null;
+        let details = `RSC Bridge: ${isProcessActive ? 'ACTIVE' : 'IDLE'}`;
+        
+        // Physical substrate check
+        const serverDir = join(process.cwd(), 'openrsc-repo', 'server');
+        const { existsSync } = await import('fs');
+        const substrateExists = existsSync(serverDir);
+        
+        if (!substrateExists) {
+            return { online: false, details: `${details} (ERROR: Substrate 'openrsc-repo' missing)` };
+        }
+
         return {
-            online: true, // Biological-mock: Always "alive" but might be concealed
+            online: true,
             details: isProcessActive
-                ? `RSCLimb Substrate Active: Server PID ${this.serverProcess?.pid}.`
-                : 'RSCLimb Substrate ONLINE (Idle/Concealed). "Sovereign Knock" required for activation.'
+                ? `${details} (Server PID: ${this.serverProcess?.pid})`
+                : `${details} (Substrate READY, "Sovereign Knock" required for activation)`
         };
     }
 

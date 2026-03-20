@@ -74,6 +74,10 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         path: 'src/engines/PipelineController.ts', role: 'Workflow Orchestrator', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 25,
         biologicalRole: { organ: 'Central Nervous Center', input: 'Pipeline definitions', output: 'Executed production cycles', constraints: 'Sequential/Parallel execution' }
     },
+    {
+        path: 'src/routing/TaskScheduler.ts', role: 'Motor Planning (Sequencing)', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Cerebellum (Motor Plan)', input: 'Task list', output: 'Scheduled execution sequence', constraints: 'Priority-aware' }
+    },
 
     // â•â•â• PNS (Peripheral Nervous System â€” Limbs) â•â•â•
     {
@@ -121,8 +125,20 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Tactile Nerve', input: 'RSC game data', output: 'Parsed game structures', constraints: 'Game-specific limb' }
     },
     {
-        path: 'src/utils/RSMVExtractor.ts', role: 'Anatomical Vision (RSMV)', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 10,
-        biologicalRole: { organ: 'Spatial Retain', input: 'RSMV Model JSON', output: 'SpeciesAnatomy + KineticProfile', constraints: 'Substrate for developmental memory' }
+        path: 'src/utils/RSMVExtractor.ts', role: 'Anatomical Vision & Structural Pedagogy', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Spatial Retain', input: 'RSMV Model JSON / Pedagogy Profile', output: 'SpeciesAnatomy + KineticProfile', constraints: 'Substrate for developmental memory' }
+    },
+    {
+        path: 'src/vision/RSMVController.ts', role: 'Active 3D Actuator & Pedagogy Ingestor', category: NeuralCategory.PNS, docDomain: 'VISION', metabolicBaseCost: 20,
+        biologicalRole: { organ: 'Visual Cortex (Motor)', input: 'ModelModifications / WikiData', output: 'ActuationResult (GLTF/Inspector/PedagogyProfile)', constraints: 'Drives physical model modification and structural learning' }
+    },
+    {
+        path: 'src/limbs/spatial/CacheForensicsLimb.ts', role: 'Substrate Auditor', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Volatility Sensor', input: 'Cache Path', output: 'Audit Report', constraints: 'Monitors Jagex cache integrity' }
+    },
+    {
+        path: 'src/limbs/spatial/CacheLearningLimb.ts', role: 'Active Ingestion Limb', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 25,
+        biologicalRole: { organ: 'Hippocampal Extractor', input: 'JS5 Index/File', output: 'Raw Buffer', constraints: 'Deep cache extraction' }
     },
     {
         path: 'src/limbs/creative/YouTubeLimb.ts', role: 'Visual Streamer (YouTube)', category: NeuralCategory.PNS, docDomain: 'CREATIVE', metabolicBaseCost: 20,
@@ -137,12 +153,48 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Language Center', input: 'Book ID/Content', output: 'Ingested Metadata', constraints: 'SHA-256 checksum required' }
     },
     {
-        path: 'src/limbs/creative/StoryboardLimb.ts', role: 'Narrative Visualization', category: NeuralCategory.PNS, docDomain: 'CREATIVE', metabolicBaseCost: 35,
+        path: 'src/limbs/creative/StoryboardLimbV2.ts', role: 'Narrative Visualization', category: NeuralCategory.PNS, docDomain: 'CREATIVE', metabolicBaseCost: 35,
         biologicalRole: { organ: 'Visualization Center', input: 'Book ID', output: 'Storyboard Scenes', constraints: 'Depends on GutenbergLimb' }
     },
     {
         path: 'src/limbs/creative/WebAppForgeLimb.ts', role: 'Project Architect (WebApp)', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 45,
         biologicalRole: { organ: 'Creative Execution', input: 'Blueprint/Prompt', output: 'Scaffolded Project', constraints: 'Vite/Tailwind default' }
+    },
+    {
+        path: 'src/engines/ForgeEngine.ts', role: 'Substrate Foundry', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 20,
+        biologicalRole: { organ: 'Foundry', input: 'Blueprint', output: 'Project Structure', constraints: 'Codebase construction' }
+    },
+    {
+        path: 'src/engines/ReimaginationEngine.ts', role: 'Visual Synthesis (Refinement)', category: NeuralCategory.PNS, docDomain: 'CREATIVE', metabolicBaseCost: 30,
+        biologicalRole: { organ: 'Visual cortex (Secondary)', input: 'Image buffer', output: 'Refined prompt/image', constraints: 'Higher iterations' }
+    },
+    {
+        path: 'src/engines/VisionActuationHarness.ts', role: 'Motor Eye coordination', category: NeuralCategory.PNS, docDomain: 'VISION', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Oculomotor', input: 'Spatial coords', output: 'Click/Type event', constraints: 'Precise interaction' }
+    },
+    {
+        path: 'src/limbs/technical/DynamicsLimb.ts', role: 'Kinetic Physics (RS)', category: NeuralCategory.PNS, docDomain: 'SYSTEM', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Kinetic Nerve', input: 'Animation frame', output: 'Vector delta', constraints: 'RS-specific physics' }
+    },
+    {
+        path: 'src/limbs/technical/HiScoreLimb.ts', role: 'External Reputation Link', category: NeuralCategory.PNS, docDomain: 'SYSTEM', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Social Nerve', input: 'Player name', output: 'Stats/Rank', constraints: 'HTTP bound' }
+    },
+    {
+        path: 'src/limbs/technical/KinematicsLimb.ts', role: 'Movement Solver', category: NeuralCategory.PNS, docDomain: 'SYSTEM', metabolicBaseCost: 20,
+        biologicalRole: { organ: 'Motor Solver', input: 'Target position', output: 'Path sequence', constraints: 'Collision-aware' }
+    },
+    {
+        path: 'src/limbs/technical/PedagogyLimb.ts', role: 'Skill/Learning Management', category: NeuralCategory.PNS, docDomain: 'SYSTEM', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Skill Center', input: 'Interaction', output: 'Competency gain', constraints: 'Persists to VectorDB' }
+    },
+    {
+        path: 'src/limbs/technical/TopologyLimb.ts', role: 'Spatial Map Decoder', category: NeuralCategory.PNS, docDomain: 'SYSTEM', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Spatial Memory', input: 'Map ID', output: 'Grid data', constraints: 'RS map reconstruction' }
+    },
+    {
+        path: 'src/limbs/technical/VectorPedagogyLimb.ts', role: 'Deep Memory Learning', category: NeuralCategory.PNS, docDomain: 'SYSTEM', metabolicBaseCost: 20,
+        biologicalRole: { organ: 'Metabolic Learning', input: 'Raw text', output: 'Embedding structure', constraints: 'Context-optimized' }
     },
     // --- Phase 48: New Physicalized Limbs ---
     {
@@ -218,6 +270,10 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Hippocampal Link', input: 'Neurological state data', output: 'Global durable persistence', constraints: 'Partyserver-backed' }
     },
     {
+        path: 'src/limbs/technical/EntitySchema.ts', role: 'Identity DNA', category: NeuralCategory.METABOLIC, docDomain: 'MEMORY', metabolicBaseCost: 2,
+        biologicalRole: { organ: 'Identity Gene', input: 'Entity definitions', output: 'Shared state schemas', constraints: 'Static reference' }
+    },
+    {
         path: 'src/engines/VSCodeEngine.ts', role: 'IDE Nerve Bridge', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 10,
         biologicalRole: { organ: 'Finger', input: 'VSCode commands', output: 'Editor state changes', constraints: 'VSCode API dependent' }
     },
@@ -242,6 +298,34 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
     {
         path: 'src/monitor/NodeTester.ts', role: 'Nerve Conduction Test', category: NeuralCategory.SENSORY, docDomain: 'SYSTEM', metabolicBaseCost: 10,
         biologicalRole: { organ: 'Diagnostic Probe', input: 'NeurologicalMap nodes', output: 'Node health status[]', constraints: 'File existence + import check' }
+    },
+    {
+        path: 'src/verify_advanced_audio.ts', role: 'Auditory Sensitivity Probe', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Auditory Nerve', input: 'Audio buffer/stream', output: 'Transcription/Sentiment', constraints: 'Diagnostic focus' }
+    },
+    {
+        path: 'src/scripts/verify_rsmv_capabilities.ts', role: 'Spatial Capability Probe (RSMV)', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Spatial Proprioception', input: 'Tool registry', output: 'RSMV functionality verification', constraints: 'Diagnostic focus' }
+    },
+    {
+        path: 'src/limbs/spatial/WikiReconciliationLimb.ts', role: 'Fact Verification (Wiki)', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Truth Scanner', input: 'Fact claim', output: 'Verification status', constraints: 'Network dependent' }
+    },
+    {
+        path: 'src/utils/WikiEnricher.ts', role: 'Contextual Wisdom Ingestion', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Knowledge Siphon', input: 'Topic', output: 'Enriched metadata', constraints: 'Wikipedia-backed' }
+    },
+    {
+        path: 'src/vision/PuppeteerEye.ts', role: 'Dynamic Web Retina', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 25,
+        biologicalRole: { organ: 'Electronic Retina', input: 'URL', output: 'Interactive DOM / Screenshot', constraints: 'Requires browser runtime' }
+    },
+    {
+        path: 'src/vision/StructuralAnalyzer.ts', role: 'Geometric Vision', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Parietal Lobe', input: 'Visual buffer', output: 'Structural primitives', constraints: 'Edge/shape detection' }
+    },
+    {
+        path: 'src/vision/TransientObserver.ts', role: 'Temporal Visual Change', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Motion Sensor', input: 'Image sequence', output: 'Motion/Change report', constraints: 'High frequency' }
     },
     {
         path: 'src/engines/ContextBuilder.ts', role: 'Contextual Awareness', category: NeuralCategory.SENSORY, docDomain: 'MEMORY', metabolicBaseCost: 15,
@@ -282,6 +366,10 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Learned Patterns', input: 'History/Bookmarks', output: 'Research Shards', constraints: 'Local profile dependent' }
     },
     { path: 'resources/cloudflare-templates', role: 'Knowledge:Cloudflare', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 5 },
+    {
+        path: 'tmp_rsmv_inspect', role: 'Structural Pedagogy Substrate', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'External Prefrontal Cache', input: 'Jagex Cache / Opcodes', output: 'GLB/PNG/PedagogyProfile', constraints: 'External rsmv-clone inspection and structural analysis' }
+    },
 
     // â•â•â• Immune (Validation) â•â•â•
     {
@@ -401,5 +489,81 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
     {
         path: 'src/engines/MetaCognitionEngine.ts', role: 'Self-Observation (Monologue)', category: NeuralCategory.METABOLIC, docDomain: 'META', metabolicBaseCost: 20,
         biologicalRole: { organ: 'Reflective Consciousness', input: 'Outcomes + Emotions', output: 'Internal Monologue', constraints: 'Affective modulation' }
+    },
+    {
+        path: 'src/core/ServiceDiscovery.ts', role: 'Substrate Enumeration', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'Self-Awareness (Substrate)', input: 'System path', output: 'Node inventory', constraints: 'Discovery only' }
+    },
+    {
+        path: 'src/core/SkillResonance.ts', role: 'Cognitive Harmony (Skills)', category: NeuralCategory.METABOLIC, docDomain: 'META', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Skill Sync', input: 'Tool performance', output: 'Resonance score', constraints: 'Feedback loop' }
+    },
+    {
+        path: 'src/events/EventBus.ts', role: 'Neural Signal Hub', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'Central Signaling', input: 'Event emission', output: 'Listener dispatch', constraints: 'Async propagation' }
+    },
+    {
+        path: 'src/events/processors/MetricsAggregator.ts', role: 'Metabolic Metric Collector', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'Vitals Monitor', input: 'Raw events', output: 'Aggregated vitals', constraints: 'Time-series focus' }
+    },
+    {
+        path: 'src/events/processors/TrainingProcessor.ts', role: 'Synaptic Plasticity (Training)', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Learning Processor', input: 'Interaction traces', output: 'Training examples', constraints: 'Records to JSONL' }
+    },
+    {
+        path: 'src/routing/evolution/OutcomeScorer.ts', role: 'Reflex Evaluator', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Striatum', input: 'Goal + Result', output: 'Outcome score (0-1)', constraints: 'Cognitive audit' }
+    },
+    {
+        path: 'src/routing/evolution/StrategyAdvisor.ts', role: 'Strategy Refinement', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Orbitofrontal Cortex', input: 'Outcome history', output: 'Strategy adjustment', constraints: 'Adaptive routing' }
+    },
+    {
+        path: 'src/routing/strategies/FallbackStrategy.ts', role: 'Primitive Reflex (Fallback)', category: NeuralCategory.METABOLIC, docDomain: 'META', metabolicBaseCost: 2,
+        biologicalRole: { organ: 'Brainstem Reflex', input: 'Error state', output: 'Emergency Route', constraints: 'Last resort' }
+    },
+    {
+        path: 'src/routing/strategies/OverrideStrategy.ts', role: 'Manual Intervention (Override)', category: NeuralCategory.METABOLIC, docDomain: 'META', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'Voluntary Motion', input: 'User config override', output: 'Prioritized route', constraints: 'Precedence over auto-routing' }
+    },
+    {
+        path: 'src/routing/strategies/TernaryClassifierStrategy.ts', role: 'Yin/Yang/Yao Logic Engine', category: NeuralCategory.METABOLIC, docDomain: 'META', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Cognitive Divider', input: 'Task complexity', output: 'Ternary Route', constraints: 'I Ching structured' }
+    },
+    {
+        path: 'src/services/GoogleServices.ts', role: 'External Limb Connectivity (Google)', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Extracorporeal Sensor', input: 'Service request', output: 'External response', constraints: 'OAuth dependent' }
+    },
+    {
+        path: 'src/utils/JagexCacheReader.ts', role: 'Ancient Substrate Decoder', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'Archaeological Cortex', input: 'Jagex Cache Binary', output: 'Decoded structures', constraints: 'Protocol-bound' }
+    },
+    {
+        path: 'src/utils/KeyVault.ts', role: 'Protected Memory (Secrets)', category: NeuralCategory.METABOLIC, docDomain: 'IMMUNE', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'Encrypted Hippocampus', input: 'Key name', output: 'Decrypted secret', constraints: 'Process env priority' }
+    },
+    {
+        path: 'src/utils/NarrativeExtractor.ts', role: 'Language Synthesis (Narrative)', category: NeuralCategory.METABOLIC, docDomain: 'CREATIVE', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Wernicke Area', input: 'Raw context', output: 'Narrative summary', constraints: 'Focus on flow' }
+    },
+    {
+        path: 'src/utils/SmartEdit.ts', role: 'Precision Motor Surgery', category: NeuralCategory.METABOLIC, docDomain: 'CODE', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'Precision Finger', input: 'Target lines + replacements', output: 'Modified file', constraints: 'Line-by-line surgicality' }
+    },
+    {
+        path: 'src/utils/SovereignLibrary.ts', role: 'Sovereign Knowledge Base', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'Collective Memory', input: 'Topic query', output: 'System library reference', constraints: 'Static shared knowledge' }
+    },
+    {
+        path: 'src/utils/StyleAnalyzer.ts', role: 'Aesthetic Sense (Aura)', category: NeuralCategory.METABOLIC, docDomain: 'CREATIVE', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'Aesthetic Cortex', input: 'Visual/Code buffer', output: 'Style consistency report', constraints: 'Premium aesthetic focus' }
+    },
+    {
+        path: 'src/vision/ShaderInjector.ts', role: 'Visual Enhancement (Shader)', category: NeuralCategory.METABOLIC, docDomain: 'VISION', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Visual Filter', input: 'GLSL source', output: 'Compiled shader effect', constraints: 'GPU/WebGL context' }
+    },
+    {
+        path: 'src/monitor/ClinicalLogger.ts', role: 'Clinical Observation Log', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'Observation Log', input: 'System state changes', output: 'Chronological clinical record', constraints: 'Immutable history' }
     }
 ];

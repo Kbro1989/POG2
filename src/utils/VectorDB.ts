@@ -253,6 +253,41 @@ export class VectorDB {
         }
     }
 
+    /**
+     * queryLocal - Direct metadata retrieval by ID.
+     */
+    public queryLocal(id: string): Result<Lesson | null> {
+        if (!this.db) return { ok: false, error: new Error('Database not initialized') };
+        try {
+            const row = this.db.prepare('SELECT * FROM lessons WHERE id = ?').get(id) as LessonRow | undefined;
+            if (!row) return ok(null);
+
+            const embeddingBuffer = row.embedding;
+            const embedding = embeddingBuffer ? new Float32Array(
+                embeddingBuffer.buffer,
+                embeddingBuffer.byteOffset,
+                embeddingBuffer.byteLength / 4
+            ) : new Float32Array();
+
+            return ok({
+                id: String(row.id),
+                text: String(row.text),
+                embedding,
+                sessionId: row.sessionId ? String(row.sessionId) : undefined,
+                projectId: String(row.projectId || 'global'),
+                domainNamespace: String(row.domainNamespace || 'global'),
+                errorType: row.errorType ? String(row.errorType) : undefined,
+                createdAt: Number(row.createdAt),
+                regretLikelihood: Number(row.regretLikelihood),
+                metadata: JSON.parse(String(row.metadata || '{}')),
+                hash: row.hash ? String(row.hash) : undefined,
+                type: row.type ? String(row.type) : 'lesson'
+            });
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
+    }
+
     public deleteLessons(ids: string[]): Result<void> {
         if (!this.db || ids.length === 0) return ok(undefined);
         try {

@@ -17,6 +17,11 @@ Or via npm:
 npm install -g pog2-cli
 ```
 
+## System Requirements
+
+- **Storage**: ~2TB of dedicated high-speed storage is required for full-scale operations (audiobook generation, video assembly, asset caching).
+- **Buffer**: An additional 1TB+ buffer zone is highly recommended to prevent neurological substrate fragmentation.
+
 ## Configuration
 
 On first run, a config is bootstrapped at `~/.POG2-cli/config.json`.

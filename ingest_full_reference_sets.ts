@@ -5,13 +5,28 @@ import { PedagogyLimb } from './src/limbs/technical/PedagogyLimb.js';
 import { VectorPedagogyLimb } from './src/limbs/technical/VectorPedagogyLimb.js';
 import { createLogger } from './src/utils/logger.js';
 
+import { TernaryRouter } from './src/routing/TernaryRouter.js';
+import { VectorDB } from './src/utils/VectorDB.js';
+
 const logger = createLogger('ReferenceIngest');
 
 async function main() {
-    const config = loadConfig('config.json');
-    const client = new ModelClient(config);
-    const pedagogy = new PedagogyLimb();
-    const vectorPedagogy = new VectorPedagogyLimb(client);
+    // Point to the local project-level config if it exists, otherwise fallback
+    const configPath = existsSync('.pog2-config.json') ? '.pog2-config.json' : 'config.json';
+    const config = loadConfig(configPath);
+    
+    const router = new TernaryRouter(config);
+    const client = new ModelClient(config, router);
+    const vectorDb = new VectorDB({ client });
+    
+    // Explicitly initialize VectorDB substrate
+    const dbInitRes = vectorDb.initialize();
+    if (!dbInitRes.ok) {
+        logger.error({ error: dbInitRes.error.message }, 'Failed to initialize VectorDB.');
+        process.exit(1);
+    }
+    
+    const pedagogy = new PedagogyLimb(router, vectorDb, client);
 
     const referenceFiles = [
         'equipment_by_slot.json',
@@ -32,17 +47,11 @@ async function main() {
             logger.info({ file }, 'Processing Reference File');
             const rawData = JSON.parse(readFileSync(file, 'utf8'));
             
-            // 1. Generate Reference Profile
+            // 1. Generate Reference Profile (This automatically triggers vector ingestion via PedagogyLimb)
             const profileRes = await pedagogy.analyzeReferenceDataset(file, rawData);
             
             if (profileRes.ok) {
-                // 2. Ingest into VectorDB
-                const ingestRes = await vectorPedagogy.ingestProfile(profileRes.value);
-                if (ingestRes.ok) {
-                    logger.info({ file }, 'Successfully vectorized reference dataset.');
-                } else {
-                    logger.error({ file, error: ingestRes.error.message }, 'Ingestion failed for reference.');
-                }
+                logger.info({ file }, 'Successfully analyzed and anchored reference dataset.');
             } else {
                 logger.error({ file, error: profileRes.error.message }, 'Analysis failed for reference.');
             }
@@ -52,7 +61,6 @@ async function main() {
     }
 
     pedagogy.close();
-    vectorPedagogy.close();
     logger.info('Reference Ingestion Complete.');
 }
 

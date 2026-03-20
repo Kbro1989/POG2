@@ -1,0 +1,6 @@
+﻿{"level":30,"time":1773961190389,"hostname":"POG2","name":"SovereignVerifier","msg":"--- SOVEREIGN CREATOR VERIFICATION COMMENCING ---"}
+{"level":20,"time":1773961190391,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Orchestrate Engines..."}
+{"level":30,"time":1773961190392,"hostname":"POG2","name":"TrainingCollector","sessionId":"pog2_20260319_175950_jmrm","msg":"Training collector initialized"}
+{"level":20,"time":1773961190568,"hostname":"POG2","name":"EmbedEngine","db":"D:\\sovereign\\learning\\embeddings.db","msg":"EmbedEngine DB initialized"}
+{"level":20,"time":1773961190569,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Memory Substrates..."}
+{"level":20,"time":1773961190571,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Specialized Limbs..."}

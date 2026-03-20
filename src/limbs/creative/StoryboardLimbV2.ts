@@ -2,7 +2,10 @@ import { type Result, type ProsodyVector, ok } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { GutenbergLimb } from './GutenbergLimb.js';
 import { NarrativeSegment } from '../../utils/NarrativeExtractor.js';
-
+import { BioIntelligenceLimb } from '../spatial/BioIntelligenceLimb.js';
+import { VectorDB } from '../../utils/VectorDB.js';
+import { PedagogyLimb } from '../technical/PedagogyLimb.js';
+import { KinematicsLimb } from '../technical/KinematicsLimb.js';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { HexagramManager } from '../../routing/HexagramManager.js';
@@ -17,13 +20,22 @@ export interface StoryboardScene {
     styleInfluence: string;
     prosody?: ProsodyVector;
     speaker?: string; // Autonomous character identification
+    modelId?: number; // RSMV Model ID (Forensic Casting)
+    animationId?: number; // RSMV Sequence ID (Forensic Acting)
+    duration?: number;
+    cameraNotes?: string;
+    audioPrompt?: string;
 }
 
-export class StoryboardLimb {
+export class StoryboardLimbV2 {
     constructor(
         private readonly client: ModelClient,
         private readonly gutenberg: GutenbergLimb,
         private readonly hexagram: HexagramManager,
+        private readonly vectorDB: VectorDB,
+        private readonly bioIntel: BioIntelligenceLimb,
+        private readonly pedagogy: PedagogyLimb,
+        private readonly kinematics: KinematicsLimb,
         private readonly modelName: string = 'deepseek-r1:8b'
     ) { }
 
@@ -196,10 +208,13 @@ Respond strictly in this JSON format:
 
             if (res.ok) {
                 const rawResponse = res.value.response.match(/\{[\s\S]*\}/)?.[0] || '{}';
-                const data = JSON.parse(rawResponse);
-                let scenes = data.scenes || [];
+            const data = JSON.parse(rawResponse);
+            let scenes = data.scenes || [];
 
-                // Validate length to prevent silent pipeline creation of empty folders
+            // Stage 2.5: Forensic Casting & Acting
+            scenes = await this.performForensicCasting(scenes);
+
+            // Validate length to prevent silent pipeline creation of empty folders
                 if (scenes.length === 0) {
                     logger.error({ id: book.id }, 'LLM generated 0 valid scenes or returned invalid JSON format.');
                     return { ok: false, error: new Error('Storyboard generation yielded 0 scenes.') };
@@ -376,10 +391,81 @@ Vary prosody based on narrative tension and ${yaostate} influence.
         }
     }
 
-    public healthCheck(): { online: boolean; details: string } {
+    /**
+     * performForensicCasting - Maps characters to RSMV IDs using affective resonance.
+     */
+    public async performForensicCasting(scenes: StoryboardScene | StoryboardScene[]): Promise<Result<StoryboardScene[]>> {
+        const sceneList = Array.isArray(scenes) ? scenes : [scenes];
+        logger.info({ sceneCount: sceneList.length }, 'Initiating Forensic Casting protocol.');
+        
+        for (const scene of sceneList) {
+            const description = scene.description.toLowerCase();
+            const prosody = scene.prosody || { darkTone: 0.5 };
+
+            // 1. Casting Query
+            // Search for an NPC that matches the description + affective resonance
+            const query = `NPC entity matching description: ${description}. Affective resonance: ${JSON.stringify(prosody)}.`;
+            const embedRes = await this.client.embed(query);
+            
+            if (embedRes.ok) {
+                const results = this.vectorDB.searchSimilar(embedRes.value, 5, 'global', 'pedagogy');
+                if (results.ok && results.value.length > 0) {
+                    // Filter for NPC types and apply BioIntelligence validation
+                    for (const lesson of results.value) {
+                        const profile = lesson.metadata;
+                        if (profile.type === 'NPC') {
+                            const npcId = parseInt(profile.id);
+                            
+                            // BioIntelligence Gate: Anatomical proof
+                            const proof = { 
+                                limbCount: profile.metrics.boneCount > 100 ? 33 : 10, // Heuristic
+                                structuralIntegrity: 10 
+                            };
+                            
+                            if (await this.bioIntel.validateStructure(proof)) {
+                                scene.modelId = npcId;
+                                logger.info({ scene: scene.index, npcId, name: profile.name }, 'Forensic Casting: Match Found.');
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Acting Query (Animations)
+            // If we have a model, find a suitable animation
+            if (scene.modelId) {
+                // Heuristic: Match description verbs to animation types
+                const verbs = ['roar', 'walk', 'attack', 'run', 'die', 'laugh'];
+                let selectedVerb = 'idle';
+                for (const v of verbs) {
+                    if (description.includes(v)) {
+                        selectedVerb = v;
+                        break;
+                    }
+                }
+
+                const animQuery = `Animation for ${selectedVerb}. Model ID: ${scene.modelId}`;
+                const animEmbed = await this.client.embed(animQuery);
+                if (animEmbed.ok) {
+                    const animResults = this.vectorDB.searchSimilar(animEmbed.value, 5, 'global', 'kinematics');
+                    if (animResults.ok && animResults.value.length > 0) {
+                        scene.animationId = parseInt(animResults.value[0].id);
+                        logger.info({ scene: scene.index, animationId: scene.animationId }, 'Forensic Acting: Match Found.');
+                    }
+                }
+            }
+        }
+
+        return ok(sceneList);
+    }
+
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        const gutenbergHealth = await this.gutenberg.healthCheck();
+        const details = `Storyboard Substrate: ${gutenbergHealth.online ? 'ONLINE' : 'DEGRADED'} (Gutenberg dependency: ${gutenbergHealth.online ? 'OK' : 'FAIL'})`;
         return {
-            online: true,
-            details: 'Storyboard limb operational.'
+            online: gutenbergHealth.online,
+            details
         };
     }
 }

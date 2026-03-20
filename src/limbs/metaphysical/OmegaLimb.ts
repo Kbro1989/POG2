@@ -25,10 +25,13 @@ export class OmegaLimb {
         });
     }
 
-    public healthCheck(): { online: boolean; status: string } {
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        // terminal alignment self-audit
+        const audit = await this.verifyObjective({ state: 'ALIVE' }, 'existence');
+        const ok = audit.ok && audit.value.aligned;
         return {
-            online: true,
-            status: 'TEMINAL_ALIGNMENT_NOMINAL'
+            online: ok,
+            details: `Omega: ${ok ? 'ONLINE' : 'DEGRADED'} (Terminal alignment nominal)`
         };
     }
 }

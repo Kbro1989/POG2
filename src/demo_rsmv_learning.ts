@@ -2,6 +2,10 @@ import { PedagogyLimb } from './limbs/technical/PedagogyLimb.js';
 import { ForgeEngine, SynthesisTarget } from './engines/ForgeEngine.js';
 import { YaoState } from './core/models.js';
 import { createLogger } from './utils/logger.js';
+import { TernaryRouter } from './routing/TernaryRouter.js';
+import { VectorDB } from './utils/VectorDB.js';
+import { loadConfig } from './config/SovereignConfig.js';
+import { ModelClient } from './clients/ModelClient.js';
 
 const logger = createLogger('DemoRSMV');
 
@@ -12,7 +16,11 @@ const logger = createLogger('DemoRSMV');
 async function runDemo() {
     logger.info('--- STARTING RSMV LEARNING DEMO ---');
 
-    const pedagogy = new PedagogyLimb();
+    const config = loadConfig('config.json');
+    const router = new TernaryRouter(config);
+    const client = new ModelClient(config, router);
+    const vectorDb = new VectorDB({ client });
+    const pedagogy = new PedagogyLimb(router, vectorDb, client);
     const forge = new ForgeEngine();
 
     // 1. Analyze a "Pro" asset from the cache (e.g., King Black Dragon ID 50)

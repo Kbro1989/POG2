@@ -1,0 +1,20 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; background: #0a0a0a; color: #fff; font-family: 'Inter', system-ui, sans-serif; height: 720px; width: 1280px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .manifest { border: 2px solid #333; padding: 40px; border-radius: 20px; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); width: 80%; text-align: center; }
+        h1 { font-size: 24px; color: #aaa; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+        p { font-size: 32px; font-weight: 600; line-height: 1.4; color: #eee; }
+        .meta { margin-top: 30px; font-size: 14px; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="manifest">
+        <h1>Visual Manifest Substrate</h1>
+        <p>A cinematic 3D render of the King Black Dragon roaring, 4k, volumetric lighting, dark dungeon atmosphere</p>
+        <div class="meta">POG2 Sovereign Offline Fallback â€” Generated at 2026-03-20T04:09:08.747Z</div>
+    </div>
+</body>
+</html>

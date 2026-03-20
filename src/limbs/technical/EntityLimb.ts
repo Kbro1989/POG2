@@ -270,11 +270,14 @@ export class EntityLimb {
         }
     }
 
-    public healthCheck(): { online: boolean; persistence: string } {
-        return {
-            online: !!this.db,
-            persistence: this.db ? 'SQLITE_ACTIVE' : 'OFFLINE'
-        };
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        if (!this.db) return { online: false, details: 'Entity Database not initialized.' };
+        try {
+            const row = this.db.prepare('SELECT count(*) as count FROM entities').get() as { count: number };
+            return { online: true, details: `Entity Substrate: ONLINE (${row.count} active entities)` };
+        } catch (e) {
+            return { online: false, details: `Entity Substrate ERROR: ${(e as Error).message}` };
+        }
     }
 
     /**

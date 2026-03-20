@@ -5,6 +5,9 @@ import { GameCacheLoader } from '../../../tmp_rsmv_inspect/src/cache/sqlite.js';
 import { parse } from '../../../tmp_rsmv_inspect/src/opdecoder.js';
 import { cacheMajors } from '../../../tmp_rsmv_inspect/src/constants.js';
 
+import { TernaryRouter } from '../../routing/TernaryRouter.js';
+import { VectorDB } from '../../utils/VectorDB.js';
+
 const logger = createLogger('DynamicsLimb');
 
 /**
@@ -14,16 +17,37 @@ const logger = createLogger('DynamicsLimb');
  */
 export class DynamicsLimb {
     private loader: GameCacheLoader;
+    private router: TernaryRouter;
+    private vectorDB: VectorDB;
 
-    constructor() {
+    constructor(router: TernaryRouter, vectorDB: VectorDB) {
         this.loader = new GameCacheLoader();
+        this.router = router;
+        this.vectorDB = vectorDB;
+    }
+
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        const loaderHealth = !!this.loader;
+        return {
+            online: loaderHealth,
+            details: `Dynamics: ${loaderHealth ? 'ONLINE' : 'OFFLINE'} (Archive 21 mapped)`
+        };
     }
 
     /**
      * Extracts a pedagogical profile for a specific world effect (SpotAnim).
      */
     public async extractDynamics(spotAnimId: number): Promise<Result<PedagogyProfile>> {
-        logger.info({ spotAnimId }, 'Extracting Dynamic Profile');
+        const state = this.router.temporalState;
+        logger.info({ spotAnimId, state }, 'Extracting Dynamic Profile');
+
+        if (state === 'PAST') {
+            const cached = this.vectorDB.queryLocal(`dynamic-${spotAnimId}`);
+            if (cached.ok && cached.value) {
+                logger.info({ spotAnimId }, 'Retrieved Dynamic Profile from PAST substrate.');
+                return ok(cached.value.metadata as PedagogyProfile);
+            }
+        }
 
         try {
             const buffer = await this.loader.getFile(cacheMajors.spotanims, spotAnimId);

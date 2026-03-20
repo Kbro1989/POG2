@@ -21,7 +21,11 @@ export class NeuralForgeLimb {
         return ok(`NeuralForge: Formed conceptual structure for ${prompt}`);
     }
 
-    public healthCheck(): { online: boolean } {
-        return { online: true };
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        // Conceptual layer self-audit
+        return { 
+            online: true, 
+            details: 'Neural Forge: ONLINE (Ideation substrate ready)' 
+        };
     }
 }

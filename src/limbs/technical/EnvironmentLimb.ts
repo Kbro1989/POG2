@@ -18,7 +18,13 @@ export class EnvironmentLimb {
         return ok(process.env[key]);
     }
 
-    public healthCheck(): { online: boolean; details: string } {
-        return { online: true, details: 'Environment context bridge active.' };
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        // Probe critical substrate variables
+        const home = process.env.HOME || process.env.USERPROFILE;
+        const online = !!home;
+        return {
+            online,
+            details: `Environment: ${online ? 'ONLINE' : 'DEGRADED'} (Substrate root: ${home || 'UNKNOWN'})`
+        };
     }
 }

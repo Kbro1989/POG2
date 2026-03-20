@@ -297,6 +297,12 @@ Respond in JSON ONLY:
         return yinCount >= 3;
     }
 
+    public isYang(): boolean {
+        const interpretation = this.getInterpretation();
+        const yangCount = (interpretation.binary.match(/1/g) || []).length;
+        return yangCount >= 3;
+    }
+
     public getEmotionalPool(): Record<string, number> {
         const interpretation = this.getInterpretation();
         return {

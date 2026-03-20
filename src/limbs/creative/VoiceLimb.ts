@@ -303,10 +303,10 @@ export class VoiceLimb {
         return { ok: true, value: { matchScore: 0.95 } };
     }
 
-    public healthCheck(): { online: boolean; details: string } {
-        return {
-            online: true,
-            details: 'VoiceLimb active (Real Cloudflare TTS + Consistency Tracker enabled).'
-        };
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        // Cloudflare AI Substrate Check
+        const cfOnline = !!this.cfServices || !!(this.client as any).cf;
+        const details = `Voice Substrate: ${cfOnline ? 'ONLINE' : 'DEGRADED'} (Cloudflare AI binding: ${cfOnline ? 'ACTIVE' : 'MISSING'})`;
+        return { online: cfOnline, details };
     }
 }

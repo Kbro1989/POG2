@@ -151,6 +151,8 @@ This registry provides absolute GitHub links to all neurological substrates with
 ### 🧿 Spatial Core (`spatial/`)
 - [BioIntelligenceLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/BioIntelligenceLimb.ts)
 - [ChromaLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/ChromaLimb.ts)
+- [CacheForensicsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/CacheForensicsLimb.ts)
+- [CacheLearningLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/CacheLearningLimb.ts)
 - [GlobeStateLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/GlobeStateLimb.ts)
 - [RSCLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/RSCLimb.ts)
 - [WebSensoryLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/WebSensoryLimb.ts)
@@ -267,7 +269,10 @@ This registry provides absolute GitHub links to all neurological substrates with
 - [NarrativeExtractor.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/NarrativeExtractor.ts)
 - [PathNormalizer.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/PathNormalizer.ts)
 - [QuotaTracker.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/QuotaTracker.ts)
-- [RSMVExtractor.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/RSMVExtractor.ts)
+- [RSMVExtractor.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/RSMVExtractor.ts): Real-world substrate hook for RS model extraction.
+- **[RSMVController.ts](src/vision/RSMVController.ts)**: CNS Bridge for active 3D modification and GLTF export.
+- **[CacheForensicsLimb.ts](src/limbs/spatial/CacheForensicsLimb.ts)**: Live volatility monitoring of the Jagex cache.
+- **[CacheLearningLimb.ts](src/limbs/spatial/CacheLearningLimb.ts)**: Sovereign extraction of raw JS5 substrates.
 - [shell.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/shell.ts)
 - [SmartEdit.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/SmartEdit.ts)
 - [SovereignEye.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/SovereignEye.ts)
@@ -290,4 +295,67 @@ This registry provides absolute GitHub links to all neurological substrates with
 - [Kbro1989/rsmv](tmp_rsmv_inspect/) (RuneScape 3 Model Viewer + Cache Subsystem)
 
 ---
-*Audited: 2026-03-16 | 105 TypeScript substrates across 17 folders + 1 External Substrate.*
+
+# 🧠 System Awareness Layer (The Living Organism)
+*Functional topography and cognitive flow dynamics.*
+
+## 🧬 Cognitive Flow Map (Meridians)
+The following map visualizes how energy and intent move from User Input through the Internal Kernel to External Actuators.
+
+```mermaid
+graph TD
+    Input[User Input] --> Router[TernaryRouter]
+    Router --> Intent[Intent Classification]
+    Intent --> Logic{Ternary Logic}
+    Logic -->|Yang/Deep| Master[Master Tier Model]
+    Logic -->|YinYang/Mid| Executive[Executive Tier Model]
+    Logic -->|Yin/Reflex| Reactive[Reactive Tier Model]
+    Master --> Engine[OrchestrateEngine]
+    Executive --> Engine
+    Reactive --> Engine
+    Engine --> Limb[Actuation Limb]
+    Limb --> Output[Actuator / Reality Hook]
+    Output --> Feedback[Reinforcement Loop]
+    Feedback --> Router
+```
+
+## 🏗️ Functional Hierarchy
+
+### 1. Internal Kernel (The Core Spine)
+*Central nervous system and routing logic. Responsible for "Self" awareness and intent triage.*
+- **[TernaryRouter.ts](src/routing/TernaryRouter.ts)**: Cognitive Load Balancer & ε-greedy model discovery.
+- **[HexagramManager.ts](src/routing/HexagramManager.ts)**: Probabilistic state machine / I Ching abstraction layer.
+- **[OrchestrateEngine.ts](src/engines/OrchestrateEngine.ts)**: Central spine coordinating all limbs and specialized processing.
+- **[ModelRolodex.ts](src/api/ai/ModelRolodex.ts)**: Living model catalog with reputation-based selection.
+
+### 2. Cognitive Processing (The Cortex)
+*Deep thought and analysis subsystems.*
+- **[CognitiveEngine.ts](src/engines/CognitiveEngine.ts)**: Reasoning & context synthesis.
+- **[CodeEngine.ts](src/engines/CodeEngine.ts)**: Structural analysis and code generation.
+- **[DiscoveryEngine.ts](src/engines/DiscoveryEngine.ts)**: Knowledgebase exploration and pattern recognition.
+- **[MetabolicEngine.ts](src/engines/MetabolicEngine.ts)**: System health and resource management.
+
+### 3. External Actuation (The Limbs)
+*The actuation surface where thoughts become reality actions.*
+- **[AILimb.ts](src/limbs/technical/AILimb.ts)**: Primary generative and creative interface.
+- **[BlenderRenderer.ts](src/engines/BlenderRenderer.ts)**: Visual and 3D reconstruction actuator.
+- **[PipelineController.ts](src/engines/PipelineController.ts)**: Orchestrating multi-step execution sequences.
+- **[StoryboardLimbV2.ts](src/limbs/creative/StoryboardLimb.ts)**: Narrative and visual sequencing.
+- **[RSMVExtractor.ts](src/utils/RSMVExtractor.ts)**: Real-world substrate hook for RS model extraction.
+
+### 4. Sensory & Memory (Proprioception)
+*Input probes and persistent context substrates.*
+- **[PulseMonitor.ts](src/monitor/PulseMonitor.ts)**: Real-time system heartbeat and file-system awareness.
+- **[WebSensoryLimb.ts](src/limbs/spatial/WebSensoryLimb.ts)**: External world information gathering.
+- **[VectorDB.ts](src/utils/VectorDB.ts)**: High-dimensional associative memory.
+- **[MemoryConsolidationEngine.ts](src/engines/MemoryConsolidationEngine.ts)**: Context gating and long-term memory stratification.
+
+## 🛠️ Tool Execution Surface
+The POG2 organism exposes **92+ nodes** (tools) across the following surfaces:
+- **Spatial Nodes**: Cache extraction (`cache_learn_extract`), pixel forensic (`cache_forensics_scan`), chromatic soul validation.
+- **Motor Nodes**: Code generation, renderer actuation, file modification, 3D export (`rsmv_export`).
+- **Sensory Nodes**: Vision detection (`rsmv_view`), audio transcription, web scraping.
+- **Audit Nodes**: Neurological verification, health checks, clinical logging.
+
+---
+*Audited: 2026-03-20 | 105 Substrates | Alive Mode: Active*

@@ -1,4 +1,4 @@
-﻿import { writeFileSync, existsSync } from 'fs';
+import { writeFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
 import { type Result, ok, type ProsodyVector } from '../../core/models.js';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
@@ -217,16 +217,14 @@ export class SoundtrackLimb {
         return `aevalsrc='${envelopedEnv}':s=44100:d=${duration},${dspChain}`;
     }
 
-    public healthCheck(): { online: boolean; details: string } {
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
         let hasFfmpeg = false;
         try {
             execSync('ffmpeg -version', { stdio: 'pipe', timeout: 5000, windowsHide: true });
             hasFfmpeg = true;
         } catch { /* noop */ }
 
-        const details = [
-            `ffmpeg: ${hasFfmpeg ? 'AVAILABLE' : 'MISSING (Core procedural synthesis offline)'}`
-        ].join(' | ');
+        const details = `Soundtrack: ${hasFfmpeg ? 'ONLINE' : 'DEGRADED'} (${hasFfmpeg ? 'ffmpeg procedural synthesis READY' : 'ffmpeg MISSING, procedural synthesis OFFLINE'})`;
 
         return { online: hasFfmpeg, details };
     }
