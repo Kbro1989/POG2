@@ -37,4 +37,98 @@ google-key.json
 youtube_token.json
 C:\Users\
 D:\
+
+# ═══════════════════════════════════════════════════
+# PROPRIETARY CACHE DATA — NEVER COMMIT
+# Jagex RuneScape cache-derived content.
+# Pedagogy use only — generalization, not distribution.
+# ═══════════════════════════════════════════════════
+
+# Cache-derived JSON dumps (items, npcs, objects, quests, enums)
+items.json
+npcs.json
+objects.json
+quests.json
+enums.json
+equipment_by_slot.json
+
+# 3D model exports (.glb, .gltf, .bin geometry)
+*.glb
+*.gltf
+model_gltf.json
+Hans_gltf.json
+
+# Cache forensics & pedagogy outputs
 audit_output/
+ped_out.json
+ped_out.log
+pedagogy_profile.json
+pedagogy_output*
+cache_*forensics*
+knowledge_packet*.jsonl
+relational_index.json
+cache_boundary_map.json
+*_specimen_map.json
+*_name_map.json
+*_index.bin
+*_index_decomp.bin
+
+# KBD and content-specific research
+kbd_*.txt
+kbd_*.json
+kbd_*/
+
+# RSMV research cluster (contains cache reader code)
+tmp_rsmv_inspect/
+
+# Temporary test/debug outputs
+test_output*.txt
+stress_test_results*.log
+verification_*.txt
+debug_*.log
+all_files_audit*.txt
+audit_*.txt
+audit_*.csv
+forensic_*.log
+forensic_*.ts
+live_cycle*.log
+out.log
+out.txt
+output.txt
+build_errors.txt
+sovereign_atlas/
+
+# Scratch scripts that reference cache data
+scan_cache_for_pog.ts
+search_cache_for_pog.ts
+search_pog_npc*.ts
+raw_cache_search*.ts
+deep_cache_search.ts
+extract_item_raw.ts
+extract_npc_raw.ts
+inspect_objcache.ts
+get_full_cache_id_list.ts
+get_kinematics_ids.ts
+get_spotanim_ids.ts
+ingest_full_reference_sets.ts
+ingest_hi_fi_stats.ts
+cache_enum_forensics.ts
+cache_enum_scanner.ts
+cache_equipment_mapper.ts
+cache_generalization_ingest.ts
+cache_object_forensics.ts
+cache_quest_forensics.ts
+cache_script_forensics.ts
+debug_cache_archives.ts
+capture_plan.ts
+list_all_indices.ts
+
+# Large binary/media test files
+*.wav
+*.png
+!fallback.png
+!resources/**/*.png
+
+# Pog2 test loop
+pog2-test-loop/
+test_dispatch/
