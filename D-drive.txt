@@ -1,5 +1,3 @@
-ok... this is not -2004 era.. this is 2004+ to present....
-
 apos-bridge
 apos-bridge\logs
 apos-bridge\logs\session_20260222_044208.txt
