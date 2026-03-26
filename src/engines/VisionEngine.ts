@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import { ModelClient } from '../clients/ModelClient.js';
 import { ShellEngine } from './ShellEngine.js';
 import { Renderer } from '../ui/Renderer.js';
@@ -7,6 +8,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { createLogger } from "../utils/logger.js";
+import { SovereignEye } from '../utils/SovereignEye.js';
 
 const logger = createLogger('VisionEngine');
 
@@ -21,16 +23,22 @@ export interface VisionParams {
  * VisionEngine â€” Multimodal observation substrate.
  * Implements SoverignEye (system-wide viewing) and Chromanumber (color/line mapping).
  */
-export class VisionEngine {
+export class VisionEngine extends EventEmitter {
     private readonly client: ModelClient;
     private readonly shell: ShellEngine;
+    private readonly eye: SovereignEye;
 
     constructor(
         private readonly config: SovereignConfig,
         private readonly renderer: Renderer
     ) {
+        super();
         this.client = new ModelClient(config);
         this.shell = new ShellEngine(renderer);
+        this.eye = new SovereignEye('vision-engine');
+        
+        // Proxy SovereignEye captures to VisionEngine listeners (Switchboard)
+        this.eye.on('capture', (res) => this.emit('capture', res));
     }
 
     async observe(params: VisionParams): Promise<Result<EngineOutput>> {
@@ -39,7 +47,7 @@ export class VisionEngine {
         // 1. Capture State (SoverignEye)
         if (params.intent === 'eye' || params.intent === 'chroma') {
             this.renderer.info('Capturing system state via SoverignEye...');
-            const captureRes = await this.captureScreen(screenshotPath);
+            const captureRes = await this.eye.capture({ type: 'window', target: params.target || 'POG2' });
             if (!captureRes.ok) return captureRes as any;
         }
 
@@ -76,15 +84,6 @@ export class VisionEngine {
         };
     }
 
-    private async captureScreen(outputPath: string): Promise<Result<void>> {
-        // Real Win32 screen capture via PowerShell
-        const command = `powershell -NoProfile -Command "[Reflection.Assembly]::LoadWithPartialName('System.Drawing') | Out-Null; [Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; $Screen = [System.Windows.Forms.Screen]::PrimaryScreen; $Width = $Screen.Bounds.Width; $Height = $Screen.Bounds.Height; $Left = $Screen.Bounds.Left; $Top = $Screen.Bounds.Top; $Bitmap = New-Object System.Drawing.Bitmap($Width, $Height); $Graphics = [System.Drawing.Graphics]::FromImage($Bitmap); $Graphics.CopyFromScreen($Left, $Top, 0, 0, $Bitmap.Size); $Bitmap.Save('${outputPath}', [System.Drawing.Imaging.ImageFormat]::Png); $Graphics.Dispose(); $Bitmap.Dispose();"`;
-
-        const res = await this.shell.execute({ command, silent: true });
-        if (!res.ok) return res as any;
-
-        return { ok: true, value: undefined };
-    }
 
     private buildVisionPrompt(params: VisionParams): string {
         if (params.intent === 'chroma') {
@@ -123,8 +122,7 @@ TASKS:
      * Diagnostic probe for NodeTester.
      */
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
-        const screenshotPath = join(tmpdir(), `POG2_probe_${Date.now()}.png`);
-        const capture = await this.captureScreen(screenshotPath);
+        const capture = await this.eye.capture({ type: 'window', target: 'POG2' });
         const online = capture.ok;
         return {
             online,

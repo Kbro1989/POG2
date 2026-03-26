@@ -7,6 +7,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { createLogger } from "../utils/logger.js";
+import { SovereignEye } from '../utils/SovereignEye.js';
 
 const logger = createLogger('SpatialVisionEngine');
 
@@ -53,6 +54,7 @@ export interface SpatialMap {
 export class SpatialVisionEngine {
     private readonly client: ModelClient;
     private readonly shell: ShellEngine;
+    private readonly eye: SovereignEye;
 
     constructor(
         private readonly config: SovereignConfig,
@@ -60,24 +62,22 @@ export class SpatialVisionEngine {
     ) {
         this.client = new ModelClient(config);
         this.shell = new ShellEngine(renderer);
+        this.eye = new SovereignEye('spatial-vision');
     }
 
     async observe(params: SpatialVisionParams): Promise<Result<EngineOutput>> {
-        const screenshotPath = join(tmpdir(), `POG2_spatial_${Date.now()}.png`);
+        let imagePath = params.target && existsSync(params.target) ? params.target : '';
 
         // 1. Capture screen
-        if (params.includeScreenshot !== false) {
-            this.renderer.info('ðŸ‘ï¸ Spatial capture initiated...');
-            const captureRes = await this.captureScreen(screenshotPath);
+        if (params.includeScreenshot !== false && !imagePath) {
+            this.renderer.info('👁️  Spatial capture initiated...');
+            const captureRes = await this.eye.capture({ type: 'window', target: params.target || 'POG2' });
             if (!captureRes.ok) return captureRes as any;
+            imagePath = captureRes.value.imagePath || '';
         }
 
-        const imagePath = params.target && existsSync(params.target)
-            ? params.target
-            : screenshotPath;
-
-        if (!existsSync(imagePath)) {
-            return { ok: false, error: new Error(`Image not found: ${imagePath}`) };
+        if (!imagePath || !existsSync(imagePath)) {
+            return { ok: false, error: new Error(`Image not found for spatial analysis: ${imagePath}`) };
         }
 
         // 2. Analyze based on intent
@@ -160,14 +160,6 @@ export class SpatialVisionEngine {
         return { ok: true, value: colors };
     }
 
-    private async captureScreen(outputPath: string): Promise<Result<void>> {
-        const command = `powershell -NoProfile -Command "[Reflection.Assembly]::LoadWithPartialName('System.Drawing') | Out-Null; [Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; $Screen = [System.Windows.Forms.Screen]::PrimaryScreen; $Width = $Screen.Bounds.Width; $Height = $Screen.Bounds.Height; $Left = $Screen.Bounds.Left; $Top = $Screen.Bounds.Top; $Bitmap = New-Object System.Drawing.Bitmap($Width, $Height); $Graphics = [System.Drawing.Graphics]::FromImage($Bitmap); $Graphics.CopyFromScreen($Left, $Top, 0, 0, $Bitmap.Size); $Bitmap.Save('${outputPath}', [System.Drawing.Imaging.ImageFormat]::Png); $Graphics.Dispose(); $Bitmap.Dispose();"`;
-
-        const res = await this.shell.execute({ command, silent: true });
-        if (!res.ok) return res as any;
-
-        return { ok: true, value: undefined };
-    }
 
     private buildSpatialPrompt(params: SpatialVisionParams): string {
         if (params.intent === 'chroma') {
