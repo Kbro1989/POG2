@@ -1,3 +1,4 @@
+'
 import { type Result, type ProsodyVector, ok } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { GutenbergLimb } from './GutenbergLimb.js';
@@ -398,6 +399,38 @@ Vary prosody based on narrative tension and ${yaostate} influence.
         const sceneList = Array.isArray(scenes) ? scenes : [scenes];
         logger.info({ sceneCount: sceneList.length }, 'Initiating Forensic Casting protocol.');
         
+        logger.info({ sceneCount: sceneList.length }, 'Initiating Generalized Forensic Casting protocol (Total Substrate Awareness).');
+        
+        // Load local KBD substrates if available
+        const kbdSubstratePath = join(process.cwd(), 'audit_output', 'kbd_arena', 'assets', 'kbd_legion_configs.json');
+        const boneAuditPath = join(process.cwd(), 'kbd_bone_audit.json');
+        
+        let localConfigs: any[] = [];
+        let boneAudit: Record<string, any> = {};
+
+        if (existsSync(kbdSubstratePath)) {
+            try {
+                localConfigs = JSON.parse(readFileSync(kbdSubstratePath, 'utf8'));
+                logger.debug({ count: localConfigs.length }, 'Loaded local KBD substrate.');
+            } catch (e) { logger.warn('Failed to parse kbd_legion_configs.json'); }
+        }
+
+        if (existsSync(boneAuditPath)) {
+            try {
+                boneAudit = JSON.parse(readFileSync(boneAuditPath, 'utf8'));
+                logger.debug('Loaded KBD bone audit signals.');
+            } catch (e) { logger.warn('Failed to parse kbd_bone_audit.json'); }
+        }
+
+        let kinematicsSubstrate: any = { kinematics: [] };
+        const kinematicsPath = join(getSovereignRoot(), 'memory', 'pedagogy', 'kinematics.json');
+        if (existsSync(kinematicsPath)) {
+            try {
+                kinematicsSubstrate = JSON.parse(readFileSync(kinematicsPath, 'utf8'));
+                logger.debug({ count: kinematicsSubstrate.kinematics.length }, 'Loaded verified Kinematics substrate.');
+            } catch (e) { logger.warn('Failed to parse kinematics.json'); }
+        }
+
         for (const scene of sceneList) {
             const description = scene.description.toLowerCase();
             const prosody = scene.prosody || { darkTone: 0.5 };
@@ -444,14 +477,63 @@ Vary prosody based on narrative tension and ${yaostate} influence.
                         break;
                     }
                 }
+            // 2.5 Signal Detection (Call Signals / VFX / Audio)
+            if (description.includes('fire') || description.includes('flame')) {
+                scene.spotAnimId = 393; // standard fire breath GFX
+                scene.callSignals = { ...scene.callSignals, vfx_trigger: 'primary_attack' };
+            }
+            if (description.includes('roar') || description.includes('growl')) {
+                scene.audioId = 401; // dragon roar sfx
+                scene.callSignals = { ...scene.callSignals, audio_trigger: 'voice_primary' };
+            }
 
-                const animQuery = `Animation for ${selectedVerb}. Model ID: ${scene.modelId}`;
+            // 3. Acting Query (Animations)
+            const verbs = ['roar', 'walk', 'attack', 'run', 'die', 'laugh', 'idle'];
+            let selectedVerb = 'idle';
+            for (const v of verbs) {
+                if (description.includes(v)) {
+                    selectedVerb = v;
+                    break;
+                }
+            }
+
+            // Check verified kinematics substrate first
+            const matchedKinematic = kinematicsSubstrate.kinematics.find((k: any) => 
+                k.semantics?.role?.toLowerCase().includes(selectedVerb) || 
+                k.semantics?.intent?.toLowerCase().includes(selectedVerb)
+            );
+
+            if (matchedKinematic) {
+                scene.animationId = parseInt(matchedKinematic.id);
+                scene.duration = matchedKinematic.metrics?.durationSeconds;
+                scene.isSkeletal = matchedKinematic.metrics?.isSkeletal;
+                if (matchedKinematic.metrics?.linkedSpotanims?.length > 0) {
+                    scene.spotAnimId = matchedKinematic.metrics.linkedSpotanims[0].id;
+                }
+                logger.info({ scene: scene.index, animationId: scene.animationId, duration: scene.duration, verb: selectedVerb }, 'Forensic Acting: Substrate Match Found.');
+            } else if (scene.modelId) {
+                // Fallback to VectorDB
+                const animQuery = `Animation for ${selectedVerb}. Affective resonance: ${JSON.stringify(prosody)}.`;
                 const animEmbed = await this.client.embed(animQuery);
                 if (animEmbed.ok) {
                     const animResults = this.vectorDB.searchSimilar(animEmbed.value, 5, 'global', 'kinematics');
                     if (animResults.ok && animResults.value.length > 0) {
                         scene.animationId = parseInt(animResults.value[0].id);
                         logger.info({ scene: scene.index, animationId: scene.animationId }, 'Forensic Acting: Match Found.');
+                        const animId = parseInt(animResults.value[0].id);
+                        scene.animationId = animId;
+                        
+                        // Extract rich metrics from KinematicsLimb
+                        const kinRes = await this.kinematics.extractKinematics(animId);
+                        if (kinRes.ok) {
+                            scene.duration = kinRes.value.metrics.durationSeconds;
+                            scene.isSkeletal = kinRes.value.metrics.isSkeletal;
+                            if (kinRes.value.metrics.linkedSpotanims?.length) {
+                                scene.spotAnimId = kinRes.value.metrics.linkedSpotanims[0].id;
+                            }
+                        }
+                        
+                        logger.info({ scene: scene.index, animationId: scene.animationId, duration: scene.duration }, 'Forensic Acting: VectorDB Match Found.');
                     }
                 }
             }

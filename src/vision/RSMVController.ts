@@ -11,6 +11,7 @@ export interface ModelModifications {
     replaceColors?: [from: number, to: number][];
     replaceMaterials?: [from: number, to: number][];
     lodLevel?: number;
+    animationId?: number;
 }
 
 /**
@@ -42,6 +43,9 @@ export class RSMVController {
             }
             if (mods?.replaceMaterials) {
                 args.push('--materials', JSON.stringify(mods.replaceMaterials));
+            }
+            if (mods?.animationId !== undefined) {
+                args.push('--anim', mods.animationId.toString());
             }
 
             const subprocess = spawn('npx', args, {
@@ -86,6 +90,9 @@ export class RSMVController {
             }
             if (mods?.replaceMaterials) {
                 args.push('--materials', JSON.stringify(mods.replaceMaterials));
+            }
+            if (mods?.animationId !== undefined) {
+                args.push('--anim', mods.animationId.toString());
             }
 
             // Use the headless CLI with proper source mapping

@@ -25,7 +25,8 @@ async function run() {
         }
     }
 
-    const controller = new RSMVController();
+    const rsmvDir = join(getSovereignRoot(), 'cache_pedagogy', 'rsmv_inspector');
+    const controller = new RSMVController(rsmvDir);
     const modelId = 'npc:0'; // Hans
     
     try {

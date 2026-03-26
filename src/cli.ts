@@ -62,6 +62,7 @@ import { HexagramManager } from './routing/HexagramManager.js';
 import { EntityLimb } from './limbs/technical/EntityLimb.js';
 import { PedagogyLimb } from './limbs/technical/PedagogyLimb.js';
 import { HiScoreLimb } from './limbs/technical/HiScoreLimb.js';
+import { KinematicsLimb } from './limbs/technical/KinematicsLimb.js';
 import { RSMVController } from './vision/RSMVController.js';
 import {
     getGodHeadRoot,
@@ -1216,6 +1217,81 @@ export async function main(): Promise<void> {
     });
 
     const ped = program.command('pedagogy').description('Cognitive Curation & Sovereign Principle Archiving');
+
+    ped
+        .option('--ground-quest <id>', 'Ground a quest in functional Varbit logic')
+        .option('--verify-state-machine', 'Verify the state machine of the grounded quest')
+        .action(async (options) => {
+            if (options.groundQuest) {
+                const questId = parseInt(options.groundQuest);
+                const vectorDB = new VectorDB({ client });
+                const limb = new PedagogyLimb(router, vectorDB, client);
+                
+                if (options.verifyStateMachine) {
+                    renderer.info(`Verifying State Machine for Quest ${questId}...`);
+                    const res = await limb.verifyStateMachine(questId);
+                    if (res.ok) {
+                        renderer.success(`Quest ${questId} State Machine Verified: ${res.value.status}`);
+                        console.log(JSON.stringify(res.value, null, 2));
+                    } else {
+                        renderer.error(`Verification failed: ${res.error?.message}`);
+                    }
+                } else {
+                    renderer.info(`Grounding Quest ${questId} in Varbit logic...`);
+                    const res = await limb.groundQuest(questId);
+                    if (res.ok) {
+                        renderer.success(`Quest ${questId} Grounded: ${res.value.quest}`);
+                        console.log(JSON.stringify(res.value.grounding, null, 2));
+                    } else {
+                        renderer.error(`Grounding failed: ${res.error?.message}`);
+                    }
+                }
+                return;
+            }
+            // If subcommands are present but no subcommand was called, commander shows help
+        });
+
+    const kin = program
+        .command('kinematics')
+        .description('Sovereign Kinetic Layer: Animation deconstruction and binding');
+
+    kin
+        .command('extract <id>')
+        .description('Forensic deconstruction of a Jagex animation sequence (Major 20/56)')
+        .action(async (id: string) => {
+            const vectorDB = new VectorDB({ client });
+            const limb = new KinematicsLimb(router, vectorDB, client);
+            
+            renderer.info(`Initiating Forensic Kinematic Extractions ID: ${id}...`);
+            const res = await limb.extractKinematics(parseInt(id));
+            
+            if (res.ok) {
+                renderer.success(`Kinematic Profile Extracted for Sequence ${id}`);
+                console.log(JSON.stringify(res.value, null, 2));
+            } else {
+                renderer.error(`Extraction failed: ${res.error?.message}`);
+            }
+        });
+
+    kin
+        .command('bind <id>')
+        .description('Bind a kinematic sequence to a semantic state (e.g., IDLE, WALK)')
+        .requiredOption('-s, --state <name>', 'Semantic state name')
+        .option('-a, --actor <id>', 'Specific actor/NPC ID to bind to')
+        .action(async (id: string, opts) => {
+            const vectorDB = new VectorDB({ client });
+            const limb = new KinematicsLimb(router, vectorDB, client);
+            
+            renderer.info(`Binding Sequence ${id} to state ${opts.state}...`);
+            const res = await limb.bindSequenceToState(parseInt(id), opts.state, opts.actor);
+            
+            if (res.ok) {
+                renderer.success(`Kinematic Binding Consolidated in Pedagogy Substrate.`);
+                console.log(JSON.stringify(res.value, null, 2));
+            } else {
+                renderer.error(`Binding failed: ${res.error?.message}`);
+            }
+        });
 
     ped
         .command('store')

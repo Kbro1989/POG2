@@ -1,4 +1,4 @@
-﻿import { YaoState, CognitiveChoice, FreeModelConfig, ModelPerformance, Lesson } from '../core/models.js';
+import { YaoState, CognitiveChoice, FreeModelConfig, ModelPerformance, Lesson } from '../core/models.js';
 
 export interface RoutingDecision {
     model: string;

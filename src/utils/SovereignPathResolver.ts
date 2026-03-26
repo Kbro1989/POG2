@@ -411,6 +411,13 @@ export function getSnapshotPath(snapshotId?: string): string {
 }
 
 /**
+ * Gets the path for pedagogical knowledge substrates
+ */
+export function getPedagogyPath(): string {
+    return resolveSovereignPath('memory/pedagogy');
+}
+
+/**
  * Resolves the absolute path to this project's tsconfig.json.
  * Uses a module-relative anchor (not CWD) so it works from any directory.
  * Falls back to CWD and then sovereign root.

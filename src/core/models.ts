@@ -5,10 +5,53 @@
 
 import { join, basename } from 'path';
 // HealthReport and ServiceHealthState defined below to resolve broken import
-import type { RoutingDecision, RoutingContext } from '../routing/types.js';
 import { SovereignDomain } from '../types/SovereignDomain.js';
 
-export { RoutingDecision, RoutingContext, SovereignDomain };
+export { SovereignDomain };
+
+export interface RoutingDecision {
+    model: string;
+    metadata: {
+        source: string;
+        latencyMs: number;
+        reasoning: string;
+        path?: number[];
+        error?: string;
+    };
+}
+
+export interface RoutingContext {
+    prompt: string;
+    weightedTasks?: Record<string, number>;
+    extension?: string;
+    fileSize?: number;
+    complexity?: CognitiveChoice;
+    availableModels?: FreeModelConfig[];
+    architectureAlignment?: string[];
+    goldenTemplates?: string[];
+    historicalPerformance?: ModelPerformance[];
+    lessons?: Lesson[];
+    metadata?: {
+        ternarySignals?: {
+            localAvailability: YaoState;
+            historySignal: YaoState;
+            supervisorSignal: YaoState;
+            architectureAlignmentState: YaoState;
+        };
+        decisionDirective?: string;
+        [key: string]: unknown;
+    };
+    hexagram?: any;
+}
+
+export interface RoutingStrategy {
+    readonly name: string;
+    route(context: RoutingContext): Promise<RoutingDecision | null>;
+}
+
+export interface TerminalStrategy extends RoutingStrategy {
+    route(context: RoutingContext): Promise<RoutingDecision>;
+}
 
 export type ServiceHealthState = 'READY' | 'DEGRADED' | 'CRITICAL_FAILURE' | 'OFFLINE';
 
@@ -265,6 +308,10 @@ export interface PedagogyProfile {
         readonly durationSeconds?: number;
         readonly isSkeletal?: boolean;
         readonly jointDensity?: number;
+        readonly frames?: Array<{ frameId: number; framemapId: number; boneTransformCount: number; rawDataSize: number }>;
+        readonly linkedSpotanims?: Array<{ id: number; modelId: number; scaleX: number; scaleYorZ: number; rotation: number }>;
+        readonly linkedModels?: Array<{ id: number; vertexCount: number; faceCount: number }>;
+        readonly skeletalData?: { animId: number; keyframeCount: number };
     };
     readonly structure?: {
         readonly meshCount: number;

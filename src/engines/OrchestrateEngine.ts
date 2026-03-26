@@ -174,6 +174,7 @@ export class OrchestrateEngine {
         this.shell = new ShellEngine(renderer, router);
         this.vscode = new VSCodeEngine(renderer, router);
         this.registry = new ToolRegistry();
+
         this.todoEngine = new TodoEngine(renderer);
         this.visionEngine = new SpatialVisionEngine(config, renderer);
         this.vision = new VisionEngine(config, renderer);
@@ -194,11 +195,15 @@ export class OrchestrateEngine {
         this.metabolic = new MetabolicEngine(this.client, this.router.getHexagram(), this.cognitive, this.discovery);
 
         this.pedagogy = new PedagogyLimb(this.router, this.vectorDB, this.client);
+        this.questSynthesis = new QuestSynthesisLimb(this.client, this.cacheForensics, this.pedagogy);
+        this.kinematics = new KinematicsLimb(this.router, this.vectorDB, this.client);
         this.kinematics = new KinematicsLimb(this.router, this.vectorDB);
 
         this.bioIntel = new BioIntelligenceLimb();
         logger.debug('Initializing Specialized Limbs...');
         this.gutenberg = new GutenbergLimb(this.client, this.vectorDB);
+        this.questSynthesis = new QuestSynthesisLimb(this.client, this.cacheForensics, this.pedagogy);
+
         this.storyboard = new StoryboardLimbV2(
             this.client,
             this.gutenberg,
@@ -247,7 +252,7 @@ export class OrchestrateEngine {
             );
             logger.debug('YouTube Substrate activated via config.');
         }
-        
+
         // Phase 7: Anatomical Binding (Tool Reality Layer)
         const rsmvCachePath = getRSMVCachePath();
         const taxonomiesDir = resolveSovereignPath('memory/pedagogy');
@@ -368,7 +373,7 @@ export class OrchestrateEngine {
      * Phase 259: Explicitly awaken the Sovereign Substrate.
      * This awaits all critical neural links (MCP, DB, etc.) before execution begins.
      */
-    public async initialize(): Promise<void> {
+    public async initialize(options: { diagnosticOnly?: boolean } = {}): Promise<void> {
         if (this.initialized) return;
         if (this.initPromise) return this.initPromise;
 
@@ -381,17 +386,49 @@ export class OrchestrateEngine {
                 logger.error({ err: dbInit.error }, 'Failed to initialize VectorDB Substrate');
             }
 
-            // Await external neural links (MCP)
-            await this.mcpEngine.initialize();
-
             // Phase 7: Epistemology Activation
             const forensicInit = await this.cacheForensics.initialize();
             if (!forensicInit.ok) {
                 logger.error({ err: forensicInit.error }, 'Failed to initialize CacheForensicsLimb');
             }
 
+            if (!options.diagnosticOnly) {
+                // Await external neural links (MCP)
+                await this.mcpEngine.initialize();
+
+                // 🧬 Phase 14: Substrate-Switchboard Integration
+                if (this.switchboard.injectSubstrates) {
+                    this.switchboard.injectSubstrates({
+                        nodeTester: this.nodeTester,
+                        endpointHealer: this.client.getHealer()
+                    });
+                }
+
+                // 🧬 Phase 14: Graceful port selection (replaces fatal hard-coded port)
+                try {
+                    if (this.switchboard.startWithGracefulPort) {
+                        const result = await this.switchboard.startWithGracefulPort(this);
+                        logger.info({ port: result.port, url: result.url }, 'Switchboard Bridge active (graceful port)');
+                    } else {
+                        // LEGACY FALLBACK: If startWithGracefulPort doesn't exist
+                        await this.switchboard.startServer(8788, this);
+                    }
+                } catch (switchboardErr: any) {
+                    // Non-fatal: Switchboard is enhancement, not critical path
+                    logger.warn({ err: switchboardErr.message }, 'Switchboard failed to start — continuing without remote bridge');
+                }
+
+                // Connect renderer and vision (safe regardless of port status)
+                this.switchboard.connectToSubstrates(this.renderer, this.vision);
+
+                // 🧬 Phase 14: Register with NodeTester if method exists
+                if (this.nodeTester?.registerSwitchboard) {
+                    this.nodeTester.registerSwitchboard(this.switchboard);
+                }
+            }
+
             this.initialized = true;
-            logger.info('Sovereign Substrate AWAKE.');
+            logger.info({ diagnosticOnly: options.diagnosticOnly }, 'Sovereign Substrate AWAKE.');
         })();
 
         return this.initPromise;
@@ -1428,10 +1465,10 @@ export class OrchestrateEngine {
                     queryType: params.queryType || 'partial'
                 });
                 if (!res.ok) return res as any;
-                
+
                 const output = `Taxonomy Query [${params.layer}]: ${res.value.length} matches found.\n` +
                     res.value.map(e => `- [${e.id}] ${e.name}${e.combatLevel ? ` (Lvl ${e.combatLevel})` : ''}`).join('\n');
-                
+
                 return ok({ output, data: res.value });
             }
         });
@@ -1449,11 +1486,11 @@ export class OrchestrateEngine {
                 const { name } = args as { name: string };
                 const res = await this.cacheForensics.crossReferenceItem(name);
                 if (!res.ok) return res as any;
-                
+
                 const output = `Cross-Reference [${name}]:\n` +
                     `- Item Context: ${res.value.itemContext.name} (ID: ${res.value.itemContext.id})\n` +
                     `- Mapped Model IDs: ${res.value.rawModelIds.join(', ')}`;
-                
+
                 return ok({ output, data: res.value });
             }
         });
@@ -3055,6 +3092,30 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
             }).catch(() => { /* Non-blocking training persistence */ });
         }
 
+        // --- Phase 108: Stateful Overwritten Awareness ---
+        // Funnel diagnostic outputs directly into the biological memory substrate.
+        if (finalResult.ok && plan.tool && ['check_node_health', 'diagnostic_nexus', 'discover_capabilities', 'clinical_audit'].includes(plan.tool)) {
+            try {
+                // Inline import to avoid circular root dependencies if not already imported
+                const { resolveSovereignPath } = await import('../utils/SovereignPathResolver.js');
+                const { writeFileSync, mkdirSync, existsSync } = await import('fs');
+                const { dirname } = await import('path');
+
+                const awarenessPath = resolveSovereignPath('memory/awareness_state.md');
+                const dir = dirname(awarenessPath);
+                if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+
+                const content = `# Stateful Awareness Reflection\n**Tool**: ${plan.tool}\n**Goal**: ${plan.goal}\n**Timestamp**: ${new Date().toISOString()}\n\n## Output Log\n\`\`\`\n${finalResult.value.output}\n\`\`\`\n`;
+                writeFileSync(awarenessPath, content, 'utf8');
+
+                // Embed into VectorDB for semantic retrieval
+                await this.vectorDB.autoIndexFile(awarenessPath, 'global');
+                this.renderer.success(`🧠 [Cognitive Engram] Output synthesized into stateful VectorDB awareness.`);
+            } catch (err) {
+                logger.error({ err }, 'Failed to persist stateful overwritten awareness');
+            }
+        }
+
         // Phase 53: Meta-Cognitive Reflection Engine
         const toolId = String(plan.tool);
         const skipReflection = plan.interaction === 'silent' ||
@@ -3274,6 +3335,120 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         }, 'SOVEREIGN SELF-MODIFICATION: Complete.');
 
         return { ok: true, value: { commit, hexagram: sym, linesGenerated } };
+    }
+
+    /**
+     * Phase 9: Retrospective Cognition
+     * Analyzes task outcomes and extracts profound lessons.
+     */
+    private async conductCognitiveRetrospective(task: string, narrative: string, finalOutput: string, plan: Plan): Promise<void> {
+        this.renderer.info('\x1b[38;5;208m[🧠 Retrospective]\x1b[0m Distilling profound lessons...');
+
+        try {
+            // 1. Get recent consequences (tool outcomes)
+            const consequences = await this.trainingCollector.getRecentConsequences(5);
+
+            // Phase 9.5: Command Readout Analysis (User Logic)
+            // Extract CLI signals from finalOutput to touch "all points when learning from command readouts"
+            const cliSignals = finalOutput.match(/(Step Id: \d+|(The following changes were made|Encountered error in step execution|successfully applied|target content not found):?.*)/gi) || [];
+            const cliContext = cliSignals.length > 0 ? `\n\x1b[38;5;86m[CLI READOUT SIGNALS]\x1b[0m\n${cliSignals.join('\n')}\n` : '';
+
+            const consequenceSummary = consequences.map(c => `- Tool: ${c.tool}, Success: ${c.success}, Outcome: ${c.output.substring(0, 100)}...`).join('\n');
+
+            // 2. Format reflection prompt
+            const reflectionPrompt = `
+Analyze the following task execution and extract a "Profound Lesson".
+TASK: "${task}"
+PLAN: ${plan.goal} (Tool: ${plan.tool})
+FINAL NARRATIVE: "${narrative}"
+
+${cliContext}
+
+RECENT TOOL CONSEQUENCES:
+${consequenceSummary}
+
+Output JSON ONLY:
+{
+    "thought": "Deep architectural reasoning about the outcome",
+    "action": "${plan.tool}",
+    "outcome": "${consequences.every(c => c.success) ? 'success' : consequences.some(c => c.success) ? 'partial' : 'failure'}",
+    "why": "Explanation of the success or failure factor",
+    "logic": ${consequences.every(c => c.success) ? 1 : consequences.some(c => c.success) ? 0 : -1},
+    "lesson": "A single sentence architectural or strategic insight",
+    "impact": "high|medium|low",
+    "categories": ["list", "of", "tags"],
+    "actionableAdvice": "What should the AI do differently next time?"
+}
+        `.trim();
+
+            // 3. Call Kimi for reflection
+            const res = await this.client.call({
+                model: this.config.fastPathModel,
+                prompt: reflectionPrompt,
+                systemPrompt: 'You are an advanced Meta-Cognitive Architect. Distill task outcomes into evolutionary wisdom.',
+                temperature: 0.3
+            });
+
+            if (res.ok) {
+                const insightRaw = extractJson(res.value.response);
+                const insightData = JSON.parse(insightRaw);
+
+                const insight: RetrospectiveInsight = {
+                    thought: insightData.thought || 'No thought captured',
+                    action: insightData.action || plan.tool || 'unknown',
+                    outcome: insightData.outcome || 'partial',
+                    why: insightData.why || 'No explanation provided',
+                    logic: insightData.logic ?? 0
+                };
+
+                // 4. Record the retrospective
+                const interpretation = this.router.getHexagram().getInterpretation();
+                const record: Omit<RetrospectiveRecord, 'timestamp' | 'sessionId'> = {
+                    task: task,
+                    narrative: narrative,
+                    insight: insight,
+                    yaoState: plan.yaoState,
+                    hexagram: interpretation.symbol || interpretation.binary
+                };
+                await this.trainingCollector.recordRetrospective(record);
+
+                // 5. Add to VectorDB for future recall
+                const lessonText = `[TASK]: ${task}\n[LESSON]: ${insightData.lesson}\n[ADVICE]: ${insightData.actionableAdvice}`;
+                const embedRes = await this.client.embed(lessonText);
+
+                if (embedRes.ok) {
+                    await this.vectorDB.addLesson({
+                        id: `retro_${Date.now()}`,
+                        text: lessonText,
+                        embedding: embedRes.value,
+                        projectId: 'global',
+                        domainNamespace: 'retrospective',
+                        type: 'retrospective',
+                        createdAt: Date.now(),
+                        metadata: {
+                            lesson: insightData.lesson,
+                            advice: insightData.actionableAdvice,
+                            impact: insightData.impact,
+                            categories: insightData.categories,
+                            originalTask: task
+                        }
+                    });
+
+                    // 6. Update Hexagram Line 1 (Foundation)
+                    this.router.getHexagram().pushLine({
+                        lineIndex: 0,
+                        title: 'Retrospective Foundation',
+                        content: insightData.lesson,
+                        state: YaoState.OldYang,
+                        importance: 1
+                    });
+
+                    this.renderer.success(`[🧠 Retrospective] Lesson anchored: ${insightData.lesson}`);
+                }
+            }
+        } catch (err) {
+            logger.warn({ err: (err as Error).message }, 'Failed to conduct retrospective');
+        }
     }
 
     /**
