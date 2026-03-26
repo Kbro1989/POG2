@@ -1,5 +1,9 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { VisionActuationHarness } from '../engines/VisionActuationHarness.js';
 import { ChromanumberEngine } from '../engines/ChromanumberEngine.js';
+import { SpatialVisionEngine } from '../engines/SpatialVisionEngine.js';
+import { Renderer } from '../ui/Renderer.js';
 import { ModelClient } from '../clients/ModelClient.js';
 import { SovereignConfig } from '../config/SovereignConfig.js';
 import { createLogger } from '../utils/logger.js';
@@ -19,28 +23,33 @@ async function runLiveCycle() {
 
     const config: SovereignConfig = {
         visionModel: 'ollama:llava',
-        generationModel: 'kimi-k2.5:cloud',
+        codingHeavyModel: 'kimi-k2.5:cloud',
+        codingFastModel: 'ollama:qwen2.5-coder:1.5b',
         ollamaBaseUrl: 'http://localhost:11434',
-        midPathModel: 'kimi-k2.5:cloud',
     } as any;
 
     const client = new ModelClient(config);
-    const engine = new ChromanumberEngine(client, config);
-    const harness = new VisionActuationHarness(engine);
+    const renderer = new Renderer();
+    const spatialVision = new SpatialVisionEngine(config, renderer);
+    const engine = new ChromanumberEngine();
+    const harness = new VisionActuationHarness(engine, spatialVision);
 
     // Target file for mutation
-    const targetFile = path.resolve('tmp_rsmv_inspect/src/3d/test_substrate.ts');
+    const targetFile = path.resolve('rsmv/src/3d/test_substrate.ts');
     const backupFile = targetFile + '.bak';
 
     try {
+        if (!existsSync(targetFile)) {
+             logger.warn({ targetFile }, 'Target substrate not found. Skipping physical mutation.');
+             return;
+        }
+
         // 1. Create backup
         logger.info({ targetFile }, 'Creating substrate backup');
         copyFileSync(targetFile, backupFile);
 
         // 2. Run Cycle
-        // We simulate a URL (e.g., pointing to a local file or generic site)
-        // In a real scenario, this would be the RSMV viewer URL.
-        const testUrl = 'https://example.com'; 
+        const testUrl = 'https://example.com';
         const prompt = 'Mutate the shader in test_substrate to use a crimson (#DC143C) aesthetic for the primary color.';
 
         logger.info('Triggering perception-action loop...');
@@ -48,7 +57,7 @@ async function runLiveCycle() {
 
         if (result.ok && result.value.success) {
             logger.info({ details: result.value.details }, 'CYCLE SUCCESSFUL');
-            
+
             // 3. Verify Mutation
             const content = readFileSync(targetFile, 'utf-8');
             if (content.includes('#DC143C')) {
@@ -57,7 +66,7 @@ async function runLiveCycle() {
                 logger.error('VERIFICATION FAILED: Mutation not found in file content.');
             }
         } else {
-            logger.error({ 
+            logger.error({
                 error: result.ok ? 'Actuation reported failure' : result.error?.message,
                 details: result.ok ? result.value.details : undefined
             }, 'CYCLE FAILED');
@@ -70,7 +79,6 @@ async function runLiveCycle() {
         if (existsSync(backupFile)) {
             logger.info('Restoring substrate integrity');
             copyFileSync(backupFile, targetFile);
-            // In a real run, we might keep it, but for a test we cleanup.
         }
         await harness.shutdown();
         logger.info('Live Vision Loop terminated.');

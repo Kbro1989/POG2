@@ -14,6 +14,8 @@ const logger = createLogger('SwitchboardLimb');
 export class SwitchboardLimb {
     private wss: WebSocketServer | null = null;
     private server: HttpServer | null = null;
+    injectSubstrates: any;
+    startWithGracefulPort: any;
 
     constructor() { }
 
@@ -112,7 +114,7 @@ export class SwitchboardLimb {
         return {
             online: isOnline,
             retryable: !isOnline, // Allow NodeTester to retry if not yet listening
-            details: isOnline 
+            details: isOnline
                 ? `Switchboard Bridge Active: ${this.wss?.clients.size || 0} remote mirroring links.`
                 : 'Switchboard Bridge Offline.'
         };

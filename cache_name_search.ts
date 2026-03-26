@@ -12,6 +12,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { getCachePedagogyFile } from './src/utils/SovereignPathResolver.js';
 
 // ─── Types ───
 interface CacheEntry {
@@ -36,11 +37,10 @@ interface SearchOutput {
 }
 
 // ─── Config ───
-const DATA_DIR = path.resolve(import.meta.dirname || __dirname);
 const FILES: Record<string, string> = {
-    npc: path.join(DATA_DIR, 'npcs.json'),
-    item: path.join(DATA_DIR, 'items.json'),
-    object: path.join(DATA_DIR, 'objects.json'),
+    npc: getCachePedagogyFile('npcs.json'),
+    item: getCachePedagogyFile('items.json'),
+    object: getCachePedagogyFile('objects.json'),
 };
 
 // ─── Search Engine ───

@@ -69,7 +69,13 @@ async function testKBDRoar() {
         visualPrompts: ['A cinematic 3D render of the King Black Dragon roaring, 4k, volumetric lighting, dark dungeon atmosphere'],
         speaker: 'KBD',
         styleInfluence: 'High-fidelity cinematic drama',
-        prosody: { chaos: 0.8, whimsy: 0, darkTone: 0.9, coherence: 0.7 }
+        prosody: { chaos: 0.8, whimsy: 0, darkTone: 0.9, coherence: 0.7 },
+        spotAnimId: 0,
+        callSignals: undefined,
+        audioId: 0,
+        boneCount: undefined,
+        isSkeletal: undefined,
+        dataType: ''
     };
 
     // Accessing the pipeline directly for the test

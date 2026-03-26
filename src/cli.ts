@@ -9,6 +9,8 @@
  * Rules: NO MOCKS, NO PLACEHOLDERS, REAL implementations only.
  */
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { program, Command } from 'commander';
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -218,7 +220,7 @@ export async function main(): Promise<void> {
         .command('init')
         .description('Initialize or repair Sovereign Context files and environmental substrates')
         .option('--force', 'Force re-initialization of core directories', false)
-        .action(async (opts) => {
+        .action(async (opts: any) => {
             bootstrapWorkspace(renderer);
 
             const root = getSovereignRoot();
@@ -253,7 +255,7 @@ export async function main(): Promise<void> {
         .command('process <intent>')
         .description('Execute a single task managed by Kimi')
         .option('-y, --yes', 'Execute without biological confirmation (Auto-proceed)', false)
-        .action(async (intent: string, opts) => {
+        .action(async (intent: string, opts: { yes: any; }) => {
             if (opts.yes) process.env['POG2_AUTO_PROCEED'] = '1';
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.run(intent);
@@ -303,7 +305,7 @@ export async function main(): Promise<void> {
         .command('dispatch <capabilityId> <payload>')
         .description('Directly invoke an AI capability via the Dispatcher substrate')
         .option('-m, --model <id>', 'Override target model')
-        .action(async (capabilityId: string, payload: string, opts) => {
+        .action(async (capabilityId: string, payload: string, opts: { model: any; }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
                 goal: `Invoke capability: ${capabilityId}`,
@@ -344,7 +346,7 @@ export async function main(): Promise<void> {
         .command('consult-memetics [query]')
         .description('Consult browser history for research kernels from the global memetic substrate')
         .option('-l, --limit <n>', 'Number of entries to return', '10')
-        .action(async (query: string | undefined, opts) => {
+        .action(async (query: string | undefined, opts: { limit: string; }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
                 goal: `Consult memetic substrate: ${query || 'recent'}`,
@@ -365,7 +367,7 @@ export async function main(): Promise<void> {
         .command('consult-syntropy')
         .description('Harmonize external metadata from .claude and .gemini substrates')
         .option('-t, --type <type>', 'Filter: personas, history, todos, extensions', 'all')
-        .action(async (opts) => {
+        .action(async (opts: { type: any; }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
                 goal: `Harmonize syntropy: ${opts.type}`,
@@ -389,7 +391,7 @@ export async function main(): Promise<void> {
         .command('health')
         .description('Deep clinical audit of all neurological substrates (Alias for system health)')
         .option('--json', 'Output health report in JSON format', false)
-        .action(async (opts) => {
+        .action(async (opts: { json: any; }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
                 goal: 'Clinical health audit',
@@ -456,7 +458,7 @@ export async function main(): Promise<void> {
         .command('status')
         .description('Neuro-system status and hierarchical routing diagnostics')
         .option('-r, --routing', 'Show detailed hierarchical model routing mapping')
-        .action(async (opts) => {
+        .action(async (opts: { routing: any; }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             if (opts.routing) {
                 await router.route('Yin');
@@ -498,7 +500,7 @@ export async function main(): Promise<void> {
         .command('health')
         .description('Deep clinical audit of all neurological substrates and neural nodes')
         .option('--json', 'Output health report in JSON format', false)
-        .action(async (opts) => {
+        .action(async (opts: { json: any; }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
                 goal: 'Detailed health audit',
@@ -742,7 +744,7 @@ export async function main(): Promise<void> {
         .description('Perform a quick edit/insert at current file or position')
         .option('-l, --line <number>', 'Line index (0-based)')
         .option('-c, --col <number>', 'Column index (0-based)')
-        .action(async (file: string, text: string, opts) => {
+        .action(async (file: string, text: string, opts: { line: string; col: string; }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
                 goal: `Quick edit: ${file}`,
@@ -838,7 +840,7 @@ export async function main(): Promise<void> {
         .command('ingest <id> <title> <author>')
         .description('Download and store a book')
         .option('-d, --domain <domain>', 'Target domain (default: general)')
-        .action(async (id: string, title: string, author: string, opts) => {
+        .action(async (id: string, title: string, author: string, opts: { domain: any; }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
                 goal: `Ingest book: ${title}`,
@@ -919,7 +921,7 @@ export async function main(): Promise<void> {
         .command('storyboard <id>')
         .description('Generate narrative scenes and visual prompts from a book\'s literary style')
         .option('-s, --scenes <count>', 'Number of scenes to generate', '5')
-        .action(async (id: string, opts) => {
+        .action(async (id: string, opts: { scenes: string; }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
                 goal: `Storyboard generation: Book ${id}`,
@@ -943,14 +945,14 @@ export async function main(): Promise<void> {
         .command('rsmv')
         .description('RSMV inspection & one-shot CLI access')
         .option('--view <modelId>', 'View model via RSMV')
-        .action(async (options) => {
+        .action(async (options: { view: any; }) => {
             const modelId = options.view;
             if (!modelId) return console.error('No modelId provided');
 
             // Spawn one-shot RSMV process
             const { spawn } = await import('child_process');
             const cachePath = getRSMVCachePath();
-            const subprocess = spawn('npx', ['tsx', 'tmp_rsmv_inspect/index.ts', '--model', modelId, '--cache', cachePath], {
+            const subprocess = spawn('npx', ['tsx', 'rsmv/index.ts', '--model', modelId, '--cache', cachePath], {
                 stdio: 'inherit',
             });
 
@@ -975,7 +977,7 @@ export async function main(): Promise<void> {
         .option('--personality <archetype>', 'Narration personality (e.g., sarcastic, epic, scholar)')
         .option('--no-voice', 'Skip voice generation')
         .option('--no-video', 'Skip final video assembly')
-        .action(async (bookId, options) => {
+        .action(async (bookId: string, options: { scenes: string; personality: any; voice: any; video: any; feedback: any; }) => {
             const sceneCount = options.scenes === 'all' ? -1 : parseInt(options.scenes);
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
@@ -1007,7 +1009,7 @@ export async function main(): Promise<void> {
         .option('--personality <archetype>', 'Narration personality')
         .option('--no-voice', 'Skip voice generation')
         .option('--no-video', 'Skip final video assembly')
-        .action(async (options) => {
+        .action(async (options: { scenes: string; personality: any; voice: any; video: any; }) => {
             const sceneCount = options.scenes === 'all' ? -1 : parseInt(options.scenes);
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
@@ -1106,7 +1108,7 @@ export async function main(): Promise<void> {
             .requiredOption('-t, --type <type>', 'Memory type (combat | skilling | drop | reward | threat)')
             .option('-c, --content <text>', 'Specific event pattern', 'Manual interaction')
             .option('-w, --weight <float>', 'Experience intensity', '1.0')
-            .action(async (id: string, opts) => {
+            .action(async (id: string, opts: { type: any; content: any; weight: string; }) => {
                 const limb = new EntityLimb();
                 const memory = {
                     type: opts.type,
@@ -1135,15 +1137,15 @@ export async function main(): Promise<void> {
             .action(async (id: string) => {
                 const limb = new EntityLimb();
                 renderer.info(`Querying Behavioral Engine for ${id}...`);
-                
+
                 const decisionRes = await limb.decideAction(id);
                 if (decisionRes.ok) {
                     const { action, yao, reasoning } = decisionRes.value;
                     const yaoSymbol = yao === YaoState.OldYang ? 'â•²' : (yao === YaoState.OldYin ? 'â•¹' : (yao === YaoState.YoungYang ? 'â• ' : 'â•‹'));
-                    
+
                     renderer.log(`\n\x1b[38;5;154m[DECISION]\x1b[0m \x1b[1m${action.toUpperCase()}\x1b[0m`);
                     renderer.log(`\x1b[38;5;244mReasoning:\x1b[0m ${reasoning}`);
-                    renderer.log(`\x1b[38;5;208mCognitive State:\x1b[0m ${yaoSymbol} [Yao: ${ YaoState[yao] }]`);
+                    renderer.log(`\x1b[38;5;208mCognitive State:\x1b[0m ${yaoSymbol} [Yao: ${YaoState[yao]}]`);
 
                     // Close the loop
                     renderer.info(`Executing and reinforcing pattern...`);
@@ -1185,7 +1187,7 @@ export async function main(): Promise<void> {
 
                 renderer.info(`Fetching HiScores for ${name}...`);
                 const res = await hiscore.fetchStats(name);
-                
+
                 if (res.ok) {
                     renderer.json(res.value);
                     await limb.updatePlayerIdentity(id, { name, stats: res.value });
@@ -1221,12 +1223,12 @@ export async function main(): Promise<void> {
     ped
         .option('--ground-quest <id>', 'Ground a quest in functional Varbit logic')
         .option('--verify-state-machine', 'Verify the state machine of the grounded quest')
-        .action(async (options) => {
+        .action(async (options: { groundQuest: string; verifyStateMachine: any; }) => {
             if (options.groundQuest) {
                 const questId = parseInt(options.groundQuest);
                 const vectorDB = new VectorDB({ client });
                 const limb = new PedagogyLimb(router, vectorDB, client);
-                
+
                 if (options.verifyStateMachine) {
                     renderer.info(`Verifying State Machine for Quest ${questId}...`);
                     const res = await limb.verifyStateMachine(questId);
@@ -1261,10 +1263,10 @@ export async function main(): Promise<void> {
         .action(async (id: string) => {
             const vectorDB = new VectorDB({ client });
             const limb = new KinematicsLimb(router, vectorDB, client);
-            
+
             renderer.info(`Initiating Forensic Kinematic Extractions ID: ${id}...`);
             const res = await limb.extractKinematics(parseInt(id));
-            
+
             if (res.ok) {
                 renderer.success(`Kinematic Profile Extracted for Sequence ${id}`);
                 console.log(JSON.stringify(res.value, null, 2));
@@ -1278,13 +1280,13 @@ export async function main(): Promise<void> {
         .description('Bind a kinematic sequence to a semantic state (e.g., IDLE, WALK)')
         .requiredOption('-s, --state <name>', 'Semantic state name')
         .option('-a, --actor <id>', 'Specific actor/NPC ID to bind to')
-        .action(async (id: string, opts) => {
+        .action(async (id: string, opts: { state: string; actor: string | undefined; }) => {
             const vectorDB = new VectorDB({ client });
             const limb = new KinematicsLimb(router, vectorDB, client);
-            
+
             renderer.info(`Binding Sequence ${id} to state ${opts.state}...`);
             const res = await limb.bindSequenceToState(parseInt(id), opts.state, opts.actor);
-            
+
             if (res.ok) {
                 renderer.success(`Kinematic Binding Consolidated in Pedagogy Substrate.`);
                 console.log(JSON.stringify(res.value, null, 2));
@@ -1299,13 +1301,13 @@ export async function main(): Promise<void> {
         .requiredOption('-p, --principle <name>', 'Name of the principle to archive')
         .requiredOption('-s, --source <substrate>', 'Source of the wisdom (e.g., phase_6_complete)')
         .option('-c, --confidence <float>', 'Clinical confidence level (0.0-1.0)', '0.99')
-        .action(async (opts) => {
+        .action(async (opts: { principle: string; source: string; confidence: string; }) => {
             const vectorDB = new VectorDB({ client });
             const limb = new PedagogyLimb(router, vectorDB, client);
-            
+
             renderer.info(`Archiving Principle: ${opts.principle}...`);
             const res = await limb.storePrinciple(opts.principle, opts.source, parseFloat(opts.confidence));
-            
+
             if (res.ok) {
                 renderer.success(`Principle anchored to neurological memory: ${res.value.id}`);
             } else {
@@ -1471,7 +1473,7 @@ export async function main(): Promise<void> {
     gen.command('jsdoc <file>')
         .description('Generate JSDoc for a file')
         .option('-m, --model <model>', 'Override model selection')
-        .action(async (file: string, opts) => {
+        .action(async (file: string, opts: { model: any; }) => {
             if (!existsSync(file)) {
                 renderer.error(`File not found: ${file}`);
                 return;
@@ -1494,7 +1496,7 @@ export async function main(): Promise<void> {
         .option('-m, --model <model>', 'Override model selection')
         .option('--improve', 'Improve existing code at --file instead of generating from scratch')
         .option('--adversarial', 'Enable 3-agent adversarial validation loop', false)
-        .action(async (task: string, opts) => {
+        .action(async (task: string, opts: { lang: any; file: any; model: any; improve: any; adversarial: any; }) => {
             const complexity = await router.classify(task);
             logger.info({ task: task.substring(0, 60), complexity }, 'Generating code');
 
@@ -1516,7 +1518,7 @@ export async function main(): Promise<void> {
         .command('jsdoc <file>')
         .description('Generate JSDoc/inline documentation for a source file')
         .option('-m, --model <model>', 'Override model selection')
-        .action(async (file: string, opts) => {
+        .action(async (file: string, opts: { model: any; }) => {
             if (!existsSync(file)) {
                 renderer.error(`File not found: ${file}`);
                 return;
@@ -1536,7 +1538,7 @@ export async function main(): Promise<void> {
         .description('Generate integration tests for a source file (NO MOCKS)')
         .option('-m, --model <model>', 'Override model selection')
         .option('-o, --output <path>', 'Output test file path')
-        .action(async (file: string, opts) => {
+        .action(async (file: string, opts: { output: any; model: any; }) => {
             if (!existsSync(file)) {
                 renderer.error(`File not found: ${file}`);
                 return;
@@ -1557,7 +1559,7 @@ export async function main(): Promise<void> {
         .description('Refactor a source file according to sovereign laws')
         .option('-m, --model <model>', 'Override model selection')
         .option('--rules <rules>', 'Additional rules to enforce (comma-separated)')
-        .action(async (file: string, opts) => {
+        .action(async (file: string, opts: { model: any; rules: string; }) => {
             if (!existsSync(file)) {
                 renderer.error(`File not found: ${file}`);
                 return;
@@ -1583,7 +1585,7 @@ export async function main(): Promise<void> {
         .description('Adversarial code review with ternary severity scoring')
         .option('-m, --model <model>', 'Override model selection')
         .option('--strict', 'Enforce all sovereign laws strictly', false)
-        .action(async (file: string, opts) => {
+        .action(async (file: string, opts: { model: any; strict: any; }) => {
             if (!existsSync(file)) {
                 renderer.error(`File not found: ${file}`);
                 return;
@@ -1604,7 +1606,7 @@ export async function main(): Promise<void> {
         .description('Generate a deep explanation of what a file does and why')
         .option('-m, --model <model>', 'Override model selection')
         .option('--section <lines>', 'Only explain a section (format: start:end)')
-        .action(async (file: string, opts) => {
+        .action(async (file: string, opts: { section: string; model: any; }) => {
             if (!existsSync(file)) {
                 renderer.error(`File not found: ${file}`);
                 return;
@@ -1633,7 +1635,7 @@ export async function main(): Promise<void> {
         .description('Autonomously fix TypeScript/lint errors in a file')
         .option('-m, --model <model>', 'Override model selection')
         .option('--dry-run', 'Preview changes without writing to disk', false)
-        .action(async (file: string, opts) => {
+        .action(async (file: string, opts: { model: any; dryRun: any; }) => {
             if (!existsSync(file)) {
                 renderer.error(`File not found: ${file}`);
                 return;
@@ -1653,7 +1655,7 @@ export async function main(): Promise<void> {
         .command('diff <fileA> <fileB>')
         .description('Semantic diff between two files â€” explains changes in natural language')
         .option('-m, --model <model>', 'Override model selection')
-        .action(async (fileA: string, fileB: string, opts) => {
+        .action(async (fileA: string, fileB: string, opts: { model: any; }) => {
             if (!existsSync(fileA)) { renderer.error(`File not found: ${fileA}`); process.exit(1); }
             if (!existsSync(fileB)) { renderer.error(`File not found: ${fileB}`); process.exit(1); }
 
@@ -1678,7 +1680,7 @@ export async function main(): Promise<void> {
         .option('--project <id>', 'Project ID to associate embeddings with')
         .option('--force', 'Re-index even if already indexed', false)
         .option('--exclude <patterns>', 'Comma-separated glob patterns to exclude')
-        .action(async (path: string, opts) => {
+        .action(async (path: string, opts: { project: any; force: any; }) => {
             if (!existsSync(path)) {
                 renderer.error(`Path not found: ${path}`);
                 return;
@@ -1700,7 +1702,7 @@ export async function main(): Promise<void> {
         .option('-n, --limit <number>', 'Number of results to return', '5')
         .option('-t, --threshold <score>', 'Minimum similarity score (0.0-1.0)', '0.0')
         .option('--project <id>', 'Filter by project ID')
-        .action(async (query: string, opts) => {
+        .action(async (query: string, opts: { limit: string; threshold: string; project: any; }) => {
             const engine = new EmbedEngine(config, renderer, router);
             const result = await engine.search({
                 query,
@@ -1716,7 +1718,7 @@ export async function main(): Promise<void> {
         .command('similarity <fileA> <fileB>')
         .description('Compute semantic similarity score between two files')
         .option('--metadata', 'Include detailed metadata in output', false)
-        .action(async (fileA: string, fileB: string, opts) => {
+        .action(async (fileA: string, fileB: string, opts: { metadata: any; }) => {
             if (!existsSync(fileA)) { renderer.error(`File not found: ${fileA}`); process.exit(1); }
             if (!existsSync(fileB)) { renderer.error(`File not found: ${fileB}`); process.exit(1); }
 
@@ -1777,7 +1779,7 @@ export async function main(): Promise<void> {
         .command('compress')
         .description('Compress the learning VectorDB by vacuuming and removing old entries')
         .option('--days <n>', 'Number of days of memory to keep', '30')
-        .action(async (opts) => {
+        .action(async (opts: { days: string; }) => {
             const maintenance = new DBMaintenance();
             const res = await maintenance.compress(parseInt(opts.days));
             if (res.ok) renderer.success(`Memory compressed. Removed ${res.value} old entries.`);
@@ -1804,7 +1806,7 @@ export async function main(): Promise<void> {
         .description('Get code completion at a specific cursor position')
         .option('-m, --model <model>', 'Override model selection')
         .option('-n, --count <n>', 'Number of completion candidates', '3')
-        .action(async (file: string, line: string, col: string, opts) => {
+        .action(async (file: string, line: string, col: string, opts: { count: string; model: any; }) => {
             if (!existsSync(file)) {
                 renderer.error(`File not found: ${file}`);
                 return;
@@ -1827,7 +1829,7 @@ export async function main(): Promise<void> {
         .description('Fill in missing implementations (TODO markers, empty stubs)')
         .option('-m, --model <model>', 'Override model selection')
         .option('--dry-run', 'Preview completions without writing', false)
-        .action(async (file: string, opts) => {
+        .action(async (file: string, opts: { dryRun: any; model: any; }) => {
             if (!existsSync(file)) {
                 renderer.error(`File not found: ${file}`);
                 return;
@@ -1848,7 +1850,7 @@ export async function main(): Promise<void> {
         .description('Continue an incomplete file from where it left off')
         .option('-m, --model <model>', 'Override model selection')
         .option('--lines <n>', 'Target continuation length in lines', '50')
-        .action(async (file: string, opts) => {
+        .action(async (file: string, opts: { lines: string; model: any; }) => {
             if (!existsSync(file)) {
                 renderer.error(`File not found: ${file}`);
                 return;
@@ -1875,7 +1877,7 @@ export async function main(): Promise<void> {
         .option('-t, --template <name>', 'Cloudflare template to use as base')
         .option('-s, --synthetic', 'Forge a novel application by synthesizing patterns')
         .option('-p, --path <path>', 'Destination directory', '.')
-        .action(async (prompt: string, opts) => {
+        .action(async (prompt: string, opts: { path: string; template: any; synthetic: any; }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
                 goal: `Scaffold webapp: ${prompt}`,
@@ -2019,7 +2021,7 @@ export async function main(): Promise<void> {
         .command('forge <prompt>')
         .description('Professional image/visual generation via Flux')
         .option('-m, --model <model>', 'Override model selection')
-        .action(async (prompt: string, opts) => {
+        .action(async (prompt: string, opts: { model: any; }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.run(`forge a visual substrate for: ${prompt}${opts.model ? ` using ${opts.model}` : ''}`);
             handleResult(result, renderer, state);
@@ -2029,7 +2031,7 @@ export async function main(): Promise<void> {
         .command('score <prompt>')
         .description('Procedural background audio scoring via ffmpeg')
         .option('-d, --duration <n>', 'Duration in seconds', '10')
-        .action(async (prompt: string, opts) => {
+        .action(async (prompt: string, opts: { duration: any; }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.run(`score a background soundtrack for: ${prompt} with duration ${opts.duration}s`);
             handleResult(result, renderer, state);
@@ -2048,7 +2050,7 @@ export async function main(): Promise<void> {
         .command('absorb <prompt> <response>')
         .description('Absorb a CLI interaction into the training substrate')
         .option('-c, --category <cat>', 'Training category', 'general')
-        .action(async (prompt: string, response: string, opts) => {
+        .action(async (prompt: string, response: string, opts: { category: any; }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
                 goal: `Absorb training interaction: ${opts.category}`,
@@ -2069,7 +2071,7 @@ export async function main(): Promise<void> {
         .command('serve')
         .description('Start the external Switchboard Bridge for remote orchestration and visual feedback')
         .option('-p, --port <number>', 'Port to listen on', config.wsPort.toString())
-        .action(async (opts) => {
+        .action(async (opts: { port: string; }) => {
             const port = parseInt(opts.port);
             renderer.info(`⚡ Awakening the Sovereign Bridge on port ${port}...`);
             const engine = new OrchestrateEngine(config, router, renderer);

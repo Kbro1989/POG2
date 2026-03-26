@@ -1,8 +1,11 @@
-import { GameCacheLoader } from './tmp_rsmv_inspect/src/cache/sqlite.js';
-import * as fs from 'fs';
-import { createRequire } from 'module';
 
+import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
+const { GameCacheLoader  } = require("./tmp_rsmv_inspect/src/cache/sqlite.js");
+import * as fs from 'fs';
+
+
+
 (global as any).__non_webpack_require__ = require;
 
 async function main() {

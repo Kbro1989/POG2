@@ -1,3 +1,8 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const {  GameCacheLoader  } = require("../../../rsmv/src/cache/sqlite.js");
+const {  EngineCache, ThreejsSceneCache  } = require("../../../rsmv/src/3d/modeltothree.js");
+const {  renderAppearance  } = require("../../../rsmv/src/headless/api.js");
 import { type Result, type DataType, type CacheData, err, ok } from '../../core/models.js';
 import { createLogger } from '../../utils/logger.js';
 import { JagexCacheReader } from '../../utils/JagexCacheReader.js';
@@ -7,9 +12,9 @@ import path from 'path';
 import { CacheForensicsLimb } from './CacheForensicsLimb.js';
 
 // Deep imports to integrate the actual physical translation pipeline from the user's rsmv_inspect lib
-import { GameCacheLoader } from '../../../tmp_rsmv_inspect/src/cache/sqlite.js';
-import { EngineCache, ThreejsSceneCache } from '../../../tmp_rsmv_inspect/src/3d/modeltothree.js';
-import { renderAppearance } from '../../../tmp_rsmv_inspect/src/headless/api.js';
+
+
+
 
 const logger = createLogger('CacheLearning');
 
@@ -37,16 +42,16 @@ export class CacheLearningLimb {
 
     constructor(cachePath: string, forensicsLimb: CacheForensicsLimb, extractionDir: string) {
         this.cachePath = cachePath;
-        
+
         // Phase 112: Intelligent Substrate Selection
         // If provided a directory, default to the model index (js5-47.jcache) for the primary reader.
         let effectivePath = cachePath;
         if (existsSync(cachePath) && path.extname(cachePath) === '') {
-             const modelPath = path.join(cachePath, 'js5-47.jcache');
-             if (existsSync(modelPath)) {
-                 effectivePath = modelPath;
-                 logger.info({ effectivePath }, 'Substrate directory detected; defaulting to model index.');
-             }
+            const modelPath = path.join(cachePath, 'js5-47.jcache');
+            if (existsSync(modelPath)) {
+                effectivePath = modelPath;
+                logger.info({ effectivePath }, 'Substrate directory detected; defaulting to model index.');
+            }
         }
 
         this.cacheReader = new JagexCacheReader(effectivePath);
@@ -98,7 +103,7 @@ export class CacheLearningLimb {
 
     private async ensureHeadlessPipeline() {
         if (!this.engineCache) {
-            logger.info('Booting headless WebGL JS5 Translation Pipeline (tmp_rsmv_inspect)...');
+            logger.info('Booting headless WebGL JS5 Translation Pipeline (rsmv)...');
             const source = new GameCacheLoader(this.cachePath);
             this.engineCache = await EngineCache.create(source);
             this.sceneCache = await ThreejsSceneCache.create(this.engineCache);
@@ -162,7 +167,7 @@ export class CacheLearningLimb {
 
     /**
      * Translates proprietary raw JS5 geometry model to a standard .gltf file for Blender
-     * using the actual physical tmp_rsmv_inspect pipeline.
+     * using the actual physical rsmv pipeline.
      */
     public async translateToObj(semanticName: string): Promise<Result<string>> {
         try {
@@ -205,10 +210,10 @@ export class CacheLearningLimb {
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
         const substrateOk = existsSync(this.cachePath);
         const readerOk = !!this.cacheReader;
-        
+
         // Deep substrate check
         let details = `JagexCacheReader: ${readerOk ? 'PRIMED' : 'UNINITIALIZED'} (Path: ${this.cachePath})`;
-        
+
         if (!substrateOk) {
             return { online: false, details: `${details} (ERROR: Substrate MISSING)` };
         }

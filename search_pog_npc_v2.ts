@@ -1,13 +1,19 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
+const { EngineCache  } = require("./tmp_rsmv_inspect/src/3d/modeltothree.js");
+const { GameCacheLoader  } = require("./tmp_rsmv_inspect/src/cache/sqlite.js");
+const { cacheMajors  } = require("./tmp_rsmv_inspect/src/constants.js");
+const { parse  } = require("./tmp_rsmv_inspect/src/opdecoder.js");
+
+
 if (typeof (globalThis as any).__non_webpack_require__ === 'undefined') {
     (globalThis as any).__non_webpack_require__ = require;
 }
 
-import { EngineCache } from './tmp_rsmv_inspect/src/3d/modeltothree.js';
-import { GameCacheLoader } from './tmp_rsmv_inspect/src/cache/sqlite.js';
-import { cacheMajors } from './tmp_rsmv_inspect/src/constants.js';
-import { parse } from './tmp_rsmv_inspect/src/opdecoder.js';
+
+
+
+
 
 async function searchNpcs() {
     const source = new GameCacheLoader('C:\\ProgramData\\Jagex\\RuneScape');

@@ -1,13 +1,17 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { GameCacheLoader  } = require("./rsmv/src/cache/sqlite.js");
+const { parse  } = require("./rsmv/src/opdecoder.js");
 /**
  * cache_enum_scanner.ts
  * Scans Major 8 (Enums) to find the RS3 Enum that defines Skills.
  */
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+
+
 (global as any).__non_webpack_require__ = require;
 
-import { GameCacheLoader } from './tmp_rsmv_inspect/src/cache/sqlite.js';
-import { parse } from './tmp_rsmv_inspect/src/opdecoder.js';
+
+
 
 const CACHE_PATH = 'C:\\ProgramData\\Jagex\\RuneScape';
 const MAJOR_ENUMS = 8;
@@ -15,7 +19,7 @@ const ARCH_SIZE = 256;
 
 async function main() {
     console.log(`\n🔬 Scanning Enums (Major 8) for Skill Definitions...`);
-    
+
     const cache = new GameCacheLoader(CACHE_PATH);
     (cache as any).buildnr = 940;
 
@@ -26,7 +30,7 @@ async function main() {
         const indices = await cache.getCacheIndex(MAJOR_ENUMS);
         for (const index of indices) {
             if (!index) continue;
-            
+
             try {
                 const archive = await cache.getArchiveById(MAJOR_ENUMS, index.minor);
                 for (const file of archive) {
@@ -34,14 +38,14 @@ async function main() {
                     try {
                         const raw = parse.enums.read(file.buffer, cache);
                         totalEnums++;
-                        
+
                         // We are looking for an Enum that maps integers to Strings (value_type2 === 115 's')
                         // and contains "Attack", "Strength", or "Necromancy"
                         let hasAttack = false;
                         let hasNecromancy = false;
-                        
+
                         let isStringValues = false;
-                        
+
                         const values = raw.stringArrayValue1 || raw.stringArrayValue2?.values;
                         if (values) {
                             for (const val of values) {
@@ -70,17 +74,17 @@ async function main() {
                             }
                         }
                     } catch (e) {
-                         // parse error
+                        // parse error
                     }
                 }
             } catch {
-                 // archive error
+                // archive error
             }
         }
     } catch (e) {
         console.error(e);
     }
-    
+
     cache.close();
     console.log(`\n  Scanned ${totalEnums} enums. Found ${foundEnums.length} matching skill enums.`);
 }

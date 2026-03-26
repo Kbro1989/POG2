@@ -1,3 +1,5 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';

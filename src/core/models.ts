@@ -3,6 +3,8 @@
  * Aggregator and Domain-Specific Taxonomy.
  */
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { join, basename } from 'path';
 // HealthReport and ServiceHealthState defined below to resolve broken import
 import { SovereignDomain } from '../types/SovereignDomain.js';
@@ -268,7 +270,7 @@ export interface EngineOutput {
  * ActuationIntent — CNS-driven structural or environmental change.
  */
 export interface ActuationIntent {
-    readonly action: 'mutate_shader' | 'capture_frame' | 'update_model' | 'ui_actuate' | 'rsmv_control';
+    readonly action: 'mutate_shader' | 'capture_frame' | 'update_model' | 'ui_actuate' | 'rsmv_control' | 'actuate_hud';
     readonly target: string;
     readonly parameters: Record<string, any>;
     readonly reasoning?: string;

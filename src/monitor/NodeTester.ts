@@ -1,3 +1,5 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { existsSync, readdirSync } from 'fs';
 import { join, basename, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -427,7 +429,7 @@ export class NodeTester {
                             return { ...this.nodeBase(node), status: 'OFFLINE', yaoState: YaoState.OldYin, details: `Template directory unreadable: ${(e as Error).message}` };
                         }
                     }
-                    if (node.path === 'tmp_rsmv_inspect') {
+                    if (node.path === 'rsmv') {
                         try {
                             const hasGlb = existsSync(join(fullPath, 'model.glb'));
                             const hasPng = existsSync(join(fullPath, 'model.png'));
@@ -496,7 +498,7 @@ export class NodeTester {
     private async structuralProbe(node: NeuralNode): Promise<NodeHealth> {
         const fullPath = join(this.projectRoot, node.path);
         // Simple file existence check was already done in probeNode()
-        
+
         try {
             // Check if file is non-empty and has basic TS/JS structural markers
             const stats = readdirSync(dirname(fullPath)); // Just to confirm dir access

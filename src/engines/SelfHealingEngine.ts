@@ -162,6 +162,72 @@ export class SelfHealingEngine {
         }
     }
 
+    /**
+     * Phase 29: Hexagram-Driven Health Healing
+     * Evaluates substrate degradation, checks the hexagram gate, and routes to CodeEngine if permissible.
+     */
+    public async healSubstrateError(nodeHealth: { path: string, role: string, category: string, status: string, details?: string }): Promise<{ decision: CognitiveChoice, reasoning: string }> {
+        const hexagram = this.hexagramManager;
+        const interpretation = hexagram.getInterpretation();
+        const strategy = interpretation.strategy.split(':')[0]?.trim() || '';
+        const yao = hexagram.getYaoState?.() || YaoState.YoungYang;
+
+        logger.info({ node: nodeHealth.role, status: nodeHealth.status, strategy }, 'Attempting substrate healing...');
+
+        const BLOCKING_STRATEGIES = ['FREEZE', 'ROLLBACK', 'PAUSE', 'DEEP_DORMANCY'];
+
+        // 1. Hexagram Gate
+        if (BLOCKING_STRATEGIES.includes(strategy) || yao === YaoState.OldMixed) {
+            await hexagram.pinCard(2, 'Healing Suspended', `Node ${nodeHealth.role} (${nodeHealth.status}) auto-repair blocked by ${strategy} strategy / chaotic state.`, yao);
+            return {
+                decision: CognitiveChoice.META,
+                reasoning: `Healing suspended due to ${strategy} strategy or OldMixed chaos. Node: ${nodeHealth.role} requires manual intervention.`
+            };
+        }
+
+        // 2. Acknowledge intent to heal
+        await hexagram.pinCard(2, 'Active Substrate Healing', `Initiating algorithmic repair protocols for ${nodeHealth.role}. Issue: ${nodeHealth.details || 'Unknown'}`, YaoState.OldYang);
+
+        // 3. Provider/Endpoint Healing
+        // For endpoints (e.g., 'ollama', 'cloudflare'), we route to the EndpointHealer
+        if (nodeHealth.category === 'PROVIDER') {
+            if ('getHealer' in this.executor) {
+                const healer = (this.executor as any).getHealer();
+                if (healer && typeof healer.diagnoseAndHeal === 'function') {
+                    logger.info({ provider: nodeHealth.role }, 'Routing degraded provider to EndpointHealer');
+                    const diag = await healer.diagnoseAndHeal(nodeHealth.role, nodeHealth.details || 'Unknown failure', undefined);
+                    return {
+                        decision: diag.resolved ? CognitiveChoice.SIMPLE : CognitiveChoice.META,
+                        reasoning: diag.resolved 
+                            ? `EndpointHealer successfully resolved ${nodeHealth.role}: ${diag.resolution}`
+                            : `EndpointHealer could not resolve ${nodeHealth.role}: ${diag.resolution}`
+                    };
+                }
+            }
+        }
+
+        // 4. Code-level Healing (Physical TS file fix)
+        // Ensure path exists and is a .ts file (avoids trying to run CodeEngine on virtual nodes or directories)
+        if (this.codeEngine && nodeHealth.path && nodeHealth.path.endsWith('.ts')) {
+            const absolutePath = require('path').join(process.cwd(), nodeHealth.path);
+            const fs = require('fs');
+            if (fs.existsSync(absolutePath)) {
+                logger.info({ file: absolutePath }, 'Routing degraded node to CodeEngine.fix()');
+                const fixRes = await this.codeEngine.fix({ filePath: absolutePath, dryRun: false });
+                
+                return {
+                    decision: fixRes.ok ? CognitiveChoice.SIMPLE : CognitiveChoice.META,
+                    reasoning: fixRes.ok ? `CodeEngine successfully applied algorithmic fix to ${nodeHealth.path}` : `CodeEngine algorithmic fix failed for ${nodeHealth.path}: ${fixRes.error}`
+                };
+            }
+        }
+
+        return {
+             decision: CognitiveChoice.META,
+             reasoning: `No explicit algorithmic repair path available for ${nodeHealth.role} (${nodeHealth.category}). Requires developer intervention.`
+        };
+    }
+
     public healthCheck(): { online: boolean; details: string } {
         const digOk = !!this.architectureDigest;
         const hexOk = !!this.hexagramManager;

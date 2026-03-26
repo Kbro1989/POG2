@@ -1,3 +1,5 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { spawn } from 'child_process';
 import { promises as fs, existsSync } from 'fs';
 import { join } from 'path';
@@ -21,19 +23,19 @@ export interface ModelModifications {
 export class RSMVController {
     private activeProcess: any = null;
 
-    constructor() {}
+    constructor() { }
 
     /**
      * Open a model in the RSMV viewer via one-shot CLI.
      */
     public async viewModel(modelId: string, mods?: ModelModifications): Promise<Result<ActuationResult>> {
         logger.info({ modelId, mods }, 'Requesting RSMV model view');
-        
+
         try {
             const cachePath = getRSMVCachePath();
             const args = [
-                'tsx', 'tmp_rsmv_inspect/src/headless/cli.ts',
-                '--model', modelId, 
+                'tsx', 'rsmv/src/headless/cli.ts',
+                '--model', modelId,
                 '--source', `cache:${cachePath}`,
                 '--analyze'
             ];
@@ -61,9 +63,9 @@ export class RSMVController {
                 this.activeProcess = null;
             });
 
-            return { 
-                ok: true, 
-                value: { success: true, details: `RSMV launched for model ${modelId}` } 
+            return {
+                ok: true,
+                value: { success: true, details: `RSMV launched for model ${modelId}` }
             };
         } catch (err) {
             return { ok: false, error: err as Error };
@@ -75,12 +77,12 @@ export class RSMVController {
      */
     public async exportGltf(modelId: string, outputPath: string, mods?: ModelModifications): Promise<Result<ActuationResult>> {
         logger.info({ modelId, outputPath, mods }, 'Executing 3D export actuation');
-        
+
         try {
             const cachePath = getRSMVCachePath();
             const args = [
-                'tsx', 'tmp_rsmv_inspect/src/headless/cli.ts',
-                '--model', modelId, 
+                'tsx', 'rsmv/src/headless/cli.ts',
+                '--model', modelId,
                 '--source', `cache:${cachePath}`,
                 '--analyze'
             ];
@@ -106,27 +108,27 @@ export class RSMVController {
                 subprocess.on('exit', async (code) => {
                     if (code === 0) {
                         try {
-                            const profilePath = join(process.cwd(), 'tmp_rsmv_inspect', 'pedagogy_profile.json');
+                            const profilePath = join(process.cwd(), 'rsmv', 'pedagogy_profile.json');
                             let profile = null;
                             if (existsSync(profilePath)) {
                                 const profileStr = await fs.readFile(profilePath, 'utf8');
                                 profile = JSON.parse(profileStr);
                             }
-                            resolve({ 
-                                ok: true, 
-                                value: { 
-                                    success: true, 
+                            resolve({
+                                ok: true,
+                                value: {
+                                    success: true,
                                     details: `Exported model ${modelId} to ${outputPath}`,
                                     data: { profile }
-                                } 
+                                }
                             });
                         } catch (e) {
-                            resolve({ 
-                                ok: true, 
-                                value: { 
-                                    success: true, 
-                                    details: `Exported model ${modelId} but profile capture failed: ${(e as Error).message}` 
-                                } 
+                            resolve({
+                                ok: true,
+                                value: {
+                                    success: true,
+                                    details: `Exported model ${modelId} but profile capture failed: ${(e as Error).message}`
+                                }
                             });
                         }
                     } else {
@@ -140,10 +142,10 @@ export class RSMVController {
     }
 
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
-        // Basic check: Ensure tmp_rsmv_inspect/src/cli.ts exists
+        // Basic check: Ensure rsmv/src/cli.ts exists
         const { existsSync } = await import('fs');
         const { join } = await import('path');
-        const substrateStatus = existsSync(join(process.cwd(), 'tmp_rsmv_inspect', 'src', 'headless', 'cli.ts'));
+        const substrateStatus = existsSync(join(process.cwd(), 'rsmv', 'src', 'headless', 'cli.ts'));
         return {
             online: substrateStatus,
             details: substrateStatus ? 'RSMV CLI substrate verified.' : 'RSMV CLI substrate missing or unlinked.'

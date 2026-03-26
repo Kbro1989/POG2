@@ -1,3 +1,5 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import { join } from 'path';
@@ -12,7 +14,7 @@ const logger = createLogger('TransientObserver');
  * TransientObserver — Coordinates the "Observe -> Distill -> Purge" pedagogy loop.
  */
 export class TransientObserver {
-    
+
     /**
      * Study a professional asset to learn its production norms.
      */
@@ -30,15 +32,15 @@ export class TransientObserver {
             const cachePath = getRSMVCachePath();
             const pedagogyProfilePath = join(process.cwd(), 'pedagogy_profile.json');
             const wikiContextPath = join(process.cwd(), 'wiki_context.json');
-            
+
             // Write wiki context to file to avoid shell escaping issues
             await fs.writeFile(wikiContextPath, JSON.stringify(wikiResult.value));
 
             // Spawn headless CLI with --analyze and --wiki (as file path)
             const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
             const subprocess = spawn(npxCmd, [
-                'tsx', 'tmp_rsmv_inspect/src/headless/cli.ts', 
-                '--model', modelId, 
+                'tsx', 'rsmv/src/headless/cli.ts',
+                '--model', modelId,
                 '--source', `cache:${cachePath}`,
                 '--analyze',
                 '--wiki', 'wiki_context.json'

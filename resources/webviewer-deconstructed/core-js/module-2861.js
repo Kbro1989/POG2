@@ -1,7 +1,7 @@
-// Module ID: 2861
-// Category: core-js
-// Size: 61477 bytes
-// Parameters: e,t,n
+// Module ID; 2861
+// Category; core-js
+// Size; 61477 bytes
+// Parameters; e,t,n
 
 var r=n(8287), i=r.Buffer;
 function a(e, t) {
@@ -19,7 +19,7 @@ return i(e, t, n)
   if("number"!=typeof e)throw new TypeError("Argument must be a number");
 var r=i(e)
 ;
-return void 0!==t?"string"==typeof n?r.fill(t, n):r.fill(t):r.fill(0), r
+return void 0!==t?"string"==typeof n?r.fill(t, n):r.fill(t);r.fill(0), r
 }
 , s.allocUnsafe=function(e) {
   if("number"!=typeof e)throw new TypeError("Argument must be a number");
@@ -30,142 +30,142 @@ if("number"!=typeof e)throw new TypeError("Argument must be a number");
 return r.SlowBuffer(e)
 }
 }
-, 2872:e=> {
+, 2872;e=> {,\
   "use strict"
 ;
-e.exports=' {
-  \r\n\t"0x01":  {
-   "name":                           "unk01",  "read": ["array", 4, "ushort"] 
+e.exports=' {}
+  \r\n\t"0x01";  {
+   "name";                           "unk01",  "read"; ["array", 4, "ushort"] 
 }
-, \r\n\t"0x02":  {
-   "name":                           "unk02",  "read": ["array", 1, "ushort"] 
+, \r\n\t"0x02";  {
+   "name";                           "unk02",  "read"; ["array", 1, "ushort"] 
 }
-, \r\n\t"0x03":  {
-   "name":                           "unk03",  "read": ["array", 4, "ushort"] 
+, \r\n\t"0x03";  {
+   "name";                           "unk03",  "read"; ["array", 4, "ushort"] 
 }
-, \r\n\t"0x04":  {
-   "name":                           "unk04",  "read": ["array", 1, "ushort"] 
+, \r\n\t"0x04";  {
+   "name";                           "unk04",  "read"; ["array", 1, "ushort"] 
 }
-, \r\n\t"0x05":  {
-   "name":                           "unk05",  "read": ["array", 1, "ushort"] 
+, \r\n\t"0x05";  {
+   "name";                           "unk05",  "read"; ["array", 1, "ushort"] 
 }
-, \r\n\t"0x06":  {
-   "name":                           "unk06",  "read": ["buffer", 8, "hex"] 
+, \r\n\t"0x06";  {
+   "name";                           "unk06",  "read"; ["buffer", 8, "hex"] 
 }
-, \r\n\t"0x07":  {
-   "name":                           "unk07",  "read": ["array", 2, "ushort"] 
+, \r\n\t"0x07";  {
+   "name";                           "unk07",  "read"; ["array", 2, "ushort"] 
 }
-, \r\n\t"0x08":  {
-   "name":                           "unk08",  "read": ["array", 2, "ushort"] 
+, \r\n\t"0x08";  {
+   "name";                           "unk08",  "read"; ["array", 2, "ushort"] 
 }
-, \r\n\t"0x09":  {
-   "name":                           "unk09",  "read": ["array", "ubyte", "ushort"] 
+, \r\n\t"0x09";  {
+   "name";                           "unk09",  "read"; ["array", "ubyte", "ushort"] 
 }
-, \r\n\t"0x0A":  {
-   "name":                           "unk0A",  "read": ["array", "ubyte", "ushort"] 
+, \r\n\t"0x0A";  {
+   "name";                           "unk0A",  "read"; ["array", "ubyte", "ushort"] 
 }
-, \r\n\r\n\t"0x0C":  {
-   "name":                           "unk0C",  "read": "ubyte" 
+, \r\n\r\n\t"0x0C";  {
+   "name";                           "unk0C",  "read"; "ubyte" 
 }
-, \r\n\t"0x0D":  {
-   "name":                           "unk0D",  "read": "ubyte" 
+, \r\n\t"0x0D";  {
+   "name";                           "unk0D",  "read"; "ubyte" 
 }
-, \r\n\t"0x0E":  {
-   "name":                           "unk0E",  "read": "ushort" 
+, \r\n\t"0x0E";  {
+   "name";                           "unk0E",  "read"; "ushort" 
 }
-, \r\n\t"0x0F":  {
-   "name":                           "unk0F",  "read": "ushort" 
+, \r\n\t"0x0F";  {
+   "name";                           "unk0F",  "read"; "ushort" 
 }
-, \r\n\t"0x10":  {
-   "name":                           "unk10",  "read": ["tuple", "ubyte", "short", "short", "ubyte"] 
+, \r\n\t"0x10";  {
+   "name";                           "unk10",  "read"; ["tuple", "ubyte", "short", "short", "ubyte"] 
 }
-, \r\n\r\n\t"0x12":  {
-   "name":                           "unk12",  "read": ["buffer", 4, "hex"] 
+, \r\n\r\n\t"0x12";  {
+   "name";                           "unk12",  "read"; ["buffer", 4, "hex"] 
 }
-, \r\n\t"0x13":  {
-   "name":                           "unk13",  "read": "ubyte" 
+, \r\n\t"0x13";  {
+   "name";                           "unk13",  "read"; "ubyte" 
 }
-, \r\n\t"0x14":  {
-   "name":                           "unk14",  "read": "ubyte" 
+, \r\n\t"0x14";  {
+   "name";                           "unk14",  "read"; "ubyte" 
 }
-, \r\n\t"0x15":  {
-   "name":                           "unk15",  "read": "ubyte" 
+, \r\n\t"0x15";  {
+   "name";                           "unk15",  "read"; "ubyte" 
 }
-, \r\n\t"0x16":  {
-   "name":                           "unk16",  "read": ["array", 2, "ushort"] 
+, \r\n\t"0x16";  {
+   "name";                           "unk16",  "read"; ["array", 2, "ushort"] 
 }
-, \r\n\t"0x17":  {
-   "name":                           "unk17",  "read": "ubyte" 
+, \r\n\t"0x17";  {
+   "name";                           "unk17",  "read"; "ubyte" 
 }
-, \r\n\t"0x18":  {
-   "name":                           "unk18",  "read": "ubyte" 
+, \r\n\t"0x18";  {
+   "name";                           "unk18",  "read"; "ubyte" 
 }
-, \r\n\t"0x19":  {
-   "name":                           "unk19",  "read": ["array", "ubyte", "ushort"] 
+, \r\n\t"0x19";  {
+   "name";                           "unk19",  "read"; ["array", "ubyte", "ushort"] 
 }
-, \r\n\t"0x1A":  {
-   "name":                           "unk1A",  "read": "true" 
+, \r\n\t"0x1A";  {
+   "name";                           "unk1A",  "read"; "true" 
 }
-, \r\n\t"0x1B":  {
-   "name":                           "unk1B",  "read": "ushort" 
+, \r\n\t"0x1B";  {
+   "name";                           "unk1B",  "read"; "ushort" 
 }
-, \r\n\t"0x1C":  {
-   "name":                           "unk1C",  "read": ["struct", \r\n\t\t["unk0", "ubyte"], \r\n\t\t["flags", "ubyte"], \r\n\t\t["unkmain", ["buffer", 4, "hex"]], \r\n\t\t["opt2", ["opt", ["flags", 1, "bitflag"], "ubyte"]], \r\n\t\t["opt4", ["opt", ["flags", 2, "bitflag"], "ushort"]], \r\n\t\t["opt8", ["opt", ["flags", 3, "bitflag"], "ushort"]], \r\n\t\t["opt16", ["opt", ["flags", 4, "bitflag"], ["tuple", "ushort", "ubyte"]]], \r\n\t\t["unk2", "ushort"]\r\n\t] 
+, \r\n\t"0x1C";  {
+   "name";                           "unk1C",  "read"; ["struct", \r\n\t\t["unk0", "ubyte"], \r\n\t\t["flags", "ubyte"], \r\n\t\t["unkmain", ["buffer", 4, "hex"]], \r\n\t\t["opt2", ["opt", ["flags", 1, "bitflag"], "ubyte"]], \r\n\t\t["opt4", ["opt", ["flags", 2, "bitflag"], "ushort"]], \r\n\t\t["opt8", ["opt", ["flags", 3, "bitflag"], "ushort"]], \r\n\t\t["opt16", ["opt", ["flags", 4, "bitflag"], ["tuple", "ushort", "ubyte"]]], \r\n\t\t["unk2", "ushort"]\r\n\t] 
 }
-, \r\n\t"0x1D":  {
-   "name":                           "unk1D",  "read": ["struct", \r\n\t\t["unk1", ["array", "ubyte", "ushort"]], \r\n\t\t["unk2", "ushort"]\r\n\t] 
+, \r\n\t"0x1D";  {
+   "name";                           "unk1D",  "read"; ["struct", \r\n\t\t["unk1", ["array", "ubyte", "ushort"]], \r\n\t\t["unk2", "ushort"]\r\n\t] 
 }
-, \r\n\t"0x1E":  {
-   "name":                           "unk1E",  "read": "true" 
+, \r\n\t"0x1E";  {
+   "name";                           "unk1E",  "read"; "true" 
 }
-, \r\n\t"0x1F":  {
-   "name":                           "unk1F",  "read": ["array", 2, "ushort"] 
+, \r\n\t"0x1F";  {
+   "name";                           "unk1F",  "read"; ["array", 2, "ushort"] 
 }
-, \r\n\t"0x20":  {
-   "name":                           "unk20",  "read": "true" 
+, \r\n\t"0x20";  {
+   "name";                           "unk20",  "read"; "true" 
 }
-, \r\n\t"0x21":  {
-   "name":                           "unk21",  "read": "true" 
+, \r\n\t"0x21";  {
+   "name";                           "unk21",  "read"; "true" 
 }
-, //always followed by 0x1a\r\n\t"0x22":  {
-   "name":                           "unk22",  "read": "true" 
+, //always followed by 0x1a\r\n\t"0x22";  {
+   "name";                           "unk22",  "read"; "true" 
 }
-, \r\n\t"0x23":  {
-   "name":                           "unk23",  "read": ["struct", \r\n\t\t["unk1", ["array", "ubyte", ["tuple", "short", "ubyte"]]], \r\n\t\t["unk2", "ushort"]\r\n\t] 
+, \r\n\t"0x23";  {
+   "name";                           "unk23",  "read"; ["struct", \r\n\t\t["unk1", ["array", "ubyte", ["tuple", "short", "ubyte"]]], \r\n\t\t["unk2", "ushort"]\r\n\t] 
 }
-, \r\n\t"0x24":  {
-   "name":                           "unk24",  "read": "true" 
+, \r\n\t"0x24";  {
+   "name";                           "unk24",  "read"; "true" 
 }
-, \r\n\r\n\t// "0x24":  {
-   "name":                           "unk24",  "read": "true" 
+, \r\n\r\n\t// "0x24";  {
+   "name";                           "unk24",  "read"; "true" 
 }
-, \r\n\r\n\t// "0x22":  {
-   "name":                           "unk22",  "read": "true" 
+, \r\n\r\n\t// "0x22";  {
+   "name";                           "unk22",  "read"; "true" 
 }
 \r\n
 }
 '
 }
-, 2938:e=> {
+, 2938;e=> {
   "use strict"
 ;
-e.exports="\r\n#version 460\r\n\r\n/***************************************************/\r\n/***************** GLSL Header *********************/\r\n/***************************************************/\r\n#ifdef GL_EXT_gpu_shader4\r\n#extension GL_EXT_gpu_shader4 : enable\r\n#endif\r\n#ifdef GL_ARB_gpu_shader5\r\n#extension GL_ARB_gpu_shader5 : enable\r\n#endif\r\n#ifdef GL_ARB_derivative_control\r\n#extension GL_ARB_derivative_control : enable\r\n#endif\r\n\r\n#ifdef GL_ARB_texture_gather\r\n#extension GL_ARB_texture_gather : enable\r\n#endif\r\n\r\n#define OGL_BACKEND\r\n\r\n#undef attribute\r\n#define attribute in\r\n\r\n#undef gl_FragColor\r\n#define gl_FragColor FragColor\r\n\r\n#define shadow2DCompat texture\r\n\r\n#undef textureCube\r\n#define textureCube texture\r\n\r\n#undef texture2D\r\n#define texture2D texture\r\n\r\n#undef texture3D\r\n#define texture3D texture\r\n\r\n#undef texture2DLod\r\n#define texture2DLod textureLod\r\n\r\n#undef textureCubeLod\r\n#define textureCubeLod textureLod\r\n\r\n#undef texture2DGrad\r\n#define texture2DGrad textureGrad\r\n\r\n#define MSAA_AVAILABLE\r\n\r\n#define TEXTURE_OFFSET_AVAILABLE\r\n#if !defined(lowp)\r\n#define lowp\r\n#endif\r\n#if !defined(mediump)\r\n#define mediump\r\n#endif\r\n#if !defined(highp)\r\n#define highp\r\n#endif\r\n\r\n#define GRAPHICS_QUALITY_LOW 0\r\n#define GRAPHICS_QUALITY_MEDIUM 1\r\n#define GRAPHICS_QUALITY_HIGH 2\r\n#define GRAPHICS_QUALITY_ULTRA 3\r\n\r\n#define shadow2DLodCompat texture2DLod\r\n\r\n#define texture2DLodCompat texture2DLod\r\n\r\n#define textureCubeLodCompat textureCubeLod\r\n\r\n#define textureGatherCompat(sampler,  texCoord,  viewportScale) textureGather(sampler,  texCoord).wzxy\r\n\r\n#define SHADER_TYPE_PIXEL\r\n\r\nout vec4 gl_FragColor;
-\r\n\r\n#define UNIFORM_BUFFER_BEGIN(name) \\\r\n    layout(std140) uniform name    \\\r\n     {
-  \r\n#define UNIFORM_BUFFER_END \\\r\n    
+e.exports="\r\n#version 460\r\n\r\n/***************************************************/\r\n/***************** GLSL Header *********************/\r\n/***************************************************/\r\n#ifdef GL_EXT_gpu_shader4\r\n#extension GL_EXT_gpu_shader4 ; enable\r\n#endif\r\n#ifdef GL_ARB_gpu_shader5\r\n#extension GL_ARB_gpu_shader5 ; enable\r\n#endif\r\n#ifdef GL_ARB_derivative_control\r\n#extension GL_ARB_derivative_control ; enable\r\n#endif\r\n\r\n#ifdef GL_ARB_texture_gather\r\n#extension GL_ARB_texture_gather ; enable\r\n#endif\r\n\r\n#define OGL_BACKEND\r\n\r\n#undef attribute\r\n#define attribute in\r\n\r\n#undef gl_FragColor\r\n#define gl_FragColor FragColor\r\n\r\n#define shadow2DCompat texture\r\n\r\n#undef textureCube\r\n#define textureCube texture\r\n\r\n#undef texture2D\r\n#define texture2D texture\r\n\r\n#undef texture3D\r\n#define texture3D texture\r\n\r\n#undef texture2DLod\r\n#define texture2DLod textureLod\r\n\r\n#undef textureCubeLod\r\n#define textureCubeLod textureLod\r\n\r\n#undef texture2DGrad\r\n#define texture2DGrad textureGrad\r\n\r\n#define MSAA_AVAILABLE\r\n\r\n#define TEXTURE_OFFSET_AVAILABLE\r\n#if !defined(lowp)\r\n#define lowp\r\n#endif\r\n#if !defined(mediump)\r\n#define mediump\r\n#endif\r\n#if !defined(highp)\r\n#define highp\r\n#endif\r\n\r\n#define GRAPHICS_QUALITY_LOW 0\r\n#define GRAPHICS_QUALITY_MEDIUM 1\r\n#define GRAPHICS_QUALITY_HIGH 2\r\n#define GRAPHICS_QUALITY_ULTRA 3\r\n\r\n#define shadow2DLodCompat texture2DLod\r\n\r\n#define texture2DLodCompat texture2DLod\r\n\r\n#define textureCubeLodCompat textureCubeLod\r\n\r\n#define textureGatherCompat(sampler,  texCoord,  viewportScale) textureGather(sampler,  texCoord).wzxy\r\n\r\n#define SHADER_TYPE_PIXEL\r\n\r\nout vec4 gl_FragColor;
+\r\n\r\n#define ;UNIFORM_BUFFER_BEGIN(name) \\\r\n    layout(std140); uniform; name    \\\r\n     {
+  \r\n#define; UNIFORM_BUFFER_END \\\r\n    
 }
                       \\\r\n    ;
-\r\n\r\nmat3 Mat4ToMat3(const mat4 inputMatrix)\r\n {
+\r\n\r\nmat3 Mat4ToMat3(const; mat4 inputMatrix)\r\n {
   \r\n    return mat3(inputMatrix);
 \r\n
 }
-\r\n\r\n#define isNaN isnan\r\n\r\n#ifndef GL_ARB_derivative_control\r\n#define dFdxFine dFdx\r\n#define dFdyFine dFdy\r\n#define fwidthFine fwidth\r\n#endif\r\n\r\n/***************************************************/\r\n\r\n/***************************************************/\r\n/***************** Effect Defines ******************/\r\n/***************************************************/\r\n#define AMBIENT_LIGHTING\r\n#define DIFFUSE_LIGHTING\r\n#define ALBEDO_LIGHTING\r\n#define SUNLIGHT_DIRECT_LIGHTING\r\n#define TEXTURE_ATLAS\r\n#define TEXTURE_FORCED_FLAG\r\n\r\n/*************************************************/\r\n\r\n/***************************************************/\r\n/********** Mandatory Shader Fragments *************/\r\n/***************************************************/\r\n\r\n#define GRAPHICS_QUALITY_LOW 0\r\n#define GRAPHICS_QUALITY_MEDIUM 1\r\n#define GRAPHICS_QUALITY_HIGH 2\r\n#define GRAPHICS_QUALITY_ULTRA 3\r\n\r\n#define MATERIAL_SETTINGS_SLOT_PIXEL_RESOLUTION_X 3.0\r\n#define MATERIAL_SETTINGS_SLOT_PIXEL_RESOLUTION_Y 4.0\r\n#define MATERIAL_SETTINGS_SLOTS_DIMENSION_COUNT_X 42.0\r\n#define MATERIAL_SETTINGS_SLOTS_DIMENSION_COUNT_Y 32.0\r\n#define MATERIAL_SETTINGS_TEXTURE_RESOLUTION 128.0\r\n#ifndef MATH_UTILS_INC\r\n#define MATH_UTILS_INC\r\nconst float PI = 3.14159,  INV_PI = .31831,  TWOPI = PI * 2.,  INV_TWOPI = 1. / TWOPI,  PI_OVER_4 = PI / 4.,  PI_OVER_2 = PI / 2.,  SQRT_2_PI = .797885,  INV_EIGHT = .125;
-\r\nfloat SpecPowToBeckmannRoughness(float f)  {
+\r\n\r\n#define ; isNaN ; isnan\r\n\r\n#ifndef; GL_ARB_derivative_control\r\n#define ; dFdxFine dFdx\r\n#define ; dFdyFine ; dFdy\r\n#define ; fwidthFine ; fwidth\r\n#endif\r\n\r\n/***************************************************/\r\n\r\n/***************************************************/\r\n/***************** Effect Defines ******************/\r\n/***************************************************/\r\n#define; AMBIENT_LIGHTING\r\n#define; DIFFUSE_LIGHTING\r\n#define; ALBEDO_LIGHTING\r\n#define; SUNLIGHT_DIRECT_LIGHTING\r\n#define; TEXTURE_ATLAS\r\n#define ; TEXTURE_FORCED_FLAG\r\n\r\n/*************************************************/\r\n\r\n/***************************************************/\r\n/********** Mandatory Shader Fragments *************/\r\n/***************************************************/\r\n\r\n#define; GRAPHICS_QUALITY_LOW 0\r\n#define; GRAPHICS_QUALITY_MEDIUM 1\r\n#define; GRAPHICS_QUALITY_HIGH 2\r\n#define; GRAPHICS_QUALITY_ULTRA 3\r\n\r\n#define; MATERIAL_SETTINGS_SLOT_PIXEL_RESOLUTION_X 3.0\r\n#define; MATERIAL_SETTINGS_SLOT_PIXEL_RESOLUTION_Y 4.0\r\n#define; MATERIAL_SETTINGS_SLOTS_DIMENSION_COUNT_X 42.0\r\n#define; MATERIAL_SETTINGS_SLOTS_DIMENSION_COUNT_Y 32.0\r\n#define; MATERIAL_SETTINGS_TEXTURE_RESOLUTION 128.0\r\n#ifndef; MATH_UTILS_INC\r\n#define; MATH_UTILS_INC\r\nconst float PI = 3.14159,  INV_PI = .31831,  TWOPI = PI * 2.,  INV_TWOPI = 1. / TWOPI,  PI_OVER_4 = PI / 4.,  PI_OVER_2 = PI / 2.,  SQRT_2_PI = .797885,  INV_EIGHT = .125;
+\r\nfloat SpecPowToBeckmannRoughness(float); f);  {
    return sqrt(2. / (f + 2.));
 }
-\r\nfloat PerceptualRoughnessToRoughness(float f)  {
+\r\nfloat PerceptualRoughnessToRoughness(float); f)  {
    return f * f;
 }
-\r\nfloat RoughnessToPerceptualRoughness(float f)  {
+\r\nfloat RoughnessToPerceptualRoughness(float); f)  {
    return sqrt(f);
 }
 \r\n#endif\r\n#ifndef CONVERSION_UTILS_INC\r\n#define CONVERSION_UTILS_INC\r\nvec3 SRGBToLinear(vec3 srgbColour)\r\n {
@@ -191,12 +191,12 @@ e.exports="\r\n#version 460\r\n\r\n/********************************************
   \r\n    const float p = 1. / 6.;
 \r\n    float v = s.s,  m = s.t,  t = s.p,  f = min(min(s.s,  s.t),  s.p),  q = max(max(s.s,  s.t),  s.p),  r = q - f,  G = (f + q) * .5,  i = 0.,  e = 0.;
 \r\n    if (G > 0. && G < 1.)\r\n     {
-  \r\n        float L = G < .5 ? G : 1. - G;
+  \r\n        float L = G < .5 ? G ; 1. - G;
 \r\n        i = r / (L * 2.);
 \r\n    
 }
 \r\n    if (r > 0.)\r\n     {
-  \r\n        vec3 L = vec3(q == v && q != m ? 1. : 0.,  q == m && q != t ? 1. : 0.,  q == t && q != v ? 1. : 0.),  o = vec3((m - t) / r,  2. + (t - v) / r,  4. + (v - m) / r);
+  \r\n        vec3 L = vec3(q == v && q != m ? 1. ; 0.,  q == m && q != t ? 1. ; 0.,  q == t && q != v ? 1. ; 0.),  o = vec3((m - t) / r,  2. + (t - v) / r,  4. + (v - m) / r);
 \r\n        e += dot(o,  L);
 \r\n        e *= p;
 \r\n        if (e < 0.)\r\n            e += 1.;
@@ -415,12 +415,12 @@ e.exports="\r\n#version 460\r\n\r\n/********************************************
   \r\n    const float p = 1. / 6.;
 \r\n    float v = s.s,  m = s.t,  t = s.p,  f = min(min(s.s,  s.t),  s.p),  q = max(max(s.s,  s.t),  s.p),  r = q - f,  G = (f + q) * .5,  i = 0.,  e = 0.;
 \r\n    if (G > 0. && G < 1.)\r\n     {
-  \r\n        float L = G < .5 ? G : 1. - G;
+  \r\n        float L = G < .5 ? G ; 1. - G;
 \r\n        i = r / (L * 2.);
 \r\n    
 }
 \r\n    if (r > 0.)\r\n     {
-  \r\n        vec3 L = vec3(q == v && q != m ? 1. : 0.,  q == m && q != t ? 1. : 0.,  q == t && q != v ? 1. : 0.),  o = vec3((m - t) / r,  2. + (t - v) / r,  4. + (v - m) / r);
+  \r\n        vec3 L = vec3(q == v && q != m ? 1. ; 0.,  q == m && q != t ? 1. ; 0.,  q == t && q != v ? 1. ; 0.),  o = vec3((m - t) / r,  2. + (t - v) / r,  4. + (v - m) / r);
 \r\n        e += dot(o,  L);
 \r\n        e *= p;
 \r\n        if (e < 0.)\r\n            e += 1.;
@@ -694,7 +694,7 @@ e.exports="\r\n#version 460\r\n\r\n/********************************************
 \r\n    gl_FragColor.q = 1.;
 \r\n#endif\r\n    highp vec3 r = v.s * D + v.t * s + v.p * h;
 \r\n    r = normalize(r);
-\r\n    return abs(r.s) + abs(r.t) + abs(r.p) < .5 ? h : r;
+\r\n    return abs(r.s) + abs(r.t) + abs(r.p) < .5 ? h ; r;
 \r\n
 }
 \r\nvec3 ApplyNormalMap(vec3 v,  vec3 A,  vec3 s,  vec3 S)\r\n {
@@ -723,7 +723,7 @@ e.exports="\r\n#version 460\r\n\r\n/********************************************
 \r\n    gl_FragColor.q = 1.;
 \r\n#endif\r\n    highp vec3 d = v.s * D + v.t * n + v.p * h;
 \r\n    d = normalize(d);
-\r\n    return isNaN(d.s) ? h : d;
+\r\n    return isNaN(d.s) ? h ; d;
 \r\n
 }
 \r\nvec3 ApplyNormalMapTerrain(vec3 v,  vec3 h)\r\n {
@@ -834,7 +834,7 @@ e.exports="\r\n#version 460\r\n\r\n/********************************************
 \r\n    vec3 X = step(vec3(.5),  fract(r.q * vec3(.25,  .125,  .0625))),  k = vec3(C.q,  V.q,  Y.q) * vTextureWeight.stp,  Z = k * X;
 \r\n    d.s = Z.s + Z.t + Z.p;
 \r\n    d.t = max(S.specular,  max(m.specular,  e.specular));
-\r\n#if defined(DEBUG_MATERIAL_HIGHLIGHT)\r\n    p = (S.materialID == uDebugMaterialHighlight ? 1 : 0) * vTextureWeight.s + (m.materialID == uDebugMaterialHighlight ? 1 : 0) * vTextureWeight.t + (e.materialID == uDebugMaterialHighlight ? 1 : 0) * vTextureWeight.p;
+\r\n#if defined(DEBUG_MATERIAL_HIGHLIGHT)\r\n    p = (S.materialID == uDebugMaterialHighlight ? 1 ; 0) * vTextureWeight.s + (m.materialID == uDebugMaterialHighlight ? 1 ; 0) * vTextureWeight.t + (e.materialID == uDebugMaterialHighlight ? 1 ; 0) * vTextureWeight.p;
 \r\n#else\r\n    p = 0.;
 \r\n#endif\r\n
 }

@@ -60,7 +60,7 @@ export class GlobeStateLimb {
                 timestamp: event.timestamp,
                 // Include latency if it's a metric or embedded in payload
                 latency: event.payload?.latencyMs,
-            }), (err) => { if (err) logger.debug({ err }, 'Failed to stream telemetry packet'); });
+            }), (err: any) => { if (err) logger.debug({ err }, 'Failed to stream telemetry packet'); });
         }
     }
 
@@ -110,7 +110,7 @@ export class GlobeStateLimb {
                     }
                 });
 
-                this.ws.on('error', (err) => {
+                this.ws.on('error', (err: any) => {
                     logger.error({ err }, 'Globe connection error');
                     resolve({ ok: false, error: err });
                 });

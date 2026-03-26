@@ -13,12 +13,16 @@
  * PedagogyLimb for "what can go in each slot?", and avatar composition.
  */
 
-import { GameCacheLoader } from './tmp_rsmv_inspect/src/cache/sqlite.js';
-import { parse } from './tmp_rsmv_inspect/src/opdecoder.js';
-import * as fs from 'fs';
-import { createRequire } from 'module';
 
+
+import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
+const { GameCacheLoader  } = require("./rsmv/src/cache/sqlite.js");
+const { parse  } = require("./rsmv/src/opdecoder.js");
+import * as fs from 'fs';
+
+
+
 (global as any).__non_webpack_require__ = require;
 
 // ─── Types ───

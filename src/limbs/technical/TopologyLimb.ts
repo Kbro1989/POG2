@@ -1,7 +1,11 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const {  GameCacheLoader  } = require("../../../rsmv/src/cache/sqlite.js");
+const {  parseOb3Model  } = require("../../../rsmv/src/3d/rt7model.js");
 import { Result, ok, err, YaoState } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-import { GameCacheLoader } from '../../../tmp_rsmv_inspect/src/cache/sqlite.js';
-import { parseOb3Model } from '../../../tmp_rsmv_inspect/src/3d/rt7model.js';
+
+
 
 const logger = createLogger('TopologyLimb');
 
@@ -62,7 +66,7 @@ export class TopologyLimb {
             // Parse full geometry
             const modelData = parseOb3Model(buffer, this.cache);
             logger.debug({ modelId, meshCount: modelData.meshes.length }, 'Model parsed.');
-            
+
             let vertexCount = 0;
             let triangleCount = 0;
             let hasUVs = false;
@@ -73,11 +77,11 @@ export class TopologyLimb {
             for (const mesh of modelData.meshes) {
                 if (mesh.attributes.pos) vertexCount += mesh.attributes.pos.count;
                 if (mesh.indices) triangleCount += Math.floor(mesh.indices.count / 3);
-                
+
                 if (mesh.attributes.texuvs) hasUVs = true;
                 if (mesh.attributes.color) hasVertexColors = true;
                 if (mesh.attributes.skinids || mesh.attributes.boneids) hasSkinning = true;
-                
+
                 materials.add(mesh.materialId);
             }
 

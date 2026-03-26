@@ -1,6 +1,8 @@
 // src/utils/RSMVExtractor.ts
 // Utility to parse RSMV model definitions and map them to Biological Constraints
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { Result, ok, err, EmotionalState } from '../core/models.js';
 import { AnatomyLimits, SpeciesAnatomy } from '../constants/AnatomyRegistry.js';
 import { ModelReference } from '../constants/ModelRegistry.js';

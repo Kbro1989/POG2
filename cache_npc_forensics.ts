@@ -12,12 +12,13 @@
  * Substrate hook: Powers EntityLimb.catalogEntity() and PedagogyLimb NPC learning.
  */
 
-import { GameCacheLoader } from './tmp_rsmv_inspect/src/cache/sqlite.js';
-import { parse } from './tmp_rsmv_inspect/src/opdecoder.js';
-import * as fs from 'fs';
 import { createRequire } from 'module';
-
 const require = createRequire(import.meta.url);
+const { GameCacheLoader } = require("./tmp_rsmv_inspect/src/cache/sqlite.js");
+const { parse } = require("./tmp_rsmv_inspect/src/opdecoder.js");
+import * as fs from 'fs';
+import { getRSMVCachePath } from './src/utils/SovereignPathResolver.js';
+
 (global as any).__non_webpack_require__ = require;
 
 // ─── Types ───
@@ -53,7 +54,7 @@ interface NpcForensicResult {
 }
 
 // ─── Config ───
-const CACHE_PATH = 'C:\\ProgramData\\Jagex\\RuneScape';
+const CACHE_PATH = getRSMVCachePath();
 const MAJOR_NPCS = 18;
 const ARCH_SIZE = 128;
 const PLAYER_TEMPLATE_IDS = new Set([15516, 15517, 15518, 15519, 15520, 15521, 15522, 15523, 15524]);
@@ -72,10 +73,10 @@ async function loadNpc(cache: any, id: number): Promise<NpcForensicResult | null
         const name = raw.name || `NPCS ${id}`;
         const isPlayerTemplate = PLAYER_TEMPLATE_IDS.has(id) || name === 'Player';
 
-        // Extract models (models is number[] in the npcs type)
+        // Extract models
         const models: number[] = raw.models ? [...raw.models] : [];
 
-        // Head models (headModels is number[] in the npcs type)
+        // Head models
         const headModels: number[] = raw.headModels ? [...raw.headModels] : [];
 
         // Actions
@@ -85,7 +86,7 @@ async function loadNpc(cache: any, id: number): Promise<NpcForensicResult | null
             if (raw[key]) actions.push(raw[key] as string);
         }
 
-        // Animation group (individual anims are packed into animation_group reference)
+        // Animation group
         const animationGroup = raw.animation_group ?? null;
         const animations = {
             idle: null as number | null,

@@ -1,11 +1,14 @@
-import { GameCacheLoader } from './tmp_rsmv_inspect/src/cache/sqlite.js';
+
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { GameCacheLoader  } = require("./rsmv/src/cache/sqlite.js");
 import { createLogger } from './src/utils/logger.js';
 
 const logger = createLogger('CacheAnalysis');
 
 async function main() {
     const loader = new GameCacheLoader('C:/Users/Destiny/Desktop/rsmv_clone/cache');
-    
+
     // Key Archives for "The Next Level"
     const targets = {
         'Config/Enums': 2,

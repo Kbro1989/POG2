@@ -1,4 +1,5 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { join, basename } from 'path';
 import { ModelClient } from '../clients/ModelClient.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { extractCodeBlock } from '../utils/CodeExtractor.js';
@@ -9,9 +10,13 @@ import { YaoState } from '../core/models.js';
 import { SmartEdit, type SmartEditParams as SEParams, type SmartEditResult } from '../utils/SmartEdit.js';
 import { ValidationSystem } from './ValidationSystem.js';
 import { ArchitecturalValidator } from './ArchitecturalValidator.js';
+import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
 import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger('CodeEngine');
+
+/** Strategies that block all code modifications */
+const EDIT_BLOCKING_STRATEGIES = ['FREEZE', 'ROLLBACK', 'PAUSE', 'DEEP_DORMANCY'];
 
 export interface ReviewParams {
     filePath: string;
@@ -78,6 +83,83 @@ export class CodeEngine {
         this.validation = new ValidationSystem([
             new ArchitecturalValidator(this.manifest)
         ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Phase 29: Young/Old Snapshot Infrastructure
+    // Young = stable before state. Old = proposed after state.
+    // All edits are gated through Hexagram strategy + deletion guard.
+    // ═══════════════════════════════════════════════════════════════
+
+    private getSnapshotDir(): string {
+        const dir = join(getSovereignRoot(), 'snapshots', 'edits');
+        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+        return dir;
+    }
+
+    private snapshotYoung(filePath: string, content: string): string {
+        const ts = Date.now();
+        const name = basename(filePath).replace(/\.[^.]+$/, '');
+        const snapPath = join(this.getSnapshotDir(), `${ts}_${name}.young.ts`);
+        writeFileSync(snapPath, content, 'utf8');
+        logger.info({ snapPath, filePath }, '📸 Young state snapshot saved (before edit).');
+        return snapPath;
+    }
+
+    private snapshotOld(filePath: string, content: string): string {
+        const ts = Date.now();
+        const name = basename(filePath).replace(/\.[^.]+$/, '');
+        const snapPath = join(this.getSnapshotDir(), `${ts}_${name}.old.ts`);
+        writeFileSync(snapPath, content, 'utf8');
+        logger.info({ snapPath, filePath }, '📸 Old state snapshot saved (after edit).');
+        return snapPath;
+    }
+
+    /**
+     * Hexagram Edit Gate: consults the current hexagram strategy.
+     * Returns null if edit is permitted, or an error Result if blocked.
+     */
+    private checkHexagramGate(action: string, filePath: string): Result<EngineOutput> | null {
+        const hexagram = this.router.getHexagram();
+        const interpretation = hexagram.getInterpretation();
+        const strategy = interpretation.strategy.split(':')[0]?.trim() || '';
+
+        if (EDIT_BLOCKING_STRATEGIES.includes(strategy)) {
+            logger.warn({ strategy, action, filePath }, '🚫 Hexagram gate BLOCKED edit. Strategy forbids modification.');
+            return {
+                ok: false,
+                error: new Error(`Hexagram Gate: ${strategy} strategy active (${interpretation.name}). Code modifications are suspended. Wait for state transition.`)
+            };
+        }
+        return null;
+    }
+
+    /**
+     * Phase 29: Safe write with Young/Old snapshots + function-deletion guard.
+     * If the modified code deletes any exported symbol, the Young snapshot is restored.
+     */
+    private safeWriteWithGuard(filePath: string, originalContent: string, modifiedContent: string): Result<void> {
+        // 1. Snapshot Young (before)
+        const youngPath = this.snapshotYoung(filePath, originalContent);
+
+        // 2. Function-Deletion Guard
+        const archValidator = new ArchitecturalValidator(this.manifest);
+        const preservation = archValidator.validatePreservation(originalContent, modifiedContent);
+        if (!preservation.ok) {
+            logger.error({ filePath, error: preservation.error?.reason }, '🛡️ Function-Deletion Guard BLOCKED write. Restoring Young state.');
+            // Restore original — the Young snapshot is the safety net
+            writeFileSync(filePath, originalContent, 'utf8');
+            return { ok: false, error: new Error(preservation.error?.reason || 'Function deletion detected') };
+        }
+
+        // 3. Write the modified content
+        writeFileSync(filePath, modifiedContent, 'utf8');
+
+        // 4. Snapshot Old (after)
+        this.snapshotOld(filePath, modifiedContent);
+
+        logger.info({ filePath, youngPath }, '✅ Safe write complete. Young/Old snapshots preserved.');
+        return { ok: true, value: undefined };
     }
 
     async review(params: ReviewParams): Promise<Result<EngineOutput>> {
@@ -215,6 +297,11 @@ Be precise and technical. Assume the reader is an expert developer.`;
     async fix(params: FixParams): Promise<Result<EngineOutput>> {
         if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
         const content = readFileSync(params.filePath, 'utf8');
+
+        // Phase 29: Hexagram Gate — block edits during FREEZE/ROLLBACK
+        const gate = this.checkHexagramGate('fix', params.filePath);
+        if (gate) return gate;
+
         const route = await this.router.route('YinYang', 'fix');
         const model = params.modelOverride ?? route.model;
 
@@ -227,11 +314,12 @@ Be precise and technical. Assume the reader is an expert developer.`;
 ${cognitiveBias}
 
 Rules:
-1. Fix every error â€” no leaving partial fixes
-2. Maintain all existing functionality
+1. Fix every error — no leaving partial fixes
+2. Maintain all existing functionality — DO NOT remove any functions, classes, or exports
 3. Do not introduce mocks or stubs
 4. Add missing return types where TypeScript requires them
 5. Remove all 'any' types where a real type can be inferred
+6. NEVER delete a function to fix an error — fix the function itself
 
 FILE: ${params.filePath}
 \`\`\`
@@ -258,13 +346,18 @@ Output the COMPLETE fixed file:`;
 
         if (!params.dryRun) {
             try {
-                writeFileSync(params.filePath, fixed, 'utf8');
-                logger.info({ file: params.filePath }, 'Fixes applied to disk');
+                // Phase 29: Safe write with Young/Old snapshots + function-deletion guard
+                const writeResult = this.safeWriteWithGuard(params.filePath, content, fixed);
+                if (!writeResult.ok) {
+                    return { ok: false, error: writeResult.error! };
+                }
 
-                // ARCHITECTURAL VALIDATION
+                // ARCHITECTURAL VALIDATION (post-write)
                 const valid = await this.validation.validateAll(fixed, { fileName: params.filePath });
                 if (!valid.ok) {
-                    return { ok: false, error: new Error(`Fix interrupted by architectural violation: ${valid.error?.reason}`) };
+                    // Restore Young state on architectural violation
+                    writeFileSync(params.filePath, content, 'utf8');
+                    return { ok: false, error: new Error(`Fix interrupted by architectural violation: ${valid.error?.reason}. Young state restored.`) };
                 }
             } catch (err) {
                 return { ok: false, error: err as Error };
@@ -279,10 +372,14 @@ Output the COMPLETE fixed file:`;
             }
         };
     }
-
     async refactor(params: RefactorParams): Promise<Result<EngineOutput>> {
         if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
         const content = readFileSync(params.filePath, 'utf8');
+
+        // Phase 29: Hexagram Gate
+        const gate = this.checkHexagramGate('refactor', params.filePath);
+        if (gate) return gate;
+
         const route = await this.router.route('Yang', 'refactor');
         const model = params.modelOverride ?? route.model;
 
@@ -299,13 +396,14 @@ Output the COMPLETE fixed file:`;
 ${cognitiveBias}
 
 SOVEREIGN LAWS:
-1. NO MOCKS or faked data â€” only real implementations
+1. NO MOCKS or faked data — only real implementations
 2. NO TODOs, stubs, or placeholder logic
 3. Use readonly for all immutable properties
 4. Replace 'any' with specific types or 'unknown'
 5. All functions must have explicit return types
 6. Prefer composition over inheritance
-7. Use Result<T> for all fallible operations${extraRules}
+7. Use Result<T> for all fallible operations
+8. NEVER remove/delete existing functions — refactor them in-place${extraRules}
 
 FILE: ${params.filePath}
 \`\`\`
@@ -331,12 +429,17 @@ Output the COMPLETE refactored file:`;
         const refactored = extractCodeBlock(result.value.response) ?? result.value.response;
 
         try {
-            writeFileSync(params.filePath, refactored, 'utf8');
+            // Phase 29: Safe write with Young/Old snapshots + function-deletion guard
+            const writeResult = this.safeWriteWithGuard(params.filePath, content, refactored);
+            if (!writeResult.ok) {
+                return { ok: false, error: writeResult.error! };
+            }
 
-            // ARCHITECTURAL VALIDATION
+            // ARCHITECTURAL VALIDATION (post-write)
             const valid = await this.validation.validateAll(refactored, { fileName: params.filePath });
             if (!valid.ok) {
-                return { ok: false, error: new Error(`Refactor rejected: ${valid.error?.reason}`) };
+                writeFileSync(params.filePath, content, 'utf8');
+                return { ok: false, error: new Error(`Refactor rejected: ${valid.error?.reason}. Young state restored.`) };
             }
         } catch (err) {
             return { ok: false, error: err as Error };
@@ -401,6 +504,10 @@ Provide a structured semantic analysis:`;
         if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
         const content = readFileSync(params.filePath, 'utf8');
 
+        // Phase 29: Hexagram Gate
+        const gate = this.checkHexagramGate('smartEdit', params.filePath);
+        if (gate) return gate;
+
         const result: SmartEditResult = await SmartEdit.calculateReplacement(content, {
             file_path: params.filePath,
             old_string: params.oldString,
@@ -417,8 +524,12 @@ Provide a structured semantic analysis:`;
         const finalContent = SmartEdit.restoreTrailingNewline(content, result.newContent);
 
         try {
-            writeFileSync(params.filePath, finalContent, 'utf8');
-            logger.info({ file: params.filePath, strategy: result.strategy }, 'SmartEdit applied');
+            // Phase 29: Safe write with Young/Old snapshots + function-deletion guard
+            const writeResult = this.safeWriteWithGuard(params.filePath, content, finalContent);
+            if (!writeResult.ok) {
+                return { ok: false, error: writeResult.error! };
+            }
+            logger.info({ file: params.filePath, strategy: result.strategy }, 'SmartEdit applied with Young/Old snapshots.');
         } catch (err) {
             return { ok: false, error: err as Error };
         }

@@ -1,5 +1,9 @@
-import { GameCacheLoader } from './tmp_rsmv_inspect/src/cache/sqlite.js';
-import { cacheMajors } from './tmp_rsmv_inspect/src/constants.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { GameCacheLoader  } = require("./rsmv/src/cache/sqlite.js");
+const { cacheMajors  } = require("./rsmv/src/constants.js");
+
+
 
 async function main() {
     const loader = new GameCacheLoader('C:/ProgramData/Jagex/RuneScape');

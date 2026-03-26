@@ -1,7 +1,10 @@
-import { GameCacheLoader } from './tmp_rsmv_inspect/src/cache/sqlite.js';
 import { createRequire } from 'module';
-
 const require = createRequire(import.meta.url);
+const { GameCacheLoader  } = require("./rsmv/src/cache/sqlite.js");
+
+
+
+
 (global as any).__non_webpack_require__ = require;
 
 async function main() {
@@ -19,7 +22,7 @@ async function main() {
 
     try {
         const archive = await cache.getArchiveById(major, archId);
-        const file = archive.find(f => f.fileid === fileId);
+        const file = archive.find((f: { fileid: number; }) => f.fileid === fileId);
         if (file) {
             console.log('Raw Bytes (Hex):', file.buffer.toString('hex'));
         } else {

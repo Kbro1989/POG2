@@ -1,26 +1,27 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const {  GameCacheLoader  } = require("../../../rsmv/src/cache/sqlite.js");
+const {  parse  } = require("../../../rsmv/src/opdecoder.js");
+const {  cacheMajors  } = require("../../../rsmv/src/constants.js");
 import { Result, ok, err } from '../../core/models.js';
 import type { PedagogyProfile } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-import { GameCacheLoader } from '../../../tmp_rsmv_inspect/src/cache/sqlite.js';
-import { parse } from '../../../tmp_rsmv_inspect/src/opdecoder.js';
-import { cacheMajors } from '../../../tmp_rsmv_inspect/src/constants.js';
 
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
 import { VectorDB } from '../../utils/VectorDB.js';
+import { ModelClient } from '../../clients/ModelClient.js';
 
 const logger = createLogger('DynamicsLimb');
 
 /**
  * DynamicsLimb - World Effect & Particle Deconstruction
- * Responsible for parsing Archive 21 (SpotAnims) to understand
- * how temporary 3D effects are orchestrated.
  */
 export class DynamicsLimb {
-    private loader: GameCacheLoader;
+    private loader: any;
     private router: TernaryRouter;
     private vectorDB: VectorDB;
 
-    constructor(router: TernaryRouter, vectorDB: VectorDB) {
+    constructor(router: TernaryRouter, vectorDB: VectorDB, private readonly client: ModelClient) {
         this.loader = new GameCacheLoader();
         this.router = router;
         this.vectorDB = vectorDB;
@@ -34,9 +35,6 @@ export class DynamicsLimb {
         };
     }
 
-    /**
-     * Extracts a pedagogical profile for a specific world effect (SpotAnim).
-     */
     public async extractDynamics(spotAnimId: number): Promise<Result<PedagogyProfile>> {
         const state = this.router.temporalState;
         logger.info({ spotAnimId, state }, 'Extracting Dynamic Profile');
@@ -44,7 +42,6 @@ export class DynamicsLimb {
         if (state === 'PAST') {
             const cached = this.vectorDB.queryLocal(`dynamic-${spotAnimId}`);
             if (cached.ok && cached.value) {
-                logger.info({ spotAnimId }, 'Retrieved Dynamic Profile from PAST substrate.');
                 return ok(cached.value.metadata as PedagogyProfile);
             }
         }
@@ -53,16 +50,16 @@ export class DynamicsLimb {
             const buffer = await this.loader.getFile(cacheMajors.spotanims, spotAnimId);
             if (!buffer) return err(new Error(`SpotAnim ${spotAnimId} not found in cache.`));
 
-            const spotAnim = parse.spotAnims.read(buffer, this.loader);
+            const spotAnim = (parse as any).spotAnims.read(buffer, this.loader);
 
             const profile: PedagogyProfile = {
                 id: spotAnimId.toString(),
                 name: `SpotAnim_${spotAnimId}`,
                 type: 'DYNAMIC',
                 metrics: {
-                    polyCount: 0, // Indirect (via modelId)
+                    polyCount: 0,
                     vertexCount: 0,
-                    boneCount: 0, // Indirect (via animationId)
+                    boneCount: 0,
                     materialComplexity: spotAnim.replace_materials?.length || 0,
                     rigLogic: spotAnim.sequence ? 'SKELETAL' : 'STATIC'
                 },
@@ -81,6 +78,8 @@ export class DynamicsLimb {
     }
 
     public close(): void {
-        this.loader.close();
+        if (this.loader && typeof this.loader.close === 'function') {
+            this.loader.close();
+        }
     }
 }

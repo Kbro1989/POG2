@@ -1,3 +1,5 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
 export enum NeuralCategory {
     CNS = 'CNS (Central Nervous System)',
@@ -367,7 +369,7 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
     },
     { path: 'resources/cloudflare-templates', role: 'Knowledge:Cloudflare', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 5 },
     {
-        path: 'tmp_rsmv_inspect', role: 'Structural Pedagogy Substrate', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 5,
+        path: 'rsmv', role: 'Structural Pedagogy Substrate', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 5,
         biologicalRole: { organ: 'External Prefrontal Cache', input: 'Jagex Cache / Opcodes', output: 'GLB/PNG/PedagogyProfile', constraints: 'External rsmv-clone inspection and structural analysis' }
     },
 

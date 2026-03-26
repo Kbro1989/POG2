@@ -20,6 +20,7 @@
     "dist",
     "resources",
     "logs",
+    "rsmv",
     "tmp_rsmv_inspect"
   ]
 }

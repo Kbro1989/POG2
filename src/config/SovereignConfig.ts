@@ -131,7 +131,7 @@ const DEFAULT_CONFIG: SovereignConfig = {
 
     // specialized Generation Defaults (Phase 104)
     storyboardModel: 'deepseek-r1:8b',
-    vocalAnalysisModel: 'yi-coder:9b-chat-q5_K_M',
+    vocalAnalysisModel: 'qwen2.5-coder:1.5b-instruct-q4_K_M',
     imagePromptModel: 'deepseek-coder:6.7b-instruct-q4_K_M',
     // Back to 7b for rapid processing speeds over the 14b CPU latency.
     soulIngestionModel: 'deepseek-r1:8b',

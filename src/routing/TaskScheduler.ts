@@ -160,14 +160,16 @@ export class TaskScheduler {
             setImmediate(() => this.processQueue());
         };
 
+        // Sovereign Gate: High-fidelity narrative synthesis may take hours/days.
+        // We expand the hard timeout to 24 hours (86,400,000ms) for Executive/Master tier tasks (priority <= 2).
+        const absoluteTimeout = (task.priority <= 2) ? 86_400_000 : task.timeoutMs;
+
         const timeoutId = setTimeout(() => {
             if (!finished) {
-                logger.error({ id: task.id, provider }, `Task exceeded hard timeout (${task.timeoutMs}ms) - rejecting`);
-                task.reject(new Error(`Task ${task.id} timed out after ${task.timeoutMs}ms`));
-                // We keep the lane occupied until the process actually finishes or throws, 
-                // to prevent over-saturating local substrates like Ollama.
+                logger.error({ id: task.id, provider, absoluteTimeout }, `Task exceeded hard timeout (${absoluteTimeout}ms) - rejecting`);
+                task.reject(new Error(`Task ${task.id} timed out after ${absoluteTimeout}ms`));
             }
-        }, task.timeoutMs);
+        }, absoluteTimeout);
 
         try {
             logger.debug({ id: task.id, provider }, 'Task starting execution');

@@ -1,6 +1,8 @@
 // src/scripts/kbd_roar_cinema.ts
 // Cinematic Execution - Temporal Synthesis of KBD Roar
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { createCanvas } from 'canvas';
@@ -208,7 +210,7 @@ class KBDRoarCinema {
       mkdirSync(this.config.outputPath, { recursive: true });
     }
     
-    const outPath = join(this.config.outputPath, 'pog-vibe-interactive_kbd_0.png');
+    const outPath = join(this.config.outputPath, 'rsmv_kbd_0.png');
     const buffer = canvas.toBuffer('image/png');
     writeFileSync(outPath, buffer);
     console.log(`💾 Output saved to: ${outPath}`);

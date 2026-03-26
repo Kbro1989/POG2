@@ -1,9 +1,14 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { GameCacheLoader } = require("../../../tmp_rsmv_inspect/src/cache/sqlite.js");
+const { parse } = require("../../../tmp_rsmv_inspect/src/opdecoder.js");
+const { cacheMajors } = require("../../../tmp_rsmv_inspect/src/constants.js");
 import { Result, ok, err } from '../../core/models.js';
 import type { PedagogyProfile } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-import { GameCacheLoader } from '../../../tmp_rsmv_inspect/src/cache/sqlite.js';
-import { parse } from '../../../tmp_rsmv_inspect/src/opdecoder.js';
-import { cacheMajors } from '../../../tmp_rsmv_inspect/src/constants.js';
+
+
+
 
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
 import { VectorDB } from '../../utils/VectorDB.js';
@@ -20,7 +25,7 @@ const logger = createLogger('KinematicsLimb');
  * the structure of movement and skeletal physics.
  */
 export class KinematicsLimb {
-    private loader: GameCacheLoader;
+    private loader: any;
     private router: TernaryRouter;
     private vectorDB: VectorDB;
 
@@ -59,10 +64,8 @@ export class KinematicsLimb {
             if (!buffer) return err(new Error(`Sequence ${sequenceId} not found in cache.`));
 
             const sequence = parse.sequences.read(buffer, this.loader);
-            
-            let frameCount = 0;
-            // Calculate metrics
-            const frameCount = sequence.frames?.length || 0;
+
+            let frameCount = sequence.frames?.length || 0;
             let totalDuration = 0;
             const extractedFrames: any[] = [];
             const linkedSpotanims: any[] = [];
@@ -75,11 +78,11 @@ export class KinematicsLimb {
                 for (const f of sequence.frames) {
                     const duration = (f.framelength || 0) * 0.020;
                     totalDuration += duration;
-                    
+
                     // Decode the frame architecture
                     const frameArchive = f.frameidhi;
                     const frameSubid = f.frameidlow;
-                    
+
                     try {
                         // In Major 48, frameidhi is the archive, and frameidlow is the file within the archive
                         const frameBuffer = await this.loader.getFile(cacheMajors.frames, frameArchive, frameSubid).catch(() => null);
@@ -97,25 +100,24 @@ export class KinematicsLimb {
                     }
                 }
             } else if (sequence.skeletal_animation) {
-                 frameCount = 100; // Deep scan needed if actually compiling skeletals
-                 totalDuration = 2.0; 
-                 skeletalData = {
-                     animId: sequence.skeletal_animation,
-                     keyframeCount: 0 // Placeholder until Major 56 is deeply parsed
-                 };
-                 // 2. Skeletal Extraction (Major 56)
-                 try {
-                     const skelBuffer = await this.loader.getFileById(cacheMajors.skeletalAnims, sequence.skeletal_animation);
-                     if (skelBuffer) {
-                         const skelData = parse.skeletalAnim.read(skelBuffer, this.loader);
-                         // This is a complex struct, we'll track its presence and size
-                         skeletalData.keyframeCount = skelData.bones?.length || 0; 
-                     }
-                 } catch (err) { /* soft fail */ }
+                skeletalData = {
+                    rigLogic: sequence.skeletal_animation ? 'SKELETAL' : 'STATIC',
+                    keyframeCount: 0
+                };
+                // 2. Skeletal Extraction (Major 56)
+                try {
+                    const skelBuffer = await this.loader.getFileById(cacheMajors.skeletalAnims, sequence.skeletal_animation);
+                    if (skelBuffer) {
+                        const skelData = parse.skeletalAnim.read(skelBuffer, this.loader);
+                        skeletalData.keyframeCount = skelData.bones?.length || 0;
+                    }
+                } catch (err) {
+                    logger.warn({ animId: sequence.skeletal_animation, msg: (err as Error).message }, 'Skeletal extraction for Major 56 failed');
+                }
             }
 
             const isSkeletal = sequence.skeletal_animation !== undefined || sequence.skeletal_range !== undefined;
-            
+
             // 3. Spotanim Resolution (Major 21)
             // We scan the first ~1000 spotanims to find any that reference this sequence
             // (In a full production engine, this would be an inverted index)
@@ -126,7 +128,7 @@ export class KinematicsLimb {
                 for (const sub of spotanimIndex) {
                     if (!sub) continue;
                     if (scanCount++ > 2000) break; // Limit scan for performance
-                    
+
                     try {
                         const spotBuffer = await this.loader.getFileById(cacheMajors.spotanims, sub.minor);
                         if (spotBuffer) {
@@ -140,7 +142,7 @@ export class KinematicsLimb {
                                     rotation: spotData.rotation || 0,
                                     colors: spotData.replace_colors || []
                                 });
-                                
+
                                 // 4. Nested Model Resolution (Major 47)
                                 if (spotData.model) {
                                     try {
@@ -160,7 +162,7 @@ export class KinematicsLimb {
                         }
                     } catch (err) { /* ignore individual spotanim read errors */ }
                 }
-            } catch (err) { 
+            } catch (err) {
                 logger.warn({ msg: (err as Error).message }, 'Spotanim scan failed');
             }
 
@@ -183,7 +185,6 @@ export class KinematicsLimb {
 
             // Note: In RS3, sequences reference Archive 0 frames or Archive 57/58/59 skeletons.
             // We'll perform a shallow check for now.
-            const isSkeletal = sequence.skeletal_animation !== undefined;
 
             const profile: PedagogyProfile = {
                 id: sequenceId.toString(),
@@ -192,7 +193,7 @@ export class KinematicsLimb {
                 metrics: {
                     polyCount: 0, // Animations don't have polys directly
                     vertexCount: 0,
-                    boneCount: isSkeletal ? 100 : 20, // Heuristic or deep scan needed
+                    boneCount: skeletalData ? skeletalData.keyframeCount : 20, // Real Major 56 count or legacy fallback
                     materialComplexity: 0,
                     frameCount,
                     durationSeconds: parseFloat(totalDuration.toFixed(3)),
@@ -202,7 +203,6 @@ export class KinematicsLimb {
                     linkedSpotanims: linkedSpotanims,
                     linkedModels: linkedModels,
                     skeletalData: skeletalData
-                    jointDensity: 0 // Deep skeletal scan would go here
                 },
                 semantics: {
                     role: `Animation sequence ${sequenceId}. Total frames: ${frameCount}.`,
@@ -223,7 +223,7 @@ export class KinematicsLimb {
      */
     public async bindSequenceToState(sequenceId: number, state: string, actorId?: string): Promise<Result<any>> {
         logger.info({ sequenceId, state, actorId }, 'Binding kinematic sequence to semantic state.');
-        
+
         const profileRes = await this.extractKinematics(sequenceId);
         if (!profileRes.ok) return profileRes;
 
@@ -254,7 +254,7 @@ export class KinematicsLimb {
             // Persist to D:\sovereign\memory\pedagogy
             const fs = await import('fs');
             fs.writeFileSync(substratePath, JSON.stringify(substrate, null, 2));
-            
+
             // Vectorize the principle
             const embedRes = await this.client.embed(`Kinematic sequence ${sequenceId} bound to ${state}`);
             if (embedRes.ok) {

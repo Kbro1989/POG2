@@ -1,266 +1,453 @@
-import { Result } from '../../core/models.js';
-import { createLogger } from '../../utils/logger.js';
-import fs from 'fs/promises';
-import fsSync from 'fs';
-import path from 'path';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { GameCacheLoader } = require("../../../rsmv/src/cache/sqlite.js");
+const { parse } = require("../../../rsmv/src/opdecoder.js");
 
-const logger = createLogger('CacheForensics');
+import { Result, ok, err } from '../../core/models.js';
+import { createLogger } from "../../utils/logger.js";
+import { getSovereignRoot, getRSMVCachePath, getCachePedagogyPath } from '../../utils/SovereignPathResolver.js';
+import * as fs from 'fs';
+import * as fsPromise from 'fs/promises';
+import * as path from 'path';
+
+const logger = createLogger('CacheForensicsLimb');
 
 export interface VolatilityStatus {
     lastModified: Date;
     hasChanged: boolean;
 }
 
-export interface CachedEntityInfo {
-    id: number;
-    name: string;
-    description?: string;
-    combatLevel?: number;
-    category?: string;
-}
-
-export interface ForensicQuery {
-    layer: 'models' | 'npcs' | 'items' | 'objects' | 'quests';
-    queryType: 'exact' | 'partial' | 'regex';
-    term: string;
-    limit?: number;
-}
-
 /**
- * CacheForensicsLimb
- * Sovereign Epistemology Central Router.
+ * CacheForensicsLimb - Sovereign Epistemology Substrate
  * 
  * Responsibilities:
  * 1. Cache Volatility Monitoring (detecting if the physical JS5 cache updated).
- * 2. Hierarchical Routing across preserved JSON taxonomy states.
- * 3. Cross-referencing entities (e.g., finding the exact Model IDs for an NPC query).
+ * 2. High-fidelity forensic decompilation of Items, NPCs, Objects, and Enums.
+ * 3. Unified search across exported JSON catalogs.
  */
 export class CacheForensicsLimb {
-    private mainCachePath: string;
-    private taxonomiesPath: string;
+    private readonly cachePath = getRSMVCachePath();
+    private cache: any | null = null;
+    private readonly rootDir = getCachePedagogyPath(); // D:\sovereign\cache_pedagogy\json_dumps
 
-    // Preserved States (Layer 2)
-    private states: Record<string, CachedEntityInfo[]> = {
-        npcs: [],
-        items: [],
-        objects: [],
-        quests: []
-    };
-
+    // Volatility tracking
     private lastCacheStat: number = 0;
+    private mainCacheFile: string;
 
-    constructor(cacheDir: string, taxonomiesDir: string) {
-        const legacyPath = path.join(cacheDir, 'main_file_cache.dat2');
-        const modernPath = path.join(cacheDir, 'js5-47.jcache'); // Major 47 is usually models
-        
-        this.mainCachePath = fsSync.existsSync(legacyPath) ? legacyPath : modernPath;
-        this.taxonomiesPath = taxonomiesDir;
+    // Cached JSON files
+    private equipmentBySlot: any = null;
+    private quests: any = null;
+    private npcs: any[] | null = null;
+    private items: any[] | null = null;
+    private objects: any[] | null = null;
+
+    private readonly SLOT_NAMES = [
+        'helm', 'cape', 'necklace', 'weapon', 'body', 'offhand',
+        'arms', 'legs', 'face', 'gloves', 'boots', 'beard',
+        'ring', 'ammo', 'aura', 'slot15'
+    ];
+
+    constructor() {
+        // Track the main cache file for volatility checks
+        const legacyPath = path.join(this.cachePath, 'main_file_cache.dat2');
+        const modernPath = path.join(this.cachePath, 'js5-47.jcache');
+        this.mainCacheFile = fs.existsSync(legacyPath) ? legacyPath : modernPath;
+
+        try {
+            this.cache = new GameCacheLoader(this.cachePath);
+            this.cache.buildnr = 940;
+            logger.info({ path: this.cachePath }, 'CacheForensicsLimb connected to substrate.');
+        } catch (e) {
+            logger.error({ error: (e as Error).message }, 'Failed to connect to GameCacheLoader.');
+        }
+
+        // Lazy load basic catalogs
+        this.loadCatalogData();
     }
 
     /**
-     * Boot Sequence
-     * Checks cache health and loads preserved states.
+     * initialize - Boot sequence for the forensic substrate.
      */
     public async initialize(): Promise<Result<boolean>> {
         try {
-            logger.info('Booting CacheForensicsLimb (Epistemology Router)...');
-
-            // 1. Initial Volatility Check
+            logger.info('Booting CacheForensicsLimb (Epistemology substrate)...');
+            
+            // Initial volatility check
             const volatility = await this.checkCacheVolatility();
             if (volatility.ok && volatility.value.hasChanged) {
-                logger.warn('Initial cache state indicates recent modifications. An automated extraction sweep should be orchestrated.');
-                // Trigger sweeping sequence via orchestration later.
+                logger.warn('Initial cache state indicates recent modifications. Substrate may be out of sync.');
             }
 
-            // 2. Load Preserved JSON States into memory
-            await this.loadPreservedStates();
-
-            logger.info('CacheForensicsLimb sequence active.');
-            return { ok: true, value: true };
+            logger.info('CacheForensicsLimb sequence ACTIVE.');
+            return ok(true);
         } catch (error) {
             logger.error({ error }, 'Failed to initialize CacheForensicsLimb.');
-            return { ok: false, error: error as Error };
+            return err(error as Error);
+        }
+    }
+
+    private loadCatalogData() {
+        try {
+            const eqPath = path.join(this.rootDir, 'equipment_by_slot.json');
+            if (fs.existsSync(eqPath)) {
+                this.equipmentBySlot = JSON.parse(fs.readFileSync(eqPath, 'utf8'));
+                logger.debug('Loaded equipment_by_slot.json');
+            }
+
+            const questPath = path.join(this.rootDir, 'quests.json');
+            if (fs.existsSync(questPath)) {
+                this.quests = JSON.parse(fs.readFileSync(questPath, 'utf8'));
+                logger.debug('Loaded quests.json');
+            }
+        } catch (e) {
+            logger.warn({ error: (e as Error).message }, 'Failed to load forensic JSON catalogs.');
         }
     }
 
     /**
-     * Checks the physical mtime of the main_file_cache.dat2 to detect Jagex updates.
+     * Checks the physical mtime of the cache to detect Jagex updates.
      */
     public async checkCacheVolatility(): Promise<Result<VolatilityStatus>> {
         try {
-            const stat = await fs.stat(this.mainCachePath);
+            if (!fs.existsSync(this.mainCacheFile)) {
+                return err(new Error(`Cache file not found: ${this.mainCacheFile}`));
+            }
+            const stat = await fsPromise.stat(this.mainCacheFile);
             const currentMTime = stat.mtimeMs;
 
             const hasChanged = this.lastCacheStat > 0 && currentMTime > this.lastCacheStat;
             this.lastCacheStat = currentMTime;
 
-            return {
-                ok: true,
-                value: {
-                    lastModified: stat.mtime,
-                    hasChanged
+            return ok({
+                lastModified: stat.mtime,
+                hasChanged
+            });
+        } catch (error) {
+            logger.error({ error }, `Cache volatility probe failed at ${this.mainCacheFile}`);
+            return err(error as Error);
+        }
+    }
+
+    /**
+     * Search for an entity by name across all exported JSON catalogs.
+     */
+    public searchByName(query: string, type: 'npc' | 'item' | 'object' | 'all' = 'all'): Result<any[]> {
+        try {
+            const types = type === 'all' ? ['npc', 'item', 'object'] : [type];
+            const results: any[] = [];
+            const lowerQuery = query.toLowerCase();
+
+            for (const t of types) {
+                const entries = this.getEntries(t as any);
+                for (const entry of entries) {
+                    const score = this.scoreMatch(entry.name, lowerQuery);
+                    if (score > 0) {
+                        results.push({
+                            id: entry.id,
+                            name: entry.name,
+                            type: t,
+                            matchScore: score
+                        });
+                    }
+                }
+            }
+
+            results.sort((a, b) => b.matchScore - a.matchScore || a.id - b.id);
+            return ok(results.slice(0, 50));
+        } catch (e) {
+            logger.error({ error: (e as Error).message, query }, 'Forensic Name Search failed.');
+            return err(new Error(`Search failed: ${(e as Error).message}`));
+        }
+    }
+
+    private getEntries(type: 'npc' | 'item' | 'object'): any[] {
+        if (type === 'npc') {
+            if (!this.npcs) {
+                const p = path.join(this.rootDir, 'npcs.json');
+                this.npcs = fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : [];
+            }
+            return this.npcs!;
+        }
+        if (type === 'item') {
+            if (!this.items) {
+                const p = path.join(this.rootDir, 'items.json');
+                this.items = fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : [];
+            }
+            return this.items!;
+        }
+        if (type === 'object') {
+            if (!this.objects) {
+                const p = path.join(this.rootDir, 'objects.json');
+                this.objects = fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : [];
+            }
+            return this.objects!;
+        }
+        return [];
+    }
+
+    private scoreMatch(name: string, lowerQuery: string): number {
+        if (!name) return 0;
+        const lowerName = name.toLowerCase();
+        if (lowerName === lowerQuery) return 1.0;
+        if (lowerName.includes(lowerQuery)) return 0.7;
+        return 0.0;
+    }
+
+    /**
+     * Decompile the full item definition from the active cache.
+     */
+    public async getItemDetails(id: number): Promise<Result<any>> {
+        if (!this.cache) return err(new Error('Cache connection offline.'));
+
+        try {
+            const MAJOR_ITEMS = 19;
+            const ARCH_SIZE = 256;
+            const archiveId = Math.floor(id / ARCH_SIZE);
+            const fileId = id % ARCH_SIZE;
+
+            const archive = await this.cache.getArchiveById(MAJOR_ITEMS, archiveId);
+            const file = archive.find((f: any) => f.fileid === fileId);
+            if (!file) return err(new Error(`Item ID ${id} not found in archive ${archiveId}`));
+
+            const raw = parse.item.read(file.buffer, this.cache);
+            const name = raw.name || `ITEMS ${id}`;
+            const equipSlotId = raw.equipSlotId ?? null;
+            const isEquippable = equipSlotId !== null;
+
+            // Extract models
+            const maleModels = [raw.maleModels_0?.id ?? null, raw.maleModels_1 ?? null, raw.maleModels_2 ?? null];
+            const femaleModels = [raw.femaleModels_0?.id ?? null, raw.femaleModels_1 ?? null, raw.femaleModels_2 ?? null];
+
+            const result = {
+                id,
+                raw,
+                forensics: {
+                    name,
+                    isEquippable,
+                    equipSlot: isEquippable && equipSlotId < this.SLOT_NAMES.length ? this.SLOT_NAMES[equipSlotId] : null,
+                    equipSlotId,
+                    isMember: !!raw.members,
+                    maleModels,
+                    femaleModels,
+                    actions: [raw.widget_actions_0, raw.widget_actions_1, raw.widget_actions_2, raw.widget_actions_3, raw.widget_actions_4].filter(Boolean)
                 }
             };
-        } catch (error) {
-            logger.error({ error }, `Cache probe failed at ${this.mainCachePath}`);
-            return { ok: false, error: error as Error };
-        }
-    }
-
-    private async loadPreservedStates(): Promise<void> {
-        const layers = ['npcs', 'items', 'objects', 'quests'];
-
-        // 1. Load Group Reference Files
-        for (const layer of layers) {
-            const possibleNames = [
-                `${layer}.json`,
-                `GROUP_REFERENCE_${layer}.json`,
-                `${layer.toUpperCase()}.json`
-            ];
-            
-            let foundPath: string | null = null;
-            // Check Sovereign storage first, then fall back to CWD
-            const searchDirs = [this.taxonomiesPath, process.cwd(), path.join(process.cwd(), 'src', 'opcodes')];
-
-            for (const dir of searchDirs) {
-                for (const name of possibleNames) {
-                    const p = path.join(dir, name);
-                    if (fsSync.existsSync(p)) {
-                        foundPath = p;
-                        break;
-                    }
-                }
-                if (foundPath) break;
-            }
-
-            if (foundPath) {
-                try {
-                    const data = await fs.readFile(foundPath, 'utf-8');
-                    const parsed = JSON.parse(data);
-                    this.states[layer] = Array.isArray(parsed) ? parsed : [parsed];
-                    logger.info({ layer, path: path.basename(foundPath), count: this.states[layer].length }, `Sovereign taxonomy layer loaded.`);
-                } catch (e) {
-                    logger.error({ layer, foundPath, e }, 'Corrupted preserved state detected.');
-                }
-            } else {
-                logger.warn(`Preserved substrate missing for layer: ${layer}. (Searched in ${searchDirs.join(', ')})`);
-            }
-        }
-
-        // 2. Aggregate Individual Entity Files (NPC_50.json etc)
-        try {
-            const files = fsSync.readdirSync(this.taxonomiesPath);
-            for (const file of files) {
-                const match = file.match(/^(NPC|ITEM|OBJECT|QUEST)_(\d+)\.json$/i);
-                if (match) {
-                    const type = match[1].toLowerCase();
-                    const layer = type === 'quest' ? 'quests' : type + 's';
-                    if (!this.states[layer]) continue;
-
-                    try {
-                        const data = await fs.readFile(path.join(this.taxonomiesPath, file), 'utf-8');
-                        const entity = JSON.parse(data);
-                        // Avoid duplicates from group files
-                        if (!this.states[layer].find(e => e.id === entity.id)) {
-                            this.states[layer].push(entity);
-                            logger.debug({ layer, entity: entity.name, id: entity.id }, 'Aggregate entity loaded.');
-                        }
-                    } catch (e) {
-                        logger.error({ file, e }, 'Failed to load aggregate entity.');
-                    }
-                }
-            }
-            logger.info('Taxonomy aggregation complete.');
+            return ok(result);
         } catch (e) {
-            logger.error({ e }, 'Failed to scan for aggregate entities.');
+            logger.error({ error: (e as Error).message, id }, 'Item Forensic Decompile failed.');
+            return err(new Error(`Decompile failed: ${(e as Error).message}`));
         }
     }
 
     /**
-     * Query Engine (Layer 2)
-     * Replaces hardcoded strings with dynamic capability.
+     * Decompile the full NPC definition from the active cache.
      */
-    public queryTaxonomy(query: ForensicQuery): Result<CachedEntityInfo[]> {
-        const targetLayer = this.states[query.layer];
-        if (!targetLayer || targetLayer.length === 0) {
-            return { ok: false, error: new Error(`No data loaded for layer: ${query.layer}`) };
+    public async getNpcDetails(id: number): Promise<Result<any>> {
+        if (!this.cache) return err(new Error('Cache connection offline.'));
+
+        try {
+            const MAJOR_NPCS = 18;
+            const ARCH_SIZE = 128;
+            const archiveId = Math.floor(id / ARCH_SIZE);
+            const fileId = id % ARCH_SIZE;
+
+            const archive = await this.cache.getArchiveById(MAJOR_NPCS, archiveId);
+            const file = archive.find((f: any) => f.fileid === fileId);
+            if (!file) return err(new Error(`NPC ID ${id} not found in archive ${archiveId}`));
+
+            const raw = parse.npc.read(file.buffer, this.cache);
+            const name = raw.name || `NPCS ${id}`;
+
+            const result = {
+                id,
+                raw,
+                forensics: {
+                    name,
+                    combatLevel: raw.combat ?? null,
+                    models: raw.models || [],
+                    headModels: raw.headModels || [],
+                    actions: [raw.actions_0, raw.actions_1, raw.actions_2, raw.actions_3, raw.actions_4].filter(Boolean),
+                    boundSize: raw.boundSize ?? null,
+                    animationGroup: raw.animation_group ?? null
+                }
+            };
+            return ok(result);
+        } catch (e) {
+            logger.error({ error: (e as Error).message, id }, 'NPC Forensic Decompile failed.');
+            return err(new Error(`Decompile failed: ${(e as Error).message}`));
         }
-
-        const limit = query.limit || 50;
-        const results: CachedEntityInfo[] = [];
-        const lowerTerm = query.term.toLowerCase();
-
-        for (const entity of targetLayer) {
-            if (!entity.name) continue;
-
-            const lowerName = entity.name.toLowerCase();
-            let isMatch = false;
-
-            if (query.queryType === 'exact' && lowerName === lowerTerm) {
-                isMatch = true;
-            } else if (query.queryType === 'partial' && lowerName.includes(lowerTerm)) {
-                isMatch = true;
-            } else if (query.queryType === 'regex') {
-                try {
-                    isMatch = new RegExp(query.term, 'i').test(entity.name);
-                } catch { }
-            }
-
-            if (isMatch) {
-                results.push(entity);
-                if (results.length >= limit) break;
-            }
-        }
-
-        return { ok: true, value: results };
     }
 
     /**
-     * Deep Cross-Reference (Layer 3)
-     * e.g., Finds an item dynamically, then tries to cross reference it with equipment lists.
+     * Decompile the full Object definition from the active cache.
      */
-    public async crossReferenceItem(partialName: string): Promise<Result<{ itemContext: CachedEntityInfo, rawModelIds: number[] }>> {
-        // Find the base item via Layer 2 dynamic search
-        const qRes = this.queryTaxonomy({ layer: 'items', queryType: 'partial', term: partialName, limit: 1 });
-        if (!qRes.ok || qRes.value.length === 0) return { ok: false, error: new Error(`Item "${partialName}" not found in taxonomy.`) };
+    public async getObjectDetails(id: number): Promise<Result<any>> {
+        if (!this.cache) return err(new Error('Cache connection offline.'));
 
-        const baseItem = qRes.value[0];
-        const rawModelIds: number[] = [];
+        try {
+            const MAJOR_OBJECTS = 16;
+            const ARCH_SIZE = 256;
+            const archiveId = Math.floor(id / ARCH_SIZE);
+            const fileId = id % ARCH_SIZE;
 
-        // Cross-reference resolved item IDs with equipment model mappings.
-        const equipPath = path.join(this.taxonomiesPath, 'equipment_by_slot.json');
-        if (fsSync.existsSync(equipPath)) {
-            const equipData = JSON.parse(await fs.readFile(equipPath, 'utf8'));
-            for (const slotKey in equipData.equipment) {
-                const slot = equipData.equipment[slotKey];
-                for (const item of slot.items) {
-                    if (item.id === baseItem.id && item.maleModelId) {
-                        rawModelIds.push(item.maleModelId);
+            const archive = await this.cache.getArchiveById(MAJOR_OBJECTS, archiveId);
+            const file = archive.find((f: any) => f.fileid === fileId);
+            if (!file) return err(new Error(`Object ID ${id} not found in archive ${archiveId}`));
+
+            const raw = parse.object.read(file.buffer, this.cache);
+            const result = {
+                id,
+                name: raw.name || `OBJECT ${id}`,
+                models: raw.models || [],
+                actions: [raw.actions_0, raw.actions_1, raw.actions_2, raw.actions_3, raw.actions_4].filter(Boolean),
+                width: raw.width || 1,
+                length: raw.length || 1,
+                raw
+            };
+            return ok(result);
+        } catch (e) {
+            logger.error({ error: (e as Error).message, id }, 'Object Forensic Decompile failed.');
+            return err(new Error(`Decompile failed: ${(e as Error).message}`));
+        }
+    }
+
+    /**
+     * Get the full ENUM definition from the cache.
+     */
+    public async getEnumDetails(id: number): Promise<Result<any>> {
+        if (!this.cache) return err(new Error('Cache connection offline.'));
+        try {
+            const MAJOR_ENUMS = 17;
+            const ARCH_SIZE = 128;
+            const archiveId = Math.floor(id / ARCH_SIZE);
+            const fileId = id % ARCH_SIZE;
+
+            const archive = await this.cache.getArchiveById(MAJOR_ENUMS, archiveId);
+            const file = archive.find((f: any) => f.fileid === fileId);
+            if (!file) return err(new Error(`Enum ID ${id} not found in archive ${archiveId}`));
+
+            const def = this.decodeEnum(file.buffer);
+            return ok({ id, ...def });
+        } catch (e) {
+            logger.error({ error: (e as Error).message, id }, 'Enum Forensic Decompile failed.');
+            return err(new Error(`Decompile failed: ${(e as Error).message}`));
+        }
+    }
+
+    private decodeEnum(buffer: Buffer): any {
+        let offset = 0;
+        const def: any = { map: {} };
+        while (offset < buffer.length) {
+            const opcode = buffer.readUInt8(offset++);
+            if (opcode === 0) break;
+            switch (opcode) {
+                case 1: def.keyType = buffer.readUInt8(offset++); break;
+                case 2: def.valType = buffer.readUInt8(offset++); break;
+                case 3: def.defaultString = this.readString(buffer, offset); offset += def.defaultString.length + 1; break;
+                case 4: def.defaultInt = buffer.readInt32BE(offset); offset += 4; break;
+                case 5: {
+                    const size = buffer.readUInt16BE(offset); offset += 2;
+                    for (let i = 0; i < size; i++) {
+                        const key = buffer.readInt32BE(offset); offset += 4;
+                        const val = this.readString(buffer, offset); offset += val.length + 1;
+                        def.map[key] = val;
                     }
+                    break;
+                }
+                case 6: {
+                    const size = buffer.readUInt16BE(offset); offset += 2;
+                    for (let i = 0; i < size; i++) {
+                        const key = buffer.readInt32BE(offset); offset += 4;
+                        const val = buffer.readInt32BE(offset); offset += 4;
+                        def.map[key] = val;
+                    }
+                    break;
                 }
             }
         }
+        return def;
+    }
 
-        return { ok: true, value: { itemContext: baseItem, rawModelIds } };
+    private readString(buffer: Buffer, offset: number): string {
+        let end = offset;
+        while (end < buffer.length && buffer[end] !== 0) end++;
+        return buffer.slice(offset, end).toString('utf-8');
     }
 
     /**
-     * Retrieves the raw payload and metadata for an entity.
-     * Used by the Sovereign Extraction bridge.
+     * Get all equippable items for a specific avatar slot.
+     */
+    public getEquipmentBySlot(slotName: string): Result<any[]> {
+        if (!this.equipmentBySlot) return err(new Error('equipment_by_slot.json not loaded.'));
+
+        const slotData = this.equipmentBySlot.equipment[slotName];
+        if (!slotData) return err(new Error(`Slot '${slotName}' does not exist.`));
+
+        return ok(slotData.items);
+    }
+
+    /**
+     * Get a specific quest definition.
+     */
+    public getQuestDetails(questId: number): Result<any> {
+        if (!this.quests) return err(new Error('quests.json not loaded.'));
+        const quest = this.quests.quests.find((q: any) => q.id === questId);
+        if (!quest) return err(new Error(`Quest ID ${questId} not found.`));
+        return ok(quest);
+    }
+
+    /**
+     * Get the full prerequisite chain for a quest.
+     */
+    public getQuestChain(questId: number): Result<{ quest: any, chainPath: number[] }> {
+        if (!this.quests) return err(new Error('quests.json not loaded.'));
+
+        const quest = this.quests.quests.find((q: any) => q.id === questId);
+        if (!quest) return err(new Error(`Quest ID ${questId} not found.`));
+
+        const chainPath: number[] = [];
+        const visited = new Set<number>();
+        const stack = [...quest.prerequisiteQuests];
+
+        while (stack.length > 0) {
+            const next = stack.pop()!;
+            if (visited.has(next)) continue;
+            visited.add(next);
+            chainPath.push(next);
+
+            const nextQuest = this.quests.quests.find((q: any) => q.id === next);
+            if (nextQuest && nextQuest.prerequisiteQuests) {
+                stack.push(...nextQuest.prerequisiteQuests);
+            }
+        }
+
+        return ok({ quest, chainPath: chainPath.reverse() });
+    }
+
+    /**
+     * findItemSlot - Resolves which equipment slot an item belongs to using JSON substrate.
+     */
+    public findItemSlot(itemId: number): string | null {
+        if (!this.equipmentBySlot || !this.equipmentBySlot.equipment) return null;
+        for (const [slot, data] of Object.entries(this.equipmentBySlot.equipment)) {
+            const items = (data as any).items || [];
+            if (items.some((item: any) => item.id === itemId)) return slot;
+        }
+        return null;
+    }
+
+    /**
+     * getRawPayload - Interface for learning substrates.
      */
     public async getRawPayload(type: string, id: number): Promise<{ buffer: Buffer, crc: number, version: number, fields: any }> {
-        logger.info({ type, id }, 'Retrieving raw payload from forensics substrate...');
-
-        // In a production scenario, this reads from the localized JSON snapshots or the physical cache.
-        // For now, we search the memory states for the fields.
         const layer = type.toLowerCase() + 's';
-        const entity = this.states[layer]?.find((e: any) => e.id === id);
+        const entries = this.getEntries(type as any);
+        const entity = entries.find((e: any) => e.id === id);
 
         if (!entity) {
-            throw new Error(`Forensics failed: Entity ${id} not found in ${layer} taxonomy.`);
+            throw new Error(`Forensics failed: Entity ${id} not found in ${layer} substrate.`);
         }
 
-    // Return a structural payload based on the taxonomy metadata
         return {
             buffer: Buffer.from(JSON.stringify(entity)),
             crc: 0,
@@ -269,22 +456,64 @@ export class CacheForensicsLimb {
         };
     }
 
+    /**
+     * queryTaxonomy - Interface for CLI tools.
+     */
+    public queryTaxonomy(query: { layer: string, term: string, queryType?: string, limit?: number }): Result<any[]> {
+        const typeMap: Record<string, string> = { npcs: 'npc', items: 'item', objects: 'object' };
+        const t = typeMap[query.layer] || 'all';
+        return this.searchByName(query.term, t as any);
+    }
+
+    /**
+     * crossReferenceItem - Deep matching for model IDs.
+     */
+    public async crossReferenceItem(partialName: string): Promise<Result<{ itemContext: any, rawModelIds: number[] }>> {
+        const qRes = this.searchByName(partialName, 'item');
+        if (!qRes.ok || qRes.value.length === 0) return err(new Error(`Item "${partialName}" not found.`));
+
+        const baseItem = qRes.value[0];
+        const rawModelIds: number[] = [];
+
+        if (this.equipmentBySlot) {
+            for (const slotKey in this.equipmentBySlot.equipment) {
+                const slot = this.equipmentBySlot.equipment[slotKey];
+                for (const item of slot.items) {
+                    if (item.id === baseItem.id && item.maleModelId) {
+                        rawModelIds.push(item.maleModelId);
+                    }
+                }
+            }
+        }
+
+        return ok({ itemContext: baseItem, rawModelIds });
+    }
+
     public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' } {
-        const cacheExists = fsSync.existsSync(this.mainCachePath);
-        const layers = Object.keys(this.states).filter(k => this.states[k].length > 0);
-        const missingLayers = ['npcs', 'items', 'objects'].filter(l => this.states[l].length === 0);
+        const cacheExists = this.cache !== null;
+        const catalogReady = this.equipmentBySlot !== null;
         
         let status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' = 'ONLINE';
-        let details = `Cache: ${cacheExists ? 'NOMINAL' : 'MISSING'} (${path.basename(this.mainCachePath)}). ${layers.length}/4 layers loaded.`;
+        let details = `Cache: ${cacheExists ? 'NOMINAL' : 'OFFLINE'}. Catalogs: ${catalogReady ? 'READY' : 'MISSING'}.`;
 
         if (!cacheExists) {
             status = 'OFFLINE';
-            details += " CRITICAL: Physical JS5 substrate unreachable.";
-        } else if (missingLayers.length > 0) {
+        } else if (!catalogReady) {
             status = 'DEGRADED';
-            details += ` WARNING: Missing taxonomies: ${missingLayers.join(', ')}. Extraction required.`;
         }
 
         return { online: cacheExists, details, status };
+    }
+
+    public close() {
+        if (this.cache) {
+            try {
+                this.cache.close();
+                this.cache = null;
+                logger.info('CacheForensicsLimb cache connection closed.');
+            } catch (e) {
+                logger.error({ error: (e as Error).message }, 'Error closing cache.');
+            }
+        }
     }
 }

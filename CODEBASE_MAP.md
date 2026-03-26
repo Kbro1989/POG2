@@ -292,7 +292,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ## 📂 External Core Substrates (`tmp/`)
 *Local repository clones and critical external dependencies woven into the cognitive runtime.*
 
-- [Kbro1989/rsmv](tmp_rsmv_inspect/) (RuneScape 3 Model Viewer + Cache Subsystem)
+- [Kbro1989/rsmv](rsmv/) (RuneScape 3 Model Viewer + Cache Subsystem)
 
 ---
 

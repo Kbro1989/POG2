@@ -1,3 +1,5 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { createLogger } from '../utils/logger.js';
 import { ModelRolodex } from '../api/ai/ModelRolodex.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';

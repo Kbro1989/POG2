@@ -21991,8 +21991,8 @@
                         }, !this.props.ctx.source && oT.createElement(oT.Fragment, null, oT.createElement(YA, { onOpen: this.openCache }), oT.createElement("div", { style: { flex: "1" } }), oT.createElement("div", { style: { textAlign: "center" } }, "Go to ", oT.createElement("a", {
                             href: "https://runeapps.org/modelviewer_about"
                         }, "RuneApps"), " for more info. Source code hosted at ", oT.createElement("a", {
-                            href: "https://github.com/Kbro1989/POG2/blob/main/tmp_rsmv_inspect", target: "_blank"
-                        }, "https://github.com/Kbro1989/POG2.git/tmp_rsmv_inspect"))), t && oT.createElement(oT.Fragment, null, oT.createElement("input", { type: "button", className: "sub-btn", onClick: this.closeCache, value: `Close ${t.name}`, title: t.descr }), oT.createElement(qM, {
+                            href: "https://github.com/Kbro1989/POG2/blob/main/rsmv", target: "_blank"
+                        }, "https://github.com/Kbro1989/POG2.git/rsmv"))), t && oT.createElement(oT.Fragment, null, oT.createElement("input", { type: "button", className: "sub-btn", onClick: this.closeCache, value: `Close ${t.name}`, title: t.descr }), oT.createElement(qM, {
                             ctx: this.props.ctx
                         }), oT.createElement(NM, { ctx: this.props.ctx }))))
                     }

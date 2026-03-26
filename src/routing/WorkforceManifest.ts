@@ -1,3 +1,5 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { SovereignDomain, DOMAIN_ADJACENCY } from '../types/SovereignDomain.js';
 import { YaoState } from '../core/models.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';

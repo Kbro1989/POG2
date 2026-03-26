@@ -230,14 +230,14 @@ export class ModelClient implements ModelExecutor {
         switch (yaoState) {
             case YaoState.OldYang:   // 3: Deep metamorphic change
             case YaoState.OldMixed:  // 4: Chaotic complexity
-                return 1_200_000;   // 20 mins for deep reasoning
+                return 86_400_000;   // 24 hours for deep sovereignty
             case YaoState.YoungYin:
                 return 180_000; // 3m fast response
             case YaoState.YoungYang: // 2: Stable expansion
             case YaoState.OldYin:    // 1: Structural break
-                return 600_000;     // 10 mins
+                return 3_600_000;    // 1 hour
             case YaoState.YoungMixed:// 5: Emerging
-                return 300_000;     // 5 mins
+                return 600_000;     // 10 mins
             default:
                 return 300_000;
         }

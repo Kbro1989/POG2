@@ -87,6 +87,24 @@ export interface ConsequenceRecord {
     latencyMs: number;
 }
 
+export interface RetrospectiveInsight {
+    thought: string;
+    action: string;
+    outcome: string;
+    why: string;
+    logic: number;
+}
+
+export interface RetrospectiveRecord {
+    timestamp: string;
+    sessionId: string;
+    task: string;
+    narrative: string;
+    insight: RetrospectiveInsight;
+    yaoState: number;
+    hexagram: string;
+}
+
 /**
  * TrainingCollector â€” Biological memory substrate for perpetual learning.
  * Records all interactions, routing decisions, session history, and metrics
@@ -96,6 +114,36 @@ export interface ConsequenceRecord {
  * can learn from its own behavior over time.
  */
 export class TrainingCollector {
+    async getRecentConsequences(count: number): Promise<ConsequenceRecord[]> {
+        const dir = getTrainingConsequencesPath();
+        const fileName = `${this.getDatePrefix()}.jsonl`;
+        const filePath = join(dir, fileName);
+        if (!existsSync(filePath)) return [];
+        try {
+            const raw = readFileSync(filePath, 'utf-8');
+            const lines = raw.trim().split('\n');
+            const records: ConsequenceRecord[] = lines
+                .map((line: string) => { try { return JSON.parse(line); } catch { return null; } })
+                .filter((r: any): r is ConsequenceRecord => r !== null);
+            return records.slice(-count);
+        } catch (error) {
+            logger.warn({ filePath, error: (error as Error).message }, 'Failed to read consequences');
+            return [];
+        }
+    }
+
+    async recordRetrospective(record: Omit<RetrospectiveRecord, 'timestamp' | 'sessionId'>): Promise<void> {
+        const full: RetrospectiveRecord = {
+            ...record,
+            timestamp: new Date().toISOString(),
+            sessionId: this.sessionId
+        };
+        EventBus.getInstance().publish({
+            type: 'retrospective',
+            source: 'TrainingCollector',
+            payload: full
+        });
+    }
     private readonly sessionId: string;
     private interactionCount = 0;
     private errorCount = 0;

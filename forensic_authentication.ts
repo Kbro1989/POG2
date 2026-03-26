@@ -1,12 +1,17 @@
-import { GameCacheLoader } from './tmp_rsmv_inspect/src/cache/sqlite.js';
-import { parse } from './tmp_rsmv_inspect/src/opdecoder.js';
-import { cacheMajors } from './tmp_rsmv_inspect/src/constants.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { GameCacheLoader  } = require("./rsmv/src/cache/sqlite.js");
+const { parse  } = require("./rsmv/src/opdecoder.js");
+const { cacheMajors  } = require("./rsmv/src/constants.js");
+
+
+
 
 async function main() {
     const loader = new GameCacheLoader('C:/ProgramData/Jagex/RuneScape');
     console.log('--- FORENSIC AUTHENTICATION REPORT ---');
     console.log('Target: C:/ProgramData/Jagex/RuneScape');
-    
+
     try {
         // 1. Authenticate SpotAnim ID 10
         const saBuffer = await loader.getFile(cacheMajors.spotanims, 10);

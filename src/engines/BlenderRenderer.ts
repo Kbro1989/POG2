@@ -32,6 +32,7 @@ interface SceneAnalysis {
     isFiery: boolean;
     isCinematic: boolean;
     isAerial: boolean;
+    isPlayerPOV: boolean;
     hasMotion: boolean;
     keyColor: [number, number, number];
     frameCount: number;
@@ -160,6 +161,7 @@ export class BlenderRenderer {
         const isFiery = /fire|flame|lava|burn|inferno|volcanic|roar/.test(combined);
         const isCinematic = /cinematic|dramatic|epic|volumetric|4k/.test(combined);
         const isAerial = /aerial|fly|sky|above|panoramic/.test(combined);
+        const isPlayerPOV = combined.includes('player') || combined.includes('npc pov');
 
         // Detect motion keywords for camera animation style
         const hasMotion = /roar|swing|charge|attack|run|explode|burst|swirl/.test(combined);
@@ -181,6 +183,7 @@ export class BlenderRenderer {
             isFiery,
             isCinematic,
             isAerial,
+            isPlayerPOV,
             hasMotion,
             keyColor,
             frameCount,
@@ -193,7 +196,7 @@ export class BlenderRenderer {
      * generateCinemaScript - Produce real Blender Python for the analyzed scene.
      */
     private generateCinemaScript(analysis: SceneAnalysis, outputPath: string): string {
-        const { subjects, isDark, isFiery, isCinematic, isAerial, hasMotion, keyColor, frameCount } = analysis;
+        const { subjects, isDark, isFiery, isCinematic, isAerial, isPlayerPOV, hasMotion, keyColor, frameCount } = analysis;
         const escapedPath = outputPath.replace(/\\/g, '/');
 
         // Build subject geometry code
@@ -326,8 +329,8 @@ for obj in bpy.data.objects:
 `;
 
         // Camera orbit animation
-        const camDistance = isAerial ? 18 : (isCinematic ? 12 : 9);
-        const camHeight = isAerial ? 12 : (isCinematic ? 6 : 5);
+        const camDistance = isPlayerPOV ? 3 : (isAerial ? 18 : (isCinematic ? 12 : 9));
+        const camHeight = isPlayerPOV ? 1.7 : (isAerial ? 12 : (isCinematic ? 6 : 5)); // 1.7m = avg NPC head height
 
         // Ground plane
         const groundCode = `

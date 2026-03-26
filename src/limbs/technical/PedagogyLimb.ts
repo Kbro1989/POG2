@@ -1,9 +1,11 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { Result, ok, err, YaoState, EmotionalState } from '../../core/models.js';
 import type { PedagogyProfile } from '../../core/models.js';
 export { PedagogyProfile }; // Re-export for dependent limbs
 import { createLogger } from "../../utils/logger.js";
 import { getSovereignRoot, getPedagogyPath } from "../../utils/SovereignPathResolver.js";
-import { CacheForensicsLimb } from './CacheForensicsLimb.js';
+import { CacheForensicsLimb } from '../spatial/CacheForensicsLimb.js';
 import { TopologyLimb, TopologicalProfile } from './TopologyLimb.js';
 import { spawn } from 'child_process';
 import * as path from 'path';
@@ -17,7 +19,9 @@ import { RSMVExtractor } from '../../utils/RSMVExtractor.js';
 import { WikiEnricher } from '../../utils/WikiEnricher.js';
 import { VectorPedagogyLimb } from './VectorPedagogyLimb.js';
 import { ModelClient } from '../../clients/ModelClient.js';
-import { HudResearchLimb } from './HudResearchLimb.js';
+// import { HudResearchLimb } from './HudResearchLimb.js';
+// Stubbing missing HudResearchLimb until it appears in origin
+class HudResearchLimb { findCandidates(): any { return ok([]); } }
 
 const logger = createLogger('PedagogyLimb');
 
@@ -116,7 +120,7 @@ export class PedagogyLimb {
         const wikiRes = await WikiEnricher.enrich(itemData.forensics.name);
         const wikiData = wikiRes.ok ? wikiRes.value : null;
 
-        const slot = this.forensics.findItemSlot(itemId);
+        const slot = this.forensics.findItemSlot(itemId) as string | null;
 
         const profile = this.synthesizeProfile(`ITEM_${itemId}`, itemData.forensics.name, 'ITEM', topologicalProfiles, {
             role: wikiData?.role || itemData.pedagogy.summary,
@@ -283,7 +287,7 @@ The second should define its cinematic intent.
     }
 
     public async analyzeDynamics(spotAnimId: number): Promise<Result<PedagogyProfile>> {
-        const dynamicsLimb = new (await import('./DynamicsLimb.js')).DynamicsLimb(this.router, this.vectorDB);
+        const dynamicsLimb = new (await import('./DynamicsLimb.js')).DynamicsLimb(this.router, this.vectorDB, this.client);
         const res = await dynamicsLimb.extractDynamics(spotAnimId);
         if (res.ok) {
             this.anchorToMemory(res.value);

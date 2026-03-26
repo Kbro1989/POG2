@@ -1,7 +1,10 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { RSMVController } from '../vision/RSMVController.js';
 import { createLogger } from '../utils/logger.js';
 import { existsSync } from 'fs';
-import path from 'path';
+import path, { join } from 'path';
+import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
 
 const logger = createLogger('PullHans');
 
@@ -26,7 +29,7 @@ async function run() {
     }
 
     const rsmvDir = join(getSovereignRoot(), 'cache_pedagogy', 'rsmv_inspector');
-    const controller = new RSMVController(rsmvDir);
+    const controller = new RSMVController();
     const modelId = 'npc:0'; // Hans
     
     try {

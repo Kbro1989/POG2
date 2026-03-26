@@ -75,7 +75,71 @@ export class ArchitecturalValidator implements Validator {
         return false;
     }
 
+    /**
+     * Phase 29: Function-Deletion Guard.
+     * Extracts all exported symbols (functions, classes, consts, types, enums, interfaces)
+     * from the original code and verifies they ALL survive in the modified version.
+     * The system must NEVER heal by deletion.
+     */
+    public validatePreservation(original: string, modified: string): ValidationResult {
+        const originalSymbols = this.extractExportedSymbols(original);
+        const modifiedSymbols = this.extractExportedSymbols(modified);
+
+        const deleted: string[] = [];
+        for (const sym of originalSymbols) {
+            if (!modifiedSymbols.has(sym)) {
+                deleted.push(sym);
+            }
+        }
+
+        if (deleted.length > 0) {
+            return {
+                ok: false,
+                error: {
+                    reason: `Function-Deletion Guard: ${deleted.length} exported symbol(s) were removed: [${deleted.join(', ')}]. The system must NEVER heal by deletion.`,
+                    suggestion: `Restore the deleted symbols and fix them in-place instead. Young/Old snapshot will be used for rollback.`
+                }
+            };
+        }
+
+        return { ok: true, value: true };
+    }
+
+    /**
+     * Extracts all exported symbol names from TypeScript source code.
+     * Covers: export function, export class, export const, export let,
+     *         export type, export interface, export enum, export default,
+     *         and re-exports like export { X }.
+     */
+    private extractExportedSymbols(content: string): Set<string> {
+        const symbols = new Set<string>();
+
+        // export function/class/const/let/type/interface/enum NAME
+        const declarationPattern = /export\s+(?:async\s+)?(?:function|class|const|let|var|type|interface|enum)\s+(\w+)/g;
+        let match;
+        while ((match = declarationPattern.exec(content)) !== null) {
+            if (match[1]) symbols.add(match[1]);
+        }
+
+        // export default function/class NAME
+        const defaultPattern = /export\s+default\s+(?:async\s+)?(?:function|class)\s+(\w+)/g;
+        while ((match = defaultPattern.exec(content)) !== null) {
+            if (match[1]) symbols.add(match[1]);
+        }
+
+        // export { A, B, C } — named re-exports
+        const bracePattern = /export\s*\{([^}]+)\}/g;
+        while ((match = bracePattern.exec(content)) !== null) {
+            if (match[1]) {
+                const names = match[1].split(',').map(n => n.trim().split(/\s+as\s+/)[0]?.trim()).filter(Boolean);
+                names.forEach(n => { if (n) symbols.add(n); });
+            }
+        }
+
+        return symbols;
+    }
+
     public healthCheck(): { online: boolean; details: string } {
-        return { online: true, details: 'ArchitecturalValidator clinical enforcement substrate active.' };
+        return { online: true, details: 'ArchitecturalValidator clinical enforcement substrate active. Function-deletion guard armed.' };
     }
 }

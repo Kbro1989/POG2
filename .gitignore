@@ -79,7 +79,7 @@ kbd_*.json
 kbd_*/
 
 # RSMV research cluster (contains cache reader code)
-tmp_rsmv_inspect/
+rsmv/
 
 # Temporary test/debug outputs
 test_output*.txt

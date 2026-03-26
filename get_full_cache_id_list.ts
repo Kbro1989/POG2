@@ -1,9 +1,13 @@
-import { GameCacheLoader } from './tmp_rsmv_inspect/src/cache/sqlite.js';
-import { parse } from './tmp_rsmv_inspect/src/opdecoder.js';
-import * as fs from 'fs';
-import { createRequire } from 'module';
 
+
+import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
+const { GameCacheLoader  } = require("./rsmv/src/cache/sqlite.js");
+const { parse  } = require("./rsmv/src/opdecoder.js");
+import * as fs from 'fs';
+
+
+
 (global as any).__non_webpack_require__ = require;
 
 async function main() {
@@ -20,7 +24,7 @@ async function main() {
     for (const task of tasks) {
         console.log(`--- EXPORTING ${task.name.toUpperCase()} (MAJOR ${task.major}) ---`);
         const results: { id: number, name: string }[] = [];
-        
+
         try {
             const indices = await cache.getCacheIndex(task.major);
             console.log(`Found ${indices.length} archives in Major ${task.major}.`);
@@ -38,7 +42,7 @@ async function main() {
                             const parsed = task.parser.read(file.buffer, cache);
                             const name = (parsed as any).name || `${task.name.toUpperCase()} ${id}`;
                             results.push({ id, name });
-                            
+
                             if (results.length <= 5) {
                                 console.log(`SUCCESS: Parsed ${task.name} ${id} -> ${name}`);
                             }

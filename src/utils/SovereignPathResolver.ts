@@ -34,9 +34,13 @@ function getEffectiveSovereignLair(): string {
     const envRoot = process.env['POG_SOVEREIGN_ROOT'];
     if (envRoot) return envRoot;
 
-    // Backward compatibility for existing Windows setup
-    if (process.platform === 'win32' && existsSync('D:\\sovereign')) {
-        return 'D:\\sovereign';
+    // Direct redirection to the Sovereign substrate drive
+    if (process.platform === 'win32') {
+        const dDrive = 'D:\\sovereign';
+        if (!existsSync(dDrive)) {
+            try { mkdirSync(dDrive, { recursive: true }); } catch { /* Fallback to home */ }
+        }
+        if (existsSync(dDrive)) return dDrive;
     }
 
     return SOVEREIGN_HOME_ROOT;
@@ -330,6 +334,25 @@ export function getVectorDbPath(): string {
 }
 
 /**
+ * Phase 28: Federated Multi-DB Support
+ * Gets paths for historical/satellite vector databases for readonly contextual queries.
+ */
+export function getSatelliteDbPaths(): string[] {
+    const dir = hasHighPerformanceSubstrate() ? join(getSovereignRoot(), 'learning') : getSovereignRoot();
+    const candidates = ['learning.db', 'vibe-learning.db', 'embeddings.db'];
+    const validPaths: string[] = [];
+    
+    for (const name of candidates) {
+        const p = join(dir, name);
+        if (existsSync(p)) {
+            validPaths.push(p);
+        }
+    }
+    
+    return validPaths;
+}
+
+/**
  * Resolves a specific production pipeline path (category/folder)
  */
 export function getPipelinePath(category: string, folderName: string): string {
@@ -415,6 +438,20 @@ export function getSnapshotPath(snapshotId?: string): string {
  */
 export function getPedagogyPath(): string {
     return resolveSovereignPath('memory/pedagogy');
+}
+
+/**
+ * Gets the path for cache-extracted pedagogical JSON dumps (forensic exports)
+ */
+export function getCachePedagogyPath(): string {
+    return resolveSovereignPath('cache_pedagogy/json_dumps');
+}
+
+/**
+ * Resolves a specific forensic JSON file path within the pedagogy substrate
+ */
+export function getCachePedagogyFile(filename: string): string {
+    return join(getCachePedagogyPath(), filename);
 }
 
 /**

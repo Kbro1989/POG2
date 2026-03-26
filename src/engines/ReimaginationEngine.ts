@@ -47,9 +47,8 @@ export class ReimaginationEngine {
             spec.dataType
         );
 
-        // PHASE 2: Abstraction (AI Pedagogy)
-        logger.info('PHASE 2: Abstracting Sovereign Design Principle...');
-        const principle = await this.extractPrinciple(rawSubstrate, spec.domain);
+        if (!rawSubstrate.ok) throw new Error(`Extraction failed: ${rawSubstrate.error?.message}`);
+        const principle = await this.extractPrinciple(rawSubstrate.value, spec.domain);
         
         // Store in VectorDB under game-design-pedagogy
         await this.pedagogyLimb.ingestProfile({

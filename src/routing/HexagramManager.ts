@@ -24,6 +24,9 @@ export interface SystemState {
 }
 
 export class HexagramManager extends EventEmitter {
+    pinSynthesis(arg0: string) {
+        throw new Error('Method not implemented.');
+    }
     private static instance: HexagramManager | undefined;
     private lines: ContextCard[] = [];
     private readonly projectId: string;
@@ -117,7 +120,7 @@ export class HexagramManager extends EventEmitter {
     }
 
     async initialize(): Promise<void> {
-        if (this.vectorDB) {
+        if (this.vectorDB && typeof this.vectorDB.getHexagramContext === 'function') {
             const result = await this.vectorDB.getHexagramContext(this.projectId);
             if (result.ok) {
                 const rows = (result.value as unknown as HexagramRow[]) || [];
@@ -150,7 +153,7 @@ export class HexagramManager extends EventEmitter {
             return { ok: false, error: new Error('Invalid line index (1-6)') };
         }
         this.lines[index - 1] = card;
-        if (this.vectorDB) {
+        if (this.vectorDB && typeof this.vectorDB.updateHexagramLine === 'function') {
             return this.vectorDB.updateHexagramLine(index, this.projectId, card.title, card.content, card.state);
         }
         return { ok: true, value: undefined };
@@ -273,23 +276,32 @@ Respond in JSON ONLY:
 
     public getYaoState(): YaoState {
         if (this.lines.length === 0) return YaoState.YoungYang;
+
+        // Track all 6 states independently — Old states must not collapse into Young.
+        // This preserves chaotic/changing signals from accumulated context,
+        // enabling Phase 27 generative bias to trigger organically.
         const counts: Record<number, number> = {
             [YaoState.YoungYang]: 0,
             [YaoState.YoungYin]: 0,
-            [YaoState.YoungMixed]: 0
+            [YaoState.YoungMixed]: 0,
+            [YaoState.OldYang]: 0,
+            [YaoState.OldYin]: 0,
+            [YaoState.OldMixed]: 0
         };
+
         this.lines.forEach(l => {
-            if (l.state === YaoState.YoungYang || l.state === YaoState.OldYang) {
-                counts[YaoState.YoungYang]++;
-            } else if (l.state === YaoState.YoungYin || l.state === YaoState.OldYin) {
-                counts[YaoState.YoungYin]++;
+            const state = l.state ?? YaoState.YoungYang;
+            if (counts[state] !== undefined) {
+                counts[state]++;
             } else {
-                counts[YaoState.YoungMixed]++;
+                counts[YaoState.YoungYang]++;
             }
         });
+
         const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
         return parseInt(sorted[0][0], 10) as YaoState;
     }
+
 
     public isYin(): boolean {
         const interpretation = this.getInterpretation();

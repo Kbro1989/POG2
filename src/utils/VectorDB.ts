@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import { type Result, type Lesson, ok } from '../core/models.js';
-import { getLearningDbPath } from './SovereignPathResolver.js';
+import { getLearningDbPath, getSatelliteDbPaths } from './SovereignPathResolver.js';
 import { createHash } from 'crypto';
 import { readFileSync, existsSync } from 'fs';
 import { ModelClient } from '../clients/ModelClient.js';
@@ -41,6 +41,7 @@ export interface VectorDBConfig {
  */
 export class VectorDB {
     private db: Database.Database | null = null;
+    private satellites: Database.Database[] = [];
     private readonly dbPath: string;
     private readonly client: ModelClient;
 
@@ -57,8 +58,18 @@ export class VectorDB {
             return { online: false, details: 'Database not initialized.' };
         }
         try {
+            let totalLessons = 0;
             const row = this.db.prepare('SELECT count(*) as count FROM lessons').get() as { count: number };
-            return { online: true, details: `Memory substrate nominal. Lessons: ${row.count}` };
+            totalLessons += row.count;
+
+            for (const sat of this.satellites) {
+                try {
+                    const satRow = sat.prepare('SELECT count(*) as count FROM lessons').get() as { count: number };
+                    totalLessons += satRow.count;
+                } catch { /* ignore if corrupted/wrong schema */ }
+            }
+
+            return { online: true, details: `Memory substrate nominal. Total Federated Lessons: ${totalLessons} (${this.satellites.length} Satellites)` };
         } catch (err) {
             return { online: false, details: `Memory substrate error: ${(err as Error).message}` };
         }
@@ -70,6 +81,19 @@ export class VectorDB {
             this.db = new Database(this.dbPath);
             this.db.pragma('journal_mode = WAL');
             this.createTables();
+
+            // Phase 28: Initialize Satellite DBs for Federated Queries
+            const satPaths = getSatelliteDbPaths();
+            for (const path of satPaths) {
+                try {
+                    const satDb = new Database(path, { readonly: true });
+                    this.satellites.push(satDb);
+                    logger.info({ satPath: path }, 'Federated Satellite DB Connected (Readonly)');
+                } catch (err) {
+                    logger.warn({ satPath: path, err }, 'Failed to connect satellite DB');
+                }
+            }
+
             return ok(undefined);
         } catch (error) {
             return { ok: false, error: error as Error };
@@ -170,7 +194,15 @@ export class VectorDB {
         if (!this.db) return { ok: false, error: new Error('Database not initialized') };
 
         try {
-            const rows = this.db.prepare('SELECT * FROM lessons ORDER BY createdAt DESC LIMIT 1000').all() as LessonRow[];
+            let rows = this.db.prepare('SELECT * FROM lessons ORDER BY createdAt DESC LIMIT 1000').all() as LessonRow[];
+
+            // Phase 28: Federated Search
+            for (const sat of this.satellites) {
+                try {
+                    const satRows = sat.prepare('SELECT * FROM lessons ORDER BY createdAt DESC LIMIT 1000').all() as LessonRow[];
+                    rows = rows.concat(satRows);
+                } catch { /* ignore */ }
+            }
 
             const lessons = rows.map((row: LessonRow) => {
                 const embeddingBuffer = row.embedding;
@@ -233,7 +265,16 @@ export class VectorDB {
     public getSessionLessons(sessionId: string): Result<Lesson[]> {
         if (!this.db) return { ok: false, error: new Error('Database not initialized') };
         try {
-            const rows = this.db.prepare('SELECT id, text, sessionId, projectId, domainNamespace, errorType, createdAt, regretLikelihood, metadata, hash, type FROM lessons WHERE sessionId = ?').all(sessionId) as LessonRow[];
+            let rows = this.db.prepare('SELECT id, text, sessionId, projectId, domainNamespace, errorType, createdAt, regretLikelihood, metadata, hash, type FROM lessons WHERE sessionId = ?').all(sessionId) as LessonRow[];
+            
+            // Phase 28: Federated Read
+            for (const sat of this.satellites) {
+                try {
+                    const satRows = sat.prepare('SELECT id, text, sessionId, projectId, domainNamespace, errorType, createdAt, regretLikelihood, metadata, hash, type FROM lessons WHERE sessionId = ?').all(sessionId) as LessonRow[];
+                    rows = rows.concat(satRows);
+                } catch { /* ignore */ }
+            }
+
             return ok(rows.map((r: LessonRow) => ({
                 id: String(r.id),
                 text: String(r.text),
@@ -259,7 +300,18 @@ export class VectorDB {
     public queryLocal(id: string): Result<Lesson | null> {
         if (!this.db) return { ok: false, error: new Error('Database not initialized') };
         try {
-            const row = this.db.prepare('SELECT * FROM lessons WHERE id = ?').get(id) as LessonRow | undefined;
+            let row = this.db.prepare('SELECT * FROM lessons WHERE id = ?').get(id) as LessonRow | undefined;
+            
+            // Phase 28: Federated Read
+            if (!row) {
+                for (const sat of this.satellites) {
+                    try {
+                        row = sat.prepare('SELECT * FROM lessons WHERE id = ?').get(id) as LessonRow | undefined;
+                        if (row) break;
+                    } catch { /* ignore */ }
+                }
+            }
+
             if (!row) return ok(null);
 
             const embeddingBuffer = row.embedding;
@@ -529,5 +581,9 @@ export class VectorDB {
             this.db.close();
             this.db = null;
         }
+        for (const sat of this.satellites) {
+            try { sat.close(); } catch { /* ignore */ }
+        }
+        this.satellites = [];
     }
 }
