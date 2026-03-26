@@ -468,7 +468,7 @@ export class CacheForensicsLimb {
     /**
      * crossReferenceItem - Deep matching for model IDs.
      */
-    public async crossReferenceItem(partialName: string): Promise<Result<{ itemContext: any, rawModelIds: number[] }>> {
+    public async crossReferenceItem(partialName: string): Promise<Result<{ id: number, name: string, itemContext: any, rawModelIds: number[] }>> {
         const qRes = this.searchByName(partialName, 'item');
         if (!qRes.ok || qRes.value.length === 0) return err(new Error(`Item "${partialName}" not found.`));
 
@@ -486,7 +486,21 @@ export class CacheForensicsLimb {
             }
         }
 
-        return ok({ itemContext: baseItem, rawModelIds });
+        return ok({ id: baseItem.id, name: baseItem.name, itemContext: baseItem, rawModelIds });
+    }
+
+    /**
+     * crossReferenceNpc - Resolves NPC by name.
+     */
+    public async crossReferenceNpc(partialName: string): Promise<Result<{ id: number, name: string, raw: any }>> {
+        const qRes = this.searchByName(partialName, 'npc');
+        if (!qRes.ok || qRes.value.length === 0) return err(new Error(`NPC "${partialName}" not found.`));
+
+        const baseNpc = qRes.value[0];
+        const details = await this.getNpcDetails(baseNpc.id);
+        if (!details.ok) return err(details.error);
+
+        return ok({ id: baseNpc.id, name: baseNpc.name, raw: details.value.raw });
     }
 
     public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' } {

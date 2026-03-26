@@ -9,6 +9,7 @@ export interface WikiData {
     race?: string;
     intent: string;
     url: string;
+    variables?: Record<string, string>;
 }
 
 /**
@@ -109,7 +110,8 @@ export class WikiEnricher {
                     role,
                     race,
                     intent,
-                    url
+                    url,
+                    variables: await this.fetchInfoboxData(pageTitle)
                 }
             };
         } catch (err) {
@@ -130,5 +132,61 @@ export class WikiEnricher {
      */
     public static async enrichItem(name: string): Promise<Result<WikiData>> {
         return this.enrich(name);
+    }
+
+    /**
+     * fetchInfoboxData(title) - Extracts variables from the MediaWiki Infobox.
+     */
+    private static async fetchInfoboxData(title: string): Promise<Record<string, string>> {
+        const params = new URLSearchParams({
+            action: 'parse',
+            format: 'json',
+            page: title,
+            prop: 'wikitext',
+            origin: '*'
+        });
+
+        try {
+            const response = await fetch(`${this.API_URL}?${params.toString()}`);
+            const data = await response.json() as any;
+            const wikitext = data.parse?.wikitext?.['*'] || '';
+
+            // Simple regex parser for Infobox variables
+            const variables: Record<string, string> = {};
+            const matches = wikitext.matchAll(/\|\s*([\w\d]+)\s*=\s*([^|\n}]+)/g);
+            for (const match of matches) {
+                variables[match[1].trim()] = match[2].trim();
+            }
+            return variables;
+        } catch (e) {
+            logger.error({ title, error: (e as Error).message }, 'Infobox parsing failed.');
+            return {};
+        }
+    }
+    /**
+     * fetchPageLinks(title) - Extracts all internal wiki links from a page.
+     * Useful for finding associated NPCs/Items/Objects for a minigame.
+     */
+    public static async fetchPageLinks(title: string): Promise<string[]> {
+        const params = new URLSearchParams({
+            action: 'query',
+            format: 'json',
+            titles: title,
+            prop: 'links',
+            pllimit: 'max',
+            origin: '*'
+        });
+
+        try {
+            const response = await fetch(`${this.API_URL}?${params.toString()}`);
+            const data = await response.json() as any;
+            const pages = data.query?.pages || {};
+            const pageId = Object.keys(pages)[0];
+            const links = pages[pageId]?.links || [];
+            return (links as any[]).map((l: any) => l.title);
+        } catch (e) {
+            logger.error({ title, error: (e as Error).message }, 'Link extraction failed.');
+            return [];
+        }
     }
 }

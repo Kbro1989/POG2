@@ -40,7 +40,9 @@ const originalDescription = Command.prototype.description;
 
 import pino from 'pino';
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
+import * as fs from 'fs';
 import { resolve, join, dirname, sep } from 'path';
+import * as path from 'path';
 import { homedir } from 'os';
 import * as readline from 'readline/promises';
 import { StateManager } from './state/StateManager.js';
@@ -66,6 +68,12 @@ import { PedagogyLimb } from './limbs/technical/PedagogyLimb.js';
 import { HiScoreLimb } from './limbs/technical/HiScoreLimb.js';
 import { KinematicsLimb } from './limbs/technical/KinematicsLimb.js';
 import { RSMVController } from './vision/RSMVController.js';
+import { HUDForensicsLimb } from './limbs/spatial/HUDForensicsLimb.js';
+import { CacheLearningLimb } from './limbs/spatial/CacheLearningLimb.js';
+import { OfficialApiLimb } from './limbs/spatial/OfficialApiLimb.js';
+import { SpatialMetricEngine } from './engines/SpatialMetricEngine.js';
+import { WikiEnricher } from './utils/WikiEnricher.js';
+import { MinigameForensicsLimb } from './limbs/spatial/MinigameForensicsLimb.js';
 import {
     getGodHeadRoot,
     getGutenbergPath,
@@ -74,6 +82,7 @@ import {
     getSovereignRoot,
     setProjectRoot as setSovereignRoot
 } from './utils/SovereignPathResolver.js';
+import { CacheForensicsLimb } from './limbs/spatial/CacheForensicsLimb.js';
 
 const POG_MD_TEMPLATE = `# ðŸ§¬ Sovereign Workspace: [Project Name]
 - Status: Initialized
@@ -446,6 +455,140 @@ export async function main(): Promise<void> {
                 renderer.success('Memory compression complete. Redundant pathways eliminated.');
             } else {
                 renderer.error(`Synthesis failed: ${result.error?.message}`);
+            }
+        });
+
+    // —————————————————————————————————————————————————————————————
+    // ATLAS COMMANDS (Phase 15: HUD & Spatial Forensics)
+    // —————————————————————————————————————————————————————————————
+    const atlas = program.command('atlas').description('Sovereign Atlas Forensic Substrate commands');
+
+    atlas
+        .command('hud <id|name>')
+        .description('Decompile and audit a Jagex interface from Major 3 cache')
+        .action(async (target: string) => {
+            const limb = new HUDForensicsLimb();
+            renderer.info(`👁️ Investigating HUD Substrate: ${target}...`);
+
+            const id = parseInt(target);
+            if (!isNaN(id)) {
+                const res = await limb.getInterface(id);
+                if (res.ok) {
+                    renderer.success(`Interface ${id} decompiled.`);
+                    renderer.json(res.value);
+                } else {
+                    renderer.error(`Forensic decompile failed: ${res.error.message}`);
+                }
+            } else {
+                renderer.info(`Scanning interfaces for text: "${target}"...`);
+                const res = await limb.searchInterfaces(target);
+                if (res.ok && res.value.length > 0) {
+                    renderer.success(`Found ${res.value.length} matching interfaces.`);
+                    renderer.json(res.value.map(i => ({ id: i.interfaceId, labels: i.textLabels.slice(0, 5) })));
+                } else {
+                    renderer.warn('No matching interfaces found in forensic scan.');
+                }
+            }
+        });
+
+    atlas
+        .command('spatial <name>')
+        .description('Calculate high-fidelity 3D metrics for a named asset')
+        .action(async (name: string) => {
+            const forensics = new CacheForensicsLimb();
+            const learning = new CacheLearningLimb(getRSMVCachePath(), forensics, join(getSovereignRoot(), 'library', 'spatial'));
+            
+            renderer.info(`📐 Calculating Spatial Metrics for: ${name}...`);
+            
+            // Resolve to model ID via forensics
+            const resolveRes = await forensics.crossReferenceItem(name);
+            if (!resolveRes.ok || resolveRes.value.rawModelIds.length === 0) {
+                renderer.error(`Could not resolve semantic name: ${name}`);
+                return;
+            }
+
+            const modelId = resolveRes.value.rawModelIds[0];
+            renderer.info(`Resolved ${name} to Model ID: ${modelId}. Initiating geometric forensics...`);
+
+            const res = await learning.learnSpatialModel('item', modelId);
+            if (res.ok) {
+                renderer.success(`Spatial metrics calculated for ${name}.`);
+                renderer.json(res.value.metrics);
+                
+                // Also trigger translation to GLTF for visual manifest
+                renderer.info('Generating universal GLTF manifest...');
+                await learning.translateToObj(name, modelId);
+            } else {
+                renderer.error(`Spatial forensics failed: ${res.error.message}`);
+            }
+        });
+
+    program
+        .command('learn <type> <idOrName>')
+        .description('Unified learning: Extraction + Spatial Metrics + Wiki Enrichment')
+        .action(async (type, idOrName) => {
+            renderer.info(`\n🧬 Commencing Unified Learning for ${type}: ${idOrName}...`);
+            
+            const apiLimb = new OfficialApiLimb();
+            const metricEngine = new SpatialMetricEngine();
+            const forensics = new CacheForensicsLimb();
+            const learning = new CacheLearningLimb(getRSMVCachePath(), forensics, join(getSovereignRoot(), 'library', 'spatial'));
+
+            try {
+                let learnedObject: any = { type, source: 'Jagex Cache', timestamp: new Date().toISOString() };
+
+                if (type === 'item') {
+                    // 1. Resolve & Extract
+                    const resolveRes = await forensics.crossReferenceItem(idOrName);
+                    if (!resolveRes.ok || resolveRes.value.rawModelIds.length === 0) {
+                        throw new Error(`Could not resolve semantic name: ${idOrName}`);
+                    }
+                    
+                    const item = resolveRes.value;
+                    const modelId = item.rawModelIds[0];
+                    learnedObject.id = item.id;
+                    learnedObject.name = idOrName;
+
+                    // 2. Spatial Metrics
+                    renderer.info(`📐 Calculating Spatial Metrics for Model ID: ${modelId}...`);
+                    const res = await learning.learnSpatialModel('item', modelId);
+                    if (res.ok) learnedObject.spatial = res.value.metrics;
+
+                    // 3. Enrichment
+                    renderer.info(`🔍 Fetching Wiki & GE Enrichment...`);
+                    const wikiRes = await WikiEnricher.enrichItem(idOrName);
+                    if (wikiRes.ok) learnedObject.enrichment = wikiRes.value;
+
+                    // Attempt GE lookup if it's an item and we have an ID
+                    const geRes = await apiLimb.getItemDetail(item.id);
+                    if (geRes.ok) learnedObject.economics = geRes.value;
+
+                } else if (type === 'npc') {
+                    const resolveRes = await forensics.crossReferenceNpc(idOrName);
+                    if (!resolveRes.ok) throw resolveRes.error;
+                    const npc = resolveRes.value;
+                    learnedObject.id = npc.id;
+                    learnedObject.name = idOrName;
+
+                    const wikiRes = await WikiEnricher.enrichNpc(idOrName);
+                    if (wikiRes.ok) learnedObject.enrichment = wikiRes.value;
+                } else if (type === 'system') {
+                    const minigameLimb = new MinigameForensicsLimb(forensics, learning);
+                    const systemRes = await minigameLimb.learnMinigame(idOrName);
+                    if (!systemRes.ok) throw systemRes.error;
+                    learnedObject = systemRes.value;
+                }
+
+                // 4. Persistence
+                const atlasPath = path.join('D:\\sovereign\\atlas', type, `${learnedObject.name.replace(/\s+/g, '_').toLowerCase()}.json`);
+                await fs.promises.mkdir(path.dirname(atlasPath), { recursive: true });
+                await fs.promises.writeFile(atlasPath, JSON.stringify(learnedObject, null, 2));
+
+                renderer.success(`\n✅ Learned Object synchronized: ${atlasPath}`);
+                if (learnedObject.spatial) renderer.json(learnedObject.spatial);
+            } catch (err: any) {
+                renderer.error(`\n✘ Learning failed: ${err.message}`);
+                process.exit(1);
             }
         });
 
@@ -2180,7 +2323,7 @@ export async function main(): Promise<void> {
 
     // For single-shot commands, automatically exit unless we are supposed to enter REPL
     const commandName = program.args[0];
-    if (commandName && ['player', 'npc', 'status', 'health', 'personality', 'read', 'gutenberg', 'cooldown', 'config', 'memory', 'consult-shadow', 'consult-memetics', 'consult-syntropy', 'init', 'system', 'vs', 'rsmv'].includes(commandName)) {
+    if (commandName && ['player', 'npc', 'status', 'health', 'personality', 'read', 'gutenberg', 'cooldown', 'config', 'memory', 'consult-shadow', 'consult-memetics', 'consult-syntropy', 'init', 'system', 'vs', 'rsmv', 'atlas', 'learn'].includes(commandName)) {
         // Clinical exit: allow more time for pino to flush and background MCP links to settle
         setTimeout(() => process.exit(0), 500);
     } else if (commandName) {
