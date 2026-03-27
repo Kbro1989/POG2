@@ -92,13 +92,18 @@ export class SwitchboardLimb {
             });
         });
 
-        eye.on('capture', (capture: any) => {
-            this.broadcast({
-                type: 'vision',
-                timestamp: Date.now(),
-                capture
+        // Guard: VisionEngine may not implement EventEmitter
+        if (eye && typeof eye.on === 'function') {
+            eye.on('capture', (capture: any) => {
+                this.broadcast({
+                    type: 'vision',
+                    timestamp: Date.now(),
+                    capture
+                });
             });
-        });
+        } else {
+            logger.debug('SovereignEye substrate does not support EventEmitter — vision mirroring skipped.');
+        }
     }
 
     /**
