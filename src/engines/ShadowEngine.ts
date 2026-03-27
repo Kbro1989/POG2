@@ -1,4 +1,4 @@
-﻿import { readdirSync, readFileSync, existsSync } from 'fs';
+import { readdirSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import { type Result, ok, err } from '../core/models.js';

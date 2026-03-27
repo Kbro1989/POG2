@@ -370,7 +370,7 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
     { path: 'resources/cloudflare-templates', role: 'Knowledge:Cloudflare', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 5 },
     {
         path: 'rsmv', role: 'Structural Pedagogy Substrate', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 5,
-        biologicalRole: { organ: 'External Prefrontal Cache', input: 'Jagex Cache / Opcodes', output: 'GLB/PNG/PedagogyProfile', constraints: 'External rsmv-clone inspection and structural analysis' }
+        biologicalRole: { organ: 'External Prefrontal Cache', input: 'Jagex Cache / Opcodes', output: 'GLB/PNG/PedagogyProfile', constraints: 'Externalrsmv-clone inspection and structural analysis' }
     },
 
     // â•â•â• Immune (Validation) â•â•â•

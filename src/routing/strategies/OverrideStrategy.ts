@@ -1,4 +1,4 @@
-﻿import type { RoutingContext, RoutingDecision, RoutingStrategy } from '../types.js';
+import type { RoutingContext, RoutingDecision, RoutingStrategy } from '../types.js';
 import { IntentMap } from '../../api/ai/IntentMap.js';
 
 export class OverrideStrategy implements RoutingStrategy {

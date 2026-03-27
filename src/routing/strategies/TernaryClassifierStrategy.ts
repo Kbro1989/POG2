@@ -1,4 +1,4 @@
-﻿import type { RoutingContext, RoutingDecision, RoutingStrategy } from '../types.js';
+import type { RoutingContext, RoutingDecision, RoutingStrategy } from '../types.js';
 import { YaoState } from '../../core/models.js';
 
 export class TernaryClassifierStrategy implements RoutingStrategy {

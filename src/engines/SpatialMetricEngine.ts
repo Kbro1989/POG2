@@ -1,6 +1,6 @@
 import { createLogger } from "../utils/logger.js";
+// @ts-ignore
 import type { ModelData } from "../../rsmv/src/3d/rt7model.js";
-
 const logger = createLogger('SpatialMetricEngine');
 
 export interface AABB {
@@ -30,14 +30,14 @@ export interface MetricProfile {
  * Calculates metrics directly from extracted ModelData buffers
  */
 export class SpatialMetricEngine {
-    
+
     /**
      * Calculates a comprehensive metric profile for a given 3D model
      */
     public static calculateProfile(model: ModelData): MetricProfile {
         let polyCount = 0;
         let vertexCount = 0;
-        
+
         let minX = Infinity, maxX = -Infinity;
         let minY = Infinity, maxY = -Infinity;
         let minZ = Infinity, maxZ = -Infinity;

@@ -1,4 +1,4 @@
-﻿import { join, relative, sep } from 'path';
+import { join, relative, sep } from 'path';
 
 /**
  * SovereignIgnoreManager - Centralized exclusion logic for POG2.

@@ -1,4 +1,4 @@
-﻿// Pre-built components for instant absorption (no AI generation needed)
+// Pre-built components for instant absorption (no AI generation needed)
 export const SOVEREIGN_COMPONENTS = {
     DASHBOARD: `import React from 'react';
 export const Dashboard = ({ children, title }: { children: React.ReactNode, title: string }) => (
@@ -39,7 +39,7 @@ export const Modal = ({ trigger, children, title }: any) => {
           <div className="sovereign-card max-w-lg w-full" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-ghost-glow">{title}</h3>
-              <button onClick={() => setOpen(false)} className="text-sovereign-300 hover:text-white">âœ•</button>
+              <button onClick={() => setOpen(false)} className="text-sovereign-300 hover:text-white">✕</button>
             </div>
             {children}
           </div>

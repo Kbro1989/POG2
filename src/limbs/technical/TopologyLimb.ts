@@ -1,7 +1,9 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const {  GameCacheLoader  } = require("../../../rsmv/src/cache/sqlite.js");
-const {  parseOb3Model  } = require("../../../rsmv/src/3d/rt7model.js");
+let GameCacheLoader: any = null;
+let parseOb3Model: any = null;
+try { ({ GameCacheLoader } = require("../../../rsmv/src/cache/sqlite.js")); } catch {}
+try { ({ parseOb3Model } = require("../../../rsmv/src/3d/rt7model.js")); } catch {}
 import { Result, ok, err, YaoState } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
 
@@ -31,9 +33,13 @@ export class TopologyLimb {
 
     constructor() {
         try {
-            this.cache = new GameCacheLoader(this.cachePath);
-            this.cache.buildnr = 940;
-            logger.info('TopologyLimb initialized. Cache connection active.');
+            if (GameCacheLoader) {
+                this.cache = new GameCacheLoader(this.cachePath);
+                this.cache.buildnr = 940;
+                logger.info('TopologyLimb initialized. Cache connection active.');
+            } else {
+                logger.warn('TopologyLimb: GameCacheLoader not available.');
+            }
         } catch (e) {
             logger.error({ error: (e as Error).message }, 'Failed to initialize GameCacheLoader.');
         }
@@ -64,6 +70,7 @@ export class TopologyLimb {
 
             logger.debug({ modelId, bufferLength: buffer.length }, 'Model buffer acquired. Parsing...');
             // Parse full geometry
+            if (!parseOb3Model) return err(new Error('TopologyLimb: parseOb3Model not available.'));
             const modelData = parseOb3Model(buffer, this.cache);
             logger.debug({ modelId, meshCount: modelData.meshes.length }, 'Model parsed.');
 

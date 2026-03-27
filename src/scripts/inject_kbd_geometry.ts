@@ -3,9 +3,12 @@
 
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const {  parseOb3Model  } = require("../../rsmv/src/3d/rt7model.js");
-const {  buildAttributeBuffer  } = require("../../rsmv/src/3d/gltfutil.js");
-const {  GameCacheLoader  } = require("../../rsmv/src/cache/sqlite.js");
+let parseOb3Model: any = null;
+let buildAttributeBuffer: any = null;
+let GameCacheLoader: any = null;
+try { ({ parseOb3Model } = require("../../rsmv/src/3d/rt7model.js")); } catch {}
+try { ({ buildAttributeBuffer } = require("../../rsmv/src/3d/gltfutil.js")); } catch {}
+try { ({ GameCacheLoader } = require("../../rsmv/src/cache/sqlite.js")); } catch {}
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 // @ts-ignore - Importing from sibling project substrate
@@ -30,6 +33,11 @@ const CACHE_DIR = 'C:\\ProgramData\\Jagex\\RuneScape';
 
 async function executeInjection() {
     console.log('📐 Phase 6: Sovereign Geometry Injection\n');
+
+    if (!GameCacheLoader || !parseOb3Model || !buildAttributeBuffer) {
+        console.error('❌ RSMV headless substrate not available. Ensure rsmv modules are built.');
+        return;
+    }
 
     // Initialize Cache Loader to satisfy opdecoder requirements
     const cache = new GameCacheLoader(CACHE_DIR) as any;

@@ -1,5 +1,5 @@
-﻿/**
- * SovereignDomain â€” Execution authority boundaries.
+/**
+ * SovereignDomain — Execution authority boundaries.
  * Every tool, model, and memory access must be scoped to a domain.
  * Cross-domain execution is a HARD ERROR. No silent fallback.
  */
@@ -13,9 +13,9 @@ export enum SovereignDomain {
     VISION = 'VISION',
     /** Web search, URL fetching, documentation lookup */
     RESEARCH = 'RESEARCH',
-    /** SQL forge, docs forge, refactor forge â€” specialized AI sub-agents */
+    /** SQL forge, docs forge, refactor forge — specialized AI sub-agents */
     FORGE = 'FORGE',
-    /** DASHBOARD, status, read-only observation â€” CANNOT mutate state */
+    /** DASHBOARD, status, read-only observation — CANNOT mutate state */
     OBSERVE = 'OBSERVE',
     /** Gameplay, chat, NPC interaction */
     SOCIAL = 'SOCIAL',
@@ -66,7 +66,7 @@ export const TOOL_DOMAIN_MAP: Record<string, SovereignDomain> = {
 };
 
 /**
- * Domain adjacency matrix â€” defines which domains are allowed to co-execute.
+ * Domain adjacency matrix — defines which domains are allowed to co-execute.
  * A task locked to CODE can also invoke RESEARCH tools (for documentation lookup).
  * But CODE cannot invoke SYSTEM tools (no shell access during code generation).
  */
@@ -99,7 +99,7 @@ const DOMAIN_PATTERNS: { domain: SovereignDomain; pattern: RegExp }[] = [
 
 /**
  * Classify a user intent string into a SovereignDomain.
- * Returns CODE as the default fallback â€” code generation is the most common task.
+ * Returns CODE as the default fallback — code generation is the most common task.
  */
 export function classifyDomain(intent: string): SovereignDomain {
     for (const { domain, pattern } of DOMAIN_PATTERNS) {

@@ -1,0 +1,147 @@
+﻿node_modules/@types/chokidar/index.d.ts(21,14): error TS2420: Class 'import("C:/Users/Destiny/Desktop/pog-vibe-interactive/files/node_modules/@types/chokidar/index").FSWatcher' incorrectly implements interface 'import("fs").FSWatcher'.
+  Type 'FSWatcher' is missing the following properties from type 'FSWatcher': ref, unref
+node_modules/gaxios/build/cjs/src/gaxios.d.ts(16,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/google-auth-library/build/src/auth/awsclient.d.ts(83,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/google-auth-library/build/src/auth/baseexternalclient.d.ts(173,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/google-auth-library/build/src/auth/googleauth.d.ts(159,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/google-auth-library/build/src/auth/oauth2common.d.ts(50,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/google-auth-library/build/src/auth/stscredentials.d.ts(99,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/google-auth-library/build/src/util.d.ts(125,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+src/api/ai/ModelRolodex.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/constants/ModelRegistry.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/core/models.ts(7,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/engines/ArchitecturalValidator.ts(89,27): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/BlenderRenderer.ts(62,82): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/engines/EmbedEngine.ts(4,8): error TS1259: Module '"C:/Users/Destiny/Desktop/pog-vibe-interactive/files/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/engines/MCPEngine.ts(115,38): error TS2802: Type 'MapIterator<[string, Client<{ method: string; params?: { [x: string]: unknown; _meta?: { [x: string]: unknown; progressToken?: string | number; "io.modelcontextprotocol/related-task"?: { taskId: string; }; }; }; }, { method: string; params?: { ...; }; }, { ...; }>]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/MemeticEngine.ts(1,8): error TS1259: Module '"C:/Users/Destiny/Desktop/pog-vibe-interactive/files/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/engines/OrchestrateEngine.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/engines/OrchestrateEngine.ts(5,8): error TS1259: Module '"C:/Users/Destiny/Desktop/pog-vibe-interactive/files/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/engines/OrchestrateEngine.ts(893,63): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/engines/OrchestrateEngine.ts(893,71): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/engines/OrchestrateEngine.ts(893,79): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/engines/OrchestrateEngine.ts(1309,13): error TS2322: Type '(args: Record<string, unknown>) => Promise<{ ok: false; error: Error; value?: never; } | { ok: true; value: EngineOutput; error?: never; } | { ok: true; value: { path: string; }; error?: never; }>' is not assignable to type '(args: Record<string, unknown>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: Error; value?: never; } | { ok: true; value: EngineOutput; error?: never; } | { ok: true; value: { path: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: Error; value?: never; } | { ok: true; value: EngineOutput; error?: never; } | { ok: true; value: { path: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: { path: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: { path: string; }; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type '{ path: string; }' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(1619,13): error TS2322: Type '(args: Record<string, unknown>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: { profile: StyleProfile; book: BookMetadata; }; error?: never; } | { ...; }>' is not assignable to type '(args: Record<string, unknown>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: { profile: StyleProfile; book: BookMetadata; }; error?: never; } | { ok: true; value: { output: string; data: StyleProfile; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: { profile: StyleProfile; book: BookMetadata; }; error?: never; } | { ok: true; value: { output: string; data: StyleProfile; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: { profile: StyleProfile; book: BookMetadata; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: { profile: StyleProfile; book: BookMetadata; }; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type '{ profile: StyleProfile; book: BookMetadata; }' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(1661,13): error TS2322: Type '(args: Record<string, unknown>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Record<string, unknown>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: void; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: void; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'void' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(1679,13): error TS2322: Type '(args: Record<string, unknown>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: GutenbergBook[]; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Record<string, unknown>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: GutenbergBook[]; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: GutenbergBook[]; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: GutenbergBook[]; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: GutenbergBook[]; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'GutenbergBook[]' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(1708,30): error TS2322: Type 'Result<StoryboardScene[]>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: StoryboardScene[]; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: StoryboardScene[]; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Property 'output' is missing in type 'StoryboardScene[]' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(1727,13): error TS2322: Type '(args: Record<string, unknown>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: AppBlueprint; error?: never; } | { ok: true; value: { ...; }; error?: never; }>' is not assignable to type '(args: Record<string, unknown>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: AppBlueprint; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: AppBlueprint; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: string; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: string; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'string' is not assignable to type 'EngineOutput'.
+src/engines/ReimaginationEngine.ts(17,8): error TS1192: Module '"crypto"' has no default export.
+src/engines/ReimaginationEngine.ts(50,27): error TS2339: Property 'ok' does not exist on type 'void'.
+src/engines/ReimaginationEngine.ts(50,82): error TS2339: Property 'error' does not exist on type 'void'.
+src/engines/ReimaginationEngine.ts(51,68): error TS2339: Property 'value' does not exist on type 'void'.
+src/engines/SpatialVisionEngine.ts(94,25): error TS2322: Type 'Result<ModelResponse>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Property 'output' is missing in type 'ModelResponse' but required in type 'EngineOutput'.
+src/engines/SyntropyEngine.ts(217,29): error TS2802: Type 'Set<any>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/SyntropyEngine.ts(223,32): error TS2802: Type 'Set<any>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/creative/StoryboardLimbV2.ts(337,22): error TS2322: Type 'Result<ModelResponse>' is not assignable to type 'Result<StoryboardScene[]>'.
+  Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type 'Result<StoryboardScene[]>'.
+    Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type '{ ok: true; value: StoryboardScene[]; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'ModelResponse' is missing the following properties from type 'StoryboardScene[]': length, pop, push, concat, and 29 more.
+src/limbs/creative/StoryboardLimbV2.ts(397,22): error TS2322: Type 'Result<ModelResponse>' is not assignable to type 'Result<StoryboardScene[]>'.
+  Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type 'Result<StoryboardScene[]>'.
+    Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type '{ ok: true; value: StoryboardScene[]; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'ModelResponse' is missing the following properties from type 'StoryboardScene[]': length, pop, push, concat, and 29 more.
+src/limbs/creative/WebAppForgeLimb.ts(11,41): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/limbs/creative/WebAppForgeLimb.ts(196,22): error TS2322: Type 'Result<ModelResponse>' is not assignable to type 'Result<string>'.
+  Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type 'Result<string>'.
+    Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type '{ ok: true; value: string; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'ModelResponse' is not assignable to type 'string'.
+src/limbs/creative/WebAppForgeLimb.ts(246,22): error TS2322: Type 'Result<ModelResponse>' is not assignable to type 'Result<AppBlueprint>'.
+  Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type 'Result<AppBlueprint>'.
+    Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type '{ ok: true; value: AppBlueprint; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'ModelResponse' is missing the following properties from type 'AppBlueprint': name, features, stack
+src/limbs/creative/YouTubeLimb.ts(8,8): error TS1192: Module '"http"' has no default export.
+src/limbs/creative/YouTubeLimb.ts(9,8): error TS1192: Module '"url"' has no default export.
+src/limbs/spatial/CacheForensicsLimb.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/limbs/spatial/CacheLearningLimb.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/limbs/spatial/CacheLearningLimb.ts(11,8): error TS1192: Module '"fs/promises"' has no default export.
+src/limbs/spatial/CacheLearningLimb.ts(13,8): error TS1259: Module '"path"' can only be default-imported using the 'esModuleInterop' flag
+src/limbs/spatial/WikiReconciliationLimb.ts(3,8): error TS1192: Module '"fs/promises"' has no default export.
+src/limbs/spatial/WikiReconciliationLimb.ts(4,8): error TS1259: Module '"path"' can only be default-imported using the 'esModuleInterop' flag
+src/limbs/technical/DynamicsLimb.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/limbs/technical/EntityLimb.ts(1,8): error TS1259: Module '"C:/Users/Destiny/Desktop/pog-vibe-interactive/files/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/limbs/technical/KinematicsLimb.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/limbs/technical/PedagogyLimb.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/limbs/technical/PedagogyLimb.ts(80,30): error TS2802: Type 'Set<any>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/technical/PedagogyLimb.ts(112,30): error TS2802: Type 'Set<number>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/technical/TopologyLimb.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/monitor/NodeTester.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/monitor/NodeTester.ts(79,47): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/monitor/NodeTester.ts(393,70): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/NodeTester.ts(394,96): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(50,29): error TS2802: Type 'Set<ChildProcess>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/monitor/PulseMonitor.ts(92,49): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(93,46): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(185,24): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(186,60): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(211,67): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(212,62): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(231,70): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/SwitchboardLimb.ts(3,8): error TS1259: Module '"C:/Users/Destiny/Desktop/pog-vibe-interactive/files/node_modules/@types/express/index"' can only be default-imported using the 'esModuleInterop' flag
+src/routing/TaskScheduler.ts(201,41): error TS2802: Type 'MapIterator<[string, number[]]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/routing/TernaryRouter.ts(989,38): error TS2802: Type 'Map<YaoState, number>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/routing/WorkforceManifest.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/routing/WorkforceManifest.ts(314,37): error TS2802: Type 'MapIterator<[string, WorkerDefinition]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/routing/WorkforceManifest.ts(355,30): error TS2802: Type 'MapIterator<WorkerDefinition>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/routing/WorkforceManifest.ts(369,30): error TS2802: Type 'MapIterator<WorkerDefinition>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/routing/WorkforceManifest.ts(381,30): error TS2802: Type 'MapIterator<WorkerDefinition>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/state/NeurologicalMap.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/ToolRegistry.ts(42,35): error TS2802: Type 'MapIterator<[string, ToolDefinition]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/ui/Renderer.ts(3,8): error TS1259: Module '"C:/Users/Destiny/Desktop/pog-vibe-interactive/files/node_modules/chalk/index"' can only be default-imported using the 'esModuleInterop' flag
+src/ui/Renderer.ts(285,32): error TS2802: Type 'Set<NeuralCategory>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/CodeExtractor.ts(10,25): error TS2802: Type 'RegExpStringIterator<RegExpExecArray>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/CodeExtractor.ts(25,16): error TS2802: Type 'RegExpStringIterator<RegExpExecArray>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/DBMaintenance.ts(1,8): error TS2613: Module '"C:/Users/Destiny/Desktop/pog-vibe-interactive/files/node_modules/sqlite3/lib/sqlite3"' has no default export. Did you mean to use 'import { sqlite3 } from "C:/Users/Destiny/Desktop/pog-vibe-interactive/files/node_modules/sqlite3/lib/sqlite3"' instead?
+src/utils/JagexCacheReader.ts(2,8): error TS1259: Module '"C:/Users/Destiny/Desktop/pog-vibe-interactive/files/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/utils/logger.ts(1,8): error TS1259: Module '"C:/Users/Destiny/Desktop/pog-vibe-interactive/files/node_modules/pino/pino"' can only be default-imported using the 'esModuleInterop' flag
+src/utils/RSMVExtractor.ts(5,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/utils/RSMVExtractor.ts(182,24): error TS2802: Type 'Generator<any, any, any>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/VectorDB.ts(1,8): error TS1259: Module '"C:/Users/Destiny/Desktop/pog-vibe-interactive/files/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/utils/VectorDB.ts(408,31): error TS2322: Type 'Result<Float32Array<ArrayBufferLike>>' is not assignable to type 'Result<void>'.
+  Type '{ ok: true; value: Float32Array<ArrayBufferLike>; error?: never; }' is not assignable to type 'Result<void>'.
+    Type '{ ok: true; value: Float32Array<ArrayBufferLike>; error?: never; }' is not assignable to type '{ ok: true; value: void; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'Float32Array<ArrayBufferLike>' is not assignable to type 'void'.
+src/vision/RSMVController.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.

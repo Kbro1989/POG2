@@ -1,4 +1,4 @@
-﻿export interface StyleProfile {
+export interface StyleProfile {
     readabilityScore: number;
     avgSentenceLength: number;
     uniqueWordRatio: number;

@@ -1,9 +1,16 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { GameCacheLoader } = require("../../../rsmv/src/cache/sqlite.js");
-const { EngineCache, ThreejsSceneCache } = require("../../../rsmv/src/3d/modeltothree.js");
-const { renderAppearance } = require("../../../rsmv/src/headless/api.js");
-const { SpatialMetricEngine } = require("../../engines/SpatialMetricEngine.js");
+// Graceful substrate imports — these may not exist in all environments
+let GameCacheLoader: any = null;
+let EngineCache: any = null;
+let ThreejsSceneCache: any = null;
+let renderAppearance: any = null;
+let SpatialMetricEngine: any = null;
+
+try { ({ GameCacheLoader } = require("../../../rsmv/src/cache/sqlite.js")); } catch { /* RSMV substrate not linked */ }
+try { ({ EngineCache, ThreejsSceneCache } = require("../../../rsmv/src/3d/modeltothree.js")); } catch { /* RSMV 3D substrate not linked */ }
+try { ({ renderAppearance } = require("../../../rsmv/src/headless/api.js")); } catch { /* RSMV headless substrate not linked */ }
+try { ({ SpatialMetricEngine } = require("../../engines/SpatialMetricEngine.js")); } catch { /* SpatialMetricEngine not available */ }
 
 import { type Result, type DataType, type CacheData, err, ok } from '../../core/models.js';
 import { createLogger } from '../../utils/logger.js';
@@ -30,6 +37,22 @@ interface ModelMetadata {
  * 3. Calculating spatial metrics and taxonomic signatures.
  */
 export class CacheLearningLimb {
+    /**
+     * extract - High-level substrate extraction wrapper.
+     */
+    public async extract(cachePath: string, entityId: number, type: 'npc' | 'item' | 'object'): Promise<Result<any>> {
+        logger.info({ entityId, type }, 'Sovereign Extraction initiated via substrate wrapper.');
+        // Ensure path matches or update it
+        if (cachePath !== this.cachePath) {
+            this.cachePath = cachePath;
+            const effectivePath = existsSync(cachePath) && path.extname(cachePath) === ''
+                ? path.join(cachePath, 'js5-47.jcache')
+                : cachePath;
+            this.cacheReader = new JagexCacheReader(effectivePath);
+            this.engineCache = null; // Force re-init of headless pipeline
+        }
+        return this.learnSpatialModel(type, entityId);
+    }
     private cacheReader: JagexCacheReader;
     private forensics: CacheForensicsLimb;
     private extractionDir: string;
@@ -41,7 +64,7 @@ export class CacheLearningLimb {
 
     constructor(cachePath: string, forensicsLimb: CacheForensicsLimb, extractionDir: string) {
         this.cachePath = cachePath;
-        
+
         // Ensure effective substrate selection
         let effectivePath = cachePath;
         if (existsSync(cachePath) && path.extname(cachePath) === '') {
@@ -57,6 +80,9 @@ export class CacheLearningLimb {
     }
 
     private async ensureHeadlessPipeline() {
+        if (!GameCacheLoader || !EngineCache || !ThreejsSceneCache) {
+            throw new Error('RSMV headless substrate not available. Ensure rsmv modules are built and linked.');
+        }
         if (!this.engineCache) {
             logger.info('Booting headless JS5 Translation Pipeline...');
             const source = new GameCacheLoader(this.cachePath);
@@ -80,6 +106,9 @@ export class CacheLearningLimb {
             if (!modelData) return err(new Error(`Failed to extract model data for ${type}:${id}`));
 
             // 2. Calculate Spatial Metrics (Phase 15 Addition)
+            if (!SpatialMetricEngine) {
+                return ok({ type, id, metrics: null, meshes: modelData.meshes?.length || 0, raw: modelData, timestamp: Date.now(), warning: 'SpatialMetricEngine not available' });
+            }
             const metrics = SpatialMetricEngine.calculateProfile(modelData);
 
             logger.info({ type, id, metrics }, 'Spatial learning completed for asset.');
@@ -89,6 +118,7 @@ export class CacheLearningLimb {
                 id,
                 metrics,
                 meshes: modelData.meshes.length,
+                raw: modelData,
                 timestamp: Date.now()
             });
         } catch (error) {
@@ -122,6 +152,9 @@ export class CacheLearningLimb {
             const metrics = SpatialMetricEngine.calculateProfile(modelData);
 
             // Real-time render
+            if (!renderAppearance) {
+                return err(new Error('renderAppearance not available — RSMV headless substrate not linked.'));
+            }
             const rendered = await renderAppearance(this.sceneCache, "item", targetId.toString());
 
             const outPath = path.join(this.extractionDir, `${cleanName}_${targetId}.gltf`);

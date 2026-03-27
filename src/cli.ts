@@ -11,6 +11,9 @@
 
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
+if (typeof (globalThis as any).__non_webpack_require__ === 'undefined') {
+    (globalThis as any).__non_webpack_require__ = require;
+}
 import { program, Command } from 'commander';
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -74,15 +77,10 @@ import { OfficialApiLimb } from './limbs/spatial/OfficialApiLimb.js';
 import { SpatialMetricEngine } from './engines/SpatialMetricEngine.js';
 import { WikiEnricher } from './utils/WikiEnricher.js';
 import { MinigameForensicsLimb } from './limbs/spatial/MinigameForensicsLimb.js';
-import {
-    getGodHeadRoot,
-    getGutenbergPath,
-    getPipelineRootPath,
-    getRSMVCachePath,
-    getSovereignRoot,
-    setProjectRoot as setSovereignRoot
-} from './utils/SovereignPathResolver.js';
+import { getSovereignRoot, getRSMVCachePath, getCachePedagogyPath, getPipelineRootPath, getGodHeadRoot, getGutenbergPath, setProjectRoot as setSovereignRoot } from './utils/SovereignPathResolver.js';
 import { CacheForensicsLimb } from './limbs/spatial/CacheForensicsLimb.js';
+import { SystemTaxonomyLimb } from './limbs/spatial/SystemTaxonomyLimb.js';
+import { MaterialLimb } from './limbs/spatial/MaterialLimb.js';
 
 const POG_MD_TEMPLATE = `# ðŸ§¬ Sovereign Workspace: [Project Name]
 - Status: Initialized
@@ -201,9 +199,6 @@ export async function main(): Promise<void> {
     const rolodex = new ModelRolodex(config);
     router.setRolodex(rolodex);
     client.setRolodex(rolodex);
-    // Non-blocking background refresh of all provider models
-    rolodex.refreshAll().catch(() => { /* non-blocking */ });
-
     // Phase 16: Initialize Path Normalizer & Resolver
     PathNormalizer.setProjectRoot(process.cwd());
     setSovereignRoot(process.cwd());
@@ -221,6 +216,8 @@ export async function main(): Promise<void> {
     // CONVERSATIONAL REPL (Default bare invocation)
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (process.argv.length <= 2) {
+        // Non-blocking background refresh of all provider models for REPL
+        rolodex.refreshAll().catch(() => { /* non-blocking */ });
         await startRepl(renderer, config, router, client, state);
         return;
     }
@@ -489,6 +486,38 @@ export async function main(): Promise<void> {
                     renderer.warn('No matching interfaces found in forensic scan.');
                 }
             }
+        });
+
+    atlas
+        .command('dbtables')
+        .description('Extract Major 2 Config (dbtables/dbrows) into memory/pedagogy')
+        .action(async () => {
+            renderer.info('🔍 Initiating System Taxonomy Extraction...');
+            const configLimb = new SystemTaxonomyLimb();
+            const res = await configLimb.extractSystemTaxonomy();
+            if (res.ok) {
+                renderer.success('DBTables successfully extracted to cache_pedagogy/dbtables.json');
+            } else {
+                renderer.error(`Extraction failed: ${res.error.message}`);
+            }
+            configLimb.close();
+            process.exit(res.ok ? 0 : 1);
+        });
+
+    atlas
+        .command('materials')
+        .description('Extract Major 26 Materials into memory/pedagogy')
+        .action(async () => {
+            renderer.info('🔍 Initiating Material Shader Extraction...');
+            const materialLimb = new MaterialLimb();
+            const res = await materialLimb.extractMaterials();
+            if (res.ok) {
+                renderer.success('Materials successfully extracted to cache_pedagogy/materials.json');
+            } else {
+                renderer.error(`Extraction failed: ${res.error.message}`);
+            }
+            materialLimb.close();
+            process.exit(res.ok ? 0 : 1);
         });
 
     atlas

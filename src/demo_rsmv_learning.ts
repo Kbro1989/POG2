@@ -10,11 +10,11 @@ import { ModelClient } from './clients/ModelClient.js';
 const logger = createLogger('DemoRSMV');
 
 /**
- * Demo: RSMV Learning Substrate Loop
+ * Demo:rsmv Learning Substrate Loop
  * Demonstrates: Deconstruction -> Pedagogy -> Synthesis
  */
 async function runDemo() {
-    logger.info('--- STARTING RSMV LEARNING DEMO ---');
+    logger.info('--- STARTINGrsmv LEARNING DEMO ---');
 
     const config = loadConfig('config.json');
     const router = new TernaryRouter(config);
@@ -24,7 +24,7 @@ async function runDemo() {
     const forge = new ForgeEngine();
 
     // 1. Analyze a "Pro" asset from the cache (e.g., King Black Dragon ID 50)
-    const npcId = 50; 
+    const npcId = 50;
     logger.info(`Phase 1: Learning from NPC ${npcId} (KBD)...`);
     const learnRes = await pedagogy.analyzeNpc(npcId, YaoState.OldYang);
 
@@ -34,10 +34,10 @@ async function runDemo() {
     }
 
     const profile = learnRes.value;
-    logger.info({ 
-        name: profile.name, 
+    logger.info({
+        name: profile.name,
         tris: profile.metrics.polyCount,
-        bones: profile.metrics.boneCount 
+        bones: profile.metrics.boneCount
     }, 'Phase 1: Pedagogy Profile Acquired.');
 
     // 2. Synthesize a "Synthetic Dragon" asset based on the learned pedagogy
@@ -54,9 +54,9 @@ async function runDemo() {
     const synthRes = await forge.synthesizeAsset(target, `NPC_${npcId}`);
 
     if (synthRes.ok) {
-        logger.info({ 
+        logger.info({
             path: synthRes.value.path,
-            format: target.type 
+            format: target.type
         }, 'Phase 2: Synthesis Complete. New asset generated.');
     } else {
         logger.error({ error: synthRes.error.message }, 'Phase 2: Synthesis failed.');

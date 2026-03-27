@@ -7,8 +7,8 @@
 ;
 var r, i=n(9612), a=n(9383), s=n(1237), o=n(9290), l=n(9538), c=n(8068), u=n(9675), h=n(5345), d=n(1514), p=n(8968), f=n(6188), m=n(8002), g=n(5880), _=n(414), v=n(3093), y=Function, b=function(e) {
   try {
-  return y('"use strict";
- return ('+e+").constructor;
+  return y('"use strict";, 
+ return  ('+e+").constructor;
 ")()
 }
 catch(e) {

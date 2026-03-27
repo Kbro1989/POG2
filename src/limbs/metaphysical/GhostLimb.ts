@@ -34,7 +34,7 @@ export class GhostLimb {
         // Monitor primary cycle every 5 seconds (low resource overhead)
         this.watchInterval = setInterval(() => {
             this.pulse();
-        }, 5000);
+        }, 5000).unref();
     }
 
     /**

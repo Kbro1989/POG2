@@ -16778,7 +16778,7 @@
                                         }), s.push([d + c, d + h, _, o]); let v = new cx(r, o, d + p); v.addSuccessor(i(d + c, o)), _.push(v)
                                 } else if ("intrinsic" == o.type) {
                                     let e = o.name; if ("string" != typeof e) throw new Error("intrinsic name not set")
-                                        ; let t = Yb.get(e); if (!t) throw new Error(`intrinsic ${e} was references in bytecode, but does not exists in the version of rsmv`); u.push({ name: e, index: d + p, in: t.in, out: t.out })
+                                        ; let t = Yb.get(e); if (!t) throw new Error(`intrinsic ${e} was references in bytecode, but does not exists in the version ofrsmv`); u.push({ name: e, index: d + p, in: t.in, out: t.out })
                                 } else console.log(`unknown header type "${o.type}"`)
                                     ; if (isNaN(l)) throw new Error("invalid subfunc header"); d += l
                         } s.forEach((e => a(...e))), o.pushList(c), o.push(new _x(0, n[0], e.getNamedOp(n[0].opcode)))
@@ -17631,7 +17631,7 @@
                         ext: "ui.json", major: xg.interfaces, minor: void 0, logicalDimensions: 1,
                         usesArchieves: !0, fileToLogical(e, t, n, r) { if (0 != r) throw new Error("subfile 0 expected"); return [n] }, logicalToFile: (e, t) => ({ major: xg.interfaces, minor: t[0], subid: 0 }),
                         logicalRangeToFiles: async (e, t, n) => (await e.getCacheIndex(xg.interfaces)).filter((e => e && e.minor >= t[0] && e.minor <= n[0])).map((e => ({ index: e, subindex: 0 }))), ...pE, read: async (e, t, n) => JSON.stringify({ id: t[0] }),
-                        description: "Doesn't extract anything but invokes the built-in RSMV interface viewer."
+                        description: "Doesn't extract anything but invokes the built-inrsmv interface viewer."
                     }), fontviewer: () => ({
                         ext: "font.json", major: xg.fontmetrics, minor: void 0, logicalDimensions: 1, usesArchieves: !1, fileToLogical(e, t, n, r) {
                             if (0 != r) throw new Error("subfile 0 expected"); return [n]

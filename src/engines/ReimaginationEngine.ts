@@ -14,7 +14,7 @@ import { VectorPedagogyLimb } from '../limbs/technical/VectorPedagogyLimb.js';
 import { GutenbergLimb } from '../limbs/creative/GutenbergLimb.js';
 import { MediaForgeLimb } from '../limbs/creative/MediaForgeLimb.js';
 import { AILimb } from '../limbs/technical/AILimb.js';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 const logger = createLogger('ReimaginationEngine');
 
@@ -41,13 +41,12 @@ export class ReimaginationEngine {
 
         // PHASE 1: Extraction
         logger.info('PHASE 1: Extracting substrate from cache...');
-        const rawSubstrate = await this.cacheLimb.extract(
-            spec.sourceCachePath,
-            spec.entityId,
-            spec.dataType
+        const rawSubstrate = await this.cacheLimb.learnSpatialModel(
+            spec.dataType as any,
+            spec.entityId
         );
 
-        if (!rawSubstrate.ok) throw new Error(`Extraction failed: ${rawSubstrate.error?.message}`);
+        if (!rawSubstrate.ok) throw new Error(`Extraction failed: ${(rawSubstrate as any).error?.message || 'Unknown error'}`);
         const principle = await this.extractPrinciple(rawSubstrate.value, spec.domain);
         
         // Store in VectorDB under game-design-pedagogy

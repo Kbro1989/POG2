@@ -14,57 +14,98 @@ const logger = createLogger('SwitchboardLimb');
 export class SwitchboardLimb {
     private wss: WebSocketServer | null = null;
     private server: HttpServer | null = null;
-    injectSubstrates: any;
-    startWithGracefulPort: any;
+    private activePort: number | null = null;
 
     constructor() { }
+
+    /**
+     * injectSubstrates - Sets up dependencies for the switchboard.
+     */
+    public injectSubstrates(substrates: { nodeTester: any, endpointHealer: any }): void {
+        this.injectSubstratesInternal = substrates;
+        logger.debug('Substrates injected into Switchboard Bridge.');
+    }
+
+    private injectSubstratesInternal: any = null;
 
     /**
      * startServer - Initializes the external bridge server.
      */
     public async startServer(port: number, orchestrator: any): Promise<void> {
-        const app = express();
-        this.server = createServer(app);
-        this.wss = new WebSocketServer({ server: this.server });
-
-        // Serve SovereignEye captures via HTTP
-        const eyeDir = join(process.cwd(), 'captures', 'sovereign_eye');
-        app.use('/captures', express.static(eyeDir));
-
-        this.wss.on('connection', (ws: WebSocket) => {
-            logger.info('External client connected to Switchboard Bridge.');
-
-            ws.on('message', async (data: string) => {
-                try {
-                    const msg = JSON.parse(data);
-                    if (msg.type === 'command') {
-                        logger.info({ intent: msg.intent }, 'Bridge received command');
-                        const result = await orchestrator.run(msg.intent);
-                        ws.send(JSON.stringify({ type: 'result', ok: result.ok, value: result.value, error: result.error }));
-                    }
-                } catch (err) {
-                    logger.error({ err }, 'Failed to process bridge message');
-                    ws.send(JSON.stringify({ type: 'error', message: (err as Error).message }));
-                }
-            });
-
-            ws.send(JSON.stringify({ type: 'welcome', status: 'Sovereign Bridge ACTIVE' }));
-        });
-
         return new Promise((resolve, reject) => {
-            this.server?.on('error', (err: any) => {
-                logger.error({ err }, 'Switchboard Bridge server error');
-                if (err.code === 'EADDRINUSE') {
-                    logger.warn(`Port ${port} already in use. Bridge will remain offline.`);
-                }
-                resolve(); // Resolve anyway so we don't hang the audit
-            });
+            try {
+                const app = express();
+                const server = createServer(app);
+                
+                // Serve SovereignEye captures via HTTP
+                const eyeDir = join(process.cwd(), 'captures', 'sovereign_eye');
+                app.use('/captures', express.static(eyeDir));
 
-            this.server?.listen(port, () => {
-                logger.info(`Switchboard Bridge listening on port ${port}`);
-                resolve();
-            });
+                let wss: WebSocketServer | null = null;
+
+                server.on('error', (err: any) => {
+                    if (wss) wss.close();
+                    server.close();
+                    reject(err);
+                });
+
+                server.listen(port, () => {
+                    // Only after successful listen do we attach WS and assign to this
+                    wss = new WebSocketServer({ server });
+                    this.server = server;
+                    this.wss = wss;
+                    this.activePort = port;
+
+                    wss.on('connection', (ws: WebSocket) => {
+                        logger.info('External client connected to Switchboard Bridge.');
+
+                        ws.on('message', async (data: string) => {
+                            try {
+                                const msg = JSON.parse(data);
+                                if (msg.type === 'command') {
+                                    logger.info({ intent: msg.intent }, 'Bridge received command');
+                                    const result = await orchestrator.run(msg.intent);
+                                    ws.send(JSON.stringify({ type: 'result', ok: result.ok, value: result.value, error: result.error }));
+                                }
+                            } catch (err) {
+                                logger.error({ err }, 'Failed to process bridge message');
+                                ws.send(JSON.stringify({ type: 'error', message: (err as Error).message }));
+                            }
+                        });
+
+                        ws.send(JSON.stringify({ type: 'welcome', status: 'Sovereign Bridge ACTIVE' }));
+                    });
+
+                    logger.info(`Switchboard Bridge listening on port ${port}`);
+                    resolve();
+                });
+            } catch (err) {
+                reject(err);
+            }
         });
+    }
+
+    /**
+     * startWithGracefulPort - Checks for available ports starting from a base.
+     */
+    public async startWithGracefulPort(orchestrator: any, startPort: number = 8788): Promise<{ port: number, url: string }> {
+        let currentPort = startPort;
+        const maxTries = 5;
+
+        for (let i = 0; i < maxTries; i++) {
+            try {
+                await this.startServer(currentPort, orchestrator);
+                return { port: currentPort, url: `http://localhost:${currentPort}` };
+            } catch (err: any) {
+                if (err.code === 'EADDRINUSE') {
+                    logger.warn({ port: currentPort }, 'Switchboard port in use, incrementing...');
+                    currentPort++;
+                    continue;
+                }
+                throw err;
+            }
+        }
+        throw new Error(`Switchboard failed to bind to any port in range ${startPort}-${currentPort - 1}`);
     }
 
     /**
@@ -118,9 +159,9 @@ export class SwitchboardLimb {
         const isOnline = this.server?.listening || false;
         return {
             online: isOnline,
-            retryable: !isOnline, // Allow NodeTester to retry if not yet listening
+            retryable: !isOnline,
             details: isOnline
-                ? `Switchboard Bridge Active: ${this.wss?.clients.size || 0} remote mirroring links.`
+                ? `Switchboard Bridge Active on port ${this.activePort}. ${this.wss?.clients.size || 0} remote mirroring links.`
                 : 'Switchboard Bridge Offline.'
         };
     }

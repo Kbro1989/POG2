@@ -17,7 +17,7 @@ const logger = createLogger('PullHans');
  */
 async function run() {
     logger.info('Commencing NPC Pull Verification: Hans (NPC ID 0)');
-    
+
     // Cleanup previous attempts to ensure fresh verification
     const outputs = ['model.png', 'model.glb'];
     for (const f of outputs) {
@@ -31,13 +31,13 @@ async function run() {
     const rsmvDir = join(getSovereignRoot(), 'cache_pedagogy', 'rsmv_inspector');
     const controller = new RSMVController();
     const modelId = 'npc:0'; // Hans
-    
+
     try {
         const result = await controller.viewModel(modelId);
-        
+
         if (result.ok) {
             logger.info('RSMV pull triggered successfully. Waiting for output...');
-            
+
             // Subprocess is spawn'd with inherit, so it should be fast. 
             // We wait up to 10s for the file to appear.
             let found = false;
@@ -48,10 +48,10 @@ async function run() {
                     break;
                 }
             }
-            
+
             const pngPath = path.resolve('model.png');
             const glbPath = path.resolve('model.glb');
-            
+
             if (found) {
                 logger.info({ pngPath, glbPath }, 'SUCCESS: Hans NPC pulled from cache.');
             } else {

@@ -140,7 +140,7 @@ export class PedagogyLimb {
      */
     public async analyzeGroupByType(type: string, sampleSize: number = 20): Promise<Result<PedagogyProfile>> {
         logger.info({ type, sampleSize }, 'Synthesizing Sovereign Type Pedagogy via AI...');
-        
+
         const typeMap: Record<string, any> = {
             'NPC': { poly: 1500, vert: 5000, bones: 20, mat: 4 },
             'LOC': { poly: 800, vert: 2500, bones: 0, mat: 2 },
@@ -263,7 +263,7 @@ The second should define its cinematic intent.
             if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
             fs.writeFileSync(memoryPath, JSON.stringify(profile, null, 2));
             logger.info({ memoryPath }, 'Pedagogy anchored successfully to Sovereign memory.');
-            
+
             // Phase 8: Vector Ingestion
             this.vectorIndex.ingestProfile(profile).catch((err: Error) => {
                 logger.error({ id: profile.id, error: err.message }, 'Failed to vectorize pedagogy profile.');
@@ -326,14 +326,14 @@ The second should define its cinematic intent.
      */
     public async analyzeGroup(label: string, type: 'NPC' | 'ITEM' | 'OBJECT', ids: number[], yaoState: YaoState): Promise<Result<PedagogyProfile>> {
         logger.info({ label, type, count: ids.length }, 'Initiating Group Pedagogy Analysis');
-        
+
         const profiles: TopologicalProfile[] = [];
-        
+
         for (const id of ids) {
             const res = type === 'NPC' ? await this.analyzeNpc(id, yaoState) :
-                        type === 'ITEM' ? await this.analyzeItem(id, yaoState) :
-                        ok(null); // Objects not implemented yet
-            
+                type === 'ITEM' ? await this.analyzeItem(id, yaoState) :
+                    ok(null); // Objects not implemented yet
+
             if (res.ok && res.value) {
                 // Profile analysis already happened, we just need the topology
                 // But analyzeNpc returns a PedagogyProfile which doesn't directly expose the array of TopologicalProfiles 
@@ -342,11 +342,11 @@ The second should define its cinematic intent.
                 // TODO: Optimize this by caching individual IDs
             }
         }
-        
+
         // This is a stub for the heavy lifting: sampling and averaging metrics.
         // In the interest of efficiency, we'll implement a fast-path that identifies
         // the "Standard" for the group based on the IDs provided.
-        
+
         return err(new Error('analyzeGroup implementation in progress.'));
     }
 
@@ -412,7 +412,7 @@ The second should define its cinematic intent.
      */
     public async analyzeQuests(): Promise<Result<any>> {
         logger.info('Analyzing Quest/Achievement Substrate (Major 57)...');
-        
+
         try {
             const questsPath = path.join(getPedagogyPath(), 'quests.json');
             if (!fs.existsSync(questsPath)) {
@@ -421,7 +421,7 @@ The second should define its cinematic intent.
 
             const data = JSON.parse(fs.readFileSync(questsPath, 'utf8'));
             const quests = data.quests || [];
-            
+
             logger.info({ totalQuests: quests.length }, 'Loaded quest substrate');
 
             // Find high-complexity chains (depth > 5)
@@ -480,7 +480,7 @@ The second should define its cinematic intent.
         const objectForensics = await import('../../scripts/temp_object_forensics.js' as any); // Dynamic import for prototype
         // Note: I'll use a simplified version here for now as the script is a CLI tool.
         // In a real implementation, this would call CacheForensicsLimb.getObjectDetails().
-        
+
         const principle = await this.storePrinciple(
             'WORLD_GEOMETRY_CONSTRAINTS',
             `Jagex Cache Major 16 (Spatial Logic)`,
@@ -652,7 +652,7 @@ Output JSON ONLY:
      */
     public async verifyStateMachine(questId: number): Promise<Result<any>> {
         logger.info({ questId }, 'Verifying quest state machine persistence...');
-        
+
         // In Phase 23, verification confirms the varbit range is valid and maps to quest stages.
         const groundingRes = await this.groundQuest(questId);
         if (!groundingRes.ok) return groundingRes;
@@ -663,7 +663,7 @@ Output JSON ONLY:
             varbitCoverage: '100%',
             stateTransitions: 'VALID',
             transitions: grounding.states.map((s: any, i: number) => {
-                const next = grounding.states[i+1];
+                const next = grounding.states[i + 1];
                 return next ? `${s.label} -> ${next.label}` : `${s.label} (Final)`;
             })
         };

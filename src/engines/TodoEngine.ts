@@ -2,6 +2,7 @@ import { Renderer } from '../ui/Renderer.js';
 import { type Todo, type TodoStatus, ok } from '../core/models.js';
 import { SovereignProprioception } from '../utils/SovereignProprioception.js';
 import { join } from 'path';
+import type { TodoCloudLimb } from '../limbs/spatial/TodoCloudLimb.js';
 
 /**
  * TodoEngine â€” Real task management and checklisting substrate.
@@ -11,6 +12,7 @@ import { join } from 'path';
 export class TodoEngine {
     private todos: Todo[] = [];
     private readonly proprioception: SovereignProprioception;
+    private cloudLimb: TodoCloudLimb | null = null;
 
     constructor(private readonly renderer: Renderer) {
         // Clinical path resolution for neurological mapping
@@ -18,10 +20,22 @@ export class TodoEngine {
         this.proprioception = new SovereignProprioception(brainPath);
     }
 
+    public setCloudLimb(limb: TodoCloudLimb): void {
+        this.cloudLimb = limb;
+    }
+
     public update(todos: Todo[]): void {
         this.todos = todos;
         this.renderChecklist();
         this.proprioception.updateTaskList(this.todos);
+
+        // Pipeline to the specialized cloud substrate if available
+        if (this.cloudLimb) {
+            this.cloudLimb.pushTasks(this.todos).catch(err => {
+                // Non-blocking sync error
+                this.renderer.warn(`[TodoCloud] Sync Delay: ${err.message}`);
+            });
+        }
     }
 
     public getTodos(): Todo[] {

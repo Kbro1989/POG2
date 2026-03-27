@@ -1,8 +1,6 @@
 // src/utils/RSMVExtractor.ts
 // Utility to parse RSMV model definitions and map them to Biological Constraints
 
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
 import { Result, ok, err, EmotionalState } from '../core/models.js';
 import { AnatomyLimits, SpeciesAnatomy } from '../constants/AnatomyRegistry.js';
 import { ModelReference } from '../constants/ModelRegistry.js';
@@ -14,14 +12,14 @@ const logger = createLogger('RSMVExtractor');
 
 export interface RSMVModelJSON {
     name: string;
-    models?: number[];
-    headModels?: number[];
-    boundSize?: number;
-    animation_group?: number;
-    movementCapabilities?: number;
-    extra?: Record<number, string | number>;
-    color_replacements?: [number, number][];
-    material_replacements?: [number, number][];
+    models ?: number[];
+    headModels ?: number[];
+    boundSize ?: number;
+    animation_group ?: number;
+    movementCapabilities ?: number;
+    extra ?: Record<number, string | number>;
+    color_replacements ?: [number, number][];
+    material_replacements ?: [number, number][];
 }
 
 export class RSMVExtractor {
@@ -50,7 +48,7 @@ export class RSMVExtractor {
         if (json.extra) {
             if (json.extra[1010]) limits.limbs = Number(json.extra[1010]);
             if (json.extra[1011]) limits.eyes = Number(json.extra[1011]);
-            
+
             if (json.extra[1012]) {
                 const joints = Number(json.extra[1012]);
                 if (!limits.joints) limits.joints = {};
@@ -143,7 +141,7 @@ export class RSMVExtractor {
 
         // 3. Kinetic resonance (Animation group cues)
         if (animGroup > 5000) return EmotionalState.Inspired; // High-tier modern rigs
-        
+
         return EmotionalState.Zen; // Default stable state
     }
 
@@ -171,25 +169,26 @@ export class RSMVExtractor {
      * Phase 25: Headless Batch Ingestion
      * Recursively scans a directory for RSMV JSONs and yields knowledge packets.
      */
-    public *batchProcessModels(directory: string): Generator<any> {
+    public batchProcessModels(directory: string): any[] {
+        const packets: any[] = [];
         const files = readdirSync(directory);
 
-        for (const file of files) {
+        for(const file of files) {
             const fullPath = join(directory, file);
             const stat = statSync(fullPath);
 
             if (stat.isDirectory()) {
-                yield* this.batchProcessModels(fullPath);
+                packets.push(...this.batchProcessModels(fullPath));
             } else if (file.endsWith('.json')) {
                 try {
                     const content = readFileSync(fullPath, 'utf8');
                     const json = JSON.parse(content) as RSMVModelJSON;
-                    
+
                     if (!json.name) continue;
 
                     const anatomy = RSMVExtractor.extractAnatomy(json);
                     const kinetic = RSMVExtractor.getKineticProfile(json);
-                    
+
                     // Synthetic reference for the knowledge packet
                     const ref: ModelReference = {
                         id: `rsmv-${json.name.toLowerCase().replace(/\s+/g, '-')}`,
@@ -199,11 +198,12 @@ export class RSMVExtractor {
                         metadata: { boundSize: json.boundSize }
                     };
 
-                    yield RSMVExtractor.toKnowledgePacket(ref, anatomy, kinetic);
+                    packets.push(RSMVExtractor.toKnowledgePacket(ref, anatomy, kinetic));
                 } catch (e) {
                     logger.error({ file, error: (e as Error).message }, 'Failed to parse RSMV model');
                 }
             }
         }
+        return packets;
     }
 }

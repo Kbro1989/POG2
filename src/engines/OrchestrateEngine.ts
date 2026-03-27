@@ -1,4 +1,4 @@
-﻿import { createRequire } from 'module';
+import { createRequire } from 'module';
 const require = createRequire(import.meta.url); // POG2 Substrate Active
 import { existsSync, mkdirSync, readdirSync, statSync, readFileSync } from 'fs';
 import { dirname, join } from 'path';
@@ -13,6 +13,7 @@ import { ShellEngine, type ShellParams } from './ShellEngine.js';
 import { ShellLibrary } from './ShellLibrary.js';
 import { SpatialVisionEngine } from './SpatialVisionEngine.js';
 import { VisionEngine } from './VisionEngine.js';
+import { TodoCloudLimb } from '../limbs/spatial/TodoCloudLimb.js';
 import { TodoEngine } from './TodoEngine.js';
 import { MCPEngine } from './MCPEngine.js';
 import { ChromanumberEngine } from './ChromanumberEngine.js';
@@ -59,6 +60,7 @@ import { CacheLearningLimb } from '../limbs/spatial/CacheLearningLimb.js';
 import { CacheForensicsLimb } from '../limbs/spatial/CacheForensicsLimb.js';
 import { RSMVController } from '../vision/RSMVController.js';
 import { VectorDB } from '../utils/VectorDB.js';
+import { ModelViewerLimb } from '../limbs/spatial/ModelViewerLimb.js';
 import { ContextBuilder } from './ContextBuilder.js';
 import { ToolRegistry } from '../ToolRegistry.js';
 import { Renderer } from '../ui/Renderer.js';
@@ -148,6 +150,7 @@ export class OrchestrateEngine {
     private readonly neuralForge: NeuralForgeLimb;
     private readonly webSensory: WebSensoryLimb;
     private readonly bioIntel: BioIntelligenceLimb;
+    private readonly modelViewer: ModelViewerLimb;
     private readonly ghost: GhostLimb;
     private readonly quantum: QuantumLimb;
     private readonly omega: OmegaLimb;
@@ -163,6 +166,7 @@ export class OrchestrateEngine {
     private readonly rsmvController: RSMVController;
     private readonly cacheForensics: CacheForensicsLimb;
     private readonly cacheLearning: CacheLearningLimb;
+    private readonly todoCloud: TodoCloudLimb;
     private readonly EXTREME_THRESHOLD = 80;
     private initialized = false;
     private initPromise: Promise<void> | null = null;
@@ -182,6 +186,12 @@ export class OrchestrateEngine {
         this.cacheForensics = new CacheForensicsLimb();
 
         this.todoEngine = new TodoEngine(renderer);
+        this.todoCloud = new TodoCloudLimb({ 
+            endpoint: 'https://pog2-todo-list.kristain33rs.workers.dev/api/todos',
+            token: 'multiplayer-globe-pog2 build token'
+        });
+        this.todoEngine.setCloudLimb(this.todoCloud);
+
         this.visionEngine = new SpatialVisionEngine(config, renderer);
         this.vision = new VisionEngine(config, renderer);
         this.mcpEngine = new MCPEngine(config, this.registry);
@@ -204,6 +214,7 @@ export class OrchestrateEngine {
         this.kinematics = new KinematicsLimb(this.router, this.vectorDB, this.client);
 
         this.bioIntel = new BioIntelligenceLimb();
+        this.modelViewer = new ModelViewerLimb(this.cacheForensics);
         logger.debug('Initializing Specialized Limbs...');
         this.gutenberg = new GutenbergLimb(this.client, this.vectorDB);
 
@@ -265,13 +276,10 @@ export class OrchestrateEngine {
         this.rsmvController = new RSMVController();
         this.cacheLearning = new CacheLearningLimb(rsmvCachePath, this.cacheForensics, extractionDir);
         this.questSynthesis = new QuestSynthesisLimb(this.client, this.cacheForensics, this.pedagogy);
-
-        // Moving PulseMonitor initialization earlier to satisfy BlenderRenderer dependency
-        logger.debug('Starting PulseMonitor...');
         this.pulseMonitor = new PulseMonitor(process.cwd(), this.router.getHexagram());
-        this.pulseMonitor.start().catch(err => {
-            logger.error({ err }, 'PulseMonitor failed to start, but substrate continues.');
-        });
+
+        // PulseMonitor already created above (line 271) to satisfy BlenderRenderer dependency.
+        // It will be started gracefully in initialize() to prevent CLI hangs.
 
         this.blender = new BlenderRenderer(
             this.shell,
@@ -367,8 +375,8 @@ export class OrchestrateEngine {
         // Phase 82: Wire TrainingCollector into TernaryRouter for FPRAG persistence
         this.router.setTrainingCollector(this.trainingCollector);
 
-        // Phase 48: Awaken the Ghost (Adversarial Reflection)
-        this.ghost.awaken();
+        // Phase 48: Ghost (Adversarial Reflection) is prepared.
+        // It will be awakened in initialize() to prevent CLI hangs during import/boot.
 
         this.initializeTools();
     }
@@ -410,13 +418,8 @@ export class OrchestrateEngine {
 
                 // ðŸ§¬ Phase 14: Graceful port selection (replaces fatal hard-coded port)
                 try {
-                    if (this.switchboard.startWithGracefulPort) {
-                        const result = await this.switchboard.startWithGracefulPort(this);
-                        logger.info({ port: result.port, url: result.url }, 'Switchboard Bridge active (graceful port)');
-                    } else {
-                        // LEGACY FALLBACK: If startWithGracefulPort doesn't exist
-                        await this.switchboard.startServer(8788, this);
-                    }
+                    const result = await this.switchboard.startWithGracefulPort(this);
+                    logger.info({ port: result.port, url: result.url }, 'Switchboard Bridge active (graceful port)');
                 } catch (switchboardErr: any) {
                     // Non-fatal: Switchboard is enhancement, not critical path
                     logger.warn({ err: switchboardErr.message }, 'Switchboard failed to start â€” continuing without remote bridge');
@@ -425,10 +428,20 @@ export class OrchestrateEngine {
                 // Connect renderer and vision (safe regardless of port status)
                 this.switchboard.connectToSubstrates(this.renderer, this.vision);
 
-                // ðŸ§¬ Phase 14: Register with NodeTester if method exists
+                // 🧬 Phase 14: Register with NodeTester if method exists
                 if (this.nodeTester?.registerSwitchboard) {
                     this.nodeTester.registerSwitchboard(this.switchboard);
                 }
+
+                // 🧬 Phase 14: Awaken background health & reflection substrates
+                logger.debug('Awakening background health and reflection substrates...');
+                await this.pulseMonitor.start().catch(err => {
+                    logger.error({ err }, 'PulseMonitor failed to start, but substrate continues.');
+                });
+                this.ghost.awaken();
+
+                // 🧬 Phase 6: Refresh all discovered models in background
+                this.client.getRolodex()?.refreshAll().catch(() => { /* non-blocking */ });
             }
 
             this.initialized = true;
@@ -579,7 +592,7 @@ export class OrchestrateEngine {
                 MultiModelExecutor: new MultiModelExecutor(this.config, this.renderer),
                 ContextBuilder: new ContextBuilder(this.vectorDB, getGodHeadRoot() ?? process.cwd(), 'pog2-sovereign', this.client),
                 TrainingCollector: this.trainingCollector,
-                RSMVExtractor: this.rsmvExtractor,
+                rsmvExtractor: this.rsmvExtractor,
                 NodeTester: undefined // Self-registration will be handled via class name matching if needed, but we provide it here as part of the registry
             }
         );
@@ -589,9 +602,13 @@ export class OrchestrateEngine {
         nodeTester.registerLimbs({ OrchestrateEngine: this });
         nodeTester.registerLimbs({ ChromaLimb: this.chromaLimb });
         nodeTester.registerLimbs({ SwitchboardLimb: this.switchboard });
-        nodeTester.registerLimbs({ RSMVController: this.rsmvController });
+        nodeTester.registerLimbs({ rsmvController: this.rsmvController });
         nodeTester.registerLimbs({ CacheForensicsLimb: this.cacheForensics });
         nodeTester.registerLimbs({ CacheLearningLimb: this.cacheLearning });
+
+        // Phase 21: Wire PulseMonitor to use NodeTester for lightweight limb health after first pass
+        this.pulseMonitor.setNodeTester(nodeTester);
+        this.nodeTester = nodeTester;
 
         // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â OBSERVE DOMAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
         this.registry.register({
@@ -721,7 +738,7 @@ export class OrchestrateEngine {
                 // Phase 29: Systemic Health/Provider Audit & Autonomous Healing
                 const nodeResults = await nodeTester.auditNeuralNodes();
                 const providerResults = nodeTester.auditProviders();
-                
+
                 let output = '=== SOVEREIGN HEALTH DIAGNOSTIC ===\n\n';
 
                 // 1. Audit Providers
@@ -1312,7 +1329,7 @@ export class OrchestrateEngine {
 
                 // 1. Generate Substrate
                 this.renderer.info(`Generating visual substrate for: "${prompt}"...`);
-                const genRes = await this.chroma.generateVisualSubstrate({ prompt, undefined, OldYang: YaoState.OldYang });
+                const genRes = await this.chroma.generateVisualSubstrate({ prompt, analysisPrompt: undefined, OldYang: YaoState.OldYang });
                 if (!genRes.ok) return genRes;
 
                 // 2. Capture and Analyze via Vision
@@ -1392,7 +1409,7 @@ export class OrchestrateEngine {
                 }
 
                 const output = [
-                    `ðŸ“ RSMV ANATOMY EXTRACTION: ${modelData.name}`,
+                    `ðŸ“rsmv ANATOMY EXTRACTION: ${modelData.name}`,
                     `Species: ${anatomy.species}`,
                     `Kinetic Profile: ${kinetic.toUpperCase()}`,
                     `Limb Constraints: ${anatomy.limits.limbs} limbs, ${anatomy.limits.eyes} eyes`,
@@ -1400,7 +1417,41 @@ export class OrchestrateEngine {
                     `Substrate Notes: ${anatomy.notes}`,
                     `ðŸ§  Insight ingested into Sovereign Developmental Memory.`
                 ].join('\n');
-                return ok({ output, data: { anatomy, kinetic } });
+                return ok({ output, data: { anatomy, kinetic, packet } });
+            }
+        });
+
+        this.registry.register({
+            name: 'model_preview',
+            description: 'Preview a 3D model with PBR shaders accurately representing the Sovereign Atlas state.',
+            humanDescription: 'Open a 3D preview of a RuneScape model with high-fidelity shaders.',
+            jargonDescription: 'Orchestrates a 3D spatial projection via the ModelViewerLimb, applying deconstructed GLSL PBR fragments to the target model substrate.',
+            idealYaoState: YaoState.YoungYang,
+            domain: SovereignDomain.VISION,
+            category: 'sensory',
+            parameters: { modelId: 'number', materialId: 'number?' },
+            execute: async (args) => {
+                const { modelId, materialId } = args as { modelId: number, materialId?: number };
+                const res = await this.modelViewer.previewModel(modelId, { materialId });
+                if (!res.ok) return res;
+                return ok({ output: `Projected 3D model ${modelId} to spatial viewport.`, data: res.value });
+            }
+        });
+
+        this.registry.register({
+            name: 'link_chromatic_intent',
+            description: 'Link a detected color intent to a specific 3D model sub-mesh.',
+            humanDescription: 'Tell the engine that a specific color you see on screen belongs to a part of a 3D model.',
+            jargonDescription: 'Maps a Chromanumber classification to a specific 3D mesh fragment, establishing a semantic link between 2D vision and 3D spatial substrates.',
+            idealYaoState: YaoState.YoungYang,
+            domain: SovereignDomain.VISION,
+            category: 'sensory',
+            parameters: { modelId: 'number', colorIntent: 'string' },
+            execute: async (args) => {
+                const { modelId, colorIntent } = args as { modelId: number, colorIntent: string };
+                const res = await this.modelViewer.linkChromaticIntent(modelId, colorIntent);
+                if (!res.ok) return res;
+                return ok({ output: `Linked chromatic intent '${colorIntent}' to model ${modelId}.`, data: res.value });
             }
         });
 
@@ -1458,6 +1509,59 @@ export class OrchestrateEngine {
                 const res = await this.rsmvController.viewModel(modelId, { replaceColors: colors, replaceMaterials: materials });
                 if (!res.ok) return res as any;
                 return ok({ output: res.value.details || `Model ${modelId} opened in inspector.`, data: res.value });
+            }
+        });
+
+        this.registry.register({
+            name: 'visual_audit',
+            description: 'Perform a multimodal visual audit of an image or media output.',
+            humanDescription: 'Have the AI "look" at an image, 3D render, or video frame and score its quality.',
+            jargonDescription: 'Invokes the SpatialVisionEngine to perform a technical and aesthetic audit of a target visual substrate, returning a 0-10 score.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.VISION,
+            category: 'sensory',
+            parameters: { targetPath: 'string', intent: 'string?', threshold: 'number?' },
+            execute: async (args) => {
+                const { targetPath, intent = 'ui_analysis', threshold = 8 } = args as { targetPath: string; intent?: string; threshold?: number };
+                
+                const prompt = `
+VISHUAL AUDIT PROTOCOL:
+Analyze the target visual substrate at: ${targetPath}
+Intent: ${intent}
+
+TASKS:
+1. TECHNICAL FIDELITY: Inspect for artifacts, clipping, or rendering errors.
+2. STYLISTIC ALIGNMENT: Does this match Sovereign aesthetics (premium, dark mode, rich gradients)?
+3. SCORING: Provide a numerical score from 0 to 10.
+
+OUTPUT FORMAT:
+- Score: [Number]/10
+- Analysis: [Concise technical feedback]
+- Verdict: [PASS/FAIL] (${threshold}/10 threshold)
+`.trim();
+
+                const res = await this.visionEngine.observe({
+                    intent: intent as any,
+                    target: targetPath,
+                    prompt,
+                    includeScreenshot: !targetPath // Screenshot if no path
+                });
+
+                if (!res.ok) return res as any;
+
+                const responseText = res.value.output;
+                const scoreMatch = responseText.match(/Score:\s*(\d+(\.\d+)?)\/10/i);
+                const score = scoreMatch ? parseFloat(scoreMatch[1]!) : 0;
+                const passed = score >= threshold;
+
+                const resultOutput = [
+                    `🔍 VISUAL AUDIT RESULT: ${passed ? '✅ PASS' : '❌ FAIL'} (${score}/10)`,
+                    `Target: ${targetPath || 'System View'}`,
+                    `Threshold: ${threshold}/10`,
+                    `\n--- TECHNICAL ANALYSIS ---\n${responseText}`
+                ].join('\n');
+
+                return ok({ output: resultOutput, data: { score, passed, fullResponse: responseText } });
             }
         });
 

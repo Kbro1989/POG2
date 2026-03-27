@@ -45,7 +45,7 @@ export class VisionActuationHarness {
             if (existsSync(pedagogyPath)) {
                 const files = readdirSync(pedagogyPath);
                 const hudFiles = files.filter(f => f.startsWith('GROUP_PRINCIPLE_HUD_CANDIDATE_'));
-                
+
                 for (const file of hudFiles) {
                     const data = JSON.parse(readFileSync(join(pedagogyPath, file), 'utf8'));
                     this.hudSubstrates.push(data);
@@ -88,10 +88,10 @@ export class VisionActuationHarness {
             if (spatialRes.ok && spatialRes.value.data?.spatialMap) {
                 const map = spatialRes.value.data.spatialMap;
                 logger.info({ regions: map.regions?.length }, 'Spatial HUD regions mapped');
-                
+
                 // Save mapping results to D:\ sovereign learning substrate
                 const learningPath = resolveSovereignPath(join('learning', `hud_mapping_${Date.now()}.json`));
-                writeFileSync(learningPath, JSON.stringify({ 
+                writeFileSync(learningPath, JSON.stringify({
                     timestamp: Date.now(),
                     url,
                     spatialMap: map,
@@ -125,15 +125,15 @@ export class VisionActuationHarness {
         switch (intent.action) {
             case 'mutate_shader':
                 return await this.injector.injectColor(intent.target, intent.parameters.code);
-            
+
             case 'rsmv_control':
                 return await this.rsmv.viewModel(intent.parameters.modelId);
-            
+
             case 'actuate_hud':
                 // High-fidelity HUD interaction (Mocked to click via Puppeteer in production)
                 logger.info({ widgetId: intent.parameters.widgetId }, 'Actuating HUD Widget');
                 return { ok: true, value: { success: true, details: `Actuated HUD Widget ${intent.parameters.widgetId}` } };
-            
+
             default:
                 return { ok: false, error: new Error(`Unsupported actuation action: ${intent.action}`) };
         }

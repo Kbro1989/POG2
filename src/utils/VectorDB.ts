@@ -405,7 +405,7 @@ export class VectorDB {
             }
 
             const embedRes = await this.client.embed(content.substring(0, 4000));
-            if (!embedRes.ok) return embedRes;
+            if (!embedRes.ok) return { ok: false, error: embedRes.error };
 
             return this.addLesson({
                 id: `auto-${hash.substring(0, 8)}-${Date.now()}`,

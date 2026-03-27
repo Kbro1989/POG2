@@ -1,8 +1,11 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const {  GameCacheLoader  } = require("../../../rsmv/src/cache/sqlite.js");
-const {  parse  } = require("../../../rsmv/src/opdecoder.js");
-const {  cacheMajors  } = require("../../../rsmv/src/constants.js");
+let GameCacheLoader: any = null;
+let parse: any = null;
+let cacheMajors: any = null;
+try { ({ GameCacheLoader } = require("../../../rsmv/src/cache/sqlite.js")); } catch {}
+try { ({ parse } = require("../../../rsmv/src/opdecoder.js")); } catch {}
+try { ({ cacheMajors } = require("../../../rsmv/src/constants.js")); } catch {}
 import { Result, ok, err } from '../../core/models.js';
 import type { PedagogyProfile } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
@@ -22,7 +25,7 @@ export class DynamicsLimb {
     private vectorDB: VectorDB;
 
     constructor(router: TernaryRouter, vectorDB: VectorDB, private readonly client: ModelClient) {
-        this.loader = new GameCacheLoader();
+        this.loader = GameCacheLoader ? new GameCacheLoader() : null;
         this.router = router;
         this.vectorDB = vectorDB;
     }
@@ -47,6 +50,7 @@ export class DynamicsLimb {
         }
 
         try {
+            if (!this.loader || !parse || !cacheMajors) return err(new Error('DynamicsLimb: RSMV substrates not available.'));
             const buffer = await this.loader.getFile(cacheMajors.spotanims, spotAnimId);
             if (!buffer) return err(new Error(`SpotAnim ${spotAnimId} not found in cache.`));
 

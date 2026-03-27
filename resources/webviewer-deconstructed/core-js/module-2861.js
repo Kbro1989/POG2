@@ -19,7 +19,7 @@ return i(e, t, n)
   if("number"!=typeof e)throw new TypeError("Argument must be a number");
 var r=i(e)
 ;
-return void 0!==t?"string"==typeof n?r.fill(t, n):r.fill(t);r.fill(0), r
+return void 0!==t?"string"==typeof n?r.fill(t, n):r.fill(t):r.fill(0), r
 }
 , s.allocUnsafe=function(e) {
   if("number"!=typeof e)throw new TypeError("Argument must be a number");
@@ -168,12 +168,12 @@ e.exports="\r\n#version 460\r\n\r\n/********************************************
 \r\nfloat RoughnessToPerceptualRoughness(float); f)  {
    return sqrt(f);
 }
-\r\n#endif\r\n#ifndef CONVERSION_UTILS_INC\r\n#define CONVERSION_UTILS_INC\r\nvec3 SRGBToLinear(vec3 srgbColour)\r\n {
-  \r\n#if defined(GAMMA_CORRECT_INPUTS)\r\n    return srgbColour * srgbColour;
+\r\n#endif\r\n#ifndef; CONVERSION_UTILS_INC\r\n#define; CONVERSION_UTILS_INC\r\nvec3; SRGBToLinear(vec3, srgbColour)\r\n {
+  \r\n#if; defined(GAMMA_CORRECT_INPUTS)\r\n    return srgbColour * srgbColour;
 \r\n#else\r\n    return pow(srgbColour,  vec3(2.2,  2.2,  2.2));
 \r\n#endif\r\n
 }
-\r\nvec3 LinearToSRGB(vec3 s)  {
+\r\nvec3; LinearToSRGB,(vec3 s) ; {
    return max(vec3(1.055) * pow(s,  vec3(.416667)) - vec3(.055),  vec3(0.));
 }
 \r\nfloat LinearToSRGB(float s)\r\n {

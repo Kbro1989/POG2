@@ -1,7 +1,9 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { GameCacheLoader } = require("../../../rsmv/src/cache/sqlite.js");
-const { parse } = require("../../../rsmv/src/opdecoder.js");
+let GameCacheLoader: any = null;
+let parse: any = null;
+try { ({ GameCacheLoader } = require("../../../rsmv/src/cache/sqlite.js")); } catch {}
+try { ({ parse } = require("../../../rsmv/src/opdecoder.js")); } catch {}
 
 import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
@@ -54,9 +56,13 @@ export class CacheForensicsLimb {
         this.mainCacheFile = fs.existsSync(legacyPath) ? legacyPath : modernPath;
 
         try {
-            this.cache = new GameCacheLoader(this.cachePath);
-            this.cache.buildnr = 940;
-            logger.info({ path: this.cachePath }, 'CacheForensicsLimb connected to substrate.');
+            if (GameCacheLoader) {
+                this.cache = new GameCacheLoader(this.cachePath);
+                this.cache.buildnr = 940;
+                logger.info({ path: this.cachePath }, 'CacheForensicsLimb connected to substrate.');
+            } else {
+                logger.warn('CacheForensicsLimb: GameCacheLoader not available.');
+            }
         } catch (e) {
             logger.error({ error: (e as Error).message }, 'Failed to connect to GameCacheLoader.');
         }
@@ -71,7 +77,7 @@ export class CacheForensicsLimb {
     public async initialize(): Promise<Result<boolean>> {
         try {
             logger.info('Booting CacheForensicsLimb (Epistemology substrate)...');
-            
+
             // Initial volatility check
             const volatility = await this.checkCacheVolatility();
             if (volatility.ok && volatility.value.hasChanged) {
@@ -198,6 +204,7 @@ export class CacheForensicsLimb {
      */
     public async getItemDetails(id: number): Promise<Result<any>> {
         if (!this.cache) return err(new Error('Cache connection offline.'));
+        if (!parse) return err(new Error('CacheForensicsLimb: parse not available.'));
 
         try {
             const MAJOR_ITEMS = 19;
@@ -244,6 +251,7 @@ export class CacheForensicsLimb {
      */
     public async getNpcDetails(id: number): Promise<Result<any>> {
         if (!this.cache) return err(new Error('Cache connection offline.'));
+        if (!parse) return err(new Error('CacheForensicsLimb: parse not available.'));
 
         try {
             const MAJOR_NPCS = 18;
@@ -283,6 +291,7 @@ export class CacheForensicsLimb {
      */
     public async getObjectDetails(id: number): Promise<Result<any>> {
         if (!this.cache) return err(new Error('Cache connection offline.'));
+        if (!parse) return err(new Error('CacheForensicsLimb: parse not available.'));
 
         try {
             const MAJOR_OBJECTS = 16;
@@ -506,7 +515,7 @@ export class CacheForensicsLimb {
     public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' } {
         const cacheExists = this.cache !== null;
         const catalogReady = this.equipmentBySlot !== null;
-        
+
         let status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' = 'ONLINE';
         let details = `Cache: ${cacheExists ? 'NOMINAL' : 'OFFLINE'}. Catalogs: ${catalogReady ? 'READY' : 'MISSING'}.`;
 

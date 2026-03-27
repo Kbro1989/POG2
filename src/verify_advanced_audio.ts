@@ -1,4 +1,4 @@
-﻿import { SoundtrackLimb } from './limbs/creative/SoundtrackLimb.js';
+import { SoundtrackLimb } from './limbs/creative/SoundtrackLimb.js';
 import { loadConfig } from './config/SovereignConfig.js';
 import { existsSync, unlinkSync } from 'fs';
 import { join } from 'path';

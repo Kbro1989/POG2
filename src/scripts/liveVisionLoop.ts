@@ -40,8 +40,8 @@ async function runLiveCycle() {
 
     try {
         if (!existsSync(targetFile)) {
-             logger.warn({ targetFile }, 'Target substrate not found. Skipping physical mutation.');
-             return;
+            logger.warn({ targetFile }, 'Target substrate not found. Skipping physical mutation.');
+            return;
         }
 
         // 1. Create backup

@@ -316,11 +316,30 @@ Respond in JSON ONLY:
     }
 
     public getEmotionalPool(): Record<string, number> {
-        const interpretation = this.getInterpretation();
-        return {
-            [interpretation.emotion]: 1.0,
+        const primary = this.getInterpretation();
+        const futureBinary = this.calculateHexagramId(this.lines, true);
+        const future = HEXAGRAM_REGISTRY[futureBinary] || { ...DEFAULT_HEXAGRAM, binary: futureBinary };
+        
+        const pool: Record<string, number> = {
+            [primary.emotion]: 1.0,
             [EmotionalState.Zen]: 0.5
         };
+
+        // Add future (changing) emotion if different, with lower weight
+        if (future.emotion !== primary.emotion) {
+            pool[future.emotion] = (pool[future.emotion] || 0) + 0.6;
+        }
+
+        // Somatic Metabolic Influence (Mock for now, can be wired to system sensors)
+        // If many lines are "Old" (Changing), increase Agitation or Excitement
+        const changingLines = this.lines.filter(l => l.state === YaoState.OldYang || l.state === YaoState.OldYin || l.state === YaoState.OldMixed).length;
+        if (changingLines >= 3) {
+            pool[EmotionalState.Agitated] = (pool[EmotionalState.Agitated] || 0) + 0.4;
+        } else if (changingLines >= 1) {
+            pool[EmotionalState.Curious] = (pool[EmotionalState.Curious] || 0) + 0.3;
+        }
+
+        return pool;
     }
 
     private calculateHexagramId(cards: ContextCard[], future: boolean): string {

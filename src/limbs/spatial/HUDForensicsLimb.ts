@@ -1,7 +1,9 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { GameCacheLoader } = require("../../../rsmv/src/cache/sqlite.js");
-const { parse } = require("../../../rsmv/src/opdecoder.js");
+let GameCacheLoader: any = null;
+let parse: any = null;
+try { ({ GameCacheLoader } = require("../../../rsmv/src/cache/sqlite.js")); } catch {}
+try { ({ parse } = require("../../../rsmv/src/opdecoder.js")); } catch {}
 
 import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
@@ -46,11 +48,15 @@ export class HUDForensicsLimb {
 
     constructor() {
         this.pedagogyCandidateDir = path.join(getSovereignRoot(), 'cache_pedagogy', 'atlas', 'interfaces');
-        
+
         try {
-            this.cache = new GameCacheLoader(this.cachePath);
-            this.cache.buildnr = 940; // RS3 Build
-            logger.info({ path: this.cachePath }, 'HUDForensicsLimb connected to Jagex Cache substrate.');
+            if (GameCacheLoader) {
+                this.cache = new GameCacheLoader(this.cachePath);
+                this.cache.buildnr = 940; // RS3 Build
+                logger.info({ path: this.cachePath }, 'HUDForensicsLimb connected to Jagex Cache substrate.');
+            } else {
+                logger.warn('HUDForensicsLimb: GameCacheLoader not available.');
+            }
         } catch (e) {
             logger.error({ error: (e as Error).message }, 'Failed to connect to GameCacheLoader.');
         }
@@ -61,10 +67,11 @@ export class HUDForensicsLimb {
      */
     public async getInterface(id: number): Promise<Result<InterfaceForensics>> {
         if (!this.cache) return err(new Error('Cache substrate not connected.'));
+        if (!parse) return err(new Error('HUDForensicsLimb: parse not available.'));
 
         try {
             const rawBuffer = await this.cache.getFile(3, id); // Major 3 is Interfaces
-            
+
             // Use internal parser and state for multi-component iteration
             const state = {
                 isWrite: false,
@@ -73,7 +80,7 @@ export class HUDForensicsLimb {
                 hiddenstack: [],
                 scan: 0,
                 endoffset: rawBuffer.byteLength,
-                args: { 
+                args: {
                     ...this.cache.getDecodeArgs(),
                     clientVersion: 940 // Explicitly force RS3/NXT context
                 }
@@ -118,13 +125,13 @@ export class HUDForensicsLimb {
                     const dumpEnd = Math.min(rawBuffer.byteLength, state.scan + 20);
                     const hexDump = rawBuffer.subarray(dumpStart, dumpEnd).toString('hex');
                     const pointer = ' '.repeat((state.scan - dumpStart) * 2) + '^^';
-                    
-                    logger.error({ 
-                        id, 
-                        scan: state.scan, 
+
+                    logger.error({
+                        id,
+                        scan: state.scan,
                         hexAround: hexDump,
                         pointerAtHex: pointer,
-                        error: err.message 
+                        error: err.message
                     }, 'Forensic decompile failure detected.');
                     // Forensic salvage: If we can't parse more, we return what we have
                     break;
@@ -137,14 +144,14 @@ export class HUDForensicsLimb {
             }
 
             // Check if HUD candidate (has specific text hits or structure)
-            const isHudCandidate = textLabels.some(t => 
+            const isHudCandidate = textLabels.some(t =>
                 /inventory|skill|chat|map|quest|ability|friend|clan/i.test(t)
             );
 
             let wikiContext: WikiData | undefined;
             if (isHudCandidate && textLabels.length > 0) {
                 // Take the most descriptive text label (longest for now)
-                const query = textLabels.sort((a,b) => b.length - a.length)[0];
+                const query = textLabels.sort((a, b) => b.length - a.length)[0];
                 const wikiRes = await WikiEnricher.enrich(query);
                 if (wikiRes.ok) wikiContext = wikiRes.value;
             }
@@ -167,7 +174,7 @@ export class HUDForensicsLimb {
      */
     public async searchInterfaces(query: string, limit: number = 10): Promise<Result<InterfaceForensics[]>> {
         if (!this.cache) return err(new Error('Cache substrate not connected.'));
-        
+
         const results: InterfaceForensics[] = [];
         const regex = new RegExp(query, 'i');
 

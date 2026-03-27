@@ -33,8 +33,8 @@ export interface StoryboardScene {
     styleInfluence: string;
     prosody?: ProsodyVector;
     speaker?: string; // Autonomous character identification
-    modelId?: number; // RSMV Model ID (Forensic Casting)
-    animationId?: number; // RSMV Sequence ID (Forensic Acting)
+    modelId?: number; //rsmv Model ID (Forensic Casting)
+    animationId?: number; //rsmv Sequence ID (Forensic Acting)
     duration?: number;
     durationSeconds?: number; // Real game-tick duration
     kinematicId?: string | number; // Pedagogy Kinematic ID
@@ -416,7 +416,7 @@ Vary prosody based on narrative tension and ${yaostate} influence.
     }
 
     /**
-     * performForensicCasting - Maps characters to RSMV IDs using affective resonance.
+     * performForensicCasting - Maps characters torsmv IDs using affective resonance.
      */
     public async performForensicCasting(scenes: StoryboardScene | StoryboardScene[]): Promise<Result<StoryboardScene[]>> {
         const sceneList = Array.isArray(scenes) ? scenes : [scenes];
@@ -426,7 +426,7 @@ Vary prosody based on narrative tension and ${yaostate} influence.
 
         // Stage 0.5: Specialized Substrate Detection (KBD/Project Specific)
         const isKbdContext = sceneList.some(s => (s.description || "").toLowerCase().includes('kbd') || (s.speaker || "").toLowerCase().includes('kbd'));
-        
+
         let localConfigs: any[] = [];
         let boneAudit: Record<string, any> = {};
 
@@ -481,11 +481,11 @@ Vary prosody based on narrative tension and ${yaostate} influence.
                         const details = await this.forensics.getNpcDetails(bestMatch.id);
                         if (details.ok) {
                             scene.modelId = bestMatch.id;
-                            scene.pose = { 
-                                npcId: bestMatch.id, 
+                            scene.pose = {
+                                npcId: bestMatch.id,
                                 x: 3213, // Fallback location if spawn unknown
-                                y: 3424, 
-                                z: 0 
+                                y: 3424,
+                                z: 0
                             };
                             logger.info({ scene: scene.index, name: bestMatch.name, npcId: bestMatch.id }, 'Forensic Casting: Exact Substrate Match Resolved.');
                         }
@@ -537,8 +537,8 @@ Vary prosody based on narrative tension and ${yaostate} influence.
                 const yao = this.hexagram.getYaoState();
                 const chaosTemp = yao === YaoState.OldMixed ? 1.2
                     : yao === YaoState.OldYang ? 0.9
-                    : yao === YaoState.YoungMixed ? 0.8
-                    : 0.6; // YoungYin/YoungYang — grounded invention
+                        : yao === YaoState.YoungMixed ? 0.8
+                            : 0.6; // YoungYin/YoungYang — grounded invention
 
                 const bornDigitalId = BORN_DIGITAL_ID_BASE + Math.floor(Math.random() * BORN_DIGITAL_ID_RANGE);
                 const capitalizedName = speaker.charAt(0).toUpperCase() + speaker.slice(1);

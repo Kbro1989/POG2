@@ -77,6 +77,17 @@ export class ModelRolodex {
             try {
                 this.state = JSON.parse(readFileSync(this.persistPath, 'utf8'));
                 logger.info({ models: Object.keys(this.state.models).length }, '🗂️ Rolodex loaded from disk.');
+
+                // Phase 21: Reputation Healing - Restore baseline for unused/corrupted states
+                for (const key in this.state.models) {
+                    const m = this.state.models[key];
+                    if (m.successCount === 0 && m.failureCount === 0 && m.reputation < 1.0) {
+                        m.reputation = 1.0;
+                    }
+                    if (m.reputation < 0.2) {
+                        m.reputation = 0.2; // Enforce absolute physiological floor
+                    }
+                }
             } catch {
                 this.state = this.createEmptyState();
             }
@@ -88,7 +99,7 @@ export class ModelRolodex {
         const decayRate = config.reputationDecayRate || 0.05;
         // Interval: 1 hour in production, 1 minute in development/test
         const intervalMs = process.env.NODE_ENV === 'test' ? 60000 : 3600000;
-        setInterval(() => this.applyReputationDecay(decayRate), intervalMs);
+        (setInterval(() => this.applyReputationDecay(decayRate), intervalMs) as any).unref();
     }
 
     private createEmptyState(): RolodexState {
@@ -103,6 +114,7 @@ export class ModelRolodex {
         };
         return { models: {}, providers, lastRefresh: 0, version: '1.0.0' };
     }
+
 
     /** 
      * Sovereign FinOps / Hive Mind: Merge incoming state from the Globe substrate.
@@ -268,15 +280,15 @@ export class ModelRolodex {
         const oldRep = entry.reputation;
         // 🧬 Phase 108: Physiological clamping (Prevent drift chaos)
         entry.reputation = Math.max(0.2, Math.min(2.0, entry.reputation + adjustment));
-        
-        logger.info({ 
-            model: modelId, 
-            provider, 
-            oldRep: oldRep.toFixed(4), 
+
+        logger.info({
+            model: modelId,
+            provider,
+            oldRep: oldRep.toFixed(4),
             newRep: entry.reputation.toFixed(4),
-            adjustment 
+            adjustment
         }, '🧬 Model reputation mutated by strategy advisor.');
-        
+
         this.persist();
     }
 
@@ -287,11 +299,11 @@ export class ModelRolodex {
 
         // 1. Success Rate Component (60%)
         const successRate = m.successCount / totalCalls;
-        
+
         // 2. Latency Component (30%) - Normalized (0.1 effectively infinite, 1.0 instant)
         // Assume 50ms is "instant" and 5000ms is "stalled"
         const latencyFactor = Math.max(0, 1 - (m.avgLatencyMs / 5000));
-        
+
         // 3. Cost/Token Penalty (10%) - Discourage massive token burns without success
         const tokenPenalty = Math.min(0.1, (m.totalTokensUsed / 1_000_000) * 0.1);
 
@@ -360,8 +372,8 @@ export class ModelRolodex {
                         parameterSize: m.details?.parameter_size,
                         quantization: m.details?.quantization_level,
                         lastSeen: Date.now(),
-                        successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0, 
-                        latencySamples: 0, 
+                        successCount: 0, failureCount: 0, totalTokensUsed: 0, avgLatencyMs: 0,
+                        latencySamples: 0,
                         reputation: 1.0,
                         isEmbedding: m.name.includes('embed'),
                         isVision: m.name.includes('llava') || m.name.includes('moondream'),
@@ -795,10 +807,10 @@ export class ModelRolodex {
 
     /** Check if an error is a fetch timeout or abortion */
     private isTimeoutError(err: any): boolean {
-        return err.name === 'TimeoutError' || 
-               err.message?.includes('timeout') || 
-               err.message?.includes('aborted') ||
-               err.code === 'ETIMEDOUT';
+        return err.name === 'TimeoutError' ||
+            err.message?.includes('timeout') ||
+            err.message?.includes('aborted') ||
+            err.code === 'ETIMEDOUT';
     }
 
     private globeStateLimb?: any; // Avoiding circular deep imports, typed functionally
@@ -868,7 +880,7 @@ export class ModelRolodex {
             // formula: rep = rep + (1 - rep) * decayRate
             model.reputation = model.reputation + (1.0 - model.reputation) * decayRate;
         }
-        
+
         logger.debug({ decayRate, count }, '🧬 Reputation decay applied: All models drifted toward baseline.');
         this.persist();
     }
@@ -889,7 +901,7 @@ export class ModelRolodex {
      */
     canAcceptCall(_provider: string, _model: string): boolean {
         // Backpressure stub — future: check against maxParallelCalls from config
-        return true; 
+        return true;
     }
 
     /** Functional health probe for NodeTester */

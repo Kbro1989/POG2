@@ -46,7 +46,7 @@ export class ChromanumberEngine {
         return ok({ path: outputPath });
     }
 
-    async capture(params: { target: string; sourceType: 'file' | 'url' | 'html' | 'window'; prompt?: string }): Promise<Result<EngineOutput>> {
+    async capture(params: { target: string; sourceType: 'file' | 'url' | 'html' | 'window'; prompt?: string; modelOverride?: string }): Promise<Result<EngineOutput>> {
         const eye = this.getEye();
         const res = await eye.capture({ type: params.sourceType, target: params.target } as any);
         if (!res.ok) return res as any;
@@ -59,7 +59,8 @@ export class ChromanumberEngine {
             }
         };
     }
-    async generateVisualSubstrate({ prompt }: { prompt: string }): Promise<Result<{ path: string }>> {
+    async generateVisualSubstrate(params: { prompt: string; analysisPrompt?: string; OldYang?: YaoState }): Promise<Result<{ path: string }>> {
+        const { prompt } = params;
         logger.info({ prompt }, '🏗️  Generating visual substrate via Stable Diffusion substrate');
         // This traditionally calls the /generate endpoint of a running stable-diffusion-webui or similar
         const outputPath = join(process.cwd(), 'audit_output', `substrate_${Date.now()}.png`);

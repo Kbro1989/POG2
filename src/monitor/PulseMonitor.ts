@@ -10,6 +10,7 @@ import { ClinicalLogger } from './ClinicalLogger.js';
 import type { DiskSubstrate, NeuralNode, DiagnosticResult } from '../types/diagnostic.js';
 import type { TernaryRouter } from '../routing/TernaryRouter.js';
 import type { SovereignKnock } from '../core/models.js';
+import type { NodeTester } from './NodeTester.js';
 import { ChromaLimb } from '../limbs/spatial/ChromaLimb.js';
 import { getDefaultSovereignConfig } from '../config/SovereignConfig.js';
 import { createLogger } from "../utils/logger.js";
@@ -27,6 +28,8 @@ export class PulseMonitor extends EventEmitter {
     private lastSenseTime: number = Date.now();
     private errorCount: number = 0;
     private readonly clinicalLogger: ClinicalLogger;
+    private firstPassComplete: boolean = false;
+    private nodeTester: NodeTester | null = null;
 
     constructor(
         private readonly projectRoot: string,
@@ -41,7 +44,7 @@ export class PulseMonitor extends EventEmitter {
         this.isRunning = true;
         this.clinicalLogger.log('INFO', 'PulseMonitor', 'BIOLOGICAL_HEART_RATE_ESTABLISHED');
         await this.pulse();
-        this.monitorInterval = setInterval(() => this.pulse(), 60000); // 1 minute pulse
+        this.monitorInterval = setInterval(() => this.pulse(), 60000).unref(); // 1 minute pulse
     }
 
     public stop(): void {
@@ -69,8 +72,50 @@ export class PulseMonitor extends EventEmitter {
             return;
         }
 
-        const sensors = await this.sense();
-        this.hexagramManager.updateState(sensors);
+        // Phase 21: Session-aware pulse optimization
+        // First pass: Full Win32 telemetry (disk, memory, tasklist)
+        // Subsequent passes: Lightweight limb health via NodeTester
+        if (this.firstPassComplete && this.nodeTester) {
+            await this.lightweightPulse();
+        } else {
+            const sensors = await this.sense();
+            this.hexagramManager.updateState(sensors);
+            this.firstPassComplete = true;
+            logger.info('First telemetry pass complete. Switching to lightweight limb health monitoring.');
+        }
+    }
+
+    /** Inject NodeTester reference for lightweight limb health monitoring */
+    public setNodeTester(tester: NodeTester): void {
+        this.nodeTester = tester;
+    }
+
+    /** Lightweight pulse: Skip Win32 WMI queries, only check limb health via NodeTester */
+    private async lightweightPulse(): Promise<void> {
+        if (!this.nodeTester) return;
+
+        try {
+            const report = await this.nodeTester.auditNeuralNodes();
+            const onlineCount = report.filter(r => r.status === 'ONLINE').length;
+            const offlineCount = report.filter(r => r.status !== 'ONLINE').length;
+
+            const noRecentErrors = this.checkErrors();
+            const buildPass = this.checkBuildStatus();
+
+            this.hexagramManager.updateState({
+                buildPass,
+                userActive: (Date.now() - this.lastSenseTime) < 300000,
+                noRecentErrors,
+                substrateHealthy: offlineCount < 5,
+                authorityLocal: true,
+                auditSync: onlineCount >= 20
+            } as SystemSensors);
+
+            logger.debug({ online: onlineCount, offline: offlineCount }, 'Lightweight limb pulse complete.');
+        } catch (err: any) {
+            logger.warn({ error: err.message }, 'Lightweight pulse failed, reverting to full telemetry next tick.');
+            this.firstPassComplete = false; // Revert to force one full pass
+        }
     }
 
     private async sense(): Promise<SystemSensors> {

@@ -98,14 +98,20 @@ export class NodeTester {
 
     /**
      * Audit the entire Neurological Map functional health.
+     * Phase 21: Parallelized execution with concurrency limit to prevent CLI hangs.
      */
     public async auditNeuralNodes(): Promise<NodeHealth[]> {
         logger.info('Commencing deep clinical neurological audit...');
-        const results: NodeHealth[] = [];
-
-        for (const node of NEUROLOGICAL_MAP) {
-            const health = await this.probeNode(node);
-            results.push(health);
+        const results: NodeHealth[] = new Array(NEUROLOGICAL_MAP.length);
+        const concurrency = 50; // Process 50 nodes at a time
+        
+        for (let i = 0; i < NEUROLOGICAL_MAP.length; i += concurrency) {
+            const batch = NEUROLOGICAL_MAP.slice(i, i + concurrency);
+            const batchPromises = batch.map(async (node, index) => {
+                const health = await this.probeNode(node);
+                results[i + index] = health;
+            });
+            await Promise.all(batchPromises);
         }
 
         // Phase 112: Visual Workflow Organ Grouping
@@ -241,27 +247,14 @@ export class NodeTester {
 
         while (retries <= maxRetries) {
             try {
-                // Specific logic for testing SwitchboardLimb server
-                let probe = await instance.healthCheck() as { online: boolean; details: string; retryable?: boolean };
-
-                // If it's not already running, try to start a test instance so we can audit its capability
-                if (!probe.online && className === 'SwitchboardLimb' && typeof instance.startServer === 'function') {
-                    try {
-                        const realOrchestrator = this.limbs['OrchestrateEngine'];
-                        if (realOrchestrator) {
-                            // Try to start on a test port (e.g., 8788) with the real orchestrator
-                            await instance.startServer(8788, realOrchestrator);
-                            // Stabilization delay for Switchboard bridge
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-                            // Re-probe after starting
-                            probe = await instance.healthCheck() as { online: boolean; details: string; retryable?: boolean };
-                        } else {
-                            logger.warn('SwitchboardLimb degraded: OrchestrateEngine not found in registry');
-                        }
-                    } catch (e) {
-                        logger.warn({ err: e }, 'SwitchboardLimb test server failed to start (port in use?)');
-                    }
-                }
+                // Phase 21: Added per-node timeout to prevent stalling the entire audit
+                const checkPromise = instance.healthCheck() as Promise<{ online: boolean; details: string; retryable?: boolean }>;
+                const probe = await Promise.race([
+                    checkPromise,
+                    new Promise<{ online: boolean; details: string; retryable?: boolean }>((_, reject) => 
+                        setTimeout(() => reject(new Error('HEALTH_CHECK_TIMEOUT')), 10000)
+                    )
+                ]);
 
                 // Wait logic for transient "Waiting for connection" states
                 const isWaiting = probe.retryable || (probe.details?.toLowerCase().includes('waiting for connection') || false);

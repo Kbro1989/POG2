@@ -41,7 +41,7 @@ This document provides a structured, clickable map of the POG2 substrate. Use it
 ---
 
 <details>
-<summary>📂 rsmv/ (RSMV Substrate)</summary>
+<summary>📂rsmv/ (RSMV Substrate)</summary>
 
 - [src/opcode_reader.ts](https://github.com/Kbro1989/POG2/blob/main/rsmv/src/opcode_reader.ts)
 - [package.json](https://github.com/Kbro1989/POG2/blob/main/rsmv/package.json)

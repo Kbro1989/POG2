@@ -1,4 +1,4 @@
-﻿import { readFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
