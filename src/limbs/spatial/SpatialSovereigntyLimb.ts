@@ -6,7 +6,12 @@ import { Result, ok, err, GameState, Direction, Coord, DirectionalCollision } fr
 import { MechanicalSovereigntyLimb } from '../technical/MechanicalSovereigntyLimb.js';
 import { DirectionalPathfinder } from './DirectionalPathfinder.js';
 
-const logger = createLogger('SpatialSovereigntyLimb');
+// const logger = createLogger('SpatialSovereigntyLimb');
+const logger = {
+    info: (...args: any[]) => console.log('[INFO]', ...args),
+    warn: (...args: any[]) => console.log('[WARN]', ...args),
+    error: (...args: any[]) => console.log('[ERROR]', ...args)
+};
 
 export interface CollisionMatrix {
     [key: string]: number | DirectionalCollision; // "plane_x_y" -> bitmask OR directional object
@@ -56,10 +61,11 @@ export class SpatialSovereigntyLimb {
                 return ok(true);
             }
 
-            // Load the "Prifddinas" keystone if available
+            // Load known regions
             await this.loadLogic('prifddinas');
+            await this.loadLogic('barrows');
             
-            logger.info(`SpatialSovereigntyLimb active with ${this.loadedMatrices.size} mapped regions.`);
+            logger.info(`SpatialSovereigntyLimb active with ${this.loadedMatrices.size} mapped regions. (${[...this.loadedMatrices.keys()].join(',')})`);
             return ok(true);
         } catch (error) {
             logger.error({ error }, 'Failed to initialize SpatialSovereigntyLimb.');
@@ -79,18 +85,27 @@ export class SpatialSovereigntyLimb {
 
         const fullPath = path.join(this.atlasDir, filename);
         if (!fs.existsSync(fullPath)) {
+            // Return err instead of throwing, allowing orchestrator to probe
             return err(new Error(`Logic file not found: ${fullPath}`));
         }
 
         try {
             const data = JSON.parse(fs.readFileSync(fullPath, 'utf8')) as SpatialLogicArtifact;
             this.loadedMatrices.set(data.city.toLowerCase(), data);
+            
+            // Log once per successful ingestion
             logger.info({ city: data.city }, 'Ingested Sovereignty Artifact.');
             return ok(undefined);
         } catch (error) {
-            logger.error({ error, filename }, 'Failed to parse logic artifact.');
             return err(error as Error);
         }
+    }
+
+    /**
+     * hasRegion - Check if a region is already loaded.
+     */
+    public hasRegion(name: string): boolean {
+        return this.loadedMatrices.has(name.toLowerCase());
     }
 
     /**
@@ -107,12 +122,13 @@ export class SpatialSovereigntyLimb {
         if (!collision) return true; // Default walkable if no data
 
         // CASE 1: High-Fidelity Directional Collision (Object)
-        if (typeof collision === 'object') {
+        if (collision && typeof collision === 'object') {
             if (!direction) return true; // If no direction given, assume broad walkability
             return (collision as any)[direction] !== false;
         }
 
-        // CASE 2: Legacy Bitmask (Number)
+        // CASE 2: Legacy Bitmask (Number or undefined)
+        if (collision === undefined) return true; // Default walkable
         // 0x100 = Object Block, 0x200000 = Terrain Block
         const isBlocked = (collision & 0x100) !== 0 || (collision & 0x200000) !== 0;
         return !isBlocked;
@@ -233,7 +249,7 @@ export class SpatialSovereigntyLimb {
      * findMatrixForCoords - Resolves which loaded artifact contains the coordinate.
      */
     private findMatrixForCoords(x: number, y: number): SpatialLogicArtifact | undefined {
-        for (const artifact of this.loadedMatrices.values()) {
+        for (const [name, artifact] of this.loadedMatrices.entries()) {
             const b = artifact.meta.bounds;
             if (x >= b.wx_min && x <= b.wx_max && y >= b.wy_min && y <= b.wy_max) {
                 return artifact;

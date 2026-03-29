@@ -88,6 +88,12 @@ import { GameplaySovereigntyLimb } from './limbs/spatial/GameplaySovereigntyLimb
 import { PrifddinasInterpreter } from './engines/gameplay/PrifddinasInterpreter.js';
 import { BarrowsInterpreter } from './engines/gameplay/BarrowsInterpreter.js';
 import { PestControlInterpreter } from './engines/gameplay/PestControlInterpreter.js';
+import { JsonLogicInterpreter } from './engines/gameplay/JsonLogicInterpreter.js';
+import { SovereignGrounding } from './utils/SovereignGrounding.js';
+import { ObservationEngine } from './engines/spatial/ObservationEngine.js';
+import { getPedagogyPath, getAtlasLogicPath, getAtlasSystemPath } from './utils/SovereignPathResolver.js';
+
+
 
 const POG_MD_TEMPLATE = `# 🕸️ Sovereign Workspace: [Project Name]
 - Status: Initialized
@@ -530,6 +536,22 @@ export async function main(): Promise<void> {
     const spatialSub = atlas.command('spatial').description('Sovereign Spatial Substrate commands');
 
     spatialSub
+        .command('grounding <x> <y> [plane]')
+        .description('Perform a pedagogical grounding check for a coordinate')
+        .action(async (xStr: string, yStr: string, planeStr: string | undefined) => {
+            const x = parseInt(xStr);
+            const y = parseInt(yStr);
+            const plane = planeStr ? parseInt(planeStr) : 0;
+            
+            const grounding = await SovereignGrounding.loadDefault();
+            const meta = grounding.getRegionMetadata(x, y, plane);
+            
+            renderer.info(`📍 Spatial Grounding for [${x}, ${y}, ${plane}]:`);
+            renderer.success(`   Region: ${meta.name} (Archetype: ${meta.archetype})`);
+            renderer.info(`   MapZone Center: ${JSON.stringify(meta.center)}`);
+        });
+
+    spatialSub
         .command('metrics <name>')
         .description('Calculate high-fidelity 3D metrics for a named asset')
         .action(async (name: string) => {
@@ -637,6 +659,54 @@ export async function main(): Promise<void> {
         });
 
     spatialSub
+        .command('observe <x> <z> [plane] [radius]')
+        .description('High-fidelity world observation with ASCII grid and pedagogical comparison')
+        .option('-d, --directionality', 'Show directional collision arrows (^v<>)')
+        .action(async (xStr: string, zStr: string, planeStr: string | undefined, radiusStr: string | undefined, options: any) => {
+            const x = parseInt(xStr);
+            const z = parseInt(zStr);
+            const plane = planeStr ? parseInt(planeStr) : 0;
+            const radius = radiusStr ? parseInt(radiusStr) : 5;
+            const directionality = !!options.directionality;
+            
+            const engine = new ObservationEngine();
+            renderer.info(`📡 Initiating Sovereign World Observation at [${x}, ${z}, plane ${plane}] (Radius: ${radius}, Directionality: ${directionality})...`);
+            
+            const initRes = await engine.initialize();
+            if (!initRes.ok) {
+                renderer.error(`Engine initialization failed: ${initRes.error.message}`);
+                return;
+            }
+
+            const res = await engine.observe(x, z, plane, radius, directionality);
+            if (res.ok) {
+                const report = res.value;
+                renderer.success(`📍 Observation Complete: ${report.regionName} (${report.archetype})`);
+                
+                // Print the ASCII Grid
+                console.log('\n--- WORLD COLLISION RADAR ---');
+                for (const row of report.grid) {
+                    let line = '  ';
+                    for (const tile of row) {
+                        let char = tile.label;
+                        // Add some basic coloring heuristics for the terminal
+                        if (char === 'P') line += `\x1b[36m${char}\x1b[0m `; // Cyan Player
+                        else if (char === 'X') line += `\x1b[31m${char}\x1b[0m `; // Red Blocked
+                        else if (char === '?') line += `\x1b[33m${char}\x1b[0m `; // Yellow Discrepancy
+                        else line += `${char} `; // Default .
+                    }
+                    console.log(line);
+                }
+                console.log('-----------------------------\n');
+                renderer.info(`Legend: . = Walkable | X = Blocked | P = Player | ^v<> = Wall/Object Blocking | ? = Discrepancy`);
+            } else {
+                renderer.error(`Observation failed: ${res.error.message}`);
+            }
+            
+            engine.close();
+        });
+
+    spatialSub
         .command('load <regionName>')
         .description('Force load a spatial logic artifact into memory')
         .action(async (regionName: string) => {
@@ -660,11 +730,22 @@ export async function main(): Promise<void> {
             if (minigame.toLowerCase() === 'prifddinas') module = new PrifddinasInterpreter();
             else if (minigame.toLowerCase() === 'barrows') module = new BarrowsInterpreter();
             else if (minigame.toLowerCase() === 'pestcontrol') module = new PestControlInterpreter();
+            else {
+                // Try to load as a generic JSON logic file
+                try {
+                    module = new JsonLogicInterpreter(minigame);
+                } catch (e) {
+                    module = null;
+                }
+            }
             
             if (!module) {
-                renderer.error(`Unknown minigame '${minigame}'. Available: prifddinas, barrows, pestcontrol`);
+                renderer.error(`Unknown minigame or logic file '${minigame}'.`);
+                renderer.info(`Available interpreters: prifddinas, barrows, pestcontrol`);
+                renderer.info(`Or specify a JSON file in d:/sovereign/atlas/system/ (e.g., 'observatory_logic')`);
                 process.exit(1);
             }
+
 
             await engine.mountModule(module);
             renderer.success(`[Engine] ${module.name} loaded and avatar spawned at [${engine.avatar.coord.x}, ${engine.avatar.coord.y}, ${engine.avatar.coord.plane}]`);
@@ -674,25 +755,33 @@ export async function main(): Promise<void> {
                 output: process.stdout
             });
 
+            // Durable Tick Loop
+            let tickCount = 0;
+            const tickInterval = setInterval(async () => {
+                tickCount++;
+                try {
+                    const tickRes = await engine.forceTick();
+                    process.stdout.write(`\r♥ Tick #${tickCount}${tickRes ? ` | ${tickRes}` : ''} > `);
+                } catch (err: any) {
+                    process.stdout.write(`\n❌ [TICK ERROR] ${err.message}\n> `);
+                }
+            }, 600);
+
             console.log(`\n--- POG2 SOVEREIGN GAMEPLAY SIMULATOR ---`);
-            console.log(`Type an action (e.g., 'dig dharok') or press Enter for a 600ms tick. Type 'exit' to quit.\n`);
+            console.log(`The heart is beating (600ms). Type actions while ticks process.\n`);
+            console.log(`Actions: 'move north', 'dig dharok', 'search sarcophagus'. Type 'exit' to quit.\n`);
 
             const promptLoop = async () => {
                 const answer = await rl.question(`> `);
                 if (answer.toLowerCase() === 'exit') {
+                    clearInterval(tickInterval);
                     rl.close();
                     process.exit(0);
                 }
                 
-                if (answer.trim() === '') {
-                    // Manual tick advance
-                    const tickRes = engine.forceTick();
-                    if (tickRes) console.log(tickRes);
-                    else console.log(`[Tick ${engine.tickCount}] 600ms passed...`);
-                } else {
-                    // User Action
-                    const actionRes = engine.pushAction(answer);
-                    console.log(actionRes);
+                if (answer.trim() !== '') {
+                    const actionRes = await engine.pushAction(answer);
+                    console.log(`\n${actionRes}`);
                 }
 
                 promptLoop();
@@ -701,7 +790,55 @@ export async function main(): Promise<void> {
             promptLoop();
         });
 
+    const pedagogySub = atlas.command('pedagogy').description('Sovereign Pedagogical Substrate commands');
+
+    pedagogySub
+        .command('audit <query>')
+        .description('Perform a forensic audit of pedagogical logic bridges')
+        .action(async (query: string) => {
+            renderer.info(`🔍 Sovereign Pedagogical Audit - Searching for: "${query}"...`);
+            
+            const dirs = [getPedagogyPath(), getAtlasLogicPath(), getAtlasSystemPath()];
+            let foundCount = 0;
+
+            for (const dir of dirs) {
+                if (!existsSync(dir)) continue;
+                const files = fs.readdirSync(dir, { recursive: true }) as string[];
+                
+                for (const file of files) {
+                    if (!file.endsWith(".json")) continue;
+                    const filePath = join(dir, file);
+                    if (fs.statSync(filePath).isDirectory()) continue;
+                    
+                    try {
+                        const content = fs.readFileSync(filePath, "utf-8");
+                        if (content.toLowerCase().includes(query.toLowerCase())) {
+                            const index = content.toLowerCase().indexOf(query.toLowerCase());
+                            renderer.success(`[FOUND] in ${file}`);
+                            console.log(`   Snippet: ...${content.substring(index - 40, index + 60).replace(/\n/g, ' ')}...`);
+                            foundCount++;
+                        }
+                    } catch (e) {}
+                }
+            }
+            
+            if (foundCount === 0) renderer.warn("No logic bridges found for this query.");
+            else renderer.success(`Audit complete. Found ${foundCount} matches.`);
+        });
+
+    pedagogySub
+        .command('extract-grounding <region>')
+        .description('Extract world coordinates from cache DBRows (Major 2, Page 39)')
+        .action(async (region: string) => {
+            renderer.info(`🚀 Starting Targeted Grounding Extraction for: ${region}...`);
+            // This is a placeholder for the logic in extract_prifddinas_logic.ts
+            // In a real implementation, we would use the Cache Learning substrate.
+            renderer.warn("Extraction subsystem requires the Jagex Cache bridge to be fully active.");
+            renderer.info("Tip: Use 'pog2 atlas spatial grounding' for pre-extracted data.");
+        });
+
     const mechanicalSub = atlas.command('mechanical').description('Sovereign Mechanical Substrate commands');
+
 
     mechanicalSub
         .command('load <region>')

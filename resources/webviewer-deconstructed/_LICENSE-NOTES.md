@@ -1,1 +1,0 @@
-License Information\n===================\n\nThis bundle contains code from various sources.\nOriginal license file reference: webviewer.js.LICENSE.txt\n
