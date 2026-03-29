@@ -172,6 +172,8 @@ export class Renderer {
             [YaoState.OldYin]: { symbol: '✕', label: 'Gentle Transition', color: '\x1b[38;5;208m' },
             [YaoState.YoungMixed]: { symbol: '⚎', label: 'Emerging Potential', color: '\x1b[38;5;213m' },
             [YaoState.OldMixed]: { symbol: '⚏', label: 'Chaotic Flux', color: '\x1b[38;5;141m' },
+            [YaoState.SovereignAvatar]: { symbol: '♙', label: 'Spatial Avatar', color: '\x1b[38;5;220m' },
+            [YaoState.SovereignEngine]: { symbol: '⚙', label: 'Master Engine', color: '\x1b[38;5;123m' },
         };
 
         const card = cards[state];
@@ -191,7 +193,9 @@ export class Renderer {
             [YaoState.YoungYin]: '\x1b[38;5;39m',      // Receptive
             [YaoState.OldYin]: '\x1b[38;5;208m',       // Changing
             [YaoState.YoungMixed]: '\x1b[38;5;213m',
-            [YaoState.OldMixed]: '\x1b[38;5;141m'
+            [YaoState.OldMixed]: '\x1b[38;5;141m',
+            [YaoState.SovereignAvatar]: '\x1b[38;5;220m',
+            [YaoState.SovereignEngine]: '\x1b[38;5;123m'
         };
 
         console.log('\x1b[38;5;51m\n  ─── [ Current Strategic Archetype ] ───\x1b[0m');

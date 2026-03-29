@@ -153,7 +153,9 @@ export enum YaoState {
     OldMixed = 4,   // Chaotic
     YoungMixed = 5, // Emerging
     YangYao = 2,    // Alias
-    YinYao = 0      // Alias
+    YinYao = 0,     // Alias
+    SovereignAvatar = 6, // Active Entity / Spatial Sandbox Participant
+    SovereignEngine = 7  // World Container / Master Tick Heartbeat
 }
 
 export enum TemporalState {
@@ -704,6 +706,22 @@ export const YAO_PRODUCTION_PREREQUISITES: Record<YaoState, ProductionPrerequisi
         mandateMemoryConsolidation: false,
         mandateSovereignAudit: true,
         severityThreshold: 10
+    },
+    [YaoState.SovereignAvatar]: {
+        mandateAdversarialAudit: true,
+        mandateBuildVerification: false,
+        mandateHealthAudit: true,
+        mandateMemoryConsolidation: true,
+        mandateSovereignAudit: true,
+        severityThreshold: 80
+    },
+    [YaoState.SovereignEngine]: {
+        mandateAdversarialAudit: true,
+        mandateBuildVerification: true,
+        mandateHealthAudit: true,
+        mandateMemoryConsolidation: false,
+        mandateSovereignAudit: true,
+        severityThreshold: 100
     }
 };
 

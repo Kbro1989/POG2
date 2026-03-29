@@ -455,6 +455,22 @@ export function getCachePedagogyFile(filename: string): string {
 }
 
 /**
+ * Phase 29: Sovereign Spatial Engine Substrate
+ * Resolves the path to the Atlas logic mappings (e.g., boundaries, region rules).
+ */
+export function getAtlasLogicPath(): string {
+    return resolveSovereignPath('atlas/logic');
+}
+
+/**
+ * Phase 29: Sovereign Spatial Engine Substrate
+ * Resolves the path to the active gameplay sandbox systems (e.g. minigames).
+ */
+export function getAtlasSystemPath(): string {
+    return resolveSovereignPath('atlas/system');
+}
+
+/**
  * Resolves the absolute path to this project's tsconfig.json.
  * Uses a module-relative anchor (not CWD) so it works from any directory.
  * Falls back to CWD and then sovereign root.
