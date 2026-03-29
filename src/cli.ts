@@ -70,6 +70,7 @@ import { EntityLimb } from './limbs/technical/EntityLimb.js';
 import { PedagogyLimb } from './limbs/technical/PedagogyLimb.js';
 import { HiScoreLimb } from './limbs/technical/HiScoreLimb.js';
 import { KinematicsLimb } from './limbs/technical/KinematicsLimb.js';
+import { MechanicalSovereigntyLimb } from './limbs/technical/MechanicalSovereigntyLimb.js';
 import { RSMVController } from './vision/RSMVController.js';
 import { HUDForensicsLimb } from './limbs/spatial/HUDForensicsLimb.js';
 import { CacheLearningLimb } from './limbs/spatial/CacheLearningLimb.js';
@@ -81,21 +82,27 @@ import { getSovereignRoot, getRSMVCachePath, getCachePedagogyPath, getPipelineRo
 import { CacheForensicsLimb } from './limbs/spatial/CacheForensicsLimb.js';
 import { SystemTaxonomyLimb } from './limbs/spatial/SystemTaxonomyLimb.js';
 import { MaterialLimb } from './limbs/spatial/MaterialLimb.js';
+import { SpatialSovereigntyLimb } from './limbs/spatial/SpatialSovereigntyLimb.js';
+import { NPC, GameState, VarbitSnapshot, CompositeCondition } from './core/models.js';
+import { GameplaySovereigntyLimb } from './limbs/spatial/GameplaySovereigntyLimb.js';
+import { PrifddinasInterpreter } from './engines/gameplay/PrifddinasInterpreter.js';
+import { BarrowsInterpreter } from './engines/gameplay/BarrowsInterpreter.js';
+import { PestControlInterpreter } from './engines/gameplay/PestControlInterpreter.js';
 
-const POG_MD_TEMPLATE = `# ðŸ§¬ Sovereign Workspace: [Project Name]
+const POG_MD_TEMPLATE = `# 🕸️ Sovereign Workspace: [Project Name]
 - Status: Initialized
 - Objective: [Describe goals]
 - Substrate: POG2 Sovereign
 `;
 
-const RULES_MD_TEMPLATE = `# ðŸŽ¯ Sovereign Laws (Workspace Scoped)
+const RULES_MD_TEMPLATE = `# 🎯 Sovereign Laws (Workspace Scoped)
 1. NO MOCKS
 2. NO PLACEHOLDERS
 3. TSC TIGHT
 4. CLINICAL LOGGING
 `;
 
-const MANIFEST_MD_TEMPLATE = `# ðŸ“Š Sovereign Manifest
+const MANIFEST_MD_TEMPLATE = `# 📊 Sovereign Manifest
 - Health: Online
 - Limbs: Standard Roster
 - Heartbeat: 60s
@@ -117,7 +124,7 @@ function bootstrapWorkspace(renderer: Renderer): void {
     }
 
     if (createdCount > 0) {
-        renderer.info(`ðŸ§¬ Sovereign Substrate: initialized ${createdCount} context files in current workspace.`);
+        renderer.info(`🕸️ Sovereign Substrate: initialized ${createdCount} context files in current workspace.`);
     }
 }
 
@@ -157,7 +164,7 @@ const CONFIG_DIR = join(homedir(), '.POG2-cli');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 
 async function checkSubstrate(renderer: Renderer, config: SovereignConfig, client: ModelClient): Promise<void> {
-    renderer.info('ðŸ” Initializing Substrate Diagnostics...');
+    renderer.info('⚡ Initializing Substrate Diagnostics...');
     const health = await client.checkHealth();
 
     if (health.online) {
@@ -208,13 +215,13 @@ export async function main(): Promise<void> {
 
     program
         .name('POG2')
-        .description('POG2 Sovereign CLI â€” Ternary Intelligence Engine')
+        .description('POG2 Sovereign CLI — Ternary Intelligence Engine')
         .version(VERSION)
         .exitOverride(); // Prevent process.exit() on --help/--version so async cleanup runs
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ————————————————————————————————————————————————————————————————————————————————
     // CONVERSATIONAL REPL (Default bare invocation)
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ————————————————————————————————————————————————————————————————————————————————
     if (process.argv.length <= 2) {
         // Non-blocking background refresh of all provider models for REPL
         rolodex.refreshAll().catch(() => { /* non-blocking */ });
@@ -390,9 +397,9 @@ export async function main(): Promise<void> {
             handleResult(result, renderer, state);
         });
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ————————————————————————————————————————————————————————————————————————————————
     // TOP-LEVEL ALIASES (Discovery & UX)
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ————————————————————————————————————————————————————————————————————————————————
     program
         .command('health')
         .description('Deep clinical audit of all neurological substrates (Alias for system health)')
@@ -520,8 +527,10 @@ export async function main(): Promise<void> {
             process.exit(res.ok ? 0 : 1);
         });
 
-    atlas
-        .command('spatial <name>')
+    const spatialSub = atlas.command('spatial').description('Sovereign Spatial Substrate commands');
+
+    spatialSub
+        .command('metrics <name>')
         .description('Calculate high-fidelity 3D metrics for a named asset')
         .action(async (name: string) => {
             const forensics = new CacheForensicsLimb();
@@ -549,6 +558,252 @@ export async function main(): Promise<void> {
                 await learning.translateToObj(name, modelId);
             } else {
                 renderer.error(`Spatial forensics failed: ${res.error.message}`);
+            }
+        });
+
+    spatialSub
+        .command('query <x> <y> [plane]')
+        .option('-c, --context <states>', 'Contextual state (e.g., "follower=7015,inventory=12519")')
+        .description('Deterministic walkability check via Sovereign Atlas')
+        .action(async (xStr: string, yStr: string, planeStr: string | undefined, options: any) => {
+            const x = parseInt(xStr);
+            const y = parseInt(yStr);
+            const plane = planeStr ? parseInt(planeStr) : 0;
+            
+            const limb = new SpatialSovereigntyLimb();
+            const mechanical = new MechanicalSovereigntyLimb();
+            
+            await limb.initialize();
+            await mechanical.initialize();
+
+            renderer.info(`🔍 Querying Spatial Logic at [${x}, ${y}, plane ${plane}]...`);
+            
+            let walkable = false;
+
+            if (options.context) {
+                // Build a tactical mock GameState for the query
+                const context = createMockGameState(options);
+                context.plane = plane;
+
+                // If follower is specified, place it on the target tile for testing
+                const followerMatch = options.context.match(/follower=(\d+)/);
+                if (followerMatch) {
+                    const id = parseInt(followerMatch[1]);
+                    const npc: NPC = { id, name: 'Mock Follower', x, y, plane, isFollower: true };
+                    const key = `${x},${y},${plane}`;
+                    context.npcSpatialIndex.set(key, [npc]);
+                }
+
+                walkable = await limb.isWalkableContextual(plane, x, y, context, mechanical);
+            } else {
+                walkable = limb.isWalkable(plane, x, y);
+            }
+
+            // POG2 Autonomous Audit: Full tile diagnostic
+            const audit = limb.auditTile(plane, x, y);
+            const mask = limb.getLegacyMask(plane, x, y);
+
+            if (walkable) {
+                renderer.success(`✅ Coordinate [${x}, ${y}, ${plane}] is WALKABLE.`);
+            } else {
+                let reason = "Blocked";
+
+                if (audit.collisionType === 'directional' && audit.directional) {
+                    const dirs = audit.directional;
+                    const blocked = [
+                        !dirs.north ? 'N' : '', !dirs.south ? 'S' : '',
+                        !dirs.east ? 'E' : '', !dirs.west ? 'W' : ''
+                    ].filter(Boolean);
+                    reason = `Blocked Directionally (${blocked.join(',')})`;
+                    if (audit.npcOnlyBlocks?.length) {
+                        reason += ` | NPC-Only: ${audit.npcOnlyBlocks.join(',')}`;
+                    }
+                } else if ((mask & 0x200000) !== 0) reason = "Blocked by Terrain";
+                else if ((mask & 0x100) !== 0) reason = "Blocked by Object";
+                
+                // If it's walkable statically but blocked contextually
+                if (limb.isWalkable(plane, x, y) && !walkable) {
+                    reason = "Blocked by DYNAMIC ENTITY (Platypus/Follower)";
+                }
+
+                renderer.warn(`❌ Coordinate [${x}, ${y}, ${plane}] is BLOCKED (${reason}). Mask: 0x${mask.toString(16)}`);
+            }
+
+            // POG2 audit data dump (machine-consumable)
+            if (audit.collisionType === 'directional') {
+                renderer.info(`🧬 [POG2 AUDIT] Type: ${audit.collisionType} | Region: ${audit.region || 'unknown'}`);
+                renderer.info(`   N:${audit.directional?.north} S:${audit.directional?.south} E:${audit.directional?.east} W:${audit.directional?.west}`);
+            }
+        });
+
+    spatialSub
+        .command('load <regionName>')
+        .description('Force load a spatial logic artifact into memory')
+        .action(async (regionName: string) => {
+            const limb = new SpatialSovereigntyLimb();
+            renderer.info(`📥 Loading spatial logic artifact: ${regionName}...`);
+            const res = await limb.loadLogic(regionName);
+            if (res.ok) {
+                renderer.success(`Successfully loaded ${regionName}_logic.json.`);
+            } else {
+                renderer.error(`Failed to load ${regionName}: ${res.error.message}`);
+            }
+        });
+
+    spatialSub
+        .command('play <minigame>')
+        .description('Launch the GameplaySovereigntyLimb REPL simulation for a minigame')
+        .action(async (minigame: string) => {
+            const engine = new GameplaySovereigntyLimb();
+            let module: any = null;
+
+            if (minigame.toLowerCase() === 'prifddinas') module = new PrifddinasInterpreter();
+            else if (minigame.toLowerCase() === 'barrows') module = new BarrowsInterpreter();
+            else if (minigame.toLowerCase() === 'pestcontrol') module = new PestControlInterpreter();
+            
+            if (!module) {
+                renderer.error(`Unknown minigame '${minigame}'. Available: prifddinas, barrows, pestcontrol`);
+                process.exit(1);
+            }
+
+            await engine.mountModule(module);
+            renderer.success(`[Engine] ${module.name} loaded and avatar spawned at [${engine.avatar.coord.x}, ${engine.avatar.coord.y}, ${engine.avatar.coord.plane}]`);
+            
+            const rl = readline.createInterface({
+                input: process.stdin,
+                output: process.stdout
+            });
+
+            console.log(`\n--- POG2 SOVEREIGN GAMEPLAY SIMULATOR ---`);
+            console.log(`Type an action (e.g., 'dig dharok') or press Enter for a 600ms tick. Type 'exit' to quit.\n`);
+
+            const promptLoop = async () => {
+                const answer = await rl.question(`> `);
+                if (answer.toLowerCase() === 'exit') {
+                    rl.close();
+                    process.exit(0);
+                }
+                
+                if (answer.trim() === '') {
+                    // Manual tick advance
+                    const tickRes = engine.forceTick();
+                    if (tickRes) console.log(tickRes);
+                    else console.log(`[Tick ${engine.tickCount}] 600ms passed...`);
+                } else {
+                    // User Action
+                    const actionRes = engine.pushAction(answer);
+                    console.log(actionRes);
+                }
+
+                promptLoop();
+            };
+
+            promptLoop();
+        });
+
+    const mechanicalSub = atlas.command('mechanical').description('Sovereign Mechanical Substrate commands');
+
+    mechanicalSub
+        .command('load <region>')
+        .description('Load regional mechanical logic artifact (e.g., barrows)')
+        .action(async (region: string) => {
+            const limb = new MechanicalSovereigntyLimb();
+            const initRes = await limb.initialize();
+            if (!initRes.ok) {
+                renderer.error(`Limb initialization failed: ${initRes.error.message}`);
+                return;
+            }
+
+            renderer.info(`🧬 Loading Mechanical Logic for: ${region}...`);
+            const res = await limb.loadLogic(region);
+            if (res.ok) {
+                renderer.success(`Mechanical logic artifact loaded: ${region}`);
+                renderer.success(limb.healthCheck().details);
+            } else {
+                renderer.error(`Failed to load mechanical logic: ${res.error.message}`);
+            }
+        });
+
+    mechanicalSub
+        .command('query [objectId] [varbitId] [region]')
+        .option('-e, --evaluate-condition', 'Evaluate the condition for the object logic using provided varbits')
+        .option('-v, --varbits <states>', 'Comma-separated varbit states (e.g., "1515=1,1516=0")')
+        .option('-t, --show-evaluation-trace', 'Show detailed evaluation trace for composite conditions')
+        .description('Query mechanical rules for objects or state transitions')
+        .action(async (objIdStr: string | undefined, vIdStr: string | undefined, region: string | undefined, options: any) => {
+            const regionName = region || 'barrows';
+            const limb = new MechanicalSovereigntyLimb();
+            const initRes = await limb.initialize();
+            if (!initRes.ok) {
+                renderer.error(`Limb initialization failed: ${initRes.error.message}`);
+                return;
+            }
+
+            await limb.loadLogic(regionName);
+
+            renderer.info(`⚙️ Querying Mechanical Rules for ${regionName}...`);
+
+            if (objIdStr) {
+                const objectId = parseInt(objIdStr);
+                const res = limb.getSpawningRule(objectId, regionName);
+                if (res.ok) {
+                    renderer.success(`[Object ${objIdStr}] Mechanical Rule Found:`);
+                    renderer.json(res.value);
+
+                    // If it's a loot chest (6711), check loot logic too
+                    if (objectId === 6711) {
+                        const lootRes = limb.evaluateLootLogic(objectId, regionName);
+                        if (lootRes.ok) {
+                            renderer.success(`[Object ${objIdStr}] Loot Logic Found:`);
+                            renderer.json(lootRes.value);
+                        }
+                    }
+
+                    if (options.evaluateCondition) {
+                        renderer.info(`🧪 Evaluating Condition for Object ${objIdStr}...`);
+                        const context = createMockGameState(options);
+                        
+                        let isUnlocked = false;
+                        const rule = res.value;
+                        const lootRes = limb.evaluateLootLogic(objectId, regionName);
+                        const lootRule = lootRes.ok ? lootRes.value : null;
+
+                        if (lootRule && (lootRule.type === 'composite_and' || lootRule.type === 'composite_or')) {
+                            isUnlocked = await limb.evaluateCompositeCondition(lootRule as CompositeCondition, context);
+                            if (options.showEvaluationTrace) {
+                                renderer.info(`📝 Evaluation Trace (${lootRule.type === 'composite_and' ? 'AND' : 'OR'} Gate):`);
+                                for (const c of (lootRule as CompositeCondition).conditions) {
+                                    const res = await limb.evaluateStringCondition(c, context);
+                                    renderer.log(`   - ${c} : ${res ? '✅' : '❌'}`);
+                                }
+                            }
+                        } else if (rule.condition) {
+                            isUnlocked = await limb.evaluateStringCondition(rule.condition, context);
+                        } else if (rule.spatial_side_effects) {
+                            const sideEffect = await limb.getSpatialSideEffects(objectId, context);
+                            isUnlocked = sideEffect !== null;
+                            if (sideEffect) renderer.success(`   Spatial Side Effect active: ${sideEffect.description}`);
+                        }
+
+                        if (isUnlocked) {
+                            renderer.success(`✅ CONDITION MET: Unlocked/Triggered.`);
+                        } else {
+                            renderer.warn(`❌ CONDITION NOT MET: Locked/Idle.`);
+                        }
+                    }
+                } else {
+                    renderer.error(`Object Query Error: ${res.error.message}`);
+                }
+            }
+
+            if (vIdStr) {
+                const res = limb.resolveStateTransition(parseInt(vIdStr), 1, regionName);
+                if (res.ok) {
+                    renderer.success(`[Varbit ${vIdStr}] State Transition:`);
+                    renderer.json(res.value);
+                } else {
+                    renderer.error(`Varbit Query Error: ${res.error.message}`);
+                }
             }
         });
 
@@ -2347,6 +2602,38 @@ export async function main(): Promise<void> {
             });
             handleResult(result, renderer, state);
         });
+
+/**
+ * createMockGameState - Tactical helper for CLI queries to simulate world state.
+ */
+function createMockGameState(options: any): GameState {
+    const varbits = new Map<number, number>();
+    if (options.varbits) {
+        options.varbits.split(',').forEach((s: string) => {
+            const [id, val] = s.split('=');
+            varbits.set(parseInt(id), parseInt(val));
+        });
+    }
+
+    const inventory: number[] = [];
+    if (options.context) {
+        options.context.split(',').forEach((s: string) => {
+            const [key, val] = s.split('=');
+            if (key === 'inventory') {
+                inventory.push(parseInt(val));
+            }
+        });
+    }
+
+    return {
+        plane: 0,
+        varbits,
+        playerInventory: inventory,
+        npcMap: new Map(),
+        npcSpatialIndex: new Map(),
+        objectMap: new Map()
+    };
+}
 
     await program.parseAsync(process.argv);
 

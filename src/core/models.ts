@@ -10,6 +10,13 @@ import { join, basename } from 'path';
 import { SovereignDomain } from '../types/SovereignDomain.js';
 
 export { SovereignDomain };
+export type Direction = 'north' | 'south' | 'east' | 'west';
+
+export interface Coord {
+    x: number;
+    y: number;
+    plane: number;
+}
 
 export interface RoutingDecision {
     model: string;
@@ -58,6 +65,68 @@ export interface TerminalStrategy extends RoutingStrategy {
 export type ServiceHealthState = 'READY' | 'DEGRADED' | 'CRITICAL_FAILURE' | 'OFFLINE';
 
 export type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+
+export interface VarbitSnapshot {
+    [id: number]: number;
+}
+
+export interface CompositeCondition {
+    type: 'composite_and' | 'composite_or';
+    conditions: string[];
+}
+
+export interface DirectionalCollision {
+    north: boolean;
+    south: boolean;
+    east: boolean;
+    west: boolean;
+    npc_only_blocks?: Direction[];
+}
+
+export interface TileCollision {
+    static: DirectionalCollision;
+    dynamic: DirectionalCollision;
+}
+
+export interface SpatialSideEffect {
+    type: 'dynamic_collision' | 'walkability_override' | 'special_property';
+    mask?: number;           // 0x100, 0x2, etc.
+    condition?: string;      // "is_active_follower == true"
+    blocks_movement?: boolean;
+    description?: string;
+}
+
+export interface NPC {
+    id: number;
+    name: number | string; // Support for ID or Name
+    x: number;
+    y: number;
+    plane: number;
+    isFollower?: boolean;
+    path?: Coord[];
+    target?: number | Coord; // Entity ID or Destination
+    metadata?: Record<string, any>;
+}
+
+export interface GameObject {
+    id: number;
+    name: string;
+    x: number;
+    y: number;
+    plane: number;
+    metadata?: Record<string, any>;
+}
+
+export interface GameState {
+    plane: number;
+    npcMap: Map<number, NPC>;
+    npcSpatialIndex: Map<string, NPC[]>;  // "x,y,plane" -> [NPCs]
+    objectMap: Map<number, GameObject>;
+    playerInventory: number[];            // Item IDs
+    varbits: Map<number, number>;
+    tickNumber?: number;
+    players?: Map<string, any>; // any represents SovereignAvatar locally
+}
 
 export interface HealthReport {
     state: ServiceHealthState | 'RATE_LIMITED';

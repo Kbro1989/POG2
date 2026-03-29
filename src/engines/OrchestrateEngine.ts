@@ -58,6 +58,10 @@ import { StateManager } from '../state/StateManager.js';
 import { RSMVExtractor } from '../utils/RSMVExtractor.js';
 import { CacheLearningLimb } from '../limbs/spatial/CacheLearningLimb.js';
 import { CacheForensicsLimb } from '../limbs/spatial/CacheForensicsLimb.js';
+import { SystemTaxonomyLimb } from '../limbs/spatial/SystemTaxonomyLimb.js';
+import { MaterialLimb } from '../limbs/spatial/MaterialLimb.js';
+import { SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
+import { MechanicalSovereigntyLimb } from '../limbs/technical/MechanicalSovereigntyLimb.js';
 import { RSMVController } from '../vision/RSMVController.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { ModelViewerLimb } from '../limbs/spatial/ModelViewerLimb.js';
@@ -167,6 +171,8 @@ export class OrchestrateEngine {
     private readonly cacheForensics: CacheForensicsLimb;
     private readonly cacheLearning: CacheLearningLimb;
     private readonly todoCloud: TodoCloudLimb;
+    private readonly spatialSovereignty: SpatialSovereigntyLimb;
+    private readonly mechanicalSovereignty: MechanicalSovereigntyLimb;
     private readonly EXTREME_THRESHOLD = 80;
     private initialized = false;
     private initPromise: Promise<void> | null = null;
@@ -184,6 +190,8 @@ export class OrchestrateEngine {
         this.vscode = new VSCodeEngine(renderer, router);
         this.registry = new ToolRegistry();
         this.cacheForensics = new CacheForensicsLimb();
+        this.spatialSovereignty = new SpatialSovereigntyLimb();
+        this.mechanicalSovereignty = new MechanicalSovereigntyLimb();
 
         this.todoEngine = new TodoEngine(renderer);
         this.todoCloud = new TodoCloudLimb({ 
@@ -404,6 +412,18 @@ export class OrchestrateEngine {
                 logger.error({ err: forensicInit.error }, 'Failed to initialize CacheForensicsLimb');
             }
 
+            // Phase 109: Spatial Sovereignty Integration
+            const spatialInit = await this.spatialSovereignty.initialize();
+            if (!spatialInit.ok) {
+                logger.error({ err: spatialInit.error }, 'Failed to initialize SpatialSovereigntyLimb');
+            }
+
+            // Phase 110: Mechanical Sovereignty Integration
+            const mechanicalInit = await this.mechanicalSovereignty.initialize();
+            if (!mechanicalInit.ok) {
+                logger.error({ err: mechanicalInit.error }, 'Failed to initialize MechanicalSovereigntyLimb');
+            }
+
             if (!options.diagnosticOnly) {
                 // Await external neural links (MCP)
                 await this.mcpEngine.initialize();
@@ -593,6 +613,8 @@ export class OrchestrateEngine {
                 ContextBuilder: new ContextBuilder(this.vectorDB, getGodHeadRoot() ?? process.cwd(), 'pog2-sovereign', this.client),
                 TrainingCollector: this.trainingCollector,
                 rsmvExtractor: this.rsmvExtractor,
+                SpatialSovereigntyLimb: this.spatialSovereignty,
+                MechanicalSovereigntyLimb: this.mechanicalSovereignty,
                 NodeTester: undefined // Self-registration will be handled via class name matching if needed, but we provide it here as part of the registry
             }
         );
@@ -722,6 +744,94 @@ export class OrchestrateEngine {
                 }
 
                 return ok({ output });
+            }
+        });
+
+        this.registry.register({
+            name: 'spatial_query',
+            description: 'Queries the Sovereign Atlas for deterministic spatial walkability and grounding logic.',
+            humanDescription: 'Check if a specific coordinate is walkable based on the ground-truth collision matrix.',
+            jargonDescription: 'Queries the SpatialSovereigntyLimb for 0x100 (Object) and 0x200000 (Terrain) collision masks at specific world coordinates.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.OBSERVE,
+            category: 'sensory',
+            parameters: {
+                x: { type: 'number', description: 'World X coordinate' },
+                y: { type: 'number', description: 'World Y coordinate' },
+                plane: { type: 'number', description: 'World Z/Plane coordinate', default: 0 }
+            },
+            execute: async (args) => {
+                const x = args.x as number;
+                const y = args.y as number;
+                const plane = (args.plane as number) || 0;
+                
+                // POG2 Autonomous Audit: Use auditTile for machine-consumable spatial data
+                const audit = this.spatialSovereignty.auditTile(plane, x, y);
+                const mask = this.spatialSovereignty.getLegacyMask(plane, x, y);
+                
+                let terrain = "walkable";
+                if (audit.collisionType === 'unmapped') terrain = "unmapped";
+                else if (audit.collisionType === 'directional') {
+                    const dirs = audit.directional!;
+                    const blocked = [
+                        !dirs.north ? 'N' : '', !dirs.south ? 'S' : '',
+                        !dirs.east ? 'E' : '', !dirs.west ? 'W' : ''
+                    ].filter(Boolean);
+                    terrain = blocked.length > 0 ? `blocked_directional(${blocked.join(',')})` : 'walkable';
+                } else if ((mask & 0x200000) !== 0) terrain = "blocked_terrain";
+                else if ((mask & 0x100) !== 0) terrain = "blocked_object";
+
+                return ok({
+                    output: `Spatial Query [${x}, ${y}, ${plane}]: ${audit.walkable ? 'WALKABLE' : 'BLOCKED'} (${terrain})${audit.region ? ` [${audit.region}]` : ''}`,
+                    data: { ...audit, mask, terrain, skipNormalization: true }
+                });
+            }
+        });
+
+        this.registry.register({
+            name: 'mechanical_query',
+            description: 'Queries the Mechanical Sovereignty substrate for deterministic regional game rules (spawning, state machines).',
+            humanDescription: 'Check the game rules for a specific object or state transition in a region (e.g., Barrows).',
+            jargonDescription: 'Queries the MechanicalSovereigntyLimb for spawning rules, state transitions, and loot conditions based on regional logic artifacts.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.OBSERVE,
+            category: 'sensory',
+            parameters: {
+                region: { type: 'string', description: 'Region name (e.g., "barrows")', default: 'barrows' },
+                objectId: { type: 'number', description: 'Optional Object ID to query spawning rules' },
+                varbitId: { type: 'number', description: 'Optional Varbit ID to query state transitions' }
+            },
+            execute: async (args) => {
+                const region = (args.region as string) || 'barrows';
+                const results: any = { region, rules: [] };
+
+                if (args.objectId) {
+                    const rule = this.mechanicalSovereignty.getSpawningRule(args.objectId as number, region);
+                    if (rule.ok) results.rules.push({ type: 'spawning', ...rule.value });
+                    else {
+                        results.errors = results.errors || [];
+                        results.errors.push(rule.error.message);
+                    }
+                }
+
+                if (args.varbitId) {
+                    const state = this.mechanicalSovereignty.resolveStateTransition(args.varbitId as number, 1, region);
+                    if (state.ok) results.rules.push({ type: 'state_transition', ...state.value });
+                    else {
+                        results.errors = results.errors || [];
+                        results.errors.push(state.error.message);
+                    }
+                }
+
+                if (!args.objectId && !args.varbitId) {
+                    const health = this.mechanicalSovereignty.healthCheck();
+                    return ok({ output: `Mechanical Sovereignty status: ${health.details}`, data: { health } });
+                }
+
+                return ok({
+                    output: `Mechanical Query [${region}]:\n${JSON.stringify(results, null, 2)}`,
+                    data: { ...results, skipNormalization: true }
+                });
             }
         });
 

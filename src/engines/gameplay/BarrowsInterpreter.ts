@@ -1,0 +1,97 @@
+import { readFileSync, existsSync } from 'fs';
+import { GameplayModule } from './MinigameInterfaces.js';
+import { GameState } from '../../core/models.js';
+import { SovereignAvatar } from '../../core/SovereignAvatar.js';
+
+export class BarrowsInterpreter implements GameplayModule {
+    public readonly name = 'Barrows';
+    private logicMap: any;
+    private killedBrothers: Set<string> = new Set();
+    private activeBrother: string | null = null;
+    private hiddenTunnel: string = '';
+
+    private readonly BROTHERS = ['Ahrim', 'Dharok', 'Guthan', 'Karil', 'Torag', 'Verac'];
+
+    public async mount(state: GameState, avatar: SovereignAvatar): Promise<void> {
+        // Drop them at Barrows 
+        avatar.coord = { x: 3564, y: 3288, plane: 0 };
+        
+        const path = 'D:/sovereign/atlas/logic/barrows_logic.json';
+        if (existsSync(path)) {
+            this.logicMap = JSON.parse(readFileSync(path, 'utf8'));
+        }
+
+        // Randomize the hidden tunnel for this run
+        this.hiddenTunnel = this.BROTHERS[Math.floor(Math.random() * this.BROTHERS.length)];
+        this.killedBrothers.clear();
+        this.activeBrother = null;
+        
+        console.log(`[BARROWS] Initialization complete. Hidden tunnel is randomized.`);
+    }
+
+    public onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): string | null {
+        // Drain prayer passively every ~18 ticks (10.8s) if underground
+        if (avatar.coord.plane === -1 && tickCount % 18 === 0) {
+            let prayer = avatar.skills.get('prayer')?.level || 0;
+            if (prayer > 0) {
+                avatar.skills.set('prayer', { level: Math.max(0, prayer - 8), xp: 0 }); // Drain 8 prayer
+                return '[BARROWS] The cursed energy of the crypt drains your Prayer points.';
+            }
+        }
+        return null; // Silent tick normally
+    }
+
+    public onAction(action: string, state: GameState, avatar: SovereignAvatar): string {
+        const parts = action.toLowerCase().split(' ');
+        
+        if (parts[0] === 'dig') {
+            const mound = parts[1];
+            if (!mound) return "[BARROWS] Dig where? (e.g., 'dig dharok')";
+
+            const brotherName = this.BROTHERS.find(b => b.toLowerCase() === mound);
+            if (!brotherName) return `[BARROWS] There is no mound for '${mound}'.`;
+
+            // Drop into the crypt
+            avatar.coord.plane = -1;
+            return `[BARROWS] You dig into ${brotherName}'s crypt. The air is cold and stale.`;
+        }
+
+        if (parts[0] === 'search') {
+            if (avatar.coord.plane !== -1) return "[BARROWS] You are not in a crypt.";
+            
+            // Assume they are searching the crypt they are currently in based on previous 'dig'
+            // For this CLI sim, we just take the last 'dig' action or require them to name it if we want it perfect
+            // Simplification: Mounding sets a state var. Let's just randomize a brother they haven't killed for CLI logic test
+            const potentialSpawn = this.BROTHERS.find(b => !this.killedBrothers.has(b));
+            
+            if (!potentialSpawn) {
+                return "[BARROWS] You search the sarcophagus, but find nothing. You have defeated them all.";
+            }
+
+            if (potentialSpawn === this.hiddenTunnel) {
+                return `[BARROWS] You search the sarcophagus. You find a hidden tunnel leading deeper into the earth!`;
+            }
+
+            this.activeBrother = potentialSpawn;
+            return `[BARROWS] The sarcophagus bursts open! ${potentialSpawn} the Wretched attacks!`;
+        }
+        
+        if (parts[0] === 'kill') {
+            if (!this.activeBrother) return "[BARROWS] There is no brother to kill right now.";
+            
+            this.killedBrothers.add(this.activeBrother);
+            const killed = this.activeBrother;
+            this.activeBrother = null;
+            return `[BARROWS] You have defeated ${killed}. (${this.killedBrothers.size}/${this.BROTHERS.length})`;
+        }
+
+        if (parts[0] === 'chest') {
+            if (this.killedBrothers.size < 6) {
+                return "[BARROWS] The chest is locked. You hear the whispers of the undefeat brothers.";
+            }
+            return "[BARROWS] You open the Barrows Chest! Loot acquired. Minigame cycle complete.";
+        }
+
+        return `[BARROWS] Unknown action. Try: 'dig <mound>', 'search', 'kill', 'chest'`;
+    }
+}

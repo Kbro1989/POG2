@@ -1,0 +1,37 @@
+{
+  "region": 8755,
+  "coords": {
+    "rx": 34,
+    "ry": 51
+  },
+  "findings": [
+    {
+      "id": 92415,
+      "name": "Crystal Fence",
+      "raw_opcodes": [
+        "0x1b",
+        "0x1c"
+      ],
+      "interpretation": true,
+      "usage_proof": "Object 92415 found at Map(34,51) Type 0 Rotation 1 (North Wall)"
+    },
+    {
+      "id": 92430,
+      "name": "Prifddinas Wall",
+      "raw_opcodes": [
+        "0x1b"
+      ],
+      "interpretation": true,
+      "usage_proof": "Object 92430 found at Map(34,51) Type 0 Rotation 1 (North Wall)"
+    },
+    {
+      "id": 1001,
+      "name": "NPC Only Barrier",
+      "raw_opcodes": [
+        "0x40000"
+      ],
+      "interpretation": "NPCONLY",
+      "usage_proof": "Object 1001 found at Map(34,51) Type 0 Rotation 1 (North Wall)"
+    }
+  ]
+}
