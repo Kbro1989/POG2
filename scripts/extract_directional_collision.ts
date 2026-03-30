@@ -4,13 +4,12 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
 
-// Resolve paths to RSMV substrate
+// Resolve paths to RSMV substrate (Sovereign Inspector)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const RSMV_ROOT = path.resolve(__dirname, '../../rsmv');
+const RSMV_ROOT = 'D:\\sovereign\\cache_pedagogy\\rsmv_inspector';
 const POG_ROOT = path.resolve(__dirname, '..');
 
-// Import RSMV logic via ts-node/register or similar if needed, 
-// but here we'll assume we can use the compiled output or tsx.
+// Import RSMV logic from the Sovereign substrate
 const { GameCacheLoader } = require(path.join(RSMV_ROOT, 'dist/cache/sqlite.js'));
 const { parse } = require(path.join(RSMV_ROOT, 'dist/opdecoder.js'));
 

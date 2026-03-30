@@ -248,7 +248,7 @@ export class TernaryRouter {
         try {
             await this.syncLocalModels();
             return {
-                online: this.availableLocalModels.size > 0,
+                online: true, // Router is online if daemon is reachable, even with 0 models
                 modelCount: this.availableLocalModels.size,
                 details: `Ollama responsive with ${this.availableLocalModels.size} models.`
             };

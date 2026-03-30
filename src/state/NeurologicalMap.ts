@@ -37,7 +37,7 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Cortex', input: 'SystemSensors', output: 'Hexagram state transitions', constraints: 'Drives all YaoState changes' }
     },
     {
-        path: 'src/core/HexagramDefinitions.ts', role: 'Hexagram DNA', category: NeuralCategory.CNS, docDomain: 'META', metabolicBaseCost: 2,
+        path: 'src/core/HexagramDefinitions.ts', role: 'Hexagram DNA', category: NeuralCategory.METABOLIC, docDomain: 'META', metabolicBaseCost: 2,
         biologicalRole: { organ: 'Genetic Code', input: 'Hexagram constants', output: 'Trigram/hexagram definitions', constraints: 'Immutable; reference only' }
     },
     {
@@ -49,23 +49,23 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Thalamus', input: 'Task + complexity + YaoState', output: 'RouteDecision (model + provider)', constraints: 'Ollama-first; free-tier cloud only; records to TrainingCollector' }
     },
     {
-        path: 'src/routing/WorkforceManifest.ts', role: 'Census/Inventory', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 5,
+        path: 'src/routing/WorkforceManifest.ts', role: 'Census/Inventory', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 5,
         biologicalRole: { organ: 'Hypothalamus', input: 'SovereignConfig', output: 'WorkerDefinition[]', constraints: 'Frozen roster; tier-based access' }
     },
     {
-        path: 'src/routing/DomainLocker.ts', role: 'Access Control Gate', category: NeuralCategory.CNS, docDomain: 'IMMUNE', metabolicBaseCost: 5,
+        path: 'src/routing/DomainLocker.ts', role: 'Access Control Gate', category: NeuralCategory.METABOLIC, docDomain: 'IMMUNE', metabolicBaseCost: 5,
         biologicalRole: { organ: 'Blood-Brain Barrier', input: 'Domain + model', output: 'Allow/deny', constraints: 'Prevents unauthorized domain access' }
     },
     {
-        path: 'src/clients/ModelClient.ts', role: 'Neural Axon (API Layer)', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 10,
+        path: 'src/clients/ModelClient.ts', role: 'Neural Axon (API Layer)', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 10,
         biologicalRole: { organ: 'Axon', input: 'ModelCallParams', output: 'ModelResponse', constraints: 'Records to training substrate; invokes EndpointHealer on failure' }
     },
     {
-        path: 'src/ToolRegistry.ts', role: 'Motor Cortex Registry', category: NeuralCategory.CNS, docDomain: 'CODE', metabolicBaseCost: 5,
+        path: 'src/ToolRegistry.ts', role: 'Motor Cortex Registry', category: NeuralCategory.METABOLIC, docDomain: 'CODE', metabolicBaseCost: 5,
         biologicalRole: { organ: 'Motor Cortex', input: 'Tool definitions', output: 'Registered tools for dispatch', constraints: 'Central tool catalog' }
     },
     {
-        path: 'src/cli.ts', role: 'Spinal Cord (Entry Point)', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 5,
+        path: 'src/cli.ts', role: 'Spinal Cord (Entry Point)', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 5,
         biologicalRole: { organ: 'Spinal Cord', input: 'Terminal input', output: 'Renderer output', constraints: 'Bootstraps entire system' }
     },
     {
@@ -77,7 +77,7 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Central Nervous Center', input: 'Pipeline definitions', output: 'Executed production cycles', constraints: 'Sequential/Parallel execution' }
     },
     {
-        path: 'src/routing/TaskScheduler.ts', role: 'Motor Planning (Sequencing)', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 15,
+        path: 'src/routing/TaskScheduler.ts', role: 'Motor Planning (Sequencing)', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 15,
         biologicalRole: { organ: 'Cerebellum (Motor Plan)', input: 'Task list', output: 'Scheduled execution sequence', constraints: 'Priority-aware' }
     },
 

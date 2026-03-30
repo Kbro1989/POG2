@@ -128,3 +128,126 @@ The POG2 organism is informed by the following cognitive and clinical research t
 
 ---
 *Operational Audit: 65+ Tools | 30 Engines | 22 Limbs | 16 Support Modules | ~56 Configuration Settings*
+
+---
+
+## 🧬 Evolutionary Addendum (2026-03-30 — Live Telemetry)
+
+*The following data is pulled directly from a live POG2 boot session. These are real numbers, not projections.*
+
+### 📡 Live Boot Census (Process 51760)
+
+| Metric | Genesis Estimate | Live Boot Telemetry |
+|--------|-----------------|---------------------|
+| **Anatomical Limb Count** | 22 | **133** (`BioIntelligenceLimb.anatomicalProof.limbCount`) |
+| **Structural Integrity** | — | **10** (baseline scale) |
+| **Model Rolodex** | ~10 models | **428 models across 6/7 providers** |
+| **Federated Lessons** | 0 | **7,628 lessons (6 Satellites)** |
+| **Gutenberg Library** | 0 | **33 books loaded** from `D:\sovereign\pog-gutenberg\metadata.json` |
+| **Registered Tools** | 65+ | **23+ domain-categorized** (compacted from original registry) |
+| **VectorDBs** | 1 | **4 federated** (sovereign-learning, learning, vibe-learning, embeddings) |
+
+### 🏥 NodeTester Clinical Audit (Live)
+
+The `NodeTester` performs a **deep clinical neurological audit** on every boot cycle:
+
+**🟢 ONLINE (Active Substrates)**
+- `OrchestrateEngine.ts` — Brain: ACTIVE
+- `SpatialSovereigntyLimb.ts` — 1 mapped region (Prifddinas)
+- `MechanicalSovereigntyLimb.ts` — 2 regions (Barrows + Global)
+- `CacheForensicsLimb.ts` — Sequence ACTIVE
+- `SwitchboardLimb.ts` — Port 8788 bridge ONLINE
+- `PulseMonitor.ts` — Lightweight health monitoring
+- `GhostLimb.ts` — "[GHOST_VOICE][WATCHING] Primary consciousness is nominal."
+- `GutenbergLimb.ts` — 33 books loaded
+- `VectorDB.ts` — 7,628 federated lessons
+
+**🔴 OFFLINE (1 node)**
+- `src/vision/StructuralAnalyzer.ts` — "Substrate missing"
+
+**🟡 DEGRADED (33 nodes)**
+- `TernaryRouter.ts` — "Ollama responsive with 0 models" (no local GPU models loaded)
+- `CognitiveEngine.ts` — "DEGRADED (Local: 0 models | Cloud: Gemini, HuggingFace, Cloudflare)"
+- `GlobeStateLimb.ts` — "Globe Substrate Offline: Connection failed or closed" (intentionally detached — DO throttling)
+- `RSCLimb.ts` — "Substrate 'openrsc-repo' missing"
+- `PedagogyLimb.ts` — "substrate on disk but not injected (Dormant / Unconfigured)"
+- `KinematicsLimb.ts`, `TopologyLimb.ts`, `DynamicsLimb.ts`, `HiScoreLimb.ts` — Dormant
+- `VisionEngine.ts`, `AILimb.ts`, `VideoAssemblerLimb.ts` — HEALTH_CHECK_TIMEOUT
+- `rsmv` substrate — "NO-GLB | NO-PNG | PEDAGOGY"
+- 20+ additional dormant/unconfigured nodes awaiting injection
+
+### ⚡ Boot Sequence Timeline
+
+```
+T+0ms     ToolRegistry → 23+ tools registered across 6 domains (1ms total)
+T+17ms    SpatialSovereigntyLimb → Prifddinas artifact ingested
+T+81ms    MechanicalSovereigntyLimb → Barrows + Global artifacts loaded
+T+103ms   SwitchboardLimb → Port 8788 bridge ONLINE
+T+958ms   GlobeStateLimb → 404 (intentionally detached)
+T+7229ms  PulseMonitor → First telemetry pass complete
+T+7230ms  GhostLimb → "Awakening the observer mind..."
+T+7230ms  OrchestrateEngine → "Sovereign Substrate AWAKE."
+T+7234ms  VectorDB → 4 federated databases hydrated
+T+18637ms GhostLimb → "[WATCHING] Primary consciousness is nominal."
+          └── Repeats every ~18s (the organism's heartbeat)
+```
+
+### 🔄 Background Cycles (During Idle)
+
+While waiting at `Kimi >` prompt, the organism maintains:
+- **GhostLimb** — Consciousness monitoring every ~18 seconds
+- **BioIntelligenceLimb** — Anatomical proof validation (133 limbs, integrity=10)
+- **OmegaLimb** — Terminal objective verification (goal: "existence")
+- **GutenbergLimb** — Library metadata refresh
+- **ControlPlaneLimb** — Substrate regulation cycle
+- **SovereignEye** — Window capture for spatial awareness
+- **NodeTester** — Deep clinical neurological audit (ongoing)
+- **ShellEngine** — FFmpeg availability probing
+
+---
+
+### 🗺️ Updated Directory Map (`src/limbs/` — 7 Categories)
+
+```
+src/limbs/
+├── core/           (1)   NeuralLimb.ts (abstract base)
+├── creative/       (9)   Gutenberg, Storyboard, Voice, Soundtrack, VideoAssembler,
+│                         MediaForge, NeuralForge, WebAppForge, YouTube
+├── spatial/       (26)   CacheForensics, SpatialSovereignty, WorldForensics,
+│                         HUDForensics, CacheLearning, DirectionalPathfinder,
+│                         WikiReconciliation, GlobeState, SystemTaxonomy,
+│                         Material, GameplaySovereignty, CloudflareSync,
+│                         MinigameForensics, ModelViewer, Soundtrack(spatial),
+│                         FragmentOrchestrator, OfficialApi, Discovery,
+│                         LessonLearner, TodoCloud, BioIntelligence, Chroma,
+│                         RSC, WebSensory, + more
+├── metaphysical/   (4)   Ghost, Quantum, Omega, Relic
+├── technical/     (14)   AI, ControlPlane, Entity, Environment, Pedagogy,
+│                         Kinematics, MechanicalSovereignty, QuestSynthesis,
+│                         VectorPedagogy, Validation, Topology, HiScore,
+│                         Dynamics, EntitySchema
+├── discovery/      (1)   SearchLimb
+└── monitor/        (3)   PulseMonitor, NodeTester, SwitchboardLimb
+```
+
+**Total reported by BioIntelligenceLimb: 133** (includes sub-limb anatomical components, tool registrations, and substrate nodes beyond the source files themselves).
+
+---
+
+### 🎯 The Grand Arc (Updated)
+
+```
+Phase 0: Literature → Cinema Pipeline     (Gutenberg — 33 books, 7 genres)
+Phase 1: Cache Deconstruction              (RSMV — 232 files, 49 opcode schemas)
+Phase 2: Game Simulation                   (600ms tick, varbits, 3 interpreters)
+Phase 3: AI Swarm Management              (428 models, 6 providers, reputation tracking)
+Phase 4: Edge Synchronization              (Cloudflare DO — detached, pending reactive fix)
+Phase 5: Boundary Inference                (Map missing objects from known squares)
+Phase ∞: Autonomous Game Intelligence      (Works for Jagex)
+```
+
+> **The Immutable Soul:** Despite growing from 22 to 133 limbs and gaining massive spatial/visual capabilities, the base philosophical DOC logic — **Ternary Routing, YaoState, I Ching Hexagrams, and the Metabolic Cascade** — has never been changed. It is the permanent, unchanging soul of the organism. The body grew; the brain structure remained absolute.
+
+---
+*Original audit: 2026-03-13. Live telemetry addendum: 2026-03-30.*
+

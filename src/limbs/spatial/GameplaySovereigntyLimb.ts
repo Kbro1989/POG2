@@ -2,6 +2,7 @@ import { GameState } from '../../core/models.js';
 import { SovereignAvatar } from '../../core/SovereignAvatar.js';
 import { GameplayModule } from '../../engines/gameplay/MinigameInterfaces.js';
 import { createLogger } from '../../utils/logger.js';
+import { CloudflareSyncLimb } from './CloudflareSyncLimb.js';
 
 const logger = createLogger('GameplaySovereigntyLimb');
 
@@ -9,6 +10,9 @@ export class GameplaySovereigntyLimb {
     private isRunning: boolean = false;
     private tickInterval: NodeJS.Timeout | null = null;
     public tickCount: number = 0;
+    
+    // Cloudflare Edge Sync Layer
+    public edgeSync: CloudflareSyncLimb;
     
     // The overarching state matrix
     public globalState: GameState = {
@@ -28,7 +32,8 @@ export class GameplaySovereigntyLimb {
     constructor() {
         this.avatar = new SovereignAvatar('POG2_Sovereign');
         this.globalState.players!.set(this.avatar.username, this.avatar as any);
-        logger.info('GameplaySovereigntyLimb booted with initial Avatar state.');
+        this.edgeSync = new CloudflareSyncLimb();
+        logger.info('GameplaySovereigntyLimb booted with initial Avatar state and Cloudflare Edge sync active.');
     }
 
     /**

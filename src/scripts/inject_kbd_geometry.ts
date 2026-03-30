@@ -3,14 +3,16 @@
 
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
+import { join } from 'path';
+import { getRSMVSubstratePath } from '../utils/SovereignPathResolver.js';
 let parseOb3Model: any = null;
 let buildAttributeBuffer: any = null;
 let GameCacheLoader: any = null;
-try { ({ parseOb3Model } = require("../../rsmv/src/3d/rt7model.js")); } catch {}
-try { ({ buildAttributeBuffer } = require("../../rsmv/src/3d/gltfutil.js")); } catch {}
-try { ({ GameCacheLoader } = require("../../rsmv/src/cache/sqlite.js")); } catch {}
+const RSMV = getRSMVSubstratePath();
+try { ({ parseOb3Model } = require(join(RSMV, 'src', '3d', 'rt7model.js'))); } catch {}
+try { ({ buildAttributeBuffer } = require(join(RSMV, 'src', '3d', 'gltfutil.js'))); } catch {}
+try { ({ GameCacheLoader } = require(join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch {}
 import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { join } from 'path';
 // @ts-ignore - Importing from sibling project substrate
 
 // @ts-ignore

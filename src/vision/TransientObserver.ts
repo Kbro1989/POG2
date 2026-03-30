@@ -5,7 +5,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import { createLogger } from '../utils/logger.js';
 import { WikiEnricher } from '../utils/WikiEnricher.js';
-import { getRSMVCachePath } from '../utils/SovereignPathResolver.js';
+import { getRSMVCachePath, getRSMVSubstratePath } from '../utils/SovereignPathResolver.js';
 import type { Result, PedagogyProfile } from '../core/models.js';
 
 const logger = createLogger('TransientObserver');
@@ -39,7 +39,7 @@ export class TransientObserver {
             // Spawn headless CLI with --analyze and --wiki (as file path)
             const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
             const subprocess = spawn(npxCmd, [
-                'tsx', 'rsmv/src/headless/cli.ts',
+                'tsx', join(getRSMVSubstratePath(), 'src', 'headless', 'cli.ts'),
                 '--model', modelId,
                 '--source', `cache:${cachePath}`,
                 '--analyze',

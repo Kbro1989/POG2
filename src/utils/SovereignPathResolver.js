@@ -181,6 +181,23 @@ function bootstrapSovereignSubstrate(root) {
     }
 }
 /**
+ * Returns the absolute path to the RSMV Inspector substrate.
+ */
+export function getRSMVSubstratePath() {
+    const envPath = process.env['POG_RSMV_SUBSTRATE_PATH'];
+    if (envPath && existsSync(envPath))
+        return envPath;
+    const sovereignPath = join(getSovereignRoot(), 'cache_pedagogy', 'rsmv_inspector');
+    if (existsSync(sovereignPath))
+        return sovereignPath;
+    if (_projectRoot) {
+        const localPath = join(_projectRoot, 'rsmv');
+        if (existsSync(localPath))
+            return localPath;
+    }
+    return sovereignPath;
+}
+/**
  * Returns the formal structural path to the local Jagex/RuneScape cache.
  * Governs the vision bridge's access to underlying model data.
  */

@@ -34,8 +34,8 @@ async function runLiveCycle() {
     const engine = new ChromanumberEngine();
     const harness = new VisionActuationHarness(engine, spatialVision);
 
-    // Target file for mutation
-    const targetFile = path.resolve('rsmv/src/3d/test_substrate.ts');
+    const { getRSMVSubstratePath } = await import('../utils/SovereignPathResolver.js');
+    const targetFile = path.resolve(getRSMVSubstratePath(), 'src', '3d', 'test_substrate.ts');
     const backupFile = targetFile + '.bak';
 
     try {

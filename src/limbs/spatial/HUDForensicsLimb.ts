@@ -1,15 +1,17 @@
 import { createRequire } from 'module';
+import * as path from 'path';
 const require = createRequire(import.meta.url);
 let GameCacheLoader: any = null;
 let parse: any = null;
-try { ({ GameCacheLoader } = require("../../../rsmv/src/cache/sqlite.js")); } catch {}
-try { ({ parse } = require("../../../rsmv/src/opdecoder.js")); } catch {}
 
 import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-import { getRSMVCachePath, getSovereignRoot } from '../../utils/SovereignPathResolver.js';
+import { getRSMVCachePath, getSovereignRoot, getRSMVSubstratePath } from '../../utils/SovereignPathResolver.js';
 import * as fs from 'fs';
-import * as path from 'path';
+
+const RSMV = getRSMVSubstratePath();
+try { ({ GameCacheLoader } = require(path.join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch {}
+try { ({ parse } = require(path.join(RSMV, 'src', 'opdecoder.js'))); } catch {}
 import { WikiEnricher, WikiData } from '../../utils/WikiEnricher.js';
 
 const logger = createLogger('HUDForensicsLimb');

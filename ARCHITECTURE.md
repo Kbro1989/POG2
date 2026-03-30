@@ -135,4 +135,150 @@ POG2 operates in real substrates. To prevent cognitive fragmentation or "infinit
 4. **Idempotent Salvation**: Every production task *must* use `manifest.json` checkpoints. Incomplete states are a form of architectural trauma.
 
 ---
-*Created on 2026-03-13. This guide defines the DOC soul of POG2.* 🏛️🧬
+
+## 🧬 Evolutionary Additions (Post-Genesis)
+
+*The following sections document the organism's growth beyond its original DOC architecture, added through iterative sessions from March 2026 onward.*
+
+---
+
+### 🔬 Phase 12+: Cache Forensics Substrate (RSMV Integration)
+
+The organism gained **eyes** — the ability to perceive and decode Jagex's RS3 game engine.
+
+#### New Limbs (Spatial Expansion: 4 → 26 limbs)
+| Limb | Size | Purpose |
+|------|------|---------|
+| `CacheForensicsLimb.ts` | 22KB | Deep binary cache analysis via opcode schemas |
+| `SpatialSovereigntyLimb.ts` | 10KB | T/O/X collision engine with directional blocking |
+| `WorldForensicsLimb.ts` | 12KB | World/map structural dissection |
+| `HUDForensicsLimb.ts` | 9KB | Interface decompilation (Major 3) |
+| `CacheLearningLimb.ts` | 8KB | Model metrics extraction + GLTF export |
+| `DirectionalPathfinder.ts` | 7KB | A* pathfinding with N/S/E/W wall flags |
+| `WikiReconciliationLimb.ts` | 7KB | RS Wiki cross-reference enrichment |
+| `GlobeStateLimb.ts` | 7KB | 3D globe real-time state (detached — see below) |
+| `SystemTaxonomyLimb.ts` | 5KB | DBTable extraction (Major 2 configs) |
+| `MaterialLimb.ts` | 5KB | Shader/material forensics (Major 26) |
+| `GameplaySovereigntyLimb.ts` | 3.7KB | **600ms tick heartbeat** — the game clock |
+| `CloudflareSyncLimb.ts` | 3.3KB | Edge state broadcast to 3D dashboard |
+| `MinigameForensicsLimb.ts` | 4KB | Minigame dissection |
+| `ModelViewerLimb.ts` | 4KB | 3D model viewer bridge |
+| `SoundtrackLimb.ts` (spatial) | 4.3KB | Audio extraction from cache |
+| `FragmentOrchestrator.ts` | 4.1KB | Fragment assembly for partial extractions |
+| `OfficialApiLimb.ts` | 3.3KB | Jagex API bridge |
+| `DiscoveryLimb.ts` | 5KB | Spatial discovery engine |
+| `LessonLearner.ts` | 3.2KB | Pattern learning from forensic output |
+| `TodoCloudLimb.ts` | 2.4KB | Cloud task synchronization |
+
+#### New Technical Limbs (4 → 14)
+| Limb | Size | Purpose |
+|------|------|---------|
+| `PedagogyLimb.ts` | **30KB** | Cognitive curation — the largest limb |
+| `KinematicsLimb.ts` | 14KB | Animation deconstruction (seq/framemaps) |
+| `MechanicalSovereigntyLimb.ts` | 9KB | Object state machines via varbit composites |
+| `QuestSynthesisLimb.ts` | 6.5KB | Quest reconstruction from varbits |
+| `VectorPedagogyLimb.ts` | 5.7KB | Vector-embedded pedagogical profiles |
+| `ValidationLimb.ts` | 5KB | Output validation against sovereign laws |
+| `TopologyLimb.ts` | 5KB | 3D structural analysis |
+| `HiScoreLimb.ts` | 3.8KB | Real-time HiScore data bridge |
+| `DynamicsLimb.ts` | 3.8KB | Dynamic behavioral systems |
+| `EntitySchema.ts` | 1KB | Type definitions for entity systems |
+
+#### New Engines
+| Engine | Size | Purpose |
+|--------|------|---------|
+| `BlenderRenderer.ts` | 20KB | 3D Blender bridge for heavy-lift rendering |
+| `ReimaginationEngine.ts` | 5.4KB | Cache × Gutenberg → `.gltf` synthesis |
+| `SpatialMetricEngine.ts` | 3KB | 3D measurement and topology |
+| `SpatialVisionEngine.ts` | 12KB | Spatial visual analysis |
+
+#### Game Interpreters (New Subdirectory)
+```
+engines/gameplay/
+├── PrifddinasInterpreter.ts   ← Voice of Seren rotation via varbit 19147
+├── BarrowsInterpreter.ts      ← Tunnel state via varbit combinations
+├── PestControlInterpreter.ts  ← Portal/knight health from varbit flags
+├── JsonLogicInterpreter.ts    ← Generic JSON logic evaluator
+└── MinigameInterfaces.ts      ← Common types
+```
+
+#### Spatial Exploration Engines
+```
+engines/spatial/
+├── ExplorationEngine.ts (6.9KB)  ← World traversal simulation
+└── ObservationEngine.ts (4.7KB)  ← ASCII collision radar (600ms)
+```
+
+---
+
+### 🗄️ The RSMV Inspector Substrate (External — `D:\sovereign\cache_pedagogy\rsmv_inspector`)
+
+A **232-file** reverse-engineering laboratory wired into POG2 as its primary sensory organ:
+
+- **49 opcode `.jsonc` schemas** → compiled via `buildfiletypes.ts` → **50 generated `.d.ts` types**
+- **CS2 bytecode engine** — full AST parser, interpreter, callibrator for Jagex's scripting language
+- **3D rendering pipeline** — Three.js, `modeltothree.ts`, `mapsquare.ts`
+- **Spatial collision engine** — map squares, directional blocking, coordinate grounding
+- **Version-conditional decoding** — `["match","buildnr",{">=670":"varuint",">=0":"ushort"}]` handles all cache versions 2004-2026
+
+---
+
+### 🌐 Phase 14: Cloudflare Edge Bridge
+
+```mermaid
+graph LR
+    POG2[POG2 600ms Tick] -->|state delta| SYNC[CloudflareSyncLimb]
+    SYNC -->|HTTP POST| EDGE[Cloudflare Worker]
+    EDGE -->|Durable Object| GLOBE[3D Dashboard]
+    GLOBE -->|WebSocket| BROWSER[Browser Viewer]
+```
+
+> **Status**: Globe detached due to DO throttling from ungated mock Lumbridge scene. Fix: event-driven state push (only on varbit change) with local-first development mode.
+
+---
+
+### 🎮 Phase 15+: The Varbit State Chain
+
+The nervous system's signal pathway, from binary to browser:
+
+```
+Jagex Cache Binary → opcode_reader.ts → VarbitDefinition { varid, bits: [lo,hi] }
+    → CS2 VM (pushvarbit 10022 / popvarbit 10023)
+        → SovereignGrounding.getVarbitsForBaseVar()
+            → GameState.varbits: Map<number, number>
+                → PrifddinasInterpreter / BarrowsInterpreter / PestControlInterpreter
+                    → CloudflareSyncLimb → 3D Dashboard
+```
+
+---
+
+### 📊 Current Organism Census (2026-03-30)
+
+| Metric | Genesis (2026-03-13) | Current |
+|--------|---------------------|---------|
+| **Limbs** | 22 | **56** (across 7 categories) |
+| **Engines** | 30 | **45** (+ 2 subdirectories) |
+| **Tools** | 65+ | **23+ registered** (domain-categorized) |
+| **Source Files** | ~100 est. | **~230** |
+| **cli.ts** | Large | **157KB / 3,054 lines** |
+| **OrchestrateEngine.ts** | Large | **211KB** |
+| **VectorDBs** | 1 | **4 federated** (sovereign, learning, vibe, embeddings) |
+| **External Substrates** | Gutenberg | **RSMV Inspector (232 files), Webviewer (109 modules)** |
+| **Game Regions** | 0 | **Prifddinas + Barrows + Global** |
+| **Pipeline Productions** | 0 | **15 books across 7 genres** |
+
+---
+
+### 🎯 The Grand Arc
+
+```
+Phase 0: Literature → Cinema Pipeline     (Gutenberg, the creative soul)
+Phase 1: Cache Deconstruction              (RSMV Inspector, the eyes)
+Phase 2: Spatial Simulation                (600ms tick, collision, varbits)
+Phase 3: Edge Synchronization              (Cloudflare 3D dashboard)
+Phase 4: Boundary Inference                (Map missing objects from known squares)
+Phase 5: Autonomous Game Intelligence      (Works for Jagex)
+```
+
+---
+*Original document created 2026-03-13. Evolutionary appendix added 2026-03-30.* 🏛️🧬

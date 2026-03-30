@@ -404,7 +404,12 @@ export class ModelRolodex {
         }
     }
 
-    /** Discover Cloudflare models via wrangler CLI */
+    /** 
+     * Discover Cloudflare models via REST API 
+     * // NOTE: If ModelClient fails to actuate a dynamically chosen Cloudflare model (e.g., Llama)
+     * // with a 403 or TOS error, you MUST manually run `npx wrangler ai run <model-tag>` 
+     * // in the terminal to accept the Cloudflare AI Terms of Service for that specific model.
+     */
     private async discoverCloudflare(): Promise<void> {
         const start = Date.now();
         const providerState = this.state.providers.cloudflare;

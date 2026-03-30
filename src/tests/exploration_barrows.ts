@@ -18,7 +18,7 @@ async function testExplorationBarrows() {
     // Starting coordinate: Barrows Entrance [3564, 3288, 0]
     const avatar: Coord = { x: 3564, y: 3288, plane: 0 };
     
-    const engine = new ExplorationEngine(avatar, discovery, pathfinder, spatial);
+    const engine = new ExplorationEngine(avatar, discovery, pathfinder, spatial, undefined as any);
 
     // 2. Mark initial position
     discovery.markVisited(avatar.plane, avatar.x, avatar.y);

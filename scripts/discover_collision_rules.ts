@@ -13,7 +13,7 @@ import { fileURLToPath } from 'url';
 
 // Resolve paths to RSMV substrate
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const RSMV_ROOT = path.resolve(__dirname, '../../rsmv');
+const RSMV_ROOT = 'D:\\sovereign\\cache_pedagogy\\rsmv_inspector';
 
 // Use tsx or ts-node to run this, pointing to the source files
 // We need to polyfill some globals that RSMV expects

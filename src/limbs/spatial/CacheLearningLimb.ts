@@ -1,4 +1,5 @@
 import { createRequire } from 'module';
+import * as path from 'path';
 const require = createRequire(import.meta.url);
 // Graceful substrate imports — these may not exist in all environments
 let GameCacheLoader: any = null;
@@ -7,9 +8,11 @@ let ThreejsSceneCache: any = null;
 let renderAppearance: any = null;
 let SpatialMetricEngine: any = null;
 
-try { ({ GameCacheLoader } = require("../../../rsmv/src/cache/sqlite.js")); } catch { /* RSMV substrate not linked */ }
-try { ({ EngineCache, ThreejsSceneCache } = require("../../../rsmv/src/3d/modeltothree.js")); } catch { /* RSMV 3D substrate not linked */ }
-try { ({ renderAppearance } = require("../../../rsmv/src/headless/api.js")); } catch { /* RSMV headless substrate not linked */ }
+import { getRSMVSubstratePath } from '../../utils/SovereignPathResolver.js';
+const RSMV = getRSMVSubstratePath();
+try { ({ GameCacheLoader } = require(path.join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch { /* RSMV substrate not linked */ }
+try { ({ EngineCache, ThreejsSceneCache } = require(path.join(RSMV, 'src', '3d', 'modeltothree.js'))); } catch { /* RSMV 3D substrate not linked */ }
+try { ({ renderAppearance } = require(path.join(RSMV, 'src', 'headless', 'api.js'))); } catch { /* RSMV headless substrate not linked */ }
 try { ({ SpatialMetricEngine } = require("../../engines/SpatialMetricEngine.js")); } catch { /* SpatialMetricEngine not available */ }
 
 import { type Result, type DataType, type CacheData, err, ok } from '../../core/models.js';
@@ -17,7 +20,6 @@ import { createLogger } from '../../utils/logger.js';
 import { JagexCacheReader } from '../../utils/JagexCacheReader.js';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
-import path from 'path';
 import { CacheForensicsLimb } from './CacheForensicsLimb.js';
 
 const logger = createLogger('CacheLearning');

@@ -50,16 +50,16 @@ async function testLessonLearningB3a() {
 
     // 5. Verification
     const summary = lessonLearner.getSummary();
-    const learned = lessonLearner.getLearnedTiles();
+    const learned: any[] = (lessonLearner as any).learnedTiles ? Array.from((lessonLearner as any).learnedTiles.values()) : [];
 
     console.log(`\n✅ LEARNING RESULTS:`);
     console.log(`  Tiles learned: ${summary.tilesLearned}`);
     console.log(`  Total objects found: ${summary.totalObjects}`);
 
     console.log(`\n📚 SAMPLE LEARNED TILES:`);
-    learned.forEach((tile, i) => {
+    learned.forEach((tile: any, i) => {
         console.log(`  Step ${i+1}: (${tile.x}, ${tile.y}) -> ${tile.objects.length} objects, flags=0x${tile.terrainFlags.toString(16)}`);
-        tile.objects.forEach(obj => console.log(`    - [${obj.id}] ${obj.name} (type ${obj.type})`));
+        tile.objects.forEach((obj: unknown) => console.log(`    - [${(obj as any).id}] ${(obj as any).name} (type ${(obj as any).type})`));
     });
 
     const SUCCESS_CRITERIA = {

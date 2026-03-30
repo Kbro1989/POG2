@@ -44,9 +44,9 @@ export class FragmentOrchestrator {
 
         const loadPromises: Promise<any>[] = [];
 
-        // Scan 3x3 grid (radius 1) for missing logic
-        for (let mx = centerX - 1; mx <= centerX + 1; mx++) {
-            for (let my = centerY - 1; my <= centerY + 1; my++) {
+        // Scan 5x5 grid (radius 2) for missing logic - Phase E: World-Scale Reach
+        for (let mx = centerX - 2; mx <= centerX + 2; mx++) {
+            for (let my = centerY - 2; my <= centerY + 2; my++) {
                 // 1. Resolve deterministic "Expected Space ID"
                 // Use a world coordinate in the center of the mapsquare for registry lookup
                 const mapsquareCenter = { x: (mx << 6) + 32, y: (my << 6) + 32 };

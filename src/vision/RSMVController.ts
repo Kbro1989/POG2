@@ -5,7 +5,7 @@ import { promises as fs, existsSync } from 'fs';
 import { join } from 'path';
 import { createLogger } from '../utils/logger.js';
 import type { Result, ActuationResult } from '../core/models.js';
-import { getRSMVCachePath } from '../utils/SovereignPathResolver.js';
+import { getRSMVCachePath, getRSMVSubstratePath } from '../utils/SovereignPathResolver.js';
 
 const logger = createLogger('RSMVController');
 
@@ -34,7 +34,7 @@ export class RSMVController {
         try {
             const cachePath = getRSMVCachePath();
             const args = [
-                'tsx', 'rsmv/src/headless/cli.ts',
+                'tsx', join(getRSMVSubstratePath(), 'src', 'headless', 'cli.ts'),
                 '--model', modelId,
                 '--source', `cache:${cachePath}`,
                 '--analyze'
@@ -81,7 +81,7 @@ export class RSMVController {
     try {
         const cachePath = getRSMVCachePath();
         const args = [
-            'tsx', 'rsmv/src/headless/cli.ts',
+            'tsx', join(getRSMVSubstratePath(), 'src', 'headless', 'cli.ts'),
             '--model', modelId,
             '--source', `cache:${cachePath}`,
             '--analyze'
@@ -108,7 +108,7 @@ return new Promise((resolve) => {
     subprocess.on('exit', async (code) => {
         if (code === 0) {
             try {
-                const profilePath = join(process.cwd(), 'rsmv', 'pedagogy_profile.json');
+                const profilePath = join(getRSMVSubstratePath(), 'pedagogy_profile.json');
                 let profile = null;
                 if (existsSync(profilePath)) {
                     const profileStr = await fs.readFile(profilePath, 'utf8');
@@ -142,10 +142,10 @@ return new Promise((resolve) => {
     }
 
     public async healthCheck(): Promise < { online: boolean; details: string } > {
-    // Basic check: Ensure rsmv/src/cli.ts exists
+    // Basic check: Ensure rsmv substrate cli.ts exists
     const { existsSync } = await import('fs');
     const { join } = await import('path');
-    const substrateStatus = existsSync(join(process.cwd(), 'rsmv', 'src', 'headless', 'cli.ts'));
+    const substrateStatus = existsSync(join(getRSMVSubstratePath(), 'src', 'headless', 'cli.ts'));
     return {
         online: substrateStatus,
         details: substrateStatus ? 'RSMV CLI substrate verified.' : 'RSMV CLI substrate missing or unlinked.'

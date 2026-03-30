@@ -62,7 +62,7 @@ export class SovereignAvatar {
         const end = { x: targetX, y: targetY, plane: this.coord.plane };
         
         try {
-            const path = await pathfinder.findPath(start, end, 'player', context, collisionMatrix);
+            const path = await pathfinder.findPath(start, end, context);
             if (path && path.length > 0) {
                 // remove the first element if it's the current coordinate
                 if (path[0].x === this.coord.x && path[0].y === this.coord.y) {

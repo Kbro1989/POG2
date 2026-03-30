@@ -1,16 +1,18 @@
 import { createRequire } from 'module';
+import * as path from 'path';
 const require = createRequire(import.meta.url);
 let GameCacheLoader: any = null;
 let parse: any = null;
-try { ({ GameCacheLoader } = require("../../../rsmv/src/cache/sqlite.js")); } catch {}
-try { ({ parse } = require("../../../rsmv/src/opdecoder.js")); } catch {}
 
 import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-import { getSovereignRoot, getRSMVCachePath, getCachePedagogyPath } from '../../utils/SovereignPathResolver.js';
+import { getSovereignRoot, getRSMVCachePath, getCachePedagogyPath, getRSMVSubstratePath } from '../../utils/SovereignPathResolver.js';
+
+const RSMV = getRSMVSubstratePath();
+try { ({ GameCacheLoader } = require(path.join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch {}
+try { ({ parse } = require(path.join(RSMV, 'src', 'opdecoder.js'))); } catch {}
 import * as fs from 'fs';
 import * as fsPromise from 'fs/promises';
-import * as path from 'path';
 
 const logger = createLogger('CacheForensicsLimb');
 

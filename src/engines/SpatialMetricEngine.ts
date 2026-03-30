@@ -1,6 +1,7 @@
 import { createLogger } from "../utils/logger.js";
-// @ts-ignore
-import type { ModelData } from "../../rsmv/src/3d/rt7model.js";
+// ModelData type - originally from rsmv_inspector substrate (D:\sovereign\cache_pedagogy\rsmv_inspector)
+// Defined locally to avoid broken relative import path
+interface ModelData { meshes: any[]; bonecount?: number; miny?: number; maxy?: number; }
 const logger = createLogger('SpatialMetricEngine');
 
 export interface AABB {

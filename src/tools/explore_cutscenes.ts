@@ -18,7 +18,7 @@ async function main() {
         for (let i = 0; i < 10; i++) {
             const entry = reader.readEntry(0, i);
             if (entry && entry.decompressed) {
-                console.log(`Found Cutscene Group 0, File ${i}: ${entry.decompressed.length} bytes (Compression: ${entry.compressionType})`);
+                console.log(`Found Cutscene Group 0, File ${i}: ${entry.decompressed.length} bytes (Compression: ${(entry as any).compression})`);
                 // Sample first 16 bytes
                 console.log(`  Sample: ${entry.decompressed.slice(0, 16).toString('hex')}`);
             }
@@ -28,7 +28,7 @@ async function main() {
         for (let i = 0; i < 10; i++) {
             const entry = reader.readEntry(1, i);
             if (entry && entry.decompressed) {
-                console.log(`Found Cutscene Group 1, File ${i}: ${entry.decompressed.length} bytes (Compression: ${entry.compressionType})`);
+                console.log(`Found Cutscene Group ${(entry as any).compression}): ${entry.decompressed.length} bytes (Compression: ${(entry as any).compression})`);
                 console.log(`  Sample: ${entry.decompressed.slice(0, 16).toString('hex')}`);
             }
         }

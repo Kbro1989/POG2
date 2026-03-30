@@ -1,9 +1,12 @@
 import { createRequire } from 'module';
+import * as path from 'path';
 const require = createRequire(import.meta.url);
 let GameCacheLoader: any = null;
 let parseOb3Model: any = null;
-try { ({ GameCacheLoader } = require("../../../rsmv/src/cache/sqlite.js")); } catch {}
-try { ({ parseOb3Model } = require("../../../rsmv/src/3d/rt7model.js")); } catch {}
+import { getRSMVSubstratePath } from '../../utils/SovereignPathResolver.js';
+const RSMV = getRSMVSubstratePath();
+try { ({ GameCacheLoader } = require(path.join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch {}
+try { ({ parseOb3Model } = require(path.join(RSMV, 'src', '3d', 'rt7model.js'))); } catch {}
 import { Result, ok, err, YaoState } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
 

@@ -9,6 +9,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { getAtlasSystemPath } from '../../utils/SovereignPathResolver.js';
 import { createLogger } from '../../utils/logger.js';
+import { CloudflareSyncLimb } from '../../limbs/spatial/CloudflareSyncLimb.js';
 
 const logger = createLogger('JsonLogicInterpreter');
 
@@ -16,9 +17,11 @@ export class JsonLogicInterpreter implements GameplayModule {
     public name: string = "Json Logic Engine";
     private logic: any = null;
     private fileName: string;
+    private edgeSync: CloudflareSyncLimb;
 
     constructor(fileName: string) {
         this.fileName = fileName.endsWith('.json') ? fileName : `${fileName}.json`;
+        this.edgeSync = new CloudflareSyncLimb();
     }
 
     public async mount(state: GameState, avatar: SovereignAvatar): Promise<void> {
@@ -102,6 +105,8 @@ export class JsonLogicInterpreter implements GameplayModule {
                 if (branch.next_state) {
                     // Placeholder for actual state-machine transition logic
                     logger.info(`Transitioning logic state: ${branch.next_state}`);
+                    // BROADCAST EXACT-MATCH LOGIC TO CLOUDFLARE EDGE
+                    this.edgeSync.broadcastStateTransition(this.name, branch.next_state).catch(e => logger.error("Sync failed", e));
                 }
                 return branch.action;
             }
