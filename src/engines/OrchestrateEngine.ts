@@ -18,6 +18,7 @@ import { TodoEngine } from './TodoEngine.js';
 import { MCPEngine } from './MCPEngine.js';
 import { ChromanumberEngine } from './ChromanumberEngine.js';
 import { MetabolicEngine } from './MetabolicEngine.js';
+import { SovereignIngestionEngine } from './SovereignIngestionEngine.js';
 import { CognitiveEngine } from './CognitiveEngine.js';
 import { MultiModelExecutor } from './MultiModelExecutor.js';
 import { ShadowEngine } from './ShadowEngine.js';
@@ -62,6 +63,8 @@ import { SystemTaxonomyLimb } from '../limbs/spatial/SystemTaxonomyLimb.js';
 import { MaterialLimb } from '../limbs/spatial/MaterialLimb.js';
 import { SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
 import { MechanicalSovereigntyLimb } from '../limbs/technical/MechanicalSovereigntyLimb.js';
+import { GameplaySovereigntyLimb } from '../limbs/spatial/GameplaySovereigntyLimb.js';
+
 import { RSMVController } from '../vision/RSMVController.js';
 import { StructuralAnalyzer } from '../vision/StructuralAnalyzer.js';
 import { VectorDB } from '../utils/VectorDB.js';
@@ -132,6 +135,7 @@ export class OrchestrateEngine {
     private readonly code: CodeEngine;
     private readonly codeGen: GenerateEngine;
     private readonly metabolic: MetabolicEngine;
+    private readonly ingestionEngine: SovereignIngestionEngine;
     private readonly cognitive: CognitiveEngine;
     private readonly vectorDB: VectorDB;
     private readonly gutenberg: GutenbergLimb;
@@ -174,6 +178,8 @@ export class OrchestrateEngine {
     private readonly todoCloud: TodoCloudLimb;
     private readonly spatialSovereignty: SpatialSovereigntyLimb;
     private readonly mechanicalSovereignty: MechanicalSovereigntyLimb;
+    private readonly gameplay: GameplaySovereigntyLimb;
+
     private readonly EXTREME_THRESHOLD = 80;
     private initialized = false;
     private initPromise: Promise<void> | null = null;
@@ -193,6 +199,8 @@ export class OrchestrateEngine {
         this.cacheForensics = new CacheForensicsLimb();
         this.spatialSovereignty = new SpatialSovereigntyLimb();
         this.mechanicalSovereignty = new MechanicalSovereigntyLimb();
+        this.gameplay = new GameplaySovereigntyLimb();
+
 
         this.todoEngine = new TodoEngine(renderer);
         this.todoCloud = new TodoCloudLimb({ 
@@ -218,8 +226,11 @@ export class OrchestrateEngine {
         this.codeGen = new GenerateEngine(config, router);
         this.cognitive = new CognitiveEngine(this.vectorDB, this.client);
         this.metabolic = new MetabolicEngine(this.client, this.router.getHexagram(), this.cognitive, this.discovery);
+        this.ingestionEngine = SovereignIngestionEngine.getInstance(this.vectorDB);
+        this.ingestionEngine.injectMetabolicMonitor(this.metabolic);
 
         this.pedagogy = new PedagogyLimb(this.router, this.vectorDB, this.client);
+        this.mechanicalSovereignty.injectPedagogy(this.pedagogy);
         this.kinematics = new KinematicsLimb(this.router, this.vectorDB, this.client);
 
         this.bioIntel = new BioIntelligenceLimb();
@@ -247,6 +258,11 @@ export class OrchestrateEngine {
         this.controlPlane = new ControlPlaneLimb();
         this.switchboard = new SwitchboardLimb();
         this.entityLimb = new EntityLimb();
+        
+        // Wire Gameplay Heartland
+        this.gameplay.injectSwitchboard(this.switchboard);
+        this.gameplay.injectEntityLimb(this.entityLimb);
+
         this.envLimb = new EnvironmentLimb();
         this.cfServices = new CloudflareServices(config);
         this.mediaForge = new MediaForgeLimb(this.client);
@@ -415,6 +431,10 @@ export class OrchestrateEngine {
 
             // Phase 109: Spatial Sovereignty Integration
             const spatialInit = await this.spatialSovereignty.initialize();
+            
+            // Phase 111: Gameplay Sovereignty (Heartbeat)
+            await this.gameplay.initialize();
+
             if (!spatialInit.ok) {
                 logger.error({ err: spatialInit.error }, 'Failed to initialize SpatialSovereigntyLimb');
             }
@@ -594,6 +614,7 @@ export class OrchestrateEngine {
                 ClinicalAuditTool: this.clinicalAudit,
                 SovereignProprioception: this.proprioception,
                 MetabolicEngine: this.metabolic,
+                SovereignIngestionEngine: this.ingestionEngine,
                 IntentVerifier: this.verifier,
                 RSCLimb: this.rscLimb,
                 GlobeStateLimb: this.globeState,

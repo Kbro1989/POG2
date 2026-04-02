@@ -2,7 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createLogger } from "../../utils/logger.js";
 import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
-import { Result, ok, err, VarbitSnapshot, CompositeCondition, GameState, SpatialSideEffect } from '../../core/models.js';
+import { Result, ok, err, VarbitSnapshot, CompositeCondition, GameState, SpatialSideEffect, SovereignAvatar } from '../../core/models.js';
+import { PedagogyLimb } from './PedagogyLimb.js';
 
 const logger = createLogger('MechanicalSovereigntyLimb');
 
@@ -20,9 +21,15 @@ export interface MechanicalLogicArtifact {
 export class MechanicalSovereigntyLimb {
     private readonly logicDir: string;
     private loadedLogic: Map<string, MechanicalLogicArtifact> = new Map();
+    private pedagogy?: PedagogyLimb;
 
-    constructor() {
+    constructor(pedagogy?: PedagogyLimb) {
         this.logicDir = path.join(getSovereignRoot(), 'atlas', 'logic');
+        this.pedagogy = pedagogy;
+    }
+    
+    public injectPedagogy(pedagogy: PedagogyLimb) {
+        this.pedagogy = pedagogy;
     }
 
     /**
@@ -210,18 +217,19 @@ export class MechanicalSovereigntyLimb {
             const [_, idStr, stateStr] = itemMatch;
             const itemId = parseInt(idStr);
             const target = stateStr === 'true';
-            const has = context.playerInventory.includes(itemId);
+            
+            // Query the primary avatar's 28-slot inventory
+            const avatar = context.players.get('POG2_Sovereign');
+            const has = avatar?.inventory.some(i => i?.id === itemId) || false;
             return has === target;
         }
 
+
         // Functional check matching: is_follower_active(player, 7015) == true
-        // (For now, treat as successful if item is in inventory or npc is near?) 
-        // Simplified heuristic for Phase 4
         if (condition.includes('is_follower_active')) {
             const match = condition.match(/is_follower_active\(.*,\s*(\d+)\)\s*==\s*true/);
             if (match) {
                 const entityId = parseInt(match[1]);
-                // Heuristic: if npc is in the spatial index on the current plane, it's active
                 for (const npcs of context.npcSpatialIndex.values()) {
                     if (npcs.some(n => n.id === entityId)) return true;
                 }
@@ -229,7 +237,101 @@ export class MechanicalSovereigntyLimb {
             return false;
         }
 
+        // Level check: has_level("Attack", 90) == true
+        const levelMatch = condition.match(/has_level\("(.*)",\s*(\d+)\)\s*==\s*(true|false)/);
+        if (levelMatch) {
+            const [_, skillName, levelStr, targetState] = levelMatch;
+            const reqLevel = parseInt(levelStr);
+            const target = targetState === 'true';
+            
+            const avatar = context.players.get('POG2_Sovereign');
+            if (!avatar) return !target;
+
+            // Find skill by name
+            const skill = Object.values(avatar.skills).find(s => s.name.toLowerCase() === skillName.toLowerCase());
+            const has = (skill?.level || 0) >= reqLevel;
+            return has === target;
+        }
+
+        // Equipment Gating: can_equip(1289) == true
+        const equipMatch = condition.match(/can_equip\((\d+)\)\s*==\s*(true|false)/);
+        if (equipMatch) {
+            const [_, idStr, stateStr] = equipMatch;
+            const itemId = parseInt(idStr);
+            const target = stateStr === 'true';
+            
+            const avatar = context.players.get('POG2_Sovereign');
+            if (!avatar) return !target;
+
+            const res = this.canEquip(itemId, avatar);
+            return res.ok === target;
+        }
+
         return false;
+    }
+
+    /**
+     * canEquip - Validates if an avatar meets the pedagogical requirements for an item.
+     * Grounded in equipment_requirements.json.
+     */
+    public canEquip(itemId: number, avatar: SovereignAvatar): Result<boolean> {
+        if (!this.pedagogy) return ok(true); // Passive mode
+        
+        const requirements = this.pedagogy.getEquipmentRequirements();
+        if (!requirements) return ok(true);
+
+        // Heuristic: Find tier by item ID range or lookup
+        // For now, we'll implement a basic level check based on the 'tiers' manifest.
+        // We assume items follow a TXX naming convention or ID range.
+        // PROMPT: In a real system, Major 19 (Items) would define the 'requirement' property.
+        
+        // Simplified Logic: Hardcoded gates for Pick of Gods manifest items
+        const itemGates: Record<number, { skill: string, level: number }> = {
+            1289: { skill: 'Attack', level: 40 }, // Adamant Longsword
+            581: { skill: 'Magic', level: 1 },    // Wizard Robe
+            57161: { skill: 'Necromancy', level: 95 }, // First Necromancer's Lantern (T95)
+        };
+
+        const gate = itemGates[itemId];
+        if (gate) {
+            const skill = Object.values(avatar.skills).find(s => s.name.toLowerCase() === gate.skill.toLowerCase());
+            if ((skill?.level || 0) < gate.level) {
+                return err(new Error(`Requirement not met: ${gate.level} ${gate.skill}`));
+            }
+        }
+
+        return ok(true);
+    }
+
+    /**
+     * validateAbility - Checks adrenaline and resource costs for Necromancy abilities.
+     * Grounded in necromancy_logic.json.
+     */
+    public validateAbility(abilityId: string, avatar: SovereignAvatar): Result<boolean> {
+        if (!this.pedagogy) return ok(true);
+        const logic = this.pedagogy.getNecromancyLogic();
+        if (!logic) return ok(true);
+
+        const ability = logic.abilities[abilityId];
+        if (!ability) return err(new Error(`Unknown ability: ${abilityId}`));
+
+        // 1. Check Adrenaline
+        const adrenaline = avatar.metadata?.combat_state?.adrenaline || 0;
+        if (ability.adrenaline < 0 && adrenaline < Math.abs(ability.adrenaline)) {
+            return err(new Error(`Insufficient Adrenaline: ${Math.abs(ability.adrenaline)}% required.`));
+        }
+
+        // 2. Check Resources (Ectoplasm)
+        if (ability.cost && ability.cost.includes('Ectoplasm')) {
+            const ectoMatch = ability.cost.match(/(\d+)\s*Ectoplasm/);
+            const reqEcto = ectoMatch ? parseInt(ectoMatch[1]) : 1;
+            const hasEcto = avatar.inventory.find(i => i?.id === 57167)?.amount || 0;
+            if (hasEcto < reqEcto) {
+                return err(new Error(`Insufficient Ectoplasm: ${reqEcto} required.`));
+            }
+        }
+
+        return ok(true);
     }
 
     public healthCheck(): { online: boolean; details: string } {

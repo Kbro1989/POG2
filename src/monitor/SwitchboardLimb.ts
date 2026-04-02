@@ -122,6 +122,17 @@ export class SwitchboardLimb {
     }
 
     /**
+     * syncGameState - Broadcasts the integrated POG2 world/player state to the UI.
+     */
+    public syncGameState(state: any): void {
+        this.broadcast({
+            type: 'state_sync',
+            timestamp: Date.now(),
+            state
+        });
+    }
+
+    /**
      * connectToSubstrates - Hooks into Renderer and SovereignEye for remote mirroring.
      */
     public connectToSubstrates(renderer: any, eye: any): void {

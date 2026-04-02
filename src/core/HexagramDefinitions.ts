@@ -211,3 +211,51 @@ export const HEXAGRAM_REGISTRY: Record<string, HexagramDefinition> = {
 };
 
 export const DEFAULT_HEXAGRAM = HEXAGRAM_REGISTRY['111111'];
+
+export interface HexagramIngestionProfile {
+    name: string;
+    chinese: string;
+    trigrams: [string, string];
+    ingestionMode: 'structural' | 'vectorization' | 'emergency';
+    breathCycle: number;
+    maxConcurrent: number;
+    recursionDepth: number;
+    targetLayers: string[];
+    description: string;
+}
+
+export const INGESTION_TRIGGERS: Record<number, HexagramIngestionProfile> = {
+    27: {
+        name: 'Nourishment',
+        chinese: 'Yi',
+        trigrams: ['Mountain', 'Thunder'],
+        ingestionMode: 'structural',
+        breathCycle: 1200,
+        maxConcurrent: 3,
+        recursionDepth: 2,
+        targetLayers: ['CachePedagogy', 'AtlasSpatial'],
+        description: 'Slow feeding of foundational data. NPCs, Items, Objects.'
+    },
+    46: {
+        name: 'Pushing Upward',
+        chinese: 'Sheng',
+        trigrams: ['Earth', 'Wood'],
+        ingestionMode: 'vectorization',
+        breathCycle: 400,
+        maxConcurrent: 8,
+        recursionDepth: 4,
+        targetLayers: ['VectorDB', 'Rolodex'],
+        description: 'Rapid ascent into cognitive layer. Spatial mappings, rolodex updates.'
+    },
+    23: {
+        name: 'Splitting Apart',
+        chinese: 'Bo',
+        trigrams: ['Mountain', 'Earth'],
+        ingestionMode: 'emergency',
+        breathCycle: 0,
+        maxConcurrent: 0,
+        recursionDepth: 0,
+        targetLayers: ['GhostLimb', 'R2_ColdStorage'],
+        description: 'Emergency brake. Dump to cold storage, clear buffers.'
+    }
+};

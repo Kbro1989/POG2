@@ -83,7 +83,7 @@ import { CacheForensicsLimb } from './limbs/spatial/CacheForensicsLimb.js';
 import { SystemTaxonomyLimb } from './limbs/spatial/SystemTaxonomyLimb.js';
 import { MaterialLimb } from './limbs/spatial/MaterialLimb.js';
 import { SpatialSovereigntyLimb } from './limbs/spatial/SpatialSovereigntyLimb.js';
-import { NPC, GameState, VarbitSnapshot, CompositeCondition } from './core/models.js';
+import { NPC, GameState, VarbitSnapshot, CompositeCondition, Item, SovereignAvatar } from './core/models.js';
 import { GameplaySovereigntyLimb } from './limbs/spatial/GameplaySovereigntyLimb.js';
 import { PrifddinasInterpreter } from './engines/gameplay/PrifddinasInterpreter.js';
 import { BarrowsInterpreter } from './engines/gameplay/BarrowsInterpreter.js';
@@ -747,6 +747,7 @@ export async function main(): Promise<void> {
             }
 
 
+            await engine.initialize();
             await engine.mountModule(module);
             renderer.success(`[Engine] ${module.name} loaded and avatar spawned at [${engine.avatar.coord.x}, ${engine.avatar.coord.y}, ${engine.avatar.coord.plane}]`);
             
@@ -755,26 +756,15 @@ export async function main(): Promise<void> {
                 output: process.stdout
             });
 
-            // Durable Tick Loop
-            let tickCount = 0;
-            const tickInterval = setInterval(async () => {
-                tickCount++;
-                try {
-                    const tickRes = await engine.forceTick();
-                    process.stdout.write(`\r♥ Tick #${tickCount}${tickRes ? ` | ${tickRes}` : ''} > `);
-                } catch (err: any) {
-                    process.stdout.write(`\n❌ [TICK ERROR] ${err.message}\n> `);
-                }
-            }, 600);
-
             console.log(`\n--- POG2 SOVEREIGN GAMEPLAY SIMULATOR ---`);
-            console.log(`The heart is beating (600ms). Type actions while ticks process.\n`);
-            console.log(`Actions: 'move north', 'dig dharok', 'search sarcophagus'. Type 'exit' to quit.\n`);
+            console.log(`The clinical heart is beating (600ms). Type actions while ticks process.\n`);
+            console.log(`Actions: 'move north', 'talk to banker', 'trade'. Type 'exit' to quit.\n`);
 
             const promptLoop = async () => {
+
                 const answer = await rl.question(`> `);
                 if (answer.toLowerCase() === 'exit') {
-                    clearInterval(tickInterval);
+                    engine.stopClock();
                     rl.close();
                     process.exit(0);
                 }
@@ -2752,25 +2742,42 @@ function createMockGameState(options: any): GameState {
         });
     }
 
-    const inventory: number[] = [];
+    const inventory: (Item | null)[] = Array(28).fill(null);
     if (options.context) {
+        let slot = 0;
         options.context.split(',').forEach((s: string) => {
             const [key, val] = s.split('=');
-            if (key === 'inventory') {
-                inventory.push(parseInt(val));
+            if (key === 'inventory' && slot < 28) {
+                inventory[slot++] = { id: parseInt(val), amount: 1 };
             }
         });
     }
 
+    const players = new Map<string, SovereignAvatar>();
+    const mockAvatar: SovereignAvatar = {
+        id: -1,
+        name: 'Mock Player',
+        username: 'Mock_Player',
+        x: 0, y: 0, plane: 0,
+        inventory,
+        bank: [],
+        wallet: {},
+        equipment: {},
+        skills: {},
+        quests: { points: 0, completedCount: 0, quests: {} }
+    };
+    players.set(mockAvatar.username, mockAvatar);
+
     return {
         plane: 0,
         varbits,
-        playerInventory: inventory,
+        players,
         npcMap: new Map(),
         npcSpatialIndex: new Map(),
         objectMap: new Map()
     };
 }
+
 
     await program.parseAsync(process.argv);
 

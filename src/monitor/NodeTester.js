@@ -404,6 +404,27 @@ export class NodeTester {
                         const probe = this.training.healthCheck();
                         return { ...this.nodeBase(node), status: probe.online ? 'ONLINE' : 'DEGRADED', yaoState: probe.online ? YaoState.YoungYang : YaoState.OldYang, details: probe.details };
                     }
+                    if (node.path === 'src/limbs/spatial/GameplaySovereigntyLimb.ts') {
+                        const gameplaySig = await this.signal(node);
+                        if (gameplaySig) {
+                            // Specialized Organism Audit
+                            const instance = this.limbs['GameplaySovereigntyLimb'];
+                            const avatar = instance?.avatar;
+                            const invCount = avatar?.inventory?.length || 0;
+                            const skillCount = Object.keys(avatar?.skills || {}).length;
+                            const questPoints = avatar?.quests?.points || 0;
+                            const questCount = avatar?.quests?.completedCount || 0;
+                            const coinBalance = avatar?.wallet?.[22159] || 0;
+                            
+                            const ok = invCount === 28 && skillCount >= 29;
+                            return {
+                                ...gameplaySig,
+                                status: ok ? 'ONLINE' : 'DEGRADED',
+                                details: `Organism Grounded: ${invCount}-Slot Inv | ${skillCount} Skills | ${questPoints} QP (${questCount} Done) | ${coinBalance} GP`
+                            };
+
+                        }
+                    }
                     const metaSig = await this.signal(node);
                     if (metaSig)
                         return metaSig;

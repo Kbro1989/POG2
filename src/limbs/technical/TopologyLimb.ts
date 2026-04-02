@@ -1,16 +1,6 @@
-import { createRequire } from 'module';
-import * as path from 'path';
-const require = createRequire(import.meta.url);
-let GameCacheLoader: any = null;
-let parseOb3Model: any = null;
-import { getRSMVSubstratePath } from '../../utils/SovereignPathResolver.js';
-const RSMV = getRSMVSubstratePath();
-try { ({ GameCacheLoader } = require(path.join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch {}
-try { ({ parseOb3Model } = require(path.join(RSMV, 'src', '3d', 'rt7model.js'))); } catch {}
 import { Result, ok, err, YaoState } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-
-
+import { rsmvBridge } from '../../utils/RSMVBridge.js';
 
 const logger = createLogger('TopologyLimb');
 
@@ -31,28 +21,16 @@ export interface TopologicalProfile {
  * Deconstructs raw RS3 3D models into learning heuristics for the Pedagogy Engine.
  */
 export class TopologyLimb {
-    private readonly cachePath = 'C:\\ProgramData\\Jagex\\RuneScape';
-    private cache: any | null = null;
-
-    constructor() {
-        try {
-            if (GameCacheLoader) {
-                this.cache = new GameCacheLoader(this.cachePath);
-                this.cache.buildnr = 940;
-                logger.info('TopologyLimb initialized. Cache connection active.');
-            } else {
-                logger.warn('TopologyLimb: GameCacheLoader not available.');
-            }
-        } catch (e) {
-            logger.error({ error: (e as Error).message }, 'Failed to initialize GameCacheLoader.');
-        }
-    }
+    constructor() {}
 
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
-        const cacheValid = this.cache !== null;
+        const res = rsmvBridge.healthCheck();
+        const online = res.ok && res.value.online;
         return {
-            online: cacheValid,
-            details: cacheValid ? `Topology Substrate: ONLINE (Archive 47 bound)` : 'Topology Substrate: OFFLINE (Cache unreachable)'
+            online,
+            details: online
+                ? `Topology Substrate: ONLINE (Archive 47 bound)`
+                : 'Topology Substrate: OFFLINE (Cache unreachable)'
         };
     }
 
@@ -60,64 +38,21 @@ export class TopologyLimb {
      * Extracts foundational topology heuristics from a raw model ID.
      */
     public async extractTopology(modelId: number): Promise<Result<TopologicalProfile>> {
-        if (!this.cache) return err(new Error('Cache connection offline.'));
-
-        try {
-            // Major 47 = Models Archive (for RS3/NXT)
-            // Note: Archive 7 is used for "Old Models" in some legacy/OSRS contexts.
-            const buffer = await this.cache.getFile(47, modelId);
-            if (!buffer) {
-                logger.warn({ modelId }, 'Model not found in archive 47');
-                return err(new Error(`Model ${modelId} not found in archive 47.`));
-            }
-
-            logger.debug({ modelId, bufferLength: buffer.length }, 'Model buffer acquired. Parsing...');
-            // Parse full geometry
-            if (!parseOb3Model) return err(new Error('TopologyLimb: parseOb3Model not available.'));
-            const modelData = parseOb3Model(buffer, this.cache);
-            logger.debug({ modelId, meshCount: modelData.meshes.length }, 'Model parsed.');
-
-            let vertexCount = 0;
-            let triangleCount = 0;
-            let hasUVs = false;
-            let hasVertexColors = false;
-            let hasSkinning = false;
-            const materials = new Set<number>();
-
-            for (const mesh of modelData.meshes) {
-                if (mesh.attributes.pos) vertexCount += mesh.attributes.pos.count;
-                if (mesh.indices) triangleCount += Math.floor(mesh.indices.count / 3);
-
-                if (mesh.attributes.texuvs) hasUVs = true;
-                if (mesh.attributes.color) hasVertexColors = true;
-                if (mesh.attributes.skinids || mesh.attributes.boneids) hasSkinning = true;
-
-                materials.add(mesh.materialId);
-            }
-
-            const profile: TopologicalProfile = {
-                modelId,
-                vertexCount,
-                triangleCount,
-                boneCount: modelData.bonecount || 0,
-                hasUVs,
-                hasVertexColors,
-                hasSkinning,
-                materials: Array.from(materials),
-                boundingBox: { miny: modelData.miny, maxy: modelData.maxy }
-            };
-
-            return ok(profile);
-        } catch (e) {
-            logger.error({ error: (e as Error).message, modelId }, 'Failed to extract topology.');
-            return err(new Error(`Topology extraction failed: ${(e as Error).message}`));
-        }
+        const res = rsmvBridge.getModel(modelId);
+        if (!res.ok) return res as any;
+        const m = res.value;
+        return ok({
+            modelId,
+            vertexCount: m.vertexCount,
+            triangleCount: m.triangleCount,
+            boneCount: m.boneCount,
+            hasUVs: m.hasUVs,
+            hasVertexColors: false,
+            hasSkinning: m.hasSkinning,
+            materials: m.materials,
+            boundingBox: { miny: m.miny ?? 0, maxy: m.maxy ?? 0 }
+        });
     }
 
-    public close() {
-        if (this.cache) {
-            this.cache.close();
-            this.cache = null;
-        }
-    }
+    public close() {}
 }

@@ -10,8 +10,6 @@ import { TopologyLimb, TopologicalProfile } from './TopologyLimb.js';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
-import { writeFileSync } from 'fs';
-import { join } from 'path';
 
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
 import { VectorDB } from '../../utils/VectorDB.js';
@@ -41,6 +39,16 @@ export class PedagogyLimb {
     private client!: ModelClient;
     private hudResearcher!: HudResearchLimb;
 
+    // Phase 10: Pedagogical Logic Hub (Sovereign 2026)
+    private logic: any = {
+        skills: null,
+        quests: null,
+        achievements: null,
+        necromancy: null,
+        equipment: null,
+        strategies: null
+    };
+
     constructor(router: TernaryRouter, vectorDB: VectorDB, client: ModelClient) {
         this.forensics = new CacheForensicsLimb();
         this.topology = new TopologyLimb();
@@ -49,6 +57,12 @@ export class PedagogyLimb {
         this.client = client;
         this.vectorIndex = new VectorPedagogyLimb(client);
         this.hudResearcher = new HudResearchLimb();
+        
+        // Asynchronously initialize the Logic Hub
+        this.initialize().catch(err => {
+            logger.error({ error: err.message }, 'Failed to initialize Logic Hub');
+        });
+
         logger.info('PedagogyLimb initialized. Linked to Forensics, Topology, Router, and Substrate.');
     }
 
@@ -674,4 +688,47 @@ Output JSON ONLY:
             status: 'Cogito Ergo Sum: Quest logic is grounded and verified.'
         });
     }
+
+    /**
+     * initialize - Automated ingestion of pedagogical logic substrates.
+     * Manifests the 2004-2026 cognitive logic layers within the Sovereign CNS.
+     */
+    public async initialize(): Promise<void> {
+        const logicDir = path.join('D:', 'sovereign', 'memory', 'pedagogy', 'logic');
+        if (fs.existsSync(logicDir)) {
+            const map = {
+                'skill_manifest.json': 'skills',
+                'quest_manifest.json': 'quests',
+                'achievement_manifest.json': 'achievements',
+                'necromancy_logic.json': 'necromancy',
+                'equipment_requirements.json': 'equipment',
+                'training_strategies.json': 'strategies'
+            };
+
+            for (const [file, key] of Object.entries(map)) {
+                const fullPath = path.join(logicDir, file);
+                if (fs.existsSync(fullPath)) {
+                    try {
+                        const data = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+                        this.logic[key] = data;
+                        logger.info({ key, file }, 'Ingested Pedagogical Logic Layer.');
+                    } catch (e) {
+                        logger.error({ file, error: (e as Error).message }, 'Failed to parse logical substrate.');
+                    }
+                }
+            }
+        } else {
+            logger.warn({ logicDir }, 'Pedagogical Logic directory missing. Hub initialization skipped.');
+        }
+    }
+
+    /**
+     * Accessor Methods for the Sovereign Logic Hub
+     */
+    public getLogicHub(): any { return this.logic; }
+    public getSkillManifest() { return this.logic.skills; }
+    public getQuestManifest() { return this.logic.quests; }
+    public getNecromancyLogic() { return this.logic.necromancy; }
+    public getEquipmentRequirements() { return this.logic.equipment; }
 }
+

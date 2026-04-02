@@ -5,6 +5,7 @@ import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
 import { Result, ok, err, GameState, Direction, Coord, DirectionalCollision } from '../../core/models.js';
 import { MechanicalSovereigntyLimb } from '../technical/MechanicalSovereigntyLimb.js';
 import { DirectionalPathfinder } from './DirectionalPathfinder.js';
+import { GeometryAnnotationLayer } from './GeometryAnnotationLayer.js';
 
 // const logger = createLogger('SpatialSovereigntyLimb');
 const logger = {
@@ -43,9 +44,18 @@ export interface SpatialLogicArtifact {
 export class SpatialSovereigntyLimb {
     private readonly atlasDir: string;
     private loadedMatrices: Map<string, SpatialLogicArtifact> = new Map();
+    private gal: GeometryAnnotationLayer;
 
     constructor() {
         this.atlasDir = path.join(getSovereignRoot(), 'atlas', 'spatial');
+        this.gal = new GeometryAnnotationLayer();
+    }
+
+    /**
+     * getGAL - Expose the annotation layer for external tools (renderer overlay, etc.)
+     */
+    public getGAL(): GeometryAnnotationLayer {
+        return this.gal;
     }
 
     /**
@@ -113,6 +123,13 @@ export class SpatialSovereigntyLimb {
      * Supports optional 'direction' for quaternary navigation (Directional Sovereignty).
      */
     public isWalkable(plane: number, x: number, y: number, direction?: Direction): boolean {
+        // ── LAYER 0: Geometry Annotation Layer (human-resolved truth) ──
+        const galResult = this.gal.isNavigable(x, y, plane);
+        if (galResult !== null) {
+            // RESOLVED or INFERRED human annotation overrides raw bitmask
+            return galResult;
+        }
+
         const matrix = this.findMatrixForCoords(x, y);
         if (!matrix) return false; // Out of sovereignty bounds
 

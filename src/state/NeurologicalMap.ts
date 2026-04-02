@@ -198,6 +198,10 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         path: 'src/limbs/technical/VectorPedagogyLimb.ts', role: 'Deep Memory Learning', category: NeuralCategory.PNS, docDomain: 'SYSTEM', metabolicBaseCost: 20,
         biologicalRole: { organ: 'Metabolic Learning', input: 'Raw text', output: 'Embedding structure', constraints: 'Context-optimized' }
     },
+    {
+        path: 'src/limbs/technical/SovereignEditorLimb.ts', role: 'Motor Hand (RS3 Cache Editor)', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 25,
+        biologicalRole: { organ: 'Surgical Hand', input: 'CacheEntity + EditCommand', output: 'Modified Pedagogy State', constraints: 'Mod-layer persistence; ternary-router undo/redo' }
+    },
     // --- Phase 48: New Physicalized Limbs ---
     {
         path: 'src/limbs/technical/AILimb.ts', role: 'Neural Orchestration Interface', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 10,

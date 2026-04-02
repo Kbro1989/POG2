@@ -117,16 +117,116 @@ export interface GameObject {
     metadata?: Record<string, any>;
 }
 
+export interface Item {
+    id: number;
+    amount: number;
+    metadata?: Record<string, any>;
+}
+
+export interface Wallet {
+    [currencyId: number]: number; // Map currency ID to amount
+}
+
+export enum EquipmentSlot {
+    HEAD = 'head',
+    CAPE = 'cape',
+    NECK = 'neck',
+    WEAPON = 'weapon',
+    BODY = 'body',
+    SHIELD = 'shield',
+    LEGS = 'legs',
+    HANDS = 'hands',
+    FEET = 'feet',
+    RING = 'ring',
+    AMMO = 'ammo',
+    AURA = 'aura',
+    POCKET = 'pocket'
+}
+
+export interface Equipment {
+    [slot: string]: Item | null;
+}
+
+export enum SkillId {
+    ATTACK = 1,
+    STRENGTH = 2,
+    RANGED = 3,
+    MAGIC = 4,
+    DEFENCE = 5,
+    CONSTITUTION = 6,
+    PRAYER = 7,
+    AGILITY = 8,
+    HERBLORE = 9,
+    THIEVING = 10,
+    CRAFTING = 11,
+    RUNECRAFTING = 12,
+    MINING = 13,
+    SMITHING = 14,
+    FISHING = 15,
+    COOKING = 16,
+    FIREMAKING = 17,
+    WOODCUTTING = 18,
+    FLETCHING = 19,
+    SLAYER = 20,
+    FARMING = 21,
+    CONSTRUCTION = 22,
+    HUNTER = 23,
+    SUMMONING = 24,
+    DUNGEONEERING = 25,
+    DIVINATION = 26,
+    INVENTION = 27,
+    ARCHAEOLOGY = 28,
+    NECROMANCY = 29,
+    QUEST_POINT = 31
+}
+
+export interface Skill {
+    id: number;
+    name: string;
+    level: number;
+    xp: number;
+    virtualLevel?: number;
+}
+
+export interface Quest {
+    id: number;
+    name: string;
+    status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+    points: number;
+}
+
+export interface QuestState {
+    points: number;
+    completedCount: number;
+    quests: Record<number, Quest>;
+}
+
+export interface SovereignAvatar extends NPC {
+    username: string;
+    inventory: (Item | null)[]; // Fixed 28 slots
+    bank: Item[];
+    wallet: Wallet;
+    equipment: Equipment;
+    skills: Record<number, Skill>; // Map SkillId to Skill
+    quests: QuestState;
+    appearance?: {
+        bodyColors: [number, number][]; // [original, replacement]
+        gender: 'male' | 'female';
+    };
+}
+
+
+
 export interface GameState {
     plane: number;
     npcMap: Map<number, NPC>;
     npcSpatialIndex: Map<string, NPC[]>;  // "x,y,plane" -> [NPCs]
     objectMap: Map<number, GameObject>;
-    playerInventory: number[];            // Item IDs
     varbits: Map<number, number>;
     tickNumber?: number;
-    players?: Map<string, any>; // any represents SovereignAvatar locally
+    players: Map<string, SovereignAvatar>; // Formalized from 'any'
 }
+
 
 export interface HealthReport {
     state: ServiceHealthState | 'RATE_LIMITED';
@@ -157,6 +257,71 @@ export enum YaoState {
     SovereignAvatar = 6, // Active Entity / Spatial Sandbox Participant
     SovereignEngine = 7  // World Container / Master Tick Heartbeat
 }
+
+// ── PEDAGOGICAL LOGIC SUBSTRATES ──
+
+export interface SkillManifest {
+    version: string;
+    total_skills: number;
+    categories: Record<string, string[]>;
+    caps: Record<string, string[]>;
+    xp_table: Record<string, number>;
+    milestones: {
+        [key: string]: string | string[];
+    };
+}
+
+export interface QuestManifest {
+    version: string;
+    summary: {
+        total_quests: number;
+        free_quests: number;
+        members_quests: number;
+        max_quest_points: number;
+        free_max_qp: number;
+    };
+    states: Record<string, { color: string; label: string }>;
+    critical_milestones: Record<string, any>;
+}
+
+export interface AchievementManifest {
+    version: string;
+    summary: {
+        total_achievements: number;
+        max_runescore: number;
+    };
+    categories: Record<string, any>;
+    milestones: Record<string, any>;
+}
+
+export interface NecromancyLogic {
+    general: any;
+    mechanics: any;
+    abilities: Record<string, any>;
+    incantations: Record<string, any>;
+    talents_tree: Record<string, any>;
+}
+
+export interface EquipmentRequirements {
+    version: string;
+    tiers: Record<string, { name: string; material: string; requirement: number }>;
+    style_mapping: Record<string, string>;
+}
+
+export interface TrainingStrategies {
+    version: string;
+    strategies: Record<string, any>;
+}
+
+export interface LogicHub {
+    skills: SkillManifest | null;
+    quests: QuestManifest | null;
+    achievements: AchievementManifest | null;
+    necromancy: NecromancyLogic | null;
+    equipment: EquipmentRequirements | null;
+    strategies: TrainingStrategies | null;
+}
+
 
 export enum TemporalState {
     PAST = 'PAST',

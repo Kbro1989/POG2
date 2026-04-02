@@ -1,16 +1,8 @@
-import { createRequire } from 'module';
 import * as path from 'path';
-const require = createRequire(import.meta.url);
-let GameCacheLoader: any = null;
-let parse: any = null;
-
 import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
 import { getSovereignRoot, getRSMVCachePath, getCachePedagogyPath, getRSMVSubstratePath } from '../../utils/SovereignPathResolver.js';
-
-const RSMV = getRSMVSubstratePath();
-try { ({ GameCacheLoader } = require(path.join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch {}
-try { ({ parse } = require(path.join(RSMV, 'src', 'opdecoder.js'))); } catch {}
+import { rsmvBridge } from '../../utils/RSMVBridge.js';
 import * as fs from 'fs';
 import * as fsPromise from 'fs/promises';
 
@@ -56,18 +48,6 @@ export class CacheForensicsLimb {
         const legacyPath = path.join(this.cachePath, 'main_file_cache.dat2');
         const modernPath = path.join(this.cachePath, 'js5-47.jcache');
         this.mainCacheFile = fs.existsSync(legacyPath) ? legacyPath : modernPath;
-
-        try {
-            if (GameCacheLoader) {
-                this.cache = new GameCacheLoader(this.cachePath);
-                this.cache.buildnr = 940;
-                logger.info({ path: this.cachePath }, 'CacheForensicsLimb connected to substrate.');
-            } else {
-                logger.warn('CacheForensicsLimb: GameCacheLoader not available.');
-            }
-        } catch (e) {
-            logger.error({ error: (e as Error).message }, 'Failed to connect to GameCacheLoader.');
-        }
 
         // Lazy load basic catalogs
         this.loadCatalogData();
@@ -205,121 +185,61 @@ export class CacheForensicsLimb {
      * Decompile the full item definition from the active cache.
      */
     public async getItemDetails(id: number): Promise<Result<any>> {
-        if (!this.cache) return err(new Error('Cache connection offline.'));
-        if (!parse) return err(new Error('CacheForensicsLimb: parse not available.'));
-
-        try {
-            const MAJOR_ITEMS = 19;
-            const ARCH_SIZE = 256;
-            const archiveId = Math.floor(id / ARCH_SIZE);
-            const fileId = id % ARCH_SIZE;
-
-            const archive = await this.cache.getArchiveById(MAJOR_ITEMS, archiveId);
-            const file = archive.find((f: any) => f.fileid === fileId);
-            if (!file) return err(new Error(`Item ID ${id} not found in archive ${archiveId}`));
-
-            const raw = parse.item.read(file.buffer, this.cache);
-            const name = raw.name || `ITEMS ${id}`;
-            const equipSlotId = raw.equipSlotId ?? null;
-            const isEquippable = equipSlotId !== null;
-
-            // Extract models
-            const maleModels = [raw.maleModels_0?.id ?? null, raw.maleModels_1 ?? null, raw.maleModels_2 ?? null];
-            const femaleModels = [raw.femaleModels_0?.id ?? null, raw.femaleModels_1 ?? null, raw.femaleModels_2 ?? null];
-
-            const result = {
-                id,
-                raw,
-                forensics: {
-                    name,
-                    isEquippable,
-                    equipSlot: isEquippable && equipSlotId < this.SLOT_NAMES.length ? this.SLOT_NAMES[equipSlotId] : null,
-                    equipSlotId,
-                    isMember: !!raw.members,
-                    maleModels,
-                    femaleModels,
-                    actions: [raw.widget_actions_0, raw.widget_actions_1, raw.widget_actions_2, raw.widget_actions_3, raw.widget_actions_4].filter(Boolean)
-                }
-            };
-            return ok(result);
-        } catch (e) {
-            logger.error({ error: (e as Error).message, id }, 'Item Forensic Decompile failed.');
-            return err(new Error(`Decompile failed: ${(e as Error).message}`));
-        }
+        // Use RSMVBridge for live cache access
+        const res = rsmvBridge.getItem(id);
+        if (!res.ok) return res;
+        const raw = res.value;
+        const SLOT_NAMES = this.SLOT_NAMES;
+        return ok({
+            id,
+            raw: raw.raw,
+            forensics: {
+                name: raw.name,
+                isEquippable: raw.isEquippable,
+                equipSlot: raw.isEquippable && raw.equipSlotId !== null && raw.equipSlotId < SLOT_NAMES.length ? SLOT_NAMES[raw.equipSlotId] : null,
+                equipSlotId: raw.equipSlotId,
+                isMember: raw.isMember,
+                maleModels: raw.maleModels,
+                femaleModels: raw.femaleModels,
+                actions: raw.actions
+            }
+        });
     }
 
     /**
      * Decompile the full NPC definition from the active cache.
      */
     public async getNpcDetails(id: number): Promise<Result<any>> {
-        if (!this.cache) return err(new Error('Cache connection offline.'));
-        if (!parse) return err(new Error('CacheForensicsLimb: parse not available.'));
-
-        try {
-            const MAJOR_NPCS = 18;
-            const ARCH_SIZE = 128;
-            const archiveId = Math.floor(id / ARCH_SIZE);
-            const fileId = id % ARCH_SIZE;
-
-            const archive = await this.cache.getArchiveById(MAJOR_NPCS, archiveId);
-            const file = archive.find((f: any) => f.fileid === fileId);
-            if (!file) return err(new Error(`NPC ID ${id} not found in archive ${archiveId}`));
-
-            const raw = parse.npc.read(file.buffer, this.cache);
-            const name = raw.name || `NPCS ${id}`;
-
-            const result = {
-                id,
-                raw,
-                forensics: {
-                    name,
-                    combatLevel: raw.combat ?? null,
-                    models: raw.models || [],
-                    headModels: raw.headModels || [],
-                    actions: [raw.actions_0, raw.actions_1, raw.actions_2, raw.actions_3, raw.actions_4].filter(Boolean),
-                    boundSize: raw.boundSize ?? null,
-                    animationGroup: raw.animation_group ?? null
-                }
-            };
-            return ok(result);
-        } catch (e) {
-            logger.error({ error: (e as Error).message, id }, 'NPC Forensic Decompile failed.');
-            return err(new Error(`Decompile failed: ${(e as Error).message}`));
-        }
+        const res = rsmvBridge.getNpc(id);
+        if (!res.ok) return res;
+        const raw = res.value;
+        return ok({
+            id,
+            raw: raw.raw,
+            forensics: {
+                name: raw.name,
+                combatLevel: raw.combatLevel,
+                models: raw.models,
+                headModels: raw.headModels,
+                actions: raw.actions,
+                boundSize: raw.boundSize,
+                animationGroup: raw.raw?.animation_group ?? null
+            },
+            pedagogy: {
+                summary: raw.name,
+                classification: raw.combatLevel ? 'combat_npc' : 'passive_npc'
+            }
+        });
     }
 
     /**
      * Decompile the full Object definition from the active cache.
      */
     public async getObjectDetails(id: number): Promise<Result<any>> {
-        if (!this.cache) return err(new Error('Cache connection offline.'));
-        if (!parse) return err(new Error('CacheForensicsLimb: parse not available.'));
-
-        try {
-            const MAJOR_OBJECTS = 16;
-            const ARCH_SIZE = 256;
-            const archiveId = Math.floor(id / ARCH_SIZE);
-            const fileId = id % ARCH_SIZE;
-
-            const archive = await this.cache.getArchiveById(MAJOR_OBJECTS, archiveId);
-            const file = archive.find((f: any) => f.fileid === fileId);
-            if (!file) return err(new Error(`Object ID ${id} not found in archive ${archiveId}`));
-
-            const raw = parse.object.read(file.buffer, this.cache);
-            const result = {
-                id,
-                name: raw.name || `OBJECT ${id}`,
-                models: raw.models || [],
-                actions: [raw.actions_0, raw.actions_1, raw.actions_2, raw.actions_3, raw.actions_4].filter(Boolean),
-                width: raw.width || 1,
-                length: raw.length || 1,
-                raw
-            };
-            return ok(result);
-        } catch (e) {
-            logger.error({ error: (e as Error).message, id }, 'Object Forensic Decompile failed.');
-            return err(new Error(`Decompile failed: ${(e as Error).message}`));
-        }
+        const res = rsmvBridge.getObject(id);
+        if (!res.ok) return res;
+        const raw = res.value;
+        return ok(raw);
     }
 
     /**
@@ -515,19 +435,17 @@ export class CacheForensicsLimb {
     }
 
     public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' } {
-        const cacheExists = this.cache !== null;
         const catalogReady = this.equipmentBySlot !== null;
+        // Probe the live cache via RSMVBridge
+        const bridgeRes = rsmvBridge.healthCheck();
+        const cacheOnline = bridgeRes.ok && bridgeRes.value.online;
 
-        let status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' = 'ONLINE';
-        let details = `Cache: ${cacheExists ? 'NOMINAL' : 'OFFLINE'}. Catalogs: ${catalogReady ? 'READY' : 'MISSING'}.`;
+        const status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' =
+            cacheOnline && catalogReady ? 'ONLINE' :
+            catalogReady ? 'DEGRADED' : 'OFFLINE';
 
-        if (!cacheExists) {
-            status = 'OFFLINE';
-        } else if (!catalogReady) {
-            status = 'DEGRADED';
-        }
-
-        return { online: cacheExists, details, status };
+        const details = `Cache: ${cacheOnline ? 'NOMINAL' : 'OFFLINE'}. Catalogs: ${catalogReady ? 'READY' : 'MISSING'}.`;
+        return { online: cacheOnline || catalogReady, details, status };
     }
 
     public close() {
