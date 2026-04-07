@@ -1,4 +1,4 @@
-export interface Comparable<T> {
+﻿export interface Comparable<T> {
   compare(other: T): number; // Return < 0 if this < other, > 0 if this > other
 }
 

@@ -1,4 +1,4 @@
-// src/limbs/vision/ChromaLimb.ts
+﻿// src/limbs/vision/ChromaLimb.ts
 // Phase 4C: Chromatic Validation
 
 import { type Result, ok } from '../../core/models.js';
@@ -17,7 +17,7 @@ export class ChromaLimb {
   }
 
   async validate(profile: string, palette: string[]): Promise<Result<ChromaValidationResult>> {
-    console.log(`🎨 Validating chromatic profile: ${profile}`);
+    console.log(`ðŸŽ¨ Validating chromatic profile: ${profile}`);
 
     // Simulate gradient validation
     const expected = ['#FF4500', '#FF8C00', '#FFD700'];

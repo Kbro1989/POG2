@@ -28,6 +28,7 @@ export class HexagramManager extends EventEmitter {
         throw new Error('Method not implemented.');
     }
     private static instance: HexagramManager | undefined;
+    private static mode: 'production' | 'mock' = 'production';
     private lines: ContextCard[] = [];
     private readonly projectId: string;
 
@@ -38,8 +39,44 @@ export class HexagramManager extends EventEmitter {
         return HexagramManager.instance;
     }
 
+    public static initializeMock(): void {
+        HexagramManager.mode = 'mock';
+        // Create a minimal mock instance that doesn't require a vectorDB
+        if (!HexagramManager.instance) {
+            HexagramManager.instance = new HexagramManager(null, 'mock-project');
+        }
+    }
+
+    public static isMock(): boolean {
+        return HexagramManager.mode === 'mock';
+    }
+
+    public static resetInstance(): void {
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error('resetInstance is forbidden in production');
+        }
+        HexagramManager.instance = undefined;
+        HexagramManager.mode = 'production';
+    }
+
     public updateState(sensors: any): void {
         // Integrate somatic sensory feedback into the thought processor
+    }
+
+    /**
+     * setYaoState - Direct state transformation override.
+     * Pulse-governed nodes use this to force the organism into specific metabolic states.
+     */
+    public setYaoState(state: YaoState): void {
+        // In the existing architecture, the state is derived from the lines.
+        // To "set" the state, we inject a high-priority "Pulse" card that dominates the derivation.
+        this.pushLine({
+            lineIndex: 2, // Biological Pulse / System Vitality
+            title: 'Substrate Health Pulse',
+            content: `Pulse-driven transformation triggered by CNS Godhead. State: ${state}`,
+            state: state,
+            importance: 5.0 // High weight to dominate the majority calculation
+        });
     }
 
     public healthCheck(): { online: boolean; details: string } {
@@ -277,7 +314,7 @@ Respond in JSON ONLY:
     public getYaoState(): YaoState {
         if (this.lines.length === 0) return YaoState.YoungYang;
 
-        // Track all 6 states independently — Old states must not collapse into Young.
+        // Track all 6 states independently â€” Old states must not collapse into Young.
         // This preserves chaotic/changing signals from accumulated context,
         // enabling Phase 27 generative bias to trigger organically.
         const counts: Record<number, number> = {
@@ -362,8 +399,8 @@ Respond in JSON ONLY:
     }
 
     private getYaoSymbol(state: YaoState): string {
-        if (state === YaoState.OldYang || state === YaoState.YoungYang) return '⚊';
-        if (state === YaoState.OldYin || state === YaoState.YoungYin) return '⚋';
+        if (state === YaoState.OldYang || state === YaoState.YoungYang) return 'âšŠ';
+        if (state === YaoState.OldYin || state === YaoState.YoungYin) return 'âš‹';
         return 'Balanced';
     }
 }

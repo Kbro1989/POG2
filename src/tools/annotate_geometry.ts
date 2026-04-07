@@ -1,5 +1,5 @@
-/**
- * ANNOTATE GEOMETRY — Interactive TUI Tool
+﻿/**
+ * ANNOTATE GEOMETRY â€” Interactive TUI Tool
  * 
  * Renders a collision grid and lets you attach permanent geometry
  * annotations to tile ranges. Your interpretation becomes a resolved
@@ -57,8 +57,8 @@ function renderGrid(
             );
 
             if (ann) {
-                const c = ann.confidence === 'RESOLVED' ? '★' :
-                          ann.confidence === 'INFERRED' ? '◆' : '?';
+                const c = ann.confidence === 'RESOLVED' ? 'â˜…' :
+                          ann.confidence === 'INFERRED' ? 'â—†' : '?';
                 row += c;
             } else {
                 const cell = grid.find(g => g.x === wx && g.z === wz);
@@ -68,15 +68,15 @@ function renderGrid(
         rows.push(row);
     }
     console.log(rows.join('\n'));
-    console.log(`\nLegend: . Walkable | T Terrain | O Object | X Both | ★ RESOLVED | ◆ INFERRED`);
+    console.log(`\nLegend: . Walkable | T Terrain | O Object | X Both | â˜… RESOLVED | â—† INFERRED`);
 }
 
 async function promptAnnotation(): Promise<void> {
     console.clear();
-    console.log('╔══════════════════════════════════════════════════════════════╗');
-    console.log('║   GEOMETRY ANNOTATION LAYER — Interactive Session           ║');
-    console.log('║   Your interpretation becomes permanent sovereign truth     ║');
-    console.log('╚══════════════════════════════════════════════════════════════╝\n');
+    console.log('â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—');
+    console.log('â•‘   GEOMETRY ANNOTATION LAYER â€” Interactive Session           â•‘');
+    console.log('â•‘   Your interpretation becomes permanent sovereign truth     â•‘');
+    console.log('â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n');
 
     const stats = gal.stats();
     console.log(`Current atlas: ${stats.total} annotations | ${stats.resolved} resolved | ${stats.regions} regions\n`);
@@ -86,7 +86,7 @@ async function promptAnnotation(): Promise<void> {
         console.log('Recent annotations:');
         const all = gal.getAllAnnotations().slice(-5);
         for (const a of all) {
-            const nav = a.navigable ? '✓' : '✗';
+            const nav = a.navigable ? 'âœ“' : 'âœ—';
             console.log(`  [${nav}] ${a.void_type} @ (${a.tile_range.x1}-${a.tile_range.x2}, ${a.tile_range.z1}-${a.tile_range.z2}, pl${a.region.plane})`);
         }
         console.log('');
@@ -155,7 +155,7 @@ async function promptAnnotation(): Promise<void> {
         promoteToAssumptions(ann);
     }
 
-    console.log(`\n[OK] ★ Annotation committed: "${signal}"`);
+    console.log(`\n[OK] â˜… Annotation committed: "${signal}"`);
     const another = await ask('\nAnnotate another region? (y/n): ');
     if (another.toLowerCase().startsWith('y')) {
         return promptAnnotation();
@@ -176,13 +176,13 @@ function promoteToAssumptions(ann: GeometryAnnotation) {
 ${ann.notes ? `- **Notes**: ${ann.notes}` : ''}
 `;
     try {
-        const existing = existsSync(ASSUMPTIONS_PATH) ? readFileSync(ASSUMPTIONS_PATH, 'utf-8') : '# Geometry Assumptions — Sovereign Atlas\n';
+        const existing = existsSync(ASSUMPTIONS_PATH) ? readFileSync(ASSUMPTIONS_PATH, 'utf-8') : '# Geometry Assumptions â€” Sovereign Atlas\n';
         writeFileSync(ASSUMPTIONS_PATH, existing + entry);
-        console.log(`[GAL] ↑ Promoted to assumptions.md`);
+        console.log(`[GAL] â†‘ Promoted to assumptions.md`);
     } catch (e) {
         console.warn(`[GAL] Could not write assumptions.md: ${e}`);
     }
 }
 
-// ─── RUN ───
+// â”€â”€â”€ RUN â”€â”€â”€
 promptAnnotation();

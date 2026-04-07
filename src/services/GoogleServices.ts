@@ -1,4 +1,4 @@
-import { type Result } from '../core/models.js';
+﻿import { type Result } from '../core/models.js';
 
 const logger = createLogger('GoogleServices');
 

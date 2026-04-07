@@ -1,4 +1,4 @@
-/**
+﻿/**
  * EntitySchema.ts - SQLite Schema for Sovereign Actor Persistence
  * Optimized for fast writes and simple joins without ORM overhead.
  */

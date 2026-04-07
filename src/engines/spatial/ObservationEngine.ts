@@ -1,4 +1,4 @@
-import { Result, ok, err, Coord, DirectionalCollision } from '../../core/models.js';
+﻿import { Result, ok, err, Coord, DirectionalCollision } from '../../core/models.js';
 import { WorldForensicsLimb, WorldObservation } from '../../limbs/spatial/WorldForensicsLimb.js';
 import { SovereignGrounding } from '../../utils/SovereignGrounding.js';
 import { createLogger } from '../../utils/logger.js';

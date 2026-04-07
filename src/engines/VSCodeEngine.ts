@@ -1,4 +1,4 @@
-import { spawn, exec } from 'child_process';
+﻿import { spawn, exec } from 'child_process';
 import { promisify } from 'util';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
@@ -34,7 +34,7 @@ export interface WorkspaceState {
 }
 
 /**
- * VSCodeEngine — Sovereign integration with VS Code editor
+ * VSCodeEngine â€” Sovereign integration with VS Code editor
  * Provides Kimi with direct access to edit, read, and navigate code
  * Integrated with TernaryRouter for metabolic context in the IDE.
  */

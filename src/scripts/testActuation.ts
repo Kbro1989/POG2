@@ -1,4 +1,4 @@
-import { ChromanumberEngine } from '../engines/ChromanumberEngine.js';
+﻿import { ChromanumberEngine } from '../engines/ChromanumberEngine.js';
 import { ModelClient } from '../clients/ModelClient.js';
 import { SovereignConfig } from '../config/SovereignConfig.js';
 import { createLogger } from '../utils/logger.js';

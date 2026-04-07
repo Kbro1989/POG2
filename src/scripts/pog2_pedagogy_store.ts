@@ -1,4 +1,4 @@
-// src/scripts/pog2_pedagogy_store.ts
+﻿// src/scripts/pog2_pedagogy_store.ts
 // Pedagogical Abstraction Storage - Tri-Layer UI Architecture Principle
 
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
@@ -81,7 +81,7 @@ function storePedagogy(): void {
   const outputPath = join(outputDir, 'tri_layer_architecture.json');
   writeFileSync(outputPath, JSON.stringify(TRI_LAYER_PRINCIPLE, null, 2));
   
-  console.log('🧬 Pedagogical Principle Stored:');
+  console.log('ðŸ§¬ Pedagogical Principle Stored:');
   console.log(`  ID: ${TRI_LAYER_PRINCIPLE.id}`);
   console.log(`  Confidence: ${TRI_LAYER_PRINCIPLE.confidence}`);
   console.log(`  Taxonomy Layers: ${TRI_LAYER_PRINCIPLE.taxonomy.length}`);

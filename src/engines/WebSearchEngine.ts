@@ -1,4 +1,4 @@
-import type { Result, EngineOutput } from '../core/models.js';
+﻿import type { Result, EngineOutput } from '../core/models.js';
 import { Renderer } from '../ui/Renderer.js';
 
 export interface WebSearchParams {
@@ -14,7 +14,7 @@ export interface SearchResult {
 }
 
 /**
- * WebSearchEngine â€” Free web search using DuckDuckGo HTML (no API key required)
+ * WebSearchEngine Ã¢â‚¬â€ Free web search using DuckDuckGo HTML (no API key required)
  * Falls back to other free sources if needed.
  */
 export class WebSearchEngine {
@@ -153,7 +153,7 @@ export class WebSearchEngine {
 
     private formatResults(results: SearchResult[], query: string): string {
         const lines = [
-            `ðŸ” Web Search Results for "${query}":`,
+            `Ã°Å¸â€Â Web Search Results for "${query}":`,
             '='.repeat(50),
             ''
         ];

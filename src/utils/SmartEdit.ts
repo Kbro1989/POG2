@@ -1,4 +1,4 @@
-export interface SmartEditParams {
+﻿export interface SmartEditParams {
     file_path: string;
     old_string: string;
     new_string: string;

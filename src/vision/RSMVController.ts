@@ -17,13 +17,32 @@ export interface ModelModifications {
 }
 
 /**
- * RSMVController — CNS Bridge for the RSMV 3D substrate.
+ * RSMVController â€” CNS Bridge for the RSMV 3D substrate.
  * Manages the inspector child process and coordinates exports.
  */
 export class RSMVController {
+    private static instance: RSMVController | undefined;
     private activeProcess: any = null;
 
-    constructor() { }
+    private constructor() {
+        if (RSMVController.instance) {
+            throw new Error('Singleton violation: use RSMVController.getInstance()');
+        }
+    }
+
+    public static getInstance(): RSMVController {
+        if (!this.instance) {
+            this.instance = new RSMVController();
+        }
+        return this.instance;
+    }
+
+    public static resetInstance(): void {
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error('resetInstance is forbidden in production');
+        }
+        this.instance = undefined;
+    }
 
     /**
      * Open a model in the RSMV viewer via one-shot CLI.

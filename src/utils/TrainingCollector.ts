@@ -1,4 +1,4 @@
-import { appendFile, readFile } from 'fs/promises';
+﻿import { appendFile, readFile } from 'fs/promises';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import {
@@ -17,7 +17,7 @@ import { createLogger } from "./logger.js";
 
 const logger = createLogger('TrainingCollector');
 
-// â•â•â• Training Data Interfaces â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Training Data Interfaces Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 export interface InteractionRecord {
     timestamp: string;
@@ -106,11 +106,11 @@ export interface RetrospectiveRecord {
 }
 
 /**
- * TrainingCollector â€” Biological memory substrate for perpetual learning.
+ * TrainingCollector Ã¢â‚¬â€ Biological memory substrate for perpetual learning.
  * Records all interactions, routing decisions, session history, and metrics
  * as JSONL files on D:\sovereign\training\ for future model training.
  *
- * This is the "hippocampus" â€” it captures *everything* so the system
+ * This is the "hippocampus" Ã¢â‚¬â€ it captures *everything* so the system
  * can learn from its own behavior over time.
  */
 export class TrainingCollector {
@@ -206,7 +206,7 @@ export class TrainingCollector {
         return true;
     }
 
-    // â•â•â• Interaction Recording â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Interaction Recording Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     async recordInteraction(record: Omit<InteractionRecord, 'timestamp' | 'sessionId'>): Promise<void> {
         const full: InteractionRecord = {
@@ -252,7 +252,7 @@ export class TrainingCollector {
         }
     }
 
-    // â•â•â• Routing Decision Recording â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Routing Decision Recording Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     async recordRoutingDecision(record: Omit<RoutingDecisionRecord, 'timestamp' | 'sessionId'>): Promise<void> {
         const full: RoutingDecisionRecord = {
@@ -275,7 +275,7 @@ export class TrainingCollector {
         }
     }
 
-    // â•â•â• Session History Recording â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Session History Recording Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     async recordHistory(event: SessionHistoryRecord['event'], detail: string, metadata?: Record<string, unknown>): Promise<void> {
         const record: SessionHistoryRecord = {
@@ -293,7 +293,7 @@ export class TrainingCollector {
         });
     }
 
-    // â•â•â• Metric Recording â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Metric Recording Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     async recordMetric(record: Omit<MetricRecord, 'timestamp' | 'sessionId'>): Promise<void> {
         const full: MetricRecord = {
@@ -309,7 +309,7 @@ export class TrainingCollector {
         });
     }
 
-    // â•â•â• Thinking Nexus Recording â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Thinking Nexus Recording Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     async recordThinkingNexus(nexus: ThinkingNexus): Promise<void> {
         const full = {
@@ -332,7 +332,7 @@ export class TrainingCollector {
         }
     }
 
-    // â•â•â• FPRAG Decision Recording â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â FPRAG Decision Recording Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     async recordFPRAGDecision(audit: DecisionAuditRecord): Promise<void> {
         const full = {
@@ -355,7 +355,7 @@ export class TrainingCollector {
         }
     }
 
-    // â•â•â• Error-Fix Pair Recording â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Error-Fix Pair Recording Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     async recordErrorFix(record: Omit<ErrorFixRecord, 'timestamp' | 'sessionId'>): Promise<void> {
         const full: ErrorFixRecord = {
@@ -378,7 +378,7 @@ export class TrainingCollector {
         }
     }
 
-    // â•â•â• Consequence/Outcome Recording â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Consequence/Outcome Recording Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     async recordConsequence(record: Omit<ConsequenceRecord, 'timestamp' | 'sessionId'>): Promise<void> {
         const full: ConsequenceRecord = {
@@ -394,7 +394,7 @@ export class TrainingCollector {
         });
     }
 
-    // â•â•â• Health Check (for NodeTester) â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Health Check (for NodeTester) Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     healthCheck(): { online: boolean; details: string } {
         try {
@@ -412,7 +412,7 @@ export class TrainingCollector {
         }
     }
 
-    // â•â•â• Internal Helpers â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Internal Helpers Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     private getDatePrefix(): string {
         return new Date().toISOString().split('T')[0]!;

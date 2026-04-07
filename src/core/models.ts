@@ -12,6 +12,33 @@ import { SovereignDomain } from '../types/SovereignDomain.js';
 export { SovereignDomain };
 export type Direction = 'north' | 'south' | 'east' | 'west';
 
+export enum LogicalSignature {
+    CONSUMABLE_ROLL = 'CONSUMABLE_ROLL',
+    LOOT_TABLE_ROLL = 'LOOT_TABLE_ROLL',
+    TRANSPORT_ACTUATOR = 'TRANSPORT_ACTUATOR',
+    TELEPORT_ACTUATOR = 'TELEPORT_ACTUATOR',
+    BANK_DEPOSIT_ACTUATOR = 'BANK_DEPOSIT_ACTUATOR',
+    PRACTICE_SKILL_NODE = 'PRACTICE_SKILL_NODE',
+    CONSUMABLE_SKILL_STATION = 'CONSUMABLE_SKILL_STATION',
+    SPATIAL_SHIFT = 'SPATIAL_SHIFT',
+    ENTITY_MANIFEST = 'ENTITY_MANIFEST',
+    PRIVILEGE_ELEVATION = 'PRIVILEGE_ELEVATION'
+}
+export enum SubstrateState {
+    ONLINE = 'ONLINE',          // Full actuation and vision OK
+    DEGRADED = 'DEGRADED',      // Vision OK, but actuation (RSMV write) blocked
+    DEGRADED_IO = 'DEGRADED_IO', // I/O latency exceeding pulse budget
+    OFFLINE = 'OFFLINE'         // Full substrate reachability failure (abort tick)
+}
+
+export interface SubstrateDeficit {
+    type: 'NPC' | 'ITEM' | 'OBJECT' | 'TILE';
+    id: number | string;
+    requestedAtTick: number;
+    reason: string;
+}
+
+
 export interface Coord {
     x: number;
     y: number;
@@ -224,7 +251,61 @@ export interface GameState {
     objectMap: Map<number, GameObject>;
     varbits: Map<number, number>;
     tickNumber?: number;
-    players: Map<string, SovereignAvatar>; // Formalized from 'any'
+    players: Map<string, SovereignAvatar>; 
+}
+
+/**
+ * Phase 35: Brain/CNS Orchestration
+ */
+export interface FragmentLogic {
+    anchor: string;
+    varbits: number[];
+    npcs: number[];
+    objects: number[];
+    rules: number[];
+    customTriggers: string[];
+}
+
+/**
+ * MechanicalRule - Authoritative logic extracted from refilled logic stubs.
+ */
+export interface MechanicalRule {
+    archiveId: number;
+    name: string;
+    path: string;
+    description?: string;
+    rawCode?: string; // Standardized GLSL or JS logic
+    opcodes?: number[];
+    isAuditable: boolean;
+    lastVerifiedTick?: number;
+}
+
+/**
+ * Server-side injector registry entry
+ */
+export interface ServerSideInjector {
+  // Cache identification
+  itemId?: number;        // Major 19, archive X
+  objectId?: number;      // Major 0, archive X  
+  npcId?: number;         // Major 1, archive X
+  
+  // Trigger conditions
+  trigger: 'click' | 'use' | 'examine' | 'tick' | 'proximity';
+  
+  // Server-side validation gates
+  validation: {
+    questStage?: number;
+    skillLevel?: number;
+    varbitChecks?: Array<{id: number, value: number}>;
+    inventoryChecks?: Array<{itemId: number, count: number}>;
+  };
+  
+  // Handler dispatch
+  handler: string;        // 'BarrowsInterpreter', 'ClueScrollInterpreter', etc.
+  method: string;         // 'onClick', 'onUse', etc.
+  
+  // Authority
+  authorityTier: 'CACHE' | 'SYNTHESIZED' | 'WIKI';
 }
 
 
@@ -258,7 +339,7 @@ export enum YaoState {
     SovereignEngine = 7  // World Container / Master Tick Heartbeat
 }
 
-// ── PEDAGOGICAL LOGIC SUBSTRATES ──
+// â”€â”€ PEDAGOGICAL LOGIC SUBSTRATES â”€â”€
 
 export interface SkillManifest {
     version: string;
@@ -466,10 +547,33 @@ export interface SovereignMetadata {
     readonly hash?: string;
 }
 
+export type ProvenanceSource = 'RS3_CACHE' | 'WIKI' | 'MANUAL' | 'GENERATIVE' | 'PEDAGOGY' | 'UNKNOWN';
+
+/**
+ * Provenance â€” Traceability link from Vibe (Pedagogy) to Truth (Substrate).
+ */
+export interface Provenance {
+    source: ProvenanceSource;
+
+    major?: number;
+    minor?: number;
+    recordId?: number | string;
+    subRecordId?: number;
+    hash?: string;
+    path?: string;
+    url?: string;
+    timestamp: number;
+    agentId?: string; 
+    ancestry?: Provenance[];
+
+}
+
 export interface SovereignRecord<T = any> {
     readonly metadata: SovereignMetadata;
+    readonly provenance?: Provenance;
     readonly data: T;
 }
+
 
 export interface ValidationResult {
     readonly ok: boolean;
@@ -503,7 +607,7 @@ export interface EngineOutput {
 }
 
 /**
- * ActuationIntent — CNS-driven structural or environmental change.
+ * ActuationIntent â€” CNS-driven structural or environmental change.
  */
 export interface ActuationIntent {
     readonly action: 'mutate_shader' | 'capture_frame' | 'update_model' | 'ui_actuate' | 'rsmv_control' | 'actuate_hud';
@@ -513,7 +617,7 @@ export interface ActuationIntent {
 }
 
 /**
- * ActuationResult — Feedback from the motor/vision substrate after actuation.
+ * ActuationResult â€” Feedback from the motor/vision substrate after actuation.
  */
 export interface ActuationResult {
     readonly success: boolean;
@@ -523,7 +627,7 @@ export interface ActuationResult {
 }
 
 /**
- * PedagogyProfile — Distilled metrics from professional production assets.
+ * PedagogyProfile â€” Distilled metrics from professional production assets.
  * Used for "Training" the AI on pro-level 3D standards.
  */
 export interface PedagogyProfile {

@@ -27,7 +27,7 @@ export class KinematicsLimb {
     }
 
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
-        const res = rsmvBridge.healthCheck();
+        const res = await rsmvBridge.healthCheck();
         const online = res.ok && res.value.online;
         return {
             online,
@@ -51,7 +51,7 @@ export class KinematicsLimb {
             }
         }
 
-        const res = rsmvBridge.getSequence(sequenceId);
+        const res = await rsmvBridge.getSequence(sequenceId);
         if (!res.ok) return err(new Error(`Kinematic extraction failed: ${res.error.message}`));
 
         const seq = res.value;

@@ -1,4 +1,4 @@
-import { createRequire } from 'module';
+﻿import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -13,7 +13,7 @@ import { createLogger } from "../../utils/logger.js";
 const execAsync = promisify(exec);
 const logger = createLogger('ModelRolodex');
 
-// ═══ TYPES ═══
+// â•â•â• TYPES â•â•â•
 
 export type RolodexProvider = 'ollama' | 'cloudflare' | 'gemini' | 'huggingface' | 'fireworks' | 'openrouter' | 'rsmv';
 
@@ -54,10 +54,10 @@ export interface RolodexState {
     version: string;
 }
 
-// ═══ ROLODEX CORE ═══
+// â•â•â• ROLODEX CORE â•â•â•
 
 /**
- * ModelRolodex — The Sovereign's Living Model Catalog.
+ * ModelRolodex â€” The Sovereign's Living Model Catalog.
  *
  * Dynamically discovers available models from each provider via API/shell calls.
  * Tracks per-model health (success/failure/latency/tokens).
@@ -76,7 +76,7 @@ export class ModelRolodex {
         if (existsSync(this.persistPath)) {
             try {
                 this.state = JSON.parse(readFileSync(this.persistPath, 'utf8'));
-                logger.info({ models: Object.keys(this.state.models).length }, '🗂️ Rolodex loaded from disk.');
+                logger.info({ models: Object.keys(this.state.models).length }, 'ðŸ—‚ï¸ Rolodex loaded from disk.');
 
                 // Phase 21: Reputation Healing - Restore baseline for unused/corrupted states
                 for (const key in this.state.models) {
@@ -176,7 +176,7 @@ export class ModelRolodex {
         }
     }
 
-    // ═══ PUBLIC API ═══
+    // â•â•â• PUBLIC API â•â•â•
 
     /** Get all models for a specific provider */
     getModelsForProvider(provider: RolodexProvider): RolodexModel[] {
@@ -259,7 +259,7 @@ export class ModelRolodex {
         entry.latencySamples++;
         entry.avgLatencyMs = entry.avgLatencyMs + (latencyMs - entry.avgLatencyMs) / entry.latencySamples;
 
-        // 🧬 Update reputation score
+        // ðŸ§¬ Update reputation score
         entry.reputation = this.computeReputation(entry);
 
         // Persist periodically (every 10 calls)
@@ -271,14 +271,14 @@ export class ModelRolodex {
         // Global Reputation Decay is now handled by an interval
     }
 
-    /** 🧬 Evolutionary Mutation - Manually adjust reputation based on strategy advisor */
+    /** ðŸ§¬ Evolutionary Mutation - Manually adjust reputation based on strategy advisor */
     public mutateReputation(modelId: string, provider: RolodexProvider, adjustment: number): void {
         const key = `${provider}:${modelId}`;
         const entry = this.state.models[key];
         if (!entry) return;
 
         const oldRep = entry.reputation;
-        // 🧬 Phase 108: Physiological clamping (Prevent drift chaos)
+        // ðŸ§¬ Phase 108: Physiological clamping (Prevent drift chaos)
         entry.reputation = Math.max(0.2, Math.min(2.0, entry.reputation + adjustment));
 
         logger.info({
@@ -287,12 +287,12 @@ export class ModelRolodex {
             oldRep: oldRep.toFixed(4),
             newRep: entry.reputation.toFixed(4),
             adjustment
-        }, '🧬 Model reputation mutated by strategy advisor.');
+        }, 'ðŸ§¬ Model reputation mutated by strategy advisor.');
 
         this.persist();
     }
 
-    /** 🧬 Reputation Scoring Algorithm - Research Grade */
+    /** ðŸ§¬ Reputation Scoring Algorithm - Research Grade */
     private computeReputation(m: RolodexModel): number {
         const totalCalls = m.successCount + m.failureCount;
         if (totalCalls === 0) return 1.0;
@@ -308,20 +308,20 @@ export class ModelRolodex {
         const tokenPenalty = Math.min(0.1, (m.totalTokensUsed / 1_000_000) * 0.1);
 
         const score = (successRate * 0.6) + (latencyFactor * 0.3) + 0.1 - tokenPenalty;
-        // 🧬 Phase 108: Clamping to physiological bounds (0.2 to 2.0)
+        // ðŸ§¬ Phase 108: Clamping to physiological bounds (0.2 to 2.0)
         return Math.max(0.2, Math.min(2.0, score));
     }
 
-    // ═══ DISCOVERY ═══
+    // â•â•â• DISCOVERY â•â•â•
 
-    /** Refresh all providers — non-blocking, fire-and-forget safe */
+    /** Refresh all providers â€” non-blocking, fire-and-forget safe */
     async refreshAll(): Promise<void> {
         if (this.refreshInProgress) {
             logger.info('Rolodex refresh already in progress, skipping.');
             return;
         }
         this.refreshInProgress = true;
-        logger.info('🔄 Rolodex: Refreshing all provider models...');
+        logger.info('ðŸ”„ Rolodex: Refreshing all provider models...');
 
         const start = Date.now();
         await Promise.allSettled([
@@ -339,7 +339,7 @@ export class ModelRolodex {
 
         const modelCount = Object.keys(this.state.models).length;
         const elapsed = Date.now() - start;
-        logger.info({ modelCount, elapsed }, '✅ Rolodex refresh complete.');
+        logger.info({ modelCount, elapsed }, 'âœ… Rolodex refresh complete.');
     }
 
     /** Discover Ollama models via REST API */
@@ -786,7 +786,7 @@ export class ModelRolodex {
         }
     }
 
-    // ═══ UTILITIES ═══
+    // â•â•â• UTILITIES â•â•â•
 
     /** Convert a RolodexModel to a prefixed model ID usable by ModelClient */
     private toPrefixedModelId(model: RolodexModel): string {
@@ -847,10 +847,10 @@ export class ModelRolodex {
 
     /** Get a formatted summary string for CLI display  */
     getFormattedSummary(): string {
-        const lines: string[] = ['═══ SOVEREIGN MODEL ROLODEX ═══', ''];
+        const lines: string[] = ['â•â•â• SOVEREIGN MODEL ROLODEX â•â•â•', ''];
 
         for (const [providerName, identity] of Object.entries(this.state.providers)) {
-            const status = identity.authenticated ? '\x1b[38;5;154m✓ ONLINE\x1b[0m' : '\x1b[38;5;196m✗ OFFLINE\x1b[0m';
+            const status = identity.authenticated ? '\x1b[38;5;154mâœ“ ONLINE\x1b[0m' : '\x1b[38;5;196mâœ— OFFLINE\x1b[0m';
             const models = this.getModelsForProvider(providerName as RolodexProvider);
             const totalCalls = models.reduce((sum, m) => sum + m.successCount + m.failureCount, 0);
             const totalTokens = models.reduce((sum, m) => sum + m.totalTokensUsed, 0);
@@ -866,7 +866,7 @@ export class ModelRolodex {
             const topModels = models.sort((a, b) => (b.successCount + b.failureCount) - (a.successCount + a.failureCount)).slice(0, 5);
             for (const m of topModels) {
                 const successRate = m.successCount + m.failureCount > 0 ? Math.round(m.successCount * 100 / (m.successCount + m.failureCount)) : 0;
-                lines.push(`    ↳ ${m.id} [${successRate}% success, ${m.successCount + m.failureCount} calls, ${Math.round(m.avgLatencyMs)}ms avg]`);
+                lines.push(`    â†³ ${m.id} [${successRate}% success, ${m.successCount + m.failureCount} calls, ${Math.round(m.avgLatencyMs)}ms avg]`);
             }
             lines.push('');
         }
@@ -876,7 +876,7 @@ export class ModelRolodex {
         return lines.join('\n');
     }
 
-    /** 🧬 Reputation Decay - Exponential Convergence toward baseline 1.0 */
+    /** ðŸ§¬ Reputation Decay - Exponential Convergence toward baseline 1.0 */
     public applyReputationDecay(decayRate: number): void {
         const count = Object.keys(this.state.models).length;
         if (count === 0) return;
@@ -886,18 +886,18 @@ export class ModelRolodex {
             model.reputation = model.reputation + (1.0 - model.reputation) * decayRate;
         }
 
-        logger.debug({ decayRate, count }, '🧬 Reputation decay applied: All models drifted toward baseline.');
+        logger.debug({ decayRate, count }, 'ðŸ§¬ Reputation decay applied: All models drifted toward baseline.');
         this.persist();
     }
 
     /** Increment active load counter for a model on a provider (used by stress test) */
     incrementLoad(_provider: string, _model: string): void {
-        // Load tracking stub — future: track concurrent requests per model
+        // Load tracking stub â€” future: track concurrent requests per model
     }
 
     /** Decrement active load counter for a model on a provider (used by stress test) */
     decrementLoad(_provider: string, _model: string): void {
-        // Load tracking stub — future: track concurrent requests per model
+        // Load tracking stub â€” future: track concurrent requests per model
     }
 
     /** 
@@ -905,7 +905,7 @@ export class ModelRolodex {
      * Returns true if the model/provider can accept more parallel work.
      */
     canAcceptCall(_provider: string, _model: string): boolean {
-        // Backpressure stub — future: check against maxParallelCalls from config
+        // Backpressure stub â€” future: check against maxParallelCalls from config
         return true;
     }
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * NeuralLimb Interface - The contract for all specialized limbs
  */
 

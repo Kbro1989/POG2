@@ -1,4 +1,4 @@
-// src/scripts/kbd_roar_cinema_v2.ts
+﻿// src/scripts/kbd_roar_cinema_v2.ts
 // Phase 4A: GLTF Export Pipeline + Phase 4B: Audio Synthesis Binding
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
@@ -42,10 +42,10 @@ export class KBDRoarCinemaV2 {
   }
 
   async executeFullPipeline(): Promise<void> {
-    console.log('🎬 Phase 4/5: Multi-Modal Sovereign Synthesis\n');
+    console.log('ðŸŽ¬ Phase 4/5: Multi-Modal Sovereign Synthesis\n');
 
     this.timeline = this.loadKinematicTimeline();
-    console.log(`✅ Timeline loaded: ${this.timeline.frameCount} frames, ${this.timeline.duration}ms`);
+    console.log(`âœ… Timeline loaded: ${this.timeline.frameCount} frames, ${this.timeline.duration}ms`);
 
     if (!existsSync(OUTPUT_DIR)) {
       mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -53,20 +53,20 @@ export class KBDRoarCinemaV2 {
 
     const gltf = this.generateGLTFShell();
     this.saveGLTF(gltf);
-    console.log('✅ GLTF shell exported');
+    console.log('âœ… GLTF shell exported');
 
     const audioCues = this.generateAudioCues();
     const audioResult = await this.synthesizeAudio(audioCues);
     if (audioResult) {
       this.saveAudio(audioResult);
-      console.log('✅ 5.1 channel audio synthesized');
+      console.log('âœ… 5.1 channel audio synthesized');
     }
 
     const chromaReport = await this.validateChromaticProfile();
-    console.log('✅ Chromatic validation complete');
+    console.log('âœ… Chromatic validation complete');
 
     this.generateSyncReport(audioCues, chromaReport);
-    console.log('✅ Multi-modal sync report generated');
+    console.log('âœ… Multi-modal sync report generated');
   }
 
   private loadKinematicTimeline(): any {
@@ -205,13 +205,13 @@ export class KBDRoarCinemaV2 {
   private saveGLTF(gltf: GLTFAsset): void {
     const path = join(OUTPUT_DIR, 'kbd_sovereign.gltf');
     writeFileSync(path, JSON.stringify(gltf, null, 2));
-    console.log(`  💾 GLTF: ${path}`);
+    console.log(`  ðŸ’¾ GLTF: ${path}`);
   }
 
   private saveAudio(buffer: Buffer): void {
     const path = join(OUTPUT_DIR, 'kbd_roar_51.wav');
     writeFileSync(path, buffer);
-    console.log(`  💾 Audio: ${path} (${(buffer.length / 1024 / 1024).toFixed(2)} MB)`);
+    console.log(`  ðŸ’¾ Audio: ${path} (${(buffer.length / 1024 / 1024).toFixed(2)} MB)`);
   }
 
   private generateSyncReport(audioCues: AudioCue[], chromaReport: any): void {
@@ -237,7 +237,7 @@ export class KBDRoarCinemaV2 {
     };
     const path = join(OUTPUT_DIR, 'sync_report.json');
     writeFileSync(path, JSON.stringify(report, null, 2));
-    console.log(`  💾 Report: ${path}`);
+    console.log(`  ðŸ’¾ Report: ${path}`);
   }
 }
 

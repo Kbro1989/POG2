@@ -5,10 +5,10 @@ import { SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.
 import { GameState, Coord } from '../core/models.js';
 
 async function testExplorationBarrows() {
-    console.log('🧪 PHASE B2 TEST: Autonomous Exploration (5 Iterations)\n');
+    console.log('ðŸ§ª PHASE B2 TEST: Autonomous Exploration (5 Iterations)\n');
 
     // 1. Initialize limbs
-    const spatial = new SpatialSovereigntyLimb();
+    const spatial = SpatialSovereigntyLimb.getInstance();
     await spatial.initialize();
     await spatial.loadLogic('barrows');
     
@@ -32,7 +32,7 @@ async function testExplorationBarrows() {
         players: []
     } as any;
 
-    console.log(`📍 Starting at (${avatar.x}, ${avatar.y})`);
+    console.log(`ðŸ“ Starting at (${avatar.x}, ${avatar.y})`);
     const initialCoverage = discovery.getCoverage(avatar.plane, avatar.x >> 6, avatar.y >> 6).visited;
 
     // 4. Run 5 ticks (each tick moves 1 step)
@@ -40,7 +40,7 @@ async function testExplorationBarrows() {
     for (let i = 0; i < 5; i++) {
         const canContinue = await engine.tick(gameState);
         if (!canContinue) {
-            console.log(`\n❌ Exploration halted early at move ${i}`);
+            console.log(`\nâŒ Exploration halted early at move ${i}`);
             break;
         }
         movesSuccessful++;
@@ -54,17 +54,17 @@ async function testExplorationBarrows() {
     const coverageIncremented = finalCoverage > initialCoverage;
     const withinBounds = avatar.x >= 3550 && avatar.x <= 3580 && avatar.y >= 3280 && avatar.y <= 3300;
 
-    console.log('\n✅ SUCCESS CRITERIA:');
-    console.log(`  Completed 5 moves: ${movedInCorridor ? '✓' : '✗'} (Actual: ${stats.moves})`);
-    console.log(`  Coverage incremented: ${coverageIncremented ? '✓' : '✗'} (${initialCoverage} -> ${finalCoverage})`);
-    console.log(`  Within Barrows corridor: ${withinBounds ? '✓' : '✗'} (${avatar.x}, ${avatar.y})`);
+    console.log('\nâœ… SUCCESS CRITERIA:');
+    console.log(`  Completed 5 moves: ${movedInCorridor ? 'âœ“' : 'âœ—'} (Actual: ${stats.moves})`);
+    console.log(`  Coverage incremented: ${coverageIncremented ? 'âœ“' : 'âœ—'} (${initialCoverage} -> ${finalCoverage})`);
+    console.log(`  Within Barrows corridor: ${withinBounds ? 'âœ“' : 'âœ—'} (${avatar.x}, ${avatar.y})`);
 
     if (movedInCorridor && coverageIncremented && withinBounds) {
-        console.log('\n🚀 PHASE B2 CHECKPOINT: PASSED\n');
-        console.log(`📊 FINAL POSITION: (${avatar.x}, ${avatar.y})`);
-        console.log(`📊 TOTAL MOVES: ${stats.moves}`);
+        console.log('\nðŸš€ PHASE B2 CHECKPOINT: PASSED\n');
+        console.log(`ðŸ“Š FINAL POSITION: (${avatar.x}, ${avatar.y})`);
+        console.log(`ðŸ“Š TOTAL MOVES: ${stats.moves}`);
     } else {
-        console.log('\n❌ PHASE B2 CHECKPOINT: FAILED\n');
+        console.log('\nâŒ PHASE B2 CHECKPOINT: FAILED\n');
         process.exit(1);
     }
 }

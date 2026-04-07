@@ -1,0 +1,14 @@
+﻿
+Directory   FileCount
+---------   ---------
+spatial          8545
+annotations         7
+logic               5
+system              4
+reference           1
+item                1
+minigames           1
+visual              0
+forensics           0
+
+

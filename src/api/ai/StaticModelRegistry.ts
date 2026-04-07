@@ -1,4 +1,4 @@
-import { type AICapability, type AITaskType } from '../../core/models.js';
+﻿import { type AICapability, type AITaskType } from '../../core/models.js';
 
 export const CatalogMetadata = {
     tasks: {

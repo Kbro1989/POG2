@@ -1,4 +1,4 @@
-import sqlite3 from 'sqlite3';
+﻿import sqlite3 from 'sqlite3';
 import { type Result } from '../core/models.js';
 import { getLearningDbPath } from './SovereignPathResolver.js';
 import * as fs from 'fs';

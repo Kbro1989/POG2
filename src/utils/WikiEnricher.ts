@@ -1,4 +1,4 @@
-import { createLogger } from './logger.js';
+﻿import { createLogger } from './logger.js';
 import type { Result } from '../core/models.js';
 
 const logger = createLogger('WikiEnricher');
@@ -13,7 +13,7 @@ export interface WikiData {
 }
 
 /**
- * WikiEnricher — Contextualizes professional assets via RuneScape Wiki.
+ * WikiEnricher â€” Contextualizes professional assets via RuneScape Wiki.
  */
 export class WikiEnricher {
     private static API_URL = 'https://runescape.wiki/api.php';

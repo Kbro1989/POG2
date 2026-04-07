@@ -11,7 +11,7 @@ import * as path from 'path';
 import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
 
 async function testGlobalDiscoveryC2() {
-    console.log('🧪 PHASE C2 TEST: Global Frontier Discovery (3x3 View)\n');
+    console.log('ðŸ§ª PHASE C2 TEST: Global Frontier Discovery (3x3 View)\n');
 
     const DB_PATH = 'D:\\sovereign\\vibe-learning-test.db';
     if (fs.existsSync(DB_PATH)) fs.unlinkSync(DB_PATH);
@@ -32,7 +32,7 @@ async function testGlobalDiscoveryC2() {
     fs.writeFileSync(barrowsSouthPath, JSON.stringify(barrowsSouthMatrix));
 
     // 2. Initialize
-    const spatial = new SpatialSovereigntyLimb();
+    const spatial = SpatialSovereigntyLimb.getInstance();
     await spatial.initialize();
     await spatial.loadLogic('barrows'); // Preload Barrows
     
@@ -48,10 +48,10 @@ async function testGlobalDiscoveryC2() {
 
     const gameState = { plane: 0, npcSpatialIndex: new Map(), npcMap: new Map(), objectMap: new Map(), players: [] } as any;
 
-    console.log(`📍 Avatar at (${avatar.x}, ${avatar.y}) in Barrows.`);
+    console.log(`ðŸ“ Avatar at (${avatar.x}, ${avatar.y}) in Barrows.`);
     
     // 3. Mark Barrows corridor as visited to force scanning the neighbor
-    console.log('📌 Simulating full exploration of current mapsquare...');
+    console.log('ðŸ“Œ Simulating full exploration of current mapsquare...');
     for (let x = 3550; x < 3580; x++) {
         for (let y = 3280; y < 3300; y++) {
             discovery.markVisited(0, x, y);
@@ -66,9 +66,9 @@ async function testGlobalDiscoveryC2() {
     const frontier = await discovery.getGlobalFrontier(0, avatar.x, avatar.y, spatial);
     const distantTarget = frontier.find(t => t.y < 3280); // Target in Barrows South (55, 50)
 
-    console.log(`\n🔍 Global Frontier Audit:`);
+    console.log(`\nðŸ” Global Frontier Audit:`);
     console.log(`   Total unvisited tiles identified: ${frontier.length}`);
-    console.log(`   Target found in neighboring region (Y < 3280): ${distantTarget ? '✅ YES' : '❌ NO'}`);
+    console.log(`   Target found in neighboring region (Y < 3280): ${distantTarget ? 'âœ… YES' : 'âŒ NO'}`);
     if (distantTarget) {
         console.log(`   Distant Target: (${distantTarget.x}, ${distantTarget.y})`);
     }
@@ -79,15 +79,15 @@ async function testGlobalDiscoveryC2() {
         orchestratorIntegrated: spatial.hasRegion('m_55_50')
     };
 
-    console.log(`\n✅ SUCCESS CRITERIA:`);
-    console.log(`  Identified tiles across mapsquares: ${SUCCESS_CRITERIA.scanTripled ? '✓' : '✗'}`);
-    console.log(`  Targeted neighbor region: ${SUCCESS_CRITERIA.detectedNeighbor ? '✓' : '✗'}`);
-    console.log(`  Proactive loading integration: ${SUCCESS_CRITERIA.orchestratorIntegrated ? '✓' : '✗'}`);
+    console.log(`\nâœ… SUCCESS CRITERIA:`);
+    console.log(`  Identified tiles across mapsquares: ${SUCCESS_CRITERIA.scanTripled ? 'âœ“' : 'âœ—'}`);
+    console.log(`  Targeted neighbor region: ${SUCCESS_CRITERIA.detectedNeighbor ? 'âœ“' : 'âœ—'}`);
+    console.log(`  Proactive loading integration: ${SUCCESS_CRITERIA.orchestratorIntegrated ? 'âœ“' : 'âœ—'}`);
 
     if (Object.values(SUCCESS_CRITERIA).every(v => v)) {
-        console.log('\n🚀 PHASE C2 CHECKPOINT: PASSED\n');
+        console.log('\nðŸš€ PHASE C2 CHECKPOINT: PASSED\n');
     } else {
-        console.log('\n❌ PHASE C2 CHECKPOINT: FAILED\n');
+        console.log('\nâŒ PHASE C2 CHECKPOINT: FAILED\n');
         process.exit(1);
     }
 

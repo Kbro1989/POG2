@@ -1,4 +1,4 @@
-// src/scripts/kbd_roar_cinema.ts
+﻿// src/scripts/kbd_roar_cinema.ts
 // Cinematic Execution - Temporal Synthesis of KBD Roar
 
 import { createRequire } from 'module';
@@ -53,12 +53,12 @@ class KBDRoarCinema {
     }
     
     this.manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
-    console.log('🎬 KBD Roar Cinema Initialized');
+    console.log('ðŸŽ¬ KBD Roar Cinema Initialized');
     console.log(`   Attack Animation: ${this.manifest.animationIds.attack || 'NOT FOUND'}`);
   }
 
   async synthesize(): Promise<void> {
-    console.log('\n🎭 Temporal Synthesis Beginning...');
+    console.log('\nðŸŽ­ Temporal Synthesis Beginning...');
     
     const modelData = this.loadModels();
     const animData = this.loadAnimations();
@@ -90,7 +90,7 @@ class KBDRoarCinema {
       }
     }
     
-    console.log('\n✅ Cinema synthesis complete');
+    console.log('\nâœ… Cinema synthesis complete');
     this.saveOutput(canvas);
   }
 
@@ -213,12 +213,12 @@ class KBDRoarCinema {
     const outPath = join(this.config.outputPath, 'rsmv_kbd_0.png');
     const buffer = canvas.toBuffer('image/png');
     writeFileSync(outPath, buffer);
-    console.log(`💾 Output saved to: ${outPath}`);
+    console.log(`ðŸ’¾ Output saved to: ${outPath}`);
   }
 }
 
 const cinema = new KBDRoarCinema();
 cinema.synthesize().catch(err => {
-  console.error('❌ Cinema synthesis failed:', err);
+  console.error('âŒ Cinema synthesis failed:', err);
   process.exit(1);
 });

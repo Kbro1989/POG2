@@ -3,6 +3,7 @@ import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
 import { getSovereignRoot, getRSMVCachePath, getCachePedagogyPath, getRSMVSubstratePath } from '../../utils/SovereignPathResolver.js';
 import { rsmvBridge } from '../../utils/RSMVBridge.js';
+import { WorldGroundingLimb } from '../world_grounding/WorldGroundingLimb.js';
 import * as fs from 'fs';
 import * as fsPromise from 'fs/promises';
 
@@ -22,9 +23,24 @@ export interface VolatilityStatus {
  * 3. Unified search across exported JSON catalogs.
  */
 export class CacheForensicsLimb {
+    private static instance: CacheForensicsLimb | undefined;
     private readonly cachePath = getRSMVCachePath();
     private cache: any | null = null;
     private readonly rootDir = getCachePedagogyPath(); // D:\sovereign\cache_pedagogy\json_dumps
+
+    public static getInstance(): CacheForensicsLimb {
+        if (!this.instance) {
+            this.instance = new CacheForensicsLimb();
+        }
+        return this.instance;
+    }
+
+    public static resetInstance(): void {
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error('resetInstance is forbidden in production');
+        }
+        this.instance = undefined;
+    }
 
     // Volatility tracking
     private lastCacheStat: number = 0;
@@ -37,17 +53,27 @@ export class CacheForensicsLimb {
     private items: any[] | null = null;
     private objects: any[] | null = null;
 
+    // Grounding & Pedagogy
+    private grounding: WorldGroundingLimb;
+    private readonly pedagogyDir = path.join('D:/sovereign', 'memory', 'pedagogy');
+
     private readonly SLOT_NAMES = [
         'helm', 'cape', 'necklace', 'weapon', 'body', 'offhand',
         'arms', 'legs', 'face', 'gloves', 'boots', 'beard',
         'ring', 'ammo', 'aura', 'slot15'
     ];
 
-    constructor() {
+    protected constructor() {
+        if (CacheForensicsLimb.instance) {
+            throw new Error('Singleton violation: use CacheForensicsLimb.getInstance()');
+        }
         // Track the main cache file for volatility checks
         const legacyPath = path.join(this.cachePath, 'main_file_cache.dat2');
         const modernPath = path.join(this.cachePath, 'js5-47.jcache');
         this.mainCacheFile = fs.existsSync(legacyPath) ? legacyPath : modernPath;
+
+        // Initialize grounding resolver
+        this.grounding = WorldGroundingLimb.getInstance();
 
         // Lazy load basic catalogs
         this.loadCatalogData();
@@ -58,6 +84,9 @@ export class CacheForensicsLimb {
      */
     public async initialize(): Promise<Result<boolean>> {
         try {
+            const manifestsDir = path.join(this.pedagogyDir, 'manifests');
+            const scanDirs = [this.pedagogyDir, manifestsDir];
+
             logger.info('Booting CacheForensicsLimb (Epistemology substrate)...');
 
             // Initial volatility check
@@ -181,65 +210,151 @@ export class CacheForensicsLimb {
         return 0.0;
     }
 
-    /**
-     * Decompile the full item definition from the active cache.
-     */
     public async getItemDetails(id: number): Promise<Result<any>> {
-        // Use RSMVBridge for live cache access
-        const res = rsmvBridge.getItem(id);
-        if (!res.ok) return res;
-        const raw = res.value;
+        const res = await rsmvBridge.getItem(id);
+        
+        let raw: any;
+        if (!res.ok) {
+            logger.warn({ id, err: res.error.message }, 'Live bridge failed. Falling back to JSON substrate...');
+            const entries = this.getEntries('item');
+            raw = entries.find((e: any) => e.id === id);
+            if (!raw) return err(new Error(`Item ID ${id} not found in any substrate.`));
+        } else {
+            raw = res.value;
+        }
+
         const SLOT_NAMES = this.SLOT_NAMES;
-        return ok({
+        const baseData = {
             id,
-            raw: raw.raw,
+            raw: raw.raw || raw,
             forensics: {
                 name: raw.name,
-                isEquippable: raw.isEquippable,
-                equipSlot: raw.isEquippable && raw.equipSlotId !== null && raw.equipSlotId < SLOT_NAMES.length ? SLOT_NAMES[raw.equipSlotId] : null,
-                equipSlotId: raw.equipSlotId,
-                isMember: raw.isMember,
-                maleModels: raw.maleModels,
-                femaleModels: raw.femaleModels,
-                actions: raw.actions
+                isEquippable: raw.isEquippable ?? (raw.equipSlotId !== undefined),
+                equipSlot: (raw.equipSlotId !== null && raw.equipSlotId !== undefined && raw.equipSlotId < SLOT_NAMES.length) ? SLOT_NAMES[raw.equipSlotId] : null,
+                equipSlotId: raw.equipSlotId ?? null,
+                isMember: raw.isMember ?? !!raw.members,
+                maleModels: raw.maleModels ?? [],
+                femaleModels: raw.femaleModels ?? [],
+                actions: raw.actions ?? [raw.widget_actions_0, raw.widget_actions_1, raw.widget_actions_2, raw.widget_actions_3, raw.widget_actions_4].filter(Boolean)
+            },
+            pedagogy: {
+                summary: raw.name,
+                classification: 'item_entity'
             }
-        });
+        };
+
+        // Option C Hydration
+        const pedagogy = this.getPedagogicalContext(`item_${id}`);
+        return ok(this.grounding.hydrate(`item_${id}`, { ...baseData, ...pedagogy }));
     }
 
     /**
      * Decompile the full NPC definition from the active cache.
      */
     public async getNpcDetails(id: number): Promise<Result<any>> {
-        const res = rsmvBridge.getNpc(id);
-        if (!res.ok) return res;
-        const raw = res.value;
-        return ok({
+        const res = await rsmvBridge.getNpc(id);
+        
+        let raw: any;
+        if (!res.ok) {
+            logger.warn({ id, err: res.error.message }, 'Live bridge failed. Falling back to JSON substrate...');
+            const entries = this.getEntries('npc');
+            raw = entries.find((e: any) => e.id === id);
+            if (!raw) return err(new Error(`NPC ID ${id} not found in any substrate.`));
+        } else {
+            raw = res.value;
+        }
+
+        const baseData = {
             id,
-            raw: raw.raw,
+            raw: raw.raw || raw,
             forensics: {
                 name: raw.name,
-                combatLevel: raw.combatLevel,
-                models: raw.models,
-                headModels: raw.headModels,
-                actions: raw.actions,
-                boundSize: raw.boundSize,
-                animationGroup: raw.raw?.animation_group ?? null
+                combatLevel: raw.combatLevel ?? raw.combat ?? null,
+                models: raw.models ?? [],
+                headModels: raw.headModels ?? [],
+                actions: raw.actions ?? [raw.actions_0, raw.actions_1, raw.actions_2, raw.actions_3, raw.actions_4].filter(Boolean),
+                boundSize: (raw.boundSize ?? raw.raw?.boundSize) ?? null,
+                animationGroup: (raw.animationGroup ?? raw.raw?.animation_group) ?? null
             },
             pedagogy: {
                 summary: raw.name,
-                classification: raw.combatLevel ? 'combat_npc' : 'passive_npc'
+                classification: (raw.combatLevel || raw.combat) ? 'combat_npc' : 'passive_npc'
             }
-        });
+        };
+
+        // Option C Hydration: If we have pedagogical records, overlay the grounded truth
+        const pedagogy = this.getPedagogicalContext(`npc_${id}`);
+        return ok(this.grounding.hydrate(`npc_${id}`, { ...baseData, ...pedagogy }));
     }
 
     /**
-     * Decompile the full Object definition from the active cache.
+     * getPedagogicalContext - Fetches the original POG2 synthesis for an entity.
      */
+    public getPedagogicalContext(entityKey: string): any {
+        try {
+            const [type, id] = entityKey.split('_');
+            let filename = '';
+            if (type === 'npc') filename = `NPC_${id}.json`;
+            else if (type === 'item') filename = `ITEM_ITEM_${id}.json`;
+            else if (type === 'object') filename = `OBJ_${id}.json`;
+            
+            // Check manifests subdirectory first
+            let pedagogyPath = path.join(this.pedagogyDir, 'manifests', filename);
+            if (!fs.existsSync(pedagogyPath)) {
+                // Fallback to root
+                pedagogyPath = path.join(this.pedagogyDir, filename);
+            }
+
+            if (fs.existsSync(pedagogyPath)) {
+                return JSON.parse(fs.readFileSync(pedagogyPath, 'utf8'));
+            }
+
+            // Fallback for variant naming
+            if (type === 'item') {
+                const altPath = path.join(this.pedagogyDir, `ITEM_${id}.json`);
+                if (fs.existsSync(altPath)) return JSON.parse(fs.readFileSync(altPath, 'utf8'));
+            }
+        } catch (err) {
+            logger.debug({ entityKey }, 'No pedagogical context found.');
+        }
+        return null;
+    }
+
     public async getObjectDetails(id: number): Promise<Result<any>> {
-        const res = rsmvBridge.getObject(id);
-        if (!res.ok) return res;
-        const raw = res.value;
-        return ok(raw);
+        const res = await rsmvBridge.getObject(id);
+        
+        let raw: any;
+        if (!res.ok) {
+            logger.warn({ id, err: res.error.message }, 'Live bridge failed. Falling back to JSON substrate...');
+            const entries = this.getEntries('object');
+            raw = entries.find((e: any) => e.id === id);
+            if (!raw) return err(new Error(`Object ID ${id} not found in any substrate.`));
+        } else {
+            raw = res.value;
+        }
+
+        const baseData = {
+            id,
+            raw: raw.raw || raw,
+            forensics: {
+                name: raw.name,
+                actions: raw.actions ?? [raw.actions_0, raw.actions_1, raw.actions_2, raw.actions_3, raw.actions_4].filter(Boolean),
+                models: raw.models ?? [],
+                sizeX: raw.sizeX ?? raw.width ?? 1,
+                sizeZ: raw.sizeZ ?? raw.length ?? 1,
+                maybeBlocksMovement: raw.maybe_blocks_movement ?? true,
+                probablyNoCollision: raw.probably_nocollision ?? false,
+                params: raw.params ?? {}
+            },
+            pedagogy: {
+                summary: raw.name,
+                classification: 'world_object'
+            }
+        };
+
+        // Option C Hydration
+        const pedagogy = this.getPedagogicalContext(`object_${id}`);
+        return ok(this.grounding.hydrate(`object_${id}`, { ...baseData, ...pedagogy }));
     }
 
     /**
@@ -434,10 +549,10 @@ export class CacheForensicsLimb {
         return ok({ id: baseNpc.id, name: baseNpc.name, raw: details.value.raw });
     }
 
-    public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' } {
+    public async healthCheck(): Promise<{ online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' }> {
         const catalogReady = this.equipmentBySlot !== null;
         // Probe the live cache via RSMVBridge
-        const bridgeRes = rsmvBridge.healthCheck();
+        const bridgeRes = await rsmvBridge.healthCheck();
         const cacheOnline = bridgeRes.ok && bridgeRes.value.online;
 
         const status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' =

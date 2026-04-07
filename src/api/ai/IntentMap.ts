@@ -1,4 +1,4 @@
-export interface IntentPathway {
+﻿export interface IntentPathway {
     id: string;
     description: string;
     targetCapabilityId: string;

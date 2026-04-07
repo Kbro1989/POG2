@@ -1,4 +1,4 @@
-import { SovereignIngestionEngine } from '../engines/SovereignIngestionEngine.js';
+﻿import { SovereignIngestionEngine } from '../engines/SovereignIngestionEngine.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { SovereignConfig } from '../config/SovereignConfig.js';

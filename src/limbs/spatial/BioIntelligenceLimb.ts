@@ -7,6 +7,7 @@ const logger = createLogger('BioIntelligenceLimb');
 /**
  * BioIntelligenceLimb - Biomimetic Heuristics
  * Implements evolutionary algorithms and biological feedback loops.
+ * Now manages NPC classification and phase-shifting logic.
  */
 export class BioIntelligenceLimb {
     constructor() { }
@@ -23,9 +24,29 @@ export class BioIntelligenceLimb {
     }
 
     public async validateStructure(anatomicalProof: { limbCount: number; structuralIntegrity: number }): Promise<boolean> {
-        // Now checks the NeurologicalMap dynamically.
         logger.debug({ anatomicalProof }, 'Validating Anatomical Proof...');
         const expectedCount = NEUROLOGICAL_MAP.length;
         return anatomicalProof.limbCount === expectedCount && anatomicalProof.structuralIntegrity >= 9;
+    }
+
+    public classifyNPC(id: number): string {
+        if (id >= 15516 && id <= 15548) return "Phase-Shifting Undead Dragon";
+        if (id === 15580 || id === 15581) return "Biological Pet";
+        return "Unknown Biological Entity";
+    }
+
+    public getPhaseLogic(id: number): any {
+        if (id >= 15516 && id <= 15548) {
+            return {
+                controller: "Varbit 57011",
+                phases: {
+                    0: "Normal",
+                    1: "Transition",
+                    2: "Acid",
+                    3: "Freeze"
+                }
+            };
+        }
+        return null;
     }
 }

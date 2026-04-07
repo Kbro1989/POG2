@@ -1,15 +1,15 @@
-/**
- * PATHING ARCHAEOLOGIST v2.2 — CS2 & Struct Route Tables
+﻿/**
+ * PATHING ARCHAEOLOGIST v2.2 â€” CS2 & Struct Route Tables
  * 
  * The mine cart objects are dumb props. The actual transport logic
  * lives in ClientScript (CS2) and Struct/Enum config tables.
  * 
  * This script scans:
- *   1. enums.json — for route mapping tables (destination IDs)
- *   2. objects.json — deep dump of Keldagrim trapdoor (28094) and
+ *   1. enums.json â€” for route mapping tables (destination IDs)
+ *   2. objects.json â€” deep dump of Keldagrim trapdoor (28094) and
  *      ALL objects with non-empty params/op arrays
- *   3. npcs.json — all NPCs with walkRange or movement data
- *   4. kinematics.json — any kinematic movement definitions
+ *   3. npcs.json â€” all NPCs with walkRange or movement data
+ *   4. kinematics.json â€” any kinematic movement definitions
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
@@ -43,10 +43,10 @@ function safeLoad(path: string, label: string): any[] {
 }
 
 async function main() {
-    console.log('╔══════════════════════════════════════════════════════════╗');
-    console.log('║   PHASE 2.2: CS2 ROUTE TABLE & PARAMS DEEP SCAN      ║');
-    console.log('║   Finding the path gap in structs/enums/params        ║');
-    console.log('╚══════════════════════════════════════════════════════════╝\n');
+    console.log('â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—');
+    console.log('â•‘   PHASE 2.2: CS2 ROUTE TABLE & PARAMS DEEP SCAN      â•‘');
+    console.log('â•‘   Finding the path gap in structs/enums/params        â•‘');
+    console.log('â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n');
 
     ensureDir(OUTPUT_DIR);
 
@@ -57,8 +57,8 @@ async function main() {
 
     console.log(`\n  Objects: ${objects.length}, NPCs: ${npcs.length}, Enums: ${enums.length}, Kinematics: ${kinematics.length}\n`);
 
-    // ─── 1. DEEP DUMP: Keldagrim Trapdoor & surrounding IDs ───
-    console.log('━━━ DEEP DUMP: Keldagrim Trapdoor (28094) & neighbors ━━━\n');
+    // â”€â”€â”€ 1. DEEP DUMP: Keldagrim Trapdoor & surrounding IDs â”€â”€â”€
+    console.log('â”â”â” DEEP DUMP: Keldagrim Trapdoor (28094) & neighbors â”â”â”\n');
     for (let searchId = 28090; searchId <= 28100; searchId++) {
         const obj = objects.find((o: any) => o && (o.id === searchId || o.$fileid === searchId));
         if (obj && obj.name && obj.name !== `OBJECTS ${searchId}`) {
@@ -72,8 +72,8 @@ async function main() {
         }
     }
 
-    // ─── 2. FIND ALL OBJECTS WITH NON-EMPTY OP ARRAYS ───
-    console.log('━━━ Objects with actual interaction actions (op != empty) ━━━\n');
+    // â”€â”€â”€ 2. FIND ALL OBJECTS WITH NON-EMPTY OP ARRAYS â”€â”€â”€
+    console.log('â”â”â” Objects with actual interaction actions (op != empty) â”â”â”\n');
     const objectsWithOps: any[] = [];
     for (const obj of objects) {
         if (!obj) continue;
@@ -97,13 +97,13 @@ async function main() {
     }
     console.log(`  Found ${objectsWithOps.length} transport-related objects with actions:\n`);
     for (const o of objectsWithOps.slice(0, 50)) {
-        console.log(`  [${o.id}] "${o.name}" → ${JSON.stringify(o.op)}`);
+        console.log(`  [${o.id}] "${o.name}" â†’ ${JSON.stringify(o.op)}`);
         if (o.params) console.log(`      params: ${JSON.stringify(o.params)}`);
         if (o.morphs_1) console.log(`      morphs: ${JSON.stringify(o.morphs_1)}`);
     }
 
-    // ─── 3. SCAN ENUMS FOR ROUTE TABLES ───
-    console.log('\n━━━ Enum scan: looking for route/destination tables ━━━\n');
+    // â”€â”€â”€ 3. SCAN ENUMS FOR ROUTE TABLES â”€â”€â”€
+    console.log('\nâ”â”â” Enum scan: looking for route/destination tables â”â”â”\n');
     const routeEnums: any[] = [];
     for (const en of enums) {
         if (!en) continue;
@@ -125,8 +125,8 @@ async function main() {
         if (re.values) console.log(`    values: ${JSON.stringify(re.values).slice(0, 200)}`);
     }
 
-    // ─── 4. NPCs WITH WALK RANGE / MOVEMENT DATA ───
-    console.log('\n━━━ NPCs with walkRange or movement metadata ━━━\n');
+    // â”€â”€â”€ 4. NPCs WITH WALK RANGE / MOVEMENT DATA â”€â”€â”€
+    console.log('\nâ”â”â” NPCs with walkRange or movement metadata â”â”â”\n');
     const movementNpcs: any[] = [];
     for (const npc of npcs) {
         if (!npc) continue;
@@ -153,8 +153,8 @@ async function main() {
         if (m.params) console.log(`    params: ${JSON.stringify(m.params)}`);
     }
 
-    // ─── 5. KINEMATICS DEEP SCAN ───
-    console.log('\n━━━ Kinematics data ━━━\n');
+    // â”€â”€â”€ 5. KINEMATICS DEEP SCAN â”€â”€â”€
+    console.log('\nâ”â”â” Kinematics data â”â”â”\n');
     if (kinematics.length > 0) {
         for (const k of kinematics.slice(0, 10)) {
             console.log(`  ${JSON.stringify(k)}`);
@@ -163,7 +163,7 @@ async function main() {
         console.log('  No kinematics data loaded');
     }
 
-    // ─── COMPILE ───
+    // â”€â”€â”€ COMPILE â”€â”€â”€
     const report = {
         phase: '2.2',
         timestamp: new Date().toISOString(),
@@ -177,11 +177,11 @@ async function main() {
     writeFileSync(outPath, JSON.stringify(report, null, 2));
     console.log(`\n[OK] CS2 route scan report: ${outPath}`);
 
-    console.log('\n╔══════════════════════════════════════════════════════════╗');
-    console.log(`║  Transport Objects w/ Actions: ${String(objectsWithOps.length).padStart(6)}                 ║`);
-    console.log(`║  Route Enums Found:            ${String(routeEnums.length).padStart(6)}                 ║`);
-    console.log(`║  Movement-Capable NPCs:        ${String(movementNpcs.length).padStart(6)}                 ║`);
-    console.log('╚══════════════════════════════════════════════════════════╝');
+    console.log('\nâ•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—');
+    console.log(`â•‘  Transport Objects w/ Actions: ${String(objectsWithOps.length).padStart(6)}                 â•‘`);
+    console.log(`â•‘  Route Enums Found:            ${String(routeEnums.length).padStart(6)}                 â•‘`);
+    console.log(`â•‘  Movement-Capable NPCs:        ${String(movementNpcs.length).padStart(6)}                 â•‘`);
+    console.log('â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•');
 }
 
 main().catch(e => { console.error('[FATAL]', e); process.exit(1); });

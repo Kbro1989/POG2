@@ -1,5 +1,5 @@
-/**
- * StateManager — Sovereign process state tracking.
+﻿/**
+ * StateManager â€” Sovereign process state tracking.
  * Persistent metrics and session-level state for the ternary engine.
  */
 

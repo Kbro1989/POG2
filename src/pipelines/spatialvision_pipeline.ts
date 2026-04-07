@@ -1,4 +1,4 @@
-// src/pipelines/spatialvision_pipeline.ts
+﻿// src/pipelines/spatialvision_pipeline.ts
 // The Master Orchestrator: Combines Temporal Kinematics, Auditory Telemetry, and Chromatic Validation
 
 import { ChromaLimb } from '../limbs/vision/ChromaLimb.js';
@@ -22,7 +22,7 @@ export class SpatialVisionPipeline {
    * Orchestrates the Tri-Modal Synthesis for Sovereign Entity: KBD
    */
   public async executeKBDIntegration(): Promise<void> {
-    console.log('🌌 [SpatialVisionPipeline] Initiating Multi-Modal Synthesis for KBD...');
+    console.log('ðŸŒŒ [SpatialVisionPipeline] Initiating Multi-Modal Synthesis for KBD...');
 
     // 1. Data Substrates Layout
     const workspace = join(process.cwd(), 'audit_output', 'kbd_cinema');
@@ -35,21 +35,21 @@ export class SpatialVisionPipeline {
     const triggerAnim = join(workspace, 'anim_attack_17769.raw');
 
     // 2. Chromatic Validation (Visual Cortex)
-    console.log('\n--- 👁️ VISION CORTEX START ---');
+    console.log('\n--- ðŸ‘ï¸ VISION CORTEX START ---');
     const chromaData = await this.chromaVision.extractFromModel(models[0]);
     if (!chromaData.ok) {
-      console.error('❌ SpatialVision Halt: Chroma Extraction Error ->', chromaData.error);
+      console.error('âŒ SpatialVision Halt: Chroma Extraction Error ->', chromaData.error);
       return;
     }
     const chromaCheck = await this.chromaVision.validate('dragon_fire', chromaData.value);
     if (!chromaCheck.ok || !chromaCheck.value.valid) {
-      console.warn('⚠️ SpatialVision Alert: Chromametric Anomaly Detected ->', chromaCheck.ok ? 'Heuristic Mismatch' : chromaCheck.error);
+      console.warn('âš ï¸ SpatialVision Alert: Chromametric Anomaly Detected ->', chromaCheck.ok ? 'Heuristic Mismatch' : chromaCheck.error);
     } else {
-      console.log('✅ Visual Cortex Validated. Anatomical heuristics match.');
+      console.log('âœ… Visual Cortex Validated. Anatomical heuristics match.');
     }
 
     // 3. Auditory Orchestration (Sensory Motor)
-    console.log('\n--- 🎵 AUDITORY MOTOR START ---');
+    console.log('\n--- ðŸŽµ AUDITORY MOTOR START ---');
     const audioSynth = await this.audioMotor.generate({
       prompt: 'King Black Dragon roar, volcanic reverb, bone-rattling sub-bass',
       duration: 5,
@@ -59,7 +59,7 @@ export class SpatialVisionPipeline {
       bitDepth: 24
     });
     if (!audioSynth.ok) {
-      console.error('❌ SpatialVision Halt: Audio Motor Failure ->', audioSynth.error);
+      console.error('âŒ SpatialVision Halt: Audio Motor Failure ->', audioSynth.error);
       return;
     }
 
@@ -69,19 +69,19 @@ export class SpatialVisionPipeline {
     
     const audioPath = join(renderDir, 'kbd_roar_telemetry.wav');
     writeFileSync(audioPath, audioSynth.value.buffer);
-    console.log(`✅ Auditory Telemetry Anchored: ${audioPath}`);
+    console.log(`âœ… Auditory Telemetry Anchored: ${audioPath}`);
 
     // 4. Structural Spatial Output (GLTF 2.0 Node Exporter)
-    console.log('\n--- 📐 SPATIAL EXPORT START ---');
+    console.log('\n--- ðŸ“ SPATIAL EXPORT START ---');
     const exportResult = await this.spatialExport.convertJagexToGLTF(models, triggerAnim);
     
     if (exportResult.ok) {
-      console.log('\n🏆 [SpatialVisionPipeline] Tri-Modal Integration Successfully Initialized.');
+      console.log('\nðŸ† [SpatialVisionPipeline] Tri-Modal Integration Successfully Initialized.');
       console.log('  -> Chromatic Validation: PASSED');
       console.log('  -> Auditory Synapse: PASSED');
       console.log('  -> Structural Export: PLUGGED AND AWAITING PARSER');
     } else {
-      console.error('❌ SpatialVision Halt: Structural Substrate Corrupted ->', exportResult.error);
+      console.error('âŒ SpatialVision Halt: Structural Substrate Corrupted ->', exportResult.error);
     }
   }
 }

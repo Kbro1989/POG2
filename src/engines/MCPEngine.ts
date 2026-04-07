@@ -50,7 +50,7 @@ export class MCPEngine {
     }
 
     private async connectToServer(name: string, config: MCPServerConfig): Promise<void> {
-        logger.info({ server: name }, 'ðŸ”Œ Engaging MCP Neural Link...');
+        logger.info({ server: name }, 'Ã°Å¸â€Å’ Engaging MCP Neural Link...');
 
         try {
             const transport = new StdioClientTransport({
@@ -61,7 +61,10 @@ export class MCPEngine {
 
             const client = new Client(
                 { name: "POG2-cli", version: "1.1.2" },
-                { capabilities: { tools: {} } } as Record<string, unknown>
+                { 
+                    capabilities: { tools: {} },
+                    requestTimeout: 60000 
+                } as any
             );
 
             await client.connect(transport);
@@ -100,10 +103,10 @@ export class MCPEngine {
                 });
             }
 
-            logger.info({ server: name, tools: tools.length }, '✅ MCP Neural Link Synchronized');
+            logger.info({ server: name, tools: tools.length }, 'âœ… MCP Neural Link Synchronized');
         } catch (err) {
             const errorMsg = (err as Error).stack || (err as Error).message;
-            logger.error({ server: name, error: errorMsg }, '❌ MCP Neural Link Failure');
+            logger.error({ server: name, error: errorMsg }, 'âŒ MCP Neural Link Failure');
             // Try to provide hint about EPIPE if detected
             if (errorMsg.includes('EPIPE')) {
                 logger.warn({ server: name }, 'EPIPE detected: This often means the server process crashed or stdout was polluted.');

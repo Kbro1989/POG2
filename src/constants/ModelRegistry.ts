@@ -1,4 +1,4 @@
-import { createRequire } from 'module';
+﻿import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 // src/constants/ModelRegistry.ts
 // Maps 3D Model IDs and Entity names to Species and Anatomical Constraints

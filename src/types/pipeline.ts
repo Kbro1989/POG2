@@ -1,4 +1,4 @@
-import { PipelineManifest, PipelineRequest } from '../engines/PipelineController.js';
+﻿import { PipelineManifest, PipelineRequest } from '../engines/PipelineController.js';
 
 /**
  * PipelineCheckpoint - Persistent state for resuming long-form runs.

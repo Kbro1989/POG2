@@ -1,8 +1,8 @@
-import { createLogger } from "./logger.js";
+﻿import { createLogger } from "./logger.js";
 
 const logger = createLogger('QuotaTracker');
 
-// ═══ TYPES ═══
+// â•â•â• TYPES â•â•â•
 
 export type QuotaProvider = 'ollama' | 'cloudflare' | 'gemini' | 'huggingface' | 'fireworks' | 'openrouter';
 
@@ -34,7 +34,7 @@ export interface QuotaState {
     lastUpdated: number;
 }
 
-// ═══ DEFAULT FREE-TIER CEILINGS ═══
+// â•â•â• DEFAULT FREE-TIER CEILINGS â•â•â•
 
 const DEFAULT_CEILINGS: Record<QuotaProvider, { tokens: number; requests: number }> = {
     gemini:      { tokens: 1_000_000, requests: 1_500 },
@@ -45,16 +45,16 @@ const DEFAULT_CEILINGS: Record<QuotaProvider, { tokens: number; requests: number
     ollama:      { tokens: Infinity,  requests: Infinity }
 };
 
-// ═══ QUOTA TRACKER CORE ═══
+// â•â•â• QUOTA TRACKER CORE â•â•â•
 
 /**
- * QuotaTracker — Sovereign FinOps Metabolic Budget.
+ * QuotaTracker â€” Sovereign FinOps Metabolic Budget.
  *
  * Tracks per-provider daily usage against free-tier ceilings.
  * Resets counters at UTC midnight. Fully offline-capable.
  * Persists via GlobeStateLimb (durable) or in-memory (local).
  *
- * Biological Role: Adrenal Gland — regulates resource expenditure
+ * Biological Role: Adrenal Gland â€” regulates resource expenditure
  * to prevent quota exhaustion across all cloud substrates.
  */
 export class QuotaTracker {
@@ -93,7 +93,7 @@ export class QuotaTracker {
         return tomorrow.getTime();
     }
 
-    // ═══ PUBLIC API ═══
+    // â•â•â• PUBLIC API â•â•â•
 
     /**
      * Record usage from a model call.
@@ -111,9 +111,9 @@ export class QuotaTracker {
         // Log warnings at threshold crossings
         const health = this.getQuotaHealth(provider);
         if (health.usedPct >= 90 && health.usedPct - ((tokensUsed / quota.dailyTokenCeiling) * 100) < 90) {
-            logger.warn({ provider, usedPct: health.usedPct.toFixed(1) }, '⚠️ QUOTA CRITICAL: Provider approaching daily ceiling');
+            logger.warn({ provider, usedPct: health.usedPct.toFixed(1) }, 'âš ï¸ QUOTA CRITICAL: Provider approaching daily ceiling');
         } else if (health.usedPct >= 75 && health.usedPct - ((tokensUsed / quota.dailyTokenCeiling) * 100) < 75) {
-            logger.info({ provider, usedPct: health.usedPct.toFixed(1) }, '🔶 QUOTA WARNING: Provider at 75% daily usage');
+            logger.info({ provider, usedPct: health.usedPct.toFixed(1) }, 'ðŸ”¶ QUOTA WARNING: Provider at 75% daily usage');
         }
     }
 
@@ -196,7 +196,7 @@ export class QuotaTracker {
         const now = Date.now();
         for (const quota of Object.values(this.quotas)) {
             if (now >= quota.resetAtEpoch) {
-                logger.info({ provider: quota.provider }, '🔄 Daily quota reset (UTC midnight)');
+                logger.info({ provider: quota.provider }, 'ðŸ”„ Daily quota reset (UTC midnight)');
                 quota.tokensUsedToday = 0;
                 quota.requestsToday = 0;
                 quota.resetAtEpoch = this.getNextMidnightUTC();
@@ -204,7 +204,7 @@ export class QuotaTracker {
         }
     }
 
-    // ═══ PERSISTENCE ═══
+    // â•â•â• PERSISTENCE â•â•â•
 
     /**
      * Serialize state for GlobeStateLimb persistence.
@@ -233,10 +233,10 @@ export class QuotaTracker {
 
         // Immediately check for day rollover
         this.resetIfNewDay();
-        logger.info({ providers: Object.keys(state.quotas).length }, '📊 Quota state restored from persistence');
+        logger.info({ providers: Object.keys(state.quotas).length }, 'ðŸ“Š Quota state restored from persistence');
     }
 
-    // ═══ HEALTH PROBE ═══
+    // â•â•â• HEALTH PROBE â•â•â•
 
     healthCheck(): { online: boolean; details: string } {
         const healths = this.getAllQuotaHealth();
@@ -251,10 +251,10 @@ export class QuotaTracker {
         return {
             online: true,
             details: exhaustedCount > 0
-                ? `⚠️ ${exhaustedCount} provider(s) exhausted, ${nearExhaustionCount} near limit. [${summaries}]`
+                ? `âš ï¸ ${exhaustedCount} provider(s) exhausted, ${nearExhaustionCount} near limit. [${summaries}]`
                 : nearExhaustionCount > 0
-                    ? `🔶 ${nearExhaustionCount} provider(s) near limit. [${summaries}]`
-                    : `✅ All quotas healthy. [${summaries}]`
+                    ? `ðŸ”¶ ${nearExhaustionCount} provider(s) near limit. [${summaries}]`
+                    : `âœ… All quotas healthy. [${summaries}]`
         };
     }
 }

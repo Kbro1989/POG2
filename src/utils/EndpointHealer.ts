@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+﻿import { exec } from 'child_process';
 import { promisify } from 'util';
 import type { TrainingCollector } from './TrainingCollector.js';
 
@@ -30,7 +30,7 @@ interface DiagnosticCheck {
 }
 
 /**
- * EndpointHealer â€” Immune system auto-repair for failed cloud endpoints.
+ * EndpointHealer Ã¢â‚¬â€ Immune system auto-repair for failed cloud endpoints.
  * When a provider fails (HF/CF/Gemini/Ollama), this limb uses shell commands
  * to diagnose the issue by inspecting global variables, CLI auth states,
  * and service health. It can attempt automatic resolution.
@@ -117,7 +117,7 @@ export class EndpointHealer {
         return diagnostic;
     }
 
-    // â•â•â• Ollama Diagnostics (God State) â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Ollama Diagnostics (God State) Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     private async diagnoseOllama(diag: HealerDiagnostic, model?: string): Promise<void> {
         // Check if Ollama process is running
@@ -164,7 +164,7 @@ export class EndpointHealer {
         }
     }
 
-    // â•â•â• Cloudflare Diagnostics â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Cloudflare Diagnostics Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     private async diagnoseCloudflare(diag: HealerDiagnostic): Promise<void> {
         const whoami = await this.runCheck('Wrangler Auth', 'wrangler whoami');
@@ -178,7 +178,7 @@ export class EndpointHealer {
         }
     }
 
-    // â•â•â• HuggingFace Diagnostics â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â HuggingFace Diagnostics Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     private async diagnoseHuggingFace(diag: HealerDiagnostic): Promise<void> {
         const envCheck = await this.runCheck('HF API Key', 'echo %HUGGINGFACE_API_KEY%');
@@ -194,7 +194,7 @@ export class EndpointHealer {
         }
     }
 
-    // â•â•â• Gemini Diagnostics â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Gemini Diagnostics Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     private async diagnoseGemini(diag: HealerDiagnostic): Promise<void> {
         const envCheck = await this.runCheck('Google API Key', 'echo %GOOGLE_API_KEY%');
@@ -211,7 +211,7 @@ export class EndpointHealer {
         }
     }
 
-    // â•â•â• Generic Diagnostics â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Generic Diagnostics Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     private async diagnoseGeneric(diag: HealerDiagnostic): Promise<void> {
         const netCheck = await this.runCheck('Network', 'ping -n 1 8.8.8.8');
@@ -225,7 +225,7 @@ export class EndpointHealer {
         }
     }
 
-    // â•â•â• Shell Command Runner â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Shell Command Runner Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     private async runCheck(name: string, command: string): Promise<DiagnosticCheck> {
         try {

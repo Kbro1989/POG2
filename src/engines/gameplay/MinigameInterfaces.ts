@@ -1,4 +1,4 @@
-import { SovereignAvatar } from '../../core/SovereignAvatar.js';
+﻿import { SovereignAvatar } from '../../core/SovereignAvatar.js';
 import { GameState } from '../../core/models.js';
 
 export interface GameplayModule {

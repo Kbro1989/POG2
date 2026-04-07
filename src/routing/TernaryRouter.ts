@@ -1,4 +1,4 @@
-import { createLogger } from '../utils/logger.js';
+﻿import { createLogger } from '../utils/logger.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { type Ternary, type Result, YaoState, type DecisionAuditRecord, type RoutingComplexity, type ContextCard, EmotionalState, type AIServiceType, type ActuationResult } from '../core/models.js';
@@ -104,6 +104,17 @@ export class TernaryRouter {
         this.strategyAdvisor = new StrategyAdvisor();
     }
 
+    /**
+     * setYaoState - External pulse-driven state transformation.
+     */
+    public setYaoState(state: YaoState): void {
+        this.hexagram.setYaoState(state);
+    }
+
+    public getYaoState(): YaoState {
+        return this.hexagram.getYaoState();
+    }
+
     /** Inject ContextBuilder for FPRAG retrieval (called after construction) */
     setContextBuilder(cb: ContextBuilder): void {
         this.contextBuilder = cb;
@@ -129,14 +140,14 @@ export class TernaryRouter {
         if (this.outcomeScorer) this.outcomeScorer.setClient(client);
     }
 
-    /** 🧬 Evolutionary Sweep - Audit historical interactions and propose mutations */
+    /** ðŸ§¬ Evolutionary Sweep - Audit historical interactions and propose mutations */
     public async evolutionarySweep(sampleSize: number = 20): Promise<StrategyMutation[]> {
         if (!this.trainingCollector || !this.outcomeScorer || !this.strategyAdvisor) {
             logger.warn('Evolution components not fully initialized, skipping sweep.');
             return [];
         }
 
-        logger.info({ sampleSize }, '🧬 Starting CNS evolutionary sweep...');
+        logger.info({ sampleSize }, 'ðŸ§¬ Starting CNS evolutionary sweep...');
         
         // 1. Get raw history from substrate
         // TrainingCollector needs a method to get recent interactions
@@ -157,11 +168,11 @@ export class TernaryRouter {
         const mutations = await this.strategyAdvisor.analyzeMetabolicDrift(history, scores);
         this.proposedMutations = [...this.proposedMutations, ...mutations];
 
-        logger.info({ proposedMutations: mutations.length }, '🧬 Sweep complete. Proposals registered.');
+        logger.info({ proposedMutations: mutations.length }, 'ðŸ§¬ Sweep complete. Proposals registered.');
         return mutations;
     }
 
-    /** 🧬 Apply Mutation - Sovereign Approval Gate */
+    /** ðŸ§¬ Apply Mutation - Sovereign Approval Gate */
     public applyMutation(mutationId: string): Result<void> {
         const index = this.proposedMutations.findIndex(m => m.id === mutationId);
         if (index === -1) return { ok: false, error: new Error('Mutation not found') };
@@ -169,7 +180,7 @@ export class TernaryRouter {
         const mutation = this.proposedMutations[index];
         if (!this.rolodex) return { ok: false, error: new Error('Rolodex not available') };
 
-        logger.info({ mutationId, model: mutation.model }, '🧬 Applying sovereign approved mutation...');
+        logger.info({ mutationId, model: mutation.model }, 'ðŸ§¬ Applying sovereign approved mutation...');
         
         const provider = ModelRolodex.toRolodexProvider(mutation.model.split(':')[0] || 'ollama');
         const modelId = mutation.model.includes(':') ? mutation.model.split(':').slice(1).join(':') : mutation.model;
@@ -237,7 +248,7 @@ export class TernaryRouter {
         }
 
         // 5. State transition
-        logger.info('✨ SovereignKnock sequence validated successfully. Concealment state updated to: isnot');
+        logger.info('âœ¨ SovereignKnock sequence validated successfully. Concealment state updated to: isnot');
         return { ok: true, value: 'isnot' };
     }
 
@@ -400,7 +411,7 @@ export class TernaryRouter {
 
     /**
      * Route to the best model based on role and complexity.
-     * FPRAG Pipeline: Retrieval â†’ State Derivation â†’ Decision â†’ Audit
+     * FPRAG Pipeline: Retrieval Ã¢â€ â€™ State Derivation Ã¢â€ â€™ Decision Ã¢â€ â€™ Audit
      * @param complexity - The ternary complexity classification
      * @param taskType - Optional task type hint
      * @param prompt - Optional raw prompt for FPRAG pre-flight (retrieval + organism state)
@@ -410,7 +421,7 @@ export class TernaryRouter {
 
         // === PHASE 6: SOVEREIGN OVERRIDE (Cloud-Down Detection) ===
         if (this.rolodex?.isAllCloudDown() && this.rolodex.isOllamaAlive()) {
-            logger.warn('🛡️ SOVEREIGN OVERRIDE: All cloud endpoints DOWN. Routing ALL traffic to local Ollama.');
+            logger.warn('ðŸ›¡ï¸ SOVEREIGN OVERRIDE: All cloud endpoints DOWN. Routing ALL traffic to local Ollama.');
             const ollamaModels = this.rolodex.getModelsForProvider('ollama');
             const bestLocal = ollamaModels.length > 0 ? ollamaModels[0].id : this.config.localFallbackModel;
             return {
@@ -420,7 +431,7 @@ export class TernaryRouter {
                 reasoning: 'SOVEREIGN OVERRIDE: All cloud endpoints unreachable. Local Ollama substrate taking full control.',
                 yaoState: YaoState.OldYang,
                 fallbackUsed: true,
-                fallbackReason: 'All cloud providers offline — sovereign local override active',
+                fallbackReason: 'All cloud providers offline â€” sovereign local override active',
                 timestamp: routeStartTime
             };
         }
@@ -432,7 +443,7 @@ export class TernaryRouter {
         // If we have a prompt and it's NOT a guaranteed fast path, do a cheap triage 
         let dynamicTaskType: TaskType = 'text';
 
-        // 🧬 Phase 108: CONFIDENCE OVERRIDE (Heuristic Fallback if Triage is Shaky)
+        // ðŸ§¬ Phase 108: CONFIDENCE OVERRIDE (Heuristic Fallback if Triage is Shaky)
         const triageEnabled = prompt && !fastPath && this.modelClient;
         
         if (triageEnabled) {
@@ -440,7 +451,7 @@ export class TernaryRouter {
             
             // If triage confidence is dangerously low, revert to heuristic classification
             if (this.lastConfidence < 0.4) {
-                logger.warn({ confidence: this.lastConfidence }, '🧬 CNS: Triage confidence too low. Bypassing dynamic type.');
+                logger.warn({ confidence: this.lastConfidence }, 'ðŸ§¬ CNS: Triage confidence too low. Bypassing dynamic type.');
                 dynamicTaskType = 'text'; 
             }
             // If the triage determined it's vision, but the heuristic missed it, upgrade the complexity
@@ -529,7 +540,7 @@ export class TernaryRouter {
                     reasoning: `Stage 3 (Structural Fallback) - CRITICAL: Both cloud endpoints exhausted. Local brain taking over.`,
                     yaoState: YaoState.OldYang,
                     fallbackUsed: true,
-                    fallbackReason: 'CRITICAL: Both Ollama cloud and HF rate limited â€” local fallback active',
+                    fallbackReason: 'CRITICAL: Both Ollama cloud and HF rate limited Ã¢â‚¬â€ local fallback active',
                     timestamp: routeStartTime
                 };
             } else {
@@ -754,7 +765,7 @@ export class TernaryRouter {
         const rawList = [preferred, ...fallbacks, this.config.localFallbackModel];
         const unique = Array.from(new Set(rawList.filter(Boolean)));
         
-        // 🧬 Nervous System v2: Scored Routing (Phase 9)
+        // ðŸ§¬ Nervous System v2: Scored Routing (Phase 9)
         const allModels = this.rolodex?.getAllModels() || [];
         const scored = unique
             .filter(mId => this.isModelAvailableAndHealthy(mId) && this.isModalityCompatible(mId, taskType))
@@ -765,7 +776,7 @@ export class TernaryRouter {
                 const avgLatency = mData?.avgLatencyMs ?? 500;
                 const expectedLatency = Math.max(avgLatency, 50);
                 
-                // 🧬 Phase 108: Explicit Decision Weighting
+                // ðŸ§¬ Phase 108: Explicit Decision Weighting
                 // score = (reputation weight) / log(1 + latency)
                 const score = rep / Math.log(1 + expectedLatency);
                 return { id: mId, score };
@@ -775,12 +786,12 @@ export class TernaryRouter {
         const sorted = scored.map(s => s.id);
         if (sorted.length === 0) return this.config.localFallbackModel;
 
-        // 🧬 Nervous System v2: ε-greedy Adaptive Exploration (Phase 9)
+        // ðŸ§¬ Nervous System v2: Îµ-greedy Adaptive Exploration (Phase 9)
         const epsilon = 0.25 - (this.lastConfidence * 0.20);
         if (Math.random() < epsilon && sorted.length > 1) {
             const randomIndex = Math.floor(Math.random() * (sorted.length - 1)) + 1; // Pick non-primary
             const exploredModel = sorted[randomIndex];
-            logger.info({ model: exploredModel, epsilon, taskType }, '🧬 CNS ε-greedy: Exploration triggered');
+            logger.info({ model: exploredModel, epsilon, taskType }, 'ðŸ§¬ CNS Îµ-greedy: Exploration triggered');
             return exploredModel;
         }
 
@@ -867,7 +878,7 @@ export class TernaryRouter {
     }
 
     /**
-     * 🧬 Proprioceptive Reinforcement Loop (Phase 24)
+     * ðŸ§¬ Proprioceptive Reinforcement Loop (Phase 24)
      * Directly adjusts model reputation based on sensory verification of actuation.
      */
     public recordActuationReinforcement(verification: ActuationResult): void {
@@ -881,7 +892,7 @@ export class TernaryRouter {
         // Success gives a small boost (+0.05), failure gives a significant penalty (-0.15)
         const adjustment = success ? 0.05 : -0.15;
         
-        logger.info({ modelId, success, adjustment, details }, '🧬 CNS: Applying proprioceptive reinforcement');
+        logger.info({ modelId, success, adjustment, details }, 'ðŸ§¬ CNS: Applying proprioceptive reinforcement');
         this.rolodex.mutateReputation(modelName, provider, adjustment);
         
         // Push to Hexagram line 4 (Metabolic Stability)
@@ -910,7 +921,7 @@ export class TernaryRouter {
         if (model.startsWith('fireworks:')) return 'fireworks';
         if (model.startsWith('openrouter:')) return 'openrouter';
         if (model.startsWith('@cf/') || model.includes('cloudflare')) return 'cloudflare';
-        return null; // local/ollama — no quota
+        return null; // local/ollama â€” no quota
     }
 
     private async syncLocalModels(): Promise<void> {
@@ -921,7 +932,7 @@ export class TernaryRouter {
         this.lastSyncAt = now;
 
         try {
-            // 🧬 Phase 108: Added 10s timeout to prevent hanging on stalled Ollama substrates
+            // ðŸ§¬ Phase 108: Added 10s timeout to prevent hanging on stalled Ollama substrates
             const { stdout } = await execAsync('ollama list', { timeout: 10000 });
             const lines = stdout.split('\n').slice(1);
             this.availableLocalModels.clear();

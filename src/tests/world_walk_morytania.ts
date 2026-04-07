@@ -16,9 +16,9 @@ const logger = createLogger('WorldWalkMorytania');
  * 3. Refilled Node (Decompression/Spatial) integration.
  */
 async function runGlobalDiscovery() {
-    logger.info('🚀 Launching Global Morytania Traversal...');
+    logger.info('ðŸš€ Launching Global Morytania Traversal...');
 
-    const spatial = new SpatialSovereigntyLimb();
+    const spatial = SpatialSovereigntyLimb.getInstance();
     await spatial.initialize();
     const orchestrator = new FragmentOrchestrator(spatial);
     const pathfinder = new DirectionalPathfinder(spatial);
@@ -59,7 +59,7 @@ async function runGlobalDiscovery() {
         }
 
         if (current.x >= destination.x && current.y >= destination.y) {
-            logger.info('✅ DESTINATION REACHED: Havenhythe territory detected.');
+            logger.info('âœ… DESTINATION REACHED: Havenhythe territory detected.');
             break;
         }
     }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SovereignUI - Deterministic UI patterns for the WebApp Forge.
  * Replaces generic boilerplates with high-fidelity Sovereign aesthetics.
  */
@@ -81,7 +81,7 @@ export default function App() {
     <div className="min-h-screen bg-sovereign-900 p-8">
       <header className="mb-8">
         <h1 className="text-4xl font-bold ghost-glow mb-2">${projectName}</h1>
-        <p className="text-sovereign-300">Sovereign UI • Ghost Limb Active</p>
+        <p className="text-sovereign-300">Sovereign UI â€¢ Ghost Limb Active</p>
       </header>
       
       <main className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -115,7 +115,7 @@ export default function App() {
       </main>
       
       <footer className="mt-12 pt-8 border-t border-sovereign-700 text-center text-sovereign-500 text-sm">
-        <p>POG2-SOVEREIGN • Ternary Orchestration • Local-First Guarantee</p>
+        <p>POG2-SOVEREIGN â€¢ Ternary Orchestration â€¢ Local-First Guarantee</p>
       </footer>
     </div>
   );

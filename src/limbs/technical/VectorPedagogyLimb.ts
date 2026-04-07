@@ -1,4 +1,4 @@
-import { Result, ok, err, YaoState } from '../../core/models.js';
+﻿import { Result, ok, err, YaoState } from '../../core/models.js';
 import type { PedagogyProfile } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
 import { VectorDB } from "../../utils/VectorDB.js";

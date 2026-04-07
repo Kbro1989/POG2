@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+﻿import Database from 'better-sqlite3';
 import { createLogger } from './logger.js';
 
 const logger = createLogger('SovereignKnowledgeDB');

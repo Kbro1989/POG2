@@ -1,4 +1,4 @@
-import { createLogger } from '../utils/logger.js';
+﻿import { createLogger } from '../utils/logger.js';
 import { SovereignConfig, getDefaultSovereignConfig } from '../config/SovereignConfig.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { ModelRolodex } from '../api/ai/ModelRolodex.js';
@@ -9,7 +9,7 @@ import { HexagramManager } from '../routing/HexagramManager.js';
 const logger = createLogger('EvolutionDiagnostic');
 
 async function runEvolutionDiagnostic() {
-    logger.info('🧬 Starting Phase 11: Evolution Diagnostic Probe...');
+    logger.info('ðŸ§¬ Starting Phase 11: Evolution Diagnostic Probe...');
 
     let config: SovereignConfig;
     try {
@@ -23,11 +23,11 @@ async function runEvolutionDiagnostic() {
     }
 
     // 1. Initialize CNS Components
-    logger.info('🧬 Initializing HexagramManager...');
+    logger.info('ðŸ§¬ Initializing HexagramManager...');
     const hexManager = new HexagramManager(null, 'evolution_test');
     await hexManager.initialize();
 
-    logger.info('🧬 Initializing Core Components...');
+    logger.info('ðŸ§¬ Initializing Core Components...');
     const rolodex = new ModelRolodex(config);
     const router = new TernaryRouter(config);
     const collector = TrainingCollector.getInstance('evolution_test');
@@ -41,7 +41,7 @@ async function runEvolutionDiagnostic() {
     // We use the real local thinking model for success baseline.
     const targetModel = config.masterLocalModel || 'deepseek-r1:8b';
     
-    logger.info({ model: targetModel }, '🧬 Recording real substrate interactions...');
+    logger.info({ model: targetModel }, 'ðŸ§¬ Recording real substrate interactions...');
     
     // Step A: Record some successful interactions (Baseline)
     for (let i = 0; i < 5; i++) {
@@ -58,7 +58,7 @@ async function runEvolutionDiagnostic() {
 
     // Step B: Induce REAL metabolic drift (Pressure Test)
     // We record interactions with real syntax failures (detected by Scorer) or real connection failures.
-    logger.info('🧬 Simulating real metabolic drift (syntax failure pattern)...');
+    logger.info('ðŸ§¬ Simulating real metabolic drift (syntax failure pattern)...');
     for (let i = 0; i < 6; i++) {
         await collector.recordInteraction({
             model: targetModel,
@@ -72,25 +72,25 @@ async function runEvolutionDiagnostic() {
     }
 
     // 3. Execution: Evolutionary Sweep
-    logger.info('🧬 Running Evolutionary Sweep (Clinical Drift Detection)...');
+    logger.info('ðŸ§¬ Running Evolutionary Sweep (Clinical Drift Detection)...');
     let mutations;
     try {
         mutations = await router.evolutionarySweep(10);
     } catch (sweepErr: any) {
-        logger.error({ err: sweepErr.message, stack: sweepErr.stack }, '❌ FAILED: evolutionarySweep crashed');
+        logger.error({ err: sweepErr.message, stack: sweepErr.stack }, 'âŒ FAILED: evolutionarySweep crashed');
         process.exit(1);
     }
 
-    logger.info({ proposedMutations: mutations.length }, '🧬 Sweep results processed.');
+    logger.info({ proposedMutations: mutations.length }, 'ðŸ§¬ Sweep results processed.');
 
     if (mutations.length === 0) {
-        logger.error('❌ FAILED: No mutations proposed after synthetic failures.');
+        logger.error('âŒ FAILED: No mutations proposed after synthetic failures.');
         process.exit(1);
     }
 
     const mutation = mutations.find(m => m.model === targetModel);
     if (!mutation) {
-        logger.error(`❌ FAILED: No mutation proposed for ${targetModel}`);
+        logger.error(`âŒ FAILED: No mutation proposed for ${targetModel}`);
         process.exit(1);
     }
 
@@ -98,14 +98,14 @@ async function runEvolutionDiagnostic() {
         model: mutation.model, 
         reasoning: mutation.reasoning,
         adjustment: mutation.weightAdjustment 
-    }, '✅ SUCCESS: Evolutionary loop detected drift.');
+    }, 'âœ… SUCCESS: Evolutionary loop detected drift.');
 
     // 4. Approval Gate: Applying Mutation
-    logger.info('🧬 Testing Sovereign Approval Gate...');
+    logger.info('ðŸ§¬ Testing Sovereign Approval Gate...');
     const result = router.applyMutation(mutation.id);
 
     if (result.ok) {
-        logger.info('✅ SUCCESS: Mutation applied to Rolodex.');
+        logger.info('âœ… SUCCESS: Mutation applied to Rolodex.');
         
         // Verify in Rolodex
         const models = rolodex.getAllModels();
@@ -113,13 +113,13 @@ async function runEvolutionDiagnostic() {
         logger.info({ 
             model: targetModel, 
             finalReputation: updated?.reputation.toFixed(4) 
-        }, '🧬 Metabolic state verified.');
+        }, 'ðŸ§¬ Metabolic state verified.');
     } else {
-        logger.error({ error: result.error?.message }, '❌ FAILED: Mutation application failed.');
+        logger.error({ error: result.error?.message }, 'âŒ FAILED: Mutation application failed.');
         process.exit(1);
     }
 
-    logger.info('🧬 Phase 11 Diagnostic Complete. CNS is now capable of governed evolution.');
+    logger.info('ðŸ§¬ Phase 11 Diagnostic Complete. CNS is now capable of governed evolution.');
 }
 
 runEvolutionDiagnostic().catch(err => {

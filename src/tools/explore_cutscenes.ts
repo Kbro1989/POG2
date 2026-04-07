@@ -1,4 +1,4 @@
-import { JagexCacheReader } from '../utils/JagexCacheReader.js';
+﻿import { JagexCacheReader } from '../utils/JagexCacheReader.js';
 import * as fs from 'fs';
 import * as path from 'path';
 

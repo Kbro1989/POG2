@@ -1,4 +1,4 @@
-import { SovereignKnowledgeDB } from './utils/SovereignKnowledgeDB.js';
+﻿import { SovereignKnowledgeDB } from './utils/SovereignKnowledgeDB.js';
 import { createLogger } from './utils/logger.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -59,10 +59,10 @@ async function runRefillTest() {
     const barrowsNode = saved.find(t => t.x === 3564 && t.y === 3298);
 
     if (barrowsNode && barrowsNode.objects[0].name === "Barrows Mound (Refilled)") {
-        logger.info('✅ REFILL TEST PASSED: Node logic correctly re-hydrated to DB.');
+        logger.info('âœ… REFILL TEST PASSED: Node logic correctly re-hydrated to DB.');
         console.log(`\n[SUCCESS] Refilled ${count} nodes into Sovereign Atlas.\n`);
     } else {
-        logger.error('❌ REFILL TEST FAILED: Node data mismatch.');
+        logger.error('âŒ REFILL TEST FAILED: Node data mismatch.');
     }
 
     db.close();

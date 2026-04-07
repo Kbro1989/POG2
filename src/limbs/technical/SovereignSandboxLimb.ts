@@ -1,8 +1,8 @@
-import fs from 'fs';
+﻿import fs from 'fs';
 import path from 'path';
 
 /**
- * 🧬 SovereignSandboxLimb
+ * ðŸ§¬ SovereignSandboxLimb
  * The 'Lua-inspired Editor' for POG2 Sandbox Game Nodes.
  * Mirrors the Morrowind MWSE-Lua 'writeGameStateFile' pattern.
  */

@@ -1,7 +1,7 @@
-import { createRequire } from 'module';
+﻿import { createRequire } from 'module';
 import * as path from 'path';
 const require = createRequire(import.meta.url);
-// Graceful substrate imports — these may not exist in all environments
+// Graceful substrate imports â€” these may not exist in all environments
 let GameCacheLoader: any = null;
 let EngineCache: any = null;
 let ThreejsSceneCache: any = null;
@@ -155,7 +155,7 @@ export class CacheLearningLimb {
 
             // Real-time render
             if (!renderAppearance) {
-                return err(new Error('renderAppearance not available — RSMV headless substrate not linked.'));
+                return err(new Error('renderAppearance not available â€” RSMV headless substrate not linked.'));
             }
             const rendered = await renderAppearance(this.sceneCache, "item", targetId.toString());
 

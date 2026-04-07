@@ -15,9 +15,27 @@ const logger = createLogger('EntityLimb');
  * Manages identity, pedagogy, and dynamic behavioral bias through weighted experiences.
  */
 export class EntityLimb {
+    private static instance: EntityLimb | undefined;
     private db: Database.Database;
 
-    constructor() {
+    public static getInstance(): EntityLimb {
+        if (!this.instance) {
+            this.instance = new EntityLimb();
+        }
+        return this.instance;
+    }
+
+    public static resetInstance(): void {
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error('resetInstance is forbidden in production');
+        }
+        this.instance = undefined;
+    }
+
+    private constructor() {
+        if (EntityLimb.instance) {
+            throw new Error('Singleton violation: use EntityLimb.getInstance()');
+        }
         const root = getSovereignRoot();
         const dbPath = path.join(root, 'memory', 'memory.db');
         const dbDir = path.dirname(dbPath);

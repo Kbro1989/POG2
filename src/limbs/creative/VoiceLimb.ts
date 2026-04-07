@@ -1,4 +1,4 @@
-import { writeFileSync } from 'fs';
+﻿import { writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { type Result, type ProsodyVector, EmotionalState, GenerativeAesthetics } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
@@ -101,7 +101,7 @@ export class VoiceLimb {
      */
     private splitTextIntoSegments(text: string): Array<{ text: string; pauseAfterMs: number }> {
         // Match segments ending with punctuation or end of string, including dash cases
-        const regex = /[^.!?\n,;—]+[.!?\n,;—]*/g;
+        const regex = /[^.!?\n,;â€”]+[.!?\n,;â€”]*/g;
         const matches = text.match(regex) || [text];
 
         return matches.map(segment => {
@@ -111,7 +111,7 @@ export class VoiceLimb {
             let pause = 0;
             if (/[.!?\n]/.test(segment)) {
                 pause = 600; // Increased full stop pause for cinematic weight
-            } else if (/[,;—]/.test(segment)) {
+            } else if (/[,;â€”]/.test(segment)) {
                 pause = 300; // Increased minor pause
             }
 
@@ -149,7 +149,7 @@ export class VoiceLimb {
 
             // 1. Generate segments in parallel
             const tasks = segments.map(async (segment, i) => {
-                // Apply aggressive jitter (Â±10%) to vary the monotone
+                // Apply aggressive jitter (Ã‚Â±10%) to vary the monotone
                 // Chaos and Agitation increase the range of the jitter
                 const baseJitter = 0.1 * baseProsody.jitterMult;
                 const jitterRange = baseJitter + ((options.prosody?.chaos ?? 0) * 0.2);

@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'fs';
+﻿import { readFileSync, existsSync } from 'fs';
 import { GameplayModule } from './MinigameInterfaces.js';
 import { GameState } from '../../core/models.js';
 import { SovereignAvatar } from '../../core/SovereignAvatar.js';
@@ -32,9 +32,10 @@ export class BarrowsInterpreter implements GameplayModule {
     public onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): string | null {
         // Drain prayer passively every ~18 ticks (10.8s) if underground
         if (avatar.coord.plane === -1 && tickCount % 18 === 0) {
-            let prayer = avatar.skills.get('prayer')?.level || 0;
-            if (prayer > 0) {
-                avatar.skills.set('prayer', { level: Math.max(0, prayer - 8), xp: 0 }); // Drain 8 prayer
+            // Import not needed if we hardcode 7, but let's assume 7 for Prayer
+            const prayerSkill = avatar.skills[7];
+            if (prayerSkill && prayerSkill.level > 0) {
+                prayerSkill.level = Math.max(0, prayerSkill.level - 8);
                 return '[BARROWS] The cursed energy of the crypt drains your Prayer points.';
             }
         }

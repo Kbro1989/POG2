@@ -1,4 +1,4 @@
-import { createLogger } from '../../utils/logger.js';
+﻿import { createLogger } from '../../utils/logger.js';
 import { type Result, ok } from '../../core/models.js';
 import type { TrainingCollector, InteractionRecord } from '../../utils/TrainingCollector.js';
 import type { OutcomeScore } from './OutcomeScorer.js';
@@ -16,7 +16,7 @@ export interface StrategyMutation {
 }
 
 /**
- * StrategyAdvisor — Detects metabolic drift and suggests routing policy shifts.
+ * StrategyAdvisor â€” Detects metabolic drift and suggests routing policy shifts.
  * Identifies models that are underperforming relative to their tier.
  */
 export class StrategyAdvisor {
@@ -43,7 +43,7 @@ export class StrategyAdvisor {
             if (score.score < 0.1) modelStats[int.model].failCount++;
         }
 
-        logger.info({ modelStats }, '🧬 StrategyAdvisor internal stats aggregated.');
+        logger.info({ modelStats }, 'ðŸ§¬ StrategyAdvisor internal stats aggregated.');
 
         // Detect Drift: If a model has >20% failure rate after 10+ samples
         for (const [model, stats] of Object.entries(modelStats)) {

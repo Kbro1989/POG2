@@ -1,4 +1,4 @@
-import { Coord, Result, ok, err } from '../../core/models.js';
+﻿import { Coord, Result, ok, err } from '../../core/models.js';
 import { SpatialSovereigntyLimb } from './SpatialSovereigntyLimb.js';
 import { createLogger } from '../../utils/logger.js';
 

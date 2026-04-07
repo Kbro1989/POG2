@@ -1,4 +1,4 @@
-import { YaoState, Result, BuildStatus, HealthStatus } from '../core/models.js';
+﻿import { YaoState, Result, BuildStatus, HealthStatus } from '../core/models.js';
 
 export class CognitiveTranslator {
     public static translate(data: unknown): YaoState {

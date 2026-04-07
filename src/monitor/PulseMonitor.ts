@@ -1,7 +1,7 @@
-import { spawn, type ChildProcess } from 'child_process';
+﻿import { spawn, type ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
-import { join } from 'path';
-import { existsSync, statSync } from 'fs';
+import { join, resolve } from 'path';
+import { existsSync, statSync, appendFileSync } from 'fs';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { NEUROLOGICAL_MAP } from '../state/NeurologicalMap.js';
 import { type SystemSensors, YaoState } from '../core/models.js';
@@ -270,10 +270,22 @@ export class PulseMonitor extends EventEmitter {
                 const pidStr = parts[1]?.replace(/"/g, '') || '0';
                 const memStr = parts[4]?.replace(/[", K]/g, '') || '0';
 
+                const parsedMem = parseInt(memStr, 10);
+                const memoryUsage = Number.isFinite(parsedMem) ? BigInt(parsedMem) * 1024n : 0n;
+
+                if (!Number.isFinite(parsedMem)) {
+                    // Redirect failure to pedagogical grounding history instead of crashing
+                    const logDir = resolve('D:/sovereign/logs');
+                    if (existsSync(logDir)) {
+                         const logPath = join(logDir, 'grounding_failures.log');
+                         appendFileSync(logPath, `[FAILURE] Neural node '${name}' (PID: ${pidStr}) had unparseable memory string: '${memStr}'\n`);
+                    }
+                }
+
                 return {
                     pid: parseInt(pidStr, 10),
                     name,
-                    memoryWorkingSet: BigInt(parseInt(memStr, 10)) * 1024n,
+                    memoryWorkingSet: memoryUsage,
                     cpuPercent: 0, // tasklist does not supply cpu percent easily
                     state: 'RUNNING' as const
                 };
@@ -310,7 +322,7 @@ export class PulseMonitor extends EventEmitter {
             // 1. Build test knock
             const config = getDefaultSovereignConfig();
             const chroma = new ChromaLimb(config);
-            const testSequence = ['䷀', '䷁', '䷂', '䷃', '䷄', '䷅'];
+            const testSequence = ['ä·€', 'ä·', 'ä·‚', 'ä·ƒ', 'ä·„', 'ä·…'];
 
             const knock: SovereignKnock = {
                 iChingSequence: testSequence,

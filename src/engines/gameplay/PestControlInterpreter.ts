@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'fs';
+﻿import { readFileSync, existsSync } from 'fs';
 import { GameplayModule } from './MinigameInterfaces.js';
 import { GameState } from '../../core/models.js';
 import { SovereignAvatar } from '../../core/SovereignAvatar.js';

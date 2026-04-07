@@ -1,4 +1,4 @@
-import { type Result, YaoState } from '../../core/models.js';
+﻿import { type Result, YaoState } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { VectorDB } from '../../utils/VectorDB.js';
 import { StyleAnalyzer, type StyleProfile } from '../../utils/StyleAnalyzer.js';
@@ -63,7 +63,7 @@ export class GutenbergLimb {
             logger.debug({ count: data.length }, 'Library metadata loaded successfully.');
             return data;
         } catch (err) {
-            logger.error({ err }, 'Failed to parse Gutenberg metadata â€” library may be corrupt.');
+            logger.error({ err }, 'Failed to parse Gutenberg metadata Ã¢â‚¬â€ library may be corrupt.');
             return [];
         }
     }
@@ -192,7 +192,7 @@ export class GutenbergLimb {
         const filePath = join(domainPath, fileName);
 
         if (existsSync(filePath)) {
-            logger.warn({ id, title }, 'Book already exists in library â€” maintaining read-only constraint.');
+            logger.warn({ id, title }, 'Book already exists in library Ã¢â‚¬â€ maintaining read-only constraint.');
             const existingMeta = this.loadMetadata().find(b => b.id === id);
             if (existingMeta) return { ok: true, value: existingMeta };
             return { ok: false, error: new Error('Book file exists but metadata is lost.') };
@@ -222,7 +222,7 @@ export class GutenbergLimb {
 
             return { ok: true, value: metadata };
         } catch (err) {
-            logger.error({ err, id }, 'Ingestion failed â€” executing atomic rollback.');
+            logger.error({ err, id }, 'Ingestion failed Ã¢â‚¬â€ executing atomic rollback.');
             if (filePath && existsSync(filePath)) {
                 try { unlinkSync(filePath); } catch (rollbackErr) { logger.warn({ rollbackErr }, 'Rollback unlinking failed.'); }
             }

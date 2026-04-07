@@ -1,4 +1,4 @@
-import { ShellEngine } from './ShellEngine.js';
+﻿import { ShellEngine } from './ShellEngine.js';
 import { Renderer } from '../ui/Renderer.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { type Result, type EngineOutput, YaoState } from '../core/models.js';
@@ -7,7 +7,7 @@ import { createLogger } from "../utils/logger.js";
 const logger = createLogger('ShellLibrary');
 
 /**
- * ShellLibrary — Specialized command wrappers for the Brain.
+ * ShellLibrary â€” Specialized command wrappers for the Brain.
  * Ported/Integrated capabilities for gcloud, wrangler, node, python, etc.
  * Integrated with TernaryRouter for metabolic command modulation.
  */
@@ -136,7 +136,7 @@ Please analyze this context and construct a corrected command or deployment conf
         if (this.router) {
             const yao = this.router.getHexagram().getYaoState();
             if (yao === YaoState.OldMixed || yao === YaoState.OldYin) {
-                this.renderer.warn(`⚠️ METABOLIC WARNING: Performing npm install in unstable state (${yao}). Dependency flux detected.`);
+                this.renderer.warn(`âš ï¸ METABOLIC WARNING: Performing npm install in unstable state (${yao}). Dependency flux detected.`);
             }
         }
         const pkgStr = args.packages?.join(' ') || '';

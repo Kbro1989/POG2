@@ -7,10 +7,10 @@ import { LessonLearner } from '../limbs/spatial/LessonLearner.js';
 import { GameState, Coord } from '../core/models.js';
 
 async function testLessonLearningB3a() {
-    console.log('🧪 PHASE B3a TEST: Lesson Learning (Extraction Only)\n');
+    console.log('ðŸ§ª PHASE B3a TEST: Lesson Learning (Extraction Only)\n');
 
     // 1. Initialize limbs
-    const spatial = new SpatialSovereigntyLimb();
+    const spatial = SpatialSovereigntyLimb.getInstance();
     await spatial.initialize();
     await spatial.loadLogic('barrows');
     
@@ -36,7 +36,7 @@ async function testLessonLearningB3a() {
         players: []
     } as any;
 
-    console.log(`📍 Starting at (${avatar.x}, ${avatar.y})\n`);
+    console.log(`ðŸ“ Starting at (${avatar.x}, ${avatar.y})\n`);
 
     // 3. Mark initial visit and run 5 ticks
     discovery.markVisited(avatar.plane, avatar.x, avatar.y);
@@ -52,11 +52,11 @@ async function testLessonLearningB3a() {
     const summary = lessonLearner.getSummary();
     const learned: any[] = (lessonLearner as any).learnedTiles ? Array.from((lessonLearner as any).learnedTiles.values()) : [];
 
-    console.log(`\n✅ LEARNING RESULTS:`);
+    console.log(`\nâœ… LEARNING RESULTS:`);
     console.log(`  Tiles learned: ${summary.tilesLearned}`);
     console.log(`  Total objects found: ${summary.totalObjects}`);
 
-    console.log(`\n📚 SAMPLE LEARNED TILES:`);
+    console.log(`\nðŸ“š SAMPLE LEARNED TILES:`);
     learned.forEach((tile: any, i) => {
         console.log(`  Step ${i+1}: (${tile.x}, ${tile.y}) -> ${tile.objects.length} objects, flags=0x${tile.terrainFlags.toString(16)}`);
         tile.objects.forEach((obj: unknown) => console.log(`    - [${(obj as any).id}] ${(obj as any).name} (type ${(obj as any).type})`));
@@ -68,16 +68,16 @@ async function testLessonLearningB3a() {
         validCoordinates: learned.every(t => t.x >= 3550 && t.y >= 3280)
     };
 
-    console.log(`\n✅ SUCCESS CRITERIA:`);
-    console.log(`  Learned ≥5 tiles: ${SUCCESS_CRITERIA.learnedCount ? '✓' : '✗'}`);
-    console.log(`  Found objects: ${SUCCESS_CRITERIA.foundObjects ? '✓' : '✗'}`);
-    console.log(`  Valid coordinates: ${SUCCESS_CRITERIA.validCoordinates ? '✓' : '✗'}`);
+    console.log(`\nâœ… SUCCESS CRITERIA:`);
+    console.log(`  Learned â‰¥5 tiles: ${SUCCESS_CRITERIA.learnedCount ? 'âœ“' : 'âœ—'}`);
+    console.log(`  Found objects: ${SUCCESS_CRITERIA.foundObjects ? 'âœ“' : 'âœ—'}`);
+    console.log(`  Valid coordinates: ${SUCCESS_CRITERIA.validCoordinates ? 'âœ“' : 'âœ—'}`);
 
     if (SUCCESS_CRITERIA.learnedCount && SUCCESS_CRITERIA.foundObjects) {
-        console.log('\n🚀 PHASE B3a CHECKPOINT: PASSED\n');
+        console.log('\nðŸš€ PHASE B3a CHECKPOINT: PASSED\n');
         worldForensics.close();
     } else {
-        console.log('\n❌ PHASE B3a CHECKPOINT: FAILED\n');
+        console.log('\nâŒ PHASE B3a CHECKPOINT: FAILED\n');
         worldForensics.close();
         process.exit(1);
     }

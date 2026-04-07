@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PATHING ARCHAEOLOGIST v2 - Direct Sovereign Memory Scan
  * 
  * Reads the already-extracted JSON dumps from D:\sovereign
@@ -21,9 +21,9 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CONFIGURATION
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const SOVEREIGN_BASE = 'D:/sovereign';
 const OUTPUT_DIR = 'D:/sovereign/atlas/spatial/pathing_theory';
 
@@ -49,9 +49,9 @@ const KINETIC_KEYWORDS = [
     'patrol', 'guard route',
 ];
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // HELPERS
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function ensureDir(dir: string) {
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 }
@@ -68,7 +68,7 @@ function loadJson(path: string, label: string): any[] {
         // Handle both array format and {files:[...]} batched format
         if (Array.isArray(parsed)) return parsed;
         if (parsed.files && Array.isArray(parsed.files)) return parsed.files;
-        // Single object — wrap it
+        // Single object â€” wrap it
         return [parsed];
     } catch (e: any) {
         console.error(`  [ERR] Failed to parse ${label}: ${e.message?.slice(0, 100)}`);
@@ -111,19 +111,19 @@ function searchEntities(entities: any[], keywords: string[]): any[] {
     return hits;
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MAIN
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 async function main() {
-    console.log('╔══════════════════════════════════════════════════════════╗');
-    console.log('║   PATHING ARCHAEOLOGIST v2 — SOVEREIGN MEMORY SCAN    ║');
-    console.log('║   Reading pre-extracted JSON dumps from D:\\sovereign   ║');
-    console.log('╚══════════════════════════════════════════════════════════╝\n');
+    console.log('â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—');
+    console.log('â•‘   PATHING ARCHAEOLOGIST v2 â€” SOVEREIGN MEMORY SCAN    â•‘');
+    console.log('â•‘   Reading pre-extracted JSON dumps from D:\\sovereign   â•‘');
+    console.log('â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n');
 
     ensureDir(OUTPUT_DIR);
 
-    // ─── LOAD ALL DATA ───
-    console.log('━━━ PHASE 1: Loading Sovereign Memory ━━━');
+    // â”€â”€â”€ LOAD ALL DATA â”€â”€â”€
+    console.log('â”â”â” PHASE 1: Loading Sovereign Memory â”â”â”');
     const objects = loadJson(OBJECTS_PATH, 'objects.json');
     const npcs = loadJson(NPCS_PATH, 'npcs.json');
     let varbits: any[] = [];
@@ -137,8 +137,8 @@ async function main() {
     console.log(`  Varbits loaded: ${varbits.length}`);
     console.log(`  Kinematics:     ${kinematics.length}`);
 
-    // ─── TRANSPORT SCAN ───
-    console.log('\n━━━ PHASE 2: Transport Infrastructure Scan ━━━');
+    // â”€â”€â”€ TRANSPORT SCAN â”€â”€â”€
+    console.log('\nâ”â”â” PHASE 2: Transport Infrastructure Scan â”â”â”');
     const transportObjects = searchEntities(objects, TRANSPORT_KEYWORDS);
     console.log(`  Transport object hits: ${transportObjects.length}`);
 
@@ -150,25 +150,25 @@ async function main() {
     );
     console.log(`  Mine cart/track/rail specific: ${mineCartObjects.length}`);
 
-    // ─── KINETIC SCAN ───
-    console.log('\n━━━ PHASE 3: Kinetic Target Scan ━━━');
+    // â”€â”€â”€ KINETIC SCAN â”€â”€â”€
+    console.log('\nâ”â”â” PHASE 3: Kinetic Target Scan â”â”â”');
     const kineticObjects = searchEntities(objects, KINETIC_KEYWORDS);
     const kineticNpcs = searchEntities(npcs, KINETIC_KEYWORDS);
     console.log(`  Kinetic object hits: ${kineticObjects.length}`);
     console.log(`  Kinetic NPC hits:    ${kineticNpcs.length}`);
 
-    // ─── KELDAGRIM SPECIFIC ───
-    console.log('\n━━━ PHASE 4: Keldagrim-Specific Isolation ━━━');
+    // â”€â”€â”€ KELDAGRIM SPECIFIC â”€â”€â”€
+    console.log('\nâ”â”â” PHASE 4: Keldagrim-Specific Isolation â”â”â”');
     const keldagrimHits = searchEntities(objects, ['keldagrim']);
     const keldagrimNpcs = searchEntities(npcs, ['keldagrim']);
     console.log(`  Keldagrim objects: ${keldagrimHits.length}`);
     console.log(`  Keldagrim NPCs:   ${keldagrimNpcs.length}`);
 
-    // ─── LOG DETAILED HITS ───
-    console.log('\n━━━ PHASE 5: Detailed Hit Report ━━━');
+    // â”€â”€â”€ LOG DETAILED HITS â”€â”€â”€
+    console.log('\nâ”â”â” PHASE 5: Detailed Hit Report â”â”â”');
 
     if (mineCartObjects.length > 0) {
-        console.log('\n  ── MINE CART / TRACK OBJECTS ──');
+        console.log('\n  â”€â”€ MINE CART / TRACK OBJECTS â”€â”€');
         for (const h of mineCartObjects) {
             console.log(`  [${h.id}] "${h.name}" (keyword: ${h.keyword})`);
             if (h.op) console.log(`    Actions: ${JSON.stringify(h.op)}`);
@@ -177,7 +177,7 @@ async function main() {
     }
 
     if (kineticObjects.length > 0) {
-        console.log('\n  ── KINETIC OBJECTS ──');
+        console.log('\n  â”€â”€ KINETIC OBJECTS â”€â”€');
         for (const h of kineticObjects) {
             console.log(`  [${h.id}] "${h.name}" (keyword: ${h.keyword})`);
             if (h.params) console.log(`    Params: ${JSON.stringify(h.params)}`);
@@ -185,7 +185,7 @@ async function main() {
     }
 
     if (kineticNpcs.length > 0) {
-        console.log('\n  ── KINETIC NPCs ──');
+        console.log('\n  â”€â”€ KINETIC NPCs â”€â”€');
         for (const h of kineticNpcs) {
             console.log(`  [${h.id}] "${h.name}" (keyword: ${h.keyword})`);
             if (h.walkRange) console.log(`    WalkRange: ${h.walkRange}`);
@@ -195,8 +195,8 @@ async function main() {
         }
     }
 
-    // ─── COMPILE FULL REPORT ───
-    console.log('\n━━━ PHASE 6: Compiling Archaeology Report ━━━');
+    // â”€â”€â”€ COMPILE FULL REPORT â”€â”€â”€
+    console.log('\nâ”â”â” PHASE 6: Compiling Archaeology Report â”â”â”');
     const report = {
         archaeologist_version: 2,
         timestamp: new Date().toISOString(),
@@ -229,17 +229,17 @@ async function main() {
     writeFileSync(reportPath, JSON.stringify(report, null, 2));
     console.log(`\n[OK] Full archaeology report: ${reportPath}`);
 
-    // ─── SUMMARY ───
-    console.log('\n╔══════════════════════════════════════════════════════════╗');
-    console.log(`║  Total Objects Scanned:   ${String(objects.length).padStart(8)}                   ║`);
-    console.log(`║  Total NPCs Scanned:      ${String(npcs.length).padStart(8)}                   ║`);
-    console.log(`║  Transport Hits:          ${String(transportObjects.length).padStart(8)}                   ║`);
-    console.log(`║  Mine Cart Specific:      ${String(mineCartObjects.length).padStart(8)}                   ║`);
-    console.log(`║  Kinetic Object Hits:     ${String(kineticObjects.length).padStart(8)}                   ║`);
-    console.log(`║  Kinetic NPC Hits:        ${String(kineticNpcs.length).padStart(8)}                   ║`);
-    console.log(`║  Keldagrim Objects:       ${String(keldagrimHits.length).padStart(8)}                   ║`);
-    console.log(`║  Keldagrim NPCs:          ${String(keldagrimNpcs.length).padStart(8)}                   ║`);
-    console.log('╚══════════════════════════════════════════════════════════╝');
+    // â”€â”€â”€ SUMMARY â”€â”€â”€
+    console.log('\nâ•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—');
+    console.log(`â•‘  Total Objects Scanned:   ${String(objects.length).padStart(8)}                   â•‘`);
+    console.log(`â•‘  Total NPCs Scanned:      ${String(npcs.length).padStart(8)}                   â•‘`);
+    console.log(`â•‘  Transport Hits:          ${String(transportObjects.length).padStart(8)}                   â•‘`);
+    console.log(`â•‘  Mine Cart Specific:      ${String(mineCartObjects.length).padStart(8)}                   â•‘`);
+    console.log(`â•‘  Kinetic Object Hits:     ${String(kineticObjects.length).padStart(8)}                   â•‘`);
+    console.log(`â•‘  Kinetic NPC Hits:        ${String(kineticNpcs.length).padStart(8)}                   â•‘`);
+    console.log(`â•‘  Keldagrim Objects:       ${String(keldagrimHits.length).padStart(8)}                   â•‘`);
+    console.log(`â•‘  Keldagrim NPCs:          ${String(keldagrimNpcs.length).padStart(8)}                   â•‘`);
+    console.log('â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•');
 }
 
 main().catch(e => {

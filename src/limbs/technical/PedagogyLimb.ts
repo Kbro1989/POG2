@@ -50,7 +50,7 @@ export class PedagogyLimb {
     };
 
     constructor(router: TernaryRouter, vectorDB: VectorDB, client: ModelClient) {
-        this.forensics = new CacheForensicsLimb();
+        this.forensics = CacheForensicsLimb.getInstance();
         this.topology = new TopologyLimb();
         this.router = router;
         this.vectorDB = vectorDB;
@@ -510,7 +510,7 @@ The second should define its cinematic intent.
      * Transforms historical memory into actionable generative strategy.
      */
     public async reproduce(lessonId: string): Promise<Result<any>> {
-        logger.info({ lessonId }, '🧠 Initiating Reproduction cycle from memory substrate...');
+        logger.info({ lessonId }, 'ðŸ§  Initiating Reproduction cycle from memory substrate...');
 
         const lessonRes = this.vectorDB.queryLocal(lessonId);
         if (!lessonRes.ok || !lessonRes.value) {

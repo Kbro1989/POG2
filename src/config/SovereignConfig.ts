@@ -92,6 +92,7 @@ export interface SovereignConfig {
     };
     // Phase 18: Resource & Metabolic Tracking
     metabolicCostScale: number; // 0.0 - 1.0 multiplier for all cost logging
+    globeEnabled: boolean;     // Phase 107.1: Toggle for durable state hub
     globeEndpoint?: string;    // Phase 107: Live Durable State Hub
 
     // Phase 9: Stabilization Mechanics
@@ -177,10 +178,11 @@ const DEFAULT_CONFIG: SovereignConfig = {
     // Phase 8 SovereignKnock Defaults
     knock: {
         enabled: true,
-        defaultSequence: ['䷀', '䷁', '䷂', '䷃', '䷄', '䷅'],
+        defaultSequence: ['ä·€', 'ä·', 'ä·‚', 'ä·ƒ', 'ä·„', 'ä·…'],
         ttlSeconds: 30,
         ghostFallback: true
     },
+    globeEnabled: false,
     globeEndpoint: 'wss://multiplayer-globe-template.kristain33rs.workers.dev/parties/globe/pog2-sovereign',
     
     // Phase 9 Defaults
@@ -263,6 +265,7 @@ const ENV_VAR_MAP: Record<string, string> = {
     numCtx: 'NUM_CTX',
     outputFormat: 'OUTPUT_FORMAT',
     logLevel: 'LOG_LEVEL',
+    globeEnabled: 'POG2_GLOBE_ENABLED',
     globeEndpoint: 'POG2_GLOBE_ENDPOINT',
     sovereignRoot: 'POG_SOVEREIGN_ROOT',
     reputationDecayRate: 'REPUTATION_DECAY_RATE',

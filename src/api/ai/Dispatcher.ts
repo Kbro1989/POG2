@@ -1,4 +1,4 @@
-import { type Result, type Ternary } from '../../core/models.js';
+﻿import { type Result, type Ternary } from '../../core/models.js';
 import { CapabilityRegistry, type AICapability, type AIServiceType } from './CapabilityRegistry.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { WorkforceManifest } from '../../routing/WorkforceManifest.js';

@@ -1,4 +1,4 @@
-import { ModelClient } from '../clients/ModelClient.js';
+﻿import { ModelClient } from '../clients/ModelClient.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import type { Result, EngineOutput, SovereignRecord } from '../core/models.js';
 import type { Renderer } from '../ui/Renderer.js';
@@ -28,7 +28,7 @@ export interface ParallelExecution {
 }
 
 /**
- * MultiModelExecutor â€” Kimi's limbs/digits
+ * MultiModelExecutor Ã¢â‚¬â€ Kimi's limbs/digits
  * Executes up to 4 Ollama models in parallel for task completion
  * Models work as tools under Kimi's coordination
  */
@@ -57,7 +57,7 @@ export class MultiModelExecutor {
             return { ok: false, error: new Error('Maximum 4 parallel tasks allowed') };
         }
 
-        this.renderer.info(`ðŸ¦¾ Deploying ${tasks.length} Ollama limb${tasks.length > 1 ? 's' : ''}...`);
+        this.renderer.info(`Ã°Å¸Â¦Â¾ Deploying ${tasks.length} Ollama limb${tasks.length > 1 ? 's' : ''}...`);
 
         const startTime = Date.now();
 
@@ -157,7 +157,7 @@ export class MultiModelExecutor {
         const outputs: string[] = [];
 
         for (const r of results) {
-            const status = r.result.ok ? 'âœ“' : 'âœ—';
+            const status = r.result.ok ? 'Ã¢Å“â€œ' : 'Ã¢Å“â€”';
             outputs.push(`[${status}] ${r.id} (${r.model}) - ${r.latency}ms`);
             if (r.result.ok) {
                 outputs.push(r.result.value.output);
@@ -187,7 +187,7 @@ export class MultiModelExecutor {
      */
     async executeCodingTask(task: string, context?: string): Promise<Result<EngineOutput>> {
         // Step 1: Planning (heavy model)
-        this.renderer.info('ðŸ§  Heavy model planning...');
+        this.renderer.info('Ã°Å¸Â§Â  Heavy model planning...');
         const planResult = await this.client.call({
             model: this.config.codingHeavyModel,
             prompt: `TASK: ${task}\n\n${context ? `CONTEXT:\n${context}\n\n` : ''}Create a detailed implementation plan. Break into up to 4 parallel subtasks.`,
@@ -202,7 +202,7 @@ export class MultiModelExecutor {
         const subtasks = this.extractSubtasks(plan, task);
 
         // Step 3: Execute subtasks in parallel
-        this.renderer.info(`ðŸ¦¾ Executing ${subtasks.length} subtasks in parallel...`);
+        this.renderer.info(`Ã°Å¸Â¦Â¾ Executing ${subtasks.length} subtasks in parallel...`);
 
         return this.executeParallel({
             tasks: subtasks,

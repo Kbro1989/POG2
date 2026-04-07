@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+﻿import { exec } from 'child_process';
 import { promisify } from 'util';
 import { Agent } from 'undici';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
@@ -28,7 +28,7 @@ const execAsync = promisify(exec);
 const logger = createLogger('ModelClient');
 
 /**
- * ModelClient — Real API calls to local and cloud-based neural substrates.
+ * ModelClient â€” Real API calls to local and cloud-based neural substrates.
  * NO MOCKS. NO FAKES. Real network calls with proper error handling.
  */
 export class ModelClient implements ModelExecutor {
@@ -305,7 +305,7 @@ export class ModelClient implements ModelExecutor {
             }
         }
 
-        // All retries exhausted â€” invoke EndpointHealer before final failure
+        // All retries exhausted Ã¢â‚¬â€ invoke EndpointHealer before final failure
         const provider: 'ollama' | 'huggingface' | 'gemini' | 'cloudflare' | 'fireworks' | 'openrouter' | 'unknown' = params.model.startsWith('gemini:') ? 'gemini'
             : params.model.startsWith('huggingface:') ? 'huggingface'
                 : params.model.startsWith('fireworks:') ? 'fireworks'
@@ -316,7 +316,7 @@ export class ModelClient implements ModelExecutor {
 
         if (diagnostic.resolved) {
             // One final attempt after healing
-            logger.info({ resolution: diagnostic.resolution }, 'EndpointHealer resolved issue â€” retrying...');
+            logger.info({ resolution: diagnostic.resolution }, 'EndpointHealer resolved issue Ã¢â‚¬â€ retrying...');
             const finalAttempt = await this.call(params);
 
             // Phase 56: Persistent Training Loop - Record Error Fix
@@ -330,7 +330,7 @@ export class ModelClient implements ModelExecutor {
             if (finalAttempt.ok) return finalAttempt;
         }
 
-        return { ok: false, error: lastError || new Error('Max retries exceeded â€” EndpointHealer could not resolve') };
+        return { ok: false, error: lastError || new Error('Max retries exceeded Ã¢â‚¬â€ EndpointHealer could not resolve') };
     }
 
     async embed(text: string, modelOverride?: string): Promise<Result<Float32Array>> {
@@ -363,7 +363,7 @@ export class ModelClient implements ModelExecutor {
     private async callGemini(params: ModelCallParams, startTime: number): Promise<Result<ModelResponse>> {
         const apiKey = this.config.secondaryCloudApiKey;
         if (!apiKey) {
-            return { ok: false, error: new Error('SECONDARY_CLOUD_API_KEY not set â€” cannot call cloud substrate') };
+            return { ok: false, error: new Error('SECONDARY_CLOUD_API_KEY not set Ã¢â‚¬â€ cannot call cloud substrate') };
         }
 
         // Tiered Gemini Fallback Sequence
@@ -528,7 +528,7 @@ export class ModelClient implements ModelExecutor {
                     model: params.model,
                     elapsed: `${minutes}m ${seconds}s`,
                     pulse: 'STILL_REASONING'
-                }, 'Γ¥ÿ Neural Pulse: Deep substrate calculation actively thinking...');
+                }, 'Î“Â¥Ã¿ Neural Pulse: Deep substrate calculation actively thinking...');
             }, 30000); // Pulse every 30s instead of 60s
 
             try {
@@ -539,7 +539,7 @@ export class ModelClient implements ModelExecutor {
 
                     // Activate cooldown on 429 rate limit responses
                     if (response.status === 429) {
-                        logger.warn({ model: params.model }, 'Ollama 429 rate limit â€” activating HuggingFace fallback');
+                        logger.warn({ model: params.model }, 'Ollama 429 rate limit Ã¢â‚¬â€ activating HuggingFace fallback');
                         this.router?.activateOllamaCooldown();
                     }
 
@@ -574,7 +574,7 @@ export class ModelClient implements ModelExecutor {
                     errorMsg.includes('connect') ||
                     errorMsg.includes('econnrefused') ||
                     errorMsg.includes('timeout')) {
-                    logger.warn({ model: params.model, error: errorMsg }, 'Ollama issue detected â€” activating Hugging Face fallback');
+                    logger.warn({ model: params.model, error: errorMsg }, 'Ollama issue detected Ã¢â‚¬â€ activating Hugging Face fallback');
                     this.router?.activateOllamaCooldown();
                 }
 
@@ -590,7 +590,7 @@ export class ModelClient implements ModelExecutor {
     private async callHuggingFace(params: ModelCallParams, startTime: number): Promise<Result<ModelResponse>> {
         const apiKey = this.config.primaryCloudApiKey;
         if (!apiKey) {
-            return { ok: false, error: new Error('PRIMARY_CLOUD_API_KEY not set â€” cannot call primary cloud substrate') };
+            return { ok: false, error: new Error('PRIMARY_CLOUD_API_KEY not set Ã¢â‚¬â€ cannot call primary cloud substrate') };
         }
 
         // Format: huggingface:provider/model-name (e.g., huggingface:openai-compat/kimi-k2.5-thinking)
@@ -874,7 +874,7 @@ export class ModelClient implements ModelExecutor {
                 if (!accountId || !apiToken) {
                     return {
                         ok: false,
-                        error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) â€” cannot generate TTS.')
+                        error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) Ã¢â‚¬â€ cannot generate TTS.')
                     };
                 }
 
@@ -953,7 +953,7 @@ export class ModelClient implements ModelExecutor {
                 if (!accountId || !apiToken) {
                     return {
                         ok: false,
-                        error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) â€” cannot generate score.')
+                        error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) Ã¢â‚¬â€ cannot generate score.')
                     };
                 }
 
@@ -1029,7 +1029,7 @@ export class ModelClient implements ModelExecutor {
                 if (!accountId || !apiToken) {
                     return {
                         ok: false,
-                        error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) â€” cannot generate image.')
+                        error: new Error('Cloudflare credentials missing (CLOUDFLARE_ACCOUNT_ID/API_TOKEN) Ã¢â‚¬â€ cannot generate image.')
                     };
                 }
 

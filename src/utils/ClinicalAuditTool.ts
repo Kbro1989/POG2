@@ -1,4 +1,4 @@
-import { type Result, ok } from '../core/models.js';
+﻿import { type Result, ok } from '../core/models.js';
 import { readFile, readdir, stat } from 'fs/promises';
 import { join, extname } from 'path';
 import { SovereignIgnoreManager } from './SovereignIgnoreManager.js';
@@ -25,7 +25,7 @@ interface ForbiddenPattern {
 }
 
 /**
- * ClinicalAuditTool â€” Sovereign Law enforcement substrate.
+ * ClinicalAuditTool Ã¢â‚¬â€ Sovereign Law enforcement substrate.
  * Scans code for mocks, placeholders, weak typing, and non-clinical logging.
  * Phase 35: Full recursive directory scanning with line-level violation reporting.
  */
@@ -132,15 +132,15 @@ export class ClinicalAuditTool {
         const violatedFiles = results.filter(r => !r.isClinical);
 
         if (violatedFiles.length === 0) {
-            return 'âœ… SOVEREIGN AUDIT PASSED: All files are clinically clean.';
+            return 'Ã¢Å“â€¦ SOVEREIGN AUDIT PASSED: All files are clinically clean.';
         }
 
         const lines: string[] = [
-            `âŒ SOVEREIGN AUDIT: ${violatedFiles.length} file(s) with violations:\n`
+            `Ã¢ÂÅ’ SOVEREIGN AUDIT: ${violatedFiles.length} file(s) with violations:\n`
         ];
 
         for (const file of violatedFiles) {
-            lines.push(`  ðŸ“„ ${file.filePath}`);
+            lines.push(`  Ã°Å¸â€œâ€ž ${file.filePath}`);
             for (const v of file.violations) {
                 lines.push(`     L${v.line}: ${v.pattern}`);
                 lines.push(`           ${v.content}`);

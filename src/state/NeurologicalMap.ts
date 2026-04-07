@@ -27,10 +27,14 @@ export interface NeuralNode {
 }
 
 export const NEUROLOGICAL_MAP: NeuralNode[] = [
-    // â•â•â• CNS (Central Nervous System) â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â CNS (Central Nervous System) Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
     {
         path: 'src/routing/HexagramManager.ts', role: 'Brainstem Life Support', category: NeuralCategory.CNS, docDomain: 'META', metabolicBaseCost: 5,
         biologicalRole: { organ: 'Brainstem', input: 'SystemSensors', output: 'YaoState[6]', constraints: 'Always running; crash = death' }
+    },
+    {
+        path: 'src/engines/gameplay/CNSGodheadPulseVolley.ts', role: 'Master Pulse Heartbeat', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 20,
+        biologicalRole: { organ: 'Heart of the Pulse', input: 'AdminCommandQueue + SubstrateHealth', output: 'Deterministic Tick Batch', constraints: '600ms hard interval; vetos on substrate failure' }
     },
     {
         path: 'src/routing/HexagramManager.ts', role: 'Hexagram Cortex', category: NeuralCategory.CNS, docDomain: 'META', metabolicBaseCost: 10,
@@ -81,7 +85,7 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Cerebellum (Motor Plan)', input: 'Task list', output: 'Scheduled execution sequence', constraints: 'Priority-aware' }
     },
 
-    // â•â•â• PNS (Peripheral Nervous System â€” Limbs) â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â PNS (Peripheral Nervous System Ã¢â‚¬â€ Limbs) Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
     {
         path: 'src/engines/CodeEngine.ts', role: 'Motor Hand (Code)', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 15,
         biologicalRole: { organ: 'Right Hand', input: 'Code review params', output: 'Code analysis', constraints: 'Read-only analysis limb' }
@@ -284,7 +288,7 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Finger', input: 'VSCode commands', output: 'Editor state changes', constraints: 'VSCode API dependent' }
     },
 
-    // â•â•â• Sensory (Perception) â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Sensory (Perception) Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
     {
         path: 'src/engines/VisionEngine.ts', role: 'Optic Nerve', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 25,
         biologicalRole: { organ: 'Eye', input: 'Image/screenshot buffer', output: 'Vision analysis', constraints: 'Requires vision model (moondream)' }
@@ -338,7 +342,7 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Associative Cortex', input: 'Task + history + tools', output: 'Rich context bundle', constraints: 'Assembles context for routing decisions' }
     },
 
-    // â•â•â• Memory (Hippocampus) â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Memory (Hippocampus) Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
     {
         path: 'src/utils/VectorDB.ts', role: 'Deep Metabolic Memory', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 10,
         biologicalRole: { organ: 'Hippocampus', input: 'Lesson text + embeddings', output: 'Similarity search results', constraints: 'SQLite-backed; SHA-256 dedup' }
@@ -373,11 +377,15 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
     },
     { path: 'resources/cloudflare-templates', role: 'Knowledge:Cloudflare', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 5 },
     {
-        path: 'rsmv', role: 'Structural Pedagogy Substrate', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 5,
+        path: 'src/limbs/world_grounding/WorldGroundingLimb.ts', role: 'World Architect (Grounding)', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Spatial Hippocampus', input: 'npc_spawns.json + mapsquare fragments', output: 'Grounded World Manifest', constraints: 'Authoritative cache grounding only; no mocks' }
+    },
+    {
+        path: 'D:\\\\sovereign\\\\cache_pedagogy\\\\rsmv_inspector', role: 'Structural Pedagogy Substrate', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 5,
         biologicalRole: { organ: 'External Prefrontal Cache', input: 'Jagex Cache / Opcodes', output: 'GLB/PNG/PedagogyProfile', constraints: 'Externalrsmv-clone inspection and structural analysis' }
     },
 
-    // â•â•â• Immune (Validation) â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Immune (Validation) Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
     {
         path: 'src/engines/ValidationSystem.ts', role: 'White Blood Cells', category: NeuralCategory.IMMUNE, docDomain: 'IMMUNE', metabolicBaseCost: 10,
         biologicalRole: { organ: 'WBC', input: 'Code output', output: 'Validation result', constraints: 'Schema-based validation' }
@@ -407,7 +415,7 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Mutation Scanner', input: 'File change events', output: 'AST diff + mutation report', constraints: 'Real-time file watching' }
     },
 
-    // â•â•â• Metabolic (Connective Tissue) â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Metabolic (Connective Tissue) Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
     {
         path: 'src/utils/PathNormalizer.ts', role: 'Cartilage', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 2,
         biologicalRole: { organ: 'Cartilage', input: 'Raw path', output: 'Normalized path', constraints: 'Platform-aware' }

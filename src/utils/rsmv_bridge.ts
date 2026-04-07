@@ -1,5 +1,5 @@
-/**
- * RSMV BRIDGE — ESM Subprocess Bridge
+﻿/**
+ * RSMV BRIDGE â€” ESM Subprocess Bridge
  * 
  * Called as a subprocess by CacheForensicsLimb, TopologyLimb, and KinematicsLimb.
  * Bridges the ESM/CommonJS boundary by running inside tsx (full ESM support)
@@ -9,12 +9,12 @@
  *   npx tsx src/utils/rsmv_bridge.ts <operation> <arg1> [arg2]
  * 
  * Operations:
- *   item <id>          → full item definition
- *   npc <id>           → full NPC definition  
- *   object <id>        → full object definition (with actions, params, models)
- *   model <id>         → topology profile (vertex/tri/bone counts)
- *   sequence <id>      → kinematic sequence profile
- *   health             → cache connectivity test
+ *   item <id>          â†’ full item definition
+ *   npc <id>           â†’ full NPC definition  
+ *   object <id>        â†’ full object definition (with actions, params, models)
+ *   model <id>         â†’ topology profile (vertex/tri/bone counts)
+ *   sequence <id>      â†’ kinematic sequence profile
+ *   health             â†’ cache connectivity test
  */
 
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -28,9 +28,9 @@ const RSMV_PATH = 'D:\\sovereign\\cache_pedagogy\\rsmv_inspector';
 const CACHE_PATH = 'C:\\ProgramData\\Jagex\\RuneScape';
 
 async function loadRSMV() {
-    const sqlitePath = pathToFileURL(join(RSMV_PATH, 'src', 'cache', 'sqlite.js')).href;
-    const opdecoderPath = pathToFileURL(join(RSMV_PATH, 'src', 'opdecoder.js')).href;
-    const constantsPath = pathToFileURL(join(RSMV_PATH, 'src', 'constants.js')).href;
+    const sqlitePath = pathToFileURL(join(RSMV_PATH, 'src', 'cache', 'sqlite.ts')).href;
+    const opdecoderPath = pathToFileURL(join(RSMV_PATH, 'src', 'opdecoder.ts')).href;
+    const constantsPath = pathToFileURL(join(RSMV_PATH, 'src', 'constants.ts')).href;
     
     try {
         const { GameCacheLoader } = await import(sqlitePath);

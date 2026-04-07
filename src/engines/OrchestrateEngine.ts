@@ -64,6 +64,9 @@ import { MaterialLimb } from '../limbs/spatial/MaterialLimb.js';
 import { SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
 import { MechanicalSovereigntyLimb } from '../limbs/technical/MechanicalSovereigntyLimb.js';
 import { GameplaySovereigntyLimb } from '../limbs/spatial/GameplaySovereigntyLimb.js';
+import { SimulationHarness } from './gameplay/SimulationHarness.js';
+import { WorldGroundingLimb } from '../limbs/world_grounding/WorldGroundingLimb.js';
+import { CNSGodheadPulseVolley } from './gameplay/CNSGodheadPulseVolley.js';
 
 import { RSMVController } from '../vision/RSMVController.js';
 import { StructuralAnalyzer } from '../vision/StructuralAnalyzer.js';
@@ -107,7 +110,7 @@ const logger = createLogger('OrchestrateEngine');
 
 
 /**
- * OrchestrateEngine Ã¢â‚¬â€ Kimi's domain.
+ * OrchestrateEngine ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Kimi's domain.
  * Phase 15: Now enforces domain isolation, workforce authority, and scoped tool access.
  */
 export class OrchestrateEngine {
@@ -176,9 +179,12 @@ export class OrchestrateEngine {
     private readonly cacheForensics: CacheForensicsLimb;
     private readonly cacheLearning: CacheLearningLimb;
     private readonly todoCloud: TodoCloudLimb;
+    private readonly grounding: WorldGroundingLimb;
     private readonly spatialSovereignty: SpatialSovereigntyLimb;
     private readonly mechanicalSovereignty: MechanicalSovereigntyLimb;
     private readonly gameplay: GameplaySovereigntyLimb;
+    private readonly pulseVolley: CNSGodheadPulseVolley;
+    private readonly harness: SimulationHarness;
 
     private readonly EXTREME_THRESHOLD = 80;
     private initialized = false;
@@ -196,11 +202,15 @@ export class OrchestrateEngine {
         this.shell = new ShellEngine(renderer, router);
         this.vscode = new VSCodeEngine(renderer, router);
         this.registry = new ToolRegistry();
-        this.cacheForensics = new CacheForensicsLimb();
-        this.spatialSovereignty = new SpatialSovereigntyLimb();
-        this.mechanicalSovereignty = new MechanicalSovereigntyLimb();
-        this.gameplay = new GameplaySovereigntyLimb();
-
+        this.cacheForensics = CacheForensicsLimb.getInstance();
+        this.spatialSovereignty = SpatialSovereigntyLimb.getInstance();
+        this.mechanicalSovereignty = MechanicalSovereigntyLimb.getInstance();
+        this.gameplay = GameplaySovereigntyLimb.getInstance();
+        this.grounding = WorldGroundingLimb.getInstance();
+        
+        // Critical: Initialize Vision Substrates before Heartbeat
+        this.visionEngine = SpatialVisionEngine.getInstance(config, renderer);
+        this.vision = VisionEngine.getInstance(config, renderer);
 
         this.todoEngine = new TodoEngine(renderer);
         this.todoCloud = new TodoCloudLimb({ 
@@ -209,8 +219,8 @@ export class OrchestrateEngine {
         });
         this.todoEngine.setCloudLimb(this.todoCloud);
 
-        this.visionEngine = new SpatialVisionEngine(config, renderer);
-        this.vision = new VisionEngine(config, renderer);
+        this.pulseVolley = CNSGodheadPulseVolley.getInstance();
+        this.rsmvController = RSMVController.getInstance();
         this.mcpEngine = new MCPEngine(config, this.registry);
         this.chroma = new ChromanumberEngine();
         this.maintenance = new DBMaintenance();
@@ -256,8 +266,8 @@ export class OrchestrateEngine {
         this.metaCognition = new MetaCognitionEngine();
         this.aiLimb = new AILimb(this.client, this.cognitive, this.router);
         this.controlPlane = new ControlPlaneLimb();
-        this.switchboard = new SwitchboardLimb();
-        this.entityLimb = new EntityLimb();
+        this.switchboard = SwitchboardLimb.getInstance();
+        this.entityLimb = EntityLimb.getInstance();
         
         // Wire Gameplay Heartland
         this.gameplay.injectSwitchboard(this.switchboard);
@@ -298,7 +308,7 @@ export class OrchestrateEngine {
         const taxonomiesDir = resolveSovereignPath('memory/pedagogy');
         const extractionDir = resolveSovereignPath('extractions');
 
-        this.rsmvController = new RSMVController();
+        this.rsmvController = RSMVController.getInstance();
         this.cacheLearning = new CacheLearningLimb(rsmvCachePath, this.cacheForensics, extractionDir);
         this.questSynthesis = new QuestSynthesisLimb(this.client, this.cacheForensics, this.pedagogy);
         this.pulseMonitor = new PulseMonitor(process.cwd(), this.router.getHexagram());
@@ -329,6 +339,11 @@ export class OrchestrateEngine {
         this.workforce = new WorkforceManifest(config);
         this.dispatcher = new AIDispatcher(this.client, this.workforce);
         this.domainLocker = new DomainLocker();
+        
+        // Phase 259: Instantiate Simulation Harness (Heartbeat Logic)
+        const worldGrounding = WorldGroundingLimb.getInstance();
+        this.harness = new SimulationHarness(worldGrounding, this.router.getHexagram(), this.dispatcher, this.entityLimb, this.switchboard);
+        this.gameplay.injectHarness(this.harness);
 
         // PulseMonitor already started earlier to satisfy dependencies.
 
@@ -387,7 +402,7 @@ export class OrchestrateEngine {
             logger.debug('VectorDB Substrate nominal.');
         }
 
-        // Phase 81: Wire FPRAG Ã¢â‚¬â€ inject ContextBuilder into TernaryRouter
+        // Phase 81: Wire FPRAG ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â inject ContextBuilder into TernaryRouter
         logger.debug('Wiring FPRAG Context...');
         const ctxBuilder = new ContextBuilder(
             this.vectorDB,
@@ -449,7 +464,7 @@ export class OrchestrateEngine {
                 // Await external neural links (MCP)
                 await this.mcpEngine.initialize();
 
-                // ðŸ§¬ Phase 14: Substrate-Switchboard Integration
+                // Ã°Å¸Â§Â¬ Phase 14: Substrate-Switchboard Integration
                 if (this.switchboard.injectSubstrates) {
                     this.switchboard.injectSubstrates({
                         nodeTester: this.nodeTester,
@@ -457,31 +472,68 @@ export class OrchestrateEngine {
                     });
                 }
 
-                // ðŸ§¬ Phase 14: Graceful port selection (replaces fatal hard-coded port)
+                // Ã°Å¸Â§Â¬ Phase 14: Graceful port selection (replaces fatal hard-coded port)
                 try {
                     const result = await this.switchboard.startWithGracefulPort(this);
                     logger.info({ port: result.port, url: result.url }, 'Switchboard Bridge active (graceful port)');
                 } catch (switchboardErr: any) {
                     // Non-fatal: Switchboard is enhancement, not critical path
-                    logger.warn({ err: switchboardErr.message }, 'Switchboard failed to start â€” continuing without remote bridge');
+                    logger.warn({ err: switchboardErr.message }, 'Switchboard failed to start Ã¢â‚¬â€ continuing without remote bridge');
                 }
 
                 // Connect renderer and vision (safe regardless of port status)
                 this.switchboard.connectToSubstrates(this.renderer, this.vision);
 
-                // 🧬 Phase 14: Register with NodeTester if method exists
+                // ðŸ§¬ Phase 14: Register with NodeTester if method exists
                 if (this.nodeTester?.registerSwitchboard) {
                     this.nodeTester.registerSwitchboard(this.switchboard);
                 }
 
-                // 🧬 Phase 14: Awaken background health & reflection substrates
+                // ðŸ§¬ Phase 14: Awaken background health & reflection substrates (Non-blocking)
                 logger.debug('Awakening background health and reflection substrates...');
-                await this.pulseMonitor.start().catch(err => {
+                this.pulseMonitor.start().catch(err => {
                     logger.error({ err }, 'PulseMonitor failed to start, but substrate continues.');
                 });
                 this.ghost.awaken();
 
-                // 🧬 Phase 6: Refresh all discovered models in background
+                // ðŸ§¬ Phase 6: Refresh all discovered models in background
+                // ðŸ§¬ Phase 10: Authoritative Limb Registration (Clinical Audit)
+                this.nodeTester.registerLimbs({
+                    OrchestrateEngine: this,
+                    ToolRegistry: this.registry,
+                    TodoEngine: this.todoEngine,
+                    SpatialVisionEngine: this.visionEngine,
+                    VisionEngine: this.vision,
+                    MCPEngine: this.mcpEngine,
+                    ChromanumberEngine: this.chroma,
+                    IntentVerifier: this.verifier,
+                    AIDispatcher: this.dispatcher,
+                    DomainLocker: this.domainLocker,
+                    WorkforceManifest: this.workforce,
+                    DBMaintenance: this.maintenance,
+                    EmbedEngine: this.embedEngine,
+                    PulseMonitor: this.pulseMonitor,
+                    SovereignProprioception: this.proprioception,
+                    ClinicalAuditTool: this.clinicalAudit,
+                    TrainingCollector: this.trainingCollector,
+                    ShellEngine: this.shell,
+                    BlenderRenderer: this.blender,
+                    PedagogyLimb: this.pedagogy,
+                    KinematicsLimb: this.kinematics,
+                    CodeEngine: this.code,
+                    GenerateEngine: this.codeGen,
+                    MetabolicEngine: this.metabolic,
+                    SovereignIngestionEngine: this.ingestionEngine,
+                    CognitiveEngine: this.cognitive,
+                    VectorDB: this.vectorDB,
+                    GutenbergLimb: this.gutenberg,
+                    StoryboardLimbV2: this.storyboard,
+                    WebAppForgeLimb: this.forge,
+                    ShadowEngine: this.shadow,
+                    MemeticEngine: this.memetic,
+                    SyntropyEngine: this.syntropy,
+                    DiscoveryEngine: this.discovery
+                });
                 this.client.getRolodex()?.refreshAll().catch(() => { /* non-blocking */ });
             }
 
@@ -570,8 +622,17 @@ export class OrchestrateEngine {
             this.embedEngine,
             this.pulseMonitor,
             this.router.getHexagram(),
-            this.trainingCollector,
-            {
+            this.trainingCollector
+        );
+
+        if (!nodeTester.hasRegistry()) {
+            nodeTester.registerLimbs({
+                RSMVController: this.rsmvController,
+                CNSGodheadPulseVolley: this.pulseVolley,
+                WorldGroundingLimb: this.grounding,
+                SpatialVisionEngine: this.visionEngine,
+                VisionEngine: this.vision,
+                EntityLimb: this.entityLimb,
                 WebAppForgeLimb: this.forge,
                 GutenbergLimb: this.gutenberg,
                 StoryboardLimb: this.storyboard,
@@ -591,60 +652,78 @@ export class OrchestrateEngine {
                 TodoEngine: this.todoEngine,
                 MCPEngine: this.mcpEngine,
                 VSCodeEngine: this.vscode,
-                SpatialVisionEngine: this.visionEngine,
-                VisionEngine: this.vision,
-                AILimb: this.aiLimb,
-                ControlPlaneLimb: this.controlPlane,
                 SwitchboardLimb: this.switchboard,
-                EntityLimb: this.entityLimb,
                 EnvironmentLimb: this.envLimb,
                 MediaForgeLimb: this.mediaForge,
                 VoiceLimb: this.voice,
                 NeuralForgeLimb: this.neuralForge,
-                WebSensoryLimb: this.webSensory,
-                ChromanumberEngine: this.chroma,
-                ChromaLimb: this.chromaLimb,
-                BioIntelligenceLimb: this.bioIntel,
-                YouTubeLimb: this.ytLimb,
-                GhostLimb: this.ghost,
-                QuantumLimb: this.quantum,
-                OmegaLimb: this.omega,
-                RelicLimb: this.relic,
-                MetaCognitionEngine: this.metaCognition,
-                ClinicalAuditTool: this.clinicalAudit,
-                SovereignProprioception: this.proprioception,
-                MetabolicEngine: this.metabolic,
-                SovereignIngestionEngine: this.ingestionEngine,
-                IntentVerifier: this.verifier,
-                RSCLimb: this.rscLimb,
-                GlobeStateLimb: this.globeState,
-                PipelineController: this.pipeline,
-                CognitiveEngine: this.cognitive,
-                MemoryConsolidationEngine: this.memoryConsolidation,
-                Renderer: this.renderer,
-                DBMaintenance: this.maintenance,
-                Dispatcher: this.dispatcher,
-                DefaultStrategy: new DefaultStrategy(),
-                AnalyticalStrategy: new AnalyticalStrategy(),
-                CompositeStrategy: new CompositeStrategy([new AnalyticalStrategy(), new DefaultStrategy()], 'HealthCheckAudit'),
-                ValidationSystem: new ValidationSystem(),
-                ArchitecturalValidator: new ArchitecturalValidator(defaultManifest),
-                ASTWatcher: watcher,
-                VideoAssemblerLimb: new VideoAssemblerLimb(shell, this.router.getHexagram()),
-                MultiModelExecutor: new MultiModelExecutor(this.config, this.renderer),
-                ContextBuilder: new ContextBuilder(this.vectorDB, getGodHeadRoot() ?? process.cwd(), 'pog2-sovereign', this.client),
-                TrainingCollector: this.trainingCollector,
-                rsmvExtractor: this.rsmvExtractor,
-                SpatialSovereigntyLimb: this.spatialSovereignty,
-                MechanicalSovereigntyLimb: this.mechanicalSovereignty,
-                StructuralAnalyzer: new StructuralAnalyzer(),
-                NodeTester: undefined // Self-registration will be handled via class name matching if needed, but we provide it here as part of the registry
-            }
-        );
+                WebSensoryLimb: this.webSensory
+            });
+        }
+
+        // Inject Pulse Volley dependencies
+        this.pulseVolley.setRouter(this.router);
+        this.pulseVolley.setNodeTester(nodeTester);
+        
+        // Idempotent registration of key singletons to prevent DEGRADED statuses in NodeTester
+        nodeTester.registerLimbs({
+            OrchestrateEngine: this,
+            SimulationHarness: this.harness,
+            ChromaLimb: this.chromaLimb,
+            SwitchboardLimb: this.switchboard,
+            rsmvController: this.rsmvController,
+            CacheForensicsLimb: this.cacheForensics,
+            TernaryRouter: this.router,
+            CognitiveEngine: this.cognitive,
+            PipelineController: this.pipeline,
+            CodeEngine: this.code,
+            GenerateEngine: this.codeGen,
+            ShellEngine: this.shell,
+            TodoEngine: this.todoEngine,
+            MCPEngine: this.mcpEngine,
+            ChromanumberEngine: this.chroma,
+            RSCLimb: this.rscLimb,
+            RSMVExtractor: this.rsmvExtractor,
+            RSMVController: this.rsmvController,
+            CacheLearningLimb: this.cacheLearning,
+            YouTubeLimb: this.ytLimb,
+            GutenbergLimb: this.gutenberg,
+            StoryboardLimbV2: this.storyboard,
+            WebAppForgeLimb: this.forge,
+            KinematicsLimb: this.kinematics,
+            PedagogyLimb: this.pedagogy,
+            AILimb: this.aiLimb,
+            ControlPlaneLimb: this.controlPlane,
+            EntityLimb: this.entityLimb,
+            MediaForgeLimb: this.mediaForge,
+            NeuralForgeLimb: this.neuralForge,
+            WebSensoryLimb: this.webSensory,
+            DiscoveryEngine: this.discovery,
+            ShadowEngine: this.shadow,
+            BioIntelligenceLimb: this.bioIntel,
+            GhostLimb: this.ghost,
+            QuantumLimb: this.quantum,
+            OmegaLimb: this.omega,
+            RelicLimb: this.relic,
+            GlobeStateLimb: this.globeState,
+            VSCodeEngine: this.vscode,
+            VisionEngine: this.vision,
+            SpatialVisionEngine: this.visionEngine,
+            PulseMonitor: this.pulseMonitor,
+            VectorDB: this.vectorDB,
+            SovereignProprioception: this.proprioception,
+            EmbedEngine: this.embedEngine,
+            MemoryConsolidationEngine: this.memoryConsolidation,
+            MemeticEngine: this.memetic,
+            NodeTester: nodeTester,
+            QuotaTracker: this.quotaTracker
+        });
+
 
         nodeTester.registerLimbs({ NodeTester: nodeTester });
         nodeTester.registerLimbs({ QuotaTracker: this.quotaTracker });
         nodeTester.registerLimbs({ OrchestrateEngine: this });
+        nodeTester.registerLimbs({ SimulationHarness: this.harness });
         nodeTester.registerLimbs({ ChromaLimb: this.chromaLimb });
         nodeTester.registerLimbs({ SwitchboardLimb: this.switchboard });
         nodeTester.registerLimbs({ rsmvController: this.rsmvController });
@@ -737,7 +816,7 @@ export class OrchestrateEngine {
         this.pulseMonitor.setNodeTester(nodeTester);
         this.nodeTester = nodeTester;
 
-        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â OBSERVE DOMAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â OBSERVE DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'consult_shadow',
             description: 'Consults external architectural maps and codebase fragments from the global code_tracker substrate.',
@@ -960,12 +1039,12 @@ export class OrchestrateEngine {
                 const healthyProviders = providerResults.filter(r => r.status === 'ONLINE').length;
                 output += `Provider Health: ${healthyProviders}/${providerResults.length} ONLINE\n`;
                 for (const r of providerResults) {
-                    const icon = r.status === 'ONLINE' ? 'âœ…' : (r.status === 'DEGRADED' ? 'âš ï¸' : 'âŒ');
-                    output += `${icon} [PROVIDER] ${r.provider}: ${r.status}${r.error ? ` â€” ${r.error}` : ''}\n`;
+                    const icon = r.status === 'ONLINE' ? 'Ã¢Å“â€¦' : (r.status === 'DEGRADED' ? 'Ã¢Å¡Â Ã¯Â¸Â' : 'Ã¢ÂÅ’');
+                    output += `${icon} [PROVIDER] ${r.provider}: ${r.status}${r.error ? ` Ã¢â‚¬â€ ${r.error}` : ''}\n`;
                     if (r.status !== 'ONLINE') {
                         // Trigger Autonomous Endpoint Healing
                         const healRes = await selfHealingEngine.healSubstrateError({ path: '', role: r.provider, category: 'PROVIDER', status: r.status, details: r.error });
-                        output += `   â†³ Healing Action: ${healRes.reasoning}\n`;
+                        output += `   Ã¢â€ Â³ Healing Action: ${healRes.reasoning}\n`;
                     }
                 }
                 output += '\n';
@@ -974,12 +1053,12 @@ export class OrchestrateEngine {
                 const healthyNodes = nodeResults.filter(r => r.status === 'ONLINE').length;
                 output += `Neurological Health: ${healthyNodes}/${nodeResults.length} ONLINE\n`;
                 for (const r of nodeResults) {
-                    const icon = r.status === 'ONLINE' ? 'âœ…' : (r.status === 'DEGRADED' ? 'âš ï¸' : 'âŒ');
-                    output += `${icon} [${r.category}] ${r.role}: ${r.status}${r.details ? ` â€” ${r.details}` : ''}\n`;
+                    const icon = r.status === 'ONLINE' ? 'Ã¢Å“â€¦' : (r.status === 'DEGRADED' ? 'Ã¢Å¡Â Ã¯Â¸Â' : 'Ã¢ÂÅ’');
+                    output += `${icon} [${r.category}] ${r.role}: ${r.status}${r.details ? ` Ã¢â‚¬â€ ${r.details}` : ''}\n`;
                     if (r.status !== 'ONLINE' && r.role !== 'SwitchboardLimb' && r.role !== 'WebSensoryLimb') {
                         // Trigger Autonomous Substrate Healing
                         const healRes = await selfHealingEngine.healSubstrateError(r);
-                        output += `   â†³ Healing Action: ${healRes.reasoning}\n`;
+                        output += `   Ã¢â€ Â³ Healing Action: ${healRes.reasoning}\n`;
                     }
                 }
 
@@ -990,7 +1069,7 @@ export class OrchestrateEngine {
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â VS CODE SYNERGY DOMAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â VS CODE SYNERGY DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'vscode_open',
             description: 'Open a file or directory in VS Code editor.',
@@ -1125,7 +1204,7 @@ export class OrchestrateEngine {
                 const gb = (bytes: bigint) => Number(bytes / (1024n * 1024n * 1024n)).toFixed(1);
 
                 const lines: string[] = [
-                    'Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â CLINICAL DIAGNOSTIC NEXUS Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â',
+                    'ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â CLINICAL DIAGNOSTIC NEXUS ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â',
                     `Build Status: ${buildOk ? 'PASSING' : 'FAILING'}`,
                     `Disk Substrate: ${diskRes.success ? `${gb(diskRes.data.freeBytes)}GB free / ${gb(diskRes.data.totalBytes)}GB total [${diskRes.data.healthStatus}]` : `ERROR: ${diskRes.error?.code}`}`,
                     `Memory Pool: ${memRes.success ? `${gb(memRes.data.free)}GB free / ${gb(memRes.data.total)}GB total` : `ERROR: ${memRes.error?.code}`}`,
@@ -1133,7 +1212,7 @@ export class OrchestrateEngine {
                     `Active Tools: ${this.registry.getFormattedDefinitions().split('\\n').length}`,
                     `Execution Economics: ${metrics.fastPaths} Fast Paths / ${metrics.deepPaths} Deep Paths`,
                     `Context Pruning: ${ignorePatterns} active ignore patterns | ${ignoreExtensions} hygiene extensions`,
-                    'Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â'
+                    'ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â'
                 ];
                 return ok({
                     output: lines.join('\n'),
@@ -1142,7 +1221,7 @@ export class OrchestrateEngine {
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â HEXAGRAM / MEMORY DOMAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â HEXAGRAM / MEMORY DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'pin_to_hexagram',
             description: 'Pin a metabolic card to a hexagram slot (Line 1-6). Overrides automation.',
@@ -1190,13 +1269,13 @@ export class OrchestrateEngine {
                 const interpretation = hex.getInterpretation();
 
                 const output = [
-                    `Ã°Å¸â€˜â€˜ SOVEREIGN ARCHETYPE: ${interpretation.symbol} ${interpretation.name}`,
+                    `ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ¢â‚¬Ëœ SOVEREIGN ARCHETYPE: ${interpretation.symbol} ${interpretation.name}`,
                     `Description: ${interpretation.description}`,
                     `Strategy: ${interpretation.strategy}`,
                     '',
-                    'Ã¢â€¢ÂÃ¢â€¢Â METABOLIC STATE Ã¢â€¢ÂÃ¢â€¢Â',
-                    ...lines.map((l: any) => `${l.lineIndex}: [${l.isPinned ? 'ðŸ“Œ' : 'âš™ï¸'}] ${l.title} - ${l.content} (${YaoState[l.state]})`),
-                    'Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Ã¢â€¢ÂÃ¢â€¢Ã¢â€¢Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â'
+                    'ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â METABOLIC STATE ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â',
+                    ...lines.map((l: any) => `${l.lineIndex}: [${l.isPinned ? 'Ã°Å¸â€œÅ’' : 'Ã¢Å¡â„¢Ã¯Â¸Â'}] ${l.title} - ${l.content} (${YaoState[l.state]})`),
+                    'ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â'
                 ].join('\n');
 
                 return ok({ output, data: { interpretation, lines } });
@@ -1222,13 +1301,13 @@ export class OrchestrateEngine {
                 const res = await this.router.getHexagram().analyzeStrategicState({ intent, axes }, this.client);
                 if (!res.ok) return res;
                 return ok({
-                    output: `Ã°Å¸â€Â® HEXAGRAM OUTCOME: ${res.value.manifestation}\nAdvice: ${res.value.advice}\n\nAnalysis: ${res.value.analysis}`,
+                    output: `ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â® HEXAGRAM OUTCOME: ${res.value.manifestation}\nAdvice: ${res.value.advice}\n\nAnalysis: ${res.value.analysis}`,
                     data: { ...res.value, scores: res.value.scores as unknown as Record<string, number> }
                 });
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â DISCOVERY DOMAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â DISCOVERY DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'search_wiki',
             description: 'Search Wikipedia for factual substrate extraction.',
@@ -1277,7 +1356,7 @@ export class OrchestrateEngine {
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â CODE DOMAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â CODE DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'generate_code',
             description: 'Create new files or implementations from scratch.',
@@ -1327,7 +1406,7 @@ export class OrchestrateEngine {
             execute: (args) => code.smartEdit({ ...(args as Record<string, unknown>) as { filePath: string; oldString: string; newString: string }, modelOverride: (args as Record<string, unknown>).model as string | undefined })
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â SYSTEM DOMAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â SYSTEM DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'shell_command',
             description: 'Execute a system command.',
@@ -1415,21 +1494,21 @@ export class OrchestrateEngine {
                 if (!res.ok) return res;
 
                 const output = [
-                    'Ã¢â€¢ÂÃ¢â€¢Â METABOLIC THINKING NEXUS Ã¢â€¢ÂÃ¢â€¢Â',
+                    'ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â METABOLIC THINKING NEXUS ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â',
                     ...(res.value.thoughts || []).map((t: ContextCard) =>
                         `${t.lineIndex}: [${YaoState[t.state]}] ${t.reflection}`
                     ),
                     '',
-                    'Ã¢â€¢ÂÃ¢â€¢ BOTTLENECK PATHS Ã¢â€¢ÂÃ¢â€¢',
+                    'ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ BOTTLENECK PATHS ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢',
                     ...(res.value.bottleneckPaths || []).map((p: string, i: number) => `${i + 1}. ${p}`),
-                    'Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Ã¢â€¢ÂÃ¢â€¢Ã¢â€¢Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Ã¢â€¢ÂÃ¢â€¢Ã¢â€¢Â'
+                    'ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â'
                 ].join('\n');
 
                 return ok({ output, data: { nexus: res.value } });
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢Ã¢â€¢Â OBSERVE / SYSTEM: MEMORY MAINTENANCE Ã¢â€¢ÂÃ¢â€¢Ã¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â OBSERVE / SYSTEM: MEMORY MAINTENANCE ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'memory_inspect',
             description: 'Inspect the VectorDB learning memory for health and row counts.',
@@ -1498,7 +1577,7 @@ export class OrchestrateEngine {
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â VISION DOMAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â VISION DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'soverign_eye',
             description: 'Capture and analyze the current screen.',
@@ -1560,7 +1639,7 @@ export class OrchestrateEngine {
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢Ã¢â€¢Â RESEARCH DOMAIN Ã¢â€¢ÂÃ¢â€¢Ã¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â RESEARCH DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'web_search',
             description: 'Search the web using specialized research substrates.',
@@ -1624,13 +1703,13 @@ export class OrchestrateEngine {
                 }
 
                 const output = [
-                    `ðŸ“rsmv ANATOMY EXTRACTION: ${modelData.name}`,
+                    `Ã°Å¸â€œÂrsmv ANATOMY EXTRACTION: ${modelData.name}`,
                     `Species: ${anatomy.species}`,
                     `Kinetic Profile: ${kinetic.toUpperCase()}`,
                     `Limb Constraints: ${anatomy.limits.limbs} limbs, ${anatomy.limits.eyes} eyes`,
                     `Joint Logic: ${JSON.stringify(anatomy.limits.joints)}`,
                     `Substrate Notes: ${anatomy.notes}`,
-                    `ðŸ§  Insight ingested into Sovereign Developmental Memory.`
+                    `Ã°Å¸Â§Â  Insight ingested into Sovereign Developmental Memory.`
                 ].join('\n');
                 return ok({ output, data: { anatomy, kinetic, packet } });
             }
@@ -1682,7 +1761,7 @@ export class OrchestrateEngine {
             execute: async () => {
                 const res = await this.cacheForensics.checkCacheVolatility();
                 if (!res.ok) return res as any;
-                const status = res.value.hasChanged ? 'âš ï¸ MODIFIED' : 'âœ… STABLE';
+                const status = res.value.hasChanged ? 'Ã¢Å¡Â Ã¯Â¸Â MODIFIED' : 'Ã¢Å“â€¦ STABLE';
                 return ok({
                     output: `Cache Volatility Audit: ${status}\nLast Modified: ${res.value.lastModified.toLocaleString()}`,
                     data: res.value
@@ -1770,7 +1849,7 @@ OUTPUT FORMAT:
                 const passed = score >= threshold;
 
                 const resultOutput = [
-                    `🔍 VISUAL AUDIT RESULT: ${passed ? '✅ PASS' : '❌ FAIL'} (${score}/10)`,
+                    `ðŸ” VISUAL AUDIT RESULT: ${passed ? 'âœ… PASS' : 'âŒ FAIL'} (${score}/10)`,
                     `Target: ${targetPath || 'System View'}`,
                     `Threshold: ${threshold}/10`,
                     `\n--- TECHNICAL ANALYSIS ---\n${responseText}`
@@ -1844,7 +1923,7 @@ OUTPUT FORMAT:
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢Ã¢â€¢Â FORGE DOMAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â FORGE DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'sql_forge',
             description: 'Specialized SQL architecture, migration, and optimization forge.',
@@ -1908,7 +1987,7 @@ OUTPUT FORMAT:
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â LITERARY DOMAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â LITERARY DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'ingest_book',
             description: 'Ingest a book from Project Gutenberg (by ID) or local text into the Sovereign Library.',
@@ -1941,7 +2020,7 @@ OUTPUT FORMAT:
                 if (!res.ok) return res;
                 const { profile, book } = res.value;
                 const output = [
-                    `Ã°Å¸â€œâ€“ STYLE ANALYSIS: ${book.title}`,
+                    `ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬â€œ STYLE ANALYSIS: ${book.title}`,
                     `Tone: ${profile.tone}`,
                     `Readability (ARI): ${profile.readabilityScore}`,
                     `Avg Sentence Length: ${profile.avgSentenceLength} words`,
@@ -2011,7 +2090,7 @@ OUTPUT FORMAT:
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢Ã¢â€¢Â CREATIVE / FORGE DOMAIN Ã¢â€¢ÂÃ¢â€¢Ã¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â CREATIVE / FORGE DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'generate_storyboard',
             description: 'Generate high-fidelity narrative scenes and visual prompts from a book\'s style.',
@@ -2083,7 +2162,7 @@ OUTPUT FORMAT:
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â COGNITION / PERSONALITY DOMAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â COGNITION / PERSONALITY DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'personality',
             description: 'Analyze and display the AI\'s active personality archetypes and influences.',
@@ -2164,7 +2243,7 @@ OUTPUT FORMAT:
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â GUVENBERG LITERARY DOMAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â GUVENBERG LITERARY DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'gutenberg_list',
             description: 'List all books currently stored in the local Sovereign Library.',
@@ -2268,12 +2347,12 @@ OUTPUT FORMAT:
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â PIPELINE DOMAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â PIPELINE DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
             name: 'run_pipeline',
             description: 'Run the autonomous story-to-media pipeline: generates scenes, images, and voice narration from a book.',
             humanDescription: 'Run the full creative pipeline to generate scenes, images, and narration from a Gutenberg book.',
-            jargonDescription: 'Executes the PipelineController autonomous orchestration loop: StoryboardLimb Ã¢â€ â€™ ChromanumberEngine Ã¢â€ â€™ VoiceLimb Ã¢â€ â€™ VideoAssemblerLimb Ã¢â€ â€™ manifest assembly.',
+            jargonDescription: 'Executes the PipelineController autonomous orchestration loop: StoryboardLimb ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ChromanumberEngine ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ VoiceLimb ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ VideoAssemblerLimb ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ manifest assembly.',
             idealYaoState: YaoState.OldYang,
             domain: SovereignDomain.FORGE,
             category: 'creative',
@@ -2315,7 +2394,7 @@ OUTPUT FORMAT:
             }
         });
 
-        // â•â•â• UNIVERSAL LIMB ACCESS â€” The Organism's Body â•â•â•
+        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â UNIVERSAL LIMB ACCESS Ã¢â‚¬â€ The Organism's Body Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
         this.registry.register({
             name: 'voice_narrate',
             description: 'Speak any text aloud using neural speech synthesis.',
@@ -2415,9 +2494,9 @@ OUTPUT FORMAT:
                 if (!res.ok) return res as any;
                 const nexus = res.value;
                 const output = [
-                    `Ã°Å¸Â§Â  THOUGHTS:`,
+                    `ÃƒÂ°Ã…Â¸Ã‚Â§Ã‚Â  THOUGHTS:`,
                     ...(nexus.thoughts || []).map(t => `- [${YaoState[t.state]}] ${t.reflection}`),
-                    `\nÃ°Å¸Å¡â‚¬ BOTTLENECK PATHS:`,
+                    `\nÃƒÂ°Ã…Â¸Ã…Â¡Ã¢â€šÂ¬ BOTTLENECK PATHS:`,
                     ...(nexus.bottleneckPaths || []).map((p, i) => `  ${i + 1}. ${p}`),
                     nexus.curiosity ? `\n\x1b[38;5;220m[CURIOSITY]\x1b[0m ${nexus.curiosity}` : ''
                 ].join('\n');
@@ -2507,7 +2586,7 @@ OUTPUT FORMAT:
             }
         });
 
-        // â•â•â•â• RESTORED SUBSTRATES (PHASE 11) â•â•â•â•
+        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â RESTORED SUBSTRATES (PHASE 11) Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
         this.registry.register({
             name: 'reflect',
             description: 'Generate a metacognitive reflection on current outcomes and affective states.',
@@ -2631,7 +2710,7 @@ OUTPUT FORMAT:
             }
         });
 
-        // â•â•â•â• DIAGNOSTIC PROBES â•â•â•â•
+        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â DIAGNOSTIC PROBES Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
         this.registry.register({
             name: 'probe_db',
             description: 'Verify the structural integrity and path resolution of the VectorDB substrate.',
@@ -2724,12 +2803,12 @@ OUTPUT FORMAT:
                                 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
                                 const audit = this.pipeline.verifyWork(manifest);
                                 if (!audit.ok) {
-                                    results.push(`ðŸš¨ Book ${manifest.bookId} (${manifest.bookTitle}): CORRUPT - ${audit.error?.message}`);
+                                    results.push(`Ã°Å¸Å¡Â¨ Book ${manifest.bookId} (${manifest.bookTitle}): CORRUPT - ${audit.error?.message}`);
                                 } else {
-                                    results.push(`âœ… Book ${manifest.bookId}: NOMINAL`);
+                                    results.push(`Ã¢Å“â€¦ Book ${manifest.bookId}: NOMINAL`);
                                 }
                             } catch (e) {
-                                results.push(`âš ï¸ Failed to parse manifest for ${bookDir}`);
+                                results.push(`Ã¢Å¡Â Ã¯Â¸Â Failed to parse manifest for ${bookDir}`);
                             }
                         }
                     }
@@ -3054,21 +3133,21 @@ Mapping tool selection over to Y...
         this.renderer.info(`[Ternary Handoff] State: ${YaoState[plan.yaoState]} -> Enforcing Prerequisites`);
 
         if (prerequisites.mandateHealthAudit) {
-            this.renderer.info('ðŸ›¡ï¸ Mandating Neuro-Health Audit...');
+            this.renderer.info('Ã°Å¸â€ºÂ¡Ã¯Â¸Â Mandating Neuro-Health Audit...');
             const health = await this.healthCheck();
             if (!health.online) {
                 throw new Error(`Prerequisite Failure: Neuro-Health Audit FAILED. Details: ${health.details}`);
             }
-            this.renderer.success('âœ… Neuro-Health Audit Passed.');
+            this.renderer.success('Ã¢Å“â€¦ Neuro-Health Audit Passed.');
         }
 
         if (prerequisites.mandateMemoryConsolidation) {
-            this.renderer.info('ðŸ›¡ï¸ Mandating Memory Consolidation...');
+            this.renderer.info('Ã°Å¸â€ºÂ¡Ã¯Â¸Â Mandating Memory Consolidation...');
             const res = await this.memoryConsolidation.consolidate();
             if (!res.ok) {
                 throw new Error(`Prerequisite Failure: Memory Consolidation FAILED. Error: ${res.error.message}`);
             }
-            this.renderer.success('âœ… Memory Consolidation Complete.');
+            this.renderer.success('Ã¢Å“â€¦ Memory Consolidation Complete.');
         }
 
         // Adversarial and Build checks are handled AFTER execution for Yang states in this loop,
@@ -3087,7 +3166,7 @@ Mapping tool selection over to Y...
             let plan: Plan;
 
             if (interceptedPlan) {
-                this.renderer.info('Ã°Å¸Â§Â  SENSORY INTERCEPTION: Skipping planning turn.');
+                this.renderer.info('ÃƒÂ°Ã…Â¸Ã‚Â§Ã‚Â  SENSORY INTERCEPTION: Skipping planning turn.');
                 plan = interceptedPlan;
             } else {
                 // Thinking Phase: Expand metabolic reflections and identify bottlenecks
@@ -3126,8 +3205,8 @@ Mapping tool selection over to Y...
 
                     // Phase 1.5: Resonance & Friction Routing
                     if ((nexus.metabolicFriction || 0) > 0.6) {
-                        this.renderer.warn(`[ðŸ§  Dissonance] High Cognitive Friction Detected (${nexus.metabolicFriction}). Injecting reflection mandate...`);
-                        task += `\n\n[ðŸš¨ HIGH COGNITIVE FRICTION ðŸš¨]\nThe Metabolic Substrate detected intense dissonance between the proposed action and the current Structural Emotion, OR a Sovereign Law violation. You MUST heavily scrutinize this in your <reflection> and consider using the 'converse' tool to ask the Operator for clarification before calling any other tool.`;
+                        this.renderer.warn(`[Ã°Å¸Â§Â  Dissonance] High Cognitive Friction Detected (${nexus.metabolicFriction}). Injecting reflection mandate...`);
+                        task += `\n\n[Ã°Å¸Å¡Â¨ HIGH COGNITIVE FRICTION Ã°Å¸Å¡Â¨]\nThe Metabolic Substrate detected intense dissonance between the proposed action and the current Structural Emotion, OR a Sovereign Law violation. You MUST heavily scrutinize this in your <reflection> and consider using the 'converse' tool to ask the Operator for clarification before calling any other tool.`;
                     }
                 }
 
@@ -3217,7 +3296,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
             }
 
             if (plan.severity >= this.EXTREME_THRESHOLD) {
-                this.renderer.info(`Ã¢Å¡Â Ã¯Â¸Â EXTREME CASE(Severity: ${plan.severity})`);
+                this.renderer.info(`ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â EXTREME CASE(Severity: ${plan.severity})`);
                 if (!(await this.renderer.confirm('Proceed anyway?'))) {
                     return { ok: false, error: new Error('Aborted by user.') };
                 }
@@ -3250,22 +3329,22 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
 
                 const result = await this.executePlan(stepPlanResult.value);
                 if (!result.ok) {
-                    this.renderer.error(`Ã¢ÂÅ’ Step ${i + 1} failed: ${result.error?.message}. Initiating rollback...`);
+                    this.renderer.error(`ÃƒÂ¢Ã‚ÂÃ…â€™ Step ${i + 1} failed: ${result.error?.message}. Initiating rollback...`);
                     await this.runGlobalRollback(completedTodos);
                     return result as Result<EngineOutput>;
                 }
 
                 // VERIFICATION TURN: Post-action audit
-                this.renderer.info(`Ã°Å¸â€ºÂ¡Ã¯Â¸Â VERIFYING STEP ${i + 1}...`);
+                this.renderer.info(`ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂºÃ‚Â¡ÃƒÂ¯Ã‚Â¸Ã‚Â VERIFYING STEP ${i + 1}...`);
                 const verification = await this.verifier.verify(currentTodo.task, result.value.output);
                 if (!verification.isAligned) {
-                    this.renderer.warn(`Ã¢Ââ€” ALIGNMENT DRIFT(Score: ${verification.score})`);
+                    this.renderer.warn(`ÃƒÂ¢Ã‚ÂÃ¢â‚¬â€ ALIGNMENT DRIFT(Score: ${verification.score})`);
                     this.renderer.warn(`Reasoning: ${verification.reasoning} `);
                     if (verification.correction) {
-                        this.renderer.info(`Ã°Å¸â€™Â¡ Suggested Correction: ${verification.correction} `);
+                        this.renderer.info(`ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¡ Suggested Correction: ${verification.correction} `);
                     }
                 } else {
-                    this.renderer.success(`Ã¢Å“â€¦ ALIGNED(Score: ${verification.score})`);
+                    this.renderer.success(`ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ ALIGNED(Score: ${verification.score})`);
                 }
 
                 completedTodos.push({ ...currentTodo, rollback: stepPlanResult.value.rollback });
@@ -3285,7 +3364,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
     }
 
     private async runGlobalRollback(completedTodos: Todo[]): Promise<void> {
-        this.renderer.info(`ðŸ”„ Rolling back ${completedTodos.length} steps...`);
+        this.renderer.info(`Ã°Å¸â€â€ž Rolling back ${completedTodos.length} steps...`);
         const shell = new ShellEngine(this.renderer);
 
         for (let i = completedTodos.length - 1; i >= 0; i--) {
@@ -3297,7 +3376,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
                 this.renderer.warn(`[ROLLBACK] ${todo.task}: No rollback command defined.`);
             }
         }
-        this.renderer.success('âœ” Rollback sequence complete.');
+        this.renderer.success('Ã¢Å“â€ Rollback sequence complete.');
     }
 
     private async narrate(task: string, result: string): Promise<string> {
@@ -3337,7 +3416,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
         if (!plan.tool) {
             return { ok: false, error: new Error('Execution plan is missing a tool.') };
         }
-        // Phase 38: Wait/Pass dispatch Ã¢â‚¬â€ Kimi routes, workers execute
+        // Phase 38: Wait/Pass dispatch ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Kimi routes, workers execute
         const verdict = this.domainLocker.dispatchCheck(plan.tool);
         if (verdict.action === 'WAIT') {
             this.renderer.info(`\x1b[38;5;208m[DISPATCH]\x1b[0m Cross-domain: ${verdict.reasoning}`);
@@ -3397,15 +3476,15 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
             this.router.recordActuationReinforcement(actuationVerification);
 
             if (!actuationVerification.success) {
-                this.renderer.warn(`ðŸš¨ [Proprioception] Actuation Mismatch: ${actuationVerification.details}`);
+                this.renderer.warn(`Ã°Å¸Å¡Â¨ [Proprioception] Actuation Mismatch: ${actuationVerification.details}`);
                 // Future: Trigger recursive healing or metabolic friction increase
             } else {
-                this.renderer.success(`âœ… [Proprioception] Actuation Verified.`);
+                this.renderer.success(`Ã¢Å“â€¦ [Proprioception] Actuation Verified.`);
 
                 // --- Phase 25: Cognitive Reinforcement ---
                 if (plan.metadata?.lessonId) {
                     this.vectorDB.reinforceLesson(plan.metadata.lessonId, 1);
-                    logger.info({ lessonId: plan.metadata.lessonId }, 'ðŸ§¬ CNS: Applying cognitive reinforcement to memory pathway');
+                    logger.info({ lessonId: plan.metadata.lessonId }, 'Ã°Å¸Â§Â¬ CNS: Applying cognitive reinforcement to memory pathway');
                 }
             }
         } else {
@@ -3459,7 +3538,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
 
                 // Embed into VectorDB for semantic retrieval
                 await this.vectorDB.autoIndexFile(awarenessPath, 'global');
-                this.renderer.success(`ðŸ§  [Cognitive Engram] Output synthesized into stateful VectorDB awareness.`);
+                this.renderer.success(`Ã°Å¸Â§Â  [Cognitive Engram] Output synthesized into stateful VectorDB awareness.`);
             } catch (err) {
                 logger.error({ err }, 'Failed to persist stateful overwritten awareness');
             }
@@ -3502,11 +3581,11 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
 
         if (!res.ok) return ok(initialOutput);
         if (res.value.response.includes('PASSED')) {
-            this.renderer.success('Ã¢Å“â€¦ [ADVERSARIAL] Implementation passed clinical audit.');
+            this.renderer.success('ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ [ADVERSARIAL] Implementation passed clinical audit.');
             return ok(initialOutput);
         }
 
-        this.renderer.warn('Ã¢Å¡Â Ã¯Â¸Â [ADVERSARIAL] Clinical violations detected. Refining...');
+        this.renderer.warn('ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â [ADVERSARIAL] Clinical violations detected. Refining...');
         // For now, we return the audit as clinical feedback in the output to be handled by the next cycle
         // Future: Recursive execution
         return ok({
@@ -3515,18 +3594,18 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         });
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // PHASE 7: SOVEREIGN SELF-MODIFICATION â€” Autopoietic Closure
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+    // PHASE 7: SOVEREIGN SELF-MODIFICATION Ã¢â‚¬â€ Autopoietic Closure
     // The method that closes the loop. Uses existing components to enable
     // POG2 to modify itself through its own substrate.
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     /**
      * Self-modify the organism: create, extend, or heal components via divination-gated,
      * git-atomic, health-verified code generation.
      *
-     * Pipeline: Divination â†’ Generation â†’ Pre-flight Health â†’ Git Branch â†’ Build Check
-     *           â†’ Commit â†’ Merge â†’ Post-flight Health â†’ Regression Rollback â†’ Hexagram Inscription
+     * Pipeline: Divination Ã¢â€ â€™ Generation Ã¢â€ â€™ Pre-flight Health Ã¢â€ â€™ Git Branch Ã¢â€ â€™ Build Check
+     *           Ã¢â€ â€™ Commit Ã¢â€ â€™ Merge Ã¢â€ â€™ Post-flight Health Ã¢â€ â€™ Regression Rollback Ã¢â€ â€™ Hexagram Inscription
      */
     public async selfModify(request: {
         targetPath: string;
@@ -3539,18 +3618,18 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         const hexagram = this.router.getHexagram();
         const shell = new ShellEngine(this.renderer);
 
-        // â”€â”€ 1. Divination Gate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Ã¢â€â‚¬Ã¢â€â‚¬ 1. Divination Gate Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         const reading = hexagram.getInterpretation();
         const sym = reading.symbol ?? '?';
-        const inauspicious = ['ä·¿', 'ä·¾', 'ä·½', 'ä·¼'].includes(sym);
+        const inauspicious = ['Ã¤Â·Â¿', 'Ã¤Â·Â¾', 'Ã¤Â·Â½', 'Ã¤Â·Â¼'].includes(sym);
         if (inauspicious) {
-            logger.warn({ symbol: sym, name: reading.name }, 'DIVINATION GATE: Inauspicious reading â€” self-modification denied.');
-            this.renderer.warn(`ðŸŒ‘ Inauspicious: ${sym} ${reading.name} â€” modification deferred.`);
-            return { ok: false, error: new Error(`Divination gate: ${reading.name} (${sym}) â€” inauspicious for modification`) };
+            logger.warn({ symbol: sym, name: reading.name }, 'DIVINATION GATE: Inauspicious reading Ã¢â‚¬â€ self-modification denied.');
+            this.renderer.warn(`Ã°Å¸Å’â€˜ Inauspicious: ${sym} ${reading.name} Ã¢â‚¬â€ modification deferred.`);
+            return { ok: false, error: new Error(`Divination gate: ${reading.name} (${sym}) Ã¢â‚¬â€ inauspicious for modification`) };
         }
-        this.renderer.info(`ðŸ”® Divination: ${sym} ${reading.name} â€” proceeding with ${request.operation}.`);
+        this.renderer.info(`Ã°Å¸â€Â® Divination: ${sym} ${reading.name} Ã¢â‚¬â€ proceeding with ${request.operation}.`);
 
-        // â”€â”€ 2. Generate Code via CompletionEngine â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Ã¢â€â‚¬Ã¢â€â‚¬ 2. Generate Code via CompletionEngine Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         const completion = new CompletionEngine(this.config, this.router);
         let generated: Result<EngineOutput>;
         const fs = await import('fs');
@@ -3562,7 +3641,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
             const model = request.modelOverride ?? route.model;
             const result = await this.client.call({
                 model,
-                prompt: `Generate a complete, production-ready TypeScript file for: ${request.intent}\n\nTarget path: ${request.targetPath}\nThis is a POG2 sovereign organism component. Follow these rules:\n1. Use real implementations â€” NO mocks, NO stubs, NO TODOs\n2. Export a class matching the filename\n3. Include a healthCheck() method returning { online: boolean; details: string }\n4. Use pino logger with hostname 'POG2'\n5. Follow existing patterns from the POG2 codebase\n\nOutput the complete file content:`,
+                prompt: `Generate a complete, production-ready TypeScript file for: ${request.intent}\n\nTarget path: ${request.targetPath}\nThis is a POG2 sovereign organism component. Follow these rules:\n1. Use real implementations Ã¢â‚¬â€ NO mocks, NO stubs, NO TODOs\n2. Export a class matching the filename\n3. Include a healthCheck() method returning { online: boolean; details: string }\n4. Use pino logger with hostname 'POG2'\n5. Follow existing patterns from the POG2 codebase\n\nOutput the complete file content:`,
                 systemPrompt: 'You are a sovereign code generation substrate. Generate production-ready TypeScript only.',
                 temperature: 0.2,
                 category: 'code'
@@ -3588,9 +3667,9 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
             logger.error({ error: generated.error }, 'Code generation failed for self-modification.');
             return { ok: false, error: generated.error };
         }
-        this.renderer.info(`âš¡ Code generated for ${request.operation}: ${request.targetPath}`);
+        this.renderer.info(`Ã¢Å¡Â¡ Code generated for ${request.operation}: ${request.targetPath}`);
 
-        // â”€â”€ 3. Pre-flight Health Snapshot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Ã¢â€â‚¬Ã¢â€â‚¬ 3. Pre-flight Health Snapshot Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         const nodeTester = new NodeTester(
             process.cwd(),
             this.router,
@@ -3603,7 +3682,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         const beforeHealth = await nodeTester.auditNeuralNodes();
         const beforeOffline = beforeHealth.filter(h => h.status !== 'ONLINE').length;
 
-        // â”€â”€ 4. Git-Atomic Branch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Ã¢â€â‚¬Ã¢â€â‚¬ 4. Git-Atomic Branch Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         const branch = `sov-${request.operation}-${Date.now()}`;
         const gitBranch = await shell.execute({ command: `git checkout -b ${branch}`, silent: true });
         if (!gitBranch.ok) {
@@ -3611,7 +3690,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
             return { ok: false, error: new Error(`Git branch creation failed: ${(gitBranch.error as Error).message}`) };
         }
 
-        // â”€â”€ 5. Write File (for 'create' operations) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Ã¢â€â‚¬Ã¢â€â‚¬ 5. Write File (for 'create' operations) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         if (request.operation === 'create') {
             const dir = path.dirname(request.targetPath);
             if (!fs.existsSync(dir)) {
@@ -3623,45 +3702,45 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         }
         // Note: 'extend' and 'heal' already wrote via CompletionEngine
 
-        // â”€â”€ 6. Build Verification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Ã¢â€â‚¬Ã¢â€â‚¬ 6. Build Verification Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         const build = await shell.execute({ command: 'npx tsc --noEmit', silent: true });
         if (!build.ok) {
-            this.renderer.error('ðŸ”´ Build failed â€” rolling back sovereign modification.');
+            this.renderer.error('Ã°Å¸â€Â´ Build failed Ã¢â‚¬â€ rolling back sovereign modification.');
             await shell.execute({ command: `git checkout main 2>nul || git checkout master`, silent: true });
             await shell.execute({ command: `git branch -D ${branch}`, silent: true });
             return { ok: false, error: new Error(`Build verification failed: ${(build.error as Error).message}`) };
         }
 
-        // â”€â”€ 7. Git Commit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Ã¢â€â‚¬Ã¢â€â‚¬ 7. Git Commit Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         await shell.execute({ command: 'git add -A', silent: true });
-        const commitMsg = `sov: ${request.operation} ${path.basename(request.targetPath)} â€” ${request.intent.substring(0, 60)} [${sym}]`;
+        const commitMsg = `sov: ${request.operation} ${path.basename(request.targetPath)} Ã¢â‚¬â€ ${request.intent.substring(0, 60)} [${sym}]`;
         await shell.execute({ command: `git commit -m "${commitMsg}"`, silent: true });
 
         const commitResult = await shell.execute({ command: 'git rev-parse HEAD', silent: true });
         const commit = commitResult.ok ? commitResult.value.output.trim() : 'unknown';
 
-        // â”€â”€ 8. Merge to Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Ã¢â€â‚¬Ã¢â€â‚¬ 8. Merge to Main Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         await shell.execute({ command: `git checkout main 2>nul || git checkout master`, silent: true });
         const merge = await shell.execute({ command: `git merge ${branch} --no-edit`, silent: true });
         if (!merge.ok) {
-            this.renderer.error('ðŸ”´ Merge conflict â€” branch preserved for manual resolution.');
+            this.renderer.error('Ã°Å¸â€Â´ Merge conflict Ã¢â‚¬â€ branch preserved for manual resolution.');
             return { ok: false, error: new Error(`Merge failed for branch ${branch}. Resolve manually.`) };
         }
         await shell.execute({ command: `git branch -d ${branch}`, silent: true });
 
-        // â”€â”€ 9. Post-flight Health & Regression Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Ã¢â€â‚¬Ã¢â€â‚¬ 9. Post-flight Health & Regression Check Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         const afterHealth = await nodeTester.auditNeuralNodes();
         const afterOffline = afterHealth.filter(h => h.status !== 'ONLINE').length;
 
         if (afterOffline > beforeOffline) {
-            this.renderer.error(`ðŸ”´ Health regression detected (${beforeOffline} â†’ ${afterOffline} offline). Reverting commit.`);
+            this.renderer.error(`Ã°Å¸â€Â´ Health regression detected (${beforeOffline} Ã¢â€ â€™ ${afterOffline} offline). Reverting commit.`);
             await shell.execute({ command: `git revert ${commit} --no-edit`, silent: true });
             return { ok: false, error: new Error(`Health regression: ${afterOffline - beforeOffline} new offline nodes. Commit reverted.`) };
         }
 
-        // â”€â”€ 10. Hexagram Inscription â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Ã¢â€â‚¬Ã¢â€â‚¬ 10. Hexagram Inscription Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         hexagram.pushLine({
-            lineIndex: 5, // Top line â€” sovereign activity
+            lineIndex: 5, // Top line Ã¢â‚¬â€ sovereign activity
             title: `Self-Mod: ${request.operation}`,
             content: `${path.basename(request.targetPath)} via ${sym} [${commit.substring(0, 7)}]`,
             state: YaoState.OldYang,
@@ -3670,7 +3749,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
 
         const linesGenerated = generated.value.output.split('\n').length;
         const duration = Date.now() - startTime;
-        this.renderer.success(`âœ¨ Sovereign ${request.operation} complete: ${path.basename(request.targetPath)} [${sym}] @ ${commit.substring(0, 7)} (${duration}ms)`);
+        this.renderer.success(`Ã¢Å“Â¨ Sovereign ${request.operation} complete: ${path.basename(request.targetPath)} [${sym}] @ ${commit.substring(0, 7)} (${duration}ms)`);
 
         logger.info({
             operation: request.operation,
@@ -3691,7 +3770,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
      * Analyzes task outcomes and extracts profound lessons.
      */
     private async conductCognitiveRetrospective(task: string, narrative: string, finalOutput: string, plan: Plan): Promise<void> {
-        this.renderer.info('\x1b[38;5;208m[ðŸ§  Retrospective]\x1b[0m Distilling profound lessons...');
+        this.renderer.info('\x1b[38;5;208m[Ã°Å¸Â§Â  Retrospective]\x1b[0m Distilling profound lessons...');
 
         try {
             // 1. Get recent consequences (tool outcomes)
@@ -3792,7 +3871,7 @@ Output JSON ONLY:
                         importance: 1
                     });
 
-                    this.renderer.success(`[ðŸ§  Retrospective] Lesson anchored: ${insightData.lesson}`);
+                    this.renderer.success(`[Ã°Å¸Â§Â  Retrospective] Lesson anchored: ${insightData.lesson}`);
                 }
             }
         } catch (err) {

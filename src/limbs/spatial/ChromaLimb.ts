@@ -1,4 +1,4 @@
-import { type Result, ok, err } from '../../core/models.js';
+﻿import { type Result, ok, err } from '../../core/models.js';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
 import { createLogger } from "../../utils/logger.js";
 

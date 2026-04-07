@@ -1,4 +1,4 @@
-
+﻿
 import { type Result, type ProsodyVector, ok, YaoState } from '../../core/models.js'
 import { ModelClient } from '../../clients/ModelClient.js';
 import { GutenbergLimb } from './GutenbergLimb.js';
@@ -470,9 +470,9 @@ Vary prosody based on narrative tension and ${yaostate} influence.
                 scene.pose = { npcId: 15516, x: 3213, y: 3424, z: 0 }; // Default Varrock center for player
             }
 
-            // ═══════════════════════════════════════════════════════════════
-            // STAGE 1: SUBSTRATE FORENSICS — High-Fidelity Match
-            // ═══════════════════════════════════════════════════════════════
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+            // STAGE 1: SUBSTRATE FORENSICS â€” High-Fidelity Match
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             if (speaker && speaker !== 'narrator' && speaker !== 'pov' && speaker !== 'player') {
                 const searchRes = this.forensics.searchByName(speaker, 'npc');
                 if (searchRes.ok && searchRes.value.length > 0) {
@@ -526,19 +526,19 @@ Vary prosody based on narrative tension and ${yaostate} influence.
                 }
             }
 
-            // ═══════════════════════════════════════════════════════════════
-            // PHASE 27: GENERATIVE NPC FALLBACK — "Forge of the Future"
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+            // PHASE 27: GENERATIVE NPC FALLBACK â€” "Forge of the Future"
             // Novelty bias flows through the Hexagram's YaoState:
-            //   OldMixed (Chaotic)  → Maximum invention, wild traits
-            //   OldYang  (Decisive) → Bold but structured creation
-            //   YoungYin (Receptive)→ Conservative, close to known archetypes
-            // ═══════════════════════════════════════════════════════════════
+            //   OldMixed (Chaotic)  â†’ Maximum invention, wild traits
+            //   OldYang  (Decisive) â†’ Bold but structured creation
+            //   YoungYin (Receptive)â†’ Conservative, close to known archetypes
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             if (!scene.modelId && speaker && speaker !== 'narrator') {
                 const yao = this.hexagram.getYaoState();
                 const chaosTemp = yao === YaoState.OldMixed ? 1.2
                     : yao === YaoState.OldYang ? 0.9
                         : yao === YaoState.YoungMixed ? 0.8
-                            : 0.6; // YoungYin/YoungYang — grounded invention
+                            : 0.6; // YoungYin/YoungYang â€” grounded invention
 
                 const bornDigitalId = BORN_DIGITAL_ID_BASE + Math.floor(Math.random() * BORN_DIGITAL_ID_RANGE);
                 const capitalizedName = speaker.charAt(0).toUpperCase() + speaker.slice(1);
@@ -571,9 +571,9 @@ Respond JSON ONLY: {"race":"string","role":"string","combatLevel":number,"boneCo
                 };
                 scene.boneCount = traits.boneCount;
 
-                logger.info({ scene: scene.index, npcId: bornDigitalId, name: capitalizedName, race: traits.race, yao }, '🔥 BORN-DIGITAL: New NPC forged. YaoState drove invention temperature.');
+                logger.info({ scene: scene.index, npcId: bornDigitalId, name: capitalizedName, race: traits.race, yao }, 'ðŸ”¥ BORN-DIGITAL: New NPC forged. YaoState drove invention temperature.');
 
-                // Substrate Feedback Loop — persist for self-evolution
+                // Substrate Feedback Loop â€” persist for self-evolution
                 this.persistBornDigital(capitalizedName, bornDigitalId, traits, description);
             }
 
@@ -644,18 +644,18 @@ Respond JSON ONLY: {"race":"string","role":"string","combatLevel":number,"boneCo
                         }
                     }
 
-                    // ═══════════════════════════════════════════════════════
-                    // PHASE 27: ANIMATION EXTRAPOLATION — Novel Moves
+                    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                    // PHASE 27: ANIMATION EXTRAPOLATION â€” Novel Moves
                     // No kinematic match? Extrapolate from the verb itself.
                     // Every action deserves motion. Carpe diem.
-                    // ═══════════════════════════════════════════════════════
+                    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
                     if (!vectorAnimFound && !scene.animationId) {
                         const syntheticAnimId = BORN_DIGITAL_ID_BASE + Math.floor(Math.random() * BORN_DIGITAL_ID_RANGE);
                         scene.animationId = syntheticAnimId;
                         scene.duration = 1.8 + Math.random() * 3.0; // 1.8s to 4.8s
                         scene.isSkeletal = true;
                         scene.kinematicId = `SYNTH_${selectedVerb.toUpperCase()}_${syntheticAnimId}`;
-                        logger.info({ scene: scene.index, verb: selectedVerb, syntheticAnimId }, '⚡ BORN-DIGITAL: Synthetic animation extrapolated from narrative verb.');
+                        logger.info({ scene: scene.index, verb: selectedVerb, syntheticAnimId }, 'âš¡ BORN-DIGITAL: Synthetic animation extrapolated from narrative verb.');
                     }
                 }
             }
@@ -665,7 +665,7 @@ Respond JSON ONLY: {"race":"string","role":"string","combatLevel":number,"boneCo
     }
 
     /**
-     * persistBornDigital — Substrate Feedback Loop.
+     * persistBornDigital â€” Substrate Feedback Loop.
      * Anchors a Born-Digital NPC into D:\sovereign\memory\pedagogy
      * so the system learns from its own creations.
      */
@@ -698,7 +698,7 @@ Respond JSON ONLY: {"race":"string","role":"string","combatLevel":number,"boneCo
 
             const filePath = join(pedagogyDir, `NPC_BORN_DIGITAL_${id}.json`);
             writeFileSync(filePath, JSON.stringify(profile, null, 2));
-            logger.info({ filePath, name, id }, '🧬 Born-Digital NPC persisted to Sovereign substrate.');
+            logger.info({ filePath, name, id }, 'ðŸ§¬ Born-Digital NPC persisted to Sovereign substrate.');
         } catch (e) {
             logger.warn({ name, id, error: (e as Error).message }, 'Failed to persist Born-Digital NPC.');
         }

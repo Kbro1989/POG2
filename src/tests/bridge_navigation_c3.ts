@@ -10,7 +10,7 @@ import * as path from 'path';
 import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
 
 async function testBridgeNavigationC3() {
-    console.log('🧪 PHASE C3 TEST: Bridge Navigation (Inter-Regional Crossing)\n');
+    console.log('ðŸ§ª PHASE C3 TEST: Bridge Navigation (Inter-Regional Crossing)\n');
 
     const DB_PATH = 'D:\\sovereign\\vibe-learning-test.db';
     if (fs.existsSync(DB_PATH)) fs.unlinkSync(DB_PATH);
@@ -40,7 +40,7 @@ async function testBridgeNavigationC3() {
     fs.writeFileSync(barrowsSouthPath, JSON.stringify(barrowsSouthMatrix));
 
     // 2. Initialize
-    const spatial = new SpatialSovereigntyLimb();
+    const spatial = SpatialSovereigntyLimb.getInstance();
     await spatial.initialize();
     await spatial.loadLogic('barrows');
     
@@ -57,8 +57,8 @@ async function testBridgeNavigationC3() {
 
     const gameState = { plane: 0, npcSpatialIndex: new Map(), npcMap: new Map(), objectMap: new Map(), players: [] } as any;
 
-    console.log(`📍 Avatar at (${avatar.x}, ${avatar.y}) in Barrows.`);
-    console.log(`🎯 Target is at (3564, 3260) in Barrows South.`);
+    console.log(`ðŸ“ Avatar at (${avatar.x}, ${avatar.y}) in Barrows.`);
+    console.log(`ðŸŽ¯ Target is at (3564, 3260) in Barrows South.`);
 
     // 3. Mark everything as visited except the target to force a specific path
     for (let x = 3560; x < 3570; x++) {
@@ -80,10 +80,10 @@ async function testBridgeNavigationC3() {
     const movedSouth = finalPos.y < avatar.y;
     const bridgeSuccess = finalPos.y <= 3263; // Successfully crossed the 3264 boundary
 
-    console.log(`\n🔍 Bridge Audit:`);
-    console.log(`   Moved South: ${movedSouth ? '✅ YES' : '❌ NO'}`);
-    console.log(`   Crossed Boundary (Y=3264): ${bridgeSuccess ? '✅ YES' : '❌ NO'}`);
-    console.log(`   Barrows South Logic Active: ${spatial.hasRegion('m_55_50') ? '✅ YES' : '❌ NO'}`);
+    console.log(`\nðŸ” Bridge Audit:`);
+    console.log(`   Moved South: ${movedSouth ? 'âœ… YES' : 'âŒ NO'}`);
+    console.log(`   Crossed Boundary (Y=3264): ${bridgeSuccess ? 'âœ… YES' : 'âŒ NO'}`);
+    console.log(`   Barrows South Logic Active: ${spatial.hasRegion('m_55_50') ? 'âœ… YES' : 'âŒ NO'}`);
 
     const SUCCESS_CRITERIA = {
         crossedBoundary: bridgeSuccess,
@@ -91,14 +91,14 @@ async function testBridgeNavigationC3() {
         noStuckStates: engine.getStats().moves > 0
     };
 
-    console.log(`\n✅ SUCCESS CRITERIA:`);
-    console.log(`  Bridge Crossing successful: ${SUCCESS_CRITERIA.crossedBoundary ? '✓' : '✗'}`);
-    console.log(`  Proactive Loading working: ${SUCCESS_CRITERIA.orchestratorWorked ? '✓' : '✗'}`);
+    console.log(`\nâœ… SUCCESS CRITERIA:`);
+    console.log(`  Bridge Crossing successful: ${SUCCESS_CRITERIA.crossedBoundary ? 'âœ“' : 'âœ—'}`);
+    console.log(`  Proactive Loading working: ${SUCCESS_CRITERIA.orchestratorWorked ? 'âœ“' : 'âœ—'}`);
 
     if (Object.values(SUCCESS_CRITERIA).every(v => v)) {
-        console.log('\n🚀 PHASE C3 CHECKPOINT: PASSED\n');
+        console.log('\nðŸš€ PHASE C3 CHECKPOINT: PASSED\n');
     } else {
-        console.log('\n❌ PHASE C3 CHECKPOINT: FAILED\n');
+        console.log('\nâŒ PHASE C3 CHECKPOINT: FAILED\n');
         process.exit(1);
     }
 

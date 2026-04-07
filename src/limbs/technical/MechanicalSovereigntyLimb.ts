@@ -19,11 +19,29 @@ export interface MechanicalLogicArtifact {
 }
 
 export class MechanicalSovereigntyLimb {
+    private static instance: MechanicalSovereigntyLimb | undefined;
     private readonly logicDir: string;
     private loadedLogic: Map<string, MechanicalLogicArtifact> = new Map();
     private pedagogy?: PedagogyLimb;
 
-    constructor(pedagogy?: PedagogyLimb) {
+    public static getInstance(): MechanicalSovereigntyLimb {
+        if (!this.instance) {
+            this.instance = new MechanicalSovereigntyLimb();
+        }
+        return this.instance;
+    }
+
+    public static resetInstance(): void {
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error('resetInstance is forbidden in production');
+        }
+        this.instance = undefined;
+    }
+
+    private constructor(pedagogy?: PedagogyLimb) {
+        if (MechanicalSovereigntyLimb.instance) {
+            throw new Error('Singleton violation: use MechanicalSovereigntyLimb.getInstance()');
+        }
         this.logicDir = path.join(getSovereignRoot(), 'atlas', 'logic');
         this.pedagogy = pedagogy;
     }

@@ -1,4 +1,4 @@
-export interface DiskSubstrate {
+﻿export interface DiskSubstrate {
     readonly totalBytes: bigint;
     readonly freeBytes: bigint;
     readonly volumeLabel: string;

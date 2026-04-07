@@ -1,4 +1,4 @@
-import { type Result, ok, err } from '../../core/models.js';
+﻿import { type Result, ok, err } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { CognitiveEngine } from '../../engines/CognitiveEngine.js';
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
@@ -19,7 +19,7 @@ export interface SovereignOutput {
 
 /**
  * AILimb - Sovereign Cognitive Orchestrator
- * Transitions the AI from an "考古学者" (Archaeologist) to a "建築家" (Architect).
+ * Transitions the AI from an "è€ƒå¤å­¦è€…" (Archaeologist) to a "å»ºç¯‰å®¶" (Architect).
  * Enforces Sovereign Law and directs generative realities.
  */
 export class AILimb {
@@ -39,7 +39,7 @@ CAPABILITY DOMAINS:
 - CINEMATIC DIRECTION: Camera choreography, lighting envelopes, narrative beats, chromatic pacing
 - PEDAGOGICAL SYNTHESIS: Abstracting universal patterns from specific implementations
 
-When given a task, you do not execute—you ORCHESTRATE across limbs, enforcing Sovereign Law.
+When given a task, you do not executeâ€”you ORCHESTRATE across limbs, enforcing Sovereign Law.
   `.trim();
 
     constructor(

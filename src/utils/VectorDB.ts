@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+﻿import Database from 'better-sqlite3';
 import { type Result, type Lesson, ok } from '../core/models.js';
 import { getLearningDbPath, getSatelliteDbPaths } from './SovereignPathResolver.js';
 import { createHash } from 'crypto';
@@ -36,7 +36,7 @@ export interface VectorDBConfig {
 }
 
 /**
- * VectorDB â€” Sovereign memory substrate using better-sqlite3.
+ * VectorDB Ã¢â‚¬â€ Sovereign memory substrate using better-sqlite3.
  * NO MOCKS. Real persistence for neurological lessons and hexagram context.
  */
 export class VectorDB {

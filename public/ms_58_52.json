@@ -1,0 +1,13 @@
+{
+  "regionId": 14900,
+  "rx": 58,
+  "ry": 52,
+  "metadata": {
+    "total_entities": 0,
+    "total_npcs": 0,
+    "total_objects": 0,
+    "synthesized_at": "2026-04-07T16:00:42.587Z"
+  },
+  "entities": [],
+  "collision_matrix": {}
+}

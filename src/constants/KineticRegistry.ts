@@ -1,4 +1,4 @@
-// src/constants/KineticRegistry.ts
+﻿// src/constants/KineticRegistry.ts
 // Physical and Kinetic limits for POG2 entities to ensure temporal integrity
 
 export interface JointLimit {

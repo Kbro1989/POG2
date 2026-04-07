@@ -1,4 +1,4 @@
-import { v7 as uuidv7 } from 'uuid';
+﻿import { v7 as uuidv7 } from 'uuid';
 
 /**
  * The OpenTelemetry / Distributed AI Envelope Event Standard.

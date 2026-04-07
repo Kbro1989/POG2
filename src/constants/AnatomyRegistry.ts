@@ -1,4 +1,4 @@
-// src/constants/AnatomyRegistry.ts
+﻿// src/constants/AnatomyRegistry.ts
 // Hard constraints for anatomy validation in POG2
 
 export type AnatomyLimits = {

@@ -8,6 +8,14 @@ import { EntityLimb } from '../technical/EntityLimb.js';
 import { getSovereignRoot, resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
 import * as fs from 'fs';
 import * as path from 'path';
+import { SimulationHarness } from '../../engines/gameplay/SimulationHarness.js';
+import { WorldGroundingLimb } from '../world_grounding/WorldGroundingLimb.js';
+import { HexagramManager } from '../../routing/HexagramManager.js';
+import { AIDispatcher } from '../../api/ai/Dispatcher.js';
+import { ModelClient } from '../../clients/ModelClient.js';
+import { SovereignConfig } from '../../config/SovereignConfig.js';
+import { TernaryRouter } from '../../routing/TernaryRouter.js';
+import { Renderer } from '../../ui/Renderer.js';
 
 const logger = createLogger('GameplaySovereigntyLimb');
 
@@ -17,6 +25,7 @@ const BANK_BUTTON_DEPOSIT_ALL = 141184642;
 const BANK_BUTTON_DEPOSIT_EQUIPMENT = 141184643;
 
 export class GameplaySovereigntyLimb {
+    private static instance: GameplaySovereigntyLimb | undefined;
     private isRunning: boolean = false;
     private tickInterval: NodeJS.Timeout | null = null;
     public tickCount: number = 0;
@@ -24,6 +33,7 @@ export class GameplaySovereigntyLimb {
     public edgeSync: CloudflareSyncLimb;
     private switchboard: SwitchboardLimb | null = null;
     private entityBrain: EntityLimb | null = null;
+    private harness: SimulationHarness | null = null;
     
     public globalState: GameState = {
         plane: 0,
@@ -38,12 +48,29 @@ export class GameplaySovereigntyLimb {
     public avatar: SovereignAvatar;
     private activeModule: GameplayModule | null = null;
 
-    constructor() {
+    protected constructor() {
+        if (GameplaySovereigntyLimb.instance) {
+            throw new Error('Singleton violation: use GameplaySovereigntyLimb.getInstance()');
+        }
         this.avatar = new SovereignAvatar('POG2_Sovereign');
         this.globalState.players.set(this.avatar.username, this.avatar);
         this.edgeSync = new CloudflareSyncLimb();
         this.loadSovereignState();
-        logger.info('GameplaySovereigntyLimb booted with initial Avatar state and Cloudflare Edge sync active.');
+        logger.info('GameplaySovereigntyLimb booted as a CNS-authoritative node.');
+    }
+
+    public static getInstance(): GameplaySovereigntyLimb {
+        if (!this.instance) {
+            this.instance = new GameplaySovereigntyLimb();
+        }
+        return this.instance;
+    }
+
+    public static resetInstance(): void {
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error('resetInstance is forbidden in production');
+        }
+        this.instance = undefined;
     }
 
     public injectSwitchboard(switchboard: SwitchboardLimb) {
@@ -178,23 +205,42 @@ export class GameplaySovereigntyLimb {
     public startClock() {
         if (this.isRunning) return;
         this.isRunning = true;
-        this.tickInterval = setInterval(() => this.processTick(), 600);
-        logger.info('Standard 600ms Sovereign Server Clock started.');
+        // The 600ms interval is now managed by CNSGodheadPulseVolley (Kernel)
+        logger.info('Godhead Sovereign Server Clock handed over to CNS Kernel.');
+        
+        // Phase 259: Initialize Simulation Harness
+        if (!this.harness) {
+            logger.warn('[Gameplay] Simulation Harness not yet injected. Running in viscerally grounded mode.');
+        }
+    }
+
+    public injectHarness(harness: SimulationHarness) {
+        this.harness = harness;
+        logger.info('Simulation Harness injected into Gameplay Limb.');
     }
 
     public stopClock() {
         this.isRunning = false;
-        if (this.tickInterval) clearInterval(this.tickInterval);
         logger.info('Server Clock stopped.');
     }
 
-    private processTick(): string | null {
+    /**
+     * processTick - Authoritative State Advancement.
+     * Called by CNSGodheadPulseVolley every 600ms.
+     */
+    public processTick(): string | null {
         this.tickCount++;
         this.globalState.tickNumber = this.tickCount;
 
+        // 1. Process Avatar (Visceral Reflex)
         this.avatar.processTick();
 
-        // Autosave every 10 ticks (6 seconds) if needed, or trigger on change
+        // 2. Delegate to Simulation Harness (Deterministic Logic)
+        if (this.harness) {
+            this.harness.processTick(this.tickCount, this.globalState, this.avatar);
+        }
+
+        // 3. Autosave every 10 ticks (6 seconds) if needed, or trigger on change
         if (this.tickCount % 10 === 0) {
             this.saveSovereignState();
         }

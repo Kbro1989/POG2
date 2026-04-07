@@ -24,7 +24,7 @@ export class TopologyLimb {
     constructor() {}
 
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
-        const res = rsmvBridge.healthCheck();
+        const res = await rsmvBridge.healthCheck();
         const online = res.ok && res.value.online;
         return {
             online,
@@ -38,7 +38,7 @@ export class TopologyLimb {
      * Extracts foundational topology heuristics from a raw model ID.
      */
     public async extractTopology(modelId: number): Promise<Result<TopologicalProfile>> {
-        const res = rsmvBridge.getModel(modelId);
+        const res = await rsmvBridge.getModel(modelId);
         if (!res.ok) return res as any;
         const m = res.value;
         return ok({

@@ -1,4 +1,4 @@
-// src/utils/SovereignGrounding.ts
+﻿// src/utils/SovereignGrounding.ts
 // Ported from D:\sovereign\cache_pedagogy\rsmv_inspector\src\map\grounding_logic.ts
 // Integrated into POG2 Sovereign Core
 

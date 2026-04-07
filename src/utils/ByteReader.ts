@@ -1,4 +1,4 @@
-import { Buffer } from 'buffer';
+﻿import { Buffer } from 'buffer';
 
 /**
  * ByteReader - High-fidelity binary reader for RS3 NXT cache formats.

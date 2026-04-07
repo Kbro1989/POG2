@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+﻿import { exec } from 'child_process';
 import { promisify } from 'util';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';
@@ -12,12 +12,12 @@ const execAsync = promisify(exec);
 const logger = createLogger('SovereignEye');
 
 /**
- * Capture source definition — what the Sovereign Eye is looking at.
+ * Capture source definition â€” what the Sovereign Eye is looking at.
  */
 export type CaptureSource =
     | { type: 'url'; target: string }           // http://localhost:3000, wrangler dev, etc.
     | { type: 'html'; target: string }          // Path to .html file
-    | { type: 'rsc'; target: 'game_client' }    // RSC client — delegates to RSCLimb state
+    | { type: 'rsc'; target: 'game_client' }    // RSC client â€” delegates to RSCLimb state
     | { type: 'window'; target: string }        // OS window title match
     | { type: 'file'; target: string };          // Existing screenshot/image file
 
@@ -43,12 +43,12 @@ export interface ViewportConfig {
 const DEFAULT_VIEWPORT: ViewportConfig = { width: 1280, height: 720 };
 
 /**
- * SovereignEye — Universal capture engine.
+ * SovereignEye â€” Universal capture engine.
  * 
  * Captures visual and textual state from ANY source: localhost dev servers,
  * wrangler dev environments, HTML files, OS windows, and existing images.
  * 
- * NO MOCKS — All captures come from real, running environments.
+ * NO MOCKS â€” All captures come from real, running environments.
  */
 export class SovereignEye extends EventEmitter {
     private readonly captureDir: string;
@@ -165,7 +165,7 @@ export class SovereignEye extends EventEmitter {
     }
 
     /**
-     * Capture RSC game state — text-based via RSCLimb state.
+     * Capture RSC game state â€” text-based via RSCLimb state.
      */
     private async captureRSC(): Promise<Result<CaptureResult>> {
         return {

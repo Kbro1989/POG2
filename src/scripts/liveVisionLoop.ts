@@ -30,7 +30,7 @@ async function runLiveCycle() {
 
     const client = new ModelClient(config);
     const renderer = new Renderer();
-    const spatialVision = new SpatialVisionEngine(config, renderer);
+    const spatialVision = SpatialVisionEngine.getInstance(config, renderer);
     const engine = new ChromanumberEngine();
     const harness = new VisionActuationHarness(engine, spatialVision);
 

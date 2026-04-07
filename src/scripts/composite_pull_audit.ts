@@ -1,6 +1,6 @@
-// src/scripts/composite_pull_audit.ts
+﻿// src/scripts/composite_pull_audit.ts
 /**
- * 🐉 SOVEREIGN COMPOSITE PULL AUDIT
+ * ðŸ‰ SOVEREIGN COMPOSITE PULL AUDIT
  * Deep-substrate retrieval and relational synthesis.
  * Supports Symbolic (Name), Numeric (ID), and Physical (Spatial) recall.
  */
@@ -67,7 +67,7 @@ async function runAudit() {
 }
 
 async function indexMaps(cachePath: string, outputDir: string) {
-    logger.info('🗺️ Initiating Universal Map Indexing Protocol...');
+    logger.info('ðŸ—ºï¸ Initiating Universal Map Indexing Protocol...');
     
     const targets = ['js5-5.jcache', 'js5-16.jcache', 'js5-47.jcache'];
     
@@ -102,11 +102,11 @@ async function indexMaps(cachePath: string, outputDir: string) {
         db.close();
     }
 
-    logger.info('🗺️ Map Substrate Preservation COMPLETE.');
+    logger.info('ðŸ—ºï¸ Map Substrate Preservation COMPLETE.');
 }
 
 async function performCompositeRecall(type: string, query: string, cachePath: string, outputDir: string, engine: OrchestrateEngine) {
-    logger.info({ type, query }, '🧬 Initiating Composite Recall...');
+    logger.info({ type, query }, 'ðŸ§¬ Initiating Composite Recall...');
 
     const result: any = {
         query: { type, query },
@@ -131,7 +131,7 @@ async function performCompositeRecall(type: string, query: string, cachePath: st
 
     const resultPath = join(outputDir, `recall_${type}_${query.replace(/,/g, '_')}.json`);
     await fs.writeFile(resultPath, JSON.stringify(result, null, 2));
-    logger.info({ resultPath }, '✅ Composite Recall Success.');
+    logger.info({ resultPath }, 'âœ… Composite Recall Success.');
 }
 
 async function recallNPC(query: string, cachePath: string, outputDir: string, result: any) {

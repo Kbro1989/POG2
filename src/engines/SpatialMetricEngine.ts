@@ -1,4 +1,4 @@
-import { createLogger } from "../utils/logger.js";
+﻿import { createLogger } from "../utils/logger.js";
 // ModelData type - originally from rsmv_inspector substrate (D:\sovereign\cache_pedagogy\rsmv_inspector)
 // Defined locally to avoid broken relative import path
 interface ModelData { meshes: any[]; bonecount?: number; miny?: number; maxy?: number; }
@@ -27,7 +27,7 @@ export interface MetricProfile {
 }
 
 /**
- * SpatialMetricEngine — High-fidelity 3D geometric forensics
+ * SpatialMetricEngine â€” High-fidelity 3D geometric forensics
  * Calculates metrics directly from extracted ModelData buffers
  */
 export class SpatialMetricEngine {

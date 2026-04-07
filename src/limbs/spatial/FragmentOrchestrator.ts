@@ -1,26 +1,27 @@
-import { Coord } from '../../core/models.js';
+import type { Coord } from '../../core/models.js';
 import { SpatialSovereigntyLimb } from './SpatialSovereigntyLimb.js';
 import { SpaceRegistry, SpaceMetadata } from '../../core/SpaceRegistry.js';
 import { createLogger } from '../../utils/logger.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
+import { resolveSpatialAnchor, resolveLogicFragment } from '../../utils/SovereignPathResolver.js';
+import { RegistryB } from '../../core/RegistryB.js';
+import { VibeMapper } from '../../routing/VibeMapper.js';
 
 const logger = createLogger('FragmentOrchestrator');
 
 /**
- * FragmentOrchestrator - Phase C1: The "Logistics" of Regional Sovereignty.
+ * FragmentOrchestrator - Phase 34 Mastery: Logistical Sovereign Purity.
  * 
  * Responsibilities:
- * 1. Monitor avatar position relative to mapsquare boundaries.
- * 2. Proactively load neighboring logic fragments from disk.
- * 3. Handle hysteresis to prevent redundant disk I/O on borders.
+ * 1. Monitor avatar position relative to mapsquare (fragment) boundaries.
+ * 2. Proactively load neighboring logic fragments from the D: drive "Atlas".
+ * 3. Bridges the "C3 Gap" by ensuring mechanical rules are injected per-fragment.
  */
 export class FragmentOrchestrator {
     private spatial: SpatialSovereigntyLimb;
     private registry: SpaceRegistry;
     private loadedRegions: Set<string> = new Set();
-    private atlasDir: string;
     
     // Hysteresis: Only check for new regions when moving significant distance
     private lastCheckCoord: Coord | null = null;
@@ -29,12 +30,10 @@ export class FragmentOrchestrator {
     constructor(spatial: SpatialSovereigntyLimb) {
         this.spatial = spatial;
         this.registry = SpaceRegistry.getInstance();
-        this.atlasDir = path.join(getSovereignRoot(), 'atlas', 'spatial');
     }
 
     /**
      * update - Heartbeat for regional loading.
-     * Checks if the 3x3 mapsquare view around the avatar is fully loaded.
      */
     public async update(avatar: Coord): Promise<void> {
         if (this.shouldSkipCheck(avatar)) return;
@@ -44,16 +43,13 @@ export class FragmentOrchestrator {
 
         const loadPromises: Promise<any>[] = [];
 
-        // Scan 5x5 grid (radius 2) for missing logic - Phase E: World-Scale Reach
+        // Scan 5x5 grid (radius 2) for missing logic fragments
         for (let mx = centerX - 2; mx <= centerX + 2; mx++) {
             for (let my = centerY - 2; my <= centerY + 2; my++) {
-                // 1. Resolve deterministic "Expected Space ID"
-                // Use a world coordinate in the center of the mapsquare for registry lookup
-                const mapsquareCenter = { x: (mx << 6) + 32, y: (my << 6) + 32 };
-                const space = this.registry.getSpaceForCoords(mapsquareCenter.x, mapsquareCenter.y);
+                const anchor = `m_${mx}_${my}`;
                 
-                if (space && !this.loadedRegions.has(space.spaceId)) {
-                    loadPromises.push(this.attemptLoad(space));
+                if (!this.loadedRegions.has(anchor)) {
+                    loadPromises.push(this.attemptRegionalLoad(anchor, mx, my));
                 }
             }
         }
@@ -63,34 +59,50 @@ export class FragmentOrchestrator {
             await Promise.all(loadPromises);
         }
 
+        // 4. Update Neurological Vibe based on current anchor
+        const currentAnchor = `m_${centerX}_${centerY}`;
+        const registry = RegistryB.getInstance();
+        const logic = registry.getFragmentLogic(currentAnchor);
+        if (logic) {
+            VibeMapper.getInstance().updateVibe(logic);
+        }
+
         this.lastCheckCoord = { ...avatar };
     }
 
     /**
-     * attemptLoad - Locates and ingests a logic fragment using its Space ID.
+     * attemptRegionalLoad - Locates and ingests a logic fragment from the C3 Bridge.
      */
-    private async attemptLoad(space: SpaceMetadata): Promise<void> {
-        // Priority 1: Space ID-based logic (e.g. "barrows_logic.json")
-        let success = await this.spatial.loadLogic(space.spaceId);
+    private async attemptRegionalLoad(anchor: string, mx: number, my: number): Promise<void> {
+        // Priority 1: Sovereign Path Authority resolution (D:\sovereign\atlas\spatial\)
+        const logicPath = resolveLogicFragment(anchor);
         
-        // Priority 2: Coordinate fallback (e.g. "m_55_51_logic.json")
-        if (!success.ok) {
-            const coordName = `m_${space.mapsquare.x}_${space.mapsquare.y}`;
-            success = await this.spatial.loadLogic(coordName);
+        const originLabel = logicPath?.includes('D:\\sovereign') ? '[D-SOVEREIGN]' : '[C-LOCAL]';
+        if (logicPath) {
+            logger.info(`${originLabel} Fragment resolved: ${logicPath}`);
+        } else {
+            logger.warn({ anchor }, 'No logic fragment found in Sovereign Atlas (D:). Using blank stub.');
+        }
+
+        let success = { ok: false };
+        if (logicPath) {
+            success = await this.spatial.loadLogic(anchor);
+        } else {
+            // Coordinate fallback: Even if no JSON exists, RegistryB will seed a baseline stub
+            // if it stays within the mapped coordinate range.
+            success = await this.spatial.loadLogic(anchor);
         }
 
         if (success.ok) {
-            logger.info({ spaceId: space.spaceId, region: space.name }, 'Proactive Space Logic applied.');
+            logger.info({ anchor }, 'Proactive Space Logic applied.');
         } else {
-            logger.debug({ spaceId: space.spaceId }, 'No logic fragment found for Expected Space ID.');
+            // RegistryB logic will handle the C3 Gap even if loadLogic "fails" to find a file.
+            logger.debug({ anchor }, 'Registering baseline logic for unmapped region.');
         }
 
-        this.loadedRegions.add(space.spaceId);
+        this.loadedRegions.add(anchor);
     }
 
-    private getRegionName(mx: number, my: number): string {
-        return `${mx}_${my}`;
-    }
 
     private shouldSkipCheck(avatar: Coord): boolean {
         if (!this.lastCheckCoord) return false;
@@ -98,9 +110,6 @@ export class FragmentOrchestrator {
         return dist < this.checkThreshold;
     }
 
-    /**
-     * getLoadedCount - Metrics for Phase C validation.
-     */
     public getLoadedCount(): number {
         return this.loadedRegions.size;
     }

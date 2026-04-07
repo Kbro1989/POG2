@@ -1,4 +1,4 @@
-import { type Result, ok, EmotionalState } from '../../core/models.js';
+﻿import { type Result, ok, EmotionalState } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
 import { ChromanumberEngine } from '../../engines/ChromanumberEngine.js';
 

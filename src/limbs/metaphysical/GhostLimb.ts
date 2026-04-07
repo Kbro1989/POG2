@@ -1,4 +1,4 @@
-import { type Result, ok, type SovereignKnock } from '../../core/models.js';
+﻿import { type Result, ok, type SovereignKnock } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
 import { join } from 'path';

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * CodeExtractor - Extracting pure code from markdown-wrapped LLM responses.
  * 
  * Philosophy: Absolute extraction. No markdown boilerplate in the final substrate.

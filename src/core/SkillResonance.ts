@@ -1,4 +1,4 @@
-import { YaoState, EmotionalState } from './models.js';
+﻿import { YaoState, EmotionalState } from './models.js';
 
 export interface SkillResonance {
     id: number;

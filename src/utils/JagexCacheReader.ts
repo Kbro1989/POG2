@@ -1,4 +1,4 @@
-import { gunzipSync, inflateSync } from 'zlib';
+﻿import { gunzipSync, inflateSync } from 'zlib';
 import Database from 'better-sqlite3';
 import { join } from 'path';
 import { existsSync } from 'fs';

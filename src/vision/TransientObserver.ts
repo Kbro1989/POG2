@@ -1,4 +1,4 @@
-import { createRequire } from 'module';
+﻿import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
@@ -11,7 +11,7 @@ import type { Result, PedagogyProfile } from '../core/models.js';
 const logger = createLogger('TransientObserver');
 
 /**
- * TransientObserver — Coordinates the "Observe -> Distill -> Purge" pedagogy loop.
+ * TransientObserver â€” Coordinates the "Observe -> Distill -> Purge" pedagogy loop.
  */
 export class TransientObserver {
 

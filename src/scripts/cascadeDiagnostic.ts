@@ -1,4 +1,4 @@
-import { createLogger } from '../utils/logger.js';
+﻿import { createLogger } from '../utils/logger.js';
 import { ModelRolodex } from '../api/ai/ModelRolodex.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
@@ -40,7 +40,7 @@ async function auditStage0_1(prompt: string, vectorDb: VectorDB) {
 }
 
 async function runCascadeDiagnostic() {
-    logger.info('🚀 CNS Metabolic Probe: Capability Cascade Verification');
+    logger.info('ðŸš€ CNS Metabolic Probe: Capability Cascade Verification');
 
     let config: any;
     try {
@@ -73,7 +73,7 @@ async function runCascadeDiagnostic() {
     ];
 
     for (const task of testTasks) {
-        logger.info(`🎯 Testing [${task.name}]`);
+        logger.info(`ðŸŽ¯ Testing [${task.name}]`);
         
         // Stage 0/1 Heuristics (Real substrate audit)
         await auditStage0_1(task.prompt, vectorDb);
@@ -94,15 +94,15 @@ async function runCascadeDiagnostic() {
 
         // Check nomenclature
         if (decision.reasoning.includes('Stage')) {
-            logger.info({ task: task.name }, '✅ Clinical Audit: Stage-based nomenclature present');
+            logger.info({ task: task.name }, 'âœ… Clinical Audit: Stage-based nomenclature present');
         } else {
-            logger.warn({ task: task.name }, '❌ Clinical Audit: Stage-based nomenclature missing!');
+            logger.warn({ task: task.name }, 'âŒ Clinical Audit: Stage-based nomenclature missing!');
         }
         
         console.log('---');
     }
 
-    logger.info('🏁 Cascade Diagnostic Complete.');
+    logger.info('ðŸ Cascade Diagnostic Complete.');
 }
 
 runCascadeDiagnostic().catch(console.error);

@@ -206,24 +206,18 @@ function bootstrapSovereignSubstrate(root: string): void {
 
 /**
  * Returns the absolute path to the RSMV Inspector substrate.
- * This is the source of truth for all cache decoding, model parsing,
- * and 3D rendering logic. Moved from local ./rsmv to D:\sovereign.
+ * Authoritative: D:\sovereign\cache_pedagogy\rsmv_inspector
  */
 export function getRSMVSubstratePath(): string {
     const envPath = process.env['POG_RSMV_SUBSTRATE_PATH'];
     if (envPath && existsSync(envPath)) return envPath;
 
-    // Sovereign substrate location (canonical)
-    const sovereignPath = join(getSovereignRoot(), 'cache_pedagogy', 'rsmv_inspector');
+    // Sovereign substrate location (authoritative D: drive inspector)
+    const sovereignPath = join('D:\\sovereign', 'cache_pedagogy', 'rsmv_inspector');
     if (existsSync(sovereignPath)) return sovereignPath;
 
-    // Legacy fallback: project-local rsmv/ directory
-    if (_projectRoot) {
-        const localPath = join(_projectRoot, 'rsmv');
-        if (existsSync(localPath)) return localPath;
-    }
-
-    return sovereignPath; // Return canonical even if missing
+    // Fallback: system-aware default if D is unavailable
+    return join(getSovereignRoot(), 'cache_pedagogy', 'rsmv_inspector');
 }
 
 /**
@@ -236,11 +230,13 @@ export function getRSMVCachePath(): string {
     if (process.platform === 'win32') {
         const rs3Path = 'C:\\ProgramData\\Jagex\\RuneScape';
         if (existsSync(rs3Path)) return rs3Path;
-        return 'C:\\ProgramData\\Jagex';
+        const jagexRoot = 'C:\\ProgramData\\Jagex';
+        if (existsSync(jagexRoot)) return jagexRoot;
     }
     
     return join(homedir(), 'Jagex', 'RuneScape');
 }
+
 
 /**
  * Returns the "God Head" root - the current active workspace.
@@ -508,9 +504,58 @@ export function getCliTsConfigPath(): string {
     const cwdPath = join(process.cwd(), 'tsconfig.json');
     if (existsSync(cwdPath)) return cwdPath;
 
-    // Priority 3: Give up — return empty so callers can handle gracefully
+    // Priority 3: Give up â€” return empty so callers can handle gracefully
     return '';
 }
+
+/**
+ * Phase 34: Sovereign Path Authority (C3 Bridge)
+ * Resolves the "Spatial Anchor" for a specific coordinate fragment.
+ * Format: m_X_Y (e.g., m_54_50)
+ */
+export function resolveSpatialAnchor(x: number, z: number): string {
+    const mx = x >> 6;
+    const mz = z >> 6;
+    return `m_${mx}_${mz}`;
+}
+
+/**
+ * Phase 44: Sovereign Spatial Engine Substrate (Authoritative Mapsquare Logic)
+ */
+export function getAtlasSpatialPath(): string {
+    // Phase 44: Force Sovereign D-drive authority for spatial substrates
+    if (hasHighPerformanceSubstrate()) {
+        return join(getSovereignRoot(PathTier.Sovereign), 'atlas', 'spatial');
+    }
+    return resolveSovereignPath('atlas/spatial');
+}
+
+/**
+ * Phase 34: Sovereign Path Authority (C3 Bridge)
+ * Resolves the absolute path to a Regional Logic Fragment (.json or .ts).
+ * Priority: 1. D:\sovereign\atlas\spatial\m_X_Y_logic.json (Authoritative Extractions)
+ *           2. D:\sovereign\atlas\logic\m_X_Y_logic.json   (System Logic)
+ */
+export function resolveLogicFragment(anchor: string): string | null {
+    // 1. Check D drive spatial first (Authoritative C3 extraction)
+    const spatialRoot = getAtlasSpatialPath();
+    const spatialJsonPath = join(spatialRoot, `${anchor}_logic.json`);
+    
+    if (existsSync(spatialJsonPath)) {
+        return spatialJsonPath;
+    }
+
+    // 2. Fallback to standard logic directory (System Logic)
+    const logicRoot = getAtlasLogicPath();
+    const jsonPath = join(logicRoot, `${anchor}_logic.json`);
+    const tsPath = join(logicRoot, `${anchor}_logic.ts`);
+
+    if (existsSync(jsonPath)) return jsonPath;
+    if (existsSync(tsPath)) return tsPath;
+
+    return null;
+}
+
 
 // Export constants for external use (LEGACY - use resolver functions instead)
 /** @deprecated use resolver functions */

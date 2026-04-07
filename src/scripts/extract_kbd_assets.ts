@@ -1,4 +1,4 @@
-// src/scripts/extract_kbd_assets.ts
+﻿// src/scripts/extract_kbd_assets.ts
 // Temporal Extractor - KBD Assets from JS5-52 (Models) & JS5-54 (Animations)
 
 import Database, { Database as DatabaseType } from 'better-sqlite3';
@@ -72,7 +72,7 @@ class KBDExtractor {
   }
 
   extractNPCDefinition(): KBDAssetExtraction | null {
-    console.log('🔍 Bypassing JS5-18 Multi-segment parsing. Using Sovereign KBD Asset bindings directly.');
+    console.log('ðŸ” Bypassing JS5-18 Multi-segment parsing. Using Sovereign KBD Asset bindings directly.');
     return {
       npcId: 50,
       modelIds: [17360, 17361, 17362, 17363], // Common RS3 KBD Models
@@ -158,34 +158,34 @@ class KBDExtractor {
   }
 
   extractModel(modelId: number): Buffer | null {
-    console.log(`  📐 Extracting Model ${modelId} from js5-52...`);
+    console.log(`  ðŸ“ Extracting Model ${modelId} from js5-52...`);
     
     const key = decodeKey(0, modelId);
     
     const row = this.modelDb.prepare('SELECT DATA FROM cache WHERE KEY = ?').get(key) as any;
     if (!row) {
-      console.warn(`    ⚠️ Model ${modelId} not found`);
+      console.warn(`    âš ï¸ Model ${modelId} not found`);
       return null;
     }
 
     const decompressed = decompressJagex(row.DATA);
-    console.log(`    ✅ ${decompressed.length} bytes`);
+    console.log(`    âœ… ${decompressed.length} bytes`);
     return decompressed;
   }
 
   extractAnimation(animId: number): Buffer | null {
-    console.log(`  🎬 Extracting Animation ${animId} from js5-54...`);
+    console.log(`  ðŸŽ¬ Extracting Animation ${animId} from js5-54...`);
     
     const key = decodeKey(0, animId);
     
     const row = this.animDb.prepare('SELECT DATA FROM cache WHERE KEY = ?').get(key) as any;
     if (!row) {
-      console.warn(`    ⚠️ Animation ${animId} not found`);
+      console.warn(`    âš ï¸ Animation ${animId} not found`);
       return null;
     }
 
     const decompressed = decompressJagex(row.DATA);
-    console.log(`    ✅ ${decompressed.length} bytes`);
+    console.log(`    âœ… ${decompressed.length} bytes`);
     return decompressed;
   }
 
@@ -194,7 +194,7 @@ class KBDExtractor {
     
     const kbd = this.extractNPCDefinition();
     if (!kbd) {
-      console.error('❌ KBD extraction failed');
+      console.error('âŒ KBD extraction failed');
       process.exit(1);
     }
 
@@ -204,14 +204,14 @@ class KBDExtractor {
         const path = join(OUTPUT_DIR, `model_${modelId}.raw`);
         writeFileSync(path, modelData);
         kbd.extractedModels.push(modelData);
-        console.log(`    💾 Saved: ${path}`);
+        console.log(`    ðŸ’¾ Saved: ${path}`);
       }
     }
 
     const animIds = Object.values(kbd.animationIds).filter((id): id is number => id !== undefined);
     
     if (!kbd.animationIds.attack && animIds.length > 0) {
-      console.log('⚠️ No explicit attack animation, defaulting to highest complexity sequence');
+      console.log('âš ï¸ No explicit attack animation, defaulting to highest complexity sequence');
       const sized = await Promise.all(animIds.map(async id => {
         const data = this.extractAnimation(id);
         return { id, size: data?.length || 0 };
@@ -227,7 +227,7 @@ class KBDExtractor {
         const path = join(OUTPUT_DIR, `anim_${name}_${animId}.raw`);
         writeFileSync(path, animData);
         kbd.extractedAnimations.push(animData);
-        console.log(`    💾 Saved: ${path}`);
+        console.log(`    ðŸ’¾ Saved: ${path}`);
       }
     }
 
@@ -245,7 +245,7 @@ class KBDExtractor {
     };
     
     writeFileSync(join(OUTPUT_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2));
-    console.log(`\\n✅ Extraction complete: ${OUTPUT_DIR}`);
+    console.log(`\\nâœ… Extraction complete: ${OUTPUT_DIR}`);
     console.log(`   Models: ${kbd.extractedModels.length}`);
     console.log(`   Animations: ${kbd.extractedAnimations.length}`);
   }
@@ -262,7 +262,7 @@ extractor.extractAll().then(() => {
   extractor.close();
   process.exit(0);
 }).catch(err => {
-  console.error('❌ Extraction error:', err);
+  console.error('âŒ Extraction error:', err);
   extractor.close();
   process.exit(1);
 });

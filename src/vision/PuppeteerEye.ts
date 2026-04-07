@@ -1,4 +1,4 @@
-import { SovereignEye, type CaptureSource, type CaptureResult } from '../utils/SovereignEye.js';
+﻿import { SovereignEye, type CaptureSource, type CaptureResult } from '../utils/SovereignEye.js';
 import { createLogger } from '../utils/logger.js';
 import type { Result } from '../core/models.js';
 import puppeteer, { type Browser, type Page } from 'puppeteer';
@@ -11,7 +11,7 @@ const execAsync = promisify(exec);
 const logger = createLogger('PuppeteerEye');
 
 /**
- * PuppeteerEye — Upgraded sensory module for real-time 3D/UI observation.
+ * PuppeteerEye â€” Upgraded sensory module for real-time 3D/UI observation.
  * Extends SovereignEye with streaming and DOM/Canvas inspection capabilities.
  */
 export class PuppeteerEye extends SovereignEye {

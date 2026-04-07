@@ -1,4 +1,4 @@
-import { createRequire } from 'module';
+﻿import { createRequire } from 'module';
 import * as path from 'path';
 const require = createRequire(import.meta.url);
 let GameCacheLoader: any = null;

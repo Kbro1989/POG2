@@ -22,7 +22,7 @@ import { join } from 'path';
 import { mkdirSync, existsSync, writeFileSync } from 'fs';
 
 async function main() {
-    console.log("🚀 PHASE 25: Sovereign Narrative Orchestration (Romeo & Juliet [1513])");
+    console.log("ðŸš€ PHASE 25: Sovereign Narrative Orchestration (Romeo & Juliet [1513])");
     const CONFIG_PATH = join(process.cwd(), 'sovereign-config.json');
     const config = await loadConfig(CONFIG_PATH);
     const client = new ModelClient(config);
@@ -44,7 +44,7 @@ async function main() {
 
     const kinematics = new KinematicsLimb(router as any, vectorDB as any, client as any);
     const pedagogy = new PedagogyLimb(router as any, vectorDB as any, client as any);
-    const forensics = new CacheForensicsLimb();
+    const forensics = CacheForensicsLimb.getInstance();
 
     const storyboard = new StoryboardLimbV2(client as any, gutenberg, hexagram, vectorDB as any, bioIntel, pedagogy as any, kinematics as any, forensics, config.orchestratorModel);
     const questLimb = new QuestSynthesisLimb(client as any, forensics, pedagogy as any);
@@ -53,12 +53,12 @@ async function main() {
     if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
 
     // 1. Gutenberg API Ingestion
-    console.log("📚 1. Ingesting Book 1513 from Project Gutenberg...");
+    console.log("ðŸ“š 1. Ingesting Book 1513 from Project Gutenberg...");
     const ingestRes = await gutenberg.ingestBook(1513, "Romeo and Juliet", "William Shakespeare", "drama");
     if (!ingestRes.ok) console.warn("     Ingest Notice:", ingestRes.error.message); // May already exist in cache
 
     // 2. Blueprint & Scene Generation
-    console.log("🎬 2. Generating Storyboard Scenes from literary substrate...");
+    console.log("ðŸŽ¬ 2. Generating Storyboard Scenes from literary substrate...");
     const blueprintRes = await storyboard.analyzeGlobalContext(1513);
     const blueprint = blueprintRes.ok ? blueprintRes.value.blueprint : undefined;
 
@@ -67,20 +67,20 @@ async function main() {
     let scenes = scenesRes.value;
 
     // 3. Autonomous Casting (Mapping RS3 native Romeo and Juliet!)
-    console.log("🎭 3. Autonomous Casting (Querying Pedagogy for native assets)...");
+    console.log("ðŸŽ­ 3. Autonomous Casting (Querying Pedagogy for native assets)...");
     const castRes = await storyboard.performForensicCasting(scenes);
     if (castRes.ok) scenes = castRes.value;
 
     // 4. Quest Synthesis
-    console.log("📜 4. Synthesizing Playable Quest Logic...");
+    console.log("ðŸ“œ 4. Synthesizing Playable Quest Logic...");
     const questRes = await questLimb.synthesizeFromScenes("Romeo and Juliet", scenes, "Intermediate");
     if (questRes.ok) {
-        console.log(`     ✅ Generated Quest: ${questRes.value.name} (${questRes.value.stages.length} stages)`);
+        console.log(`     âœ… Generated Quest: ${questRes.value.name} (${questRes.value.stages.length} stages)`);
         writeFileSync(join(outDir, 'Romeo_and_Juliet_quest.json'), JSON.stringify(questRes.value, null, 2));
     }
 
     // 5. Visual Render Witness (MP4 for vision pipeline scoring)
-    console.log("🎥 5. Generating MP4 Witness Render via Heavy-Lifter BlenderRenderer...");
+    console.log("ðŸŽ¥ 5. Generating MP4 Witness Render via Heavy-Lifter BlenderRenderer...");
     const uiRenderer = new Renderer();
     const shell = new ShellEngine(uiRenderer);
     const pulse = new PulseMonitor(process.cwd(), hexagram);
@@ -90,9 +90,9 @@ async function main() {
         console.log(`     Rendering Scene ${scene.index}: ${scene.speaker || 'Narrator'}...`);
         const renderRes = await blender.render(scene, outDir);
         if (renderRes.ok) {
-            console.log(`     ✅ Witness generated: ${renderRes.value.path}`);
+            console.log(`     âœ… Witness generated: ${renderRes.value.path}`);
         } else {
-            console.error(`     ❌ Witness failed: ${renderRes.error.message}`);
+            console.error(`     âŒ Witness failed: ${renderRes.error.message}`);
         }
     }
 
@@ -100,9 +100,9 @@ async function main() {
     const pipelineDir = join('D:\\', 'sovereign', 'pipelines', 'classics_of_literature', '1513_romeo_and_juliet');
     if (!existsSync(pipelineDir)) mkdirSync(pipelineDir, { recursive: true });
     writeFileSync(join(pipelineDir, `storyboard_Romeo_and_Juliet_${Date.now()}.json`), JSON.stringify(scenes, null, 2));
-    console.log(`     📁 Storyboard persisted to: ${pipelineDir}`);
+    console.log(`     ðŸ“ Storyboard persisted to: ${pipelineDir}`);
 
-    console.log("🏆 Phase 25 Pipeline Complete!");
+    console.log("ðŸ† Phase 25 Pipeline Complete!");
 }
 
 main().catch(console.error);

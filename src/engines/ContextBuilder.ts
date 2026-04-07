@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, existsSync } from 'fs';
+﻿import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname, relative, resolve } from 'path';
 import { type FileContext, type CodeContext, type Lesson, type ModelExecutor, isOk, type Result } from '../core/models.js';
 import { VectorDB } from '../utils/VectorDB.js';
@@ -51,7 +51,7 @@ export class ContextBuilder {
             .filter(p => p !== absPath && !SovereignIgnoreManager.isIgnored(this.projectRoot, p))
             .slice(0, 10);
 
-        // 3. Semantically related â€” Currently restricted to pinned context.
+        // 3. Semantically related Ã¢â‚¬â€ Currently restricted to pinned context.
         const related = Array.from(this.pinnedFiles).filter(p => p !== absPath);
 
         return {

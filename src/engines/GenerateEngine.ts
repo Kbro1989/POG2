@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
+﻿import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
 import { resolve, extname, join } from 'path';
 import { ModelClient } from '../clients/ModelClient.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
@@ -34,8 +34,8 @@ export interface GenerateTestsParams {
 }
 
 /**
- * GenerateEngine â€” Generative code creation with adversarial validation.
- * Implements the "Generate â†’ Validate â†’ Improve" sovereign loop.
+ * GenerateEngine Ã¢â‚¬â€ Generative code creation with adversarial validation.
+ * Implements the "Generate Ã¢â€ â€™ Validate Ã¢â€ â€™ Improve" sovereign loop.
  */
 export class GenerateEngine {
     private readonly client: ModelClient;
@@ -147,7 +147,7 @@ export class GenerateEngine {
 Rules:
 - Document every public API with @param, @returns, @throws where applicable
 - Include a clear one-line summary followed by a detailed description for complex items
-- Do NOT alter any implementation code â€” only add/improve doc comments
+- Do NOT alter any implementation code Ã¢â‚¬â€ only add/improve doc comments
 - Output the COMPLETE file with documentation added
 
 FILE: ${params.filePath}
@@ -200,7 +200,7 @@ Output the fully-documented file:`;
         const prompt = `Generate comprehensive integration tests for this file.
 
 SOVEREIGN LAWS:
-1. NO MOCKS â€” all tests must use real implementations
+1. NO MOCKS Ã¢â‚¬â€ all tests must use real implementations
 2. Tests must cover: happy paths, edge cases, and error conditions
 3. Use the framework implied by the project (vitest if tsconfig exists, jest otherwise)
 4. Import from the actual module path
@@ -266,7 +266,7 @@ Generate a complete, runnable test file:`;
             // Critic pass (Puppeteer)
             const criticResult = await this.client.call({
                 model: masterModel,
-                prompt: `Yo Executive, I'm auditing your latest logic substrate. Give it to me straightâ€”how's the integrity?
+                prompt: `Yo Executive, I'm auditing your latest logic substrate. Give it to me straightÃ¢â‚¬â€how's the integrity?
 
 TASK: ${task}
 
@@ -276,7 +276,7 @@ ${current}
 \`\`\`
 
 Pick it apart. Find every type violation, logic stain, or stubbed-out cowardice. 
-Don't be clinicalâ€”be sharp.
+Don't be clinicalÃ¢â‚¬â€be sharp.
 
 Respond with:
 SCORE: [0-100]
@@ -297,13 +297,13 @@ If it's perfect (SCORE >= 90), just say SCORE: [n] and "It's clean, move out."`,
 
             const score = this.extractAdversarialScore(criticResult.value.response);
 
-            // Binary absolute: 90+ is passing â€” below requires regeneration
+            // Binary absolute: 90+ is passing Ã¢â‚¬â€ below requires regeneration
             if (score >= 90) {
                 logger.info({ score, iteration }, 'Adversarial validation PASSED');
                 break;
             }
 
-            logger.warn({ score, iteration }, 'Adversarial validation REJECTED â€” regenerating');
+            logger.warn({ score, iteration }, 'Adversarial validation REJECTED Ã¢â‚¬â€ regenerating');
 
             const fixResult = await this.client.call({
                 model,

@@ -1,4 +1,4 @@
-import { appendFileSync, existsSync, mkdirSync, statSync, renameSync } from 'fs';
+﻿import { appendFileSync, existsSync, mkdirSync, statSync, renameSync } from 'fs';
 import { join } from 'path';
 
 export type DiagnosticLevel = 'INFO' | 'WARN' | 'ERROR' | 'FATAL';

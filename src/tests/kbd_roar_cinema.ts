@@ -1,4 +1,4 @@
-import { OrchestrateEngine } from '../engines/OrchestrateEngine.js';
+﻿import { OrchestrateEngine } from '../engines/OrchestrateEngine.js';
 import { StoryboardScene, StoryboardLimbV2 } from '../limbs/creative/StoryboardLimbV2.js';
 import { SovereignConfig } from '../config/SovereignConfig.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
@@ -15,7 +15,7 @@ const logger = createLogger('KBD-Roar-Test');
 
 async function testKBDRoar() {
     process.stdout.write("--- METABOLIC START ---\n");
-    logger.info('🐉 INITIALIZING KBD ROAR CINEMATIC VALIDATION...');
+    logger.info('ðŸ‰ INITIALIZING KBD ROAR CINEMATIC VALIDATION...');
 
     const configPath = join(process.cwd(), 'sovereign-config.json');
     const baseConfig = loadConfig(configPath);
@@ -60,7 +60,7 @@ async function testKBDRoar() {
         personality: 'Sovereign Director'
     };
 
-    logger.info('🎬 TRIGGERING FORENSIC CASTING FOR KBD SCENE...');
+    logger.info('ðŸŽ¬ TRIGGERING FORENSIC CASTING FOR KBD SCENE...');
     
     // We override the storyboard to force a KBD scene for this test
     const customScene: StoryboardScene = {
@@ -84,7 +84,7 @@ async function testKBDRoar() {
     // Step 1: Forensic Casting & Acting (StoryboardLimb)
     const storyboard = engine.getStoryboard() as StoryboardLimbV2;
     
-    logger.info('🔍 Performing Forensic Casting on scene text...');
+    logger.info('ðŸ” Performing Forensic Casting on scene text...');
     const castRes = await storyboard.performForensicCasting([customScene]);
     
     if (!castRes.ok) {
@@ -96,17 +96,17 @@ async function testKBDRoar() {
     logger.info({ 
         modelId: castScenes[0].modelId, 
         animationId: castScenes[0].animationId 
-    }, '✅ Forensic Casting SUCCESSFUL.');
+    }, 'âœ… Forensic Casting SUCCESSFUL.');
 
     // Step 2: Blender Rendering (Stage 2.5)
-    logger.info('🎥 Shifting to Stage 2.5: Blender Renderer...');
+    logger.info('ðŸŽ¥ Shifting to Stage 2.5: Blender Renderer...');
     const blender = (engine as any).blender;
     const pipelinePath = 'D:\\sovereign\\test\\kbd_roar';
     
     const renderRes = await blender.render(customScene, pipelinePath);
 
     if (renderRes.ok) {
-        logger.info({ clip: renderRes.value }, '🏆 KBD ROAR CINEMATIC FINALIZED.');
+        logger.info({ clip: renderRes.value }, 'ðŸ† KBD ROAR CINEMATIC FINALIZED.');
         console.log('\n--- VERIFICATION PROOF ---');
         console.log(`CLIP PATH: ${renderRes.value.path}`);
         console.log(`METABOLIC STATUS: ${renderRes.value.type}`);

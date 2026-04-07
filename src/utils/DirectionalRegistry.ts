@@ -1,4 +1,4 @@
-import { Direction } from '../core/models.js';
+﻿import { Direction } from '../core/models.js';
 
 /**
  * DirectionalRegistry - Canonical mapping of object types and rotations 
@@ -17,10 +17,10 @@ export const DIRECTION = {
 export const OBJECT_BLOCKING_MAP: Record<string, Direction[]> = {
     // TYPE 0: Straight Walls
     // In NXT, walls often block two directions if they are corner-aligned
-    '0_0': ['north', 'east'],      // Wall (0°): blocks N/E (verified: Barrows sarcophagus east wall)
-    '0_1': ['east', 'south'],      // Wall (90°): blocks E/S
-    '0_2': ['south', 'west'],      // Wall (180°): blocks S/W
-    '0_3': ['west', 'north'],      // Wall (270°): blocks W/N
+    '0_0': ['north', 'east'],      // Wall (0Â°): blocks N/E (verified: Barrows sarcophagus east wall)
+    '0_1': ['east', 'south'],      // Wall (90Â°): blocks E/S
+    '0_2': ['south', 'west'],      // Wall (180Â°): blocks S/W
+    '0_3': ['west', 'north'],      // Wall (270Â°): blocks W/N
     
     // TYPE 2: Corner Walls / Windows
     '2_0': ['north', 'east'],

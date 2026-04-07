@@ -56,7 +56,7 @@ interface EmbeddingRow {
 }
 
 /**
- * EmbedEngine — Real local VectorDB operations using SQLite + cosine similarity.
+ * EmbedEngine â€” Real local VectorDB operations using SQLite + cosine similarity.
  * NO MOCKS. All embeddings computed via real Ollama/Gemini APIs.
  * Integrated with TernaryRouter for metabolic scaling.
  */
@@ -142,8 +142,23 @@ export class EmbedEngine {
 
         for (const file of files) {
             try {
-                const content = readFileSync(file, 'utf8');
-                if (content.length > MAX_FILE_SIZE) {
+                let content = readFileSync(file, 'utf8');
+                let rawContent = content;
+
+                // Semantic Enrichment for Unified Mapsquares
+                if (file.endsWith('.json') && file.includes('unified_extract')) {
+                    try {
+                        const data = JSON.parse(content);
+                        const npcList = (data.pedagogy?.npcs || []).map((n: any) => n.npcName).filter(Boolean).join(', ');
+                        const zoneList = (data.pedagogy?.zones || []).map((z: any) => z.name).filter(Boolean).join(', ');
+                        const semanticHeader = `World Mapsquare [${data.worldX}, ${data.worldZ}] | Zones: ${zoneList} | NPCs: ${npcList}\n\n`;
+                        content = semanticHeader + content;
+                    } catch (e) {
+                        logger.warn({ file, error: (e as Error).message }, 'Failed to parse unified JSON for semantic indexing');
+                    }
+                }
+
+                if (rawContent.length > MAX_FILE_SIZE) {
                     skipped++;
                     continue;
                 }
@@ -169,11 +184,12 @@ export class EmbedEngine {
                 }
 
                 const embeddingBuffer = Buffer.from(embedResult.value.buffer);
-                const snippet = content.substring(0, 300).replace(/\n/g, ' ');
+                const snippet = content.substring(0, 350).replace(/\n/g, ' ');
                 const metadata = JSON.stringify({
-                    size: content.length,
+                    size: rawContent.length,
                     ext: extname(file),
-                    indexed_by: 'POG2'
+                    indexed_by: 'POG2',
+                    is_unified_world: file.includes('unified_extract')
                 });
 
                 this.db.prepare(`
@@ -378,7 +394,7 @@ export class EmbedEngine {
         return {
             ok: true,
             value: {
-                output: `Similarity: ${score.toFixed(4)} â€” ${tier}\n${params.fileA} â†” ${params.fileB}`,
+                output: `Similarity: ${score.toFixed(4)} Ã¢â‚¬â€ ${tier}\n${params.fileA} Ã¢â€ â€ ${params.fileB}`,
                 data: { score, tier, fileA: params.fileA, fileB: params.fileB }
             }
         };

@@ -30,13 +30,20 @@ export class GlobeStateLimb {
     private subscribers: Map<string, Array<(data: any) => void>> = new Map();
     private connectPromise: Promise<Result<boolean>> | null = null;
 
+    private enabled: boolean = false;
+
     constructor(config?: SovereignConfig) {
-        if (config?.globeEndpoint) {
-            this.endpoint = config.globeEndpoint;
+        if (config) {
+            this.enabled = config.globeEnabled ?? false;
+            if (config.globeEndpoint) {
+                this.endpoint = config.globeEndpoint;
+            }
         }
 
         // Tap into the cognitive stream
-        EventBus.getInstance().subscribeAll(this.streamEventData.bind(this));
+        if (this.enabled) {
+            EventBus.getInstance().subscribeAll(this.streamEventData.bind(this));
+        }
     }
 
     public setEndpoint(url: string): void {
@@ -79,6 +86,10 @@ export class GlobeStateLimb {
      * Stores the connection promise so healthCheck() can await it.
      */
     public async connect(): Promise<Result<boolean>> {
+        if (!this.enabled) {
+            return ok(false);
+        }
+
         this.connectPromise = new Promise((resolve) => {
             try {
                 this.ws = new WebSocket(this.endpoint);
@@ -172,7 +183,7 @@ export class GlobeStateLimb {
                     new Promise(resolve => setTimeout(resolve, 3000))
                 ]);
             } catch {
-                // Connection failed — fall through to status check
+                // Connection failed â€” fall through to status check
             }
         }
 

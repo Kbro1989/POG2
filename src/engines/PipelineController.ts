@@ -1,4 +1,4 @@
-import { type Result, ok } from '../core/models.js';
+﻿import { type Result, ok } from '../core/models.js';
 import { StoryboardLimbV2, type StoryboardScene } from '../limbs/creative/StoryboardLimbV2.js';
 import { ChromanumberEngine } from './ChromanumberEngine.js';
 import { VoiceLimb } from '../limbs/creative/VoiceLimb.js';
@@ -19,9 +19,9 @@ import { TaskScheduler } from '../routing/TaskScheduler.js';
 
 const logger = createLogger('PipelineController');
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 // Pipeline Types
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 export interface PipelineRequest {
     bookId: number;
@@ -66,9 +66,9 @@ export interface PipelineResult {
     output: string;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// PipelineController â€” The Director AI
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+// PipelineController Ã¢â‚¬â€ The Director AI
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 export class PipelineController {
     private readonly basePath = getPipelineRootPath();
@@ -121,14 +121,14 @@ export class PipelineController {
 
                 const checkpointPath = join(stage1Path, `checkpoint.json`);
 
-                logger.info({ bookId, category, folderName, sceneCount }, 'ðŸŽ¬ Pipeline initiated with Tiered Storage.');
+                logger.info({ bookId, category, folderName, sceneCount }, 'Ã°Å¸Å½Â¬ Pipeline initiated with Tiered Storage.');
 
                 // Initialize directories
                 [stage1Path, stage2Path, stage3Path, stage4Path, stage5Path, stage6Path].forEach(p => {
                     if (!existsSync(p)) mkdirSync(p, { recursive: true });
                 });
 
-                // ─── BOOKMARKING: Load Checkpoint ───
+                // â”€â”€â”€ BOOKMARKING: Load Checkpoint â”€â”€â”€
                 let manifest: PipelineManifest = {
                     bookId,
                     bookTitle: `Book ${bookId}`,
@@ -154,7 +154,7 @@ export class PipelineController {
                     try {
                         const storedManifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PipelineManifest;
                         if (storedManifest.status === 'complete' && existsSync(join(pipelinePath, '6-final', 'full_length_movie.mp4'))) {
-                            logger.info({ bookId }, '🏁 Pipeline already completed. Idempotent skip.');
+                            logger.info({ bookId }, 'ðŸ Pipeline already completed. Idempotent skip.');
                             return ok({
                                 output: `Pipeline already completed for Book ${bookId}.`,
                                 manifest: storedManifest
@@ -168,7 +168,7 @@ export class PipelineController {
                 if (existsSync(checkpointPath)) {
                     try {
                         const cp = JSON.parse(readFileSync(checkpointPath, 'utf8')) as PipelineCheckpoint;
-                        logger.info({ lastStage: cp.lastCompletedStage }, '🔄 Resuming from checkpoint.');
+                        logger.info({ lastStage: cp.lastCompletedStage }, 'ðŸ”„ Resuming from checkpoint.');
                         manifest = cp.manifest;
                         startStage = cp.lastCompletedStage;
                         startSceneIndex = cp.lastSceneIndex;
@@ -179,7 +179,7 @@ export class PipelineController {
                 } else if (existsSync(manifestPath)) {
                     try {
                         const storedManifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PipelineManifest;
-                        logger.info('🔄 Reconstructing checkpoint from manifest.json.');
+                        logger.info('ðŸ”„ Reconstructing checkpoint from manifest.json.');
                         manifest = storedManifest;
                         loadedFromCheckpoint = true;
 
@@ -213,7 +213,7 @@ export class PipelineController {
                     if (styleRes.ok) bookFromStyle = styleRes.value.book;
                 }
 
-                // ─── STAGE 0.4: Soul Ingestion (Deep Reading) ───
+                // â”€â”€â”€ STAGE 0.4: Soul Ingestion (Deep Reading) â”€â”€â”€
                 if (!loadedFromCheckpoint) {
                     logger.info({ bookId }, 'Stage 0.4: Ingesting Author Soul (Reading the book)...');
                     const readRes = await this.gutenberg.readBook(bookId, request.personality, this.hexagram.getEmotionalState());
@@ -224,7 +224,7 @@ export class PipelineController {
                     }
                 }
 
-                // â”€â”€â”€ STAGE 0.5: Character Audit (Deep Sovereignty) â”€â”€â”€
+                // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 0.5: Character Audit (Deep Sovereignty) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
                 const blueprint = (manifest as any).narrativeBlueprint;
                 if (!manifest.characterMap || !blueprint) {
                     logger.info('Stage 0.5: Performing character audit and vocal trait assignment...');
@@ -291,7 +291,7 @@ export class PipelineController {
                     scenes = artifacts.map((s: any) => s.scene);
                 }
 
-                // â”€â”€â”€ STAGE 2: Image Generation â”€â”€â”€
+                // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 2: Image Generation Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
                 // Stage 2/4: Generating visual substrate sequence...
                 // Phase 105: Ingest Anatomy Registry if VectorDB is available
                 if (this.vectorDB) {
@@ -344,7 +344,7 @@ export class PipelineController {
                         voiceStatus: skipVoice ? 'skipped' : 'pending'
                     };
 
-                    // ðŸ” SELF-REFLEXION: Visual Proprioception with Anatomy/3D/Kinetic Audit
+                    // Ã°Å¸â€Â SELF-REFLEXION: Visual Proprioception with Anatomy/3D/Kinetic Audit
                     if (sceneImagePaths.length > 0) {
                         let anatomyFacts: any = null;
                         let kineticFacts: any = null;
@@ -415,7 +415,7 @@ export class PipelineController {
 
                     artifacts[i] = artifact;
 
-                    // â”€â”€â”€ STAGE 2.5: 3D Render (Blender Cinema) â”€â”€â”€
+                    // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 2.5: 3D Render (Blender Cinema) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
                     if (dimension === '3D' && artifact.imageStatus !== 'failed') {
                         logger.info({ index: scene.index }, 'Stage 2.5: Triggering Sovereign 3D Render...');
                         const renderRes = await this.blender.render(scene, pipelinePath);
@@ -430,7 +430,7 @@ export class PipelineController {
                     this.saveCheckpoint(bookId, request, { ...manifest!, scenes: artifacts }, 'images', i + 1, stage1Path);
                 }
 
-                // â”€â”€â”€ STAGE 3: Voice Generation â”€â”€â”€
+                // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 3: Voice Generation Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
                 logger.info({ skipVoice, artifactsCount: artifacts.length }, 'ENTERING STAGE 3: Voice Generation');
                 if (!skipVoice) {
                     for (let i = 0; i < artifacts.length; i++) {
@@ -471,7 +471,7 @@ export class PipelineController {
                             artifact.voicePath = audioPath;
                             artifact.voiceStatus = 'success';
 
-                            // ðŸ” SELF-REFLEXION: Auditory Proprioception
+                            // Ã°Å¸â€Â SELF-REFLEXION: Auditory Proprioception
                             const auditRes = await this.voice.verifyConsistency(audioPath, artifact.scene.prosody || { chaos: 0, whimsy: 0, darkTone: 0, coherence: 1 });
                             if (auditRes.ok && auditRes.value.matchScore < 0.5) {
                                 logger.warn({ index: artifact.index }, 'Self-Reflexion: Audio-Tone mismatch. REDOING...');
@@ -512,9 +512,9 @@ export class PipelineController {
                     timestamp: Date.now()
                 };
 
-                logger.info({ rating: (manifest as any).decisionRating }, 'ðŸ“Š Pipeline Decision Rating Finalized.');
+                logger.info({ rating: (manifest as any).decisionRating }, 'Ã°Å¸â€œÅ  Pipeline Decision Rating Finalized.');
 
-                // â”€â”€â”€ STAGE 3.9: Integrity Audit (Check Your Work) â”€â”€â”€
+                // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 3.9: Integrity Audit (Check Your Work) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
                 const auditRes = this.verifyWork(manifest);
                 if (!auditRes.ok) {
                     logger.error({ errors: auditRes.error?.message }, 'Integrity Audit Failed: Corrupt or missing artifacts detected.');
@@ -522,7 +522,7 @@ export class PipelineController {
                     return auditRes as any;
                 }
 
-                // â”€â”€â”€ STAGE 4: Final Assembly (Autonomous Sequential Finish) â”€â”€â”€
+                // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 4: Final Assembly (Autonomous Sequential Finish) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
                 if (!skipVideo && manifest.successfulImages > 0) {
                     // Phase 120: March 5th Directive - Real I/O Probe for Master Video
                     if (manifest.videoPath && existsSync(manifest.videoPath) && statSync(manifest.videoPath).size > 100000) {
@@ -534,7 +534,7 @@ export class PipelineController {
                         if (videoRes.ok) {
                             manifest.videoPath = videoRes.value.videoPath;
                             manifest.status = 'complete';
-                            logger.info({ videoPath: manifest.videoPath }, 'ðŸŽ¬ Master movie finalized and verified.');
+                            logger.info({ videoPath: manifest.videoPath }, 'Ã°Å¸Å½Â¬ Master movie finalized and verified.');
                         } else {
                             logger.error({ err: videoRes.error }, 'Master assembly failed. Manifest remains partial.');
                             manifest.status = 'partial';
@@ -542,7 +542,7 @@ export class PipelineController {
                     }
                 }
 
-                // â”€â”€â”€ STAGE 5: YouTube Upload (Optional) â”€â”€â”€
+                // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 5: YouTube Upload (Optional) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
                 if (!skipYoutube && manifest.videoPath && existsSync(manifest.videoPath) && this.youtubeLimb) {
                     try {
                         const yt = this.youtubeLimb;
@@ -557,7 +557,7 @@ export class PipelineController {
 
                         const uploadRes = await yt.upload({
                             videoPath: manifest.videoPath,
-                            title: `${manifest.bookTitle} â€” AI Narrated Audiobook`,
+                            title: `${manifest.bookTitle} Ã¢â‚¬â€ AI Narrated Audiobook`,
                             description: `Generated by POG2 Sovereign Pipeline from Project Gutenberg #${bookId}.\n\nAuthor: ${bookMeta?.author || 'Unknown'}\nCategory: ${bookMeta?.domain || 'uncategorized'}`,
                             tags: [...(bookMeta?.subjects || []).slice(0, 10), 'audiobook', 'ai-narrated', 'project-gutenberg'],
                             categoryId: '27',
@@ -568,7 +568,7 @@ export class PipelineController {
                             videoAgeGating: isAdultContent ? { restricted: true } : undefined
                         });
                         if (uploadRes.ok) {
-                            logger.info({ videoId: uploadRes.value.videoId, url: uploadRes.value.videoUrl }, 'ðŸŽ¬ YouTube upload complete!');
+                            logger.info({ videoId: uploadRes.value.videoId, url: uploadRes.value.videoUrl }, 'Ã°Å¸Å½Â¬ YouTube upload complete!');
                             (manifest as any).youtubeUrl = uploadRes.value.videoUrl;
                         } else {
                             logger.warn({ error: uploadRes.error }, 'YouTube upload failed. Video saved locally.');
@@ -608,7 +608,7 @@ export class PipelineController {
      * and resumes the "most finished" book to ensure sequential integrity.
      */
     public async orchestrate(requestDefaults: Partial<PipelineRequest> = {}): Promise<Result<PipelineResult | void>> {
-        logger.info('ðŸ§¬ Neuro-Scanning tiered storage for active production manifests...');
+        logger.info('Ã°Å¸Â§Â¬ Neuro-Scanning tiered storage for active production manifests...');
 
         const candidates: { manifest: PipelineManifest, checkpoint: PipelineCheckpoint, progress: number }[] = [];
         const categories = readdirSync(this.basePath);
@@ -669,7 +669,7 @@ export class PipelineController {
         }
 
         if (candidates.length === 0) {
-            logger.info('âœ¨ All current production volumes are complete. Scanning catalog for fresh ingestion...');
+            logger.info('Ã¢Å“Â¨ All current production volumes are complete. Scanning catalog for fresh ingestion...');
             return ok(undefined);
         }
 
@@ -681,7 +681,7 @@ export class PipelineController {
             book: best.manifest.bookTitle,
             progress: (best.progress * 100).toFixed(1) + '%',
             id: best.manifest.bookId
-        }, 'ðŸŽ¯ Identifying priority production target.');
+        }, 'Ã°Å¸Å½Â¯ Identifying priority production target.');
 
         return this.run({ ...best.checkpoint.request, ...requestDefaults });
     }
@@ -690,7 +690,7 @@ export class PipelineController {
      * runBatch - Iterates through the entire Gutenberg library using orchestrator logic.
      */
     public async runBatch(request: Omit<PipelineRequest, 'bookId'>): Promise<Result<void>> {
-        logger.info('ðŸš€ Global Cinema Batch triggered via Sovereign Orchestration.');
+        logger.info('Ã°Å¸Å¡â‚¬ Global Cinema Batch triggered via Sovereign Orchestration.');
 
         // 1. First, finish everything already in progress
         let orchestrateRes = await this.orchestrate(request);

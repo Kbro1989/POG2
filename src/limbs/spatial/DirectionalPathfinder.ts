@@ -1,4 +1,4 @@
-import { BinaryHeap, Comparable } from '../../utils/BinaryHeap.js';
+﻿import { BinaryHeap, Comparable } from '../../utils/BinaryHeap.js';
 import { Coord, Direction, DirectionalCollision, GameState } from '../../core/models.js';
 import { createLogger } from '../../utils/logger.js';
 import { SpatialSovereigntyLimb } from './SpatialSovereigntyLimb.js';

@@ -1,4 +1,4 @@
-import { EventBus } from '../events/EventBus.js';
+﻿import { EventBus } from '../events/EventBus.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { GhostLimb } from '../limbs/metaphysical/GhostLimb.js';
@@ -69,7 +69,7 @@ export class SovereignIngestionEngine {
 
     /**
      * Primary entry: Initiates controlled feedback loop
-     * Routes input_side → output_side with recursive distillation
+     * Routes input_side â†’ output_side with recursive distillation
      */
     async beginIngestionLoop(targets: string[]): Promise<void> {
         if (this.isLoopActive) {
@@ -86,7 +86,7 @@ export class SovereignIngestionEngine {
             this.inputBuffer.push(...batches);
         }
 
-        // Phase 2: Route through TernaryRouter (Past → Present → Future)
+        // Phase 2: Route through TernaryRouter (Past â†’ Present â†’ Future)
         await this.executeTernaryFlow();
 
         // Phase 3: Mirror to GhostLimb (Removed due to context)

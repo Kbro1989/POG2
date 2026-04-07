@@ -1,4 +1,4 @@
-import { Coord, Direction, Item, Skill, SkillId, Wallet, Equipment, EquipmentSlot, SovereignAvatar as ISovereignAvatar } from './models.js';
+﻿import { Coord, Direction, Item, Skill, SkillId, Wallet, Equipment, EquipmentSlot, SovereignAvatar as ISovereignAvatar } from './models.js';
 import { DirectionalPathfinder } from '../limbs/spatial/DirectionalPathfinder.js';
 
 export class SovereignAvatar implements ISovereignAvatar {

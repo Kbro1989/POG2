@@ -1,4 +1,4 @@
-// src/engines/gameplay/JsonLogicInterpreter.ts
+﻿// src/engines/gameplay/JsonLogicInterpreter.ts
 // Generic interpreter for pedagogy-driven JSON logic files.
 // Handles state transitions, conditions, and spatial interactions.
 

@@ -20,15 +20,33 @@ export interface VisionParams {
 }
 
 /**
- * VisionEngine â€” Multimodal observation substrate.
+ * VisionEngine Ã¢â‚¬â€ Multimodal observation substrate.
  * Implements SoverignEye (system-wide viewing) and Chromanumber (color/line mapping).
  */
 export class VisionEngine extends EventEmitter {
+    private static instance: VisionEngine;
     private readonly client: ModelClient;
     private readonly shell: ShellEngine;
     private readonly eye: SovereignEye;
 
-    constructor(
+    private static initialized = false;
+
+    public static getInstance(config: SovereignConfig, renderer: Renderer): VisionEngine {
+        if (!this.instance) {
+            if (!config || !renderer) {
+                throw new Error("VisionEngine requires config on first initialization");
+            }
+            this.instance = new VisionEngine(config, renderer);
+            this.initialized = true;
+        }
+        return this.instance;
+    }
+
+    public static isInitialized(): boolean {
+        return this.initialized;
+    }
+
+    private constructor(
         private readonly config: SovereignConfig,
         private readonly renderer: Renderer
     ) {

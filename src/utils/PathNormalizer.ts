@@ -1,9 +1,9 @@
-import { relative, resolve, sep } from 'path';
+﻿import { relative, resolve, sep } from 'path';
 import { homedir } from 'os';
 import { getSystemRoot } from './SovereignPathResolver.js';
 
 /**
- * PathNormalizer — Sovereign Path Aesthetic Processor.
+ * PathNormalizer â€” Sovereign Path Aesthetic Processor.
  * 
  * Philosophy: Absolute system paths are exposing and cluttered. 
  * This utility converts absolute system paths into ./... or ~/... or POG2://

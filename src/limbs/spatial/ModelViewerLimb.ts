@@ -29,7 +29,7 @@ export class ModelViewerLimb {
     private shaderIncludePath: string;
 
     constructor(forensics: CacheForensicsLimb) {
-        this.rsmv = new RSMVController();
+        this.rsmv = RSMVController.getInstance();
         this.forensics = forensics;
         this.shaderIncludePath = path.join(getSovereignRoot(), 'src', 'motor', 'spatial', 'shaders', 'include');
     }

@@ -10,7 +10,7 @@ import * as path from 'path';
 import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
 
 async function testTripleViewC1() {
-    console.log('🧪 PHASE C1 TEST: Triple View & Fragment Orchestration\n');
+    console.log('ðŸ§ª PHASE C1 TEST: Triple View & Fragment Orchestration\n');
 
     const DB_PATH = 'D:\\sovereign\\vibe-learning-test.db';
     if (fs.existsSync(DB_PATH)) fs.unlinkSync(DB_PATH);
@@ -29,11 +29,11 @@ async function testTripleViewC1() {
             collision_matrix: {}
         };
         fs.writeFileSync(neighborPath, JSON.stringify(dummyMatrix));
-        console.log(`📝 Created mock neighbor fragment: ${neighborPath}`);
+        console.log(`ðŸ“ Created mock neighbor fragment: ${neighborPath}`);
     }
 
     // 1. Initialize limbs
-    const spatial = new SpatialSovereigntyLimb();
+    const spatial = SpatialSovereigntyLimb.getInstance();
     await spatial.initialize();
     // Only preload Barrows; neighbor should be proactively loaded by Orchestrator
     await spatial.loadLogic('barrows');
@@ -58,7 +58,7 @@ async function testTripleViewC1() {
         players: []
     } as any;
 
-    console.log(`📍 Starting Triple-View exploration at (${avatar.x}, ${avatar.y})...\n`);
+    console.log(`ðŸ“ Starting Triple-View exploration at (${avatar.x}, ${avatar.y})...\n`);
 
     // 2. Run first tick - This should trigger Orchestrator to load neighbors
     console.log('--- Tick 1: Triggering Orchestration ---');
@@ -66,8 +66,8 @@ async function testTripleViewC1() {
 
     // 3. Verify neighbor was loaded
     const isNeighborLoaded = spatial.hasRegion('m_55_50');
-    console.log(`\n🔍 Regional Audit:`);
-    console.log(`   Neighbor (m_55_50) loaded: ${isNeighborLoaded ? '✅ YES' : '❌ NO'}`);
+    console.log(`\nðŸ” Regional Audit:`);
+    console.log(`   Neighbor (m_55_50) loaded: ${isNeighborLoaded ? 'âœ… YES' : 'âŒ NO'}`);
 
     // 4. Run more ticks to confirm stability
     for (let i = 0; i < 4; i++) {
@@ -80,16 +80,16 @@ async function testTripleViewC1() {
         movesCompleted: engine.getStats().moves >= 5
     };
 
-    console.log(`\n✅ SUCCESS CRITERIA:`);
-    console.log(`  Proactive Loading working: ${SUCCESS_CRITERIA.orchestrationTriggered ? '✓' : '✗'}`);
-    console.log(`  Stability (Moves >5): ${SUCCESS_CRITERIA.movesCompleted ? '✓' : '✗'}`);
+    console.log(`\nâœ… SUCCESS CRITERIA:`);
+    console.log(`  Proactive Loading working: ${SUCCESS_CRITERIA.orchestrationTriggered ? 'âœ“' : 'âœ—'}`);
+    console.log(`  Stability (Moves >5): ${SUCCESS_CRITERIA.movesCompleted ? 'âœ“' : 'âœ—'}`);
 
     if (SUCCESS_CRITERIA.orchestrationTriggered && SUCCESS_CRITERIA.movesCompleted) {
-        console.log('\n🚀 PHASE C1 CHECKPOINT: PASSED\n');
+        console.log('\nðŸš€ PHASE C1 CHECKPOINT: PASSED\n');
         lessonLearner.close();
         worldForensics.close();
     } else {
-        console.log('\n❌ PHASE C1 CHECKPOINT: FAILED\n');
+        console.log('\nâŒ PHASE C1 CHECKPOINT: FAILED\n');
         lessonLearner.close();
         worldForensics.close();
         process.exit(1);

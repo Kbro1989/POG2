@@ -1,4 +1,4 @@
-import { createRequire } from 'module';
+﻿import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
@@ -6,11 +6,11 @@ import { spawn } from 'child_process';
 import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
 
 async function main() {
-    console.log("🚀 Initializing Blender Heavy-Lifter node...");
+    console.log("ðŸš€ Initializing Blender Heavy-Lifter node...");
 
     const inputGlb = join(process.cwd(), 'rsmv', 'model.glb');
     if (!existsSync(inputGlb)) {
-        console.error(`❌ Input GLB not found at ${inputGlb}. Please run verify_kinematic_render.ts first.`);
+        console.error(`âŒ Input GLB not found at ${inputGlb}. Please run verify_kinematic_render.ts first.`);
         process.exit(1);
     }
 
@@ -44,11 +44,11 @@ def main():
         
     rig = armatures[0]
     bone_count = len(rig.data.bones)
-    print(f"[SOVEREIGN] ✅ HD Rig Verified. Found {bone_count} bones intact.")
+    print(f"[SOVEREIGN] âœ… HD Rig Verified. Found {bone_count} bones intact.")
     
     # 4. Verify Animations
     actions = bpy.data.actions
-    print(f"[SOVEREIGN] ✅ Animations Verified. Found {len(actions)} loaded actions.")
+    print(f"[SOVEREIGN] âœ… Animations Verified. Found {len(actions)} loaded actions.")
     for act in actions:
         print(f"        - {act.name} (Frames: {int(act.frame_range[1])})")
 
@@ -74,20 +74,20 @@ def main():
         export_yup=True,
         use_selection=False
     )
-    print("[SOVEREIGN] 🏆 Blender Heavy-Lifter Pipeline Complete.")
+    print("[SOVEREIGN] ðŸ† Blender Heavy-Lifter Pipeline Complete.")
 
 if __name__ == '__main__':
     main()
 `;
 
     writeFileSync(scriptPath, pythonScript);
-    console.log(`📝 Wrote python script to ${scriptPath}`);
+    console.log(`ðŸ“ Wrote python script to ${scriptPath}`);
 
     // Call Blender Headless
     const blenderPath = "C:\\Program Files\\Blender Foundation\\Blender 5.0\\blender.exe";
     const args = ["--background", "--python", scriptPath];
 
-    console.log(`🎬 Triggering Blender 5.0...`);
+    console.log(`ðŸŽ¬ Triggering Blender 5.0...`);
 
     const blenderProcess = spawn(blenderPath, args, { stdio: 'pipe' });
 
@@ -106,10 +106,10 @@ if __name__ == '__main__':
 
     blenderProcess.on('exit', (code) => {
         if (code === 0) {
-            console.log(`\\n🏆 SUCCESS: Lightweight Babylon-ready GLB written to: ${outputGlb}`);
+            console.log(`\\nðŸ† SUCCESS: Lightweight Babylon-ready GLB written to: ${outputGlb}`);
             console.log(`You can now drop this optimized file into sandbox.babylonjs.com with full bone data & animation intact.`);
         } else {
-            console.error(`❌ Blender process exited with code ${code}`);
+            console.error(`âŒ Blender process exited with code ${code}`);
         }
     });
 }

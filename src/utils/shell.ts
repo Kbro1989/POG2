@@ -1,11 +1,11 @@
-import { exec } from 'child_process';
+﻿import { exec } from 'child_process';
 import { promisify } from 'util';
 import { createLogger } from "./logger.js";
 
 const execAsync = promisify(exec);
 const logger = createLogger('SovereignShell');
 
-// ═══ ENVIRONMENT SANITIZATION ═══
+// â•â•â• ENVIRONMENT SANITIZATION â•â•â•
 
 /**
  * Sensitive key patterns that MUST NOT leak to child processes.
@@ -27,7 +27,7 @@ const SENSITIVE_CONTAINS = [
 
 /**
  * Build a sanitized copy of process.env with all sensitive keys removed.
- * POG2 internals already read these into SovereignConfig at boot —
+ * POG2 internals already read these into SovereignConfig at boot â€”
  * child shell commands never need them.
  */
 function getSanitizedEnv(): NodeJS.ProcessEnv {
@@ -54,7 +54,7 @@ function getSanitizedEnv(): NodeJS.ProcessEnv {
 }
 
 /**
- * $ — The Sovereign Shell Utility.
+ * $ â€” The Sovereign Shell Utility.
  * A template literal tag for executing shell commands with a clean syntax.
  * Example: await $`wrangler whoami`
  *

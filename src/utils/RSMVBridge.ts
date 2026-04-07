@@ -1,5 +1,5 @@
 /**
- * RSMVBridge — Sovereign Cache Access Layer
+ * RSMVBridge â€” Sovereign Cache Access Layer
  *
  * Resolves the ESM/CommonJS boundary by calling rsmv_bridge.ts as a
  * tsx subprocess. Returns strongly-typed results from the live RS3 cache.
@@ -10,43 +10,101 @@
  *  - KinematicsLimb
  */
 
-import { execFileSync } from 'child_process';
+import { spawn } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createLogger } from './logger.js';
 import { Result, ok, err } from '../core/models.js';
 
 const logger = createLogger('RSMVBridge');
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+let _lastLatencyMs = 0;
+
+export function getLastIOLatencyMs(): number {
+    return _lastLatencyMs;
+}
 
 // Absolute path to the bridge script
 const BRIDGE_SCRIPT = join(process.cwd(), 'src', 'utils', 'rsmv_bridge.ts');
 
-// npx tsx — solves path issues and EINVAL
-const TIMEOUT_MS = 15000; // 15s max per cache read
+const TIMEOUT_MS = 60000; // Increased to 60s for substrate stability during cold starts
 
-function callBridge<T>(operation: string, ...args: string[]): Result<T> {
-    try {
-        const stdout = execFileSync(
-            process.platform === 'win32' ? 'npx.cmd' : 'npx',
-            ['tsx', BRIDGE_SCRIPT, operation, ...args],
-            { timeout: TIMEOUT_MS, encoding: 'utf8', maxBuffer: 10 * 1024 * 1024, shell: process.platform === 'win32' }
-        );
-        const parsed = JSON.parse(stdout.trim()) as T & { error?: string };
-        if ((parsed as any).error && (parsed as any).error !== 'parse_unavailable') {
-            return err(new Error((parsed as any).error));
-        }
-        return ok(parsed);
-    } catch (e: any) {
-        const msg = e?.stdout ? (() => { try { return JSON.parse(e.stdout).error; } catch { return e.message; } })() : e.message;
-        logger.error({ operation, args, msg }, 'RSMVBridge call failed');
-        return err(new Error(`RSMVBridge[${operation}]: ${msg}`));
-    }
+async function callBridge<T>(operation: string, ...args: string[]): Promise<Result<T>> {
+    const start = Date.now();
+    return new Promise((resolve) => {
+        const cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+        const childArgs = ['tsx', BRIDGE_SCRIPT, operation, ...args];
+        
+        const child = spawn(cmd, childArgs, { 
+            shell: process.platform === 'win32',
+            stdio: ['ignore', 'pipe', 'pipe'] 
+        });
+
+        let stdout = '';
+        let stderr = '';
+
+        child.stdout.on('data', (data) => { 
+            const chunk = data.toString();
+            stdout += chunk;
+            
+            // Phase 9: Real-time Substrate Visibility
+            // If the chunk doesn't look like part of a JSON blob, it might be a log from the sub-tool
+            if (!chunk.trim().startsWith('{') && !chunk.trim().startsWith('[')) {
+                const lines = chunk.split('\n').filter((l: string) => l.trim());
+                for (const line of lines) {
+                    process.stdout.write(`\x1b[38;5;244m[RSMV_BRIDGE:OUT]\x1b[0m ${line}\n`);
+                }
+            }
+        });
+
+        child.stderr.on('data', (data) => { 
+            const chunk = data.toString();
+            stderr += chunk;
+            const lines = chunk.split('\n').filter((l: string) => l.trim());
+            for (const line of lines) {
+                process.stderr.write(`\x1b[38;5;208m[RSMV_BRIDGE:ERR]\x1b[0m ${line}\n`);
+            }
+        });
+
+        const timer = setTimeout(() => {
+            child.kill();
+            logger.warn({ operation, timeout: TIMEOUT_MS }, 'RSMVBridge neurological link severed due to timeout.');
+            resolve(err(new Error(`RSMVBridge timeout: ${operation} exceeded ${TIMEOUT_MS}ms`)));
+        }, TIMEOUT_MS);
+
+        child.on('close', (code) => {
+            clearTimeout(timer);
+            _lastLatencyMs = Date.now() - start;
+            
+            if (code !== 0) {
+                const msg = stderr.trim() || `Exit code ${code}`;
+                logger.error({ operation, args, msg }, 'RSMVBridge subprocess failed');
+                resolve(err(new Error(`RSMVBridge[${operation}] failed: ${msg}`)));
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(stdout.trim()) as T & { error?: string };
+                if ((parsed as any).error && (parsed as any).error !== 'parse_unavailable') {
+                    resolve(err(new Error((parsed as any).error)));
+                } else {
+                    resolve(ok(parsed));
+                }
+            } catch (e: any) {
+                resolve(err(new Error(`RSMVBridge[${operation}] parse error: ${e.message} (Payload: ${stdout.substring(0, 100)}...)`)));
+            }
+        });
+
+        child.on('error', (errVal) => {
+            clearTimeout(timer);
+            resolve(err(errVal));
+        });
+    });
 }
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface BridgeObjectResult {
     id: number;
@@ -117,7 +175,7 @@ export interface BridgeHealthResult {
     cacheVersion?: number;
 }
 
-// ── RSMVBridge Singleton ───────────────────────────────────────────────────
+// â”€â”€ RSMVBridge Singleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export class RSMVBridge {
     private static _instance: RSMVBridge | null = null;
@@ -129,8 +187,8 @@ export class RSMVBridge {
     }
 
     /** Probe the live cache. Result is cached so subsequent limb inits are O(1). */
-    public healthCheck(): Result<BridgeHealthResult> {
-        const result = callBridge<BridgeHealthResult>('health');
+    public async healthCheck(): Promise<Result<BridgeHealthResult>> {
+        const result = await callBridge<BridgeHealthResult>('health');
         this._healthy = result.ok && result.value.online;
         return result;
     }
@@ -140,34 +198,26 @@ export class RSMVBridge {
         return this._healthy === true;
     }
 
-    // ── Object ──
+    // â”€â”€ Async Accessors â”€â”€
 
-    public getObject(id: number): Result<BridgeObjectResult> {
-        return callBridge<BridgeObjectResult>('object', String(id));
+    public async getObject(id: number): Promise<Result<BridgeObjectResult>> {
+        return await callBridge<BridgeObjectResult>('object', String(id));
     }
 
-    // ── NPC ──
-
-    public getNpc(id: number): Result<BridgeNpcResult> {
-        return callBridge<BridgeNpcResult>('npc', String(id));
+    public async getNpc(id: number): Promise<Result<BridgeNpcResult>> {
+        return await callBridge<BridgeNpcResult>('npc', String(id));
     }
 
-    // ── Item ──
-
-    public getItem(id: number): Result<BridgeItemResult> {
-        return callBridge<BridgeItemResult>('item', String(id));
+    public async getItem(id: number): Promise<Result<BridgeItemResult>> {
+        return await callBridge<BridgeItemResult>('item', String(id));
     }
 
-    // ── Model topology ──
-
-    public getModel(id: number): Result<BridgeModelResult> {
-        return callBridge<BridgeModelResult>('model', String(id));
+    public async getModel(id: number): Promise<Result<BridgeModelResult>> {
+        return await callBridge<BridgeModelResult>('model', String(id));
     }
 
-    // ── Animation sequence ──
-
-    public getSequence(id: number): Result<BridgeSequenceResult> {
-        return callBridge<BridgeSequenceResult>('sequence', String(id));
+    public async getSequence(id: number): Promise<Result<BridgeSequenceResult>> {
+        return await callBridge<BridgeSequenceResult>('sequence', String(id));
     }
 }
 

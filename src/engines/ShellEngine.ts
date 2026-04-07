@@ -1,4 +1,4 @@
-import { exec, spawn } from 'child_process';
+﻿import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import { loadavg, totalmem, freemem } from 'os';
 import { existsSync } from 'fs';
@@ -18,7 +18,7 @@ export interface ShellParams {
 }
 
 /**
- * ShellEngine — Real command execution substrate.
+ * ShellEngine â€” Real command execution substrate.
  * Binary absolute: command succeeds or returns a detailed error.
  * Integrated with TernaryRouter for metabolic safety gating.
  */
@@ -44,7 +44,7 @@ export class ShellEngine {
                 // YaoState genre check: YoungYin (0) covers both YoungYin and OldYin (retreat/decay)
                 // OldMixed (4) or the genre-normalized YoungMixed (5) in some contexts covers chaos
                 if (yao === YaoState.YoungYin || yao === YaoState.OldYin || yao === YaoState.OldMixed) {
-                    const msg = `❌ COGNITIVE BLOCK: Destructive command rejected due to unstable/retreating state (${yao}). Strategy: ${directive}`;
+                    const msg = `âŒ COGNITIVE BLOCK: Destructive command rejected due to unstable/retreating state (${yao}). Strategy: ${directive}`;
                     logger.warn({ command: params.command, yao, directive }, msg);
                     this.renderer.error(msg);
                     return { ok: false, error: new Error(msg) };

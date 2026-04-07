@@ -1,4 +1,4 @@
-import { appendFile } from 'fs/promises';
+﻿import { appendFile } from 'fs/promises';
 import { existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { EventBus, SovereignEvent } from '../EventBus.js';

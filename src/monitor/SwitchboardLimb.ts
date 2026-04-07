@@ -7,16 +7,60 @@ import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger('SwitchboardLimb');
 
+export interface AdminCommand {
+    type: string;
+    metadata?: any;
+}
+
 /**
  * SwitchboardLimb - Dynamic Resource Routing
- * Orchestrates the connection between limbs, tasks, and data substrates.
+ * Centralized ingress for bridge commands and task orchestration.
+ * Implementation: Hardened Singleton with Deterministic Queue.
  */
 export class SwitchboardLimb {
+    private static instance: SwitchboardLimb | undefined;
     private wss: WebSocketServer | null = null;
     private server: HttpServer | null = null;
     private activePort: number | null = null;
+    
+    private adminQueue: AdminCommand[] = [];
+    private privilege: string = 'standard';
 
-    constructor() { }
+    protected constructor() {
+        if (SwitchboardLimb.instance) {
+            throw new Error('Singleton violation: use SwitchboardLimb.getInstance()');
+        }
+    }
+
+    public static getInstance(): SwitchboardLimb {
+        if (!this.instance) {
+            this.instance = new SwitchboardLimb();
+        }
+        return this.instance;
+    }
+
+    public static resetInstance(): void {
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error('resetInstance is forbidden in production');
+        }
+        this.instance = undefined;
+    }
+    
+    /**
+     * initialize - Explicit lifecycle start.
+     */
+    public initialize(): void {
+        this.reset();
+        logger.info('Switchboard Kernel Initialized.');
+    }
+
+    /**
+     * reset - Clear queue and authority (for deterministic tests).
+     */
+    public reset(): void {
+        this.adminQueue = [];
+        this.privilege = 'standard';
+    }
 
     /**
      * injectSubstrates - Sets up dependencies for the switchboard.
@@ -63,9 +107,19 @@ export class SwitchboardLimb {
                             try {
                                 const msg = JSON.parse(data);
                                 if (msg.type === 'command') {
-                                    logger.info({ intent: msg.intent }, 'Bridge received command');
+                                    logger.info({ intent: msg.intent }, 'Bridge received task command');
                                     const result = await orchestrator.run(msg.intent);
                                     ws.send(JSON.stringify({ type: 'result', ok: result.ok, value: result.value, error: result.error }));
+                                } else if (msg.type === 'ADMIN_COMMAND') {
+                                    // Authoritative Ingress Path (Phase 29)
+                                    this.pushAdminCommand({
+                                        type: msg.payload.command,
+                                        metadata: { ...msg.payload.args, timestamp: msg.payload.timestamp }
+                                    });
+                                } else if (msg.type === 'CONSOLE_COMMAND') {
+                                    logger.info({ cmd: msg.payload }, 'Bridge received console command');
+                                    // Handle standard console commands via orchestrator if needed
+                                    await orchestrator.run(msg.payload);
                                 }
                             } catch (err) {
                                 logger.error({ err }, 'Failed to process bridge message');
@@ -122,6 +176,38 @@ export class SwitchboardLimb {
     }
 
     /**
+     * pushAdminCommand - Single Ingress Path for deterministic logic.
+     */
+    public pushAdminCommand(cmd: AdminCommand): void {
+        this.adminQueue.push(cmd);
+        logger.debug({ type: cmd.type }, 'Admin command enqueued in deterministic buffer.');
+    }
+
+    /**
+     * drainAdminQueue - Egress path for the 600ms Godhead Pulse.
+     */
+    public drainAdminQueue(): AdminCommand[] {
+        const batch = [...this.adminQueue];
+        this.adminQueue = [];
+        return batch;
+    }
+
+    /**
+     * setPrivilege - Authoritative elevation.
+     */
+    public setPrivilege(rank: string): void {
+        this.privilege = rank;
+        logger.info({ rank }, 'CNS Privilege Elevation Confirmed.');
+    }
+
+    /**
+     * getPrivilege - Check current authority rank.
+     */
+    public getPrivilege(): string {
+        return this.privilege;
+    }
+
+    /**
      * syncGameState - Broadcasts the integrated POG2 world/player state to the UI.
      */
     public syncGameState(state: any): void {
@@ -136,13 +222,17 @@ export class SwitchboardLimb {
      * connectToSubstrates - Hooks into Renderer and SovereignEye for remote mirroring.
      */
     public connectToSubstrates(renderer: any, eye: any): void {
-        renderer.onOutput((payload: any) => {
-            this.broadcast({
-                type: 'log',
-                timestamp: Date.now(),
-                ...payload
+        if (renderer && typeof renderer.onOutput === 'function') {
+            renderer.onOutput((payload: any) => {
+                this.broadcast({
+                    type: 'log',
+                    timestamp: Date.now(),
+                    ...payload
+                });
             });
-        });
+        } else {
+            logger.debug('Renderer substrate does not implement onOutput â€” telemetry mirroring skipped.');
+        }
 
         // Guard: VisionEngine may not implement EventEmitter
         if (eye && typeof eye.on === 'function') {
@@ -154,7 +244,7 @@ export class SwitchboardLimb {
                 });
             });
         } else {
-            logger.debug('SovereignEye substrate does not support EventEmitter — vision mirroring skipped.');
+            logger.debug('SovereignEye substrate does not support EventEmitter â€” vision mirroring skipped.');
         }
     }
 

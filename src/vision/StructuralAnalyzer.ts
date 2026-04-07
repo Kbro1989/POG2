@@ -1,4 +1,4 @@
-import { createLogger } from '../utils/logger.js';
+﻿import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('StructuralAnalyzer');
 
@@ -7,7 +7,7 @@ const logger = createLogger('StructuralAnalyzer');
  */
 export class StructuralAnalyzer {
     constructor() {
-        logger.info('StructuralAnalyzer activated — geometric edge detection ready.');
+        logger.info('StructuralAnalyzer activated â€” geometric edge detection ready.');
     }
 
     /**

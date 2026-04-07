@@ -73,7 +73,14 @@ export class ExplorationEngine {
             return false;
         }
 
+        // Defensive Guard: Ensure target has a valid coordinate structure (Phase 41)
+        if (target.x === undefined || target.y === undefined) {
+            logger.error({ target }, 'Resolved target is missing coordinates. C3 Boundary escape contained.');
+            return false; // Safely stall instead of crashing
+        }
+
         const targetKey = `${target.plane}_${target.x}_${target.y}`;
+
         
         // 2. Pathfind to target
         const path = await this.pathfinder.findPath(

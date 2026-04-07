@@ -14,7 +14,7 @@ import type { Result, ActuationIntent, ActuationResult } from '../core/models.js
 const logger = createLogger('VisionActuationHarness');
 
 /**
- * VisionActuationHarness — End-to-End Perception-Action Loop Harness.
+ * VisionActuationHarness â€” End-to-End Perception-Action Loop Harness.
  * 1. Observes substrate via PuppeteerEye.
  * 2. Processes vision/intent via ChromanumberEngine.
  * 3. Actuates changes via ShaderInjector or RSMVController.
@@ -32,7 +32,7 @@ export class VisionActuationHarness {
         this.spatialVision = spatialVision;
         this.eye = new PuppeteerEye();
         this.injector = new ShaderInjector();
-        this.rsmv = new RSMVController();
+        this.rsmv = RSMVController.getInstance();
         this.loadHUDSubstrates();
     }
 

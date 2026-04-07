@@ -4,6 +4,7 @@ import { getRSMVCachePath } from '../../utils/SovereignPathResolver.js';
 import { createLogger } from '../../utils/logger.js';
 import { ByteReader } from '../../utils/ByteReader.js';
 import { getBlockedDirections } from '../../utils/DirectionalRegistry.js';
+import fs from 'fs';
 
 const logger = createLogger('WorldForensicsLimb');
 
@@ -34,6 +35,10 @@ export interface ObjectDefinition {
     blocksSight: boolean;
     maybe_allows_lineofsight?: boolean;
     maybe_blocks_movement?: boolean;
+    varbitId?: number;
+    varpId?: number;
+    transforms?: number[];
+    defaultTransformId?: number;
 }
 
 /**
@@ -64,44 +69,79 @@ export class WorldForensicsLimb {
      * senseLocalArea - Returns a detailed world-state for a local 64x64 grid.
      */
     public async senseLocalArea(x: number, z: number, plane: number): Promise<Result<WorldObservation[]>> {
-        if (!this.cache) return err(new Error('Limb not initialized'));
-
         const mapsquareX = x >> 6;
         const mapsquareZ = z >> 6;
-        const fileId = (mapsquareX << 8) | mapsquareZ;
-
-        // Archive 5 (Mapsquares). Sub 3 = Terrain, Sub 0 = Locations.
-        const terrain = this.cache.readSubEntry(5, fileId, 3); 
-        if (!terrain) {
-            return err(new Error(`Mapsquare terrain data missing for [${mapsquareX}, ${mapsquareZ}] (Sub 3 ID: ${fileId})`));
-        }
-
+        
         const observations: WorldObservation[] = [];
         const grid: number[][][] = Array.from({ length: 4 }, () => 
             Array.from({ length: 64 }, () => new Array(64).fill(0))
         );
 
-        let tOffset = 0;
-        // Build > 936 skip magic
+        // --- PHASE 43.8: JSON-FIRST SOVEREIGNTY ---
+        const jsonPath = `D:\\sovereign\\atlas\\spatial\\world_extract\\ms_${mapsquareX}_${mapsquareZ}.json`;
+        
+        try {
+            if (fs.existsSync(jsonPath)) {
+                const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+                if (data.tiles && Array.isArray(data.tiles)) {
+                    for (const tile of data.tiles) {
+                        if (tile.plane < 4 && tile.x < 64 && tile.z < 64) {
+                            grid[tile.plane][tile.x][tile.z] = (tile.collision & 0x01);
+                        }
+                    }
+
+                    for (let curX = 0; curX < 64; curX++) {
+                        for (let curZ = 0; curZ < 64; curZ++) {
+                            const worldX = (mapsquareX << 6) + curX;
+                            const worldZ = (mapsquareZ << 6) + curZ;
+                            observations.push({
+                                x: worldX,
+                                z: worldZ,
+                                plane: plane,
+                                collision: grid[plane][curX][curZ],
+                                objects: []
+                            });
+                        }
+                    }
+                    return ok(observations);
+                }
+            }
+        } catch (e) {
+            console.log(`[WorldForensicsLimb] JSON Truth error for [${mapsquareX},${mapsquareZ}]:`, e);
+        }
+
+        // --- CACHE FALLBACK ---
+        if (!this.cache) return err(new Error('Limb not initialized'));
+        const fileId = (mapsquareX << 8) | mapsquareZ;
+        const terrain = this.cache.readSubEntry(5, fileId, 3); 
+        
+        if (!terrain) {
+            return err(new Error(`Mapsquare terrain data missing for [${mapsquareX}, ${mapsquareZ}] (Sub 3 ID: ${fileId})`));
+        }
+
+        const reader = new ByteReader(terrain);
         if (terrain.length > 5 && terrain.slice(0, 4).toString() === 'JAGX') {
-            tOffset += 5;
+            reader.skip(5);
         }
 
         for (let p = 0; p < 4; p++) {
             for (let curX = 0; curX < 64; curX++) {
                 for (let curZ = 0; curZ < 64; curZ++) {
-                    if (tOffset >= terrain.length) break;
-                    
-                    const flags = terrain.readUInt8(tOffset++);
-                    if (flags & 0x1) { if (tOffset < terrain.length) tOffset++; } 
-                    if (flags & 0x2) { if (tOffset < terrain.length) grid[p][curX][curZ] = terrain.readUInt8(tOffset++); }
-                    if (flags & 0x4) {
-                        if (tOffset < terrain.length) {
-                            const b = terrain.readUInt8(tOffset++);
-                            if (b >= 0x80 && tOffset < terrain.length) tOffset++;
-                        }
+                    let settings = 0;
+                    while (reader.hasRemaining()) {
+                        const opcode = reader.readU8();
+                        if (opcode === 0) break;
+                        if (opcode === 1) {
+                            reader.readU16(); 
+                            break; 
+                        } else if (opcode <= 49) {
+                            reader.readSmart();
+                        } else if (opcode <= 81) {
+                            settings = opcode - 49;
+                        } 
                     }
-                    if (flags & 0x8) { if (tOffset < terrain.length) tOffset++; }
+
+                    grid[p][curX][curZ] = (settings & 0x01);
 
                     if (p === plane) {
                         const worldX = (mapsquareX << 6) + curX;
@@ -115,9 +155,7 @@ export class WorldForensicsLimb {
                         });
                     }
                 }
-                if (tOffset >= terrain.length) break;
             }
-            if (tOffset >= terrain.length) break;
         }
 
         return ok(observations);
@@ -253,6 +291,36 @@ export class WorldForensicsLimb {
                 case 24: reader.readU16(); break;
                 case 28: reader.readU8(); break;
                 case 60: reader.readU16(); break;
+                case 77: { // Varbit Transformation
+                    def.varbitId = reader.readU16();
+                    if (def.varbitId === 0xFFFF) def.varbitId = -1;
+                    def.varpId = reader.readU16();
+                    if (def.varpId === 0xFFFF) def.varpId = -1;
+                    def.defaultTransformId = reader.readU16();
+                    if (def.defaultTransformId === 0xFFFF) def.defaultTransformId = -1;
+                    const count = reader.readU8();
+                    def.transforms = [];
+                    for (let i = 0; i <= count; i++) {
+                        const tid = reader.readU16();
+                        def.transforms.push(tid === 0xFFFF ? -1 : tid);
+                    }
+                    break;
+                }
+                case 92: { // Varp Transformation (Alternative)
+                    def.varbitId = reader.readU16();
+                    if (def.varbitId === 0xFFFF) def.varbitId = -1;
+                    def.varpId = reader.readU16();
+                    if (def.varpId === 0xFFFF) def.varpId = -1;
+                    def.defaultTransformId = reader.readU16();
+                    if (def.defaultTransformId === 0xFFFF) def.defaultTransformId = -1;
+                    const count = reader.readU8();
+                    def.transforms = [];
+                    for (let i = 0; i <= count; i++) {
+                        const tid = reader.readU16();
+                        def.transforms.push(tid === 0xFFFF ? -1 : tid);
+                    }
+                    break;
+                }
                 case 163: reader.readU8(); reader.readU8(); reader.readU8(); reader.readU8(); break;
                 default: break;
             }

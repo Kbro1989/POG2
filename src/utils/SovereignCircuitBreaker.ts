@@ -1,4 +1,4 @@
-import { createLogger } from './logger.js';
+﻿import { createLogger } from './logger.js';
 import { CircuitState } from '../core/models.js';
 
 const logger = createLogger('SovereignCircuitBreaker');

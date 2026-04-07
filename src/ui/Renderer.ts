@@ -7,7 +7,7 @@ import { SovereignDomain } from '../types/SovereignDomain.js';
 import type { NodeHealth } from '../monitor/NodeTester.js';
 
 /**
- * Renderer — POG2 Sovereign CLI UI output.
+ * Renderer â€” POG2 Sovereign CLI UI output.
  * Humanized for conversational synergy.
  */
 export class Renderer {
@@ -36,12 +36,12 @@ export class Renderer {
 
     public showBanner(): void {
         console.log('\x1b[38;5;51m');
-        console.log('  ██████╗  ██████╗  ██████╗     ██████╗ ██████╗ ██████╗ ███████╗██████╗ ');
-        console.log('  ██╔══██╗██╔═══██╗██╔════╝     ██╔════╝██╔═██╗██╔══██╗██╔════╝██╔══██╗');
-        console.log('  ██████╔╝██║   ██║██║  ███╗    ██║     ██║   ██║██║  ██║█████╗  ██████╔╝');
-        console.log('  ██╔═══╝ ██║   ██║██║   ██║    ██║     ██║   ██║██║  ██║██╔══╝  ██╔══██╗');
-        console.log('  ██║     ╚██████╔╝╚██████╔╝    ╚██████╗╚██████╔╝██████╔╝███████╗██║  ██║');
-        console.log('  ╚═╝      ╚═════╝  ╚═════╝      ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚══╝  ╚═╝');
+        console.log('  â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—  â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—  â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—     â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•— â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•— â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•— â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•— ');
+        console.log('  â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•—â–ˆâ–ˆâ•”â•â•â•â–ˆâ–ˆâ•—â–ˆâ–ˆâ•”â•â•â•â•â•     â–ˆâ–ˆâ•”â•â•â•â•â•â–ˆâ–ˆâ•”â•â–ˆâ–ˆâ•—â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•—â–ˆâ–ˆâ•”â•â•â•â•â•â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•—');
+        console.log('  â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ–ˆâ•—    â–ˆâ–ˆâ•‘     â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ•‘â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—  â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•');
+        console.log('  â–ˆâ–ˆâ•”â•â•â•â• â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘    â–ˆâ–ˆâ•‘     â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•”â•â•â•  â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•—');
+        console.log('  â–ˆâ–ˆâ•‘     â•šâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•â•šâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•    â•šâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—â•šâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ•‘');
+        console.log('  â•šâ•â•      â•šâ•â•â•â•â•â•  â•šâ•â•â•â•â•â•      â•šâ•â•â•â•â•â• â•šâ•â•â•â•â•â• â•šâ•â•â•â•â•â• â•šâ•â•â•â•â•â•â•â•šâ•â•â•  â•šâ•â•');
         console.log('\x1b[0m');
         console.log('        [ P O G 2 - S O V E R E I G N  E D I T I O N ]');
         console.log('               Your AI partner in creation.');
@@ -65,7 +65,7 @@ export class Renderer {
 
     public success(message: string, data?: any): void {
         const normalized = data?.skipNormalization ? message : PathNormalizer.normalizeString(message);
-        console.log(`\x1b[38;5;46m✔\x1b[0m ${normalized}`);
+        console.log(`\x1b[38;5;46mâœ”\x1b[0m ${normalized}`);
         this.dispatch(message, 'success', data);
     }
 
@@ -77,7 +77,7 @@ export class Renderer {
 
     public error(message: string, data?: any): void {
         const normalized = data?.skipNormalization ? message : PathNormalizer.normalizeString(message);
-        console.log(`\x1b[38;5;196m✘\x1b[0m ${normalized}`);
+        console.log(`\x1b[38;5;196mâœ˜\x1b[0m ${normalized}`);
         this.dispatch(message, 'error', data);
     }
 
@@ -98,14 +98,14 @@ export class Renderer {
         const percent = Math.min(Math.max(value / max, 0), 1);
         const width = 20;
         const filled = Math.round(width * percent);
-        const bar = '■'.repeat(filled) + '░'.repeat(width - filled);
+        const bar = 'â– '.repeat(filled) + 'â–‘'.repeat(width - filled);
         const colors = ['\x1b[38;5;46m', '\x1b[38;5;220m', '\x1b[38;5;196m'];
         const colorIdx = percent > 0.8 ? 2 : percent > 0.5 ? 1 : 0;
         console.log(`  ${label.padEnd(15)} ${colors[colorIdx]}${bar}\x1b[0m ${value}/${max}`);
     }
 
     public heatmap(label: string, scores: number[]): void {
-        const blocks = [' ', '░', '▒', '▓', '█'];
+        const blocks = [' ', 'â–‘', 'â–’', 'â–“', 'â–ˆ'];
         const line = scores.map(s => {
             const idx = Math.min(Math.floor(s * blocks.length), blocks.length - 1);
             return blocks[idx];
@@ -115,7 +115,7 @@ export class Renderer {
     }
 
     public status(data: unknown): void {
-        console.log('\x1b[38;5;51m\n  ─── [ System Health Overview ] ───\x1b[0m');
+        console.log('\x1b[38;5;51m\n  â”€â”€â”€ [ System Health Overview ] â”€â”€â”€\x1b[0m');
         this.json(data);
     }
 
@@ -166,22 +166,22 @@ export class Renderer {
 
     public showYaoCard(state: YaoState): void {
         const cards: Record<YaoState, { symbol: string, label: string, color: string }> = {
-            [YaoState.YoungYang]: { symbol: '⚊', label: 'Balanced Energy', color: '\x1b[38;5;46m' },
-            [YaoState.YoungYin]: { symbol: '⚋', label: 'Receptive State', color: '\x1b[38;5;39m' },
-            [YaoState.OldYang]: { symbol: '◯', label: 'Active Change', color: '\x1b[38;5;196m' },
-            [YaoState.OldYin]: { symbol: '✕', label: 'Gentle Transition', color: '\x1b[38;5;208m' },
-            [YaoState.YoungMixed]: { symbol: '⚎', label: 'Emerging Potential', color: '\x1b[38;5;213m' },
-            [YaoState.OldMixed]: { symbol: '⚏', label: 'Chaotic Flux', color: '\x1b[38;5;141m' },
-            [YaoState.SovereignAvatar]: { symbol: '♙', label: 'Spatial Avatar', color: '\x1b[38;5;220m' },
-            [YaoState.SovereignEngine]: { symbol: '⚙', label: 'Master Engine', color: '\x1b[38;5;123m' },
+            [YaoState.YoungYang]: { symbol: 'âšŠ', label: 'Balanced Energy', color: '\x1b[38;5;46m' },
+            [YaoState.YoungYin]: { symbol: 'âš‹', label: 'Receptive State', color: '\x1b[38;5;39m' },
+            [YaoState.OldYang]: { symbol: 'â—¯', label: 'Active Change', color: '\x1b[38;5;196m' },
+            [YaoState.OldYin]: { symbol: 'âœ•', label: 'Gentle Transition', color: '\x1b[38;5;208m' },
+            [YaoState.YoungMixed]: { symbol: 'âšŽ', label: 'Emerging Potential', color: '\x1b[38;5;213m' },
+            [YaoState.OldMixed]: { symbol: 'âš', label: 'Chaotic Flux', color: '\x1b[38;5;141m' },
+            [YaoState.SovereignAvatar]: { symbol: 'â™™', label: 'Spatial Avatar', color: '\x1b[38;5;220m' },
+            [YaoState.SovereignEngine]: { symbol: 'âš™', label: 'Master Engine', color: '\x1b[38;5;123m' },
         };
 
         const card = cards[state];
         if (!card) return;
-        console.log(`\n  ${card.color}┌────────────────────┐\x1b[0m`);
-        console.log(`  ${card.color}│      [ ${card.symbol} ]       │\x1b[0m`);
-        console.log(`  ${card.color}│    ${card.label.padEnd(14)}    │\x1b[0m`);
-        console.log(`  ${card.color}└────────────────────┘\x1b[0m`);
+        console.log(`\n  ${card.color}â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”\x1b[0m`);
+        console.log(`  ${card.color}â”‚      [ ${card.symbol} ]       â”‚\x1b[0m`);
+        console.log(`  ${card.color}â”‚    ${card.label.padEnd(14)}    â”‚\x1b[0m`);
+        console.log(`  ${card.color}â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜\x1b[0m`);
     }
 
     public showHexagram(manager: HexagramManager): void {
@@ -198,11 +198,11 @@ export class Renderer {
             [YaoState.SovereignEngine]: '\x1b[38;5;123m'
         };
 
-        console.log('\x1b[38;5;51m\n  ─── [ Current Strategic Archetype ] ───\x1b[0m');
+        console.log('\x1b[38;5;51m\n  â”€â”€â”€ [ Current Strategic Archetype ] â”€â”€â”€\x1b[0m');
         for (let i = 5; i >= 0; i--) {
             const line = lines[i]!;
-            const symbol = line.state === YaoState.YoungYang || line.state === YaoState.OldYang ? '━━━━━━━' : '━━━   ━━━';
-            const mark = line.state === YaoState.OldYang ? '◯' : line.state === YaoState.OldYin ? '✕' : ' ';
+            const symbol = line.state === YaoState.YoungYang || line.state === YaoState.OldYang ? 'â”â”â”â”â”â”â”' : 'â”â”â”   â”â”â”';
+            const mark = line.state === YaoState.OldYang ? 'â—¯' : line.state === YaoState.OldYin ? 'âœ•' : ' ';
             console.log(`  L${i + 1}: ${colors[line.state as YaoState] ?? '\x1b[0m'}${symbol} ${mark} \x1b[0m`);
         }
         console.log(`  \x1b[38;5;51mArchetype: ${interpretation.name} \x1b[0m`);
@@ -211,7 +211,7 @@ export class Renderer {
     }
 
     public showPlan(plan: OraclePlan): void {
-        console.log(`\x1b[38;5;51m\n  ─── [ My Thinking Process ] ───\x1b[0m`);
+        console.log(`\x1b[38;5;51m\n  â”€â”€â”€ [ My Thinking Process ] â”€â”€â”€\x1b[0m`);
         console.log(`  What I want to achieve: ${plan.goal}`);
         console.log(`  How I'll do it (${plan.steps.length} steps):`);
         plan.steps.forEach((step, idx) => {
@@ -233,58 +233,58 @@ export class Renderer {
         };
 
         const DOMAIN_ICONS: Record<SovereignDomain, string> = {
-            [SovereignDomain.CODE]: '💻',
-            [SovereignDomain.SYSTEM]: '⚙️',
-            [SovereignDomain.VISION]: '👁️',
-            [SovereignDomain.RESEARCH]: '🔍',
-            [SovereignDomain.FORGE]: '🔥',
-            [SovereignDomain.OBSERVE]: '📊',
-            [SovereignDomain.SOCIAL]: '🎭',
-            [SovereignDomain.MOTOR]: '🦾',
-            [SovereignDomain.SENSORY]: '📡',
+            [SovereignDomain.CODE]: 'ðŸ’»',
+            [SovereignDomain.SYSTEM]: 'âš™ï¸',
+            [SovereignDomain.VISION]: 'ðŸ‘ï¸',
+            [SovereignDomain.RESEARCH]: 'ðŸ”',
+            [SovereignDomain.FORGE]: 'ðŸ”¥',
+            [SovereignDomain.OBSERVE]: 'ðŸ“Š',
+            [SovereignDomain.SOCIAL]: 'ðŸŽ­',
+            [SovereignDomain.MOTOR]: 'ðŸ¦¾',
+            [SovereignDomain.SENSORY]: 'ðŸ“¡',
         };
 
         const color = DOMAIN_COLORS[to];
         const icon = DOMAIN_ICONS[to];
 
-        console.log(`\n  ${color}┌───────────────────────────────────────┐\x1b[0m`);
+        console.log(`\n  ${color}â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”\x1b[0m`);
         if (from) {
-            console.log(`  ${color}│  ${icon} Switching from ${from} to ${to} │\x1b[0m`);
+            console.log(`  ${color}â”‚  ${icon} Switching from ${from} to ${to} â”‚\x1b[0m`);
         } else {
-            console.log(`  ${color}│  ${icon} Entering ${to} Domain │\x1b[0m`);
+            console.log(`  ${color}â”‚  ${icon} Entering ${to} Domain â”‚\x1b[0m`);
         }
-        console.log(`  ${color}└───────────────────────────────────────┘\x1b[0m`);
+        console.log(`  ${color}â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜\x1b[0m`);
     }
 
     public showFallbackWarning(reason: string, targetModel: string, fallbackReason: string): void {
         const yellow = '\x1b[38;5;220m';
         const bold = '\x1b[1m';
 
-        console.log(`\n  ${yellow}${bold}┌──────────────────────────────────────────┐\x1b[0m`);
-        console.log(`  ${yellow}${bold}│  ! Switching to my cloud brain...        │\x1b[0m`);
-        console.log(`  ${yellow}${bold}├──────────────────────────────────────────┤\x1b[0m`);
-        console.log(`  ${yellow}│  Why: ${fallbackReason.substring(0, 30).padEnd(30)} │\x1b[0m`);
-        console.log(`  ${yellow}│  Using: ${targetModel.substring(0, 28).padEnd(28)} │\x1b[0m`);
-        console.log(`  ${yellow}${bold}└──────────────────────────────────────────┘\x1b[0m`);
+        console.log(`\n  ${yellow}${bold}â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”\x1b[0m`);
+        console.log(`  ${yellow}${bold}â”‚  ! Switching to my cloud brain...        â”‚\x1b[0m`);
+        console.log(`  ${yellow}${bold}â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤\x1b[0m`);
+        console.log(`  ${yellow}â”‚  Why: ${fallbackReason.substring(0, 30).padEnd(30)} â”‚\x1b[0m`);
+        console.log(`  ${yellow}â”‚  Using: ${targetModel.substring(0, 28).padEnd(28)} â”‚\x1b[0m`);
+        console.log(`  ${yellow}${bold}â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜\x1b[0m`);
     }
 
     public showDomainViolation(toolName: string, requiredDomain: SovereignDomain, activeDomain: SovereignDomain): void {
         const red = '\x1b[38;5;196m';
         const bold = '\x1b[1m';
 
-        console.log(`\n  ${red}${bold}┌──────────────────────────────────────────┐\x1b[0m`);
-        console.log(`  ${red}${bold}│  I'm sorry, I can't do that here.        │\x1b[0m`);
-        console.log(`  ${red}${bold}├──────────────────────────────────────────┤\x1b[0m`);
-        console.log(`  ${red}│  The tool "${toolName}" is off-limits.    │\x1b[0m`);
-        console.log(`  ${red}│  It belongs to the ${requiredDomain} domain.   │\x1b[0m`);
-        console.log(`  ${red}│  I'm currently working in ${activeDomain}.      │\x1b[0m`);
-        console.log(`  ${red}│                                          │\x1b[0m`);
-        console.log(`  ${red}│  Please ask for a domain switch first.   │\x1b[0m`);
-        console.log(`  ${red}${bold}└──────────────────────────────────────────┘\x1b[0m`);
+        console.log(`\n  ${red}${bold}â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”\x1b[0m`);
+        console.log(`  ${red}${bold}â”‚  I'm sorry, I can't do that here.        â”‚\x1b[0m`);
+        console.log(`  ${red}${bold}â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤\x1b[0m`);
+        console.log(`  ${red}â”‚  The tool "${toolName}" is off-limits.    â”‚\x1b[0m`);
+        console.log(`  ${red}â”‚  It belongs to the ${requiredDomain} domain.   â”‚\x1b[0m`);
+        console.log(`  ${red}â”‚  I'm currently working in ${activeDomain}.      â”‚\x1b[0m`);
+        console.log(`  ${red}â”‚                                          â”‚\x1b[0m`);
+        console.log(`  ${red}â”‚  Please ask for a domain switch first.   â”‚\x1b[0m`);
+        console.log(`  ${red}${bold}â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜\x1b[0m`);
     }
 
     public renderNeurologicalAudit(results: NodeHealth[]): void {
-        console.log('\x1b[38;5;51m\n  ─── [ System Nerve Center Audit ] ───\x1b[0m');
+        console.log('\x1b[38;5;51m\n  â”€â”€â”€ [ System Nerve Center Audit ] â”€â”€â”€\x1b[0m');
 
         const categories = [...new Set(results.map(r => r.category))];
 
@@ -297,8 +297,8 @@ export class Renderer {
                 if (node.status === 'DEGRADED') statusColor = '\x1b[38;5;220m';
                 if (node.status === 'OFFLINE') statusColor = '\x1b[38;5;196m';
 
-                const icon = node.status === 'ONLINE' ? '✔' : node.status === 'DEGRADED' ? '⚠' : '✘';
-                const yaoIcon = node.yaoState === 2 || node.yaoState === 0 ? '⚊' : '⚋';
+                const icon = node.status === 'ONLINE' ? 'âœ”' : node.status === 'DEGRADED' ? 'âš ' : 'âœ˜';
+                const yaoIcon = node.yaoState === 2 || node.yaoState === 0 ? 'âšŠ' : 'âš‹';
 
                 console.log(`    ${statusColor}${icon}\x1b[0m [${yaoIcon}] ${node.role.padEnd(18)} : ${statusColor}${node.status.padEnd(8)}\x1b[0m ${node.details || ''}`);
             }
@@ -308,6 +308,23 @@ export class Renderer {
         const total = results.length;
         this.gauge('System Integrity', online, total);
         console.log('');
+    }
+
+    public renderPedagogySync(stats: { 
+        totalMapsquares: number, 
+        linkedNpcs: number, 
+        totalNpcs: number,
+        zoneCoverage: number,
+        questLinks: number
+    }): void {
+        console.log('\x1b[38;5;51m\n  â”€â”€â”€ [ Sovereign 10/10 Global Truth Audit ] â”€â”€â”€\x1b[0m');
+        console.log(`  Mapsquares Synthesized : \x1b[38;5;46m${stats.totalMapsquares}\x1b[0m`);
+        console.log(`  Quest Grounding Links  : \x1b[38;5;220m${stats.questLinks}\x1b[0m`);
+        
+        this.gauge('NPC Semantic Match ', stats.linkedNpcs, stats.totalNpcs);
+        this.gauge('Spatial Zone Cover ', Math.round(stats.zoneCoverage * 100), 100);
+        
+        console.log(`\n  \x1b[38;5;123mStatus: Substrate Synchronized. Ready for high-fidelity simulation.\x1b[0m\n`);
     }
 
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
