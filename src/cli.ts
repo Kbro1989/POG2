@@ -64,7 +64,7 @@ import { SovereignConfig, loadConfig } from './config/SovereignConfig.js';
 import { Renderer } from './ui/Renderer.js';
 import { PathNormalizer } from './utils/PathNormalizer.js';
 import { DBMaintenance } from './utils/DBMaintenance.js';
-import { type Result, YaoState } from './core/models.js';
+import { type Result, YaoState, NPC, GameState, VarbitSnapshot, CompositeCondition, Item, SovereignAvatar, GameObject } from './core/models.js';
 import { HexagramManager } from './routing/HexagramManager.js';
 import { EntityLimb } from './limbs/technical/EntityLimb.js';
 import { PedagogyLimb } from './limbs/technical/PedagogyLimb.js';
@@ -82,8 +82,8 @@ import { getSovereignRoot, getRSMVCachePath, getCachePedagogyPath, getPipelineRo
 import { CacheForensicsLimb } from './limbs/spatial/CacheForensicsLimb.js';
 import { SystemTaxonomyLimb } from './limbs/spatial/SystemTaxonomyLimb.js';
 import { MaterialLimb } from './limbs/spatial/MaterialLimb.js';
+import { ArchaeologyEngine } from './limbs/spatial/ArchaeologyEngine.js';
 import { SpatialSovereigntyLimb } from './limbs/spatial/SpatialSovereigntyLimb.js';
-import { NPC, GameState, VarbitSnapshot, CompositeCondition, Item, SovereignAvatar } from './core/models.js';
 import { GameplaySovereigntyLimb } from './limbs/spatial/GameplaySovereigntyLimb.js';
 import { PrifddinasInterpreter } from './engines/gameplay/PrifddinasInterpreter.js';
 import { BarrowsInterpreter } from './engines/gameplay/BarrowsInterpreter.js';
@@ -135,6 +135,52 @@ function bootstrapWorkspace(renderer: Renderer): void {
         renderer.info(`ðŸ•¸ï¸ Sovereign Substrate: initialized ${createdCount} context files in current workspace.`);
     }
 }
+
+/**
+ * Tactical Mock State Generator
+ * Decodes situational context for authoritative spatial validation.
+ */
+function createMockGameState(options: any): GameState {
+    const context: GameState = {
+        plane: 0,
+        players: new Map<string, SovereignAvatar>(),
+        varbits: new Map<number, number>(),
+        npcMap: new Map<number, NPC>(),
+        npcSpatialIndex: new Map<string, NPC[]>(),
+        objectMap: new Map<number, GameObject>()
+    };
+
+    // Add a dummy avatar to hold situational state
+    const avatar: SovereignAvatar = {
+        id: 0,
+        name: 'Mock Player',
+        username: 'Mock',
+        x: 0, y: 0, plane: 0,
+        inventory: Array(28).fill(null),
+        bank: [],
+        wallet: {},
+        equipment: {},
+        skills: {},
+        quests: { points: 0, completedCount: 0, quests: {} }
+    };
+    context.players.set('Mock', avatar);
+
+    if (options.context) {
+        const pairs = options.context.split(',');
+        for (const pair of pairs) {
+            const [key, val] = pair.split('=');
+            if (key === 'inventory') {
+                const id = parseInt(val);
+                avatar.inventory[0] = { id, amount: 1 } as Item;
+            } else if (key.startsWith('varbit:')) {
+                const id = parseInt(key.split(':')[1]);
+                context.varbits.set(id, parseInt(val));
+            }
+        }
+    }
+    return context;
+}
+
 
 
 const logger = pino({
@@ -510,7 +556,7 @@ export async function main(): Promise<void> {
         .command('dbtables')
         .description('Extract Major 2 Config (dbtables/dbrows) into memory/pedagogy')
         .action(async () => {
-            renderer.info('ðŸ” Initiating System Taxonomy Extraction...');
+            renderer.info('🔍 Initiating System Taxonomy Extraction...');
             const configLimb = new SystemTaxonomyLimb();
             const res = await configLimb.extractSystemTaxonomy();
             if (res.ok) {
@@ -526,7 +572,7 @@ export async function main(): Promise<void> {
         .command('materials')
         .description('Extract Major 26 Materials into memory/pedagogy')
         .action(async () => {
-            renderer.info('ðŸ” Initiating Material Shader Extraction...');
+            renderer.info('🔍 Initiating Material Shader Extraction...');
             const materialLimb = new MaterialLimb();
             const res = await materialLimb.extractMaterials();
             if (res.ok) {
@@ -541,50 +587,60 @@ export async function main(): Promise<void> {
     const spatialSub = atlas.command('spatial').description('Sovereign Spatial Substrate commands');
 
     spatialSub
-        .command('grounding <x> <y> [plane]')
-        .description('Perform a pedagogical grounding check for a coordinate')
-        .action(async (xStr: string, yStr: string, planeStr: string | undefined) => {
-            const x = parseInt(xStr);
-            const y = parseInt(yStr);
-            const plane = planeStr ? parseInt(planeStr) : 0;
+        .command('grounding')
+        .description('Visualize Spatial Grounding Substrate')
+        .action(async () => {
+            renderer.info('🌍 Opening Sovereign Spatial Grounding Radar...');
+            const port = 4999;
             
-            const grounding = await SovereignGrounding.loadDefault();
-            const meta = grounding.getRegionMetadata(x, y, plane);
-            
-            renderer.info(`ðŸ“ Spatial Grounding for [${x}, ${y}, ${plane}]:`);
-            renderer.success(`   Region: ${meta.name} (Archetype: ${meta.archetype})`);
-            renderer.info(`   MapZone Center: ${JSON.stringify(meta.center)}`);
+            // Integrated Static Server for Grounding Radar
+            try {
+                const http = await import('http');
+                const fs = await import('fs');
+                const path = await import('path');
+                
+                const server = http.createServer((req, res) => {
+                    let filePath = join('public', req.url === '/' ? 'heatmap.html' : req.url!);
+                    if (!fs.existsSync(filePath)) {
+                        res.writeHead(404);
+                        res.end('Not Found');
+                        return;
+                    }
+                    const ext = path.extname(filePath);
+                    const contentType = ext === '.html' ? 'text/html' : 'application/json';
+                    res.writeHead(200, { 'Content-Type': contentType });
+                    fs.createReadStream(filePath).pipe(res);
+                });
+                
+                server.listen(port, () => {
+                    renderer.success(`Radar Active: http://localhost:${port}/heatmap.html`);
+                });
+            } catch (e) {
+                renderer.error(`Failed to start radar server: ${(e as Error).message}`);
+            }
         });
 
     spatialSub
-        .command('metrics <name>')
-        .description('Calculate high-fidelity 3D metrics for a named asset')
-        .action(async (name: string) => {
+        .command('metrics <target>')
+        .description('Analyze 3D Spatial Metrics (rsmv format)')
+        .action(async (target: string) => {
+            renderer.info(`📏 Performing Metric Forensic on: ${target}...`);
+            
+            // Re-routing to authoritative CacheLearningLimb for metrics
             const forensics = CacheForensicsLimb.getInstance();
             const learning = new CacheLearningLimb(getRSMVCachePath(), forensics, join(getSovereignRoot(), 'library', 'spatial'));
             
-            renderer.info(`ðŸ“ Calculating Spatial Metrics for: ${name}...`);
-            
-            // Resolve to model ID via forensics
-            const resolveRes = await forensics.crossReferenceItem(name);
-            if (!resolveRes.ok || resolveRes.value.rawModelIds.length === 0) {
-                renderer.error(`Could not resolve semantic name: ${name}`);
-                return;
-            }
-
-            const modelId = resolveRes.value.rawModelIds[0];
-            renderer.info(`Resolved ${name} to Model ID: ${modelId}. Initiating geometric forensics...`);
-
-            const res = await learning.learnSpatialModel('item', modelId);
-            if (res.ok) {
-                renderer.success(`Spatial metrics calculated for ${name}.`);
-                renderer.json(res.value.metrics);
-                
-                // Also trigger translation to GLTF for visual manifest
-                renderer.info('Generating universal GLTF manifest...');
-                await learning.translateToObj(name, modelId);
+            const resolveRes = await forensics.crossReferenceItem(target);
+            if (resolveRes.ok && resolveRes.value.rawModelIds.length > 0) {
+                const modelId = resolveRes.value.rawModelIds[0];
+                const modelRes = await learning.learnSpatialModel('item', modelId);
+                if (modelRes.ok) {
+                    renderer.json(modelRes.value.metrics);
+                } else {
+                    renderer.error(`Metric analysis failed: ${modelRes.error.message}`);
+                }
             } else {
-                renderer.error(`Spatial forensics failed: ${res.error.message}`);
+                renderer.error(`Could not resolve semantic name: ${target}`);
             }
         });
 
@@ -603,22 +659,24 @@ export async function main(): Promise<void> {
             await limb.initialize();
             await mechanical.initialize();
 
-            renderer.info(`ðŸ” Querying Spatial Logic at [${x}, ${y}, plane ${plane}]...`);
+            // Auto-load unified grounding if nearby
+            const msX = x >> 6;
+            const msZ = y >> 6;
+            await limb.loadUnifiedGrounding(msX, msZ);
+
+            renderer.info(`🔍 Querying Spatial Logic at [${x}, ${y}, plane ${plane}]...`);
             
             let walkable = false;
 
             if (options.context) {
-                // Build a tactical mock GameState for the query
                 const context = createMockGameState(options);
                 context.plane = plane;
 
-                // If follower is specified, place it on the target tile for testing
                 const followerMatch = options.context.match(/follower=(\d+)/);
                 if (followerMatch) {
                     const id = parseInt(followerMatch[1]);
                     const npc: NPC = { id, name: 'Mock Follower', x, y, plane, isFollower: true };
-                    const key = `${x},${y},${plane}`;
-                    context.npcSpatialIndex.set(key, [npc]);
+                    context.npcSpatialIndex.set(`${x},${y},${plane}`, [npc]);
                 }
 
                 walkable = await limb.isWalkableContextual(plane, x, y, context, mechanical);
@@ -626,164 +684,130 @@ export async function main(): Promise<void> {
                 walkable = limb.isWalkable(plane, x, y);
             }
 
-            // POG2 Autonomous Audit: Full tile diagnostic
             const audit = limb.auditTile(plane, x, y);
             const mask = limb.getLegacyMask(plane, x, y);
 
             if (walkable) {
-                renderer.success(`âœ… Coordinate [${x}, ${y}, ${plane}] is WALKABLE.`);
+                renderer.success(`✅ Coordinate [${x}, ${y}, ${plane}] is WALKABLE.`);
             } else {
                 let reason = "Blocked";
-
                 if (audit.collisionType === 'directional' && audit.directional) {
                     const dirs = audit.directional;
-                    const blocked = [
-                        !dirs.north ? 'N' : '', !dirs.south ? 'S' : '',
-                        !dirs.east ? 'E' : '', !dirs.west ? 'W' : ''
-                    ].filter(Boolean);
+                    const blocked = [!dirs.north ? 'N' : '', !dirs.south ? 'S' : '', !dirs.east ? 'E' : '', !dirs.west ? 'W' : ''].filter(Boolean);
                     reason = `Blocked Directionally (${blocked.join(',')})`;
-                    if (audit.npcOnlyBlocks?.length) {
-                        reason += ` | NPC-Only: ${audit.npcOnlyBlocks.join(',')}`;
-                    }
                 } else if ((mask & 0x200000) !== 0) reason = "Blocked by Terrain";
                 else if ((mask & 0x100) !== 0) reason = "Blocked by Object";
                 
-                // If it's walkable statically but blocked contextually
                 if (limb.isWalkable(plane, x, y) && !walkable) {
-                    reason = "Blocked by DYNAMIC ENTITY (Platypus/Follower)";
+                    reason = "Blocked by DYNAMIC ENTITY (Platypus/Follower/Grounded NPC)";
+                    // Check specifically for grounded NPC interference
+                    const groundedKey = `${x}_${y}_${plane}`;
+                    const grounded = (limb as any).groundedNPCs?.get(groundedKey);
+                    if (grounded?.length) {
+                        reason = `Blocked by GROUNDED NPC: ${grounded.map((n: any) => n.name).join(', ')}`;
+                    }
                 }
-
-                renderer.warn(`âŒ Coordinate [${x}, ${y}, ${plane}] is BLOCKED (${reason}). Mask: 0x${mask.toString(16)}`);
-            }
-
-            // POG2 audit data dump (machine-consumable)
-            if (audit.collisionType === 'directional') {
-                renderer.info(`ðŸ§¬ [POG2 AUDIT] Type: ${audit.collisionType} | Region: ${audit.region || 'unknown'}`);
-                renderer.info(`   N:${audit.directional?.north} S:${audit.directional?.south} E:${audit.directional?.east} W:${audit.directional?.west}`);
+                renderer.warn(`❌ Coordinate [${x}, ${y}, ${plane}] is BLOCKED (${reason}). Mask: 0x${mask.toString(16)}`);
             }
         });
 
     spatialSub
-        .command('observe <x> <z> [plane] [radius]')
-        .description('High-fidelity world observation with ASCII grid and pedagogical comparison')
-        .option('-d, --directionality', 'Show directional collision arrows (^v<>)')
-        .action(async (xStr: string, zStr: string, planeStr: string | undefined, radiusStr: string | undefined, options: any) => {
-            const x = parseInt(xStr);
-            const z = parseInt(zStr);
-            const plane = planeStr ? parseInt(planeStr) : 0;
-            const radius = radiusStr ? parseInt(radiusStr) : 5;
-            const directionality = !!options.directionality;
-            
+        .command('observe [x] [y] [plane]')
+        .description('Capture a live Spatial Observation lens snapshot')
+        .action(async (xStr, yStr, planeStr) => {
             const engine = new ObservationEngine();
-            renderer.info(`ðŸ“¡ Initiating Sovereign World Observation at [${x}, ${z}, plane ${plane}] (Radius: ${radius}, Directionality: ${directionality})...`);
+            const x = xStr ? parseInt(xStr) : 0;
+            const y = yStr ? parseInt(yStr) : 0;
+            const plane = planeStr ? parseInt(planeStr) : 0;
             
-            const initRes = await engine.initialize();
-            if (!initRes.ok) {
-                renderer.error(`Engine initialization failed: ${initRes.error.message}`);
-                return;
-            }
-
-            const res = await engine.observe(x, z, plane, radius, directionality);
+            renderer.info('🕶️ Initializing Observation Lens...');
+            await engine.initialize();
+            
+            const res = await engine.observe(x, y, plane, 10, true);
             if (res.ok) {
-                const report = res.value;
-                renderer.success(`ðŸ“ Observation Complete: ${report.regionName} (${report.archetype})`);
-                
-                // Print the ASCII Grid
-                console.log('\n--- WORLD COLLISION RADAR ---');
-                for (const row of report.grid) {
-                    let line = '  ';
-                    for (const tile of row) {
-                        let char = tile.label;
-                        // Add some basic coloring heuristics for the terminal
-                        if (char === 'P') line += `\x1b[36m${char}\x1b[0m `; // Cyan Player
-                        else if (char === 'X') line += `\x1b[31m${char}\x1b[0m `; // Red Blocked
-                        else if (char === '?') line += `\x1b[33m${char}\x1b[0m `; // Yellow Discrepancy
-                        else line += `${char} `; // Default .
-                    }
-                    console.log(line);
-                }
-                console.log('-----------------------------\n');
-                renderer.info(`Legend: . = Walkable | X = Blocked | P = Player | ^v<> = Wall/Object Blocking | ? = Discrepancy`);
+                renderer.success(`Observation Snapshot Complete for [${x}, ${y}, ${plane}]`);
+                renderer.json({ region: res.value.regionName, archetype: res.value.archetype });
+                // We could also print the grid here if desired
             } else {
                 renderer.error(`Observation failed: ${res.error.message}`);
             }
-            
-            engine.close();
         });
 
     spatialSub
-        .command('load <regionName>')
-        .description('Force load a spatial logic artifact into memory')
-        .action(async (regionName: string) => {
-            const limb = SpatialSovereigntyLimb.getInstance();
-            renderer.info(`ðŸ“¥ Loading spatial logic artifact: ${regionName}...`);
-            const res = await limb.loadLogic(regionName);
-            if (res.ok) {
-                renderer.success(`Successfully loaded ${regionName}_logic.json.`);
-            } else {
-                renderer.error(`Failed to load ${regionName}: ${res.error.message}`);
-            }
-        });
-
-    spatialSub
-        .command('play <minigame>')
-        .description('Launch the GameplaySovereigntyLimb REPL simulation for a minigame')
+        .command('load <minigame>')
+        .description('Load a Sovereign Logic module (Prifddinas, Barrows, etc.)')
         .action(async (minigame: string) => {
             const engine = GameplaySovereigntyLimb.getInstance();
+            renderer.info(`📦 Loading Sovereign Logic: ${minigame}...`);
             let module: any = null;
-
             if (minigame.toLowerCase() === 'prifddinas') module = new PrifddinasInterpreter();
             else if (minigame.toLowerCase() === 'barrows') module = new BarrowsInterpreter();
             else if (minigame.toLowerCase() === 'pestcontrol') module = new PestControlInterpreter();
             else {
-                // Try to load as a generic JSON logic file
-                try {
-                    module = new JsonLogicInterpreter(minigame);
-                } catch (e) {
-                    module = null;
-                }
+                try { module = new JsonLogicInterpreter(minigame); } catch (e) { module = null; }
             }
-            
             if (!module) {
                 renderer.error(`Unknown minigame or logic file '${minigame}'.`);
-                renderer.info(`Available interpreters: prifddinas, barrows, pestcontrol`);
-                renderer.info(`Or specify a JSON file in d:/sovereign/atlas/system/ (e.g., 'observatory_logic')`);
                 process.exit(1);
             }
-
-
             await engine.initialize();
             await engine.mountModule(module);
-            renderer.success(`[Engine] ${module.name} loaded and avatar spawned at [${engine.avatar.coord.x}, ${engine.avatar.coord.y}, ${engine.avatar.coord.plane}]`);
+            renderer.success(`[Engine] ${module.name} loaded.`);
+        });
+
+    spatialSub
+        .command('play <minigame>')
+        .description('Simulate a Sovereign Minigame logic module')
+        .action(async (minigame: string) => {
+            const engine = GameplaySovereigntyLimb.getInstance();
+            renderer.info(`🕹️ Mounting Sovereign Simulation: ${minigame}...`);
+            let module: any = null;
+            if (minigame.toLowerCase() === 'prifddinas') module = new PrifddinasInterpreter();
+            else if (minigame.toLowerCase() === 'barrows') module = new BarrowsInterpreter();
+            else if (minigame.toLowerCase() === 'pestcontrol') module = new PestControlInterpreter();
+            else {
+                try { module = new JsonLogicInterpreter(minigame); } catch (e) { module = null; }
+            }
+            if (!module) {
+                renderer.error(`Unknown minigame logic '${minigame}'.`);
+                process.exit(1);
+            }
+            await engine.initialize();
+            await engine.mountModule(module);
+            renderer.success(`[Simulator] ${module.name} active at [${engine.avatar.coord.x}, ${engine.avatar.coord.y}]`);
             
-            const rl = readline.createInterface({
-                input: process.stdin,
-                output: process.stdout
-            });
-
-            console.log(`\n--- POG2 SOVEREIGN GAMEPLAY SIMULATOR ---`);
-            console.log(`The clinical heart is beating (600ms). Type actions while ticks process.\n`);
-            console.log(`Actions: 'move north', 'talk to banker', 'trade'. Type 'exit' to quit.\n`);
-
+            const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
             const promptLoop = async () => {
-
                 const answer = await rl.question(`> `);
-                if (answer.toLowerCase() === 'exit') {
-                    engine.stopClock();
-                    rl.close();
-                    process.exit(0);
-                }
-                
+                if (answer.toLowerCase() === 'exit') { engine.stopClock(); rl.close(); process.exit(0); }
                 if (answer.trim() !== '') {
                     const actionRes = await engine.pushAction(answer);
                     console.log(`\n${actionRes}`);
                 }
-
                 promptLoop();
             };
-
             promptLoop();
         });
+
+    spatialSub
+        .command('archaeology')
+        .description('Execute a high-fidelity forensic scan for grounded objects and kinetic entities')
+        .option('-k, --keywords <list>', 'Comma-separated keywords to scan for', 'mouse toy,platypus,sextant,smuggler,patrol,bob,raptor,victoria,aereck')
+        .action(async (options: any) => {
+            renderer.info('🕵️‍♂️ Initiating Sovereign Pathing Archaeology...');
+            const engine = new ArchaeologyEngine();
+            const keywords = options.keywords.split(',').map((k: string) => k.trim());
+            const report = await engine.runAudit(keywords);
+            renderer.success('Archaeology Scan Complete.');
+            renderer.info(`   Scanned: ${report.counts.total_objects} objects, ${report.counts.total_npcs} NPCs.`);
+            renderer.info(`   Grounded: ${report.counts.grounded_npcs} NPCs in ${report.counts.unified_mapsquares} mapsquares.`);
+            if (report.hits.length > 0) {
+                renderer.success(`Found ${report.hits.length} kinetic/transport hits.`);
+                renderer.json(report.hits.slice(0, 5));
+            }
+            renderer.info(`Full report generated in pathing_theory directory.`);
+        });
+
 
     const pedagogySub = atlas.command('pedagogy').description('Sovereign Pedagogical Substrate commands');
 

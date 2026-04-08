@@ -1,4 +1,4 @@
-﻿import { Provenance } from './models.js';
+import { Provenance } from './models.js';
 
 /**
  * Sovereign Grounding Layer â€” Option C: Manifest Architecture.
@@ -17,6 +17,8 @@ export interface LineageDelta {
 export type AuthorityLevel = 'ABSOLUTE' | 'DERIVED' | 'EXPERIMENTAL';
 
 export interface GroundingEntry {
+    readonly id?: string;        // Elevated identity for hot-path indexing
+    readonly coord?: any;        // Elevated spatial truth (WorldCoord format)
     readonly pedigree: string;   // Path to original D:/sovereign/memory/pedagogy/*.json
     readonly authorityLevel: AuthorityLevel;
     readonly provenance?: Provenance;

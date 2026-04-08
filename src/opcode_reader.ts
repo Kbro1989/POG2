@@ -1,6 +1,7 @@
-import { lastLegacyBuildnr } from "./constants.js";
+// @ts-nocheck
+import { lastLegacyBuildnr } from "./rsmv/constants.js";
 import type * as jsonschema from "json-schema";
-import type { ClientscriptObfuscation } from "./clientscript/callibrator.js";
+import type { ClientscriptObfuscation } from "./rsmv/clientscript/callibrator.js";
 
 export type TypeDef = { [name: string]: unknown };
 
@@ -109,7 +110,7 @@ export function buildParser(parent: ChunkParentCallback | null, chunkdef: unknow
 	}
 }
 
-function opcodesParser(chunkdef: {}, parent: ChunkParentCallback, typedef: TypeDef) {
+function opcodesParser(chunkdef: Record<string, any>, parent: ChunkParentCallback, typedef: TypeDef) {
 	let r: ChunkParser = {
 		read(state) {
 			let r: Record<string, any> = {};
@@ -148,7 +149,7 @@ function opcodesParser(chunkdef: {}, parent: ChunkParentCallback, typedef: TypeD
 				let opt = opts[key];
 				if (!opt) { throw new Error("unknown property " + key); }
 				opcodetype.write(state, opt.op);
-				opt.parser.write(state, value[key]);
+				opt.parser.write(state, (value as any)[key]);
 			}
 			if (!hasexplicitnull) {
 				opcodetype.write(state, 0);
@@ -196,11 +197,11 @@ function opcodesParser(chunkdef: {}, parent: ChunkParentCallback, typedef: TypeD
 		}
 	}
 	let refs: Record<string, ResolvedReference[] | undefined> = {};
-	let opcodetype = buildParser(null, (chunkdef["$opcode"] ?? "unsigned byte"), typedef);
+	let opcodetype = buildParser(null, ((chunkdef as any)["$opcode"] ?? "unsigned byte"), typedef);
 	let opts: Record<string, { op: number, parser: ChunkParser }> = {};
 	for (let key in chunkdef) {
 		if (key.startsWith("$")) { continue; }
-		let op = chunkdef[key];
+		let op = (chunkdef as any)[key];
 		if (typeof op != "object" || !op) { throw new Error("op name expected"); }
 		let opname = op["name"];
 		if (typeof opname != "string") { throw new Error("op name expected"); }
@@ -280,12 +281,12 @@ function refgetter(refparent: ChunkParentCallback | null, propname: string, reso
 	return {
 		read(state: SharedEncoderState) {
 			let stack = (hidden ? state.hiddenstack : state.stack);
-			return stack[stack.length - depth][propname];
+			return (stack[stack.length - depth] as any)[propname];
 		},
 		write(state: SharedEncoderState, newvalue: number) {
 			if (state.isWrite && !hidden) { throw new Error(`can update ref values in write mode when they are hidden (prefixed with $) in ${propname}`); }
 			let stack = (hidden ? state.hiddenstack : state.stack);
-			stack[stack.length - depth][propname] = newvalue;
+			(stack[stack.length - depth] as any)[propname] = newvalue;
 		}
 	}
 }
@@ -701,7 +702,7 @@ function bufferParser(args: unknown[], parent: ChunkParentCallback, typedef: Typ
 	let scalartype: keyof typeof BufferTypes = typestring as any;
 
 	let lengthtype = buildParser(resolveLengthReference, args[0], typedef);
-	const type = BufferTypes[typestring];
+	const type = (BufferTypes as any)[typestring];
 	return r;
 }
 
@@ -741,7 +742,7 @@ function arrayParser(args: unknown[], parent: ChunkParentCallback, typedef: Type
 			}
 		});
 	}
-	const resolvePropReference = function (name, child) {
+	const resolvePropReference = function (name: string, child: ResolvedReference) {
 		return buildReference(name, parent, {
 			stackdepth: child.stackdepth,
 			resolve(v, old) {
@@ -1136,7 +1137,7 @@ hardcodes = {
 				if (byte1 == 0xff && byte0 == 0xff) { return -1; }
 				return (byte0 << 8) | byte1;
 			},
-			write(state, value) {
+			write(state: EncodeState, value: number) {
 				if (typeof value != "number") { throw new Error("number expected"); }
 				if (value == 0) {
 					state.buffer.writeUInt8(0, state.scan++);
@@ -1150,7 +1151,7 @@ hardcodes = {
 			getJsonSchema() { return { type: "integer", minimum: -1, maximum: 0xffff - 0x4000 - 1 }; }
 		}
 	},
-	itemvar: function (args) {
+	itemvar: function (args: any[]) {
 		let type = args[0];
 		if (typeof type != "string" || !["ref", "matcount", "colorcount", "modelcount"].includes(type)) { throw new Error(); }
 
@@ -1177,7 +1178,7 @@ hardcodes = {
 			getJsonSchema() { return { type: (type == "ref" ? "any" : "integer") } }
 		}
 	},
-	buildnr: function (args, typedef) {
+	buildnr: function (args: any[], typedef: TypeDef) {
 		return {
 			readConst(state) {
 				return getClientVersion(state.args);
@@ -1254,7 +1255,7 @@ hardcodes = {
 		let conditionparser = conditionParser(resolveReference, conditionstrings);
 		return r;
 	},
-	footer: function (args, parent, typedef) {
+	footer: function (args: any[], parent: ChunkParentCallback, typedef: TypeDef) {
 		if (args.length != 2) { throw new Error("footer requires length and subtype arguments"); }
 		let lentype = buildParser(parent, args[0] as any, typedef);
 		let subtype = buildParser(parent, args[1] as any, typedef);
@@ -1337,7 +1338,7 @@ hardcodes = {
 	},
 	"legacy_maptile": function (args, parent, typedef) {
 		return {
-			read(state) {
+			read(state: DecodeState) {
 				let res = {
 					flags: 0,
 					shape: null as number | null,

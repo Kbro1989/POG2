@@ -1,0 +1,47 @@
+{
+  "chunkX": 0,
+  "chunkZ": 56,
+  "worldX": 0,
+  "worldZ": 3584,
+  "mapzone": null,
+  "mapzoneId": null,
+  "objects": [],
+  "tileFlags": [],
+  "objectDefs": {},
+  "_meta": {
+    "source": "C:\\ProgramData\\Jagex\\RuneScape",
+    "extractedAt": "2026-04-03T23:41:37.500Z",
+    "engine": "SovereignWorldExtract v37.0"
+  },
+  "pedagogy": {
+    "npcs": [
+      {
+        "npcName": "Enum 1195 Node 85",
+        "worldX": 56,
+        "worldZ": 3634,
+        "plane": 0,
+        "confidence": 1,
+        "id": "db_enum_1195_85"
+      },
+      {
+        "npcName": "Enum 5306 Node 10",
+        "worldX": 0,
+        "worldZ": 3584,
+        "plane": 0,
+        "confidence": 1,
+        "id": "db_enum_5306_10"
+      },
+      {
+        "npcName": "Enum 8529 Node 1",
+        "worldX": 1,
+        "worldZ": 3616,
+        "plane": 0,
+        "confidence": 1,
+        "id": "db_enum_8529_1"
+      }
+    ],
+    "zones": [],
+    "lastBridgeSync": 1775614024648,
+    "source": "Sovereign Manifest"
+  }
+}

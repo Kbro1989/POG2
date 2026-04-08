@@ -502,6 +502,52 @@ export class CacheForensicsLimb {
         };
     }
 
+    public async getInterfaceDetails(id: number): Promise<Result<any>> {
+        const res = await rsmvBridge.getInterface(id);
+        if (!res.ok) return err(res.error);
+        return ok(res.value);
+    }
+
+    /**
+     * getInterfaceRelianceGraph - Deep dependency analysis of Archive 3.
+     */
+    public async getInterfaceRelianceGraph(id: number): Promise<Result<{ id: number, reliance: any[] }>> {
+        const details = await this.getInterfaceDetails(id);
+        if (!details.ok) return err(details.error);
+
+        const reliance: any[] = [];
+        const raw = details.value.raw;
+
+        // Recursive scanner for interface components
+        const scan = (node: any) => {
+            if (!node) return;
+            
+            // 1. Sprite Reliance (Archive 8)
+            if (node.spriteid !== undefined && node.spriteid !== -1) {
+                reliance.push({ type: 'SPRITE', id: node.spriteid, source: 'ARCHIVE_8' });
+            }
+            // 2. Model Reliance (Archive 54)
+            if (node.modelid !== undefined && node.modelid !== -1) {
+                reliance.push({ type: 'MODEL', id: node.modelid, source: 'ARCHIVE_54' });
+            }
+            // 3. Animation Reliance (Archive 54)
+            if (node.animid !== undefined && node.animid !== -1) {
+                reliance.push({ type: 'SEQUENCE', id: node.animid, source: 'ARCHIVE_54' });
+            }
+            // 4. Font Reliance (Archive 2)
+            if (node.fontid !== undefined && node.fontid !== -1) {
+                reliance.push({ type: 'FONT', id: node.fontid, source: 'ARCHIVE_2_G13' });
+            }
+
+            if (node.children) {
+                for (const child of node.children) scan(child);
+            }
+        };
+
+        scan(raw);
+        return ok({ id, reliance });
+    }
+
     /**
      * queryTaxonomy - Interface for CLI tools.
      */

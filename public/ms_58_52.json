@@ -1,5 +1,9 @@
 {
   "regionId": 14900,
+  "chunkX": 58,
+  "chunkZ": 52,
+  "worldX": 3712,
+  "worldZ": 3328,
   "rx": 58,
   "ry": 52,
   "metadata": {
@@ -9,5 +13,509 @@
     "synthesized_at": "2026-04-07T16:00:42.587Z"
   },
   "entities": [],
-  "collision_matrix": {}
+  "collision_matrix": {},
+  "pedagogy": {
+    "npcs": [],
+    "zones": [
+      {
+        "internal_name": "main",
+        "name": "RuneScape Surface",
+        "center": 52956320,
+        "unknown_1": 8949917,
+        "show": true,
+        "default_zoom": 75,
+        "unknown_2": 2,
+        "bounds": [
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 5056,
+              "zstart": 2240,
+              "xend": 5247,
+              "zend": 2495
+            },
+            "dst": {
+              "xstart": 3584,
+              "zstart": 4224,
+              "xend": 3775,
+              "zend": 4479
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 5248,
+              "zstart": 2048,
+              "xend": 5759,
+              "zend": 2623
+            },
+            "dst": {
+              "xstart": 3776,
+              "zstart": 4032,
+              "xend": 4287,
+              "zend": 4607
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 3584,
+              "zstart": 2816,
+              "xend": 3903,
+              "zend": 3711
+            },
+            "dst": {
+              "xstart": 3584,
+              "zstart": 2816,
+              "xend": 3903,
+              "zend": 3711
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2752,
+              "zstart": 2496,
+              "xend": 3583,
+              "zend": 4031
+            },
+            "dst": {
+              "xstart": 2752,
+              "zstart": 2496,
+              "xend": 3583,
+              "zend": 4031
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2560,
+              "zstart": 2496,
+              "xend": 2751,
+              "zend": 4095
+            },
+            "dst": {
+              "xstart": 2560,
+              "zstart": 2496,
+              "xend": 2751,
+              "zend": 4095
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2432,
+              "zstart": 2752,
+              "xend": 2559,
+              "zend": 4095
+            },
+            "dst": {
+              "xstart": 2432,
+              "zstart": 2752,
+              "xend": 2559,
+              "zend": 4095
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2432,
+              "zstart": 9024,
+              "xend": 2559,
+              "zend": 9151
+            },
+            "dst": {
+              "xstart": 2432,
+              "zstart": 2624,
+              "xend": 2559,
+              "zend": 2751
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2432,
+              "zstart": 2496,
+              "xend": 2559,
+              "zend": 2623
+            },
+            "dst": {
+              "xstart": 2432,
+              "zstart": 2496,
+              "xend": 2559,
+              "zend": 2623
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2368,
+              "zstart": 2496,
+              "xend": 2431,
+              "zend": 3967
+            },
+            "dst": {
+              "xstart": 2368,
+              "zstart": 2496,
+              "xend": 2431,
+              "zend": 3967
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2240,
+              "zstart": 2624,
+              "xend": 2367,
+              "zend": 2751
+            },
+            "dst": {
+              "xstart": 2240,
+              "zstart": 2624,
+              "xend": 2367,
+              "zend": 2751
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2240,
+              "zstart": 3968,
+              "xend": 2431,
+              "zend": 4159
+            },
+            "dst": {
+              "xstart": 2240,
+              "zstart": 3968,
+              "xend": 2431,
+              "zend": 4159
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2048,
+              "zstart": 3520,
+              "xend": 2367,
+              "zend": 3967
+            },
+            "dst": {
+              "xstart": 2048,
+              "zstart": 3520,
+              "xend": 2367,
+              "zend": 3967
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2240,
+              "zstart": 3456,
+              "xend": 2367,
+              "zend": 3519
+            },
+            "dst": {
+              "xstart": 2240,
+              "zstart": 3456,
+              "xend": 2367,
+              "zend": 3519
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 4544,
+              "zstart": 2752,
+              "xend": 4607,
+              "zend": 2815
+            },
+            "dst": {
+              "xstart": 2176,
+              "zstart": 3456,
+              "xend": 2239,
+              "zend": 3519
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2048,
+              "zstart": 3456,
+              "xend": 2175,
+              "zend": 3519
+            },
+            "dst": {
+              "xstart": 2048,
+              "zstart": 3456,
+              "xend": 2175,
+              "zend": 3519
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2304,
+              "zstart": 3264,
+              "xend": 2367,
+              "zend": 3455
+            },
+            "dst": {
+              "xstart": 2304,
+              "zstart": 3264,
+              "xend": 2367,
+              "zend": 3455
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 4480,
+              "zstart": 2560,
+              "xend": 4671,
+              "zend": 2751
+            },
+            "dst": {
+              "xstart": 2112,
+              "zstart": 3264,
+              "xend": 2303,
+              "zend": 3455
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2048,
+              "zstart": 3392,
+              "xend": 2111,
+              "zend": 3455
+            },
+            "dst": {
+              "xstart": 2048,
+              "zstart": 3392,
+              "xend": 2111,
+              "zend": 3455
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2048,
+              "zstart": 3264,
+              "xend": 2111,
+              "zend": 3327
+            },
+            "dst": {
+              "xstart": 2048,
+              "zstart": 3328,
+              "xend": 2111,
+              "zend": 3391
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2048,
+              "zstart": 3264,
+              "xend": 2111,
+              "zend": 3327
+            },
+            "dst": {
+              "xstart": 2048,
+              "zstart": 3264,
+              "xend": 2111,
+              "zend": 3327
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 2048,
+              "zstart": 3008,
+              "xend": 2367,
+              "zend": 3263
+            },
+            "dst": {
+              "xstart": 2048,
+              "zstart": 3008,
+              "xend": 2367,
+              "zend": 3263
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 1728,
+              "zstart": 3072,
+              "xend": 2047,
+              "zend": 3327
+            },
+            "dst": {
+              "xstart": 2048,
+              "zstart": 2752,
+              "xend": 2367,
+              "zend": 3007
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 3840,
+              "zstart": 3840,
+              "xend": 3903,
+              "zend": 4095
+            },
+            "dst": {
+              "xstart": 1984,
+              "zstart": 3840,
+              "xend": 2047,
+              "zend": 4095
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 1984,
+              "zstart": 3776,
+              "xend": 2047,
+              "zend": 3839
+            },
+            "dst": {
+              "xstart": 1984,
+              "zstart": 3776,
+              "xend": 2047,
+              "zend": 3839
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 3840,
+              "zstart": 3264,
+              "xend": 3903,
+              "zend": 3775
+            },
+            "dst": {
+              "xstart": 1984,
+              "zstart": 3264,
+              "xend": 2047,
+              "zend": 3775
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 3840,
+              "zstart": 3328,
+              "xend": 3903,
+              "zend": 3903
+            },
+            "dst": {
+              "xstart": 1984,
+              "zstart": 2496,
+              "xend": 2047,
+              "zend": 3071
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 3840,
+              "zstart": 3264,
+              "xend": 3903,
+              "zend": 4095
+            },
+            "dst": {
+              "xstart": 1920,
+              "zstart": 3264,
+              "xend": 1983,
+              "zend": 4095
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 3840,
+              "zstart": 3328,
+              "xend": 3903,
+              "zend": 3839
+            },
+            "dst": {
+              "xstart": 1920,
+              "zstart": 2496,
+              "xend": 1983,
+              "zend": 3007
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 3840,
+              "zstart": 3264,
+              "xend": 3903,
+              "zend": 4095
+            },
+            "dst": {
+              "xstart": 1856,
+              "zstart": 3264,
+              "xend": 1919,
+              "zend": 4095
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 3840,
+              "zstart": 3328,
+              "xend": 3903,
+              "zend": 3903
+            },
+            "dst": {
+              "xstart": 1856,
+              "zstart": 2496,
+              "xend": 1919,
+              "zend": 3071
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 1344,
+              "zstart": 5504,
+              "xend": 1407,
+              "zend": 5567
+            },
+            "dst": {
+              "xstart": 1920,
+              "zstart": 3008,
+              "xend": 1983,
+              "zend": 3071
+            }
+          },
+          {
+            "plane": 0,
+            "src": {
+              "xstart": 1280,
+              "zstart": 5568,
+              "xend": 1471,
+              "zend": 5759
+            },
+            "dst": {
+              "xstart": 1856,
+              "zstart": 3072,
+              "xend": 2047,
+              "zend": 3263
+            }
+          }
+        ],
+        "$schema": ".schema-mapzones.json",
+        "unpackedCenter": {
+          "x": 3232,
+          "z": 3232,
+          "plane": 0
+        }
+      }
+    ],
+    "lastBridgeSync": 1775614024653,
+    "source": "Sovereign Manifest"
+  }
 }

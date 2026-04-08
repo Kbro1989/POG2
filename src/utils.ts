@@ -38,8 +38,8 @@ export function checkObject<T extends { [key: string]: "string" | "number" | "bo
 	if (!obj || typeof obj != "object") { return null; }
 	let res: { [key in keyof T]: T[key] extends "string" ? string : T[key] extends "number" ? T[key] extends "boolean" ? boolean : number : never } = {} as any;
 	for (let [key, type] of Object.entries(props)) {
-		if (!(key in obj) && typeof obj[key] != type) { return null; }
-		res[key as keyof T] = obj[key];
+		if (!(key in (obj as any)) || typeof (obj as any)[key] != type) { return null; }
+		res[key as keyof T] = (obj as any)[key];
 	}
 	return res;
 }
@@ -58,7 +58,7 @@ export function cacheFilenameHash(name: string, oldhash: boolean) {
 	}
 	return hash >>> 0;//cast to u32
 }
-globalThis.cacheFilenameHash = cacheFilenameHash;
+(globalThis as any).cacheFilenameHash = cacheFilenameHash;
 
 export function stringToMapArea(str: string) {
 	let [x, z, xsize, zsize] = str.split(/[,\.\/:;]/).map(n => +n);
@@ -150,7 +150,7 @@ export function rsmarkupToSafeHtml(str: string) {
 				throw new Error("non-autocloseable token left unclosed " + token);
 			}
 		}
-	} catch (e) {
+	} catch (e: any) {
 		console.log(e.message);
 		res = escapeHTML(str);
 	}
@@ -196,7 +196,7 @@ export const Stream: { new(buf: Buffer): Stream, prototype: Stream } = function 
 		return res;
 	}
 	this.tee = function () {
-		return new Stream(data, scan);
+		return new (Stream as any)(data, scan);
 	}
 	this.eof = function () {
 		if (scan > data.length) { throw new Error("reading past end of buffer"); }
@@ -405,7 +405,7 @@ export function RGB2HSL(r: number, g: number, b: number): [number, number, numbe
 	return [h, s, l];
 }
 
-globalThis.hsl = (v: number) => HSL2RGB(packedHSL2HSL(v));
+(globalThis as any).hsl = (v: number) => HSL2RGB(packedHSL2HSL(v));
 
 
 export function HSL2packHSL(h: number, s: number, l: number) {
@@ -562,7 +562,7 @@ export class IterableWeakMap<K extends WeakKey, V> {
 	refSet = new Set<WeakRef<K>>();
 	finalizationGroup = new FinalizationRegistry(IterableWeakMap.cleanup);
 
-	static cleanup({ set, ref }) {
+	static cleanup({ set, ref }: { set: Set<any>, ref: WeakRef<any> }) {
 		set.delete(ref);
 	}
 

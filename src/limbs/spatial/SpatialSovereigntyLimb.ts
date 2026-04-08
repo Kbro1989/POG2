@@ -68,6 +68,7 @@ export class SpatialSovereigntyLimb {
     private readonly atlasDir: string;
     private loadedMatrices: Map<string, SpatialLogicArtifact> = new Map();
     private loadedMapsquares: Map<string, { flags: Uint16Array, heights: Int16Array }> = new Map();
+    private groundedNPCs: Map<string, any[]> = new Map(); // "x_z_plane" -> npc objects
     private gal: GeometryAnnotationLayer;
 
     public static getInstance(): SpatialSovereigntyLimb {
@@ -200,10 +201,38 @@ export class SpatialSovereigntyLimb {
             }
 
             this.loadedMapsquares.set(key, { flags, heights });
+            
+            // Also attempt to load unified grounding (NPCs) if available
+            await this.loadUnifiedGrounding(x, z);
+
             logger.info({ x, z }, 'Ingested Authoritative Mapsquare Fragment (v41 Merged).');
             return ok(undefined);
         } catch (error) {
             return err(error as Error);
+        }
+    }
+
+    /**
+     * loadUnifiedGrounding - Loads NPC spawns from unified_extract.
+     */
+    public async loadUnifiedGrounding(x: number, z: number): Promise<void> {
+        const unifiedDir = path.join(this.atlasDir, 'unified_extract');
+        const fullPath = path.join(unifiedDir, `ms_${x}_${z}.json`);
+
+        if (!fs.existsSync(fullPath)) return;
+
+        try {
+            const data = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+            if (data.pedagogy?.npcs) {
+                for (const npc of data.pedagogy.npcs) {
+                    const key = `${npc.worldX}_${npc.worldZ}_${npc.plane || 0}`;
+                    if (!this.groundedNPCs.has(key)) this.groundedNPCs.set(key, []);
+                    this.groundedNPCs.get(key)!.push(npc);
+                }
+                logger.info({ x, z, count: data.pedagogy.npcs.length }, 'Grounded NPCs indexed from Unified Extract.');
+            }
+        } catch (e) {
+            logger.warn({ x, z }, 'Failed to load unified grounding.');
         }
     }
 
@@ -373,13 +402,22 @@ export class SpatialSovereigntyLimb {
         // 2. Resolve coordinate key for spatial index
         const coordKey = `${x},${y},${plane}`;
 
-        // 3. Check for dynamic NPCs (Followers, etc.)
+        // 3. Check for dynamic NPCs (Followers, etc.) from live context
         const npcsOnTile = context.npcSpatialIndex.get(coordKey) || [];
         for (const npc of npcsOnTile) {
             const sideEffect = await mechanical.getSpatialSideEffects(npc.id, context);
             if (sideEffect?.blocks_movement) {
                 return false; // Blocked by dynamic entity
             }
+        }
+
+        // 3b. Check for GROUNDED NPCs (Sovereign Truth)
+        const groundedKey = `${x}_${y}_${plane}`;
+        const groundedHits = this.groundedNPCs.get(groundedKey);
+        if (groundedHits && groundedHits.length > 0) {
+            // In Sovereign space, grounded NPCs are authoritative blockers unless they are 'ghosts'
+            // We'll assume they block movement for now.
+            return false; 
         }
 
         // 4. Check for dynamic Objects (Locked doors, etc.)

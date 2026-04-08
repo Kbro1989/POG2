@@ -127,7 +127,7 @@ export class CNSGodheadPulseVolley {
             const pendingCommands = this.switchboard!.drainAdminQueue();
             
             // Phase 32: Tick-Accurate World Simulation (7-Step Flow)
-            await this.processTickFrame(pendingCommands);
+            await this.pulse(pendingCommands);
 
             // 3. Post-Actuation Verification (Spatial Vision)
             if (this.substrateState === SubstrateState.ONLINE && this.vision) {
@@ -187,9 +187,10 @@ export class CNSGodheadPulseVolley {
 
 
     /**
-     * processTickFrame - The 7-step deterministic execution loop.
+     * pulse - The 7-step deterministic execution loop.
      */
-    private async processTickFrame(commands: AdminCommand[]): Promise<void> {
+    public async pulse(commands: AdminCommand[]): Promise<void> {
+        this.resolve();
         // 1. Collect & Normalize
         const events = commands.map(cmd => this.createTickEvent(cmd));
 

@@ -1,0 +1,450 @@
+{
+  "version": "1.0.0",
+  "generated": "2026-04-08T01:22:09.587Z",
+  "source": "RS3 Wiki + Jagex Cache Cross-Reference",
+  "region": "Lumbridge",
+  "entities": [
+    {
+      "id": "npc_0",
+      "title": "Hans",
+      "npcId": 0,
+      "coord": {
+        "x": 3222,
+        "y": 3218,
+        "plane": 0
+      },
+      "actions": [
+        "Talk to",
+        "Buy veteran capes"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "Lumbridge Castle courtyard, wanders",
+        "isLandmark": false,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "npc_456",
+      "title": "Father Aereck",
+      "npcId": 456,
+      "coord": {
+        "x": 3243,
+        "y": 3210,
+        "plane": 0
+      },
+      "actions": [
+        "Talk to",
+        "View Gravestones"
+      ],
+      "grounded": {
+        "confidence": 1,
+        "source": "cache+wiki"
+      },
+      "meta": {
+        "wikiNote": "Lumbridge Church",
+        "isLandmark": false,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "npc_519",
+      "title": "Bob",
+      "npcId": 519,
+      "coord": {
+        "x": 3233,
+        "y": 3207,
+        "plane": 0
+      },
+      "actions": [
+        "Talk to",
+        "Trade",
+        "Repair-all"
+      ],
+      "grounded": {
+        "confidence": 1,
+        "source": "cache+wiki"
+      },
+      "meta": {
+        "wikiNote": "Bob's Brilliant Axes",
+        "isLandmark": false,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "npc_520",
+      "title": "Shopkeeper",
+      "npcId": 520,
+      "coord": {
+        "x": 3211,
+        "y": 3247,
+        "plane": 0
+      },
+      "actions": [
+        "Talk to",
+        "Trade"
+      ],
+      "grounded": {
+        "confidence": 1,
+        "source": "cache+wiki"
+      },
+      "meta": {
+        "wikiNote": "Lumbridge General Store",
+        "isLandmark": false,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "npc_7872",
+      "title": "Victoria",
+      "npcId": 7872,
+      "coord": {
+        "x": 3230,
+        "y": 3212,
+        "plane": 0
+      },
+      "actions": [
+        "Talk to"
+      ],
+      "grounded": {
+        "confidence": 1,
+        "source": "cache+wiki"
+      },
+      "meta": {
+        "wikiNote": "Near Bob's shop",
+        "isLandmark": false,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "npc_3295",
+      "title": "Duke Horacio",
+      "npcId": 3295,
+      "coord": {
+        "x": 3210,
+        "y": 3221,
+        "plane": 1
+      },
+      "actions": [
+        "Talk to"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "Lumbridge Castle, 1st floor",
+        "isLandmark": false,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "npc_4899",
+      "title": "Cook",
+      "npcId": 4899,
+      "coord": {
+        "x": 3206,
+        "y": 3214,
+        "plane": 0
+      },
+      "actions": [
+        "Talk to"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "Lumbridge Castle kitchen",
+        "isLandmark": false,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "npc_2238",
+      "title": "Doomsayer",
+      "npcId": 2238,
+      "coord": {
+        "x": 3232,
+        "y": 3239,
+        "plane": 0
+      },
+      "actions": [
+        "Talk to"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "North of Lumbridge Castle",
+        "isLandmark": false,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "npc_8867",
+      "title": "Beefy Bill",
+      "npcId": 8867,
+      "coord": {
+        "x": 3178,
+        "y": 3262,
+        "plane": 0
+      },
+      "actions": [
+        "Talk to",
+        "Bank"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "Near wheat field west",
+        "isLandmark": false,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "npc_7941",
+      "title": "Xenia",
+      "npcId": 7941,
+      "coord": {
+        "x": 3244,
+        "y": 3199,
+        "plane": 0
+      },
+      "actions": [
+        "Talk to"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "Blood Pact quest start",
+        "isLandmark": false,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "npc_4405",
+      "title": "Goblin",
+      "npcId": 4405,
+      "coord": {
+        "x": 3247,
+        "y": 3234,
+        "plane": 0
+      },
+      "actions": [
+        "Attack"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "East of River Lum",
+        "isLandmark": false,
+        "combatLevel": 5
+      }
+    },
+    {
+      "id": "npc_4405",
+      "title": "Goblin",
+      "npcId": 4405,
+      "coord": {
+        "x": 3252,
+        "y": 3228,
+        "plane": 0
+      },
+      "actions": [
+        "Attack"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "East of River Lum",
+        "isLandmark": false,
+        "combatLevel": 5
+      }
+    },
+    {
+      "id": "npc_4405",
+      "title": "Goblin",
+      "npcId": 4405,
+      "coord": {
+        "x": 3260,
+        "y": 3226,
+        "plane": 0
+      },
+      "actions": [
+        "Attack"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "East of River Lum",
+        "isLandmark": false,
+        "combatLevel": 5
+      }
+    },
+    {
+      "id": "npc_4707",
+      "title": "Melee tutor",
+      "npcId": 4707,
+      "coord": {
+        "x": 3214,
+        "y": 3237,
+        "plane": 0
+      },
+      "actions": [
+        "Talk to"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "Combat Academy area",
+        "isLandmark": false,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "npc_4709",
+      "title": "Ranged tutor",
+      "npcId": 4709,
+      "coord": {
+        "x": 3218,
+        "y": 3237,
+        "plane": 0
+      },
+      "actions": [
+        "Talk to"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "Combat Academy area",
+        "isLandmark": false,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "npc_4711",
+      "title": "Magic tutor",
+      "npcId": 4711,
+      "coord": {
+        "x": 3222,
+        "y": 3237,
+        "plane": 0
+      },
+      "actions": [
+        "Talk to"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "Combat Academy area",
+        "isLandmark": false,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "landmark_1",
+      "title": "Lumbridge Lodestone",
+      "npcId": -1,
+      "coord": {
+        "x": 3233,
+        "y": 3222,
+        "plane": 0
+      },
+      "actions": [
+        "Teleport"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "Central lodestone",
+        "isLandmark": true,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "landmark_2",
+      "title": "Lumbridge Castle",
+      "npcId": -2,
+      "coord": {
+        "x": 3210,
+        "y": 3217,
+        "plane": 0
+      },
+      "actions": [],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "Main castle",
+        "isLandmark": true,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "landmark_3",
+      "title": "Lumbridge Church",
+      "npcId": -3,
+      "coord": {
+        "x": 3243,
+        "y": 3208,
+        "plane": 0
+      },
+      "actions": [],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "Church of Saradomin",
+        "isLandmark": true,
+        "combatLevel": 0
+      }
+    },
+    {
+      "id": "landmark_4",
+      "title": "Lumbridge Bank",
+      "npcId": -4,
+      "coord": {
+        "x": 3208,
+        "y": 3220,
+        "plane": 2
+      },
+      "actions": [
+        "Bank"
+      ],
+      "grounded": {
+        "confidence": 0.85,
+        "source": "wiki"
+      },
+      "meta": {
+        "wikiNote": "Castle top floor",
+        "isLandmark": true,
+        "combatLevel": 0
+      }
+    }
+  ]
+}

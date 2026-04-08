@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PATHING ARCHAEOLOGIST v2 - Direct Sovereign Memory Scan
  * 
  * Reads the already-extracted JSON dumps from D:\sovereign
@@ -26,6 +26,7 @@ import { resolve } from 'path';
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const SOVEREIGN_BASE = 'D:/sovereign';
 const OUTPUT_DIR = 'D:/sovereign/atlas/spatial/pathing_theory';
+const UNIFIED_EXTRACT_DIR = resolve(SOVEREIGN_BASE, 'atlas/spatial/unified_extract');
 
 const OBJECTS_PATH = resolve(SOVEREIGN_BASE, 'cache_pedagogy/json_dumps/objects.json');
 const NPCS_PATH = resolve(SOVEREIGN_BASE, 'cache_pedagogy/json_dumps/npcs.json');
@@ -47,6 +48,7 @@ const KINETIC_KEYWORDS = [
     'sextant',
     'smuggler', 'dead smuggler',
     'patrol', 'guard route',
+    'bob', 'the raptor', 'victoria', 'father aereck'
 ];
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•

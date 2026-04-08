@@ -1,4 +1,4 @@
-﻿/**
+/**
  * RSMV BRIDGE â€” ESM Subprocess Bridge
  * 
  * Called as a subprocess by CacheForensicsLimb, TopologyLimb, and KinematicsLimb.
@@ -239,6 +239,43 @@ async function main() {
                 for (const f of sequence.frames) totalDuration += (f.framelength || 0) * 0.020;
             }
             console.log(JSON.stringify({ id, frameCount, isSkeletal, totalDuration: parseFloat(totalDuration.toFixed(3)), raw: sequence }));
+        } catch (e: any) {
+            console.log(JSON.stringify({ error: e.message }));
+            process.exit(1);
+        }
+        cs.loader.close?.();
+        process.exit(0);
+    }
+
+    if (operation === 'interface') {
+        const id = parseInt(args[0]);
+        const cs = await getCacheLoader();
+        if (!cs) { console.log(JSON.stringify({ error: 'no_cache' })); process.exit(1); }
+        try {
+            const MAJOR = 3; // Archive 3: Interfaces
+            const buffer = await cs.loader.getFileById(MAJOR, id);
+            if (!buffer) { console.log(JSON.stringify({ error: `Interface ${id} not found` })); process.exit(1); }
+            const raw = cs.parse.interfaces.read(buffer, cs.loader);
+            console.log(JSON.stringify({ id, raw }));
+        } catch (e: any) {
+            console.log(JSON.stringify({ error: e.message }));
+            process.exit(1);
+        }
+        cs.loader.close?.();
+        process.exit(0);
+    }
+
+    if (operation === 'sprite') {
+        const id = parseInt(args[0]);
+        const cs = await getCacheLoader();
+        if (!cs) { console.log(JSON.stringify({ error: 'no_cache' })); process.exit(1); }
+        try {
+            const MAJOR = 8; // Archive 8: Sprites
+            const buffer = await cs.loader.getFileById(MAJOR, id);
+            if (!buffer) { console.log(JSON.stringify({ error: `Sprite ${id} not found` })); process.exit(1); }
+            // Sprites are usually a collection of sub-sprites. 
+            // We return basic metadata for the interwoven graph.
+            console.log(JSON.stringify({ id, size: buffer.byteLength, authoritativeSource: 'CACHE' }));
         } catch (e: any) {
             console.log(JSON.stringify({ error: e.message }));
             process.exit(1);

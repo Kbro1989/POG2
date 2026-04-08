@@ -182,20 +182,18 @@ function bootstrapSovereignSubstrate(root) {
 }
 /**
  * Returns the absolute path to the RSMV Inspector substrate.
+ * Authoritative: D:\sovereign\cache_pedagogy\rsmv_inspector
  */
 export function getRSMVSubstratePath() {
     const envPath = process.env['POG_RSMV_SUBSTRATE_PATH'];
     if (envPath && existsSync(envPath))
         return envPath;
-    const sovereignPath = join(getSovereignRoot(), 'cache_pedagogy', 'rsmv_inspector');
+    // Sovereign substrate location (authoritative D: drive inspector)
+    const sovereignPath = join('D:\\sovereign', 'cache_pedagogy', 'rsmv_inspector');
     if (existsSync(sovereignPath))
         return sovereignPath;
-    if (_projectRoot) {
-        const localPath = join(_projectRoot, 'rsmv');
-        if (existsSync(localPath))
-            return localPath;
-    }
-    return sovereignPath;
+    // Fallback: system-aware default if D is unavailable
+    return join(getSovereignRoot(), 'cache_pedagogy', 'rsmv_inspector');
 }
 /**
  * Returns the formal structural path to the local Jagex/RuneScape cache.
@@ -208,7 +206,9 @@ export function getRSMVCachePath() {
         const rs3Path = 'C:\\ProgramData\\Jagex\\RuneScape';
         if (existsSync(rs3Path))
             return rs3Path;
-        return 'C:\\ProgramData\\Jagex';
+        const jagexRoot = 'C:\\ProgramData\\Jagex';
+        if (existsSync(jagexRoot))
+            return jagexRoot;
     }
     return join(homedir(), 'Jagex', 'RuneScape');
 }
@@ -428,6 +428,20 @@ export function getCachePedagogyFile(filename) {
     return join(getCachePedagogyPath(), filename);
 }
 /**
+ * Phase 29: Sovereign Spatial Engine Substrate
+ * Resolves the path to the Atlas logic mappings (e.g., boundaries, region rules).
+ */
+export function getAtlasLogicPath() {
+    return resolveSovereignPath('atlas/logic');
+}
+/**
+ * Phase 29: Sovereign Spatial Engine Substrate
+ * Resolves the path to the active gameplay sandbox systems (e.g. minigames).
+ */
+export function getAtlasSystemPath() {
+    return resolveSovereignPath('atlas/system');
+}
+/**
  * Resolves the absolute path to this project's tsconfig.json.
  * Uses a module-relative anchor (not CWD) so it works from any directory.
  * Falls back to CWD and then sovereign root.
@@ -443,8 +457,51 @@ export function getCliTsConfigPath() {
     const cwdPath = join(process.cwd(), 'tsconfig.json');
     if (existsSync(cwdPath))
         return cwdPath;
-    // Priority 3: Give up — return empty so callers can handle gracefully
+    // Priority 3: Give up â€” return empty so callers can handle gracefully
     return '';
+}
+/**
+ * Phase 34: Sovereign Path Authority (C3 Bridge)
+ * Resolves the "Spatial Anchor" for a specific coordinate fragment.
+ * Format: m_X_Y (e.g., m_54_50)
+ */
+export function resolveSpatialAnchor(x, z) {
+    const mx = x >> 6;
+    const mz = z >> 6;
+    return `m_${mx}_${mz}`;
+}
+/**
+ * Phase 44: Sovereign Spatial Engine Substrate (Authoritative Mapsquare Logic)
+ */
+export function getAtlasSpatialPath() {
+    // Phase 44: Force Sovereign D-drive authority for spatial substrates
+    if (hasHighPerformanceSubstrate()) {
+        return join(getSovereignRoot(1 /* PathTier.Sovereign */), 'atlas', 'spatial');
+    }
+    return resolveSovereignPath('atlas/spatial');
+}
+/**
+ * Phase 34: Sovereign Path Authority (C3 Bridge)
+ * Resolves the absolute path to a Regional Logic Fragment (.json or .ts).
+ * Priority: 1. D:\sovereign\atlas\spatial\m_X_Y_logic.json (Authoritative Extractions)
+ *           2. D:\sovereign\atlas\logic\m_X_Y_logic.json   (System Logic)
+ */
+export function resolveLogicFragment(anchor) {
+    // 1. Check D drive spatial first (Authoritative C3 extraction)
+    const spatialRoot = getAtlasSpatialPath();
+    const spatialJsonPath = join(spatialRoot, `${anchor}_logic.json`);
+    if (existsSync(spatialJsonPath)) {
+        return spatialJsonPath;
+    }
+    // 2. Fallback to standard logic directory (System Logic)
+    const logicRoot = getAtlasLogicPath();
+    const jsonPath = join(logicRoot, `${anchor}_logic.json`);
+    const tsPath = join(logicRoot, `${anchor}_logic.ts`);
+    if (existsSync(jsonPath))
+        return jsonPath;
+    if (existsSync(tsPath))
+        return tsPath;
+    return null;
 }
 // Export constants for external use (LEGACY - use resolver functions instead)
 /** @deprecated use resolver functions */

@@ -219,6 +219,14 @@ export class RSMVBridge {
     public async getSequence(id: number): Promise<Result<BridgeSequenceResult>> {
         return await callBridge<BridgeSequenceResult>('sequence', String(id));
     }
+
+    public async getInterface(id: number): Promise<Result<any>> {
+        return await callBridge<any>('interface', String(id));
+    }
+
+    public async getSprite(id: number): Promise<Result<any>> {
+        return await callBridge<any>('sprite', String(id));
+    }
 }
 
 // Convenience singleton export

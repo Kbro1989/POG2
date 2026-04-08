@@ -175,8 +175,8 @@
 </div>
 
 <div class="controls">
-  <label>Chunk X: <input type="number" id="cx" value="50" min="0" max="127" style="width:60px"></label>
-  <label>Chunk Z: <input type="number" id="cz" value="50" min="0" max="200" style="width:60px"></label>
+  <label>Chunk X: <input type="number" id="cx" value="0" min="0" max="127" style="width:60px"></label>
+  <label>Chunk Z: <input type="number" id="cz" value="56" min="0" max="200" style="width:60px"></label>
   <label>Plane: <select id="plane">
     <option value="0" selected>0 (Surface)</option>
     <option value="1">1</option>
@@ -439,6 +439,46 @@ function render(data, planeIdx, scale) {
       }
     }
   }
+
+  // Pedagogy: Grounded NPCs (Cyan Orbs)
+  if (layers.npcs && data.pedagogy?.npcs) {
+    const chunkX = data.chunkX || 0;
+    const chunkZ = data.chunkZ || 56;
+    
+    for (const npc of data.pedagogy.npcs) {
+      // Translation: world -> local
+      const lx = npc.worldX - (chunkX * 64);
+      const lz = npc.worldZ - (chunkZ * 64);
+      
+      // Calculate canvas coordinates
+      const px = lx * scale + (scale / 2);
+      const py = (63 - lz) * scale + (scale / 2);
+
+      // Pulse Glow
+      const time = Date.now() / 1000;
+      const pulse = Math.sin(time * 3) * 2 + 3;
+      
+      const isGrounded = npc.confidence >= 0.9;
+      
+      ctx.beginPath();
+      ctx.arc(px, py, pulse + 1, 0, Math.PI * 2);
+      ctx.fillStyle = isGrounded ? 'rgba(0, 255, 255, 0.4)' : 'rgba(255, 100, 0, 0.3)';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = isGrounded ? '#51ffff' : '#ff9d00';
+      ctx.fill();
+
+      // Label
+      if (scale >= 8) {
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 9px Segoe UI";
+          ctx.textAlign = "center";
+          ctx.fillText(npc.npcName, px, py - 8);
+      }
+    }
+  }
 }
 
 // Logical Neighbor Jump (Subterranean Traversals)
@@ -453,6 +493,16 @@ canvas.addEventListener('click', (e) => {
   
   const tx = Math.floor(px / scale);
   const tz = size - 1 - Math.floor(py / scale);
+  
+  const pedagogyNpcs = currentData.pedagogy?.npcs?.filter(n => {
+      const lx = n.worldX - currentData.worldX;
+      const lz = n.worldZ - currentData.worldZ;
+      return Math.abs(lx - tx) < 1 && Math.abs(lz - tz) < 1;
+  }) || [];
+
+  if (pedagogyNpcs.length > 0) {
+      console.log("[SOVEREIGN] Grounded Entity Selected:", pedagogyNpcs[0]);
+  }
   
   const portals = objectGrid[tx]?.[tz]?.filter(o => o.isPortal) || [];
   if (portals.length > 0) {
