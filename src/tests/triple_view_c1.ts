@@ -47,7 +47,7 @@ async function testTripleViewC1() {
     
     // Avatar at the BOTTOM edge of Barrows mapsquare (Y=3288)
     // Decreasing Y will move us into the (55, 51) -> (55, 50) boundary
-    const avatar: Coord = { x: 3564, y: 3282, plane: 0 };
+    const avatar: Coord = { x: 3564, y: 3288, plane: 0 };
     const engine = new ExplorationEngine(avatar, discovery, pathfinder, spatial, lessonLearner);
 
     const gameState: GameState = {

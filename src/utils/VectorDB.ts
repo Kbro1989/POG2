@@ -1,4 +1,4 @@
-﻿import Database from 'better-sqlite3';
+import Database from 'better-sqlite3';
 import { type Result, type Lesson, ok } from '../core/models.js';
 import { getLearningDbPath, getSatelliteDbPaths } from './SovereignPathResolver.js';
 import { createHash } from 'crypto';
@@ -6,6 +6,7 @@ import { readFileSync, existsSync } from 'fs';
 import { ModelClient } from '../clients/ModelClient.js';
 import { SovereignIgnoreManager } from './SovereignIgnoreManager.js';
 import { getSystemRoot } from './SovereignPathResolver.js';
+import { SovereignDBLifecycle } from './SovereignDBLifecycle.js';
 import { createLogger } from "./logger.js";
 
 const logger = createLogger('VectorDB');
@@ -44,6 +45,7 @@ export class VectorDB {
     private satellites: Database.Database[] = [];
     private readonly dbPath: string;
     private readonly client: ModelClient;
+    private closed = false;
 
     constructor(config: VectorDBConfig) {
         this.dbPath = getLearningDbPath();
@@ -94,10 +96,19 @@ export class VectorDB {
                 }
             }
 
+            this.registerLifecycle();
             return ok(undefined);
         } catch (error) {
             return { ok: false, error: error as Error };
         }
+    }
+
+    /**
+     * Register with the centralized lifecycle manager.
+     * Called automatically after successful initialization.
+     */
+    private registerLifecycle(): void {
+        SovereignDBLifecycle.getInstance().register('VectorDB', this);
     }
 
     private createTables(): void {
@@ -577,9 +588,16 @@ export class VectorDB {
     }
 
     public close(): void {
+        if (this.closed) return;
+        this.closed = true;
+
         if (this.db) {
+            try {
+                this.db.pragma('wal_checkpoint(TRUNCATE)');
+            } catch { /* WAL may not exist */ }
             this.db.close();
             this.db = null;
+            logger.info('VectorDB WAL checkpointed and closed.');
         }
         for (const sat of this.satellites) {
             try { sat.close(); } catch { /* ignore */ }

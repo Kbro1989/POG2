@@ -1,5 +1,6 @@
-﻿import Database from 'better-sqlite3';
+import Database from 'better-sqlite3';
 import { createLogger } from './logger.js';
+import { SovereignDBLifecycle } from './SovereignDBLifecycle.js';
 
 const logger = createLogger('SovereignKnowledgeDB');
 
@@ -16,6 +17,7 @@ export interface TileLesson {
  */
 export class SovereignKnowledgeDB {
     private db: Database.Database;
+    private closed = false;
     private prepared: {
         upsertTile: Database.Statement;
         getTile: Database.Statement;
@@ -30,6 +32,7 @@ export class SovereignKnowledgeDB {
         this.initSchema();
         this.prepared = this.prepareStatements();
 
+        SovereignDBLifecycle.getInstance().register('SovereignKnowledgeDB', this);
         logger.info({ path: dbPath }, 'SovereignKnowledgeDB initialized.');
     }
 
@@ -136,7 +139,12 @@ export class SovereignKnowledgeDB {
     }
 
     public close(): void {
+        if (this.closed) return;
+        this.closed = true;
+        try {
+            this.db.pragma('wal_checkpoint(TRUNCATE)');
+        } catch { /* WAL may not exist */ }
         this.db.close();
-        logger.info('SovereignKnowledgeDB substrate closed.');
+        logger.info('SovereignKnowledgeDB WAL checkpointed and closed.');
     }
 }

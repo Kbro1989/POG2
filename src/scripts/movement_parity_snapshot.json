@@ -1,0 +1,536 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-04-08T20:41:09.043Z",
+  "testCount": 37,
+  "engine": "DirectionalPathfinder + SpatialSovereigntyLimb",
+  "contract": {
+    "canStand": "SpatialSovereigntyLimb.isWalkable(p, x, y) → bool",
+    "canTransit": "DirectionalPathfinder.canTransit(from, to, dir) → bool",
+    "diagonalRule": "canTransit(N) && canTransit(E) && isWalkable(orth1) && isWalkable(orth2)"
+  },
+  "tests": [
+    {
+      "id": "S1.01",
+      "name": "Open field → North",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        1,
+        2
+      ],
+      "dir": "north",
+      "expect": true
+    },
+    {
+      "id": "S1.02",
+      "name": "Open field → South",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        1,
+        0
+      ],
+      "dir": "south",
+      "expect": true
+    },
+    {
+      "id": "S1.03",
+      "name": "Open field → East",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        1
+      ],
+      "dir": "east",
+      "expect": true
+    },
+    {
+      "id": "S1.04",
+      "name": "Open field → West",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        0,
+        1
+      ],
+      "dir": "west",
+      "expect": true
+    },
+    {
+      "id": "S1.05",
+      "name": "North into solid tile",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        1,
+        2
+      ],
+      "dir": "north",
+      "expect": false,
+      "targetSolid": true
+    },
+    {
+      "id": "S1.06",
+      "name": "North wall exit",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        1,
+        2
+      ],
+      "dir": "north",
+      "expect": false,
+      "fromEdge": "northBlocked"
+    },
+    {
+      "id": "S1.07",
+      "name": "South wall entry",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        1,
+        2
+      ],
+      "dir": "north",
+      "expect": false,
+      "toEdge": "southBlocked"
+    },
+    {
+      "id": "S2.01",
+      "name": "Bidirectional wall N",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        1,
+        2
+      ],
+      "dir": "north",
+      "expect": false,
+      "fromEdge": "northBlocked"
+    },
+    {
+      "id": "S2.02",
+      "name": "Bidirectional wall S",
+      "from": [
+        1,
+        2
+      ],
+      "to": [
+        1,
+        1
+      ],
+      "dir": "south",
+      "expect": false,
+      "toEdge": "northBlocked"
+    },
+    {
+      "id": "S2.03",
+      "name": "Reverse south into north-walled",
+      "from": [
+        1,
+        2
+      ],
+      "to": [
+        1,
+        1
+      ],
+      "dir": "south",
+      "expect": false
+    },
+    {
+      "id": "S2.04",
+      "name": "Double-mirrored N",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        1,
+        2
+      ],
+      "dir": "north",
+      "expect": false
+    },
+    {
+      "id": "S2.05",
+      "name": "Double-mirrored S",
+      "from": [
+        1,
+        2
+      ],
+      "to": [
+        1,
+        1
+      ],
+      "dir": "south",
+      "expect": false
+    },
+    {
+      "id": "S3.01",
+      "name": "NE open",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        2
+      ],
+      "dir": "north-east",
+      "expect": true
+    },
+    {
+      "id": "S3.02",
+      "name": "NW open",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        0,
+        2
+      ],
+      "dir": "north-west",
+      "expect": true
+    },
+    {
+      "id": "S3.03",
+      "name": "SE open",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        0
+      ],
+      "dir": "south-east",
+      "expect": true
+    },
+    {
+      "id": "S3.04",
+      "name": "SW open",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        0,
+        0
+      ],
+      "dir": "south-west",
+      "expect": true
+    },
+    {
+      "id": "S3.05",
+      "name": "NE north wall",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        2
+      ],
+      "dir": "north-east",
+      "expect": false
+    },
+    {
+      "id": "S3.06",
+      "name": "NE east wall",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        2
+      ],
+      "dir": "north-east",
+      "expect": false
+    },
+    {
+      "id": "S3.07",
+      "name": "NE east neighbor solid",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        2
+      ],
+      "dir": "north-east",
+      "expect": false
+    },
+    {
+      "id": "S3.08",
+      "name": "NE north neighbor solid",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        2
+      ],
+      "dir": "north-east",
+      "expect": false
+    },
+    {
+      "id": "S3.09",
+      "name": "NE target solid",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        2
+      ],
+      "dir": "north-east",
+      "expect": false
+    },
+    {
+      "id": "S3.10",
+      "name": "NE L-wall",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        2
+      ],
+      "dir": "north-east",
+      "expect": false
+    },
+    {
+      "id": "S4.01",
+      "name": "NW west wall",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        0,
+        2
+      ],
+      "dir": "north-west",
+      "expect": false
+    },
+    {
+      "id": "S4.02",
+      "name": "NW north wall",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        0,
+        2
+      ],
+      "dir": "north-west",
+      "expect": false
+    },
+    {
+      "id": "S4.03",
+      "name": "SE south wall",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        0
+      ],
+      "dir": "south-east",
+      "expect": false
+    },
+    {
+      "id": "S4.04",
+      "name": "SE east wall",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        0
+      ],
+      "dir": "south-east",
+      "expect": false
+    },
+    {
+      "id": "S4.05",
+      "name": "SW south wall",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        0,
+        0
+      ],
+      "dir": "south-west",
+      "expect": false
+    },
+    {
+      "id": "S4.06",
+      "name": "SW west wall",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        0,
+        0
+      ],
+      "dir": "south-west",
+      "expect": false
+    },
+    {
+      "id": "S5.01",
+      "name": "Entry south-wall N",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        1,
+        2
+      ],
+      "dir": "north",
+      "expect": false
+    },
+    {
+      "id": "S5.02",
+      "name": "Entry west-wall E",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        1
+      ],
+      "dir": "east",
+      "expect": false
+    },
+    {
+      "id": "S5.03",
+      "name": "Entry north-wall S",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        1,
+        0
+      ],
+      "dir": "south",
+      "expect": false
+    },
+    {
+      "id": "S5.04",
+      "name": "Entry east-wall W",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        0,
+        1
+      ],
+      "dir": "west",
+      "expect": false
+    },
+    {
+      "id": "S6.01",
+      "name": "NE squeeze A.east+B.south",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        2
+      ],
+      "dir": "north-east",
+      "expect": false
+    },
+    {
+      "id": "S6.02",
+      "name": "NE squeeze A.north+B.west",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        2
+      ],
+      "dir": "north-east",
+      "expect": false
+    },
+    {
+      "id": "S6.03",
+      "name": "NE squeeze both on A",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        2
+      ],
+      "dir": "north-east",
+      "expect": false
+    },
+    {
+      "id": "S6.04",
+      "name": "NE squeeze both on B",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        2
+      ],
+      "dir": "north-east",
+      "expect": false
+    },
+    {
+      "id": "S6.05",
+      "name": "NE squeeze cross-axis",
+      "from": [
+        1,
+        1
+      ],
+      "to": [
+        2,
+        2
+      ],
+      "dir": "north-east",
+      "expect": false
+    }
+  ]
+}

@@ -10,7 +10,7 @@ import { join, basename } from 'path';
 import { SovereignDomain } from '../types/SovereignDomain.js';
 
 export { SovereignDomain };
-export type Direction = 'north' | 'south' | 'east' | 'west';
+export type Direction = 'north' | 'south' | 'east' | 'west' | 'north-east' | 'north-west' | 'south-east' | 'south-west' | 'up' | 'down';
 
 export enum LogicalSignature {
     CONSUMABLE_ROLL = 'CONSUMABLE_ROLL',

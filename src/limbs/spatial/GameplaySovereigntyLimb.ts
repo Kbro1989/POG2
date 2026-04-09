@@ -46,7 +46,8 @@ export class GameplaySovereigntyLimb {
     };
 
     public avatar: SovereignAvatar;
-    private activeModule: GameplayModule | null = null;
+    private modules: Map<string, GameplayModule> = new Map();
+    private activeModuleName: string | null = null;
 
     protected constructor() {
         if (GameplaySovereigntyLimb.instance) {
@@ -177,13 +178,37 @@ export class GameplaySovereigntyLimb {
     }
 
     /**
-     * Docks a specific Region/Minigame logic module onto the active server.
+     * registerModule - Attach a new logic interpreter to the limb.
      */
-    public async mountModule(module: GameplayModule) {
+    public registerModule(module: GameplayModule): void {
+        this.modules.set(module.name.toLowerCase(), module);
+        logger.info({ module: module.name }, 'Gameplay module registered.');
+    }
+
+    /**
+     * setActiveModule - Docks a specific Region/Minigame logic module onto the active server.
+     */
+    public async setActiveModule(name: string): Promise<Result<boolean>> {
+        const module = this.modules.get(name.toLowerCase());
+        if (!module) return err(new Error(`Module '${name}' not found.`));
+
+        if (this.activeModuleName) {
+            const current = this.modules.get(this.activeModuleName);
+            if (current && (current as any).unmount) {
+                await (current as any).unmount(this.globalState, this.avatar);
+            }
+        }
+
         logger.info(`Mounting Gameplay Module: ${module.name}`);
-        this.activeModule = module;
-        await this.activeModule.mount(this.globalState, this.avatar);
+        await module.mount(this.globalState, this.avatar);
+        this.activeModuleName = name.toLowerCase();
+        
         logger.info(`Module ${module.name} loaded and pedagogy synthesized.`);
+        return ok(true);
+    }
+
+    public get activeModule(): GameplayModule | null {
+        return this.activeModuleName ? this.modules.get(this.activeModuleName) || null : null;
     }
 
     /**

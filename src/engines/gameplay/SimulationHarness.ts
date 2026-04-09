@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { GameState, Result, YaoState, SkillId, EquipmentSlot } from '../../core/models.js';
+import { Coord, GameState, Result, YaoState, SkillId, EquipmentSlot } from '../../core/models.js';
 import { SovereignAvatar } from '../../core/SovereignAvatar.js';
 import { WorldGroundingLimb } from '../../limbs/world_grounding/WorldGroundingLimb.js';
 import { HexagramManager } from '../../routing/HexagramManager.js';
@@ -10,6 +10,11 @@ import { createLogger } from '../../utils/logger.js';
 import { NecromancyAbility, NecromancyGFX } from './NecromancyInterfaces.js';
 import { SwitchboardLimb } from '../../monitor/SwitchboardLimb.js';
 import { ServerLogicRegistry, LogicalSignature } from './ServerLogicRegistry.js';
+import { SpatialSovereigntyLimb } from '../../limbs/spatial/SpatialSovereigntyLimb.js';
+import { DirectionalPathfinder } from '../../limbs/spatial/DirectionalPathfinder.js';
+import { NpcAgent, NpcAgentConfig } from './NpcAgent.js';
+import { InteractionGateway } from '../../limbs/logical/InteractionGateway.js';
+import { GameplaySovereigntyLimb } from '../../limbs/logical/GameplaySovereigntyLimb.js';
 
 export interface TickEvent {
     id: string;
@@ -96,6 +101,7 @@ export class SimulationHarness {
     private serverLogic: ServerLogicMapper;
     private entityLimb: EntityLimb;
     private switchboard: SwitchboardLimb;
+    private interactionGateway: InteractionGateway;
     
     private lastDeepSync: number = 0;
     private isSyncing: boolean = false;
@@ -108,6 +114,14 @@ export class SimulationHarness {
     private lastChunkX: number = -1;
     private lastChunkZ: number = -1;
 
+    // ── Movement Substrate ─────────────────────────────────────────────────────
+    private pathfinder: DirectionalPathfinder | null = null;
+    private walkGoal: Coord | null = null;
+    private isPathfinding = false;
+
+    // ── NPC Agent Registry ────────────────────────────────────────────────────
+    private agentRegistry = new Map<number, NpcAgent>();
+
     constructor(grounding: WorldGroundingLimb, hexagram: HexagramManager, dispatcher: AIDispatcher, entityLimb: EntityLimb, switchboard: SwitchboardLimb) {
         this.grounding = grounding;
         this.hexagram = hexagram;
@@ -115,18 +129,72 @@ export class SimulationHarness {
         this.entityLimb = entityLimb;
         this.switchboard = switchboard;
         this.serverLogic = new ServerLogicMapper(grounding);
+        this.interactionGateway = new InteractionGateway();
+
+        // Bootstrap the pathfinder against the singleton spatial authority
+        const spatial = SpatialSovereigntyLimb.getInstance();
+        this.pathfinder = new DirectionalPathfinder(spatial);
+
         logger.info('Simulation Harness AWAKE. Coordinating cache-authoritative world logic nodes.');
+    }
+
+    /**
+     * setWalkGoal - Authoritative walk command.
+     * Called by Admin commands (::walkTo x y) or AI strategic reasoning.
+     */
+    public setWalkGoal(x: number, y: number, plane = 0): void {
+        this.walkGoal = { x, y, plane };
+        logger.info({ x, y, plane }, '[HARNESS] Walk goal set.');
+    }
+
+    /**
+     * registerNpcAgent - Override behavior config for a specific NPC.
+     * Call this from gameplay modules (e.g. BarrowsInterpreter, PrifddinasInterpreter)
+     * to assign patrol paths or stationary stance to specific NPCs.
+     */
+    public registerNpcAgent(npcId: number, config: NpcAgentConfig, state: GameState): void {
+        const npc = state.npcMap.get(npcId);
+        if (!npc || !this.pathfinder) {
+            logger.warn({ npcId }, '[HARNESS] registerNpcAgent: NPC not found or pathfinder unavailable.');
+            return;
+        }
+        const spatial = SpatialSovereigntyLimb.getInstance();
+        this.agentRegistry.set(npcId, new NpcAgent(npc, config, this.pathfinder, spatial));
+        logger.info({ npcId, behavior: config.behavior }, '[HARNESS] NPC agent registered with explicit config.');
     }
 
     /**
      * Master Tick (Reflex) - Triggered every 600ms.
      */
+
     public processTick(tickCount: number, state: GameState, avatar: SovereignAvatar): void {
         const yao = this.hexagram.getYaoState();
         const bias = this.calculateMetabolicBias(yao);
 
         // 1. Synchronize Avatar (Player State)
+        const previousPath = avatar.currentPath;
         avatar.processTick();
+
+        // 1.5 Evaluate Pending Interactions if path just finished
+        if (avatar.pendingInteraction && avatar.currentPath === null) {
+            // Either they arrived, or they were already there.
+            const interaction = avatar.pendingInteraction;
+            avatar.pendingInteraction = null; // Clear it to prevent looping
+            
+            const activeModule = GameplaySovereigntyLimb.getInstance().activeModule || this.serverLogic /* universal fallback? */;
+            
+            const results = this.interactionGateway.evaluateInteraction(
+                avatar, 
+                interaction.action, 
+                interaction.targetId, 
+                state, 
+                activeModule
+            );
+            
+            for (const log of results) {
+                logger.info({ action: interaction.action, targetId: interaction.targetId }, log);
+            }
+        }
 
         // 2. Proximity Manifestation (Phase 39)
         const chunkX = avatar.coord.x >> 6;
@@ -150,8 +218,37 @@ export class SimulationHarness {
             }).catch(() => {});
 
             this.serverLogic.resolveNpcBehavior(npcId, tickCount).catch(err => {
-                logger.error({ err, npcId }, 'Logic resolution failure â€” defaulting to visceral reflex.');
+                logger.error({ err, npcId }, 'Logic resolution failure — defaulting to visceral reflex.');
             });
+        }
+
+        // 4. NPC Agent Movement Tick
+        // Auto-register new NPCs; tick existing agents (non-blocking)
+        for (const [npcId, npc] of state.npcMap) {
+            if (!this.agentRegistry.has(npcId) && this.pathfinder) {
+                // Auto-register as wander agent (default RSC-style behavior)
+                const spatial = SpatialSovereigntyLimb.getInstance();
+                const isDummy = this.serverLogic.isDummy(npcId);
+                const config: NpcAgentConfig = isDummy
+                    ? { behavior: 'stationary' }
+                    : { behavior: 'wander', wanderRadius: 5, ticksPerMove: 1 };
+                this.agentRegistry.set(npcId, new NpcAgent(npc, config, this.pathfinder, spatial));
+                logger.debug({ npcId, behavior: config.behavior }, '[NPC] Agent registered.');
+            }
+
+            const agent = this.agentRegistry.get(npcId);
+            if (agent) {
+                agent.tick(state).catch(err =>
+                    logger.error({ err, npcId }, '[NPC] Agent tick threw.')
+                );
+            }
+        }
+
+        // Prune agents for NPCs that have despawned
+        for (const [agentId] of this.agentRegistry) {
+            if (!state.npcMap.has(agentId)) {
+                this.agentRegistry.delete(agentId);
+            }
         }
 
         // 3. Process Reflexive Pulse (Broadcast to Renderer)
@@ -331,8 +428,53 @@ export class SimulationHarness {
     }
 
     private async reflexLoop(avatar: SovereignAvatar, state: GameState): Promise<void> {
-        // High-frequency "Reflexive Intelligence" (Ollama 1.5B)
-        // Checks local surroundings via the WorldGroundingLimb
+        // Only attempt pathfinding if we have a goal and the avatar is idle
+        if (!this.walkGoal || !this.pathfinder || this.isPathfinding) return;
+        if (avatar.currentPath && avatar.currentPath.length > 0) return; // Still walking
+        if (avatar.isBusy()) return;
+
+        const goal = this.walkGoal;
+
+        // Guard: already at destination
+        if (avatar.coord.x === goal.x && avatar.coord.y === goal.y) {
+            logger.info({ goal }, '[REFLEX] Avatar reached walk goal. Clearing.');
+            this.walkGoal = null;
+            return;
+        }
+
+        this.isPathfinding = true;
+        try {
+            logger.debug({ from: avatar.coord, to: goal }, '[REFLEX] Pathfinding...');
+            const success = await avatar.plotPath(goal.x, goal.y, this.pathfinder, state);
+
+            if (success) {
+                const steps = avatar.currentPath?.length ?? 0;
+                logger.info({ from: avatar.coord, to: goal, steps }, '[REFLEX] Path issued — avatar walking.');
+
+                // Broadcast to 3D viewer + renderer
+                this.switchboard.broadcast({
+                    type: 'tick_event',
+                    tick: state.tickNumber,
+                    events: [{
+                        id: `walk_${Date.now()}`,
+                        signature: 'EXPRESSION_TRIGGER',
+                        metadata: {
+                            pose: 'walk',
+                            from: avatar.coord,
+                            to: goal,
+                            steps,
+                        },
+                        timestamp: Date.now()
+                    }]
+                });
+            } else {
+                logger.warn({ from: avatar.coord, to: goal }, '[REFLEX] No path found to goal. Retrying next reflex pulse.');
+            }
+        } catch (err) {
+            logger.error({ err }, '[REFLEX] Pathfinding threw.');
+        } finally {
+            this.isPathfinding = false;
+        }
     }
 
     private calculateMetabolicBias(yao: YaoState): number {

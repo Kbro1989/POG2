@@ -35,8 +35,15 @@ async function main() {
         switchboard.broadcast({ type: 'tick_event', tick: Date.now(), events: [] });
     }, 600);
 
-    process.on('SIGINT', () => {
-        console.log('\n[SWITCHBOARD] Shutting down...');
+    process.on('SIGINT', async () => {
+        console.log('\n[SWITCHBOARD] Closing DB substrates...');
+        try {
+            const { SovereignDBLifecycle } = await import('./utils/SovereignDBLifecycle.js');
+            await SovereignDBLifecycle.getInstance().shutdown();
+        } catch (err) {
+            console.error(`[SWITCHBOARD] DB Lifecycle error: ${(err as Error).message}`);
+        }
+        console.log('[SWITCHBOARD] Shutting down...');
         process.exit(0);
     });
 }

@@ -51,7 +51,11 @@ export class KinematicProbeLimb {
 
         // 2. Perform Collision Check (Abstracted)
         // In the real system, this queries the SpatialSovereigntyLimb
-        const collision = this.checkCollision(nextX, nextZ, probe.coords.plane);
+        const collision = this.checkCollision(
+            probe.coords.x, probe.coords.z, 
+            nextX, nextZ, 
+            probe.coords.plane
+        );
 
         if (collision) {
             this.handleCollision(probe, collision.objectId);
@@ -92,17 +96,61 @@ export class KinematicProbeLimb {
 
     /**
      * Authentic collision check against the 10/10 spatial heatmap.
+     * Supports legacy bitmasks, 4-way edges (JSON), and 9-way masks (Hi-Fi).
      */
-    private checkCollision(x: number, z: number, plane: number): { objectId: number } | null {
-        if (!this.collisionMap || !this.collisionMap.tiles) return null;
+    private checkCollision(fromX: number, fromZ: number, toX: number, toZ: number, plane: number): { objectId: number } | null {
+        if (!this.collisionMap) return null;
 
-        // Search for a matching wall tile in the sparse array
-        const tile = this.collisionMap.tiles.find((t: any) => 
-            t.x === x && t.z === z && t.plane === plane && (t.collision & 128)
-        );
+        // 1. Identify Direction
+        const dx = toX - fromX;
+        const dz = toZ - fromZ;
+        
+        // 2. Resolve Tile Logic
+        // The collisionMap can be a sparse array (tiles[]) or a coordinate matrix (collision_matrix{})
+        let tile: any = null;
+        if (this.collisionMap.tiles) {
+            tile = this.collisionMap.tiles.find((t: any) => t.x === toX && t.z === toZ && t.plane === plane);
+        } else if (this.collisionMap.collision_matrix) {
+            tile = this.collisionMap.collision_matrix[`${toX}_${toZ}_${plane}`] || this.collisionMap.collision_matrix[`${toX}_${toZ}`];
+        }
 
-        if (tile) {
-            return { objectId: tile.objectId || 99999 }; // Fallback to unknown bumper ID
+        if (!tile) return null;
+
+        // 3. Perform Multi-Format Collision Check
+        let isBlocked = false;
+
+        // A. Legacy Bitmask (0x80 = Solid, 0x100 = Overlay)
+        if (typeof tile.collision === 'number' && (tile.collision & 0x80)) isBlocked = true;
+
+        // B. 4-Way Edges (from mapsquare json / synthesis audit)
+        if (tile.edges) {
+            if (dz > 0 && tile.edges.southBlocked) isBlocked = true; // Moving North
+            if (dz < 0 && tile.edges.northBlocked) isBlocked = true; // Moving South
+            if (dx > 0 && tile.edges.westBlocked) isBlocked = true;  // Moving East
+            if (dx < 0 && tile.edges.eastBlocked) isBlocked = true;  // Moving West
+        }
+
+        // C. 9-Way Mask (from lumbridge_collision_v1.json)
+        // Note: dz > 0 is North, dx > 0 is East in Sovereign coords
+        if (tile.mask) {
+            if (tile.mask.center) isBlocked = true;
+            if (dz > 0 && tile.mask.bottom) isBlocked = true;
+            if (dz < 0 && tile.mask.top) isBlocked = true;
+            if (dx > 0 && tile.mask.left) isBlocked = true;
+            if (dx < 0 && tile.mask.right) isBlocked = true;
+            
+            // Diagonals
+            if (dx > 0 && dz > 0 && tile.mask.botleft) isBlocked = true;
+            if (dx < 0 && dz > 0 && tile.mask.botright) isBlocked = true;
+            if (dx > 0 && dz < 0 && tile.mask.topleft) isBlocked = true;
+            if (dx < 0 && dz < 0 && tile.mask.topright) isBlocked = true;
+        }
+
+        // D. Top-level walkable flag
+        if (tile.walkable === false) isBlocked = true;
+
+        if (isBlocked) {
+            return { objectId: tile.objectId || 99999 };
         }
 
         return null;

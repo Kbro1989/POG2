@@ -14,10 +14,31 @@ async function runBumperTest() {
     const mapData = JSON.parse(fs.readFileSync('public/ms_50_50.json', 'utf8'));
     kinematicLimb.setCollisionMap(mapData);
     
-    const wallTile = mapData.tiles.find((t: any) => t.collision === 128);
+    // Modern Matrix Lookup (replacing legacy .tiles.find)
+    let wallTile: any = null;
+    if (mapData.collision_matrix) {
+        // Find a tile with some specific blocking
+        const keys = Object.keys(mapData.collision_matrix);
+        // Look for 3221_3219 (near Hans) as a target
+        if (mapData.collision_matrix["3221_3219_0"]) {
+            wallTile = { x: 3221, z: 3219, plane: 0, ...mapData.collision_matrix["3221_3219_0"] };
+        } else {
+            // Fallback: search for first blocked tile
+            for (const key of keys) {
+                const t = mapData.collision_matrix[key];
+                if (t.walkable === false || (t.edges && (t.edges.northBlocked || t.edges.southBlocked))) {
+                    const coords = key.split('_').map(Number);
+                    wallTile = { x: coords[0], z: coords[1], plane: coords[2] || 0, ...t };
+                    break;
+                }
+            }
+        }
+    } else if (mapData.tiles) {
+        wallTile = mapData.tiles.find((t: any) => (t.collision & 128) || t.walkable === false);
+    }
     
     if (!wallTile) {
-        console.error("No 128-collision wall found in ms_50_50. Aborting.");
+        console.error("No suitable collision wall found in ms_50_50. Aborting.");
         return;
     }
 

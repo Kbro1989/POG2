@@ -295,6 +295,21 @@ export class CNSGodheadPulseVolley {
                 }
                 break;
 
+            case 'walkTo': {
+                // Route to SimulationHarness.setWalkGoal() → reflexLoop → avatar.plotPath
+                const { x, y, plane } = event.inputs;
+                if (typeof x === 'number' && typeof y === 'number') {
+                    const harness = (this.gameplay as any)?.harness;
+                    if (harness?.setWalkGoal) {
+                        harness.setWalkGoal(x, y, plane ?? 0);
+                        logger.debug({ x, y, plane }, '[VOLLEY] Walk goal delegated to Simulation Harness.');
+                    } else {
+                        logger.warn('[VOLLEY] walkTo received but no harness found on gameplay limb.');
+                    }
+                }
+                break;
+            }
+
             case 'spawn':
                 const sid = event.inputs.entityId;
                 const entityDef = this.grounding!.getEntityManifest(sid);

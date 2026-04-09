@@ -1,4 +1,4 @@
-﻿import { Coord, Direction, Item, Skill, SkillId, Wallet, Equipment, EquipmentSlot, SovereignAvatar as ISovereignAvatar } from './models.js';
+import { Coord, Direction, Item, Skill, SkillId, Wallet, Equipment, EquipmentSlot, SovereignAvatar as ISovereignAvatar } from './models.js';
 import { DirectionalPathfinder } from '../limbs/spatial/DirectionalPathfinder.js';
 
 export class SovereignAvatar implements ISovereignAvatar {
@@ -28,6 +28,7 @@ export class SovereignAvatar implements ISovereignAvatar {
     public runEnergy: number;
     public lockTicks: number; // Ticks before they can act again
     public currentPath: Coord[] | null;
+    public pendingInteraction: { action: string; targetId: string } | null = null;
 
     constructor(username: string = 'Sovereign') {
         this.username = username;
@@ -146,6 +147,10 @@ export class SovereignAvatar implements ISovereignAvatar {
                 }
                 this.currentPath = path;
                 return true;
+            } else if (path && path.length === 0) {
+                // Already there.
+                this.currentPath = [];
+                return true;
             }
         } catch (error) {
             console.error('Failed to plot path:', error);
@@ -172,6 +177,7 @@ export class SovereignAvatar implements ISovereignAvatar {
             
             if (this.currentPath.length === 0) {
                 this.currentPath = null;
+                // Pending interaction evaluation happens securely in the SimulationHarness
             }
         }
     }

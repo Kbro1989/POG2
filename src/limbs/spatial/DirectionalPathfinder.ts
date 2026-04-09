@@ -1,8 +1,8 @@
-﻿import { BinaryHeap, Comparable } from '../../utils/BinaryHeap.js';
+import { BinaryHeap, Comparable } from '../../utils/BinaryHeap.js';
 import { Coord, Direction, DirectionalCollision, GameState } from '../../core/models.js';
 import { createLogger } from '../../utils/logger.js';
 import { SpatialSovereigntyLimb } from './SpatialSovereigntyLimb.js';
-import { SpaceRegistry } from '../../core/SpaceRegistry.js';
+import { PlaneTransitionRegistry } from './PlaneTransitionRegistry.js';
 
 const logger = createLogger('DirectionalPathfinder');
 
@@ -42,10 +42,8 @@ class PathNode implements Comparable<PathNode> {
  * Implements Quaternary A* incorporating Directional Collision.
  */
 export class DirectionalPathfinder {
-    private registry: SpaceRegistry;
 
     constructor(private spatial: SpatialSovereigntyLimb) {
-        this.registry = SpaceRegistry.getInstance();
     }
 
     /**
@@ -120,6 +118,7 @@ export class DirectionalPathfinder {
      * A move from (from) to (to) is valid ONLY if:
      * 1. (from) does not block exit in DIRECTION.
      * 2. (to) does not block entry in REVERSE_DIRECTION.
+     * 3. Diagonals strictly forbid corner-cutting if adjacent cardinals are blocked.
      */
     public async canMove(
         from: Coord,
@@ -127,54 +126,102 @@ export class DirectionalPathfinder {
         direction: Direction,
         gameState: GameState
     ): Promise<boolean> {
-        // Phase C3: If 'to' is not walkable (e.g. out of logic), handled by isWalkable
+        // Target tile must be structurally walkable
+        // Exception: 'up' / 'down' are portal transitions — bypass collision entirely
+        if (direction === 'up' || direction === 'down') {
+            const registry = PlaneTransitionRegistry.getInstance();
+            const link = registry.getLink(from);
+            return link !== null &&
+                   link.to.x === to.x &&
+                   link.to.y === to.y &&
+                   link.to.plane === to.plane;
+        }
+
         if (!this.isWalkable(to.plane, to.x, to.y)) {
             return false;
         }
 
-        const reverseDir = this.getReverseDirection(direction);
+        // --- DIAGONAL CLIP RULE ---
+        if (direction === 'north-east' || direction === 'north-west' || direction === 'south-east' || direction === 'south-west') {
+            // Unpack direction
+            const isNorth = direction.includes('north');
+            const isSouth = direction.includes('south');
+            const isEast = direction.includes('east');
+            const isWest = direction.includes('west');
 
-        // 1. Check Static Collision from SpatialSovereignty
+            // Find orthogonal neighbors
+            const orth1X = isEast ? from.x + 1 : (isWest ? from.x - 1 : from.x);
+            const orth1Y = from.y; // Horizontal adj
+            const orth2X = from.x;
+            const orth2Y = isNorth ? from.y + 1 : (isSouth ? from.y - 1 : from.y); // Vertical adj
+
+            // 1. Orthogonal tiles must be structurally walkable (no corner cutting across solids)
+            if (!this.isWalkable(from.plane, orth1X, orth1Y)) return false;
+            if (!this.isWalkable(from.plane, orth2X, orth2Y)) return false;
+
+            // 2. Both current and target tiles must permit orthogonal transit within the diagonal envelope
+            if (isNorth) { if (!this.canTransit(from, to, 'north')) return false; }
+            if (isSouth) { if (!this.canTransit(from, to, 'south')) return false; }
+            if (isEast)  { if (!this.canTransit(from, to, 'east')) return false; }
+            if (isWest)  { if (!this.canTransit(from, to, 'west')) return false; }
+
+            return true;
+        }
+
+        // --- CARDINAL CHECK ---
+        return this.canTransit(from, to, direction);
+    }
+
+    /**
+     * Helper to verify if transit across an exact cardinal edge is permitted safely.
+     */
+    private canTransit(from: Coord, to: Coord, direction: Direction): boolean {
         const fromLogic = this.spatial.getLogicAt(from.plane, from.x, from.y);
         const toLogic = this.spatial.getLogicAt(to.plane, to.x, to.y);
 
-        // Exit check (from tile)
-        if (typeof fromLogic === 'object' && fromLogic[direction] === false) {
-            return false;
+        // 1. From Tile Edge Blocking
+        if (typeof fromLogic === 'object' && (fromLogic as any).edges) {
+            const edges = (fromLogic as any).edges;
+            if (direction === 'north' && edges.northBlocked) return false;
+            if (direction === 'south' && edges.southBlocked) return false;
+            if (direction === 'east' && edges.eastBlocked) return false;
+            if (direction === 'west' && edges.westBlocked) return false;
+        } else if (typeof fromLogic === 'object' && (fromLogic as unknown as Record<string, boolean>)[direction] === false) {
+             return false;
         }
 
-        // Entry check (to tile)
-        if (typeof toLogic === 'object' && toLogic[reverseDir] === false) {
-            return false;
+        // 2. To Tile Edge Blocking
+        const reverseDir = this.getReverseDirection(direction);
+        if (typeof toLogic === 'object' && (toLogic as any).edges) {
+            const edges = (toLogic as any).edges;
+            if (reverseDir === 'north' && edges.northBlocked) return false;
+            if (reverseDir === 'south' && edges.southBlocked) return false;
+            if (reverseDir === 'east' && edges.eastBlocked) return false;
+            if (reverseDir === 'west' && edges.westBlocked) return false;
+        } else if (typeof toLogic === 'object' && (toLogic as unknown as Record<string, boolean>)[reverseDir] === false) {
+             return false;
         }
 
-        // Legacy bitmask check (0x100 = Blocked)
-        if (typeof toLogic === 'number' && (toLogic & 0x100)) {
-            return false;
-        }
+        // Legacy compat (0x100 overlay block etc)
+        if (typeof toLogic === 'number' && (toLogic & 0x100)) return false;
 
         return true;
     }
 
     /**
      * isWalkable - Phase C3: Deterministic Cross-Region Check.
-     * Handles loaded logic fragments and the "No-Man's-Land" between them.
+     * Delegates directly to SpatialSovereigntyLimb which uses bounds-based
+     * matrix resolution (findMatrixForCoords). The old SpaceRegistry name gate
+     * caused false-positives when registry names didn't match loaded matrix names.
      */
     private isWalkable(p: number, x: number, z: number): boolean {
-        // 1. Check if we have a spatial logic fragment for this region
-        const mx = x >> 6;
-        const my = z >> 6;
-        const regionName = this.registry.getRegionName(mx, my);
-
-        if (this.spatial.hasRegion(regionName)) {
-            // Use precise collision matrix if loaded
-            return this.spatial.isWalkable(p, x, z);
-        }
-
-        // 2. No-Man's-Land Protocol: If no logic fragment is present, 
-        // we assume the tile is walkable to allow the agent to cross boundaries
-        // until a new fragment is proactively loaded by the Orchestrator.
-        return true; 
+        // Direct delegation — SpatialSovereigntyLimb.isWalkable already handles:
+        // 1. GAL override check
+        // 2. Bounds-based matrix lookup (findMatrixForCoords)
+        // 3. Legacy surface stack fallback
+        // If no matrix covers this tile, it falls through to surface stack,
+        // which defaults walkable=true (No-Man's-Land equivalent).
+        return this.spatial.isWalkable(p, x, z);
     }
 
     private heuristic(a: Coord, b: Coord): number {
@@ -183,12 +230,25 @@ export class DirectionalPathfinder {
     }
 
     private getNeighbors(node: PathNode): { coord: Coord; direction: Direction }[] {
-        return [
+        const neighbors: { coord: Coord; direction: Direction }[] = [
             { coord: { x: node.x, y: node.y + 1, plane: node.plane }, direction: 'north' },
             { coord: { x: node.x, y: node.y - 1, plane: node.plane }, direction: 'south' },
             { coord: { x: node.x + 1, y: node.y, plane: node.plane }, direction: 'east' },
-            { coord: { x: node.x - 1, y: node.y, plane: node.plane }, direction: 'west' }
+            { coord: { x: node.x - 1, y: node.y, plane: node.plane }, direction: 'west' },
+            { coord: { x: node.x + 1, y: node.y + 1, plane: node.plane }, direction: 'north-east' },
+            { coord: { x: node.x - 1, y: node.y + 1, plane: node.plane }, direction: 'north-west' },
+            { coord: { x: node.x + 1, y: node.y - 1, plane: node.plane }, direction: 'south-east' },
+            { coord: { x: node.x - 1, y: node.y - 1, plane: node.plane }, direction: 'south-west' }
         ];
+
+        // ── Vertical Plane Transitions ────────────────────────────────────────
+        const link = PlaneTransitionRegistry.getInstance().getLink(node.toCoord());
+        if (link) {
+            const dir: Direction = link.to.plane > node.plane ? 'up' : 'down';
+            neighbors.push({ coord: link.to, direction: dir });
+        }
+
+        return neighbors;
     }
 
     private getReverseDirection(dir: Direction): Direction {
@@ -196,7 +256,13 @@ export class DirectionalPathfinder {
             north: 'south',
             south: 'north',
             east: 'west',
-            west: 'east'
+            west: 'east',
+            'north-east': 'south-west',
+            'south-west': 'north-east',
+            'north-west': 'south-east',
+            'south-east': 'north-west',
+            up: 'down',
+            down: 'up'
         };
         return map[dir];
     }

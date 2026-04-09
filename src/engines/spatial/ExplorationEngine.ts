@@ -104,6 +104,7 @@ export class ExplorationEngine {
 
         // 3. Execute one step along the path
         // path[0] is current position, path[1] is the next step
+        const MAX_STALLS = 10;
         const nextStep = path[1] || path[0];
         
         // Boundary Check: Ensure we stay within our "Tripled" awareness radius
@@ -140,15 +141,33 @@ export class ExplorationEngine {
     }
 
     /**
-     * selectTarget - Phase C2: Picks the nearest unvisited walkable tile in the 3x3 view.
+     * selectTarget - Phase C2: Picks the nearest unvisited walkable tile.
+     * Implements "Expandable Frontier Awareness" to cross regional boundaries.
      */
     private async selectTarget(): Promise<Coord | null> {
-        const frontier = await this.discovery.getGlobalFrontier(
-            this.avatar.plane,
-            this.avatar.x,
-            this.avatar.y,
-            this.spatial
-        );
+        let radius = 1;
+        let frontier: Coord[] = [];
+
+        while (radius <= 3) {
+            frontier = await this.discovery.getFrontierExtended(
+                this.avatar.plane,
+                this.avatar.x >> 6,
+                this.avatar.y >> 6,
+                radius,
+                this.spatial
+            );
+
+            // Filter out blacklisted tiles
+            const valid = frontier.filter(t => !this.blacklist.has(`${t.plane}_${t.x}_${t.y}`));
+            if (valid.length > 0) {
+                if (radius > 1) logger.info({ radius }, 'Frontier found via expanded radius.');
+                frontier = valid;
+                break;
+            }
+            radius++;
+        }
+        
+        if (frontier.length === 0) return null;
 
         // Filter out blacklisted tiles
         const validFrontier = frontier.filter(t => !this.blacklist.has(`${t.plane}_${t.x}_${t.y}`));

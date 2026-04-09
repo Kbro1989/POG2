@@ -1,0 +1,232 @@
+{
+  "entity": {
+    "npcId": 0,
+    "name": "Hans",
+    "actions": [
+      "Talk to",
+      "Buy veteran capes"
+    ],
+    "boundSize": 1,
+    "combat": 0,
+    "movementCapabilities": 2
+  },
+  "geometry": {
+    "bodyModels": [
+      {
+        "modelId": 40329,
+        "vertexCount": 474,
+        "faceCount": 0,
+        "boneIds": [
+          1,
+          2,
+          3
+        ],
+        "hasSkin": 1,
+        "hasNormals": true,
+        "hasUV": true
+      },
+      {
+        "modelId": 28785,
+        "vertexCount": 180,
+        "faceCount": 0,
+        "boneIds": [
+          8
+        ],
+        "hasSkin": 1,
+        "hasNormals": true,
+        "hasUV": true
+      },
+      {
+        "modelId": 28796,
+        "vertexCount": 200,
+        "faceCount": 0,
+        "boneIds": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          194,
+          209
+        ],
+        "hasSkin": 1,
+        "hasNormals": true,
+        "hasUV": true
+      },
+      {
+        "modelId": 40370,
+        "vertexCount": 46,
+        "faceCount": 0,
+        "boneIds": [
+          195,
+          196,
+          204,
+          207,
+          213,
+          214
+        ],
+        "hasSkin": 1,
+        "hasNormals": true,
+        "hasUV": true
+      },
+      {
+        "modelId": 28767,
+        "vertexCount": 206,
+        "faceCount": 0,
+        "boneIds": [
+          29,
+          30,
+          31,
+          32,
+          34,
+          35,
+          37,
+          38,
+          40,
+          41,
+          42
+        ],
+        "hasSkin": 1,
+        "hasNormals": true,
+        "hasUV": true
+      },
+      {
+        "modelId": 28810,
+        "vertexCount": 150,
+        "faceCount": 0,
+        "boneIds": [
+          32,
+          38,
+          45,
+          46,
+          47,
+          48,
+          232,
+          234,
+          236,
+          237
+        ],
+        "hasSkin": 1,
+        "hasNormals": true,
+        "hasUV": true
+      }
+    ],
+    "headModels": [
+      39575
+    ],
+    "totalVertices": 1256,
+    "totalMeshes": 6,
+    "totalUniqueBones": 41,
+    "colorReplacements": 5,
+    "materialReplacements": 2
+  },
+  "skeleton": {
+    "framemapId": 0,
+    "totalBones": 206,
+    "deformBones": [
+      1,
+      2,
+      3,
+      8,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      29,
+      30,
+      31,
+      32,
+      34,
+      35,
+      37,
+      38,
+      40,
+      41,
+      42,
+      45,
+      46,
+      47,
+      48,
+      194,
+      195,
+      196,
+      204,
+      207,
+      209,
+      213,
+      214,
+      232,
+      234,
+      236,
+      237
+    ],
+    "attachmentNodes": 165,
+    "skinningType": "nxt_weighted"
+  },
+  "kinematics": {
+    "animationGroup": 1426,
+    "sequences": [
+      {
+        "id": 808,
+        "frameCount": 24,
+        "totalTicks": 120,
+        "durationMs": 2400,
+        "frameArchive": 9667
+      },
+      {
+        "id": 819,
+        "frameCount": 16,
+        "totalTicks": 40,
+        "durationMs": 800,
+        "frameArchive": 9629
+      },
+      {
+        "id": 820,
+        "frameCount": 16,
+        "totalTicks": 40,
+        "durationMs": 800,
+        "frameArchive": 9670
+      },
+      {
+        "id": 821,
+        "frameCount": 16,
+        "totalTicks": 32,
+        "durationMs": 640,
+        "frameArchive": 9621
+      },
+      {
+        "id": 822,
+        "frameCount": 16,
+        "totalTicks": 32,
+        "durationMs": 640,
+        "frameArchive": 9680
+      },
+      {
+        "id": 823,
+        "frameCount": 16,
+        "totalTicks": 40,
+        "durationMs": 800,
+        "frameArchive": 9629
+      },
+      {
+        "id": 824,
+        "frameCount": 24,
+        "totalTicks": 36,
+        "durationMs": 720,
+        "frameArchive": 9612
+      }
+    ]
+  },
+  "extractionTimestamp": "2026-04-08T18:11:20.375Z"
+}

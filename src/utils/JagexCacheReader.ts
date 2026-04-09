@@ -1,7 +1,8 @@
-﻿import { gunzipSync, inflateSync } from 'zlib';
+import { gunzipSync, inflateSync } from 'zlib';
 import Database from 'better-sqlite3';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { SovereignDBLifecycle } from './SovereignDBLifecycle.js';
 
 export interface CacheEntry {
     major: number;
@@ -18,6 +19,8 @@ export interface CacheEntry {
 export class JagexCacheReader {
     private readonly cacheDir: string;
     private databases: Map<number, any> = new Map();
+    private closed = false;
+    private registered = false;
 
     private readonly ZLIB_MAGIC = Buffer.from([0x78, 0x9c]);
     private readonly GZIP_MAGIC = Buffer.from([0x1f, 0x8b]);
@@ -42,6 +45,10 @@ export class JagexCacheReader {
         try {
             const db = new Database(dbPath, { readonly: true });
             this.databases.set(major, db);
+            if (!this.registered) {
+                this.registered = true;
+                SovereignDBLifecycle.getInstance().register('JagexCacheReader', this);
+            }
             return db;
         } catch (e) {
             console.error(`Failed to open archive database [${major}]: ${e}`);
@@ -151,8 +158,10 @@ export class JagexCacheReader {
     }
 
     public close(): void {
+        if (this.closed) return;
+        this.closed = true;
         for (const db of this.databases.values()) {
-            db.close();
+            try { db.close(); } catch { /* ignore */ }
         }
         this.databases.clear();
     }

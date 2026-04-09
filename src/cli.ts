@@ -2858,6 +2858,13 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
         } catch (err) {
             renderer.warn('DB Maintenance failed: ' + (err as Error).message);
         }
+        renderer.info('Closing all DB substrates...');
+        try {
+            const { SovereignDBLifecycle } = await import('./utils/SovereignDBLifecycle.js');
+            await SovereignDBLifecycle.getInstance().shutdown();
+        } catch (err) {
+            renderer.warn('DB Lifecycle shutdown error: ' + (err as Error).message);
+        }
 
         renderer.info('Powering down now. I hope to see you again soon!');
         rl.close();

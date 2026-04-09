@@ -1,4 +1,5 @@
 import { OBJECT_INTERACTION_STORE, getInteractionResult } from '../../forensics/ObjectBinaryStore.js';
+import { SovereignVocabularyLimb, InteractionCategory } from '../logical/SovereignVocabularyLimb.js';
 
 export type ProbeState = 'IDLE' | 'TRACE' | 'BUMP_DETECTED' | 'INTERACTING' | 'TRANSITING';
 
@@ -17,9 +18,11 @@ export interface ProbeSimulationState {
  */
 export class SovereignInteractionLimb {
     private activeProbes: Map<number, ProbeSimulationState> = new Map();
+    private vocabLimb: SovereignVocabularyLimb;
 
     constructor() {
-        console.log("SovereignInteractionLimb: Neural Interaction initialized.");
+        this.vocabLimb = new SovereignVocabularyLimb();
+        console.log("SovereignInteractionLimb: Neural Interaction & Semantics initialized.");
     }
 
     /**
@@ -75,8 +78,14 @@ export class SovereignInteractionLimb {
 
         const interaction = getInteractionResult(probe.lastBumpedObjectId);
         if (interaction) {
-            console.log(`Probe ${probe.probeId}: Interaction Link found for Object ${probe.lastBumpedObjectId} -> ${interaction.action}`);
-            probe.state = 'INTERACTING';
+            const category = this.vocabLimb.categorize(interaction.action);
+            console.log(`Probe ${probe.probeId}: Interaction Link found for Object ${probe.lastBumpedObjectId} -> ${interaction.action} [${category}]`);
+            
+            if (category === InteractionCategory.MECHANICAL || category === InteractionCategory.TRANSVERSAL) {
+                 probe.state = 'INTERACTING';
+            } else {
+                 probe.state = 'IDLE'; // Not a pathing-related interaction
+            }
         } else {
             console.log(`Probe ${probe.probeId}: No Interaction Link for Object ${probe.lastBumpedObjectId}. Turning...`);
             probe.state = 'IDLE'; // AI fallback

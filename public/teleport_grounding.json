@@ -1,0 +1,672 @@
+{
+  "region": "global",
+  "metadata": {
+    "source": "Sovereign Teleport Injection",
+    "description": "Ground truth for DBRow teleports and transport objects lacking native cache params",
+    "generated": "2026-04-09T03:59:03.707Z"
+  },
+  "endpoints": {
+    "5348": {
+      "name": "Ardougne Monastery",
+      "dest": null
+    },
+    "16853": {
+      "name": "Al Kharid",
+      "dest": null
+    },
+    "16855": {
+      "name": "Brimhaven (Fruit Patch)",
+      "dest": null
+    },
+    "16857": {
+      "name": "Catherby Farm",
+      "dest": null
+    },
+    "16858": {
+      "name": "Catherby",
+      "dest": null
+    },
+    "16859": {
+      "name": "Champions Guild",
+      "dest": null
+    },
+    "16860": {
+      "name": "West Canifis",
+      "dest": null
+    },
+    "16861": {
+      "name": "Draynor Manor (Nightshade & Evil Turnip)",
+      "dest": null
+    },
+    "16862": {
+      "name": "Entrana",
+      "dest": null
+    },
+    "16863": {
+      "name": "Etceteria",
+      "dest": null
+    },
+    "16865": {
+      "name": "Falador Farm",
+      "dest": null
+    },
+    "16866": {
+      "name": "Falador",
+      "dest": null
+    },
+    "16867": {
+      "name": "Garden of Kharid",
+      "dest": null
+    },
+    "16868": {
+      "name": "Harmony Island",
+      "dest": null
+    },
+    "16869": {
+      "name": "Lletya",
+      "dest": null
+    },
+    "16870": {
+      "name": "Lumbridge",
+      "dest": null
+    },
+    "16871": {
+      "name": "Lumbridge",
+      "dest": null
+    },
+    "16873": {
+      "name": "Ardougne North Farm",
+      "dest": null
+    },
+    "16874": {
+      "name": "Seers Village",
+      "dest": null
+    },
+    "16876": {
+      "name": "West of Port Phasmatys",
+      "dest": null
+    },
+    "16878": {
+      "name": "Prifddinas - Meilyr District",
+      "dest": null
+    },
+    "16879": {
+      "name": "Prifddinas - Crwys District",
+      "dest": null
+    },
+    "16880": {
+      "name": "Prifddinas - Trahaearn District",
+      "dest": null
+    },
+    "16881": {
+      "name": "Rimmington",
+      "dest": null
+    },
+    "16882": {
+      "name": "Tai Bwo Wannai (Calquat Patch)",
+      "dest": null
+    },
+    "16883": {
+      "name": "Tree Gnome Stronghold",
+      "dest": null
+    },
+    "16884": {
+      "name": "Tree Gnome Stronghold",
+      "dest": null
+    },
+    "16885": {
+      "name": "Tree Gnome Village",
+      "dest": null
+    },
+    "16886": {
+      "name": "Trollheim",
+      "dest": null
+    },
+    "16887": {
+      "name": "Varrock",
+      "dest": null
+    },
+    "16888": {
+      "name": "Yanille",
+      "dest": null
+    },
+    "16889": {
+      "name": "Ardougne (Jade Vine)",
+      "dest": null
+    },
+    "16890": {
+      "name": "Woodcutters' Grove",
+      "dest": null
+    },
+    "16891": {
+      "name": "Het's Oasis",
+      "dest": null
+    },
+    "16892": {
+      "name": "Menaphos",
+      "dest": null
+    },
+    "16893": {
+      "name": "Anachronia",
+      "dest": null
+    },
+    "16894": {
+      "name": "Wilderness (Limpwurt Patch)",
+      "dest": null
+    },
+    "16895": {
+      "name": "Wilderness",
+      "dest": null
+    },
+    "16896": {
+      "name": "Herblore Habitat",
+      "dest": null
+    },
+    "16897": {
+      "name": "Isafdar",
+      "dest": null
+    },
+    "16898": {
+      "name": "Taverley",
+      "dest": null
+    },
+    "16899": {
+      "name": "City of Um",
+      "dest": null
+    },
+    "16902": {
+      "name": "Edgeville bank",
+      "dest": {
+        "x": 3087,
+        "z": 3496,
+        "plane": 0
+      }
+    },
+    "16903": {
+      "name": "Karamja",
+      "dest": {
+        "x": 2918,
+        "z": 3176,
+        "plane": 0
+      }
+    },
+    "16904": {
+      "name": "Draynor Village",
+      "dest": {
+        "x": 3105,
+        "z": 3251,
+        "plane": 0
+      }
+    },
+    "16905": {
+      "name": "Al Kharid",
+      "dest": {
+        "x": 3293,
+        "z": 3163,
+        "plane": 0
+      }
+    },
+    "16907": {
+      "name": "Warriors' Guild",
+      "dest": null
+    },
+    "16908": {
+      "name": "Champions' Guild",
+      "dest": null
+    },
+    "16909": {
+      "name": "Edgeville Monestary",
+      "dest": null
+    },
+    "16910": {
+      "name": "Ranging Guild",
+      "dest": null
+    },
+    "16912": {
+      "name": "Brimhaven Dungeon",
+      "dest": null
+    },
+    "16913": {
+      "name": "Fremennik Dungeon",
+      "dest": null
+    },
+    "16914": {
+      "name": "Polypore Dungeon",
+      "dest": null
+    },
+    "16916": {
+      "name": "Varrock Dig Site",
+      "dest": null
+    },
+    "16917": {
+      "name": "Senntisten Temple",
+      "dest": null
+    },
+    "16918": {
+      "name": "Exam Centre",
+      "dest": null
+    },
+    "16920": {
+      "name": "The Nexus",
+      "dest": null
+    },
+    "16921": {
+      "name": "Graveyard of Shadows",
+      "dest": null
+    },
+    "16922": {
+      "name": "Bandit Camp",
+      "dest": null
+    },
+    "16924": {
+      "name": "Kuradal",
+      "dest": null
+    },
+    "16925": {
+      "name": "Morvran",
+      "dest": null
+    },
+    "16927": {
+      "name": "Troll Invasion",
+      "dest": null
+    },
+    "16928": {
+      "name": "Barbarian Outpost",
+      "dest": null
+    },
+    "16929": {
+      "name": "Gamers' Grotto",
+      "dest": null
+    },
+    "16930": {
+      "name": "Agoroth",
+      "dest": null
+    },
+    "16931": {
+      "name": "Corporeal Beast",
+      "dest": null
+    },
+    "16932": {
+      "name": "Burgh de Rott",
+      "dest": null
+    },
+    "16933": {
+      "name": "Tears of Guthix",
+      "dest": null
+    },
+    "16935": {
+      "name": "Het's Oasis",
+      "dest": null
+    },
+    "16936": {
+      "name": "Castle Wars",
+      "dest": null
+    },
+    "16937": {
+      "name": "Warforge Dig Site",
+      "dest": null
+    },
+    "16938": {
+      "name": "Fist of Guthix",
+      "dest": null
+    },
+    "16940": {
+      "name": "Lumbridge Castle",
+      "dest": null
+    },
+    "16941": {
+      "name": "Falador Castle",
+      "dest": null
+    },
+    "16942": {
+      "name": "Camelot",
+      "dest": null
+    },
+    "16943": {
+      "name": "Soul Wars",
+      "dest": null
+    },
+    "16944": {
+      "name": "Burthorpe bank",
+      "dest": null
+    },
+    "16946": {
+      "name": "Sumona in Pollnivneach",
+      "dest": null
+    },
+    "16947": {
+      "name": "Morytania Slayer Tower",
+      "dest": null
+    },
+    "16948": {
+      "name": "Fremennik Dungeon",
+      "dest": null
+    },
+    "16949": {
+      "name": "Tarn's Lair",
+      "dest": null
+    },
+    "16951": {
+      "name": "Miscellania",
+      "dest": null
+    },
+    "16952": {
+      "name": "Grand Exchange",
+      "dest": null
+    },
+    "16954": {
+      "name": "Fishing Guild",
+      "dest": null
+    },
+    "16955": {
+      "name": "Mining Guild",
+      "dest": null
+    },
+    "16956": {
+      "name": "Crafting Guild",
+      "dest": null
+    },
+    "16957": {
+      "name": "Cooking Guild",
+      "dest": null
+    },
+    "16958": {
+      "name": "Invention Guild",
+      "dest": null
+    },
+    "16959": {
+      "name": "Farming Guild",
+      "dest": null
+    },
+    "16960": {
+      "name": "Runecrafting Guild",
+      "dest": null
+    },
+    "16962": {
+      "name": "Wizards' Tower",
+      "dest": null
+    },
+    "16963": {
+      "name": "Ardougne Outpost",
+      "dest": null
+    },
+    "16964": {
+      "name": "South of the Desert Eagle's Eyrie",
+      "dest": null
+    },
+    "16969": {
+      "name": "Turael",
+      "dest": null
+    },
+    "16970": {
+      "name": "Jacquelyn",
+      "dest": null
+    },
+    "16971": {
+      "name": "Vannaka",
+      "dest": null
+    },
+    "16972": {
+      "name": "Raptor",
+      "dest": null
+    },
+    "16973": {
+      "name": "Mazchna",
+      "dest": null
+    },
+    "16974": {
+      "name": "Chaeldar",
+      "dest": null
+    },
+    "16975": {
+      "name": "Sumona",
+      "dest": null
+    },
+    "16976": {
+      "name": "Duradel",
+      "dest": null
+    },
+    "16977": {
+      "name": "Kuradel",
+      "dest": null
+    },
+    "16978": {
+      "name": "Morvran",
+      "dest": null
+    },
+    "16979": {
+      "name": "Laniakea",
+      "dest": null
+    },
+    "16980": {
+      "name": "Mandrith",
+      "dest": null
+    },
+    "16981": {
+      "name": "Fremennik Slayer Dungeon",
+      "dest": null
+    },
+    "16982": {
+      "name": "Kuradal's Dungeon",
+      "dest": null
+    },
+    "16983": {
+      "name": "Poison Waste Slayer Dungeon",
+      "dest": null
+    },
+    "16984": {
+      "name": "Pollnivneach Slayer Dungeon",
+      "dest": null
+    },
+    "16985": {
+      "name": "Polypore Dungeon",
+      "dest": null
+    },
+    "16986": {
+      "name": "Sophanem Slayer Dungeon",
+      "dest": null
+    },
+    "16987": {
+      "name": "Sunken Pyramid",
+      "dest": null
+    },
+    "16988": {
+      "name": "Ancient Cavern",
+      "dest": null
+    },
+    "16989": {
+      "name": "Asgarnian Ice Dungeon",
+      "dest": null
+    },
+    "16990": {
+      "name": "Ascension Dungeon",
+      "dest": null
+    },
+    "16991": {
+      "name": "Brimhaven Dungeon",
+      "dest": null
+    },
+    "16992": {
+      "name": "Burthorpe Slayer Cave",
+      "dest": null
+    },
+    "16993": {
+      "name": "Braindeath Island",
+      "dest": null
+    },
+    "16994": {
+      "name": "Dorgesh-Kaan South Dungeon",
+      "dest": null
+    },
+    "16995": {
+      "name": "Lumbridge Swamp Caves",
+      "dest": null
+    },
+    "16997": {
+      "name": "Smoke Dungeon",
+      "dest": null
+    },
+    "16998": {
+      "name": "Gemstone Cavern",
+      "dest": null
+    },
+    "16999": {
+      "name": "God Wars Dungeon",
+      "dest": null
+    },
+    "17000": {
+      "name": "Guthixian Ruins",
+      "dest": null
+    },
+    "17001": {
+      "name": "Jadinko Lair",
+      "dest": null
+    },
+    "17002": {
+      "name": "Morytania Slayer Tower",
+      "dest": null
+    },
+    "17003": {
+      "name": "Mos Le'Harmless Caves",
+      "dest": null
+    },
+    "17004": {
+      "name": "Senntisten (Cathedral)",
+      "dest": null
+    },
+    "17005": {
+      "name": "Senntisten Asylum",
+      "dest": null
+    },
+    "17006": {
+      "name": "Scabarite Cavern",
+      "dest": null
+    },
+    "17007": {
+      "name": "Stalker Dungeon",
+      "dest": null
+    },
+    "17008": {
+      "name": "Lost Grove",
+      "dest": null
+    },
+    "17009": {
+      "name": "Grotworm Lair",
+      "dest": null
+    },
+    "17010": {
+      "name": "Taverley Dungeon",
+      "dest": null
+    },
+    "17011": {
+      "name": "Waterbirth Island",
+      "dest": null
+    },
+    "17012": {
+      "name": "TzHaar City",
+      "dest": null
+    },
+    "17013": {
+      "name": "The World Gate",
+      "dest": null
+    },
+    "17014": {
+      "name": "Glacor Cave",
+      "dest": null
+    },
+    "17015": {
+      "name": "Edimmus",
+      "dest": null
+    },
+    "17016": {
+      "name": "Tormented demons",
+      "dest": null
+    },
+    "17017": {
+      "name": "Camel warriors",
+      "dest": null
+    },
+    "17018": {
+      "name": "Ice strykewyrms",
+      "dest": null
+    },
+    "17019": {
+      "name": "Desert strykewyrms",
+      "dest": null
+    },
+    "17020": {
+      "name": "Jungle strykewyrms",
+      "dest": null
+    },
+    "17021": {
+      "name": "Acheron mammoths",
+      "dest": null
+    },
+    "17022": {
+      "name": "Airuts",
+      "dest": null
+    },
+    "17023": {
+      "name": "Ripper demons",
+      "dest": null
+    },
+    "17024": {
+      "name": "Celestial dragons",
+      "dest": null
+    },
+    "17025": {
+      "name": "Kal'gerion demons",
+      "dest": null
+    },
+    "17026": {
+      "name": "Brutish dinosaurs",
+      "dest": null
+    },
+    "17027": {
+      "name": "Feral dinosaurs",
+      "dest": null
+    },
+    "17028": {
+      "name": "Ripper dinosaurs",
+      "dest": null
+    },
+    "17029": {
+      "name": "Venomous dinosaurs",
+      "dest": null
+    },
+    "17030": {
+      "name": "Devil's snare",
+      "dest": null
+    },
+    "17031": {
+      "name": "Lampenfloras",
+      "dest": null
+    },
+    "17032": {
+      "name": "Liverworts",
+      "dest": null
+    },
+    "17033": {
+      "name": "Luminous snagglers",
+      "dest": null
+    }
+  },
+  "objects": {
+    "28094": {
+      "name": "Keldagrim trapdoor",
+      "dest": {
+        "x": 3144,
+        "z": 3504,
+        "plane": 0
+      }
+    },
+    "102315": {
+      "name": "GE Minecart",
+      "dest": {
+        "x": 2874,
+        "z": 10168,
+        "plane": 0
+      }
+    }
+  }
+}

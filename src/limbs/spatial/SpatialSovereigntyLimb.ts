@@ -7,6 +7,7 @@ import { Result, ok, err, GameState, Direction, Coord, DirectionalCollision } fr
 import { MechanicalSovereigntyLimb } from '../technical/MechanicalSovereigntyLimb.js';
 import { DirectionalPathfinder } from './DirectionalPathfinder.js';
 import { GeometryAnnotationLayer } from './GeometryAnnotationLayer.js';
+import { PlaneTransitionRegistry } from './PlaneTransitionRegistry.js';
 
 // const logger = createLogger('SpatialSovereigntyLimb');
 const logger = {
@@ -176,36 +177,53 @@ export class SpatialSovereigntyLimb {
 
         try {
             const data = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
-            
-            // --- Composite Ingestion Merge (Phase 41) ---
-            const flags = new Uint16Array(4 * 64 * 64);
-            const heights = new Int16Array(4 * 64 * 64);
 
-            if (data.tiles) {
+            // The new UniversalSovereignSynthesizer directly outputs
+            // semantic Phase 41 / B3 collision matrices!
+            if (data.collision_matrix) {
+                const syntheticArtifact: SpatialLogicArtifact = {
+                    city: `ms_${x}_${z}`,
+                    metadata: data.metadata || {},
+                    anchors: {},
+                    meta: {
+                        bounds: {
+                            wx_min: x * 64,
+                            wx_max: (x * 64) + 63,
+                            wy_min: z * 64,
+                            wy_max: (z * 64) + 63
+                        }
+                    },
+                    collision_matrix: data.collision_matrix
+                };
+                this.loadedMatrices.set(syntheticArtifact.city, syntheticArtifact);
+                logger.info({ x, z }, 'Ingested Semantic Phase B3 Mapsquare Fragment.');
+            } else if (data.tiles) {
+                // Fallback for older executed dumps
+                const flags = new Uint16Array(4 * 64 * 64);
+                const heights = new Int16Array(4 * 64 * 64);
                 for (const tile of data.tiles) {
                     const tx = tile.x;
                     const tz = tile.z;
                     const plane = tile.plane;
-                    if (tile.x < 0 || tile.x > 63 || tile.z < 0 || tile.z > 63 || plane < 0 || plane > 3) continue;
+                    if (tx < 0 || tx > 63 || tz < 0 || tz > 63 || plane < 0 || plane > 3) continue;
 
                     const index = (plane << 12) | (tx << 6) | tz;
-                    
-                    // Bitwise OR Merge (collision fragments)
                     flags[index] |= (tile.collision || 0);
-                    
-                    // Max Height Merge (Z-Inheritance Truth)
                     if (tile.height !== null && tile.height !== undefined) {
                         heights[index] = Math.max(heights[index], tile.height);
                     }
                 }
+                this.loadedMapsquares.set(key, { flags, heights });
             }
 
-            this.loadedMapsquares.set(key, { flags, heights });
-            
+            // Hydrate vertical plane transitions from extracted objects
+            if (data.objects && Array.isArray(data.objects)) {
+                PlaneTransitionRegistry.getInstance().hydrateFromObjects(data.objects);
+            }
+
             // Also attempt to load unified grounding (NPCs) if available
             await this.loadUnifiedGrounding(x, z);
 
-            logger.info({ x, z }, 'Ingested Authoritative Mapsquare Fragment (v41 Merged).');
             return ok(undefined);
         } catch (error) {
             return err(error as Error);
@@ -331,10 +349,53 @@ export class SpatialSovereigntyLimb {
         // --- LAYER 1: Logic Matrix (Decoded Artifacts) ---
         const matrix = this.findMatrixForCoords(x, y);
         if (matrix) {
-            const key = `${plane}_${x}_${y}`;
-            const collision = matrix.collision_matrix[key];
+            // Check cross-plane semantic footprint (Phase B3) or legacy plane format
+            const keyLegacy = `${plane}_${x}_${y}`;
+            const keyUniversal = `${x}_${y}`;
+            let collision = matrix.collision_matrix[keyLegacy];
+            
+            if (collision === undefined) {
+                collision = matrix.collision_matrix[keyUniversal];
+            }
+
             if (collision !== undefined) {
+                // Legacy bitmask matrix
                 if (typeof collision === 'number') return (collision & 0x1) === 0;
+                
+                // Semantic Matrix Object (Phase B3)
+                if (typeof collision === 'object') {
+                    const c = collision as any;
+                    
+                    // 1. Check Directional Edge blocking BEFORE tile occupancy
+                    if (direction && (c.edges || c.north !== undefined)) {
+                        const edges = c.edges || c; // Support both {edges:{northBlocked}} and {north:true} formats
+                        const dir = typeof direction === 'string' ? direction.toLowerCase() : direction;
+                        
+                        // Handle modern 'edges' format
+                        if (edges.northBlocked && dir === 'north') return false;
+                        if (edges.southBlocked && dir === 'south') return false;
+                        if (edges.eastBlocked && dir === 'east') return false;
+                        if (edges.westBlocked && dir === 'west') return false;
+
+                        // Handle legacy 'barrows' format (north: true means walkable, unlike northBlocked)
+                        if (edges.north === false && dir === 'north') return false;
+                        if (edges.south === false && dir === 'south') return false;
+                        if (edges.east === false && dir === 'east') return false;
+                        if (edges.west === false && dir === 'west') return false;
+
+                        // Support root-level flags when 'edges' is missing (Direct Barrows Logic)
+                        if (c.north === false && dir === 'north') return false;
+                        if (c.south === false && dir === 'south') return false;
+                        if (c.east === false && dir === 'east') return false;
+                        if (c.west === false && dir === 'west') return false;
+                    }
+
+                    // 2. Check general structural tile occupancy
+                    if (c.walkable !== undefined) return c.walkable;
+                    
+                    // Fallback for logic artifacts (Barrows) that use direction only
+                    return c.north !== undefined || c.edges !== undefined;
+                }
             }
         }
 
@@ -438,13 +499,46 @@ export class SpatialSovereigntyLimb {
     }
 
     /**
+     * toggleDynamicDoor - Live-toggles the collision matrix for a dynamic door/gate.
+     * When opened, the directional edges are cleared. When closed, they are restored.
+     */
+    public toggleDynamicDoor(x: number, y: number, plane: number, open: boolean): boolean {
+        const matrix = this.findMatrixForCoords(x, y);
+        if (!matrix) return false;
+        
+        const keys = [`${plane}_${x}_${y}`, `${x}_${y}`];
+        for (const key of keys) {
+            const collision = matrix.collision_matrix[key];
+            if (collision !== undefined && typeof collision === 'object') {
+                const c = collision as any;
+                if (open) {
+                    if (!c._originalEdges && c.edges) {
+                        c._originalEdges = { ...c.edges };
+                    }
+                    c.edges = { northBlocked: false, southBlocked: false, eastBlocked: false, westBlocked: false };
+                } else {
+                    if (c._originalEdges) {
+                        c.edges = { ...c._originalEdges };
+                    }
+                }
+                // logger.info({ x, y, plane, open }, '[SPATIAL] Dynamic door toggled.');
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * getLogicAt - Returns the raw collision data at a coordinate.
      */
     public getLogicAt(plane: number, x: number, y: number): number | DirectionalCollision {
         const matrix = this.findMatrixForCoords(x, y);
         if (matrix) {
-            const key = `${plane}_${x}_${y}`;
-            return matrix.collision_matrix[key] || 0;
+            let collision = matrix.collision_matrix[`${plane}_${x}_${y}`];
+            if (collision === undefined) {
+                collision = matrix.collision_matrix[`${x}_${y}`];
+            }
+            return collision || 0;
         }
 
         const msX = x >> 6;
@@ -491,23 +585,31 @@ export class SpatialSovereigntyLimb {
         const matrix = this.findMatrixForCoords(x, y);
 
         if (matrix) {
-            const key = `${plane}_${x}_${y}`;
-            const raw = matrix.collision_matrix[key];
+            let raw = matrix.collision_matrix[`${plane}_${x}_${y}`];
+            if (raw === undefined) {
+                raw = matrix.collision_matrix[`${x}_${y}`];
+            }
+            
             if (!raw) return { coord, walkable: true, collisionType: 'legacy_bitmask', raw: 0, region: matrix.city };
 
             if (typeof raw === 'object') {
                 return {
                     coord,
-                    walkable: raw.north || raw.south || raw.east || raw.west,
+                    walkable: (raw as any).walkable,
                     collisionType: 'directional',
                     raw,
-                    directional: { north: raw.north, south: raw.south, east: raw.east, west: raw.west },
-                    npcOnlyBlocks: raw.npc_only_blocks,
+                    directional: (raw as any).edges || { 
+                        north: (raw as any).north, 
+                        south: (raw as any).south, 
+                        east: (raw as any).east, 
+                        west: (raw as any).west 
+                    },
+                    npcOnlyBlocks: (raw as any).npc_only_blocks,
                     region: matrix.city
                 };
             }
 
-            const blocked = (raw & 0x100) !== 0 || (raw & 0x200000) !== 0;
+            const blocked = (raw & 0x100) !== 0 || (raw & 0x200000) !== 0 || (raw & 0x1) !== 0;
             return { coord, walkable: !blocked, collisionType: 'legacy_bitmask', raw, region: matrix.city };
         }
 
