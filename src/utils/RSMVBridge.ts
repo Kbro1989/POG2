@@ -186,10 +186,20 @@ export class RSMVBridge {
         return RSMVBridge._instance;
     }
 
-    /** Probe the live cache. Result is cached so subsequent limb inits are O(1). */
+    private _lastHealthCheckTime = 0;
+    private _lastHealthCheckResult: Result<BridgeHealthResult> | null = null;
+
+    /** Probe the live cache. Result is cached for 30s to prevent audit spam. */
     public async healthCheck(): Promise<Result<BridgeHealthResult>> {
+        const now = Date.now();
+        if (this._lastHealthCheckResult && (now - this._lastHealthCheckTime < 30000)) {
+            return this._lastHealthCheckResult;
+        }
+
         const result = await callBridge<BridgeHealthResult>('health');
         this._healthy = result.ok && result.value.online;
+        this._lastHealthCheckTime = now;
+        this._lastHealthCheckResult = result;
         return result;
     }
 

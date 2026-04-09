@@ -65,6 +65,7 @@ export class CNSGodheadPulseVolley {
 
     private substrateState: SubstrateState = SubstrateState.OFFLINE;
     private tickCount = 0;
+    private isStarted = false;
 
     private constructor() {
         if (CNSGodheadPulseVolley.instance) {
@@ -102,7 +103,15 @@ export class CNSGodheadPulseVolley {
      * Implements self-correcting drift logic inspired by RSC Evolution alarms.
      */
     public startLoop(): void {
+        if (this.isStarted) {
+            logger.warn('CNS Godhead Pulse already active. Ignition aborted.');
+            return;
+        }
+
+        this.isStarted = true;
         logger.info('CNS Godhead Pulse (Hardened Heartbeat) Started.');
+        
+        // Phase 112: Immediate bootstrap tick
         this.tick();
     }
 

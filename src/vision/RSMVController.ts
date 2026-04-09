@@ -160,14 +160,34 @@ return new Promise((resolve) => {
 }
     }
 
-    public async healthCheck(): Promise < { online: boolean; details: string } > {
-    // Basic check: Ensure rsmv substrate cli.ts exists
-    const { existsSync } = await import('fs');
-    const { join } = await import('path');
-    const substrateStatus = existsSync(join(getRSMVSubstratePath(), 'src', 'headless', 'cli.ts'));
-    return {
-        online: substrateStatus,
-        details: substrateStatus ? 'RSMV CLI substrate verified.' : 'RSMV CLI substrate missing or unlinked.'
-    };
-}
+    public async healthCheck(): Promise<{ online: boolean; details: string; status?: string }> {
+        const { existsSync } = await import('fs');
+        const substrateRoot = getRSMVSubstratePath();
+        const cliPath = join(substrateRoot, 'src', 'headless', 'cli.ts');
+        
+        const rootExists = existsSync(substrateRoot);
+        const cliExists = existsSync(cliPath);
+
+        if (cliExists) {
+            return {
+                online: true,
+                status: 'ONLINE',
+                details: 'RSMV CLI substrate verified.'
+            };
+        }
+
+        if (rootExists) {
+            return {
+                online: true,
+                status: 'DEGRADED',
+                details: 'RSMV substrate folder found, but cli.ts is missing (Limited Perception).'
+            };
+        }
+
+        return {
+            online: false,
+            status: 'OFFLINE',
+            details: 'RSMV substrate missing or unlinked.'
+        };
+    }
 }

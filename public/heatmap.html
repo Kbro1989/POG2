@@ -230,7 +230,7 @@ if (window.location.protocol === 'file:') {
         <h1 style="color:#ff4d4d">⚠️ PROTOCOL BLOCKAGE DETECTED</h1>
         <p style="font-size:18px; color:#fff; margin:20px 0;">The Sovereign Engine cannot fetch logical chunks via <b>file://</b> due to browser CORS security.</p>
         <p style="font-size:16px; color:#51ffff;">You must access the Unified Radar via the Sovereign Pulse Server:</p>
-        <a href="http://localhost:8080/heatmap.html" style="background:#51ffff; color:#000; padding:15px 30px; border-radius:5px; font-weight:bold; text-decoration:none; margin-top:20px; font-size:20px;">OPEN SOVEREIGN PULSE</a>
+        <a href="http://localhost:4999/heatmap.html" style="background:#51ffff; color:#000; padding:15px 30px; border-radius:5px; font-weight:bold; text-decoration:none; margin-top:20px; font-size:20px;">OPEN SOVEREIGN PULSE</a>
         <p style="margin-top:30px; font-size:12px; color:#666;">(Alternatively, use the "Load File" button to manually ingest a mapsquare JSON)</p>
     `;
     document.body.appendChild(shield);
@@ -606,8 +606,8 @@ async function loadChunk() {
   document.getElementById('status').textContent = `Pulse Syncing chunk ${filename}...`;
 
   try {
-    // Force HTTP protocol to bypass file:// CORS restrictions
-    const resp = await fetch(`http://localhost:8080/${filename}`);
+    // Fetch relative to the current origin (e.g. localhost:4999) to avoid CORS
+    const resp = await fetch(`/${filename}`);
     if (!resp.ok) {
         if (resp.status === 404) {
             console.log(`%c[SOVEREIGN] Chunk ${filename} is not currently indexed. (Void)`, "color: #ff9d00");

@@ -601,6 +601,15 @@ export async function main(): Promise<void> {
                 
                 const server = http.createServer((req, res) => {
                     let filePath = join('public', req.url === '/' ? 'heatmap.html' : req.url!);
+                    
+                    // Root fallback for collision data: Check the bulk extraction directory on D-drive
+                    if (!fs.existsSync(filePath) && req.url?.startsWith('/ms_')) {
+                        const dPath = join('D:\\sovereign\\atlas\\spatial\\world_extract', req.url.substring(1));
+                        if (fs.existsSync(dPath)) {
+                            filePath = dPath;
+                        }
+                    }
+
                     if (!fs.existsSync(filePath)) {
                         res.writeHead(404);
                         res.end('Not Found');

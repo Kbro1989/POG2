@@ -14,7 +14,7 @@ import { SpatialSovereigntyLimb } from '../../limbs/spatial/SpatialSovereigntyLi
 import { DirectionalPathfinder } from '../../limbs/spatial/DirectionalPathfinder.js';
 import { NpcAgent, NpcAgentConfig } from './NpcAgent.js';
 import { InteractionGateway } from '../../limbs/logical/InteractionGateway.js';
-import { GameplaySovereigntyLimb } from '../../limbs/logical/GameplaySovereigntyLimb.js';
+import { GameplaySovereigntyLimb } from '../../limbs/spatial/GameplaySovereigntyLimb.js';
 
 export interface TickEvent {
     id: string;

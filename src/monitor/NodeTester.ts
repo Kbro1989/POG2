@@ -278,7 +278,7 @@ export class NodeTester {
                 const probe = await Promise.race([
                     checkPromise,
                     new Promise<{ online: boolean; details: string; retryable?: boolean }>((_, reject) => 
-                        setTimeout(() => reject(new Error('HEALTH_CHECK_TIMEOUT')), 10000)
+                        setTimeout(() => reject(new Error('HEALTH_CHECK_TIMEOUT')), 30000)
                     )
                 ]);
 

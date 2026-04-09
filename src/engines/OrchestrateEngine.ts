@@ -449,6 +449,11 @@ export class OrchestrateEngine {
             
             // Phase 111: Gameplay Sovereignty (Heartbeat)
             await this.gameplay.initialize();
+            
+            // Phase 112: Heartbeat Ignition (Substrate Logic Loop)
+            if (!options.diagnosticOnly) {
+                CNSGodheadPulseVolley.getInstance().startLoop();
+            }
 
             if (!spatialInit.ok) {
                 logger.error({ err: spatialInit.error }, 'Failed to initialize SpatialSovereigntyLimb');

@@ -17,9 +17,14 @@ export class SubstrateResolver {
         const vision = await SpatialVisionEngine.getInstance().healthCheck();
         const cache = await CacheForensicsLimb.getInstance().healthCheck();
 
-        // OFFLINE: Core 3D Substrate or Spatial Perception is missing.
-        if (!rsmv.online || !vision.online) {
+        // OFFLINE: Heartbeat cannot proceed without any perceptual substrate.
+        if (!rsmv.online && !vision.online) {
             return SubstrateState.OFFLINE;
+        }
+
+        // DEGRADED: Core 3D Substrate or Spatial Perception is dormant/missing.
+        if (!rsmv.online || !vision.online) {
+            return SubstrateState.DEGRADED;
         }
 
         // DEGRADED: Cache auditing is failing but 3D view is active.
