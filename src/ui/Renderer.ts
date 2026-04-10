@@ -327,11 +327,16 @@ export class Renderer {
         console.log(`\n  \x1b[38;5;123mStatus: Substrate Synchronized. Ready for high-fidelity simulation.\x1b[0m\n`);
     }
 
+    public drawRadar(grid: string, clear: boolean = false): void {
+        if (clear) {
+            // ANSI escape to clear screen and reset cursor
+            process.stdout.write('\x1b[2J\x1b[0;0H');
+        }
+        console.log(grid);
+    }
+
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
-        return {
-            online: true,
-            details: 'CLI Renderer: ONLINE (Interactive substrate nominal)'
-        };
+        return { online: true, details: 'Renderer is synchronized with the CLI substrate.' };
     }
 }
 

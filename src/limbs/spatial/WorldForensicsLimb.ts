@@ -83,34 +83,74 @@ export class WorldForensicsLimb {
         try {
             if (fs.existsSync(jsonPath)) {
                 const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+
+                // Schema A: tileFlags array (SovereignWorldExtract output)
+                if (data.tileFlags && Array.isArray(data.tileFlags)) {
+                    for (const tile of data.tileFlags) {
+                        if (tile && tile.plane < 4 && tile.x < 64 && tile.z < 64) {
+                            // NXT flags: bit 1 (0x02) = blocking. NOT bit 0 (0x01 = visible).
+                            grid[tile.plane][tile.x][tile.z] = (tile.collision & 0x02) !== 0 ? 1 : 0;
+                        }
+                    }
+                }
+
+                // Schema B: collision_matrix keyed by "x_z" (public heatmap output)
+                if (data.collision_matrix) {
+                    for (const [key, val] of Object.entries(data.collision_matrix)) {
+                        const cm = val as any;
+                        if (cm && cm.sourceFlags !== undefined) {
+                            const parts = key.split('_').map(Number);
+                            const tx = parts.length === 3 ? parts[1] - (mapsquareX << 6) : parts[0] - (mapsquareX << 6);
+                            const tz = parts.length === 3 ? parts[2] - (mapsquareZ << 6) : parts[1] - (mapsquareZ << 6);
+                            const tp = parts.length === 3 ? parts[0] : 0;
+                            if (tp < 4 && tx >= 0 && tx < 64 && tz >= 0 && tz < 64) {
+                                // NXT sourceFlags: bit 1 (0x02) = blocking
+                                grid[tp][tx][tz] = (cm.sourceFlags & 0x02) !== 0 ? 1 : 0;
+                            }
+                        }
+                    }
+                }
+
+                // Schema C: tiles array (legacy format)
                 if (data.tiles && Array.isArray(data.tiles)) {
                     for (const tile of data.tiles) {
-                        if (tile.plane < 4 && tile.x < 64 && tile.z < 64) {
-                            grid[tile.plane][tile.x][tile.z] = (tile.collision & 0x01);
+                        if (tile && tile.plane < 4 && tile.x < 64 && tile.z < 64) {
+                            grid[tile.plane][tile.x][tile.z] = (tile.collision & 0x02) !== 0 ? 1 : 0;
                         }
                     }
-
-                    for (let curX = 0; curX < 64; curX++) {
-                        for (let curZ = 0; curZ < 64; curZ++) {
-                            const worldX = (mapsquareX << 6) + curX;
-                            const worldZ = (mapsquareZ << 6) + curZ;
-                            observations.push({
-                                x: worldX,
-                                z: worldZ,
-                                plane: plane,
-                                collision: grid[plane][curX][curZ],
-                                objects: []
-                            });
-                        }
-                    }
-                    return ok(observations);
                 }
+
+                for (let curX = 0; curX < 64; curX++) {
+                    for (let curZ = 0; curZ < 64; curZ++) {
+                        const worldX = (mapsquareX << 6) + curX;
+                        const worldZ = (mapsquareZ << 6) + curZ;
+                        observations.push({
+                            x: worldX,
+                            z: worldZ,
+                            plane: plane,
+                            collision: grid[plane][curX][curZ],
+                            objects: []
+                        });
+                    }
+                }
+                return ok(observations);
             }
         } catch (e) {
             console.log(`[WorldForensicsLimb] JSON Truth error for [${mapsquareX},${mapsquareZ}]:`, e);
         }
 
-        // --- CACHE FALLBACK ---
+        // --- CACHE FALLBACK: NXT Format (mapsquare_tiles_nxt.jsonc) ---
+        // Per mapsquare_tiles_nxt.jsonc from Kbro1989/rsmv:
+        //   4 levels × 4356 (66×66) tiles, each tile = struct {
+        //     flags: ubyte   → bit0=visible/has_rest, bit1=blocking(0x02), bit2=bridge, bit3=roofed, bit4=water
+        //     height: ushort (buildnr >= 936)
+        //     rest: [conditional on flags bit 0] {
+        //       waterheight: ushort (if flags & 0x10)
+        //       underlay: ushort
+        //       overlay: ushort
+        //       shape: ubyte
+        //     }
+        //   }
         if (!this.cache) return err(new Error('Limb not initialized'));
         const fileId = (mapsquareX << 8) | mapsquareZ;
         const terrain = this.cache.readSubEntry(5, fileId, 3); 
@@ -120,37 +160,53 @@ export class WorldForensicsLimb {
         }
 
         const reader = new ByteReader(terrain);
+
+        // NXT header: "JAGX\x01" (4 bytes magic + 1 byte version) for buildnr >= 936
         if (terrain.length > 5 && terrain.slice(0, 4).toString() === 'JAGX') {
-            reader.skip(5);
+            reader.skip(5); // Skip magic (4) + version (1)
         }
 
-        for (let p = 0; p < 4; p++) {
-            for (let curX = 0; curX < 64; curX++) {
-                for (let curZ = 0; curZ < 64; curZ++) {
-                    let settings = 0;
-                    while (reader.hasRemaining()) {
-                        const opcode = reader.readU8();
-                        if (opcode === 0) break;
-                        if (opcode === 1) {
-                            reader.readU16(); 
-                            break; 
-                        } else if (opcode <= 49) {
-                            reader.readSmart();
-                        } else if (opcode <= 81) {
-                            settings = opcode - 49;
-                        } 
+        // 4 levels: level0, level1, level2, level3
+        for (let level = 0; level < 4; level++) {
+            // 4356 tiles per level (66 × 66 = padded mapsquare)
+            for (let i = 0; i < 4356; i++) {
+                if (!reader.hasRemaining()) break;
+
+                const flags = reader.readU8();
+                const height = reader.readU16(); // ushort for buildnr >= 936
+
+                // "rest" data: present when flags bit 0 is set
+                if (flags & 0x01) {
+                    // waterheight: present when flags bit 4 (0x10) is set
+                    if (flags & 0x10) {
+                        reader.readU16(); // waterheight (ushort for buildnr >= 936)
                     }
+                    reader.readU16(); // underlay (ushort for buildnr >= 936)
+                    reader.readU16(); // overlay (ushort for buildnr >= 936)
+                    reader.readU8();  // shape (ubyte)
+                }
 
-                    grid[p][curX][curZ] = (settings & 0x01);
+                // Map padded 66×66 index to (tx, tz) coordinates
+                const tx = Math.floor(i / 66); // column within the 66-wide row
+                const tz = i % 66;             // row position
 
-                    if (p === plane) {
-                        const worldX = (mapsquareX << 6) + curX;
-                        const worldZ = (mapsquareZ << 6) + curZ;
+                // Core playable tiles are at padded indices [1..64].
+                // Index 0 and 65 are neighbor-bleed padding.
+                if (tx >= 1 && tx <= 64 && tz >= 1 && tz <= 64) {
+                    const coreX = tx - 1; // 0-63 in world-local space
+                    const coreZ = tz - 1; // 0-63 in world-local space
+
+                    // NXT Blocking: bit 1 (0x02) is the authoritative blocking flag
+                    grid[level][coreX][coreZ] = (flags & 0x02) !== 0 ? 1 : 0;
+
+                    if (level === plane) {
+                        const worldX = (mapsquareX << 6) + coreX;
+                        const worldZ = (mapsquareZ << 6) + coreZ;
                         observations.push({
                             x: worldX,
                             z: worldZ,
-                            plane: p,
-                            collision: grid[p][curX][curZ],
+                            plane: level,
+                            collision: grid[level][coreX][coreZ],
                             objects: []
                         });
                     }

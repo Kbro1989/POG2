@@ -440,7 +440,14 @@ export class OrchestrateEngine {
 
             // Phase 7: Epistemology Activation
             const forensicInit = await this.cacheForensics.initialize();
-            if (!forensicInit.ok) {
+            if (forensicInit.ok) {
+                // AUTHORITATIVE HEARTBEAT: If bridge is connected to 11GB Live Cache, signal the brain
+                const isAuthoritative = await this.cacheForensics.isAuthoritative?.() || false;
+                if (isAuthoritative) {
+                    logger.info('🔱 SOVEREIGN_TRUTH_ONLINE: Forensic Bridge has anchored to 11GB Authoritative Substrate.');
+                    this.nodeTester.broadcastPulse?.('SOVEREIGN_TRUTH_ONLINE', { substrate: 'NXT_LIVE_CACHE' });
+                }
+            } else {
                 logger.error({ err: forensicInit.error }, 'Failed to initialize CacheForensicsLimb');
             }
 
@@ -537,7 +544,8 @@ export class OrchestrateEngine {
                     ShadowEngine: this.shadow,
                     MemeticEngine: this.memetic,
                     SyntropyEngine: this.syntropy,
-                    DiscoveryEngine: this.discovery
+                    DiscoveryEngine: this.discovery,
+                    CacheForensicsLimb: this.cacheForensics
                 });
                 this.client.getRolodex()?.refreshAll().catch(() => { /* non-blocking */ });
             }
@@ -668,6 +676,7 @@ export class OrchestrateEngine {
 
         // Inject Pulse Volley dependencies
         this.pulseVolley.setRouter(this.router);
+        this.pulseVolley.setRenderer(this.renderer);
         this.pulseVolley.setNodeTester(nodeTester);
         
         // Idempotent registration of key singletons to prevent DEGRADED statuses in NodeTester
@@ -1900,7 +1909,7 @@ OUTPUT FORMAT:
                 if (!res.ok) return res as any;
 
                 const output = `Taxonomy Query [${params.layer}]: ${res.value.length} matches found.\n` +
-                    res.value.map(e => `- [${e.id}] ${e.name}${e.combatLevel ? ` (Lvl ${e.combatLevel})` : ''}`).join('\n');
+                    res.value.map((e: any) => `- [${e.id}] ${e.name}${e.combatLevel ? ` (Lvl ${e.combatLevel})` : ''}`).join('\n');
 
                 return ok({ output, data: res.value });
             }

@@ -1,4 +1,4 @@
-﻿import { spawn, type ChildProcess } from 'child_process';
+import { spawn, type ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import { join, resolve } from 'path';
 import { existsSync, statSync, appendFileSync } from 'fs';
@@ -14,6 +14,8 @@ import type { NodeTester } from './NodeTester.js';
 import { ChromaLimb } from '../limbs/spatial/ChromaLimb.js';
 import { getDefaultSovereignConfig } from '../config/SovereignConfig.js';
 import { createLogger } from "../utils/logger.js";
+import { SubstrateResolver } from '../engines/gameplay/SubstrateResolver.js';
+import { SubstrateState } from '../core/models.js';
 
 const logger = createLogger('PulseMonitor');
 
@@ -44,7 +46,7 @@ export class PulseMonitor extends EventEmitter {
         this.isRunning = true;
         this.clinicalLogger.log('INFO', 'PulseMonitor', 'BIOLOGICAL_HEART_RATE_ESTABLISHED');
         await this.pulse();
-        this.monitorInterval = setInterval(() => this.pulse(), 60000).unref(); // 1 minute pulse
+        this.monitorInterval = setInterval(() => this.pulse(), 10000).unref(); // 10 second decoupled pulse
     }
 
     public stop(): void {
@@ -102,6 +104,20 @@ export class PulseMonitor extends EventEmitter {
             const noRecentErrors = this.checkErrors();
             const buildPass = this.checkBuildStatus();
 
+            // Resolve global substrate state
+            let globalStatus = SubstrateState.ONLINE;
+            if (offlineCount >= 5) globalStatus = SubstrateState.OFFLINE;
+            else if (offlineCount > 0) globalStatus = SubstrateState.DEGRADED;
+
+            // Update Metabolic Registries
+            SubstrateResolver.setStatus(globalStatus);
+            
+            // Push to Line 2 (Biological Pulse / System Vitality)
+            this.hexagramManager.setYaoState(
+                globalStatus === SubstrateState.ONLINE ? YaoState.YoungYang :
+                globalStatus === SubstrateState.OFFLINE ? YaoState.OldYin : YaoState.YoungYin
+            );
+
             this.hexagramManager.updateState({
                 buildPass,
                 userActive: (Date.now() - this.lastSenseTime) < 300000,
@@ -111,7 +127,7 @@ export class PulseMonitor extends EventEmitter {
                 auditSync: onlineCount >= 20
             } as SystemSensors);
 
-            logger.debug({ online: onlineCount, offline: offlineCount }, 'Lightweight limb pulse complete.');
+            logger.info({ online: onlineCount, offline: offlineCount, globalStatus }, 'Lightweight limb pulse complete. State broadcasted.');
         } catch (err: any) {
             logger.warn({ error: err.message }, 'Lightweight pulse failed, reverting to full telemetry next tick.');
             this.firstPassComplete = false; // Revert to force one full pass

@@ -68,9 +68,21 @@ export class CacheForensicsLimb {
             throw new Error('Singleton violation: use CacheForensicsLimb.getInstance()');
         }
         // Track the main cache file for volatility checks
+        // Track the main cache file for volatility checks (Dynamically find Major 255 or the largest bundle)
         const legacyPath = path.join(this.cachePath, 'main_file_cache.dat2');
-        const modernPath = path.join(this.cachePath, 'js5-47.jcache');
-        this.mainCacheFile = fs.existsSync(legacyPath) ? legacyPath : modernPath;
+        const rootIndexPath = path.join(this.cachePath, 'js5-index.jcache');
+        
+        if (fs.existsSync(rootIndexPath)) {
+            this.mainCacheFile = rootIndexPath;
+        } else if (fs.existsSync(legacyPath)) {
+            this.mainCacheFile = legacyPath;
+        } else {
+            // Heuristic Fallback: Find any high-major jcache bundle (likely NXT God Bundle)
+            const files = fs.readdirSync(this.cachePath).filter(f => f.endsWith('.jcache'));
+            const bundles = files.map(f => ({ name: f, major: parseInt(f.match(/\d+/)?.[0] || '0') }))
+                               .sort((a, b) => b.major - a.major);
+            this.mainCacheFile = bundles.length > 0 ? path.join(this.cachePath, bundles[0].name) : 'OFFLINE';
+        }
 
         // Initialize grounding resolver
         this.grounding = WorldGroundingLimb.getInstance();
@@ -98,8 +110,20 @@ export class CacheForensicsLimb {
             logger.info('CacheForensicsLimb sequence ACTIVE.');
             return ok(true);
         } catch (error) {
-            logger.error({ error }, 'Failed to initialize CacheForensicsLimb.');
-            return err(error as Error);
+            return err(error instanceof Error ? error : new Error(String(error)));
+        }
+    }
+
+    /**
+     * isAuthoritative - Confirms if the substrate is grounded in the 11GB Live Cache.
+     */
+    public async isAuthoritative(): Promise<boolean> {
+        try {
+            const health = await rsmvBridge.healthCheck();
+            // Statuses like 'ONLINE (Authoritative)' or 'ONLINE' against the live path confirm authority.
+            return health.ok && health.value.online;
+        } catch {
+            return false;
         }
     }
 

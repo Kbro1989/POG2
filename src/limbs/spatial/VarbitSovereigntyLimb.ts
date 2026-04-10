@@ -1,6 +1,9 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import { GameState } from '../../core/models.js';
 import { WorldForensicsLimb } from './WorldForensicsLimb.js';
 import { createLogger } from '../../utils/logger.js';
+import { SpatialSovereigntyLimb } from './SpatialSovereigntyLimb.js';
 
 const logger = createLogger('VarbitSovereigntyLimb');
 
@@ -16,6 +19,9 @@ export class VarbitSovereigntyLimb {
         this.forensics = new WorldForensicsLimb();
     }
 
+    private definitions: Map<number, { parentVarpId: number, lsb: number, msb: number }> = new Map();
+    private varpToVarbits: Map<number, number[]> = new Map(); // Index to find affected varbits quickly
+
     public static getInstance(): VarbitSovereigntyLimb {
         if (!VarbitSovereigntyLimb.instance) {
             VarbitSovereigntyLimb.instance = new VarbitSovereigntyLimb();
@@ -25,6 +31,41 @@ export class VarbitSovereigntyLimb {
 
     public async initialize(): Promise<void> {
         await this.forensics.initialize();
+        this.loadRegistry();
+    }
+
+    /**
+     * loadRegistry - Ingests the authoritative varbit-to-varp mappings from the Pedagogy KB.
+     */
+    private loadRegistry(): void {
+        const registryPath = 'D:\\sovereign\\memory\\pedagogy\\varbits_registry.json';
+        if (!fs.existsSync(registryPath)) {
+            logger.warn('Varbit Registry missing. Morphism resolution will use fallbacks.');
+            return;
+        }
+
+        try {
+            const data = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+            for (const [idStr, entry] of Object.entries(data)) {
+                const id = parseInt(idStr);
+                const e = entry as any;
+                const def = {
+                    parentVarpId: e.varid,
+                    lsb: e.bits[0],
+                    msb: e.bits[1]
+                };
+                this.definitions.set(id, def);
+
+                // Build inverse index for collision invalidation
+                if (!this.varpToVarbits.has(e.varid)) {
+                    this.varpToVarbits.set(e.varid, []);
+                }
+                this.varpToVarbits.get(e.varid)!.push(id);
+            }
+            logger.info(`Varbit Registry loaded: ${this.definitions.size} mappings ingested.`);
+        } catch (error) {
+            logger.error({ error }, 'Failed to load Varbit Registry.');
+        }
     }
 
     /**
@@ -39,12 +80,11 @@ export class VarbitSovereigntyLimb {
 
         let index = -1;
         if (def.varbitId !== undefined && def.varbitId !== -1) {
-            // Varbit takes precedence
-            const value = gameState.varbits.get(def.varbitId) || 0;
-            index = value;
+            // AUTHORITATIVE: Resolve varbit bit-window from parent varp
+            index = this.resolveVarbitValue(def.varbitId, gameState);
         } else if (def.varpId !== undefined && def.varpId !== -1) {
             // Varp fallback
-            const value = gameState.varbits.get(def.varpId) || 0; // In this system, varps are stored in the same map
+            const value = gameState.varps.get(def.varpId) || 0;
             index = value;
         }
 
@@ -58,6 +98,89 @@ export class VarbitSovereigntyLimb {
         return def.defaultTransformId !== undefined && def.defaultTransformId !== -1 
             ? def.defaultTransformId 
             : originalId;
+    }
+
+    /**
+     * resolveVarbitValue - Extracts the bit-window from the parent Varp.
+     * Logic: value = (varp >> lsb) & ((1 << (msb - lsb + 1)) - 1)
+     */
+    public resolveVarbitValue(varbitId: number, gameState: GameState): number {
+        // Phase 11: Probe/Fallback definition. In a production run, this loads from table_X.json
+        const def = this.getVarbitDefinition(varbitId);
+        if (!def) return gameState.varbits.get(varbitId) || 0;
+
+        const parentValue = gameState.varps.get(def.parentVarpId) || 0;
+        const mask = ((1 << (def.msb - def.lsb + 1)) - 1);
+        const resolved = (parentValue >> def.lsb) & mask;
+        
+        // Cache the resolved value for quick lookups
+        gameState.varbits.set(varbitId, resolved);
+        return resolved;
+    }
+
+    /**
+     * setVarp - Updates a player variable and triggers varbit cache invalidation.
+     * In Phase 13, this also triggers Spatial manifestations for affected objects.
+     */
+    public async setVarp(id: number, value: number, gameState: GameState): Promise<void> {
+        const oldValue = gameState.varps.get(id) || 0;
+        if (oldValue === value) return;
+
+        gameState.varps.set(id, value);
+        logger.info({ id, oldValue, newValue: value }, 'Authoritative VARP Update');
+
+        // Phase 13: World Manifestation Trigger
+        const affectedVarbits = this.varpToVarbits.get(id) || [];
+        
+        // Find all objects in the current local area and check if they depend on these varbits/varp
+        await this.remanifestAffectedObjects(id, affectedVarbits, gameState);
+    }
+
+    /**
+     * remanifestAffectedObjects - Scans active world for objects that need a visual/collision flip.
+     */
+    private async remanifestAffectedObjects(varpId: number, affectedVarbits: number[], gameState: GameState): Promise<void> {
+        const spatial = SpatialSovereigntyLimb.getInstance();
+        
+        // Scan the active object map (This is an O(N) scan of the local chunk which is acceptable given its size)
+        for (const [index, objects] of gameState.objectMap.entries()) {
+            for (const obj of objects) {
+                const def = await this.forensics.getObjectDefinition(obj.id);
+                
+                // Check if this object is state-gated by the modified Varp or its child Varbits
+                const isAffected = (def.varpId === varpId) || (def.varbitId !== undefined && affectedVarbits.includes(def.varbitId));
+                
+                if (isAffected && def.transforms) {
+                    const oldManifestedId = obj.manifestedId || obj.id;
+                    const newManifestedId = await this.resolveCurrentObjectId(obj.id, gameState);
+                    
+                    if (oldManifestedId !== newManifestedId) {
+                        logger.info({ 
+                            coordIndex: index, 
+                            baseId: obj.id, 
+                            from: oldManifestedId, 
+                            to: newManifestedId 
+                        }, 'Manifestation Flip Triggered');
+                        
+                        obj.manifestedId = newManifestedId;
+                        
+                        // Notify Spatial limb to update collision
+                        const plane = obj.plane || 0;
+                        const x = index % 64; 
+                        const z = Math.floor(index / 64);
+                        spatial.swapObjectManifestation(x, z, plane, oldManifestedId, newManifestedId);
+                    }
+                }
+            }
+        }
+    }
+
+    public injectVarbitDefinition(id: number, def: { parentVarpId: number, lsb: number, msb: number }): void {
+        this.definitions.set(id, def);
+    }
+
+    private getVarbitDefinition(varbitId: number): { parentVarpId: number, lsb: number, msb: number } | null {
+        return this.definitions.get(varbitId) || null; 
     }
 
     public getForensics(): WorldForensicsLimb {

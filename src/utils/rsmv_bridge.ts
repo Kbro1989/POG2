@@ -68,7 +68,17 @@ async function main() {
         try {
             // Try reading a known object to confirm cache is live
             const buf = await cs.loader.getFileById(cs.cacheMajors.objects || 16, 1);
-            console.log(JSON.stringify({ online: !!buf, cacheVersion: cs.loader.buildnr }));
+            
+            // Check for Authoritative Master Index (255)
+            const rootIndexExists = cs.loader.opentables.has(255);
+            const status = rootIndexExists ? 'ONLINE (Authoritative)' : 'ONLINE (Standalone)';
+            
+            console.log(JSON.stringify({ 
+                online: !!buf, 
+                status,
+                substrate: 'NXT_JCACHE',
+                cacheVersion: cs.loader.buildnr 
+            }));
         } catch (e: any) {
             console.log(JSON.stringify({ online: false, reason: e.message }));
         }

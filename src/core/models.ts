@@ -123,15 +123,45 @@ export interface SpatialSideEffect {
     description?: string;
 }
 
-export interface NPC {
+export interface CombatantState {
+    adrenaline: number; // 0 - 10000 (0.00% to 100.00%)
+    necrosisStacks: number;
+    residualSouls: number;
+    lastCombatTick: number; // Track for rhythm enforcement (e.g. 4-tick)
+    cooldowns: Record<string, number>; // abilityId -> tickAvailable
+}
+
+export interface SovereignIntent {
+    action: string;
+    targetId: number | string;
+    tickStarted: number;
+    contextHash: string;
+    coord?: Coord;
+    abilityId?: string;
+    range?: number;
+}
+
+export interface NPC extends CombatantState {
     id: number;
-    name: number | string; // Support for ID or Name
+    name: string;
+    coord: Coord;
     x: number;
     y: number;
     plane: number;
+    adrenaline?: number;
+    adrenalinePercent?: number | string; // Support for formatted strings ("9.00%")
+    necrosisStacks?: number;
     isFollower?: boolean;
     path?: Coord[];
     target?: number | Coord; // Entity ID or Destination
+    interactionState: 'IDLE' | 'MOVING' | 'READY' | 'EXECUTING' | 'COOLDOWN';
+    intent?: SovereignIntent;
+    lastActionTick: number;
+    
+    brain?: {
+        think: (tick: number, state: GameState, avatar: any) => void;
+    };
+
     metadata?: Record<string, any>;
 }
 
@@ -240,19 +270,47 @@ export interface SovereignAvatar extends NPC {
         bodyColors: [number, number][]; // [original, replacement]
         gender: 'male' | 'female';
     };
+    // Note: interactionState, intent, and lastActionTick are inherited from NPC
 }
 
 
+
+export interface GroundItem {
+    id: number;
+    amount: number;
+    x: number;
+    y: number;
+    plane: number;
+    owner?: string;
+    spawnTick: number;
+}
+
+export interface GraveMarker {
+    id: string;
+    items: Item[];
+    x: number;
+    y: number;
+    plane: number;
+    owner: string;
+    creationTick: number;
+    expiryTick: number;
+}
 
 export interface GameState {
     plane: number;
     npcMap: Map<number, NPC>;
     npcSpatialIndex: Map<string, NPC[]>;  // "x,y,plane" -> [NPCs]
     objectMap: Map<number, GameObject>;
-    varbits: Map<number, number>;
-    tickNumber?: number;
+    groundItems?: Map<string, GroundItem[]>; // "x,y,plane" -> Items
+    graves?: Map<string, GraveMarker>;      // "x,y,plane" -> Grave
+    varps: Map<number, number>;
+    varcs: Map<number, number | string>;
+    varbits: Map<number, number>; // Cache for resolved varbit values
     players: Map<string, SovereignAvatar>; 
+    tickNumber?: number;
+    lastTickTime?: number;
 }
+
 
 /**
  * Phase 35: Brain/CNS Orchestration

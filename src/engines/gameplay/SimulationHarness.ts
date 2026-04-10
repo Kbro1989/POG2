@@ -15,6 +15,9 @@ import { DirectionalPathfinder } from '../../limbs/spatial/DirectionalPathfinder
 import { NpcAgent, NpcAgentConfig } from './NpcAgent.js';
 import { InteractionGateway } from '../../limbs/logical/InteractionGateway.js';
 import { GameplaySovereigntyLimb } from '../../limbs/spatial/GameplaySovereigntyLimb.js';
+import { DBRowOracleLimb } from '../../limbs/spatial/DBRowOracleLimb.js';
+import { WorldStateLimb } from '../../limbs/logical/WorldStateLimb.js';
+import { AdminCommandProcessor } from '../../limbs/logical/world/AdminCommandProcessor.js';
 
 export interface TickEvent {
     id: string;
@@ -102,6 +105,7 @@ export class SimulationHarness {
     private entityLimb: EntityLimb;
     private switchboard: SwitchboardLimb;
     private interactionGateway: InteractionGateway;
+    private dbRowOracle: DBRowOracleLimb;
     
     private lastDeepSync: number = 0;
     private isSyncing: boolean = false;
@@ -130,6 +134,8 @@ export class SimulationHarness {
         this.switchboard = switchboard;
         this.serverLogic = new ServerLogicMapper(grounding);
         this.interactionGateway = new InteractionGateway();
+        this.dbRowOracle = new DBRowOracleLimb(process.cwd());
+        this.dbRowOracle.initialize();
 
         // Bootstrap the pathfinder against the singleton spatial authority
         const spatial = SpatialSovereigntyLimb.getInstance();
@@ -167,9 +173,19 @@ export class SimulationHarness {
      * Master Tick (Reflex) - Triggered every 600ms.
      */
 
-    public processTick(tickCount: number, state: GameState, avatar: SovereignAvatar): void {
+    public async processTick(tickCount: number, state: GameState, avatar: SovereignAvatar): Promise<void> {
         const yao = this.hexagram.getYaoState();
         const bias = this.calculateMetabolicBias(yao);
+
+        // 0. Process Authoritative Switchboard Commands (Tick-Synchronized)
+        const commands = this.switchboard.getAdminQueue();
+        if (commands.length > 0) {
+            const worldState = WorldStateLimb.getInstance(avatar);
+            for (const cmd of commands) {
+                await AdminCommandProcessor.execute(cmd, worldState);
+            }
+            this.switchboard.clearAdminQueue();
+        }
 
         // 1. Synchronize Avatar (Player State)
         const previousPath = avatar.currentPath;
@@ -260,10 +276,12 @@ export class SimulationHarness {
             this.reflexLoop(avatar, state);
         }
 
-        // 5. Strategic Reconciliation (Every 6000ms)
+        // 5. Strategic State Reconciliation (Every 6000ms)
+        // Note: This is purely Game/Player State related (Brain Sync). 
+        // Neurological Health (Heart Audit) has been decoupled to PulseMonitor.
         if (tickCount - this.lastDeepSync >= 10) {
             this.syncGodhead(state, avatar).catch(err => {
-                logger.error({ err }, 'Deep Path sync stalled â€” retaining last known reality.');
+                logger.error({ err }, 'Strategic Deep Path sync stalled — retaining last known reality.');
             });
             this.lastDeepSync = tickCount;
         }
@@ -414,7 +432,8 @@ export class SimulationHarness {
                     metadata: {
                         pos: avatar.coord,
                         yao: this.hexagram.getYaoState(),
-                        tick: state.tickNumber
+                        tick: state.tickNumber,
+                        genomicContext: this.dbRowOracle.resolveRefillNeed(89) // Authoritative grounding for Pen logic
                     }
                 })
             });

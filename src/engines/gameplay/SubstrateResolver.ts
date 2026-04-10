@@ -9,36 +9,18 @@ import { SubstrateState } from '../../core/models.js';
  * "NodeTester observes. It never decides."
  */
 export class SubstrateResolver {
+    private static lastKnownStatus: SubstrateState = SubstrateState.ONLINE;
+
+    /**
+     * setStatus - Updated by PulseMonitor / NodeTester in background.
+     */
+    public static setStatus(status: SubstrateState): void {
+        this.lastKnownStatus = status;
+    }
+
     public static async resolve(): Promise<SubstrateState> {
-        const rsmv = await RSMVController.getInstance().healthCheck();
-        
-        // Note: SpatialVisionEngine and CacheForensicsLimb are Singletons 
-        // assumed to be initialized by OrchestrateEngine.
-        const vision = await SpatialVisionEngine.getInstance().healthCheck();
-        const cache = await CacheForensicsLimb.getInstance().healthCheck();
-
-        // OFFLINE: Heartbeat cannot proceed without any perceptual substrate.
-        if (!rsmv.online && !vision.online) {
-            return SubstrateState.OFFLINE;
-        }
-
-        // DEGRADED: Core 3D Substrate or Spatial Perception is dormant/missing.
-        if (!rsmv.online || !vision.online) {
-            return SubstrateState.DEGRADED;
-        }
-
-        // DEGRADED: Cache auditing is failing but 3D view is active.
-        if (cache.status === SubstrateState.OFFLINE || cache.status === SubstrateState.DEGRADED) {
-            return SubstrateState.DEGRADED;
-        }
-
-        // DEGRADED_IO: Check for high extraction latency
-        const { getLastIOLatencyMs } = await import('../../utils/RSMVBridge.js');
-        const lastLatency = getLastIOLatencyMs();
-        if (lastLatency > 1500) { // Threshold for "Significant Drift" in IO substrate
-            return SubstrateState.DEGRADED_IO;
-        }
-
-        return SubstrateState.ONLINE;
+        // Instant return of cached health state.
+        // Logic execution remains O(1) during the CNS Pulse.
+        return this.lastKnownStatus;
     }
 }

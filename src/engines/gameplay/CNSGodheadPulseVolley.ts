@@ -2,7 +2,7 @@ import { getLastIOLatencyMs } from '../../utils/RSMVBridge.js';
 import { createLogger } from '../../utils/logger.js';
 import { performance } from 'perf_hooks';
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
-import { SubstrateState, YaoState } from '../../core/models.js';
+import { SubstrateState, YaoState, GameState } from '../../core/models.js';
 import { RSMVController } from '../../vision/RSMVController.js';
 import { CacheForensicsLimb } from '../../limbs/spatial/CacheForensicsLimb.js';
 import { SwitchboardLimb, type AdminCommand } from '../../monitor/SwitchboardLimb.js';
@@ -12,6 +12,8 @@ import { GameplaySovereigntyLimb } from '../../limbs/spatial/GameplaySovereignty
 import { SubstrateResolver } from './SubstrateResolver.js';
 import { NodeTester } from '../../monitor/NodeTester.js';
 import { CNSCausalityLedger, type TickEvent, type EventOutcome, type TileLock, type EventSource } from '../core/CNSCausalityLedger.js';
+import { Renderer } from '../../ui/Renderer.js';
+import { SovereignAvatar } from '../../core/SovereignAvatar.js';
 import crypto from 'crypto';
 
 const logger = createLogger('CNSGodheadPulseVolley');
@@ -30,7 +32,6 @@ export class CNSGodheadPulseVolley {
     private static instance: CNSGodheadPulseVolley | undefined;
     private readonly TICK_INTERVAL = 600; // 600ms Pulse
     private readonly BUDGET_MS = 200;      // Warning threshold for tick overflow
-    private readonly AUDIT_INTERVAL_TICKS = 10; // 6s decoupled audit
     
     // Dependencies resolved lazily via resolve() to avoid boot-order violations.
     private switchboard?: SwitchboardLimb;
@@ -41,6 +42,7 @@ export class CNSGodheadPulseVolley {
     private forensics?: CacheForensicsLimb;
     private router: TernaryRouter;
     private nodeTester?: NodeTester;
+    private renderer?: Renderer;
     private readonly ledger = CNSCausalityLedger.getInstance();
 
     /**
@@ -98,6 +100,19 @@ export class CNSGodheadPulseVolley {
         this.nodeTester = nodeTester;
     }
 
+    public setRenderer(renderer: Renderer) {
+        this.renderer = renderer;
+    }
+
+    public getRenderer(): Renderer | undefined {
+        return this.renderer;
+    }
+
+    public getAvatar(): SovereignAvatar | undefined {
+        this.resolve();
+        return this.gameplay?.avatar;
+    }
+
     /**
      * startLoop - Deterministic Heartbeat (Hardened Recursive).
      * Implements self-correcting drift logic inspired by RSC Evolution alarms.
@@ -138,12 +153,17 @@ export class CNSGodheadPulseVolley {
             // Phase 32: Tick-Accurate World Simulation (7-Step Flow)
             await this.pulse(pendingCommands);
 
-            // 3. Post-Actuation Verification (Spatial Vision)
+            // 3. Post-Actuation Verification (Spatial Vision) - Non-blocking to pulse rhythm
             if (this.substrateState === SubstrateState.ONLINE && this.vision) {
-                const verification = await this.vision.verifySpatialAnchor();
-                if (!verification.ok) {
-                    logger.error({ error: (verification.error as Error)?.message }, '[CNS GODHEAD] Visual verification FAILED. Substrate desync likely.');
-                }
+                // We do NOT await this, as LLM vision latency often exceeds the 600ms tick budget.
+                // It runs as a 'sidecar' verification that logs drift but doesn't stall the world logic.
+                this.vision.verifySpatialAnchor().then(verification => {
+                    if (!verification.ok) {
+                        logger.warn({ error: (verification.error as Error)?.message }, '[CNS GODHEAD] Visual verification drift detected. Substrate link degraded.');
+                    }
+                }).catch(err => {
+                    logger.error({ err }, '[CNS GODHEAD] Vision Substrate Critical Failure.');
+                });
             }
 
         } catch (err) {
@@ -151,12 +171,6 @@ export class CNSGodheadPulseVolley {
         } finally {
             const duration = performance.now() - start;
             
-            // Decoupled Audit Cycle (6s)
-            if (this.tickCount % this.AUDIT_INTERVAL_TICKS === 0 && this.nodeTester) {
-                queueMicrotask(() => {
-                    this.nodeTester?.auditNeuralNodes();
-                });
-            }
 
             // Self-Correcting Scheduling (Drift Compensation)
             const nextDelay = Math.max(0, this.TICK_INTERVAL - duration);
@@ -198,7 +212,7 @@ export class CNSGodheadPulseVolley {
     /**
      * pulse - The 7-step deterministic execution loop.
      */
-    public async pulse(commands: AdminCommand[]): Promise<void> {
+    public async pulse(commands: AdminCommand[]): Promise<GameState | undefined> {
         this.resolve();
         // 1. Collect & Normalize
         const events = commands.map(cmd => this.createTickEvent(cmd));
@@ -225,10 +239,12 @@ export class CNSGodheadPulseVolley {
         await this.grounding!.commitTick(tx);
 
         // Authoritative Gameplay Tick
-        this.gameplay!.processTick();
+        await this.gameplay!.processTick();
 
         // 7. Commit Ledger (Logs & history rotation)
         this.ledger.commitTick();
+
+        return this.gameplay?.globalState;
     }
 
     private createTickEvent(cmd: AdminCommand): TickEvent {

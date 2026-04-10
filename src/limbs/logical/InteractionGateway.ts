@@ -4,101 +4,120 @@ import { GameplaySovereigntyLimb } from '../spatial/GameplaySovereigntyLimb.js';
 import { TeleportGrounding } from '../spatial/TeleportGrounding.js';
 import { ServerLogicRegistry, LogicalSignature } from '../../engines/gameplay/ServerLogicRegistry.js';
 import { SovereignVocabularyLimb, InteractionCategory } from './SovereignVocabularyLimb.js';
+import { ExtrasOracle } from './ExtrasOracle.js';
+import { ClueLogicLimb } from './ClueLogicLimb.js';
 
 export class InteractionGateway {
     private vocabLimb: SovereignVocabularyLimb;
+    private extrasOracle: ExtrasOracle;
+    private clueLimb: ClueLogicLimb;
 
     constructor() {
         this.vocabLimb = new SovereignVocabularyLimb();
+        this.extrasOracle = ExtrasOracle.getInstance();
+        this.clueLimb = ClueLogicLimb.getInstance();
     }
 
     /**
-     * Checks if the source is adjacent to the target (8-way 1 tile proximity).
+     * computeContextHash - Generates a fingerprint of the current state proximity.
+     * Prevents interactions from firing if the world shifted significantly.
      */
+    private computeContextHash(source: any, target: any, state: GameState): string {
+        return `${source.x}_${source.y}_${target.x}_${target.y}_${state.tickNumber}`;
+    }
+
     public isAdjacent(sourceX: number, sourceY: number, targetX: number, targetY: number): boolean {
         return Math.abs(sourceX - targetX) <= 1 && Math.abs(sourceY - targetY) <= 1;
     }
 
-    /**
-     * Evaluates a pending interaction when a path finishes.
-     */
     public evaluateInteraction(source: SovereignAvatar | NPC, action: string, targetId: string, state: GameState, activeModule: any): string[] {
         const events: string[] = [];
         
-        // 1. Resolve Target
-        const numericId = parseInt(targetId.replace('npc_', '').replace('obj_', ''), 10);
-        let target: any = state.npcMap.get(numericId) || state.objectMap.get(numericId);
-
-        if (!target) {
-            events.push(`[InteractionGateway] Target ${targetId} not found in reality.`);
-            return events;
-        }
-
-        const sourceX = 'coord' in source ? source.coord.x : source.x;
-        const sourceY = 'coord' in source ? source.coord.y : source.y;
-        
-        // 2. Validate Adjacency
-        if (!this.isAdjacent(sourceX, sourceY, target.x, target.y)) {
-            // Entities are too far apart
+        // 0. DETERMINISTIC STATE GUARD
+        // Cooldown: 1 tick minimum between actions (600ms)
+        if (source.lastActionTick && (state.tickNumber ?? 0) <= source.lastActionTick) {
             return [];
         }
 
-        // 3. Validate against authentic RS JSON structure extracted by the user (opcodes 0x1E - 0x22)
-        // Authentic structures place string arrays into target.actions or target.entity.actions.
+        if (source.interactionState === 'EXECUTING' || source.interactionState === 'COOLDOWN') {
+            return [];
+        }
+
+        // 1. Resolve Target
+        const isItem = targetId.startsWith('item_');
+        const numericId = parseInt(targetId.replace('npc_', '').replace('obj_', '').replace('item_', ''), 10);
+        
+        let target: any = isItem ? { id: numericId, name: `Item ${numericId}` } : (state.npcMap.get(numericId) || state.objectMap.get(numericId));
+        if (!target) return [];
+
+        const sourceX = source.coord.x;
+        const sourceY = source.coord.y;
+        
+        // 2. ADJACENCY LOCK
+        if (!this.isAdjacent(sourceX, sourceY, target.x, target.y)) {
+            source.interactionState = 'MOVING';
+            return [];
+        }
+
+        // 3. CONTEXT HASH VALIDATION (Intent Guard)
+        const currentHash = this.computeContextHash(source, target, state);
+        if (source.intent && source.intent.contextHash !== currentHash) {
+             // If the intent is from a previous state/tick, re-verify or drop
+             if ((state.tickNumber ?? 0) - (source.intent.tickStarted || 0) > 5) { // 3 second timeout
+                 source.intent = undefined;
+                 source.interactionState = 'IDLE';
+                 return [`[InteractionGateway] Intent for ${target.name} expired or desynced.`];
+             }
+        }
+
+        // 4. TRANSITION TO EXECUTING
+        source.interactionState = 'EXECUTING';
+        source.lastActionTick = state.tickNumber ?? 0;
+
+        // 5. CACHE ACTION VERIFICATION
         if (target.actions || (target.entity && target.entity.actions)) {
             const validActions: string[] = target.actions || target.entity.actions;
             const normalizedTargetAction = validActions.map(a => this.vocabLimb.normalizeHandle(a));
             const requested = this.vocabLimb.normalizeHandle(action);
             
             if (!normalizedTargetAction.includes(requested)) {
-                events.push(`[InteractionGateway] Rejecting action: '${action}'. Valid actions for ${target.name}: [${validActions.join(', ')}]`);
-                // For Sovereign simulation context, we might bypass the rejection if it's admin/AI forced, 
-                // but honoring the RS3 cache rules grounds the engine perfectly.
-                return events;
+                source.interactionState = 'COOLDOWN';
+                return [`[InteractionGateway] Rejecting action: '${action}'. Valid for ${target.name}: [${validActions.join(', ')}]`];
             }
         }
 
-        // 4. Route to Active Minigame/Module if applicable
+        // 6. RESOLVE LOGICAL CONTEXT (0xF9)
+        const logicCtx = this.extrasOracle.getLogicalContext(numericId);
+        if (logicCtx.handler || Object.keys(logicCtx.extras).length > 0) {
+            events.push(`[LogicBridge] Handing off ${action} on ${target.name} to ${logicCtx.handler || 'GenericInterpreter'}`);
+            
+            if (logicCtx.handler === 'ClueHandler' || this.vocabLimb.normalizeHandle(action) === 'dig') {
+                const isMatch = this.clueLimb.isCorrectSpot(numericId, { x: sourceX, y: sourceY, plane: source.plane });
+                if (isMatch) events.push(`[ClueLogicLimb] SUCCESS 🏆 ─ Treasures found at [${sourceX}, ${sourceY}].`);
+                else events.push(`[ClueLogicLimb] Nothing interesting happens.`);
+            }
+        }
+
+        // 7. MODULE ROUTING
         if (activeModule && typeof activeModule.onAction === 'function') {
             const moduleResponse = activeModule.onAction(action, state, source);
             if (moduleResponse) events.push(moduleResponse);
-        } else {
-            // 5. Fallback Universal Routing
-            const category = this.vocabLimb.categorize(action);
-            if (category === InteractionCategory.DIALOGUE) {
-                events.push(`[InteractionGateway] ${source.name} attempts to talk with ${target.name}.`);
-                // Placeholder: Here we would wake up the AI Strategic Thinker
-            } else if (category === InteractionCategory.MECHANICAL) {
-                // Determine if this mechanical object is mapped as a Teleport Actuator in the Server Logic config
-                const numericTargetId = parseInt(target.id?.toString().replace('obj_', '') || targetId.replace('obj_', ''), 10);
-                const mapping = ServerLogicRegistry.getMapping(16, numericTargetId);
-                const isActuator = mapping?.signature === LogicalSignature.TELEPORT_ACTUATOR;
+        }
 
-                const grounding = TeleportGrounding.getInstance();
-                const dest = grounding.getObjectDest(numericTargetId);
+        // 8. TELEPORT ACTUATOR SYNC
+        const mapping = ServerLogicRegistry.getMapping(16, numericId);
+        const grounding = TeleportGrounding.getInstance();
+        const dest = grounding.getObjectDest(numericId);
 
-                if (isActuator || dest) {
-                    if (dest) {
-                        if ('coord' in source) {
-                            source.coord = dest; // Synchronous Space Warp
-                            events.push(`[TELEPORT_ACTUATOR] WARP ⚡ ─ ${source.name} was injected into [${dest.x}, ${dest.y}, ${dest.plane}] via ${target.name}.`);
-                        } else {
-                            source.x = dest.x;
-                            source.y = dest.y;
-                            source.plane = dest.plane;
-                            events.push(`[TELEPORT_ACTUATOR] NPC WARP ⚡ ─ ${source.name} shifted to [${dest.x}, ${dest.y}, ${dest.plane}].`);
-                        }
-                    } else {
-                        events.push(`[TELEPORT_ACTUATOR] Path Gap ─ ${target.name} lacks synthesized coordinates. Grounding required.`);
-                    }
-                } else {
-                    events.push(`[InteractionGateway] ${source.name} applied mechanical force to ${target.name}.`);
-                }
-            } else {
-                events.push(`[InteractionGateway] Unhandled Action: ${action} on ${target.name}.`);
+        if (mapping?.signature === LogicalSignature.TELEPORT_ACTUATOR || dest) {
+            if (dest) {
+                source.coord = dest;
+                events.push(`[WARP] ⚡ ${source.name} -> [${dest.x}, ${dest.y}] via ${target.name}.`);
             }
         }
-        
+
+        // 9. FINAL STATE TRANSITION
+        source.interactionState = 'COOLDOWN';
         return events;
     }
 }

@@ -79,11 +79,25 @@ export class SwitchboardLimb {
         return new Promise((resolve, reject) => {
             try {
                 const app = express();
+                
+                // Allow Cross-Origin Requests for local diagnostics
+                app.use((req, res, next) => {
+                    res.header('Access-Control-Allow-Origin', '*');
+                    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                    res.header('Access-Control-Allow-Headers', 'Content-Type');
+                    next();
+                });
+
                 const server = createServer(app);
                 
                 // Serve SovereignEye captures via HTTP
                 const eyeDir = join(process.cwd(), 'captures', 'sovereign_eye');
+                const publicDir = join(process.cwd(), 'public');
+                
                 app.use('/captures', express.static(eyeDir));
+                app.use(express.static(publicDir));
+
+                app.get('/ping', (req, res) => res.json({ status: 'PULSE_ACTIVE', timestamp: Date.now() }));
 
                 let wss: WebSocketServer | null = null;
 
@@ -93,7 +107,7 @@ export class SwitchboardLimb {
                     reject(err);
                 });
 
-                server.listen(port, () => {
+                server.listen(port, '0.0.0.0', () => {
                     // Only after successful listen do we attach WS and assign to this
                     wss = new WebSocketServer({ server });
                     this.server = server;
@@ -184,11 +198,25 @@ export class SwitchboardLimb {
     }
 
     /**
-     * drainAdminQueue - Egress path for the 600ms Godhead Pulse.
+     * getAdminQueue - Inspect the current pending authoritative commands.
+     */
+    public getAdminQueue(): AdminCommand[] {
+        return this.adminQueue;
+    }
+
+    /**
+     * clearAdminQueue - Drains the buffer (to be called by the Heartbeat).
+     */
+    public clearAdminQueue(): void {
+        this.adminQueue = [];
+    }
+
+    /**
+     * drainAdminQueue - Legacy egress path for the 600ms Godhead Pulse.
      */
     public drainAdminQueue(): AdminCommand[] {
         const batch = [...this.adminQueue];
-        this.adminQueue = [];
+        this.clearAdminQueue();
         return batch;
     }
 

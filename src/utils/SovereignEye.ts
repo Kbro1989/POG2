@@ -1,4 +1,4 @@
-﻿import { exec } from 'child_process';
+import { exec } from 'child_process';
 import { promisify } from 'util';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';
@@ -97,7 +97,12 @@ export class SovereignEye extends EventEmitter {
             // 2. Always fetch text content as fallback/supplement
             let textContent: string | null = null;
             try {
-                const response = await fetch(url);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 200);
+                
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
                 textContent = await response.text();
                 // Trim for AI context
                 if (textContent.length > 10000) {
@@ -275,8 +280,9 @@ $bitmap.Dispose()
 
         for (const browser of browsers) {
             try {
+                const browserTimeout = 2000; // Phase 112: Aggressive timeout for heartbeat stability
                 const cmd = `"${browser}" --headless --disable-gpu --screenshot="${outputPath}" --window-size=${viewport.width},${viewport.height} --hide-scrollbars --no-sandbox "${url}"`;
-                await execAsync(cmd, { timeout: 15000 });
+                await execAsync(cmd, { timeout: browserTimeout });
 
                 if (existsSync(outputPath)) {
                     return { ok: true, value: { path: outputPath } };

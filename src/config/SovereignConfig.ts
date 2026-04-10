@@ -116,8 +116,8 @@ const DEFAULT_CONFIG: SovereignConfig = {
     planningModel: 'kimi-k2.5:cloud',
     codingModel: 'deepseek-r1:8b', // Upgraded to thinking model
     orchestratorModel: 'kimi-k2.5:cloud',
-    visionModel: 'moondream:1.8b-v2-q4_K_M',
-    voiceModel: 'tinyllama:1.1b-chat-v1.0-q4_K_M',
+    visionModel: 'moondream:1.8b',
+    voiceModel: 'tinyllama:latest',
     codingHeavyModel: 'deepseek-r1:8b',
     codingFastModel: 'deepseek-r1:8b', 
     embeddingModel: 'qwen3-embedding:latest', // Upgraded to actual embedding node
@@ -129,7 +129,7 @@ const DEFAULT_CONFIG: SovereignConfig = {
     geminiFlashModel: 'gemini-1.5-flash',
     geminiProModel: 'gemini-1.5-pro',
     geminiEmbeddingModel: 'text-embedding-004',
-
+    
     // specialized Generation Defaults (Phase 104)
     storyboardModel: 'deepseek-r1:8b',
     vocalAnalysisModel: 'qwen2.5-coder:1.5b-instruct-q4_K_M',
@@ -141,10 +141,10 @@ const DEFAULT_CONFIG: SovereignConfig = {
     // Phase 71 Hierarchy Defaults
     masterReasoningModel: 'kimi-k2.5:cloud',
     executiveCoderModel: 'deepseek-r1:8b',
-    reactiveAgentModel: 'vibethinker:1.5b-q5_K_M',
+    reactiveAgentModel: 'deepseek-r1:8b', // VibeThinker fallback for demo stability
 
     // Phase 78 Economic Budget Paths (Layer 3)
-    fastPathModel: 'vibethinker:1.5b-q5_K_M',
+    fastPathModel: 'deepseek-r1:8b',
     midPathModel: 'deepseek-r1:8b',
     deepPathModel: 'kimi-k2.5:cloud',
 

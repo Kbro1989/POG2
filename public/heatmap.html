@@ -168,6 +168,8 @@
   <button class="layer-btn active" id="btn-npcs" onclick="toggleLayer('npcs')">NPC Spawns</button>
   <button class="layer-btn active" id="btn-zones" onclick="toggleLayer('zones')">MapZones</button>
   <button class="layer-btn active" id="btn-quests" onclick="toggleLayer('quests')">Quest Markers</button>
+  <button class="layer-btn active" id="btn-terrain" onclick="toggleLayer('terrain')">Terrain Underlays</button>
+  <button class="layer-btn" id="btn-height" onclick="toggleLayer('height')">Height Contours</button>
   <div style="flex-grow:1"></div>
   <label>Varbit: <input type="number" id="varId" class="varbit-input" placeholder="ID"></label>
   <label>Value: <input type="number" id="varVal" class="varbit-input" value="1" onchange="updateVarbit()"></label>
@@ -175,8 +177,8 @@
 </div>
 
 <div class="controls">
-  <label>Chunk X: <input type="number" id="cx" value="0" min="0" max="127" style="width:60px"></label>
-  <label>Chunk Z: <input type="number" id="cz" value="56" min="0" max="200" style="width:60px"></label>
+  <label>Chunk X: <input type="number" id="cx" value="50" min="0" max="127" style="width:60px"></label>
+  <label>Chunk Z: <input type="number" id="cz" value="50" min="0" max="200" style="width:60px"></label>
   <label>Plane: <select id="plane">
     <option value="0" selected>0 (Surface)</option>
     <option value="1">1</option>
@@ -184,11 +186,18 @@
     <option value="3">3</option>
   </select></label>
   <label>Scale: <select id="scale">
+    <option value="1">1x</option>
+    <option value="2">2x</option>
     <option value="4">4x</option>
     <option value="8" selected>8x</option>
     <option value="12">12x</option>
+    <option value="16">16x</option>
   </select></label>
-  <label style="color:#00ffff"><input type="checkbox" id="compositeMode" onchange="render(currentData, parseInt(document.getElementById('plane').value), currentScale)"> Composite Radar (0-3)</label>
+  <label>Engine: <select id="engineMode" onchange="render(currentData, parseInt(document.getElementById('plane').value), currentScale)">
+    <option value="NXT" selected>NXT (Modern)</option>
+    <option value="RS3">RS3 (Classic)</option>
+  </select></label>
+  <label style="color:#00ffff"><input type="checkbox" id="compositeMode" onchange="render(currentData, parseInt(document.getElementById('plane').value), currentScale)"> Composite Radar</label>
   <button onclick="loadChunk()">Load Chunk</button>
   <input type="file" id="filePicker" accept=".json" style="display:none">
   <button onclick="document.getElementById('filePicker').click()">Load File</button>
@@ -240,7 +249,7 @@ let currentData = null;
 let currentScale = 8;
 let tileGrid = null; // [x][z] = { collision, height, overlay, underlay }
 let objectGrid = null; // [x][z] = [objectDef, ...]
-let layers = { npcs: true, zones: true, quests: true };
+let layers = { npcs: true, zones: true, quests: true, terrain: true, height: false };
 let varbitState = {}; // id -> value
 
 function toggleLayer(name) {
@@ -256,19 +265,33 @@ function updateVarbit() {
   if (currentData) render(currentData, parseInt(document.getElementById('plane').value), currentScale);
 }
 
-// Collision flag â†’ color mapping (heat)
-function collisionColor(flags, isComposite = false) {
-  if (flags === 0) return [13, 17, 23, 255];       // walkable — dark
-  if (flags <= 2)  return [26, 107, 74, 255];       // low — teal
-  if (flags <= 8)  return [42, 130, 90, 255];       // low-mid — green
-  if (flags <= 10) return [140, 150, 40, 255];      // mid — olive
-  if (flags <= 12) return [181, 137, 0, 255];       // mid-high — amber
-  if (flags <= 14) return [203, 100, 20, 255];      // high — orange
+// Collision flag → color mapping (heat/integrity)
+function getCollisionInfo(flags, engine) {
+  if (engine === 'NXT') {
+    return {
+      blocked: !!(flags & 2),
+      water: !!(flags & 16),
+      bridge: !!(flags & 4),
+      roof: !!(flags & 8)
+    };
+  } else {
+    // RS3 Classic Settings
+    return {
+      blocked: !!(flags & 1),
+      water: false, // RS3 uses separate type field for water
+      bridge: !!(flags & 2),
+      roof: !!(flags & 4)
+    };
+  }
+}
+
+function collisionColor(flags, engine) {
+  const info = getCollisionInfo(flags, engine);
+  if (info.blocked) return [220, 50, 47, 255]; // Red
+  if (info.roof) return [20, 20, 30, 255];    // Dark Grey
   
-  // Composite walkability blending logic
-  if (isComposite && flags === -1) return [40, 40, 60, 255]; // Logical Walkable Bridge
-  
-  return [220, 50, 47, 255];                        // blocked — red
+  if (flags === 0) return [13, 17, 23, 255];  // walkable
+  return [26, 107, 74, 255]; // low heat
 }
 
 function objectColor() {
@@ -276,54 +299,43 @@ function objectColor() {
 }
 
 function render(data, planeIdx, scale) {
-  if (!data || !data.tileFlags) {
-      console.warn("[SOVEREIGN] Attempted render on empty Truth. Abortion initiated.");
-      return;
-  }
+  if (!data || !data.tileFlags) return;
+  
   currentData = data;
   currentScale = scale;
-  const size = 64;
+  const engine = document.getElementById('engineMode').value;
+  
+  // ADAPTIVE GRID SIZING (RS3 64x64 vs NXT 66x66)
+  const tilesTotal = data.tileFlags.length;
+  const size = tilesTotal >= 17424 ? 66 : 64;
+  const tilesPerPlane = size * size;
+  
   canvas.width = size * scale;
   canvas.height = size * scale;
 
-  // Build grids
   tileGrid = Array.from({length: size}, () => Array.from({length: size}, () => null));
   objectGrid = Array.from({length: size}, () => Array.from({length: size}, () => []));
 
-  const planeTiles = data.tileFlags.filter(t => true); 
-  
-  // RS mapsquare tiles: 64x64 per plane, 4 planes = 16384
-  // Layout: for plane p, x, z: index = p * 4096 + x * 64 + z
-  const tilesPerPlane = 4096;
   const isComposite = document.getElementById('compositeMode').checked;
   const startIdx = planeIdx * tilesPerPlane;
   
   if (isComposite) {
-      // UNIFIED COLLISION RADAR: Aggregate all 4 planes
       for (let i = 0; i < tilesPerPlane; i++) {
-          const tx = Math.floor(i / 64);
-          const tz = i % 64;
-          let compositeCollision = 65535; // start as fully blocked
-          
+          const tx = Math.floor(i / size);
+          const tz = i % size;
+          let compositeCollision = 0;
           for (let p = 0; p < 4; p++) {
               const tile = data.tileFlags[p * tilesPerPlane + i];
-              if (tile && tile.collision === 0) {
-                  compositeCollision = 0; // If any plane is walkable, it's walkable (for navigation)
-                  break;
-              }
-              if (tile) compositeCollision = Math.min(compositeCollision, tile.collision);
+              if (tile) compositeCollision |= tile.collision;
           }
-          tileGrid[tx][tz] = { collision: compositeCollision, height: 0 };
+          tileGrid[tx][tz] = { collision: compositeCollision };
       }
   } else {
-      for (let i = 0; i < tilesPerPlane && (startIdx + i) < planeTiles.length; i++) {
-        const tileOriginal = planeTiles[startIdx + i];
-        const tile = tileOriginal ? Object.assign({}, tileOriginal) : null;
-        const tx = Math.floor(i / 64);
-        const tz = i % 64;
-        if (tx < size && tz < size) {
-          tileGrid[tx][tz] = tile;
-        }
+      for (let i = 0; i < tilesPerPlane; i++) {
+        const tile = data.tileFlags[startIdx + i];
+        const tx = Math.floor(i / size);
+        const tz = i % size;
+        if (tx < size && tz < size) tileGrid[tx][tz] = tile;
       }
   }
 
@@ -364,7 +376,39 @@ function render(data, planeIdx, scale) {
       if (!tile) {
         color = [5, 5, 10, 255]; // no data
       } else {
-        color = collisionColor(tile.collision);
+        // 1. Terrain Base Pass
+        if (layers.terrain && tile.underlaycolor) {
+            // underlaycolor is often ushort HSL or packed. 
+            // Simple expansion for heatmap visual:
+            const r = (tile.underlaycolor >> 10) & 0x1F;
+            const g = (tile.underlaycolor >> 5) & 0x1F;
+            const b = tile.underlaycolor & 0x1F;
+            color = [r * 8, g * 8, b * 8, 255];
+        } else {
+            color = collisionColor(tile.collision, engine);
+        }
+
+        // 2. Height Adjustment (Shading)
+        if (layers.height && tile.height) {
+            const h = tile.height / (engine === 'NXT' ? 256 : 1); // NXT is higher res
+            const shade = Math.min(255, 120 + h);
+            color = [
+                Math.round(color[0] * (shade/255)),
+                Math.round(color[1] * (shade/255)),
+                Math.round(color[2] * (shade/255)),
+                255
+            ];
+        }
+
+        // 3. TRANSPARENT WATER PASS
+        const info = getCollisionInfo(tile.collision, engine);
+        if (info.water || (engine === 'RS3' && tile.type === 3)) {
+            const hasBridge = info.bridge || objectGrid[x][z].some(o => o.isPortal);
+            if (!hasBridge) {
+                // Indigo/Cyan Tint for water
+                color = [0, 80, 200, 115]; // 45% opaque blue
+            }
+        }
       }
 
       // Object overlay

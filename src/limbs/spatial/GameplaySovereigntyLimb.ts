@@ -1,4 +1,4 @@
-import { GameState, Result, Item, SkillId, EquipmentSlot } from '../../core/models.js';
+import { GameState, Result, Item, SkillId, EquipmentSlot, NPC, ok, err } from '../../core/models.js';
 import { SovereignAvatar } from '../../core/SovereignAvatar.js';
 import { GameplayModule } from '../../engines/gameplay/MinigameInterfaces.js';
 import { createLogger } from '../../utils/logger.js';
@@ -16,6 +16,9 @@ import { ModelClient } from '../../clients/ModelClient.js';
 import { SovereignConfig } from '../../config/SovereignConfig.js';
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
 import { Renderer } from '../../ui/Renderer.js';
+import { CombatLimb } from './CombatLimb.js';
+import { BankLimb } from './BankLimb.js';
+import { ItemLifecycleLimb } from './ItemLifecycleLimb.js';
 
 const logger = createLogger('GameplaySovereigntyLimb');
 
@@ -34,6 +37,9 @@ export class GameplaySovereigntyLimb {
     private switchboard: SwitchboardLimb | null = null;
     private entityBrain: EntityLimb | null = null;
     private harness: SimulationHarness | null = null;
+    public combat: CombatLimb;
+    public items: ItemLifecycleLimb;
+    public bankLimb: BankLimb;
     
     public globalState: GameState = {
         plane: 0,
@@ -42,7 +48,10 @@ export class GameplaySovereigntyLimb {
         npcMap: new Map(),
         npcSpatialIndex: new Map(),
         objectMap: new Map(),
-        varbits: new Map()
+        groundItems: new Map(),
+        graves: new Map(),
+        varbits: new Map(),
+        lastTickTime: Date.now()
     };
 
     public avatar: SovereignAvatar;
@@ -56,6 +65,9 @@ export class GameplaySovereigntyLimb {
         this.avatar = new SovereignAvatar('POG2_Sovereign');
         this.globalState.players.set(this.avatar.username, this.avatar);
         this.edgeSync = new CloudflareSyncLimb();
+        this.combat = CombatLimb.getInstance();
+        this.items = ItemLifecycleLimb.getInstance();
+        this.bankLimb = BankLimb.getInstance();
         this.loadSovereignState();
         logger.info('GameplaySovereigntyLimb booted as a CNS-authoritative node.');
     }
@@ -253,16 +265,42 @@ export class GameplaySovereigntyLimb {
      * processTick - Authoritative State Advancement.
      * Called by CNSGodheadPulseVolley every 600ms.
      */
-    public processTick(): string | null {
+    public async processTick(): Promise<string | null> {
         this.tickCount++;
         this.globalState.tickNumber = this.tickCount;
 
-        // 1. Process Avatar (Visceral Reflex)
+        // 0. Vitality Check (Player Death Transition)
+        if (this.avatar.isDead && this.avatar.metadata?.deathEvent) {
+             this.handlePlayerDeath();
+        }
+
+        // 0.5 Cognitive Loop (NPC Brains Think Second)
+        for (const npc of this.globalState.npcMap.values()) {
+            if (npc.brain) {
+                npc.brain.think(this.tickCount, this.globalState, this.avatar);
+            }
+        }
+
+        // 1. Process Combat Intent (Prioritized before movement)
+        this.processCombatTick();
+
+        // 2. Process Avatar (Movement / Pathing)
         this.avatar.processTick();
 
-        // 2. Delegate to Simulation Harness (Deterministic Logic)
+        // 2.5 Process NPC Movement (Authoritative translation)
+        for (const npc of this.globalState.npcMap.values()) {
+            if (npc.interactionState === 'MOVING' && npc.target && typeof npc.target !== 'number') {
+                // If it's a coord target, move one step towards it
+                const dx = Math.sign(npc.target.x - npc.x);
+                const dy = Math.sign(npc.target.y - npc.y);
+                npc.x += dx;
+                npc.y += dy;
+            }
+        }
+
+        // 3. Delegate to Simulation Harness (Deterministic Logic)
         if (this.harness) {
-            this.harness.processTick(this.tickCount, this.globalState, this.avatar);
+            await this.harness.processTick(this.tickCount, this.globalState, this.avatar);
         }
 
         // 3. Autosave every 10 ticks (6 seconds) if needed, or trigger on change
@@ -308,6 +346,173 @@ export class GameplaySovereigntyLimb {
         }
 
         return this.activeModule.onAction(action, this.globalState, this.avatar);
+    }
+
+    private processCombatTick() {
+        const combatants: NPC[] = [this.avatar, ...Array.from(this.globalState.npcMap.values())];
+
+        for (const actor of combatants) {
+            if (!actor.intent) continue;
+
+            if (actor.intent.action === 'castAbility' || actor.intent.action === 'COMBAT_ABILITY') {
+                this.resolveCombatIntent(actor);
+            }
+        }
+    }
+
+    private resolveCombatIntent(actor: NPC) {
+        const intent = actor.intent as any;
+        const targetId = intent.targetId;
+
+        // Resolve target
+        let target: NPC | undefined;
+        if (targetId === 'player') {
+            target = this.avatar;
+        } else if (typeof targetId === 'string' && targetId.startsWith('npc_')) {
+            const id = parseInt(targetId.split('_')[1]);
+            target = this.globalState.npcMap.get(id);
+        } else if (typeof targetId === 'number') {
+            target = this.globalState.npcMap.get(targetId);
+        }
+
+        if (!target) return;
+
+        const abilityId = intent.abilityId || '1'; // Default to Basic Attack if undefined
+        const check = this.combat.canCast(actor, target, abilityId, this.tickCount);
+
+        if (check.success) {
+            // FIRE!
+            this.combat.execute(actor, target, abilityId, this.tickCount);
+            
+            // Set interaction state
+            actor.interactionState = 'EXECUTING';
+
+            // If it's the avatar, clear intent after non-auto ability? 
+            // For now, keep simple auto-attack loop logic.
+        } else if (check.reason?.includes('Out of range') || check.inRange === false) {
+            // OUT OF RANGE: Actor enters MOVING state towards target
+            actor.interactionState = 'MOVING';
+            // Authoritative target update
+            actor.target = { x: target.x, y: target.y, plane: target.plane };
+        }
+    }
+
+    private handlePlayerDeath() {
+        const x = this.avatar.x;
+        const y = this.avatar.y;
+        const p = this.avatar.plane;
+
+        logger.info(`AUTHENTIC DEATH: Sovereign falling at (${x}, ${y}). Dropping Grave.`);
+
+        // 1. Process Item Loss (Keep 3 Rule)
+        const droppedItems = this.avatar.authenticDie();
+
+        // 2. Spawn Grave Marker (ID 13296)
+        const graveId = `grave_${this.avatar.username}_${this.tickCount}`;
+        const graveKey = `${x},${y},${p}`;
+        
+        const graveMarker = {
+            id: graveId,
+            items: droppedItems,
+            x: x,
+            y: y,
+            plane: p,
+            owner: this.avatar.username,
+            creationTick: this.tickCount,
+            expiryTick: this.tickCount + 6000 // 1 Hour (Authentic)
+        };
+        
+        this.globalState.graves.set(graveKey, graveMarker);
+
+        // Visible Entity for Grounding
+        this.globalState.npcMap.set(this.tickCount + 5000, {
+            id: 13296, // Gravelord / Standard Grave
+            name: `${this.avatar.username}'s Grave`,
+            x: x,
+            y: y,
+            plane: p,
+            combat: 0,
+            adrenaline: 0,
+            necrosisStacks: 0,
+            residualSouls: 0,
+            lastCombatTick: 0,
+            cooldowns: {},
+            metadata: { isGrave: true, graveId: graveId }
+        } as any);
+
+        // 3. Relocation to Last Hub (Lumbridge by default)
+        this.avatar.respawn();
+
+        this.saveSovereignState();
+    }
+
+    public handleInteraction(targetId: string, actionId: number) {
+        logger.info(`INTERACTION: ${targetId} with Action ${actionId}`);
+        
+        // 1. Grave Recovery Logic
+        if (targetId.startsWith('grave_') || actionId === 1) {
+            const graveKey = `${this.avatar.x},${this.avatar.y},${this.avatar.plane}`;
+            const grave = this.globalState.graves.get(graveKey);
+            
+            if (grave && grave.owner === this.avatar.username) {
+                logger.info(`RECOVERING GRAVE: Restoring ${grave.items.length} items.`);
+                grave.items.forEach(item => this.avatar.addItem(item));
+                this.globalState.graves.delete(graveKey);
+                // Remove visual marker
+                for (const [id, npc] of this.globalState.npcMap.entries()) {
+                     if ((npc as any).metadata?.graveId === grave.id) {
+                         this.globalState.npcMap.delete(id);
+                     }
+                }
+                return;
+            }
+        }
+
+        // 2. Ground Item Logic (Action 1: Pick Up)
+        if (actionId === 1 && targetId.startsWith('ground_')) {
+            const key = `${this.avatar.x},${this.avatar.y},${this.avatar.plane}`;
+            const items = this.globalState.groundItems.get(key);
+            if (items && items.length > 0) {
+                const item = items.shift()!;
+                if (this.avatar.addItem(item)) {
+                    logger.info(`PICK UP: ${item.id} added to inventory.`);
+                } else {
+                    items.unshift(item); // Put it back
+                    logger.warn('PICK UP FAILED: Inventory full.');
+                }
+                return;
+            }
+        }
+
+        // 3. Bank Logic (Action 184: Bank)
+        if (actionId === 184) {
+             this.avatar.metadata = {
+                 ...this.avatar.metadata,
+                 activeInterface: 762,
+                 bankOpen: true
+             };
+             logger.info('NIS Bank Interface (ID 762) requested.');
+        }
+
+        // 4. Bank Shortcuts (Cache Derived)
+        if (actionId === 141184642) { // Deposit All
+             logger.info('BANK_SHORTCUT: Deposit All');
+             this.avatar.inventory.forEach((item, slot) => {
+                 if (item) this.bankLimb.deposit(this.avatar, slot, item.amount);
+             });
+        }
+
+        if (actionId === 141184643) { // Deposit Equipment
+             logger.info('BANK_SHORTCUT: Deposit Equipment');
+             Object.keys(this.avatar.equipment).forEach(slot => {
+                 const item = this.avatar.equipment[slot];
+                 if (item) {
+                     // Move to inv then bank or direct? Direct for shortcut.
+                     this.bankLimb.deposit(this.avatar as any, -1, item.amount); // -1 triggers direct equip depo in logic
+                     this.avatar.equipment[slot] = null;
+                 }
+             });
+        }
     }
 }
 

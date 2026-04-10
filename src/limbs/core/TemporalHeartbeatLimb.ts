@@ -17,10 +17,11 @@ export class TemporalHeartbeatLimb {
     private worldTickCount: number = 0;
     
     private readonly WORLD_TICK_MS = 600;
-    private readonly PLAYER_TICK_RATIO = 10; // 600ms * 10 = 6000ms
+    private readonly PLAYER_TICK_RATIO = 1; // 1:1 synchronization for pro-player reaction time
+    private isCognitiveBusy = false;
 
     private constructor() {
-        logger.info('TemporalHeartbeatLimb online. 600ms/6000ms duality established.');
+        logger.info('TemporalHeartbeatLimb online. 600ms Synchronous Pulse established.');
     }
 
     public static getInstance(): TemporalHeartbeatLimb {
@@ -39,7 +40,7 @@ export class TemporalHeartbeatLimb {
         logger.info('Sovereign Heartbeat started. Synchronizing world/player loops.');
         
         this.worldInterval = setInterval(async () => {
-            await this.processPulse();
+            await this.pulse();
         }, this.WORLD_TICK_MS);
     }
 
@@ -54,7 +55,10 @@ export class TemporalHeartbeatLimb {
         }
     }
 
-    private async processPulse(): Promise<void> {
+    /**
+     * pulse - Executes a single authoritative world pulse.
+     */
+    public async pulse(): Promise<void> {
         this.worldTickCount++;
         
         // 1. World Tick (600ms) - Standard RS Heartbeat
@@ -63,11 +67,24 @@ export class TemporalHeartbeatLimb {
         
         try {
             const pending = switchboard.drainAdminQueue();
-            await volley.pulse(pending);
+            const state = await volley.pulse(pending);
             
-            // 2. Player Tick (6000ms) - Cognitive Heartbeat
-            if (this.worldTickCount % this.PLAYER_TICK_RATIO === 0) {
+            // 2. Spatial Radar Update (Sensory Cortex)
+            // Render the world state to the CLI for grounding verification
+            const renderer = volley.getRenderer(); 
+            const avatar = volley.getAvatar();
+            if (renderer && state && avatar) {
+                const radar = (await import('../spatial/SpatialRadarLimb.js')).SpatialRadarLimb.getInstance();
+                const grid = radar.render(state, avatar);
+                renderer.drawRadar(grid);
+            }
+
+            // 3. Pro-Player Cognitive Tick (Sync 1:1)
+            // Skip-on-Busy Guard: Never block the heartbeat if the brain is still thinking
+            if (!this.isCognitiveBusy) {
                 this.emitPlayerPulse();
+            } else {
+                logger.warn({ tick: this.worldTickCount }, 'Cognitive Skip: Substrate busy. Droping tick to maintain authority.');
             }
             
         } catch (e: any) {
@@ -75,20 +92,27 @@ export class TemporalHeartbeatLimb {
         }
     }
 
-    private emitPlayerPulse(): void {
-        const playerTickNum = Math.floor(this.worldTickCount / this.PLAYER_TICK_RATIO);
-        logger.info({ playerTick: playerTickNum }, 'Emitting 6000ms Cognitive Pulse (Ollama Trigger).');
-        
-        // Phase 28: This is where we'll trigger the OllamaCognitiveLimb
-        // to ingest current substrate state and emit intents.
+    private async emitPlayerPulse(): Promise<void> {
+        this.isCognitiveBusy = true;
+        try {
+            const playerTickNum = this.worldTickCount;
+            logger.info({ tick: playerTickNum }, 'Emitting 600ms Pro-Player Cognitive Pulse.');
+            
+            // Phase 28: Trigger OllamaCognitiveLimb
+            // await OllamaCognitiveLimb.getInstance().process(playerTickNum);
+            
+        } finally {
+            this.isCognitiveBusy = false;
+        }
     }
 
     public getStatus() {
         return {
             active: !!this.worldInterval,
             worldTick: this.worldTickCount,
-            playerTick: Math.floor(this.worldTickCount / this.PLAYER_TICK_RATIO),
-            frequency: { world: '600ms', player: '6000ms' }
+            playerTick: this.worldTickCount,
+            frequency: { world: '600ms', cognitive: '600ms (Authoritative)' },
+            isBusy: this.isCognitiveBusy
         };
     }
 }

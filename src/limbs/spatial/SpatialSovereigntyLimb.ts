@@ -27,6 +27,14 @@ export const FLAG_ROOF      = 0x4;   // Visibility only
 export const FLAG_FORCEDRAW = 0x8;
 export const FLAG_WATER     = 0x80;  // NXT Water bit
 
+// NXT 66×66 Padded Mapsquare Constants
+// Modern NXT tiles include a 1-tile border for neighbor blending/stitching.
+// Core playable area is [1..64] in the padded grid. Index 0 and 65 are neighbor bleed.
+export const CORE_SIZE    = 64;   // Playable area per axis
+export const PADDED_SIZE  = 66;   // Full NXT tile footprint per axis
+export const TILES_PER_LEVEL = 4356; // PADDED_SIZE × PADDED_SIZE
+export const PADDING_OFFSET = 1;  // Offset from padded index to core index
+
 export interface SurfaceLayer {
     type: 'terrain' | 'water' | 'object' | 'bridge';
     z: number;
@@ -62,7 +70,7 @@ export interface SpatialLogicArtifact {
  * Responsibilities:
  * 1. Ingest synthesized logic artifacts (JSON collision matrices).
  * 2. Provide deterministic walkability queries (isWalkable).
- * 3. Bridge modern cache topology to RSC-style pathfinding.
+ * 3. Bridge modern NXT cache topology to deterministic tile-locked pathfinding.
  */
 export class SpatialSovereigntyLimb {
     private static instance: SpatialSovereigntyLimb | undefined;
@@ -161,12 +169,29 @@ export class SpatialSovereigntyLimb {
     }
 
     /**
+     * setRegionAuthority - Authoritatively shifts the spatial context to a new mapsquare.
+     * Triggers hydration of terrain and collision logic.
+     */
+    public async setRegionAuthority(rx: number, ry: number): Promise<void> {
+        logger.info({ rx, ry }, "[SPATIAL] Shifting Authority to new MapSquare.");
+        
+        // 1. Ensure mapsquare is in memory
+        await this.loadMapsquare(rx, ry);
+        
+        // 2. Resolve 'Logic Substrate' if it exists (e.g. Prifddinas/Barrows logic)
+        // [Optional: Future refinement could auto-detect logic fragments based on RX/RY]
+    }
+
+    /**
      * loadMapsquare - Ingests a raw mapsquare fragment (ms_X_Z.json) from world_extract.
      * Implements "Composite Bitwise Ingestion Merge" (Phase 41).
      */
     public async loadMapsquare(x: number, z: number): Promise<Result<void>> {
         const key = `${x}_${z}`;
         if (this.loadedMapsquares.has(key)) return ok(undefined);
+
+        // Phase 41: Eager marking to prevent redundant loads or false-negatives
+        this.loadedMapsquares.set(key, { flags: new Uint16Array(0), heights: new Int16Array(0) });
 
         const worldExtractDir = path.join(this.atlasDir, 'world_extract');
         const fullPath = path.join(worldExtractDir, `ms_${x}_${z}.json`);
@@ -178,8 +203,7 @@ export class SpatialSovereigntyLimb {
         try {
             const data = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
 
-            // The new UniversalSovereignSynthesizer directly outputs
-            // semantic Phase 41 / B3 collision matrices!
+            // Phase 41 Hybrid Ingestion: Load BOTH semantic matrices and padded binary buffers
             if (data.collision_matrix) {
                 const syntheticArtifact: SpatialLogicArtifact = {
                     city: `ms_${x}_${z}`,
@@ -197,17 +221,19 @@ export class SpatialSovereigntyLimb {
                 };
                 this.loadedMatrices.set(syntheticArtifact.city, syntheticArtifact);
                 logger.info({ x, z }, 'Ingested Semantic Phase B3 Mapsquare Fragment.');
-            } else if (data.tiles) {
-                // Fallback for older executed dumps
-                const flags = new Uint16Array(4 * 64 * 64);
-                const heights = new Int16Array(4 * 64 * 64);
+            }
+
+            if (data.tiles) {
+                // NXT 66×66 Padded Ingestion
+                const flags = new Uint16Array(4 * TILES_PER_LEVEL);
+                const heights = new Int16Array(4 * TILES_PER_LEVEL);
                 for (const tile of data.tiles) {
                     const tx = tile.x;
                     const tz = tile.z;
                     const plane = tile.plane;
-                    if (tx < 0 || tx > 63 || tz < 0 || tz > 63 || plane < 0 || plane > 3) continue;
+                    if (tx < 0 || tx > 65 || tz < 0 || tz > 65 || plane < 0 || plane > 3) continue;
 
-                    const index = (plane << 12) | (tx << 6) | tz;
+                    const index = (plane * TILES_PER_LEVEL) + (tx * PADDED_SIZE) + tz;
                     flags[index] |= (tile.collision || 0);
                     if (tile.height !== null && tile.height !== undefined) {
                         heights[index] = Math.max(heights[index], tile.height);
@@ -263,7 +289,7 @@ export class SpatialSovereigntyLimb {
 
     /**
      * resolveSurfaceStack - Volumetric Resolution of a coordinate.
-     * Maps RSC cache fragments to a single authoritative surface per plane.
+     * Maps NXT cache fragments to a single authoritative surface per plane.
      * Implements "Safe Hybrid Z" (Phase 41 logic - Option C).
      */
     public resolveSurfaceStack(x: number, y: number): SurfaceStack {
@@ -277,21 +303,26 @@ export class SpatialSovereigntyLimb {
             highestWalkableZ: 0
         };
 
-        if (!ms) return stack;
+        if (!ms) {
+            // If mapsquare loaded as matrix but no heightmap exists, default to flat Plane 0
+            stack.layers.push({ type: 'terrain', z: 0, walkable: true, blocks: false, plane: 0 });
+            return stack;
+        }
 
-        const tx = x & 0x3F;
-        const tz = y & 0x3F;
+        // +1 offset: local 0-63 coords map to padded indices 1-64
+        const tx = (x & 0x3F) + PADDING_OFFSET;
+        const tz = (y & 0x3F) + PADDING_OFFSET;
 
-        // RSC Pattern: 4 authoritative planes (0-3)
+        // NXT Pattern: 4 authoritative planes (0-3) across a 66×66 padded stride
         for (let plane = 0; plane < 4; plane++) {
-            const index = (plane << 12) | (tx << 6) | tz;
+            const index = (plane * TILES_PER_LEVEL) + (tx * PADDED_SIZE) + tz;
             const flag = ms.flags[index];
             const terrainHeight = ms.heights[index];
             
             // Absolute Priority Resolver (Overlay > Water > Terrain)
             const isOverlay = (flag & FLAG_OVERLAY) !== 0;  // 0x2
             const isWater   = (flag & FLAG_WATER) !== 0;    // 0x80
-            const isBlocked = (flag & FLAG_BLOCKED) !== 0;  // 0x1
+            const isBlocked = (flag & FLAG_BLOCKED) !== 0;  // 0x1 (Standard Blocking Bit)
 
             // --- Phase 41: Safe Hybrid Z (Option C) ---
             // deterministic overlay height sourcing
@@ -349,14 +380,9 @@ export class SpatialSovereigntyLimb {
         // --- LAYER 1: Logic Matrix (Decoded Artifacts) ---
         const matrix = this.findMatrixForCoords(x, y);
         if (matrix) {
-            // Check cross-plane semantic footprint (Phase B3) or legacy plane format
-            const keyLegacy = `${plane}_${x}_${y}`;
-            const keyUniversal = `${x}_${y}`;
-            let collision = matrix.collision_matrix[keyLegacy];
-            
-            if (collision === undefined) {
-                collision = matrix.collision_matrix[keyUniversal];
-            }
+            const key = `${plane}_${x}_${y}`;
+            const altKey = `${x}_${y}`; // Plane-agnostic fallback (Ground Level)
+            const collision = matrix.collision_matrix[key] || matrix.collision_matrix[altKey];
 
             if (collision !== undefined) {
                 // Legacy bitmask matrix
@@ -397,6 +423,10 @@ export class SpatialSovereigntyLimb {
                     return c.north !== undefined || c.edges !== undefined;
                 }
             }
+
+            // Fallback: If we have a matrix for this region but this specific tile is missing,
+            // default to walkable (unless it's a known void or perimeter).
+            return true;
         }
 
         // --- LAYER 2: Surface Stack (Absolute Deterministic Resolution) ---
@@ -428,9 +458,9 @@ export class SpatialSovereigntyLimb {
         const ms = this.loadedMapsquares.get(`${msX}_${msZ}`);
         if (!ms) return 0;
 
-        const tx = x & 0x3F;
-        const tz = y & 0x3F;
-        const index = (plane << 12) | (tx << 6) | tz;
+        const tx = (x & 0x3F) + PADDING_OFFSET;
+        const tz = (y & 0x3F) + PADDING_OFFSET;
+        const index = (plane * TILES_PER_LEVEL) + (tx * PADDED_SIZE) + tz;
         
         return ms.heights[index] * 32;
     }
@@ -529,6 +559,55 @@ export class SpatialSovereigntyLimb {
     }
 
     /**
+     * swapObjectManifestation - Live-updates the collision matrix when an object morphism occurs.
+     */
+    public async swapObjectManifestation(x: number, y: number, plane: number, oldId: number, newId: number): Promise<void> {
+        const matrix = this.findMatrixForCoords(x, y);
+        if (!matrix) return;
+
+        const key = `${plane}_${x}_${y}`;
+        const altKey = `${x}_${y}`;
+        const targetKey = matrix.collision_matrix[key] !== undefined ? key : altKey;
+
+        // Perform atomic collision swap
+        const forensics = WorldForensicsLimb.getInstance();
+        const oldDef = await forensics.getObjectDefinition(oldId);
+        const newDef = await forensics.getObjectDefinition(newId);
+
+        // Calculate masks
+        // Note: For simplicity, we currently assume single-tile objects (Doors/Gates)
+        // Future refinement: Handle multi-tile width/length swaps.
+        
+        let collision: any = matrix.collision_matrix[targetKey] || { walkable: true, edges: {} };
+        if (typeof collision === 'number') {
+            collision = { walkable: (collision & 0x1) === 0, edges: {} };
+        }
+
+        if (newDef.blocksMovement && !oldDef.blocksMovement) {
+            // Manifestation became SOLID
+            collision.walkable = false;
+        } else if (!newDef.blocksMovement && oldDef.blocksMovement) {
+            // Manifestation became WALKABLE
+            collision.walkable = true;
+        }
+
+        // Handle directional edges for doors
+        // [Logic: Use WorldForensicsLimb.buildDirectionalMask to get canonical edges for the new ID]
+        const newMaskRes = await forensics.buildDirectionalMask(x, y, plane);
+        if (newMaskRes.ok) {
+            collision.edges = {
+                northBlocked: !newMaskRes.value.north,
+                southBlocked: !newMaskRes.value.south,
+                eastBlocked: !newMaskRes.value.east,
+                westBlocked: !newMaskRes.value.west
+            };
+        }
+
+        matrix.collision_matrix[targetKey] = collision;
+        logger.info({ x, y, plane, oldId, newId }, '[SPATIAL] Object Manifestation Swapped.');
+    }
+
+    /**
      * getLogicAt - Returns the raw collision data at a coordinate.
      */
     public getLogicAt(plane: number, x: number, y: number): number | DirectionalCollision {
@@ -545,9 +624,9 @@ export class SpatialSovereigntyLimb {
         const msZ = y >> 6;
         const ms = this.loadedMapsquares.get(`${msX}_${msZ}`);
         if (ms) {
-            const tx = x & 0x3F;
-            const tz = y & 0x3F;
-            const index = (plane << 12) | (tx << 6) | tz;
+            const tx = (x & 0x3F) + PADDING_OFFSET;
+            const tz = (y & 0x3F) + PADDING_OFFSET;
+            const index = (plane * TILES_PER_LEVEL) + (tx * PADDED_SIZE) + tz;
             const tile = ms.flags[index];
             return tile || 0;
         }
