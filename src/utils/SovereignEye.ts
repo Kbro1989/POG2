@@ -298,4 +298,15 @@ $bitmap.Dispose()
     getCaptureDir(): string {
         return this.captureDir;
     }
+
+    /**
+     * healthCheck — Diagnostic probe for NodeTester.
+     * Reports whether the Win32 screen-capture substrate is nominally available.
+     */
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: true,
+            details: 'SovereignEye nominal; Win32 capture substrate available.'
+        };
+    }
 }

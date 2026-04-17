@@ -1,19 +1,19 @@
-﻿// src/pipelines/spatialvision_pipeline.ts
+// src/pipelines/spatialvision_pipeline.ts
 // The Master Orchestrator: Combines Temporal Kinematics, Auditory Telemetry, and Chromatic Validation
 
-import { ChromaLimb } from '../limbs/vision/ChromaLimb.js';
+import { ChromaValidator } from '../limbs/vision/ChromaValidator.js';
 import { SoundtrackLimb } from '../limbs/spatial/SoundtrackLimb.js';
 import { KBDRoarCinemaV2 } from '../scripts/kbd_roar_cinema_v2.js';
 import { join } from 'path';
 import { existsSync, writeFileSync, mkdirSync } from 'fs';
 
 export class SpatialVisionPipeline {
-  private chromaVision: ChromaLimb;
+  private chromaVision: ChromaValidator;
   private audioMotor: SoundtrackLimb;
   private spatialExport: KBDRoarCinemaV2;
 
   constructor() {
-    this.chromaVision = new ChromaLimb();
+    this.chromaVision = new ChromaValidator();
     this.audioMotor = new SoundtrackLimb();
     this.spatialExport = new KBDRoarCinemaV2();
   }

@@ -1,10 +1,10 @@
-﻿// src/scripts/kbd_roar_cinema_v2.ts
+// src/scripts/kbd_roar_cinema_v2.ts
 // Phase 4A: GLTF Export Pipeline + Phase 4B: Audio Synthesis Binding
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { SoundtrackLimb } from '../limbs/spatial/SoundtrackLimb.js';
-import { ChromaLimb } from '../limbs/vision/ChromaLimb.js';
+import { ChromaValidator } from '../limbs/vision/ChromaValidator.js';
 
 export interface GLTFAsset {
   asset: { version: string; generator: string };
@@ -33,12 +33,12 @@ const OUTPUT_DIR = join(ASSET_DIR, 'gltf_export');
 
 export class KBDRoarCinemaV2 {
   private soundtrack: SoundtrackLimb;
-  private chroma: ChromaLimb;
+  private chroma: ChromaValidator;
   private timeline: any;
 
   constructor() {
     this.soundtrack = new SoundtrackLimb();
-    this.chroma = new ChromaLimb();
+    this.chroma = new ChromaValidator();
   }
 
   async executeFullPipeline(): Promise<void> {

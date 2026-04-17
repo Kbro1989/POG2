@@ -1,6 +1,8 @@
 import { createLogger } from '../../utils/logger.js';
 import { CNSGodheadPulseVolley } from '../../engines/gameplay/CNSGodheadPulseVolley.js';
 import { SwitchboardLimb } from '../../monitor/SwitchboardLimb.js';
+import { PlayerAgent } from '../../engines/gameplay/PlayerAgent.js';
+import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 
 const logger = createLogger('TemporalHeartbeatLimb');
 
@@ -98,6 +100,29 @@ export class TemporalHeartbeatLimb {
             const playerTickNum = this.worldTickCount;
             logger.info({ tick: playerTickNum }, 'Emitting 600ms Pro-Player Cognitive Pulse.');
             
+            const volley = CNSGodheadPulseVolley.getInstance();
+            const avatar = volley.getAvatar();
+            if (avatar) {
+                const playerAgent = new PlayerAgent(avatar as SovereignAvatarEntity);
+                playerAgent.advanceTick(this.WORLD_TICK_MS);
+
+                // Tactical Evaluation (Safespotting Override)
+                // Retrieve the field just broadcasted by CNSGodheadPulseVolley
+                const GhostSplatEngine = (await import('../../substrates/GhostSplatEngine.js')).GhostSplatEngine;
+                const field = GhostSplatEngine.getInstance().getLatestField();
+                if (field) {
+                    await playerAgent.evaluateTacticalPosition(field);
+
+                    // Combat Evaluation (CombatRotationEngine)
+                    if (avatar.metadata.tacticalState !== 'evading') {
+                        const intent = playerAgent.evaluateCombatRotation(field, playerTickNum);
+                        if (intent) {
+                            avatar.intent = intent as any;
+                        }
+                    }
+                }
+            }
+
             // Phase 28: Trigger OllamaCognitiveLimb
             // await OllamaCognitiveLimb.getInstance().process(playerTickNum);
             

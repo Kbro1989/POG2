@@ -1,4 +1,4 @@
-﻿// src/limbs/vision/ChromaLimb.ts
+// src/limbs/vision/ChromaLimb.ts
 // Phase 4C: Chromatic Validation
 
 import { type Result, ok } from '../../core/models.js';
@@ -10,7 +10,7 @@ export interface ChromaValidationResult {
   extractedPalette: string[];
 }
 
-export class ChromaLimb {
+export class ChromaValidator {
   async extractFromModel(modelPath: any): Promise<Result<string[]>> {
     // Placeholder: Would extract texture data from model binary
     return ok(['#FF4500', '#FF8C00', '#FFD700']);

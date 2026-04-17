@@ -2,6 +2,8 @@ import { Coord, GameState, NPC } from '../../core/models.js';
 import { DirectionalPathfinder } from '../../limbs/spatial/DirectionalPathfinder.js';
 import { SpatialSovereigntyLimb } from '../../limbs/spatial/SpatialSovereigntyLimb.js';
 import { createLogger } from '../../utils/logger.js';
+import { CombatRotationEngine, CombatEvaluationContext, TargetContext, CombatIntent, TacticalArchetype } from './CombatRotationEngine.js';
+import { CombatStyle } from './AbilityBook.js';
 
 const logger = createLogger('NpcAgent');
 
@@ -13,6 +15,8 @@ export interface NpcAgentConfig {
     patrolPath?: Coord[];        // Explicit waypoints for patrol
     followTargetId?: string;     // Player username for 'follow' behavior
     ticksPerMove?: number;       // How many ticks to wait between moves (default 1 = RS standard)
+    tacticalArchetype?: TacticalArchetype;
+    combatStyle?: CombatStyle;
 }
 
 /**
@@ -35,6 +39,10 @@ export class NpcAgent {
     // Per-agent blacklist: tiles we already tried and failed to reach
     private blacklist = new Set<string>();
 
+    // Hysteresis State
+    private tacticalState: 'idle' | 'evading' = 'idle';
+    private ticksInRetreat = 0;
+
     constructor(npc: NPC, config: NpcAgentConfig, pathfinder: DirectionalPathfinder, spatial: SpatialSovereigntyLimb) {
         this.npc = npc;
         this.config = config;
@@ -47,10 +55,21 @@ export class NpcAgent {
      * tick — Called every 600ms by SimulationHarness.
      * Returns true if the NPC moved this tick.
      */
-    public async tick(state: GameState): Promise<boolean> {
+    public async tick(state: GameState, field?: any): Promise<boolean> { // field: GhostSplatField | undefined
         // Throttle: some NPCs are slow-movers (e.g., 1 move every 2 ticks)
         const rate = this.config.ticksPerMove ?? 1;
         this.ticksSinceLastMove++;
+        
+        // --- TACTICAL EVALUATION ---
+        if (field && this.config.tacticalArchetype && this.config.tacticalArchetype !== 'aggressive') {
+            await this.evaluateTacticalPosition(field, state);
+        }
+
+        // --- COMBAT EVALUATION ---
+        if (field && this.config.tacticalArchetype && this.tacticalState !== 'evading') {
+            this.evaluateCombatRotation(field, state.tick || 0, state);
+        }
+
         if (this.ticksSinceLastMove < rate) return false;
         this.ticksSinceLastMove = 0;
 
@@ -167,5 +186,127 @@ export class NpcAgent {
 
     public getNpc(): NPC {
         return this.npc;
+    }
+
+    /**
+     * evaluateTacticalPosition
+     * Subscribes to Safespots telemetry. Allows advanced AI behaviors like kiting or fleeing 
+     * based on avatar heat.
+     */
+    private async evaluateTacticalPosition(field: any, state: GameState): Promise<void> {
+        // Evaluate heat relative to field PADDED_SIZE
+        // PADDED_SIZE is 66, center is 33
+        const PADDED_SIZE = 66; // duplicate strictly for typing ease without touching imports for now
+        const centerOffset = Math.floor(PADDED_SIZE / 2);
+        
+        // We calculate heat based on distance. Wait, the PADDED_SIZE is always centered on the player currently!
+        // The NPC is NOT at the center! We must determine NPC offset relative to Player offset!
+        // The GhostSplat heatmap is centered on the player coordinate.
+        // Wait, `field.heatmap` center is NOT the player if it's universal, BUT `GhostSplatEngine.project()` sets player as center?
+        // Let's resolve the NPC coordinate onto the heatmap.
+        // Or simply, `avatarHeat` contains exactly where the player is.
+        // A far simpler heuristic for NPC: If `tacticalState === 'idle'`, and distance to player <= 3 (or whatever avatarHeat says), evade.
+        
+        // For Phase 6 proxy (without rebuilding the whole spatial grid logic in this method):
+        // Flee if HP < 50% and cowardly
+        if (this.config.tacticalArchetype === 'cowardly') {
+            const currentHp = this.npc.combatStats?.currentHp || 0;
+            const maxHp = this.npc.combatStats?.maxHp || 1;
+            const isCowardTriggered = (currentHp / maxHp) < 0.5;
+
+            // Hysteresis
+            if (this.tacticalState === 'evading') {
+                this.ticksInRetreat++;
+                if (this.ticksInRetreat >= 3 && !isCowardTriggered) {
+                    this.tacticalState = 'idle';
+                    this.ticksInRetreat = 0;
+                } else if (this.currentPath.length > 0) {
+                    return; // Already retreating
+                }
+            }
+
+            if (this.tacticalState === 'idle' && isCowardTriggered) {
+                this.tacticalState = 'evading';
+                this.ticksInRetreat = 0;
+            }
+
+            if (this.tacticalState === 'evading') {
+                // Flee to farthest safespot
+                if (field.safespots && field.safespots.length > 0) {
+                    let bestSpot = field.safespots[0];
+                    let maxDist = 0;
+                    let furthestCoord: Coord | null = null;
+                    const npcCoord = { x: this.npc.x, y: this.npc.y, plane: this.npc.plane };
+                    const safes = field.safespots;
+                    for (const safe of safes) {
+                        const dist = Math.abs(safe.coord.x - npcCoord.x) + Math.abs(safe.coord.y - npcCoord.y); // Manhattan for simple evaluation
+                        if (dist > maxDist) {
+                            maxDist = dist;
+                            furthestCoord = safe.coord;
+                        }
+                    }
+
+                    if (!furthestCoord) return;
+
+                    try {
+                        const escapePath = await this.pathfinder.findPath(npcCoord, furthestCoord, state);
+                        if (escapePath && escapePath.length > 0) {
+                            this.currentPath = escapePath;
+                            this.tacticalState = 'evading';
+                            this.ticksInRetreat = 0;
+                        }
+                    } catch (err) {
+                        logger.warn({ id: this.npc.id }, 'Tactical pathing failed during evade attempt.');
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * evaluateCombatRotation
+     */
+    private evaluateCombatRotation(field: any, currentTick: number, state: GameState): void {
+        const engine = CombatRotationEngine.getInstance();
+        
+        if (!this.npc.metadata) this.npc.metadata = {};
+        if (this.npc.metadata.gcdEndTick === undefined) this.npc.metadata.gcdEndTick = 0;
+        if (this.npc.metadata.channelEndTick === undefined) this.npc.metadata.channelEndTick = 0;
+        if (this.npc.metadata.weaponDamage === undefined) this.npc.metadata.weaponDamage = 500; // NPC default damage scalar
+        
+        const style = this.config.combatStyle || 'melee';
+        const maxRange = style === 'melee' ? 1 : 7;
+        
+        // NPCs resolve target from AvatarHeat (player threats)
+        const target = engine.resolveTargetFromHeat(field, this.npc.coord, maxRange, false);
+        
+        if (!target) return; // No targets in range
+        
+        // Enrich target HP (assume player target for now)
+        if (target.entityId === 'player_sovereign') {
+            const playerState = state.players.get('Sovereign');
+            if (playerState) {
+                target.currentHp = playerState.currentHp || 1000;
+            }
+        }
+        
+        const ctx: CombatEvaluationContext = {
+            adrenaline: this.npc.adrenaline || 0,
+            cooldowns: this.npc.cooldowns || {},
+            coord: this.npc.coord,
+            currentTick,
+            gcdEndTick: this.npc.metadata.gcdEndTick,
+            channelEndTick: this.npc.metadata.channelEndTick,
+            combatStyle: style,
+            archetype: this.config.tacticalArchetype || 'aggressive'
+        };
+        
+        const intent = engine.evaluateRotation(ctx, target);
+        
+        if (intent) {
+            // Apply lock to NpcAgent
+            this.npc.metadata.gcdEndTick = currentTick + 3; 
+            this.npc.intent = intent as any;
+        }
     }
 }

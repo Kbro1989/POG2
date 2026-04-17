@@ -274,6 +274,26 @@ export class SwitchboardLimb {
     }
 
     /**
+     * broadcastGhostSplat - Pushes the GhostSplatField to remote HUDs for predictive visualization.
+     * Tier: Sensory (Predictive)
+     */
+    public broadcastGhostSplat(field: any): void {
+        // Map objects don't JSON.stringify natively. Convert projections to array.
+        const serializableField = {
+            ...field,
+            projections: field.projections instanceof Map 
+                ? Array.from(field.projections.entries()) 
+                : field.projections
+        };
+
+        this.broadcast({
+            type: 'ghost_splat',
+            timestamp: Date.now(),
+            payload: serializableField
+        });
+    }
+
+    /**
      * syncGameState - Broadcasts the integrated POG2 world/player state to the UI.
      */
     public syncGameState(state: any): void {

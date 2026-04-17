@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import { GameState, NPC, Coord, DirectionalCollision, SovereignAvatar } from '../../core/models.js';
 import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { SpatialSovereigntyLimb, PADDED_SIZE, CORE_SIZE } from './SpatialSovereigntyLimb.js';
+import { GhostSplatEngine, GhostSplatField } from '../../substrates/GhostSplatEngine.js';
 
 export class SpatialRadarLimb {
     private static instance: SpatialRadarLimb;
@@ -40,10 +41,25 @@ export class SpatialRadarLimb {
         const xStart = fullRegion ? (rx * 64) - 1 : center.x - radius;
         const xEnd = fullRegion ? (rx * 64) + 65 : center.x + radius;
 
+        const ghostSplat = GhostSplatEngine.getInstance().getLatestField();
+        const projectedNpcs = new Set<string>();
+        const projectedPlayers = new Set<string>();
+        if (ghostSplat) {
+            ghostSplat.projections.forEach(ghost => {
+                const coord = ghost.projectedCoord;
+                const key = `${coord.x},${coord.y},${coord.plane}`;
+                if (ghost.entityId.startsWith('player_')) {
+                    projectedPlayers.add(key);
+                } else {
+                    projectedNpcs.add(key);
+                }
+            });
+        }
+
         for (let y = yStart; y >= yEnd; y--) {
             let line = chalk.dim('│ ');
             for (let x = xStart; x <= xEnd; x++) {
-                line += this.renderTile(x, y, center.plane, state, avatar);
+                line += this.renderTile(x, y, center.plane, state, avatar, projectedNpcs, projectedPlayers);
             }
             output += line + chalk.dim(' │\n');
         }
@@ -54,7 +70,7 @@ export class SpatialRadarLimb {
         return output;
     }
 
-    private renderTile(x: number, y: number, plane: number, state: GameState, avatar: SovereignAvatar): string {
+    private renderTile(x: number, y: number, plane: number, state: GameState, avatar: SovereignAvatar, projectedNpcs: Set<string>, projectedPlayers: Set<string>): string {
         // 1. Resolve Entity Priority
         if (avatar.coord.x === x && avatar.coord.y === y && avatar.coord.plane === plane) {
             let char = '@ ';
@@ -86,6 +102,14 @@ export class SpatialRadarLimb {
             if (npc.interactionState === 'EXECUTING') char = '* ';
 
             return color(char);
+        }
+
+        if (projectedPlayers.has(coordKey)) {
+            return chalk.dim.cyan('◎ '); // Ghost Player
+        }
+        
+        if (projectedNpcs.has(coordKey)) {
+            return chalk.dim.magenta('○ '); // Ghost NPC
         }
 
         // 2. Resolve Logic Substrate
@@ -129,10 +153,10 @@ export class SpatialRadarLimb {
             }
         }
 
-        // 3. Intent Trace
-        if (avatar.intent && avatar.intent.coord) {
+        // 3. Intent Trace (Ghost Avatar) - now handled by PlayerAgent ghosts above
+        if (avatar.intent && avatar.intent.coord && !projectedPlayers.has(coordKey)) {
             if (avatar.intent.coord.x === x && avatar.intent.coord.y === y && avatar.intent.coord.plane === plane) {
-                return chalk.yellow.bold('* ');
+                return chalk.dim.cyan('◎ ');
             }
         }
 
@@ -183,6 +207,7 @@ export class SpatialRadarLimb {
                chalk.red('X') + chalk.dim(' (Blocked) ') + 
                chalk.blue('~') + chalk.dim(' (Water) ') +
                chalk.yellow('║/═') + chalk.dim(' (Partial Block) ') +
-               chalk.bgGrey(' ') + chalk.dim(' (Neighbor Padding)\n');
+               chalk.dim.magenta('○') + chalk.dim(' (Ghost NPC) ') +
+               chalk.dim.cyan('◎') + chalk.dim(' (Ghost You)\n');
     }
 }

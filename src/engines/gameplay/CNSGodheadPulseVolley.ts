@@ -15,6 +15,8 @@ import { NodeTester } from '../../monitor/NodeTester.js';
 import { CNSCausalityLedger, type TickEvent, type EventOutcome, type TileLock, type EventSource } from '../core/CNSCausalityLedger.js';
 import { Renderer } from '../../ui/Renderer.js';
 import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
+import { GhostSplatEngine } from '../../substrates/GhostSplatEngine.js';
+import { PlayerAgent } from './PlayerAgent.js';
 import crypto from 'crypto';
 
 const logger = createLogger('CNSGodheadPulseVolley');
@@ -44,6 +46,7 @@ export class CNSGodheadPulseVolley {
     private router: TernaryRouter;
     private nodeTester?: NodeTester;
     private renderer?: Renderer;
+    private ghostSplat?: GhostSplatEngine;
     private readonly ledger = CNSCausalityLedger.getInstance();
     private pulseStartTime: number = 0;
     private readonly PULSE_DEADLINE_MS = 600;
@@ -60,6 +63,7 @@ export class CNSGodheadPulseVolley {
         if (!this.gameplay) this.gameplay = GameplaySovereigntyLimb.getInstance();
         if (!this.rsmv) this.rsmv = RSMVController.getInstance();
         if (!this.forensics) this.forensics = CacheForensicsLimb.getInstance();
+        if (!this.ghostSplat) this.ghostSplat = GhostSplatEngine.getInstance();
     }
 
     private static readonly PRIORITY: Record<EventSource, number> = {
@@ -245,6 +249,17 @@ export class CNSGodheadPulseVolley {
 
         // Authoritative Gameplay Tick
         await this.gameplay!.processTick();
+
+        if (this.gameplay?.globalState) {
+            let playerAgent: PlayerAgent | undefined;
+            if (this.gameplay.avatar) {
+                playerAgent = new PlayerAgent(this.gameplay.avatar);
+            }
+            const field = this.ghostSplat!.project(this.gameplay.globalState, 3, playerAgent);
+            if (field) {
+                this.switchboard!.broadcastGhostSplat(field);
+            }
+        }
 
         // 7. Commit Ledger (Logs & history rotation)
         this.ledger.commitTick();

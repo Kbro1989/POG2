@@ -58,6 +58,7 @@ import { MemoryConsolidationEngine } from './MemoryConsolidationEngine.js';
 import { StateManager } from '../state/StateManager.js';
 import { RSMVExtractor } from '../utils/RSMVExtractor.js';
 import { CacheLearningLimb } from '../limbs/spatial/CacheLearningLimb.js';
+import { GhostSplatEngine } from '../substrates/GhostSplatEngine.js';
 import { CacheForensicsLimb } from '../limbs/spatial/CacheForensicsLimb.js';
 import { SystemTaxonomyLimb } from '../limbs/spatial/SystemTaxonomyLimb.js';
 import { MaterialLimb } from '../limbs/spatial/MaterialLimb.js';
@@ -770,6 +771,7 @@ export class OrchestrateEngine {
         nodeTester.registerLimbs({ SwitchboardLimb: this.switchboard });
         nodeTester.registerLimbs({ rsmvController: this.rsmvController });
         nodeTester.registerLimbs({ CacheForensicsLimb: this.cacheForensics });
+        nodeTester.registerLimbs({ GhostSplatEngine: GhostSplatEngine.getInstance() });
         
         // Massive Registry Injection to prevent DEGRADED statuses
         nodeTester.registerLimbs({ HexagramManager: undefined });
