@@ -1,7 +1,7 @@
-﻿import { readFileSync, existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { GameplayModule } from './MinigameInterfaces.js';
-import { GameState } from '../../core/models.js';
-import { SovereignAvatar } from '../../core/SovereignAvatar.js';
+import { GameState, SovereignAvatar } from '../../core/models.js';
+import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 
 export class PestControlInterpreter implements GameplayModule {
     public readonly name = 'Pest Control';
@@ -33,7 +33,7 @@ export class PestControlInterpreter implements GameplayModule {
         state.varbits.set(1234, 0); // Knight passive
     }
 
-    public onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): string | null {
+    public async onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): Promise<string | null> {
         // Knight takes 1 damage every 15 ticks (9 seconds) if portals are up
         const activePortals = Object.values(this.shields).filter(s => s > 0).length;
         if (activePortals > 0 && tickCount % 15 === 0) {
@@ -64,7 +64,7 @@ export class PestControlInterpreter implements GameplayModule {
         return null;
     }
 
-    public onAction(action: string, state: GameState, avatar: SovereignAvatar): string {
+    public async onAction(action: string, state: GameState, avatar: SovereignAvatar): Promise<string> {
         const parts = action.toLowerCase().split(' ');
         
         if (parts[0] === 'attack') {
@@ -80,6 +80,12 @@ export class PestControlInterpreter implements GameplayModule {
                 const isShielded = (state.tickNumber || 0) % 100 !== 0; // arbitrary
                 if (isShielded) {
                     return `[PEST_CONTROL] The ${portal} portal's shield absorbs your attack. You must wait for the Void Knight to drop it.`;
+                }
+                // Plot path to target
+                let success = false;
+                const goal = { x: 2657, y: 2639 }; // Placeholder coordinates
+                if (avatar.plotPath) {
+                    success = await avatar.plotPath(goal.x, goal.y, null, state);
                 }
             }
 

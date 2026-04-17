@@ -3,6 +3,7 @@ import * as path from 'path';
 import { createLogger } from "../../utils/logger.js";
 import { getSovereignRoot, resolveLogicFragment } from '../../utils/SovereignPathResolver.js';
 import { VarbitSovereigntyLimb } from './VarbitSovereigntyLimb.js';
+import { WorldForensicsLimb } from './WorldForensicsLimb.js';
 import { Result, ok, err, GameState, Direction, Coord, DirectionalCollision } from '../../core/models.js';
 import { MechanicalSovereigntyLimb } from '../technical/MechanicalSovereigntyLimb.js';
 import { DirectionalPathfinder } from './DirectionalPathfinder.js';
@@ -512,17 +513,13 @@ export class SpatialSovereigntyLimb {
         }
 
         // 4. Check for dynamic Objects (Locked doors, etc.)
-        const index = y * 64 + x; // RS mapsquares are 64x64
-        const objectsOnTile = context.objectMap.get(index); 
-        if (objectsOnTile) {
-            const varbitLimb = VarbitSovereigntyLimb.getInstance();
-            // Since we're in a sync loop, we might need to handle this differently
-            // but for now we'll assume we can resolve the definition.
-            // Note: resolveCurrentObjectId is async. 
-            // This suggests isWalkableContextual might need to be async or we pre-resolve.
-            
-            // For now, if it's a known object, we resolve its state.
-            // (In a real game engine, this is pre-calculated per tick).
+        // Refactored for NXT 66x66: We coordinate-match using World Coordinates
+        // Note: Future refinement would use a spatial index for O(1) object lookup.
+        for (const [id, obj] of context.objectMap.entries()) {
+            if (obj.x === x && obj.y === y && obj.plane === plane) {
+                const varbitLimb = VarbitSovereigntyLimb.getInstance();
+                // Morphism resolution...
+            }
         }
 
         return true;

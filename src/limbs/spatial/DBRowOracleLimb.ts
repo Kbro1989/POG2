@@ -1,6 +1,8 @@
 import { createLogger } from "../../utils/logger.js";
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { ServerSideInjector } from "../../core/models.js";
+import { PedagogyForensicsLimb } from "../pedagogy/PedagogyForensicsLimb.js";
 
 const logger = createLogger('DBRowOracleLimb');
 
@@ -28,15 +30,24 @@ export interface DBRow {
  * Translates raw RuneScape Genome data (DBTables/DBRows) into semantic gameplay logic.
  */
 export class DBRowOracleLimb {
+    private static instance: DBRowOracleLimb;
     private dbrows: Map<number, DBRow> = new Map();
     private projectRoot: string;
+    private _cachedInjectors: ServerSideInjector[] | null = null; // High-fidelity cache substrate
 
-    constructor(projectRoot: string) {
+    private constructor(projectRoot: string) {
         this.projectRoot = projectRoot;
     }
 
+    public static getInstance(projectRoot: string = process.cwd()): DBRowOracleLimb {
+        if (!DBRowOracleLimb.instance) {
+            DBRowOracleLimb.instance = new DBRowOracleLimb(projectRoot);
+        }
+        return DBRowOracleLimb.instance;
+    }
+
     // --- ORACLE COORDINATE LOGIC ---
-    public static readonly ORACLE_BIT_OFFSET = 1; // The padding offset for 66x66 -> 64x64 alignment
+    public static readonly ORACLE_BIT_OFFSET = 1; // NXT padding: 64×64 core sits at [1..64] within 66×66 padded grid
 
     /**
      * toWorld - Transforms a local padded coordinate (0..65) to world coordinates.
@@ -106,6 +117,65 @@ export class DBRowOracleLimb {
         }
 
         return `DBRow [${rowId}] resolved from Table [${row.table}]. Unmapped logic domain.`;
+    }
+
+    /**
+     * publishInjectors
+     * Translates the entire genomic substrate into executable Mechanical Rules.
+     * Tier: CACHE (Biological Truth)
+     */
+    public publishInjectors(): ServerSideInjector[] {
+        if (this._cachedInjectors) return this._cachedInjectors;
+
+        const injectors: ServerSideInjector[] = [];
+        const pedagogy = PedagogyForensicsLimb.getInstance();
+
+        for (const row of this.dbrows.values()) {
+            // DEEP FORENSIC FALLBACK: Check for pedagogical overrides in D:/sovereign
+            const pedigree = pedagogy.resolvePedigree(`dbrow_${row.table}_${row.id}`);
+            const tier = pedigree ? 'SYNTHESIZED' : 'CACHE';
+
+            // Table 39: Player Owned Farm Pens (Interaction Gating)
+            if (row.table === 39 && row.unk01) {
+                const penIdCol = row.unk01.columndata.find(c => c.id === 1); // Pen Index
+                const varbitCol = row.unk01.columndata.find(c => c.id === 8); // Status Varbit
+                
+                if (penIdCol && varbitCol) {
+                    injectors.push({
+                        objectId: 123456, // TODO: Resolve exact Object ID from RSMVCacheDB
+                        trigger: 'click',
+                        validation: {
+                            varbitChecks: [{ id: Number(varbitCol.columns[0].value[0]), value: 1 }]
+                        },
+                        handler: 'POFInterpreter',
+                        method: 'onPenInteract',
+                        authorityTier: tier,
+                        provenance: pedigree ? { source: 'PEDAGOGY' as any, recordId: pedigree, timestamp: Date.now(), path: pedigree } : undefined
+                    });
+                }
+            }
+
+            // Table 69: Varbit-driven Global Hooks
+            if (row.table === 69 && row.unk01) {
+                const varbitId = row.unk01.columndata.find(c => c.id === 1);
+                if (varbitId) {
+                    injectors.push({
+                        trigger: 'tick',
+                        validation: {
+                            varbitChecks: [{ id: Number(varbitId.columns[0].value[0]), value: 1 }]
+                        },
+                        handler: 'GlobalStateInterpreter',
+                        method: 'onGlobalTick',
+                        authorityTier: tier,
+                        provenance: pedigree ? { source: 'PEDAGOGY' as any, recordId: pedigree, timestamp: Date.now(), path: pedigree } : undefined
+                    });
+                }
+            }
+        }
+
+        this._cachedInjectors = injectors;
+        logger.info({ count: injectors.length }, 'Genomic Injectors Published and Memoized.');
+        return injectors;
     }
 
     public healthCheck(): Promise<{ online: boolean; details: string }> {

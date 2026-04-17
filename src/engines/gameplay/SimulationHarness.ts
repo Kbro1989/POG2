@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import { Coord, GameState, Result, YaoState, SkillId, EquipmentSlot } from '../../core/models.js';
-import { SovereignAvatar } from '../../core/SovereignAvatar.js';
+import { Coord, GameState, Result, YaoState, SkillId, EquipmentSlot, SovereignAvatar, Item } from '../../core/models.js';
+import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { WorldGroundingLimb } from '../../limbs/world_grounding/WorldGroundingLimb.js';
 import { HexagramManager } from '../../routing/HexagramManager.js';
 import { AIDispatcher } from '../../api/ai/Dispatcher.js';
@@ -134,7 +134,7 @@ export class SimulationHarness {
         this.switchboard = switchboard;
         this.serverLogic = new ServerLogicMapper(grounding);
         this.interactionGateway = new InteractionGateway();
-        this.dbRowOracle = new DBRowOracleLimb(process.cwd());
+        this.dbRowOracle = DBRowOracleLimb.getInstance();
         this.dbRowOracle.initialize();
 
         // Bootstrap the pathfinder against the singleton spatial authority
@@ -199,7 +199,7 @@ export class SimulationHarness {
             
             const activeModule = GameplaySovereigntyLimb.getInstance().activeModule || this.serverLogic /* universal fallback? */;
             
-            const results = this.interactionGateway.evaluateInteraction(
+            const results = await this.interactionGateway.evaluateInteraction(
                 avatar, 
                 interaction.action, 
                 interaction.targetId, 
@@ -387,12 +387,12 @@ export class SimulationHarness {
         if (totalInv >= requiredAmount) return { bucket: 'inventory', amount: totalInv, stackable: totalInv > 1 };
 
         // 2. Equipment Check
-        const equipSlot = Object.values(avatar.equipment).find(i => i?.id === itemId);
+        const equipSlot = Object.values(avatar.equipment).find(i => i?.id === itemId) as Item | undefined;
         if (equipSlot) return { bucket: 'equipped', amount: equipSlot.amount, stackable: equipSlot.amount > 1 };
 
         // 3. Bank Check (Regional Authorization)
         let totalBank = 0;
-        avatar.bank.forEach(i => { if (i.id === itemId) totalBank += i.amount; });
+        avatar.bank.forEach((i: Item) => { if (i.id === itemId) totalBank += i.amount; });
         if (totalBank >= requiredAmount) return { bucket: 'bank', amount: totalBank, stackable: totalBank > 1 };
 
         // 4. Ground Item Check (Spatial Query within 1 square distance)
@@ -464,8 +464,12 @@ export class SimulationHarness {
         this.isPathfinding = true;
         try {
             logger.debug({ from: avatar.coord, to: goal }, '[REFLEX] Pathfinding...');
-            const success = await avatar.plotPath(goal.x, goal.y, this.pathfinder, state);
-
+            // Plot path to target
+            let success = false;
+            if (avatar.plotPath) {
+                success = await avatar.plotPath(goal.x, goal.y, this.pathfinder, state);
+            }
+            
             if (success) {
                 const steps = avatar.currentPath?.length ?? 0;
                 logger.info({ from: avatar.coord, to: goal, steps }, '[REFLEX] Path issued — avatar walking.');

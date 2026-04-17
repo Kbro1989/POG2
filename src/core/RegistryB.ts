@@ -146,7 +146,7 @@ export class RegistryB implements GroundingHydrator {
         const mx = parseInt(match[1]);
         const my = parseInt(match[2]);
 
-        // Mapsquare boundaries (64x64 tiles)
+        // Mapsquare boundaries (NXT 64×64 core tiles)
         const minX = mx << 6;
         const maxX = (mx << 6) + 63;
         const minZ = my << 6;

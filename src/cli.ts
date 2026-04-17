@@ -144,6 +144,8 @@ function createMockGameState(options: any): GameState {
     const context: GameState = {
         plane: 0,
         players: new Map<string, SovereignAvatar>(),
+        varps: new Map<number, number>(),
+        varcs: new Map<number, number | string>(),
         varbits: new Map<number, number>(),
         npcMap: new Map<number, NPC>(),
         npcSpatialIndex: new Map<string, NPC[]>(),
@@ -162,7 +164,7 @@ function createMockGameState(options: any): GameState {
         equipment: {},
         skills: {},
         quests: { points: 0, completedCount: 0, quests: {} }
-    };
+    } as any as SovereignAvatar;
     context.players.set('Mock', avatar);
 
     if (options.context) {
@@ -684,7 +686,7 @@ export async function main(): Promise<void> {
                 const followerMatch = options.context.match(/follower=(\d+)/);
                 if (followerMatch) {
                     const id = parseInt(followerMatch[1]);
-                    const npc: NPC = { id, name: 'Mock Follower', x, y, plane, isFollower: true };
+                    const npc: NPC = { id, name: 'Mock Follower', x, y, plane, isFollower: true } as any as NPC;
                     context.npcSpatialIndex.set(`${x},${y},${plane}`, [npc]);
                 }
 
@@ -760,7 +762,7 @@ export async function main(): Promise<void> {
                 process.exit(1);
             }
             await engine.initialize();
-            await engine.mountModule(module);
+            await engine.registerModule(module);
             renderer.success(`[Engine] ${module.name} loaded.`);
         });
 
@@ -782,7 +784,7 @@ export async function main(): Promise<void> {
                 process.exit(1);
             }
             await engine.initialize();
-            await engine.mountModule(module);
+            await engine.registerModule(module);
             renderer.success(`[Simulator] ${module.name} active at [${engine.avatar.coord.x}, ${engine.avatar.coord.y}]`);
             
             const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -2803,13 +2805,15 @@ function createMockGameState(options: any): GameState {
         equipment: {},
         skills: {},
         quests: { points: 0, completedCount: 0, quests: {} }
-    };
+    } as any as SovereignAvatar;
     players.set(mockAvatar.username, mockAvatar);
 
     return {
         plane: 0,
         varbits,
         players,
+        varps: new Map(),
+        varcs: new Map(),
         npcMap: new Map(),
         npcSpatialIndex: new Map(),
         objectMap: new Map()

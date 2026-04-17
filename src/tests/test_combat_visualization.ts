@@ -1,8 +1,8 @@
 import { WorldStateLimb } from '../limbs/logical/WorldStateLimb.js';
-import { SovereignAvatar } from '../core/SovereignAvatar.js';
+import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
 import { ServerOpcode } from '../core/ProtocolOpcodes.js';
 import { BitStream } from '../utils/BitStream.js';
-import { SpatialRadarLimb } from '../limbs/spatial/SpatialRadarLimb.ts';
+import { SpatialRadarLimb } from '../limbs/spatial/SpatialRadarLimb.js';
 
 /**
  * Diagnostic: Protocol 947 Combat Visualization
@@ -12,7 +12,7 @@ async function runCombatSyncTest() {
     console.log("\x1b[36m[SIMULATION] Starting Combat Visualization Sync Test...\x1b[0m");
     
     // 1. Initialize Avatar & Limb
-    const avatar = new SovereignAvatar('Sovereign_Dev');
+    const avatar = new SovereignAvatarEntity('Sovereign_Dev');
     const worldLimb = WorldStateLimb.getInstance(avatar);
     const radar = SpatialRadarLimb.getInstance();
     

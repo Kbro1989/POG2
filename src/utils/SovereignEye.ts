@@ -280,7 +280,7 @@ $bitmap.Dispose()
 
         for (const browser of browsers) {
             try {
-                const browserTimeout = 2000; // Phase 112: Aggressive timeout for heartbeat stability
+                const browserTimeout = 2000; // Original sharp timeout
                 const cmd = `"${browser}" --headless --disable-gpu --screenshot="${outputPath}" --window-size=${viewport.width},${viewport.height} --hide-scrollbars --no-sandbox "${url}"`;
                 await execAsync(cmd, { timeout: browserTimeout });
 

@@ -1,6 +1,6 @@
 import chalk from 'chalk';
-import { GameState, NPC, Coord, DirectionalCollision } from '../../core/models.js';
-import { SovereignAvatar } from '../../core/SovereignAvatar.js';
+import { GameState, NPC, Coord, DirectionalCollision, SovereignAvatar } from '../../core/models.js';
+import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { SpatialSovereigntyLimb, PADDED_SIZE, CORE_SIZE } from './SpatialSovereigntyLimb.js';
 
 export class SpatialRadarLimb {

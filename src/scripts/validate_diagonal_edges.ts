@@ -8,6 +8,8 @@ const mockState: GameState = {
     npcSpatialIndex: new Map(),
     objectMap: new Map(),
     varbits: new Map(),
+    varps: new Map(),
+    varcs: new Map(),
     players: new Map()
 };
 

@@ -16,6 +16,7 @@ export interface TileLesson {
  * SovereignKnowledgeDB - The "MEMORY" substrate for spatial persistence.
  */
 export class SovereignKnowledgeDB {
+    private static instance: SovereignKnowledgeDB;
     private db: Database.Database;
     private closed = false;
     private prepared: {
@@ -25,7 +26,7 @@ export class SovereignKnowledgeDB {
         countTiles: Database.Statement;
     };
 
-    constructor(dbPath: string = 'D:\\sovereign\\vibe-learning.db') {
+    private constructor(dbPath: string = 'D:\\sovereign\\vibe-learning.db') {
         this.db = new Database(dbPath);
         this.db.pragma('journal_mode = WAL');
 
@@ -34,6 +35,13 @@ export class SovereignKnowledgeDB {
 
         SovereignDBLifecycle.getInstance().register('SovereignKnowledgeDB', this);
         logger.info({ path: dbPath }, 'SovereignKnowledgeDB initialized.');
+    }
+
+    public static getInstance(dbPath?: string): SovereignKnowledgeDB {
+        if (!SovereignKnowledgeDB.instance) {
+            SovereignKnowledgeDB.instance = new SovereignKnowledgeDB(dbPath);
+        }
+        return SovereignKnowledgeDB.instance;
     }
 
     private initSchema(): void {

@@ -1,4 +1,4 @@
-import { SovereignAvatar } from '../core/SovereignAvatar.js';
+import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
 import { WorldStateLimb } from '../limbs/logical/WorldStateLimb.js';
 import { VarbitSovereigntyLimb } from '../limbs/spatial/VarbitSovereigntyLimb.js';
 import { ServerOpcode } from '../core/ProtocolOpcodes.js';
@@ -8,7 +8,7 @@ async function runTest() {
     console.log('[SIMULATION] Starting Phase 11: Global State Bus Test...');
 
     // 1. Setup Mock State
-    const avatar = new SovereignAvatar('TestUser');
+    const avatar = new SovereignAvatarEntity('TestUser');
     const varbitLimb = VarbitSovereigntyLimb.getInstance();
     const worldLimb = WorldStateLimb.getInstance(avatar);
 

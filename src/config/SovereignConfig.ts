@@ -116,7 +116,7 @@ const DEFAULT_CONFIG: SovereignConfig = {
     planningModel: 'kimi-k2.5:cloud',
     codingModel: 'deepseek-r1:8b', // Upgraded to thinking model
     orchestratorModel: 'kimi-k2.5:cloud',
-    visionModel: 'moondream:1.8b',
+    visionModel: 'moondream:latest',
     voiceModel: 'tinyllama:latest',
     codingHeavyModel: 'deepseek-r1:8b',
     codingFastModel: 'deepseek-r1:8b', 
@@ -197,7 +197,7 @@ const DEFAULT_CONFIG: SovereignConfig = {
     prototypeModel: 'deepseek-r1:8b',
     rscModel: 'moondream:latest',
     bioModel: 'medgemma:latest',
-    visionFastModel: 'moondream:1.8b'
+    visionFastModel: 'moondream:latest'
 };
 
 function loadEnvFile(envPath: string): void {

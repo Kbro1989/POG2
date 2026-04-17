@@ -26,6 +26,6 @@ export class AppearanceBlockDecoder {
             bodyColors
         };
         
-        avatar.metadata.lastAppearanceUpdate = Date.now();
+        if(avatar.metadata) avatar.metadata.lastAppearanceUpdate = Date.now();
     }
 }

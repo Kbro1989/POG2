@@ -1,12 +1,13 @@
 import fs from 'fs';
 import path from 'path';
+import { CORE_SIZE } from '../limbs/spatial/SpatialSovereigntyLimb.js';
 
 const TRANSFORM_DIR = 'D:/sovereign/atlas/spatial/unified_extract/';
 const OUTPUT_FILE = 'D:/sovereign/atlas/spatial/collision_radar.bin';
 
-// RS3 Map Constants
+// RS3 NXT Map Constants
 const WORLD_SIZE = 16384; 
-const GRID_SIZE = 64; 
+const GRID_SIZE = CORE_SIZE; // NXT: 64-tile playable core per mapsquare axis
 
 async function synthesize() {
     console.log("Initializing Global Collision Radar (16384x16384)...");

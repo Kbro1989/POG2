@@ -1,5 +1,5 @@
-﻿import { Coord, Result, ok, err } from '../../core/models.js';
-import { SpatialSovereigntyLimb } from './SpatialSovereigntyLimb.js';
+import { Coord, Result, ok, err } from '../../core/models.js';
+import { SpatialSovereigntyLimb, CORE_SIZE } from './SpatialSovereigntyLimb.js';
 import { createLogger } from '../../utils/logger.js';
 
 const logger = createLogger('DiscoveryLimb');
@@ -14,7 +14,7 @@ const logger = createLogger('DiscoveryLimb');
  */
 export class DiscoveryLimb {
     private visitedTiles: Set<string> = new Set();
-    private readonly mapsquareSize = 64;
+    private readonly mapsquareSize = CORE_SIZE; // NXT: 64-tile playable core
 
     /**
      * markVisited - Record the avatar's presence on a tile.
@@ -35,7 +35,7 @@ export class DiscoveryLimb {
     }
 
     /**
-     * getUnvisitedWalkableTiles - Scans a 64x64 mapsquare for exploration targets.
+     * getUnvisitedWalkableTiles - Scans an NXT mapsquare (64×64 core) for exploration targets.
      * This is the "Frontier Detection" logic for Phase B2.
      */
     public async getUnvisitedWalkableTiles(
@@ -64,8 +64,8 @@ export class DiscoveryLimb {
 
     /**
      * getFrontierExtended - Scans a range of mapsquares.
-     * radius=0: current mapsquare only (64x64)
-     * radius=1: 3x3 mapsquare grid (192x192) - User Request: "Triple the view"
+     * radius=0: current mapsquare only (NXT 64×64 core)
+     * radius=1: 3x3 mapsquare grid (192×192) - User Request: "Triple the view"
      */
     public async getFrontierExtended(
         plane: number,

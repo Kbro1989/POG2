@@ -37,7 +37,7 @@ export class ObservationEngine {
     private grounding: SovereignGrounding | null = null;
 
     constructor() {
-        this.limb = new WorldForensicsLimb();
+        this.limb = WorldForensicsLimb.getInstance();
     }
 
     public async initialize(): Promise<Result<void>> {

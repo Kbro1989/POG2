@@ -39,34 +39,51 @@ export interface ObjectDefinition {
     varpId?: number;
     transforms?: number[];
     defaultTransformId?: number;
+    actions?: string[]; // Phase 13: Interaction Morphism
 }
 
 /**
  * WorldForensicsLimb - The "SENSORY" substrate for real-time world observation.
  */
 export class WorldForensicsLimb {
+    private static instance: WorldForensicsLimb;
     private cache: JagexCacheReader | null = null;
     private readonly cachePath: string;
     private locationsCache: Map<number, GameObjectInstance[]> = new Map();
     private objectDefs: Map<number, ObjectDefinition> = new Map();
 
-    constructor() {
+    private constructor() {
         this.cachePath = getRSMVCachePath();
+    }
+
+    public static getInstance(): WorldForensicsLimb {
+        if (!WorldForensicsLimb.instance) {
+            WorldForensicsLimb.instance = new WorldForensicsLimb();
+        }
+        return WorldForensicsLimb.instance;
     }
 
     public async initialize(): Promise<Result<void>> {
         try {
+            if (this.cache) return ok(undefined); // Avoid double-init
             logger.info({ path: this.cachePath }, 'Initializing Multi-Archive World Observation substrate...');
             this.cache = new JagexCacheReader(this.cachePath);
             return ok(undefined);
         } catch (error) {
-            logger.error({ error }, 'Failed to initialize WorldForensicsLimb.');
+            logger.error({ error }, 'Failed to initialize Multi-Archive observation.');
             return err(error as Error);
         }
     }
 
     /**
-     * senseLocalArea - Returns a detailed world-state for a local 64x64 grid.
+     * injectObjectDefinition - Authoritatively inject an object definition (for missions/tests).
+     */
+    public injectObjectDefinition(id: number, def: ObjectDefinition): void {
+        this.objectDefs.set(id, def);
+    }
+
+    /**
+     * senseLocalArea - Returns a detailed world-state for a local NXT 66×66 padded grid.
      */
     public async senseLocalArea(x: number, z: number, plane: number): Promise<Result<WorldObservation[]>> {
         const mapsquareX = x >> 6;
@@ -74,7 +91,7 @@ export class WorldForensicsLimb {
         
         const observations: WorldObservation[] = [];
         const grid: number[][][] = Array.from({ length: 4 }, () => 
-            Array.from({ length: 64 }, () => new Array(64).fill(0))
+            Array.from({ length: 66 }, () => new Array(66).fill(0))
         );
 
         // --- PHASE 43.8: JSON-FIRST SOVEREIGNTY ---
@@ -87,7 +104,7 @@ export class WorldForensicsLimb {
                 // Schema A: tileFlags array (SovereignWorldExtract output)
                 if (data.tileFlags && Array.isArray(data.tileFlags)) {
                     for (const tile of data.tileFlags) {
-                        if (tile && tile.plane < 4 && tile.x < 64 && tile.z < 64) {
+                        if (tile && tile.plane < 4 && tile.x < 66 && tile.z < 66) {
                             // NXT flags: bit 1 (0x02) = blocking. NOT bit 0 (0x01 = visible).
                             grid[tile.plane][tile.x][tile.z] = (tile.collision & 0x02) !== 0 ? 1 : 0;
                         }
@@ -100,10 +117,15 @@ export class WorldForensicsLimb {
                         const cm = val as any;
                         if (cm && cm.sourceFlags !== undefined) {
                             const parts = key.split('_').map(Number);
-                            const tx = parts.length === 3 ? parts[1] - (mapsquareX << 6) : parts[0] - (mapsquareX << 6);
-                            const tz = parts.length === 3 ? parts[2] - (mapsquareZ << 6) : parts[1] - (mapsquareZ << 6);
+                            const worldX = parts.length === 3 ? parts[1] : parts[0];
+                            const worldZ = parts.length === 3 ? parts[2] : parts[1];
                             const tp = parts.length === 3 ? parts[0] : 0;
-                            if (tp < 4 && tx >= 0 && tx < 64 && tz >= 0 && tz < 64) {
+                            
+                            // Map to Padded Coordinate [0..65]
+                            const tx = worldX - (mapsquareX << 6) + 1;
+                            const tz = worldZ - (mapsquareZ << 6) + 1;
+
+                            if (tp < 4 && tx >= 0 && tx < 66 && tz >= 0 && tz < 66) {
                                 // NXT sourceFlags: bit 1 (0x02) = blocking
                                 grid[tp][tx][tz] = (cm.sourceFlags & 0x02) !== 0 ? 1 : 0;
                             }
@@ -111,19 +133,11 @@ export class WorldForensicsLimb {
                     }
                 }
 
-                // Schema C: tiles array (legacy format)
-                if (data.tiles && Array.isArray(data.tiles)) {
-                    for (const tile of data.tiles) {
-                        if (tile && tile.plane < 4 && tile.x < 64 && tile.z < 64) {
-                            grid[tile.plane][tile.x][tile.z] = (tile.collision & 0x02) !== 0 ? 1 : 0;
-                        }
-                    }
-                }
-
-                for (let curX = 0; curX < 64; curX++) {
-                    for (let curZ = 0; curZ < 64; curZ++) {
-                        const worldX = (mapsquareX << 6) + curX;
-                        const worldZ = (mapsquareZ << 6) + curZ;
+                // Authoritative Padded Observation Sweep (66x66)
+                for (let curX = 0; curX < 66; curX++) {
+                    for (let curZ = 0; curZ < 66; curZ++) {
+                        const worldX = (mapsquareX << 6) + curX - 1; // Center 0..63
+                        const worldZ = (mapsquareZ << 6) + curZ - 1;
                         observations.push({
                             x: worldX,
                             z: worldZ,
@@ -314,8 +328,15 @@ export class WorldForensicsLimb {
      * getObjectDefinition - Parses Archive 16 for object metadata using opcodes.
      */
     public async getObjectDefinition(id: number): Promise<ObjectDefinition> {
-        if (!this.cache) throw new Error('Limb not initialized');
-        if (this.objectDefs.has(id)) return this.objectDefs.get(id)!;
+        if (this.objectDefs.has(id)) {
+            // logger.info({ id }, 'Forensics - Found definition in Map.');
+            return this.objectDefs.get(id)!;
+        }
+        
+        if (!this.cache) {
+            logger.warn({ id }, 'Forensics - Attempted definition lookup without initialized cache. Returning fallback.');
+            return { id, name: `Object ${id}`, type: 0, blocksMovement: false, blocksSight: false, width: 1, length: 1 };
+        }
 
         const def: ObjectDefinition = {
             id,
@@ -344,8 +365,19 @@ export class WorldForensicsLimb {
                 case 18: def.blocksMovement = false; break;
                 case 19: reader.readU8(); break;
                 case 27: def.type = 1; break;
-                case 24: reader.readU16(); break;
                 case 28: reader.readU8(); break;
+                case 30:
+                case 31:
+                case 32:
+                case 33:
+                case 34: {
+                    if (!def.actions) def.actions = [];
+                    const action = reader.readString();
+                    if (action.toLowerCase() !== 'hidden') {
+                        def.actions[opcode - 30] = action;
+                    }
+                    break;
+                }
                 case 60: reader.readU16(); break;
                 case 77: { // Varbit Transformation
                     def.varbitId = reader.readU16();

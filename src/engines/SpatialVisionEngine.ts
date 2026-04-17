@@ -160,7 +160,9 @@ export class SpatialVisionEngine {
             yaoState: params.yaoState
         });
 
-        if (!result.ok) return result;
+        if (!result.ok) {
+            return { ok: false, error: result.error as any };
+        }
 
         // 3. Parse spatial map if chroma/spatial intent
         let spatialMap: SpatialMap | undefined;
@@ -374,7 +376,7 @@ OUTPUT FORMAT:
         return this.observe({
             intent: 'ui_analysis',
             includeScreenshot: true
-        });
+        }) as any;
     }
 
     /**

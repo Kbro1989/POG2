@@ -1,4 +1,5 @@
-﻿import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/logger.js';
+import { CORE_SIZE } from '../limbs/spatial/SpatialSovereigntyLimb.js';
 const logger = createLogger('WorldTransform');
 
 export interface WorldCoord {
@@ -25,7 +26,7 @@ export interface CameraState {
 }
 
 export class SpatialTransform {
-    private static REGION_SIZE = 64; // Standard RS3 region width/height (approximate domain assumption)
+    private static REGION_SIZE = CORE_SIZE; // Authoritative NXT mapsquare stride
 
     // Absolute world â†’ region + local offset
     public static worldToRegion(pos: WorldCoord): { regionId: string; localOffset: { dx: number; dy: number; dz: number } } {

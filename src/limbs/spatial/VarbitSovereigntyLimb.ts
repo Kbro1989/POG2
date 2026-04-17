@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { GameState } from '../../core/models.js';
-import { WorldForensicsLimb } from './WorldForensicsLimb.js';
+import { WorldForensicsLimb, ObjectDefinition } from './WorldForensicsLimb.js';
 import { createLogger } from '../../utils/logger.js';
 import { SpatialSovereigntyLimb } from './SpatialSovereigntyLimb.js';
 
@@ -16,7 +16,7 @@ export class VarbitSovereigntyLimb {
     private forensics: WorldForensicsLimb;
 
     private constructor() {
-        this.forensics = new WorldForensicsLimb();
+        this.forensics = WorldForensicsLimb.getInstance();
     }
 
     private definitions: Map<number, { parentVarpId: number, lsb: number, msb: number }> = new Map();
@@ -68,14 +68,9 @@ export class VarbitSovereigntyLimb {
         }
     }
 
-    /**
-     * resolveCurrentObjectId - Returns the active ObjectId based on current GameState.
-     */
-    public async resolveCurrentObjectId(originalId: number, gameState: GameState): Promise<number> {
-        const def = await this.forensics.getObjectDefinition(originalId);
-
+    public resolveCurrentObjectIdFromDef(def: ObjectDefinition, gameState: GameState): number {
         if (!def.transforms || def.transforms.length === 0) {
-            return originalId;
+            return def.id;
         }
 
         let index = -1;
@@ -97,7 +92,7 @@ export class VarbitSovereigntyLimb {
 
         return def.defaultTransformId !== undefined && def.defaultTransformId !== -1 
             ? def.defaultTransformId 
-            : originalId;
+            : def.id;
     }
 
     /**
@@ -140,37 +135,47 @@ export class VarbitSovereigntyLimb {
      * remanifestAffectedObjects - Scans active world for objects that need a visual/collision flip.
      */
     private async remanifestAffectedObjects(varpId: number, affectedVarbits: number[], gameState: GameState): Promise<void> {
+        logger.info({ varpId, objectMapSize: gameState.objectMap.size }, 'Entering remanifestAffectedObjects');
         const spatial = SpatialSovereigntyLimb.getInstance();
+        logger.info('Spatial limb accessed.');
         
-        // Scan the active object map (This is an O(N) scan of the local chunk which is acceptable given its size)
-        for (const [index, objects] of gameState.objectMap.entries()) {
-            for (const obj of objects) {
-                const def = await this.forensics.getObjectDefinition(obj.id);
+        // Scan the active world state for morphing objects
+        for (const [id, obj] of gameState.objectMap.entries()) {
+            try {
+                const numericId = Number(id);
+                const def = await this.forensics.getObjectDefinition(numericId);
                 
-                // Check if this object is state-gated by the modified Varp or its child Varbits
-                const isAffected = (def.varpId === varpId) || (def.varbitId !== undefined && affectedVarbits.includes(def.varbitId));
+                // Authoritative Logic Check
+                const isAffected = (def.varpId === varpId) || 
+                                   (def.varbitId !== undefined && affectedVarbits.includes(def.varbitId));
                 
+                logger.info({ 
+                    id: numericId, 
+                    isAffected, 
+                    defVarp: def.varpId, 
+                    targetVarp: varpId,
+                    hasTransforms: !!def.transforms 
+                }, 'Morphism Potential Checked');
+
                 if (isAffected && def.transforms) {
-                    const oldManifestedId = obj.manifestedId || obj.id;
-                    const newManifestedId = await this.resolveCurrentObjectId(obj.id, gameState);
+                    const oldManifestedId = obj.id || obj.id;
+                    const newManifestedId = this.resolveCurrentObjectIdFromDef(def, gameState);
                     
                     if (oldManifestedId !== newManifestedId) {
                         logger.info({ 
-                            coordIndex: index, 
-                            baseId: obj.id, 
+                            id: numericId, 
                             from: oldManifestedId, 
                             to: newManifestedId 
-                        }, 'Manifestation Flip Triggered');
+                        }, '⚠️ MORPHISM TRIGGERED');
                         
-                        obj.manifestedId = newManifestedId;
-                        
-                        // Notify Spatial limb to update collision
-                        const plane = obj.plane || 0;
-                        const x = index % 64; 
-                        const z = Math.floor(index / 64);
-                        spatial.swapObjectManifestation(x, z, plane, oldManifestedId, newManifestedId);
+                        obj.id = newManifestedId;
+                        await spatial.swapObjectManifestation(obj.x, obj.y, obj.plane, oldManifestedId, newManifestedId);
+                    } else {
+                        logger.info({ id: numericId }, 'Morphism skip: Manifested ID unchanged.');
                     }
                 }
+            } catch (tileError) {
+                logger.error({ tileError, objectId: id }, 'Error in remanifestAffectedObjects loop.');
             }
         }
     }

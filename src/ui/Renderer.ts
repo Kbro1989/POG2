@@ -1,7 +1,7 @@
 import * as readline from 'readline/promises';
 import { PathNormalizer } from '../utils/PathNormalizer.js';
 import chalk from 'chalk';
-import { YaoState, EmotionalState, type SovereignRecord, type OraclePlan } from '../core/models.js';
+import { SovereignAvatar, YaoState, EmotionalState, type SovereignRecord, type OraclePlan } from '../core/models.js';
 import type { HexagramManager } from '../routing/HexagramManager.js';
 import { SovereignDomain } from '../types/SovereignDomain.js';
 import type { NodeHealth } from '../monitor/NodeTester.js';

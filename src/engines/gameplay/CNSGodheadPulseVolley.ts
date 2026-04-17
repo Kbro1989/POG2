@@ -2,18 +2,19 @@ import { getLastIOLatencyMs } from '../../utils/RSMVBridge.js';
 import { createLogger } from '../../utils/logger.js';
 import { performance } from 'perf_hooks';
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
-import { SubstrateState, YaoState, GameState } from '../../core/models.js';
+import { SubstrateState, YaoState, GameState, SovereignAvatar } from '../../core/models.js';
 import { RSMVController } from '../../vision/RSMVController.js';
 import { CacheForensicsLimb } from '../../limbs/spatial/CacheForensicsLimb.js';
 import { SwitchboardLimb, type AdminCommand } from '../../monitor/SwitchboardLimb.js';
 import { SpatialVisionEngine } from '../SpatialVisionEngine.js';
 import { WorldGroundingLimb } from '../../limbs/world_grounding/WorldGroundingLimb.js';
 import { GameplaySovereigntyLimb } from '../../limbs/spatial/GameplaySovereigntyLimb.js';
+import { GameplayModule } from './MinigameInterfaces.js';
 import { SubstrateResolver } from './SubstrateResolver.js';
 import { NodeTester } from '../../monitor/NodeTester.js';
 import { CNSCausalityLedger, type TickEvent, type EventOutcome, type TileLock, type EventSource } from '../core/CNSCausalityLedger.js';
 import { Renderer } from '../../ui/Renderer.js';
-import { SovereignAvatar } from '../../core/SovereignAvatar.js';
+import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import crypto from 'crypto';
 
 const logger = createLogger('CNSGodheadPulseVolley');
@@ -44,6 +45,9 @@ export class CNSGodheadPulseVolley {
     private nodeTester?: NodeTester;
     private renderer?: Renderer;
     private readonly ledger = CNSCausalityLedger.getInstance();
+    private pulseStartTime: number = 0;
+    private readonly PULSE_DEADLINE_MS = 600;
+    private deferredOps: Array<() => Promise<void>> = [];
 
     /**
      * resolve - Lazy dependency resolution.
@@ -213,6 +217,7 @@ export class CNSGodheadPulseVolley {
      * pulse - The 7-step deterministic execution loop.
      */
     public async pulse(commands: AdminCommand[]): Promise<GameState | undefined> {
+        this.pulseStartTime = performance.now();
         this.resolve();
         // 1. Collect & Normalize
         const events = commands.map(cmd => this.createTickEvent(cmd));
@@ -243,6 +248,17 @@ export class CNSGodheadPulseVolley {
 
         // 7. Commit Ledger (Logs & history rotation)
         this.ledger.commitTick();
+
+        const elapsed = performance.now() - this.pulseStartTime;
+        if (elapsed > this.PULSE_DEADLINE_MS * 0.8) {
+            logger.warn({ duration: elapsed.toFixed(1) }, `[CNS] Pulse at ${elapsed.toFixed(1)}ms, deferring ${this.deferredOps.length} ops`);
+        }
+
+        // Execute deferred work post-pulse
+        while (this.deferredOps.length > 0) {
+            const op = this.deferredOps.shift();
+            if (op) await op().catch(e => logger.error({ err: e }, `[CNS] Deferred op failed`));
+        }
 
         return this.gameplay?.globalState;
     }
@@ -315,8 +331,13 @@ export class CNSGodheadPulseVolley {
         switch (event.action) {
             case 'teleport':
                 if (event.coord) {
-                    await this.grounding!.applyWorldTransform(tx, { x: event.coord.x, y: event.coord.y, z: event.coord.z });
-                    logger.debug({ coords: event.coord }, '[VOLLEY] SPATIAL_SHIFT applied to transaction.');
+                    // DEFERRED: Spatial recalculation off main pulse
+                    setImmediate(() => {
+                        this.grounding!.applyWorldTransform(tx, { x: event.coord!.x, y: event.coord!.y, z: event.coord!.z }).catch(err => 
+                            logger.error({ err: err.message }, `[CNS] Deferred transform failed`)
+                        );
+                    });
+                    logger.debug({ coords: event.coord }, '[VOLLEY] SPATIAL_SHIFT deferred for next tick.');
                 }
                 break;
 
@@ -343,8 +364,11 @@ export class CNSGodheadPulseVolley {
                     if (event.coord) {
                         defWithId.coord = event.coord;
                     }
-                    await this.grounding!.spawnEntity(tx, defWithId);
-                    logger.debug({ id: sid }, '[VOLLEY] ENTITY_MANIFEST staged.');
+                    // DEFERRED: Entity spawn off main pulse
+                    this.grounding!.spawnEntity(tx, defWithId).catch(err =>
+                        logger.error({ err: err.message }, `[CNS] Deferred spawn failed`)
+                    );
+                    logger.debug({ id: sid }, '[VOLLEY] ENTITY_MANIFEST staged for async spawn.');
                 }
                 break;
 

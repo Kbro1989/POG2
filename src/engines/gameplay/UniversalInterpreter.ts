@@ -1,6 +1,6 @@
 import { GameplayModule } from './MinigameInterfaces.js';
-import { GameState } from '../../core/models.js';
-import { SovereignAvatar } from '../../core/SovereignAvatar.js';
+import { GameState, SovereignAvatar } from '../../core/models.js';
+import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { WorldGroundingLimb } from '../../limbs/world_grounding/WorldGroundingLimb.js';
 
 export class UniversalInterpreter implements GameplayModule {
@@ -21,13 +21,13 @@ export class UniversalInterpreter implements GameplayModule {
         }
     }
 
-    public onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): string | null {
+    public async onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): Promise<string | null> {
         // Universal tick processing
         // Natural regeneration, buffs, etc., could be placed here
         return null;
     }
 
-    public onAction(action: string, state: GameState, avatar: SovereignAvatar): string {
+    public async onAction(action: string, state: GameState, avatar: SovereignAvatar): Promise<string> {
         const parts = action.toLowerCase().split(' ');
         
         if (parts[0] === 'move') {

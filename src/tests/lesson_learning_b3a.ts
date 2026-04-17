@@ -15,7 +15,7 @@ async function testLessonLearningB3a() {
     await spatial.loadLogic('barrows');
     
     // Initialize WorldForensics for extraction
-    const worldForensics = new WorldForensicsLimb();
+    const worldForensics = WorldForensicsLimb.getInstance();
     await worldForensics.initialize();
     
     const lessonLearner = new LessonLearner(worldForensics);

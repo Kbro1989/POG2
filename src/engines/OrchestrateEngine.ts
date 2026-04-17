@@ -62,8 +62,13 @@ import { CacheForensicsLimb } from '../limbs/spatial/CacheForensicsLimb.js';
 import { SystemTaxonomyLimb } from '../limbs/spatial/SystemTaxonomyLimb.js';
 import { MaterialLimb } from '../limbs/spatial/MaterialLimb.js';
 import { SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
+import { DBRowOracleLimb } from '../limbs/spatial/DBRowOracleLimb.js';
+import { SovereignKnowledgeDB } from '../utils/SovereignKnowledgeDB.js';
+import { RSMVCacheDB } from '../rsmv/utils/RSMVCacheDB.js';
 import { MechanicalSovereigntyLimb } from '../limbs/technical/MechanicalSovereigntyLimb.js';
 import { GameplaySovereigntyLimb } from '../limbs/spatial/GameplaySovereigntyLimb.js';
+import { VolumeSovereigntyLimb } from '../limbs/spatial/VolumeSovereigntyLimb.js';
+import { InteractionGateway } from '../limbs/logical/InteractionGateway.js';
 import { SimulationHarness } from './gameplay/SimulationHarness.js';
 import { WorldGroundingLimb } from '../limbs/world_grounding/WorldGroundingLimb.js';
 import { CNSGodheadPulseVolley } from './gameplay/CNSGodheadPulseVolley.js';
@@ -156,6 +161,8 @@ export class OrchestrateEngine {
     private readonly aiLimb: AILimb;
     private readonly controlPlane: ControlPlaneLimb;
     private readonly switchboard: SwitchboardLimb;
+    private readonly volumeSovereignty: VolumeSovereigntyLimb;
+    private readonly interactionGateway: InteractionGateway;
     private readonly entityLimb: EntityLimb;
     private readonly envLimb: EnvironmentLimb;
     private readonly mediaForge: MediaForgeLimb;
@@ -202,6 +209,12 @@ export class OrchestrateEngine {
         this.shell = new ShellEngine(renderer, router);
         this.vscode = new VSCodeEngine(renderer, router);
         this.registry = new ToolRegistry();
+        
+        // Connect Database Organs
+        DBRowOracleLimb.getInstance();
+        SovereignKnowledgeDB.getInstance();
+        RSMVCacheDB.getInstance();
+
         this.cacheForensics = CacheForensicsLimb.getInstance();
         this.spatialSovereignty = SpatialSovereigntyLimb.getInstance();
         this.mechanicalSovereignty = MechanicalSovereigntyLimb.getInstance();
@@ -267,6 +280,8 @@ export class OrchestrateEngine {
         this.aiLimb = new AILimb(this.client, this.cognitive, this.router);
         this.controlPlane = new ControlPlaneLimb();
         this.switchboard = SwitchboardLimb.getInstance();
+        this.volumeSovereignty = VolumeSovereigntyLimb.getInstance();
+        this.interactionGateway = new InteractionGateway();
         this.entityLimb = EntityLimb.getInstance();
         
         // Wire Gameplay Heartland
@@ -438,6 +453,13 @@ export class OrchestrateEngine {
                 logger.error({ err: dbInit.error }, 'Failed to initialize VectorDB Substrate');
             }
 
+            // Phase 300: Genomic Instincts (I Ching Routing)
+            const currentHexagram = this.router.getHexagram().getInterpretation();
+            if (currentHexagram.id === 27) { // hexagram.id or hexagram.binary? We can check hexagram.id
+                logger.info('Hexagram 27 (Nourishment) Active: Instinctively initializing DBRowOracleLimb for Genome Ingestion.');
+                await DBRowOracleLimb.getInstance().initialize();
+            }
+
             // Phase 7: Epistemology Activation
             const forensicInit = await this.cacheForensics.initialize();
             if (forensicInit.ok) {
@@ -535,6 +557,8 @@ export class OrchestrateEngine {
                     CodeEngine: this.code,
                     GenerateEngine: this.codeGen,
                     MetabolicEngine: this.metabolic,
+                    VolumeSovereigntyLimb: this.volumeSovereignty,
+                    InteractionGateway: this.interactionGateway,
                     SovereignIngestionEngine: this.ingestionEngine,
                     CognitiveEngine: this.cognitive,
                     VectorDB: this.vectorDB,
@@ -666,6 +690,8 @@ export class OrchestrateEngine {
                 MCPEngine: this.mcpEngine,
                 VSCodeEngine: this.vscode,
                 SwitchboardLimb: this.switchboard,
+                VolumeSovereigntyLimb: this.volumeSovereignty,
+                InteractionGateway: this.interactionGateway,
                 EnvironmentLimb: this.envLimb,
                 MediaForgeLimb: this.mediaForge,
                 VoiceLimb: this.voice,
@@ -730,7 +756,9 @@ export class OrchestrateEngine {
             MemoryConsolidationEngine: this.memoryConsolidation,
             MemeticEngine: this.memetic,
             NodeTester: nodeTester,
-            QuotaTracker: this.quotaTracker
+            QuotaTracker: this.quotaTracker,
+            VolumeSovereigntyLimb: this.volumeSovereignty,
+            InteractionGateway: this.interactionGateway
         });
 
 

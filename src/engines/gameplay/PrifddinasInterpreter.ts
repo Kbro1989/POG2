@@ -1,7 +1,7 @@
-﻿import { readFileSync, existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { GameplayModule } from './MinigameInterfaces.js';
-import { GameState } from '../../core/models.js';
-import { SovereignAvatar } from '../../core/SovereignAvatar.js';
+import { GameState, SovereignAvatar } from '../../core/models.js';
+import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { resolve } from 'path';
 
 export class PrifddinasInterpreter implements GameplayModule {
@@ -25,7 +25,7 @@ export class PrifddinasInterpreter implements GameplayModule {
         state.varbits.set(this.VOICE_OF_SEREN_VARBIT, 3); // Example bitwise state
     }
 
-    public onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): string | null {
+    public async onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): Promise<string | null> {
         // Rotate Voice of Seren every hour (6000 ticks = 1 Hour real time)
         if (tickCount % 6000 === 0) {
             // Randomly select 2 clans
@@ -41,7 +41,7 @@ export class PrifddinasInterpreter implements GameplayModule {
         return null;
     }
 
-    public onAction(action: string, state: GameState, avatar: SovereignAvatar): string {
+    public async onAction(action: string, state: GameState, avatar: SovereignAvatar): Promise<string> {
         const parts = action.toLowerCase().split(' ');
         
         if (parts[0] === 'voice') {

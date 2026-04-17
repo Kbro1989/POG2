@@ -48,7 +48,7 @@ export class ItemLifecycleLimb {
         const item = avatar.equipment[slot];
         if (!item) return err(new Error('Slot is empty.'));
 
-        const invSlot = avatar.firstEmptySlot();
+        const invSlot = avatar.firstEmptySlot?.() ?? -1;
         if (invSlot === -1) return err(new Error('Inventory full.'));
 
         avatar.inventory[invSlot] = item;

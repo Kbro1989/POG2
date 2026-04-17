@@ -1,5 +1,5 @@
-﻿import { SovereignAvatar } from '../../core/SovereignAvatar.js';
-import { GameState } from '../../core/models.js';
+import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
+import { GameState, SovereignAvatar } from '../../core/models.js';
 
 export interface GameplayModule {
     /**
@@ -17,12 +17,12 @@ export interface GameplayModule {
      * The 600ms tick cycle for this specific module.
      * Returns a string describing what happened this tick (useful for CLI output), or null if silent.
      */
-    onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): string | null;
+    onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): Promise<string | null>;
 
     /**
      * Process an external CLI action from the user.
      * @param action Command string (e.g., 'dig dharok', 'enter portal')
      * @returns Status/Narration of the event.
      */
-    onAction(action: string, state: GameState, avatar: SovereignAvatar): string;
+    onAction(action: string, state: GameState, avatar: SovereignAvatar): Promise<string>;
 }

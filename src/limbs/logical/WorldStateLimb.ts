@@ -1,6 +1,7 @@
+import { SovereignAvatar } from '../../core/models.js';
 import { ServerOpcode } from '../../core/ProtocolOpcodes.js';
 import { BitStream } from '../../utils/BitStream.js';
-import { SovereignAvatar } from '../../core/SovereignAvatar.js';
+import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { MovementBlockDecoder } from './world/MovementBlockDecoder.js';
 import { AppearanceBlockDecoder } from './world/AppearanceBlockDecoder.js';
 import { AnimationBlockDecoder } from './world/AnimationBlockDecoder.js';

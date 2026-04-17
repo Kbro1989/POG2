@@ -36,7 +36,7 @@ async function testGlobalDiscoveryC2() {
     await spatial.initialize();
     await spatial.loadLogic('barrows'); // Preload Barrows
     
-    const worldForensics = new WorldForensicsLimb();
+    const worldForensics = WorldForensicsLimb.getInstance();
     await worldForensics.initialize();
     
     const lessonLearner = new LessonLearner(worldForensics, DB_PATH);

@@ -35,7 +35,7 @@ async function findInEnums(source: GameCacheLoader) {
                 }
                 
                 if (hasMatch) {
-                    console.log(`[ENUM ${index.index}_${file.fileid}] Contains DbRow reference!`);
+                    console.log(`[ENUM ${index.minor}_${file.fileid}] Contains DbRow reference!`);
                     console.log(JSON.stringify(enumDef, null, 2));
                     found++;
                 }
@@ -64,13 +64,13 @@ async function findInStructs(source: GameCacheLoader) {
                         hasMatch = true;
                     }
                     // Struct might BE the coordinate payload, let's also just check if the ID matches 
-                    if (targetDbRows.has(index.index) || targetDbRows.has(file.fileid)) {
+                    if (targetDbRows.has(index.minor) || targetDbRows.has(file.fileid)) {
                         hasMatch = true;
                     }
                 }
 
                 if (hasMatch) {
-                    console.log(`[STRUCT ${index.index}_${file.fileid}] MATCH:`);
+                    console.log(`[STRUCT ${index.minor}_${file.fileid}] MATCH:`);
                     console.log(JSON.stringify(structDef, null, 2));
                     found++;
                 }

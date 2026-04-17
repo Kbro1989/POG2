@@ -1,5 +1,5 @@
-import { GameState, Result, Item, SkillId, EquipmentSlot, NPC, ok, err } from '../../core/models.js';
-import { SovereignAvatar } from '../../core/SovereignAvatar.js';
+import { GameState, Result, Item, SkillId, EquipmentSlot, NPC, SovereignAvatar, ok, err } from '../../core/models.js';
+import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { GameplayModule } from '../../engines/gameplay/MinigameInterfaces.js';
 import { createLogger } from '../../utils/logger.js';
 import { CloudflareSyncLimb } from './CloudflareSyncLimb.js';
@@ -50,6 +50,8 @@ export class GameplaySovereigntyLimb {
         objectMap: new Map(),
         groundItems: new Map(),
         graves: new Map(),
+        varps: new Map(),
+        varcs: new Map(),
         varbits: new Map(),
         lastTickTime: Date.now()
     };
@@ -62,8 +64,8 @@ export class GameplaySovereigntyLimb {
         if (GameplaySovereigntyLimb.instance) {
             throw new Error('Singleton violation: use GameplaySovereigntyLimb.getInstance()');
         }
-        this.avatar = new SovereignAvatar('POG2_Sovereign');
-        this.globalState.players.set(this.avatar.username, this.avatar);
+        this.avatar = new SovereignAvatarEntity('POG2_Sovereign');
+        this.globalState.players.set(this.avatar.username, this.avatar as any);
         this.edgeSync = new CloudflareSyncLimb();
         this.combat = CombatLimb.getInstance();
         this.items = ItemLifecycleLimb.getInstance();
@@ -116,7 +118,7 @@ export class GameplaySovereigntyLimb {
                     this.avatar.wallet = data.wallet;
                 }
                 if (data.skills) {
-                    Object.entries(data.skills).forEach(([id, skill]: [any, any]) => {
+                    Object.entries(data.skills).forEach(([id, skill]: [string, any]) => {
                         this.avatar.skills[parseInt(id)] = skill;
                     });
                 }
@@ -226,8 +228,8 @@ export class GameplaySovereigntyLimb {
     /**
      * Executes a single mechanical tick manually.
      */
-    public forceTick(): string | null {
-        return this.processTick();
+    public async forceTick(): Promise<string | null> {
+        return await this.processTick();
     }
 
     public async initialize(): Promise<Result<void>> {
@@ -310,7 +312,7 @@ export class GameplaySovereigntyLimb {
 
         let moduleResult: string | null = null;
         if (this.activeModule) {
-            moduleResult = this.activeModule.onTick(this.tickCount, this.globalState, this.avatar);
+            moduleResult = await this.activeModule.onTick(this.tickCount, this.globalState, this.avatar);
         }
 
         if (this.switchboard) {
@@ -336,7 +338,7 @@ export class GameplaySovereigntyLimb {
         return moduleResult;
     }
 
-    public pushAction(action: string): string {
+    public async pushAction(action: string): Promise<string> {
         if (!this.activeModule) {
             return "[Engine] No active gameplay module mounted.";
         }
@@ -345,7 +347,7 @@ export class GameplaySovereigntyLimb {
             return `[Engine] You are busy for ${this.avatar.lockTicks} more ticks.`;
         }
 
-        return this.activeModule.onAction(action, this.globalState, this.avatar);
+        return await this.activeModule.onAction(action, this.globalState, this.avatar);
     }
 
     private processCombatTick() {
@@ -422,7 +424,7 @@ export class GameplaySovereigntyLimb {
             expiryTick: this.tickCount + 6000 // 1 Hour (Authentic)
         };
         
-        this.globalState.graves.set(graveKey, graveMarker);
+        this.globalState.graves!.set(graveKey, graveMarker);
 
         // Visible Entity for Grounding
         this.globalState.npcMap.set(this.tickCount + 5000, {
@@ -452,12 +454,12 @@ export class GameplaySovereigntyLimb {
         // 1. Grave Recovery Logic
         if (targetId.startsWith('grave_') || actionId === 1) {
             const graveKey = `${this.avatar.x},${this.avatar.y},${this.avatar.plane}`;
-            const grave = this.globalState.graves.get(graveKey);
+            const grave = this.globalState.graves!.get(graveKey);
             
             if (grave && grave.owner === this.avatar.username) {
                 logger.info(`RECOVERING GRAVE: Restoring ${grave.items.length} items.`);
                 grave.items.forEach(item => this.avatar.addItem(item));
-                this.globalState.graves.delete(graveKey);
+                this.globalState.graves!.delete(graveKey);
                 // Remove visual marker
                 for (const [id, npc] of this.globalState.npcMap.entries()) {
                      if ((npc as any).metadata?.graveId === grave.id) {
@@ -471,7 +473,7 @@ export class GameplaySovereigntyLimb {
         // 2. Ground Item Logic (Action 1: Pick Up)
         if (actionId === 1 && targetId.startsWith('ground_')) {
             const key = `${this.avatar.x},${this.avatar.y},${this.avatar.plane}`;
-            const items = this.globalState.groundItems.get(key);
+            const items = this.globalState.groundItems!.get(key);
             if (items && items.length > 0) {
                 const item = items.shift()!;
                 if (this.avatar.addItem(item)) {

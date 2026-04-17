@@ -35,9 +35,9 @@ export class HitsplatBlockDecoder {
             
             // Apply Damage Logic (Type 5 is Necro, standard is 0-2)
             if (type !== 3) { // 3 is usually HEAL
-                if (avatar.applyDamage) avatar.applyDamage(amount);
+                if (avatar.applyDamage) avatar.applyDamage?.(amount);
             } else {
-                if (avatar.heal) avatar.heal(amount);
+                if (avatar.heal) avatar.heal?.(amount);
             }
         }
 

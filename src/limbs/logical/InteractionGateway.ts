@@ -1,11 +1,16 @@
-import { GameState, NPC } from '../../core/models.js';
-import { SovereignAvatar } from '../../core/SovereignAvatar.js';
+import { GameState, NPC, SovereignAvatar } from '../../core/models.js';
+import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { GameplaySovereigntyLimb } from '../spatial/GameplaySovereigntyLimb.js';
 import { TeleportGrounding } from '../spatial/TeleportGrounding.js';
 import { ServerLogicRegistry, LogicalSignature } from '../../engines/gameplay/ServerLogicRegistry.js';
 import { SovereignVocabularyLimb, InteractionCategory } from './SovereignVocabularyLimb.js';
+import { VarbitSovereigntyLimb } from '../spatial/VarbitSovereigntyLimb.js';
 import { ExtrasOracle } from './ExtrasOracle.js';
 import { ClueLogicLimb } from './ClueLogicLimb.js';
+import { WorldForensicsLimb } from '../spatial/WorldForensicsLimb.js';
+import { createLogger } from '../../utils/logger.js';
+
+const logger = createLogger('InteractionGateway');
 
 export class InteractionGateway {
     private vocabLimb: SovereignVocabularyLimb;
@@ -30,7 +35,7 @@ export class InteractionGateway {
         return Math.abs(sourceX - targetX) <= 1 && Math.abs(sourceY - targetY) <= 1;
     }
 
-    public evaluateInteraction(source: SovereignAvatar | NPC, action: string, targetId: string, state: GameState, activeModule: any): string[] {
+    public async evaluateInteraction(source: SovereignAvatar | NPC, action: string, targetId: string, state: GameState, activeModule: any): Promise<string[]> {
         const events: string[] = [];
         
         // 0. DETERMINISTIC STATE GUARD
@@ -45,10 +50,25 @@ export class InteractionGateway {
 
         // 1. Resolve Target
         const isItem = targetId.startsWith('item_');
+        const isObject = targetId.startsWith('obj_');
         const numericId = parseInt(targetId.replace('npc_', '').replace('obj_', '').replace('item_', ''), 10);
         
         let target: any = isItem ? { id: numericId, name: `Item ${numericId}` } : (state.npcMap.get(numericId) || state.objectMap.get(numericId));
         if (!target) return [];
+
+        // 1b. AUTHORITATIVE MORPHISM RESOLUTION (Phase 13)
+        let activeId = numericId;
+        if (isObject) {
+            const varbitLimb = VarbitSovereigntyLimb.getInstance();
+            const forensics = WorldForensicsLimb.getInstance();
+            const def = await forensics.getObjectDefinition(numericId);
+            activeId = varbitLimb.resolveCurrentObjectIdFromDef(def, state);
+            if (activeId !== numericId) {
+                const manifestedDef = await forensics.getObjectDefinition(activeId);
+                target = { ...target, id: activeId, name: manifestedDef.name, actions: manifestedDef.actions };
+                logger.info({ original: numericId, manifested: activeId }, '[InteractionGateway] Target morphed via Varbit/Varp.');
+            }
+        }
 
         const sourceX = source.coord.x;
         const sourceY = source.coord.y;
@@ -73,6 +93,15 @@ export class InteractionGateway {
         // 4. TRANSITION TO EXECUTING
         source.interactionState = 'EXECUTING';
         source.lastActionTick = state.tickNumber ?? 0;
+
+        // 3. MORPHISM INTEGRITY CHECK
+        const manifestedDef = await WorldForensicsLimb.getInstance().getObjectDefinition(activeId);
+        logger.info({ targetId, activeId, actions: manifestedDef.actions }, 'Authoritative Morphism Integrity Check');
+        
+        if (manifestedDef.actions && !manifestedDef.actions.includes(action)) {
+            logger.warn({ action, targetId, manifestedId: activeId }, 'Interaction Gateway - Manifested action set mismatch. Rejecting.');
+            return ['ACTION_STATE_GATED_REJECT'];
+        }
 
         // 5. CACHE ACTION VERIFICATION
         if (target.actions || (target.entity && target.entity.actions)) {

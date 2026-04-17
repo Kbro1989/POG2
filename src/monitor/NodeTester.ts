@@ -289,9 +289,9 @@ export class NodeTester {
                 }
             }
         } catch (err) {
-            return { ...this.nodeBase(node), status: 'DEGRADED', details: `Probe error: ${(err as Error).message}` };
+            return { ...this.nodeBase(node), status: 'DEGRADED', yaoState: YaoState.OldYang, details: `Probe error: ${(err as Error).message}` };
         }
-        return { ...this.nodeBase(node), status: 'OFFLINE', details: 'Probe logic failure' };
+        return { ...this.nodeBase(node), status: 'OFFLINE', yaoState: YaoState.OldYin, details: 'Probe logic failure' };
     }
 
     private async structuralProbe(node: NeuralNode): Promise<NodeHealth> {

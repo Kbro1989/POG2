@@ -1,10 +1,10 @@
-﻿// src/engines/gameplay/JsonLogicInterpreter.ts
+// src/engines/gameplay/JsonLogicInterpreter.ts
 // Generic interpreter for pedagogy-driven JSON logic files.
 // Handles state transitions, conditions, and spatial interactions.
 
 import { GameplayModule } from './MinigameInterfaces.js';
-import { GameState } from '../../core/models.js';
-import { SovereignAvatar } from '../../core/SovereignAvatar.js';
+import { GameState, SovereignAvatar } from '../../core/models.js';
+import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { getAtlasSystemPath } from '../../utils/SovereignPathResolver.js';
@@ -55,12 +55,12 @@ export class JsonLogicInterpreter implements GameplayModule {
         }
     }
 
-    public onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): string | null {
+    public async onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): Promise<string | null> {
         // Standard tick processing for JSON logic (timers, environmental effects)
         return null;
     }
 
-    public onAction(action: string, state: GameState, avatar: SovereignAvatar): string {
+    public async onAction(action: string, state: GameState, avatar: SovereignAvatar): Promise<string> {
         if (!this.logic?.interactions) return "[Logic] No interactive definitions found.";
 
         const lowerAction = action.toLowerCase();
@@ -106,7 +106,7 @@ export class JsonLogicInterpreter implements GameplayModule {
                     // Placeholder for actual state-machine transition logic
                     logger.info(`Transitioning logic state: ${branch.next_state}`);
                     // BROADCAST EXACT-MATCH LOGIC TO CLOUDFLARE EDGE
-                    this.edgeSync.broadcastStateTransition(this.name, branch.next_state).catch(e => logger.error("Sync failed", e));
+                    this.edgeSync.broadcastStateTransition(this.name, branch.next_state).catch(e => logger.error(e, "Sync failed"));
                 }
                 return branch.action;
             }

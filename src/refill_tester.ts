@@ -17,7 +17,7 @@ async function runRefillTest() {
     logger.info('Starting Refill Test Run (Phase D Simulation)...');
 
     // 1. Setup DB substrate
-    const db = new SovereignKnowledgeDB('D:\\sovereign\\vibe-learning-test.db');
+    const db = SovereignKnowledgeDB.getInstance();
     
     // 2. Mock "Refilled Node" logic (Derived from module-7244.js unpack patterns)
     // module-7244.js L:142 handles RGBA to Integer Float conversion for tile IDs

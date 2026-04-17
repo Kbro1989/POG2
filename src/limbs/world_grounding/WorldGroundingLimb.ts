@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import * as fs from 'fs';
 import { join } from 'path';
 import { createLogger } from '../../utils/logger.js';
 import type { GroundingManifest, GroundingEntry, GroundingHydrator } from '../../core/grounding.js';
@@ -7,7 +7,6 @@ import { ServerLogicRegistry } from '../../engines/gameplay/ServerLogicRegistry.
 import { PedagogyForensicsLimb } from '../pedagogy/PedagogyForensicsLimb.js';
 import { SpatialTransform } from '../../core/WorldTransform.js';
 import { SpatialSovereigntyLimb } from '../spatial/SpatialSovereigntyLimb.js';
-import * as fs from 'fs';
 
 import type { WorldCoord } from '../../core/WorldTransform.js';
 
@@ -24,6 +23,10 @@ export class WorldGroundingLimb implements GroundingHydrator {
     private manifest: GroundingManifest;
     private readonly manifestPath: string;
     private cacheMapping: Record<string, any[]> = {};
+    
+    // Era Layering State
+    private currentEra: '2004' | 'RS3' | 'POG2' = 'POG2';
+    private eraBaseDir: string;
     
     private lastSaveTime: number = Date.now();
     private readonly SAVE_INTERVAL = 300000; // 5 Minutes (RSC Style)
@@ -49,12 +52,42 @@ export class WorldGroundingLimb implements GroundingHydrator {
         if (WorldGroundingLimb.instance) {
             throw new Error('Singleton violation: use WorldGroundingLimb.getInstance()');
         }
-        this.manifestPath = join(substratePath, 'memory', 'pedagogy', 'grounding_manifest.json');
+        this.eraBaseDir = join(substratePath, 'memory', 'pedagogy');
+        this.manifestPath = join(this.eraBaseDir, 'grounding_manifest.json');
+        
+        // Initial Grounding
         this.manifest = this.loadManifest();
         this.loadCacheMapping();
 
         // Initialize Auto-Save Loop
         setInterval(() => this.autoSave(), 60000); // Check every minute
+    }
+
+    /**
+     * invokeEraVolley - Trigger a dynamic era-layer shift.
+     * Re-hydrates the manifest and cache mappings based on the chosen progression era.
+     */
+    public async invokeEraVolley(era: '2004' | 'RS3' | 'POG2'): Promise<void> {
+        logger.info({ from: this.currentEra, to: era }, 'âš¡ GROUNDING_VOLLEY: Re-orienting world substrate...');
+        
+        this.currentEra = era;
+        
+        // Dynamic Path Re-resolution
+        // Era-specific nodes take precedence; fall back to root pedagogy if missing.
+        const eraDir = era === 'POG2' ? this.eraBaseDir : join(this.eraBaseDir, 'eras', era.toLowerCase());
+        
+        if (!fs.existsSync(eraDir) && era !== 'POG2') {
+            fs.mkdirSync(eraDir, { recursive: true });
+            logger.warn({ eraDir }, 'Era substrate missing - initialized empty layer.');
+        }
+
+        // Re-hydrate Substrate
+        this.manifest = this.loadManifest(eraDir);
+        this.loadCacheMapping(eraDir);
+        this.npcsLoaded = false;
+        this.loadNpcSpawns(eraDir);
+
+        logger.info({ era }, 'World Grounding Re-oriented Successfully.');
     }
 
     /**
@@ -78,27 +111,37 @@ export class WorldGroundingLimb implements GroundingHydrator {
         logger.info('Grounding Kernel reset.');
     }
 
-    private loadCacheMapping() {
+    private loadCacheMapping(targetDir?: string) {
         try {
-            const mappingPath = 'D:/sovereign/atlas/system/cache_logic_mapping.json';
-            if (existsSync(mappingPath)) {
-                const data = readFileSync(mappingPath, 'utf8');
+            const base = targetDir ?? this.eraBaseDir;
+            const mappingPath = join(base, 'cache_logic_mapping.json');
+            
+            // Fallback to absolute system mapping if era-specific mapping missing
+            const fallbackPath = 'D:/sovereign/atlas/system/cache_logic_mapping.json';
+            const effectivePath = fs.existsSync(mappingPath) ? mappingPath : fallbackPath;
+
+            if (fs.existsSync(effectivePath)) {
+                const data = fs.readFileSync(effectivePath, 'utf8');
                 this.cacheMapping = JSON.parse(data);
-                logger.debug({ nodes: Object.values(this.cacheMapping).flat().length }, 'Authoritative Cache Mapping loaded into Grounding Limb.');
+                logger.debug({ nodes: Object.values(this.cacheMapping).flat().length, source: effectivePath }, 'Authoritative Cache Mapping loaded.');
             }
         } catch (err) {
             logger.warn('Authoritative Cache Mapping unavailable for grounding fallback.');
         }
     }
 
-    private loadManifest(): GroundingManifest {
+    private loadManifest(targetDir?: string): GroundingManifest {
         try {
-            if (existsSync(this.manifestPath)) {
-                const data = readFileSync(this.manifestPath, 'utf8');
+            const base = targetDir ?? this.eraBaseDir;
+            const eraManifestPath = join(base, 'grounding_manifest.json');
+            const target = fs.existsSync(eraManifestPath) ? eraManifestPath : this.manifestPath;
+
+            if (fs.existsSync(target)) {
+                const data = fs.readFileSync(target, 'utf8');
                 return JSON.parse(data);
             }
         } catch (err) {
-            logger.error({ err }, 'Failed to load grounding manifest. Falling back to empty.');
+            logger.error({ err }, 'Failed to load grounding manifest.');
         }
 
         return {
@@ -111,7 +154,7 @@ export class WorldGroundingLimb implements GroundingHydrator {
     private async saveManifest(): Promise<void> {
         try {
             const data = JSON.stringify(this.manifest, null, 2);
-            writeFileSync(this.manifestPath, data, 'utf8');
+            fs.writeFileSync(this.manifestPath, data, 'utf8');
         } catch (err) {
             logger.error({ err }, 'Failed to save grounding manifest.');
             throw err;
@@ -308,13 +351,20 @@ export class WorldGroundingLimb implements GroundingHydrator {
         entity.spatial.z = spatial.getAltitude(entity.spatial.plane || 0, entity.spatial.x, entity.spatial.y);
     }
 
-    private loadNpcSpawns() {
+    private loadNpcSpawns(targetDir?: string) {
         if (this.npcsLoaded) return;
         try {
-            const spawnsPath = 'D:/sovereign/atlas/spatial/npc_extract/npc_spawns.json';
-            if (fs.existsSync(spawnsPath)) {
-                this.npcSpawns = JSON.parse(fs.readFileSync(spawnsPath, 'utf8'));
+            const base = targetDir ?? 'D:/sovereign/atlas/spatial/npc_extract';
+            const spawnsPath = join(base, 'npc_spawns.json');
+            
+            // Absolute fallback for global NPC truth
+            const fallbackPath = 'D:/sovereign/atlas/spatial/npc_extract/npc_spawns.json';
+            const effectivePath = fs.existsSync(spawnsPath) ? spawnsPath : fallbackPath;
+
+            if (fs.existsSync(effectivePath)) {
+                this.npcSpawns = JSON.parse(fs.readFileSync(effectivePath, 'utf8'));
                 this.npcsLoaded = true;
+                logger.debug({ count: this.npcSpawns.length, source: effectivePath }, 'NPC Spawns grounded.');
             }
         } catch (err) {
             logger.warn('NPC Spawns database unavailable.');

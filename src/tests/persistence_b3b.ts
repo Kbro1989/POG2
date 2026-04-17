@@ -18,7 +18,7 @@ async function testPersistenceB3b() {
     await spatial.initialize();
     await spatial.loadLogic('barrows');
     
-    const worldForensics = new WorldForensicsLimb();
+    const worldForensics = WorldForensicsLimb.getInstance();
     await worldForensics.initialize();
     
     const lessonLearner = new LessonLearner(worldForensics, DB_PATH);

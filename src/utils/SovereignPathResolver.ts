@@ -221,6 +221,41 @@ export function getRSMVSubstratePath(): string {
 }
 
 /**
+ * Resolves the path to the transient/tmp repository clones (like Kbro1989/rsmv)
+ * This is distinct from the active runtime substrate (RSMV Inspector).
+ */
+export function getTransientClonePath(repoPath: string): string {
+    if (_projectRoot) {
+        return join(_projectRoot, 'tmp', repoPath);
+    }
+    return resolveSovereignPath(`tmp/${repoPath}`);
+}
+
+/**
+ * Resolves the path to the internal AI Instruction Substrate (.agent or .agents)
+ * Used for accessing neural workflows and rule sets.
+ */
+export function getAgentSubstratePath(): string {
+    if (_projectRoot) {
+        const pluralPath = join(_projectRoot, '.agents');
+        if (existsSync(pluralPath)) return pluralPath;
+        const singularPath = join(_projectRoot, '.agent');
+        return singularPath;
+    }
+    return resolveSovereignPath('.agents');
+}
+
+/**
+ * Resolves the path to the project's static resources (e.g. webviewer-deconstructed)
+ */
+export function getStaticResourcesPath(): string {
+    if (_projectRoot) {
+        return join(_projectRoot, 'resources');
+    }
+    return resolveSovereignPath('resources');
+}
+
+/**
  * Returns the formal structural path to the local Jagex/RuneScape cache.
  * Governs the vision bridge's access to underlying model data.
  */

@@ -1,5 +1,5 @@
 import { WorldStateLimb } from '../limbs/logical/WorldStateLimb.js';
-import { SovereignAvatar } from '../core/SovereignAvatar.js';
+import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
 import { ServerOpcode } from '../core/ProtocolOpcodes.js';
 import { SpatialRadarLimb } from '../limbs/spatial/SpatialRadarLimb.js';
 import { SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
@@ -12,7 +12,7 @@ async function runRegionRebuildTest() {
     console.log("\x1b[36m[SIMULATION] Starting Region Rebuild (Scene GPP) Test...\x1b[0m");
 
     // 1. Initialize System
-    const avatar = new SovereignAvatar('Sovereign_947');
+    const avatar = new SovereignAvatarEntity('Sovereign_947');
     const worldLimb = WorldStateLimb.getInstance(avatar);
     const radar = SpatialRadarLimb.getInstance();
     const spatial = SpatialSovereigntyLimb.getInstance();

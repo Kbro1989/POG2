@@ -1,5 +1,5 @@
 import { WorldStateLimb } from '../limbs/logical/WorldStateLimb.js';
-import { SovereignAvatar } from '../core/SovereignAvatar.js';
+import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
 import { ServerOpcode } from '../core/ProtocolOpcodes.js';
 import { BitStream } from '../utils/BitStream.js';
 
@@ -11,7 +11,7 @@ async function runWorldSyncTest() {
     console.log("\x1b[36m[SIMULATION] Starting World State Synchronization Test...\x1b[0m");
     
     // 1. Initialize Avatar & Limb
-    const avatar = new SovereignAvatar('Sovereign_Dev');
+    const avatar = new SovereignAvatarEntity('Sovereign_Dev');
     const worldLimb = WorldStateLimb.getInstance(avatar);
     
     const startCoord = { ...avatar.coord };

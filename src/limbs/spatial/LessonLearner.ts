@@ -26,7 +26,7 @@ export class LessonLearner {
 
     constructor(worldForensics: WorldForensicsLimb, dbPath?: string) {
         this.worldForensics = worldForensics;
-        this.db = new SovereignKnowledgeDB(dbPath);
+        this.db = SovereignKnowledgeDB.getInstance();
     }
 
     /**

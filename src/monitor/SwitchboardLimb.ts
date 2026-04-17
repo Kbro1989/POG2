@@ -4,6 +4,8 @@ import express from 'express';
 import { createServer, Server as HttpServer } from 'http';
 import { join } from 'path';
 import { createLogger } from "../utils/logger.js";
+import { DBRowOracleLimb } from '../limbs/spatial/DBRowOracleLimb.js';
+import { PedagogyForensicsLimb } from '../limbs/pedagogy/PedagogyForensicsLimb.js';
 
 const logger = createLogger('SwitchboardLimb');
 
@@ -93,8 +95,12 @@ export class SwitchboardLimb {
                 // Serve SovereignEye captures via HTTP
                 const eyeDir = join(process.cwd(), 'captures', 'sovereign_eye');
                 const publicDir = join(process.cwd(), 'public');
+                const unifiedDir = 'D:\\sovereign\\atlas\\spatial\\unified_extract';
+                const worldDir = 'D:\\sovereign\\atlas\\spatial\\world_extract';
                 
                 app.use('/captures', express.static(eyeDir));
+                app.use('/unified', express.static(unifiedDir));
+                app.use('/world', express.static(worldDir));
                 app.use(express.static(publicDir));
 
                 app.get('/ping', (req, res) => res.json({ status: 'PULSE_ACTIVE', timestamp: Date.now() }));
@@ -186,6 +192,38 @@ export class SwitchboardLimb {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(msg);
             }
+        });
+    }
+
+    /**
+     * broadcastSubstrateDeepAudit - Pushes genomic integrity metrics to the HUD.
+     * Tier: Epistemology (Knowing the State of Truth)
+     */
+    public broadcastSubstrateDeepAudit(): void {
+        setImmediate(() => {
+            const oracle = DBRowOracleLimb.getInstance();
+            // ... existing logic ...
+            const injectors = oracle.publishInjectors();
+            const synthesizedCount = injectors.filter(i => i.authorityTier === 'SYNTHESIZED').length;
+            const totalInjectors = injectors.length || 1;
+            
+            const integrityRatio = synthesizedCount / totalInjectors;
+            const healthLevel = integrityRatio > 0.8 ? 'OPTIMAL' : integrityRatio > 0.4 ? 'DEGRADED' : 'CRITICAL';
+
+            const auditMetadata = {
+                integrity: (integrityRatio * 100).toFixed(2) + '%',
+                synthesizedNodes: synthesizedCount,
+                biologicalNodes: totalInjectors - synthesizedCount,
+                health: healthLevel,
+                timestamp: Date.now(),
+                layer: 'Sovereign Substrate'
+            };
+
+            this.broadcast({
+                type: 'SUBSTRATE_AUDIT',
+                payload: auditMetadata
+            });
+            logger.info({ integrity: auditMetadata.integrity }, 'ðŸŒŒ Optimized Substrate Health Broadcasted.');
         });
     }
 

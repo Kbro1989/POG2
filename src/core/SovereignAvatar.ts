@@ -1,7 +1,7 @@
-import { Coord, NPC, CombatantState, Item, Skill, SkillId, Wallet, Equipment, EquipmentSlot, GameState } from './models.js';
+import { Coord, NPC, CombatantState, Item, Skill, SkillId, Wallet, Equipment, EquipmentSlot, GameState, SovereignAvatar as ISovereignAvatar } from './models.js';
 import { DirectionalPathfinder } from '../limbs/spatial/DirectionalPathfinder.js';
 
-export class SovereignAvatar implements NPC, CombatantState {
+export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAvatar {
     public id: number = -1; // Local player ID proxy
     public name: string = 'Sovereign';
     public username: string;

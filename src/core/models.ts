@@ -124,9 +124,9 @@ export interface SpatialSideEffect {
 }
 
 export interface CombatantState {
-    adrenaline: number; // 0 - 10000 (0.00% to 100.00%)
-    necrosisStacks: number;
-    residualSouls: number;
+    adrenaline?: number; // 0 - 10000 (0.00% to 100.00%)
+    necrosisStacks?: number;
+    residualSouls?: number;
     lastCombatTick: number; // Track for rhythm enforcement (e.g. 4-tick)
     cooldowns: Record<string, number>; // abilityId -> tickAvailable
 }
@@ -266,6 +266,36 @@ export interface SovereignAvatar extends NPC {
     equipment: Equipment;
     skills: Record<number, Skill>; // Map SkillId to Skill
     quests: QuestState;
+    metadata?: any;
+
+    // Operational Limb Logic (Phase 13 NXT-grade)
+    isDead: boolean;
+    processTick(): void;
+    isBusy(): boolean;
+    lock(ticks: number): void;
+    lockTicks: number; // Residual ticks until lock expires
+    addItem(item: Item): boolean;
+    removeItem(slot: number): Item | null;
+    authenticDie(): Item[];
+    respawn(): void;
+    pendingInteraction: { action: string; targetId: string } | null;
+    
+    // Adrenaline / Combat logic
+    adrenalinePercent: string;
+    addAdrenaline(amount: number): void;
+    consumeAdrenaline(amount: number): boolean;
+    state: GameState;
+    currentPath: Coord[] | null;
+    applyDamage(amount: number): void;
+    heal(amount: number): void;
+    plotPath?(
+        targetX: number, 
+        targetY: number, 
+        pathfinder: any, 
+        context: any, 
+        collisionMatrix?: Map<string, any>
+    ): Promise<boolean>;
+    firstEmptySlot(): number | null;
     appearance?: {
         bodyColors: [number, number][]; // [original, replacement]
         gender: 'male' | 'female';
@@ -349,6 +379,12 @@ export interface ServerSideInjector {
   
   // Trigger conditions
   trigger: 'click' | 'use' | 'examine' | 'tick' | 'proximity';
+  provenance?: string | {
+    source: string;
+    recordId: string;
+    timestamp: number;
+    path: string;
+  };
   
   // Server-side validation gates
   validation: {
@@ -583,6 +619,22 @@ export interface TSCError {
     readonly file?: string;
     readonly line?: number;
     readonly context?: string;
+}
+
+export interface MapZone {
+    id: string;
+    name: string;
+    internal_name: string;
+    bounds: {
+        dst: { xstart: number; xend: number; zstart: number; zend: number; };
+        plane: number;
+    }[];
+}
+
+export interface VolumeContext {
+    allVolumes: MapZone[];
+    primaryVolume: MapZone | null;
+    ambientSound?: string;
 }
 
 export interface FileContext {
@@ -1117,3 +1169,6 @@ export interface ReimaginationSpec {
 }
 
 
+export const CURRENCY_COINS = 995;
+export const CURRENCY_CHRONOTES = 49219;
+export const CURRENCY_SPIRIT_SHARDS = 12183;

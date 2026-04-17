@@ -1,4 +1,4 @@
-import { SovereignAvatar } from '../core/SovereignAvatar.js';
+import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
 import { SimulationHarness } from '../engines/gameplay/SimulationHarness.js';
 import { WorldGroundingLimb } from '../limbs/world_grounding/WorldGroundingLimb.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
@@ -10,13 +10,14 @@ async function runTest() {
     console.log('[SIMULATION] Starting Phase 12: Switchboard Injection Test...');
 
     // 1. Setup minimal substrate
-    const avatar = new SovereignAvatar('Admin');
+    const avatar = new SovereignAvatarEntity('Admin');
     const switchboard = SwitchboardLimb.getInstance();
     switchboard.initialize();
 
     // Mock dependencies
     const grounding = WorldGroundingLimb.getInstance();
-    const hexagram = new HexagramManager();
+    HexagramManager.initializeMock();
+    const hexagram = HexagramManager.getInstance();
     const dispatcher = {} as AIDispatcher;
     const entityLimb = EntityLimb.getInstance();
 

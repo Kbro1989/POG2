@@ -1,4 +1,4 @@
-﻿import { Buffer } from 'buffer';
+import { Buffer } from 'buffer';
 
 /**
  * ByteReader - High-fidelity binary reader for RS3 NXT cache formats.
@@ -76,6 +76,16 @@ export class ByteReader {
         const peek = this.buffer.readUInt8(this.offset);
         if (peek < 128) return this.readU8();
         return this.readU16() - 32768;
+    }
+
+    public readString(): string {
+        let start = this.offset;
+        while (this.buffer[this.offset] !== 0 && this.offset < this.buffer.length) {
+            this.offset++;
+        }
+        const str = this.buffer.toString('utf8', start, this.offset);
+        this.offset++; // Skip the null terminator
+        return str;
     }
 
     public skip(n: number): void {

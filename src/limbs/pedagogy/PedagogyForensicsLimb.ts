@@ -1,4 +1,4 @@
-﻿import { existsSync, readdirSync } from 'fs';
+import { existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { createLogger } from '../../utils/logger.js';
 import { Provenance, ProvenanceSource } from '../../core/models.js';
@@ -15,6 +15,7 @@ export class PedagogyForensicsLimb {
     private static instance: PedagogyForensicsLimb;
     private readonly substratePath: string;
     private fileRegistry: Set<string> = new Set();
+    private lookupMap: Map<string, string> = new Map(); // O(1) Lookup substrate
 
     private constructor(path: string = 'D:/sovereign/memory/pedagogy') {
         this.substratePath = path;
@@ -39,10 +40,14 @@ export class PedagogyForensicsLimb {
                     if (f.endsWith('.json')) {
                         const normalized = f.replace(/\\/g, '/');
                         this.fileRegistry.add(normalized);
+                        
+                        // Populate lookup map for O(1) resolution
+                        const fileName = normalized.split('/').pop()?.toLowerCase().replace('.json', '');
+                        if (fileName) this.lookupMap.set(fileName, normalized);
                     }
                 });
                 console.log(`[PEDAGOGY] Registry initialized with ${this.fileRegistry.size} nodes.`);
-                logger.info({ count: this.fileRegistry.size, path: this.substratePath }, 'Pedagogical File Registry initialized.');
+                logger.info({ count: this.fileRegistry.size, path: this.substratePath }, 'Pedagogical File Registry initialized (O(1) mapping active).');
 
 
             }
@@ -58,13 +63,11 @@ export class PedagogyForensicsLimb {
     public resolvePedigree(identifier: string): string | null {
         const target = identifier.toLowerCase();
         
-        // 1. Exact match on normalized filename
-        for (const file of this.fileRegistry) {
-            const fileName = file.split('/').pop()?.toLowerCase();
-            if (fileName === `${target}.json`) return file;
-        }
+        // 1. O(1) Map Lookup (Optimal Path)
+        const mapped = this.lookupMap.get(target);
+        if (mapped) return mapped;
 
-        // 2. Fragment match (e.g. "npcs" matches "npcs.json")
+        // 2. Fragment match fallback (O(F) - Rare)
         for (const file of this.fileRegistry) {
             const fileName = file.split('/').pop()?.toLowerCase();
             if (fileName?.includes(target)) return file;

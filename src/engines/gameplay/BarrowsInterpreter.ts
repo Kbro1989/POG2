@@ -1,7 +1,7 @@
-﻿import { readFileSync, existsSync } from 'fs';
 import { GameplayModule } from './MinigameInterfaces.js';
-import { GameState } from '../../core/models.js';
-import { SovereignAvatar } from '../../core/SovereignAvatar.js';
+import { SubstrateState, YaoState, GameState, SovereignAvatar } from '../../core/models.js';
+import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
+import { existsSync, readFileSync } from 'fs';
 
 export class BarrowsInterpreter implements GameplayModule {
     public readonly name = 'Barrows';
@@ -29,7 +29,7 @@ export class BarrowsInterpreter implements GameplayModule {
         console.log(`[BARROWS] Initialization complete. Hidden tunnel is randomized.`);
     }
 
-    public onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): string | null {
+    public async onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): Promise<string | null> {
         // Drain prayer passively every ~18 ticks (10.8s) if underground
         if (avatar.coord.plane === -1 && tickCount % 18 === 0) {
             // Import not needed if we hardcode 7, but let's assume 7 for Prayer
@@ -42,7 +42,7 @@ export class BarrowsInterpreter implements GameplayModule {
         return null; // Silent tick normally
     }
 
-    public onAction(action: string, state: GameState, avatar: SovereignAvatar): string {
+    public async onAction(action: string, state: GameState, avatar: SovereignAvatar): Promise<string> {
         const parts = action.toLowerCase().split(' ');
         
         if (parts[0] === 'dig') {

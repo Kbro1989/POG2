@@ -2,13 +2,14 @@
 
 This registry provides absolute GitHub links to all neurological substrates within the POG2 organism.
 
-> **Last Audited**: 2026-03-16 | **Total Files**: 105 TypeScript substrates
+> **Last Audited**: 2026-04-12 | **Total Files**: 106 TypeScript substrates
 
 ---
 
 ## 📂 Root (`src/`)
-*Entry points and standalone scripts.*
+*Entry points, CLI spine, and standalone scripts.*
 
+- [cli.ts](https://github.com/Kbro1989/POG2/blob/main/src/cli.ts): **Sovereign CLI entry point** — 3100+ line nerve center connecting all limbs and engines to user commands.
 - [verify_advanced_audio.ts](https://github.com/Kbro1989/POG2/blob/main/src/verify_advanced_audio.ts)
 
 ---
@@ -67,12 +68,13 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Core Types & Definitions (`src/core/`)
-*Foundational types, hexagram definitions, and architectural digests.*
+*Foundational types, hexagram definitions, avatar substrate, and architectural digests.*
 
 - [ArchitectureDigest.ts](https://github.com/Kbro1989/POG2/blob/main/src/core/ArchitectureDigest.ts)
 - [HexagramDefinitions.ts](https://github.com/Kbro1989/POG2/blob/main/src/core/HexagramDefinitions.ts)
 - [models.ts](https://github.com/Kbro1989/POG2/blob/main/src/core/models.ts)
 - [ServiceDiscovery.ts](https://github.com/Kbro1989/POG2/blob/main/src/core/ServiceDiscovery.ts)
+- [SovereignAvatar.ts](https://github.com/Kbro1989/POG2/blob/main/src/core/SovereignAvatar.ts): Authoritative player state substrate (inventory, skills, quests, wallet).
 - [SovereignEye.ts](https://github.com/Kbro1989/POG2/blob/main/src/core/SovereignEye.ts)
 
 ---
@@ -113,13 +115,30 @@ This registry provides absolute GitHub links to all neurological substrates with
 - [VisionEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/VisionEngine.ts)
 - [WebSearchEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/WebSearchEngine.ts)
 
+#### Gameplay Sub-Engines (`src/engines/gameplay/`)
+- [CNSGodheadPulseVolley.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/CNSGodheadPulseVolley.ts): 600ms deterministic heartbeat kernel.
+- [SimulationHarness.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/SimulationHarness.ts): Central CNS node for dual-tick deterministic simulation.
+- [ServerLogicRegistry.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/ServerLogicRegistry.ts): Cache-authoritative server logic mapping.
+- [NpcAgent.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/NpcAgent.ts): Autonomous NPC agent controller.
+- [MinigameInterfaces.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/MinigameInterfaces.ts): GameplayModule interface contract.
+- [PrifddinasInterpreter.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/PrifddinasInterpreter.ts): Prifddinas logic interpreter.
+- [BarrowsInterpreter.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/BarrowsInterpreter.ts): Barrows logic interpreter.
+- [PestControlInterpreter.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/PestControlInterpreter.ts): Pest Control logic interpreter.
+- [JsonLogicInterpreter.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/JsonLogicInterpreter.ts): Generic JSON logic module loader.
+- [UniversalInterpreter.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/UniversalInterpreter.ts): Universal fallback interpreter.
+- [NecromancyInterfaces.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/NecromancyInterfaces.ts): Necromancy ability/GFX definitions.
+
+#### Spatial Sub-Engines (`src/engines/spatial/`)
+- [ObservationEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/spatial/ObservationEngine.ts): Live spatial observation lens.
+
 </details>
 
 ---
 
 ## 📂 Vision & Pedagogy (`src/vision/`)
-*Transient observation and analysis of high-fidelity substrates.*
+*Transient observation, RSMV controller, and analysis of high-fidelity substrates.*
 
+- [RSMVController.ts](https://github.com/Kbro1989/POG2/blob/main/src/vision/RSMVController.ts): CNS Bridge for active 3D modification and GLTF export.
 - [StructuralAnalyzer.ts](https://github.com/Kbro1989/POG2/blob/main/src/vision/StructuralAnalyzer.ts)
 - [TransientObserver.ts](https://github.com/Kbro1989/POG2/blob/main/src/vision/TransientObserver.ts)
 
@@ -149,19 +168,52 @@ This registry provides absolute GitHub links to all neurological substrates with
 - [RelicLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/metaphysical/RelicLimb.ts)
 
 ### 🧿 Spatial Core (`spatial/`)
+- [ArchaeologyEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/ArchaeologyEngine.ts): Sovereign pathing archaeology audit.
+- [BankLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/BankLimb.ts): Bank deposit/withdraw logic.
 - [BioIntelligenceLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/BioIntelligenceLimb.ts)
-- [ChromaLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/ChromaLimb.ts)
 - [CacheForensicsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/CacheForensicsLimb.ts)
 - [CacheLearningLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/CacheLearningLimb.ts)
+- [ChromaLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/ChromaLimb.ts)
+- [CloudflareSyncLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/CloudflareSyncLimb.ts): Edge synchronization.
+- [CombatLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/CombatLimb.ts): Authoritative combat resolution.
+- [DBRowOracleLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/DBRowOracleLimb.ts): DBRow data oracle.
+- [DirectionalPathfinder.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/DirectionalPathfinder.ts): A* pathfinding with directional collision.
+- [GameplaySovereigntyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/GameplaySovereigntyLimb.ts): Authoritative gameplay tick engine.
 - [GlobeStateLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/GlobeStateLimb.ts)
+- [HUDForensicsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/HUDForensicsLimb.ts): Jagex interface decompiler.
+- [ItemLifecycleLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/ItemLifecycleLimb.ts): Item creation/destruction lifecycle.
+- [MaterialLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/MaterialLimb.ts): Major 26 material shader extraction.
+- [MinigameForensicsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/MinigameForensicsLimb.ts): Minigame system forensics.
+- [OfficialApiLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/OfficialApiLimb.ts): RuneScape official API bridge.
 - [RSCLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/RSCLimb.ts)
+- [SpatialSovereigntyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/SpatialSovereigntyLimb.ts): Authoritative spatial collision & walkability.
+- [SystemTaxonomyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/SystemTaxonomyLimb.ts): Major 2 config/dbtable extraction.
+- [TeleportGrounding.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/TeleportGrounding.ts): Teleport destination registry.
+- [VarbitSovereigntyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/VarbitSovereigntyLimb.ts): Varbit/Varp state sovereignty.
+- [VolumeSovereigntyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/VolumeSovereigntyLimb.ts)
 - [WebSensoryLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/WebSensoryLimb.ts)
+- [WorldForensicsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/WorldForensicsLimb.ts): Object definition & morphism resolution.
+
+### 🧠 Logical Core (`logical/`)
+- [ClueLogicLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/ClueLogicLimb.ts): Treasure trail spot verification.
+- [ExtrasOracle.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/ExtrasOracle.ts): Logical context & handler resolution.
+- [InteractionGateway.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/InteractionGateway.ts): Deterministic interaction pipeline.
+- [SovereignVocabularyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/SovereignVocabularyLimb.ts): Action normalization & vocabulary.
+- [WorldStateLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/WorldStateLimb.ts): Global world state facade.
+- [AdminCommandProcessor.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/world/AdminCommandProcessor.ts): Tick-synchronized admin command execution.
+
+### 🌐 World Grounding (`world_grounding/`)
+- [WorldGroundingLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/world_grounding/WorldGroundingLimb.ts): Proximity entity manifestation.
 
 ### ⚙️ Technical Core (`technical/`)
 - [AILimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/AILimb.ts)
 - [ControlPlaneLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/ControlPlaneLimb.ts)
 - [EntityLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/EntityLimb.ts)
 - [EnvironmentLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/EnvironmentLimb.ts)
+- [HiScoreLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/HiScoreLimb.ts): Player HiScore API bridge.
+- [KinematicsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/KinematicsLimb.ts): Animation forensic deconstruction.
+- [MechanicalSovereigntyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/MechanicalSovereigntyLimb.ts): Mechanical logic / state transition resolution.
+- [PedagogyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/PedagogyLimb.ts): Quest grounding & principle archiving.
 
 ---
 
@@ -253,10 +305,10 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Utilities (`src/utils/`)
-*Critical substrate utilities for extraction, memory, and path resolution.*
+*Critical substrate utilities for extraction, memory, path resolution, and grounding.*
 
 <details>
-<summary>View Utility Registry (22 files)</summary>
+<summary>View Utility Registry (25+ files)</summary>
 
 - [ClinicalAuditTool.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/ClinicalAuditTool.ts)
 - [CodeExtractor.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/CodeExtractor.ts)
@@ -293,6 +345,37 @@ This registry provides absolute GitHub links to all neurological substrates with
 *Local repository clones and critical external dependencies woven into the cognitive runtime.*
 
 - [Kbro1989/rsmv](rsmv/) (RuneScape 3 Model Viewer + Cache Subsystem)
+
+---
+
+## 🪐 The Sovereign Substrate (`D:\sovereign\`)
+*The physical, persistent data body of the organism, deeply managed by `SovereignPathResolver.ts`.*
+
+### 🗺️ Spatial & Logic Matrices (`atlas/`)
+* Ground truth definitions and logic bounds for Phase 15+.
+- `atlas/spatial/` *(Authoritative Mapsquare Logic)*
+- `atlas/logic/` *(System / Regional Rules)*
+- `atlas/system/` *(Active Gameplay Sandbox / Minigame Systems)*
+
+### 🧠 Persistence & Epistemology (`memory/`, `learning/`)
+* Long-term memory storage, vector embeddings, and pedagogical dumps.
+- `learning/sovereign-learning.db` *(Vector Storage Bank)*
+- `memory/pedagogy/` *(The enriched Sovereign knowledge base)*
+- `memory/sovereign_state.json` *(The global world save state)*
+- `memory/sovereign-performance.json` *(Neurological operational limits)*
+
+### 🔍 Phenomenological Digs (`cache_pedagogy/`)
+* Deep cache data extraction and visual forensic reconstruction instances.
+- `cache_pedagogy/rsmv_inspector/` *(The operational 3D runtime hub)*
+- `cache_pedagogy/json_dumps/` *(Raw forensic extrusions from the visual bridge)*
+
+### ⚙️ Autonomous Creation Pipelines (`training/`, `pipelines/`)
+* AI automation pipelines, generative storage, and automated training data.
+- `training/` *(Includes `interactions`, `decisions`, `thinking`, `consequences`, `error_fixes`)*
+- `pipelines/` & `generations/` & `snapshots/` *(Workflow snapshots and generated media)*
+- `pog-gutenberg/` *(Literature and historical texts)*
+- `rsc-data/` *(RuneScape Classic archaeological data)*
+
 
 ---
 
@@ -358,4 +441,4 @@ The POG2 organism exposes **92+ nodes** (tools) across the following surfaces:
 - **Audit Nodes**: Neurological verification, health checks, clinical logging.
 
 ---
-*Audited: 2026-03-20 | 105 Substrates | Alive Mode: Active*
+*Audited: 2026-04-12 | 106 Substrates | Alive Mode: Active*

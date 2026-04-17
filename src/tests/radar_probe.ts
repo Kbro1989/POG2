@@ -1,7 +1,7 @@
 import { SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
 import { SpatialRadarLimb } from '../limbs/spatial/SpatialRadarLimb.js';
-import { GameState, NPC } from '../core/models.js';
-import { SovereignAvatar } from '../core/SovereignAvatar.js';
+import { GameState, NPC, SovereignAvatar } from '../core/models.js';
+import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
 import { Renderer } from '../ui/Renderer.js';
 import * as path from 'path';
 

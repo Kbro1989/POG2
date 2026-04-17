@@ -38,7 +38,7 @@ async function testTripleViewC1() {
     // Only preload Barrows; neighbor should be proactively loaded by Orchestrator
     await spatial.loadLogic('barrows');
     
-    const worldForensics = new WorldForensicsLimb();
+    const worldForensics = WorldForensicsLimb.getInstance();
     await worldForensics.initialize();
     
     const lessonLearner = new LessonLearner(worldForensics, DB_PATH);
