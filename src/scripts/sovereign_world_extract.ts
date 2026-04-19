@@ -197,10 +197,36 @@ async function run() {
 
             // ── Extract tile data ──
             const tileFlags: TileFlags[] = [];
-            const tilesSubIdx = sq.subindices.indexOf(cacheMapFiles.squares);
-            if (tilesSubIdx !== -1 && chunkArch[tilesSubIdx]) {
+            const nxtTilesSubIdx = sq.subindices.indexOf(cacheMapFiles.square_nxt);
+            const legacyTilesSubIdx = sq.subindices.indexOf(cacheMapFiles.squares);
+
+            if (nxtTilesSubIdx !== -1 && chunkArch[nxtTilesSubIdx]) {
                 try {
-                    const tiles = parse.mapsquareTiles.read(chunkArch[tilesSubIdx].buffer, source) as any;
+                    const tilesNxt = parse.mapsquareTilesNxt.read(chunkArch[nxtTilesSubIdx].buffer, source) as any;
+                    if (tilesNxt) {
+                        for (let plane = 0; plane < 4; plane++) {
+                            const levelArray = tilesNxt[`level${plane}`];
+                            if (!levelArray) continue;
+                            for (let i = 0; i < levelArray.length; i++) {
+                                const tile = levelArray[i];
+                                if (!tile) continue;
+                                tileFlags.push({
+                                    x: Math.floor(i / 66),
+                                    z: i % 66,
+                                    plane: plane,
+                                    collision: tile.flags ?? 0,
+                                    height: tile.height ?? null,
+                                    overlay: tile.rest?.overlay ?? null,
+                                    underlay: tile.rest?.underlay ?? null,
+                                    shape: tile.rest?.shape ?? null,
+                                });
+                            }
+                        }
+                    }
+                } catch {}
+            } else if (legacyTilesSubIdx !== -1 && chunkArch[legacyTilesSubIdx]) {
+                try {
+                    const tiles = parse.mapsquareTiles.read(chunkArch[legacyTilesSubIdx].buffer, source) as any;
                     if (tiles && tiles.tiles) {
                         for (const tile of tiles.tiles) {
                             tileFlags.push({

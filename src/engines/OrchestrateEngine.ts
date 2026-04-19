@@ -65,7 +65,7 @@ import { MaterialLimb } from '../limbs/spatial/MaterialLimb.js';
 import { SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
 import { DBRowOracleLimb } from '../limbs/spatial/DBRowOracleLimb.js';
 import { SovereignKnowledgeDB } from '../utils/SovereignKnowledgeDB.js';
-import { RSMVCacheDB } from '../rsmv/utils/RSMVCacheDB.js';
+import { RSMVCacheDB } from '../utils/RSMVCacheDB.js';
 import { MechanicalSovereigntyLimb } from '../limbs/technical/MechanicalSovereigntyLimb.js';
 import { GameplaySovereigntyLimb } from '../limbs/spatial/GameplaySovereigntyLimb.js';
 import { VolumeSovereigntyLimb } from '../limbs/spatial/VolumeSovereigntyLimb.js';

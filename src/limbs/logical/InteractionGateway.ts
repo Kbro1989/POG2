@@ -51,9 +51,32 @@ export class InteractionGateway {
         // 1. Resolve Target
         const isItem = targetId.startsWith('item_');
         const isObject = targetId.startsWith('obj_');
-        const numericId = parseInt(targetId.replace('npc_', '').replace('obj_', '').replace('item_', ''), 10);
         
-        let target: any = isItem ? { id: numericId, name: `Item ${numericId}` } : (state.npcMap.get(numericId) || state.objectMap.get(numericId));
+        let target: any = null;
+        let numericId = 0;
+
+        if (isItem) {
+            // Expected format: item_<x>_<y>_<id>
+            const parts = targetId.split('_');
+            if (parts.length >= 4) {
+                const ix = parseInt(parts[1], 10);
+                const iy = parseInt(parts[2], 10);
+                numericId = parseInt(parts[3], 10);
+                
+                // Locate item on the ground
+                const key = `${ix}_${iy}`;
+                const itemsOnTile = state.groundItems?.get(key) || [];
+                const foundItem = itemsOnTile.find(i => i.id === numericId);
+                
+                if (foundItem) {
+                    target = { ...foundItem, x: ix, y: iy, type: 'item' };
+                }
+            }
+        } else {
+            numericId = parseInt(targetId.replace('npc_', '').replace('obj_', ''), 10);
+            target = state.npcMap.get(numericId) || state.objectMap.get(numericId);
+        }
+
         if (!target) return [];
 
         // 1b. AUTHORITATIVE MORPHISM RESOLUTION (Phase 13)
@@ -93,6 +116,34 @@ export class InteractionGateway {
         // 4. TRANSITION TO EXECUTING
         source.interactionState = 'EXECUTING';
         source.lastActionTick = state.tickNumber ?? 0;
+
+        if (isItem) {
+            if (action.toUpperCase() === 'PICKUP' || action.toUpperCase() === 'TAKE') {
+                const key = `${target.x}_${target.y}`;
+                const itemsOnTile = state.groundItems?.get(key) || [];
+                const idx = itemsOnTile.findIndex((i: any) => i.id === target.id);
+                if (idx > -1) {
+                    const pickedUp = itemsOnTile.splice(idx, 1)[0];
+                    if (itemsOnTile.length === 0) {
+                        state.groundItems!.delete(key);
+                    }
+                    
+                    if (source.inventory && 'addItem' in source) {
+                        const added = (source as any).addItem(pickedUp);
+                        if (added) {
+                            events.push(`[System] You picked up: ${pickedUp.itemName || 'Item ' + pickedUp.id}`);
+                        } else {
+                            // Inventory full, put it back
+                            itemsOnTile.splice(idx, 0, pickedUp);
+                            state.groundItems!.set(key, itemsOnTile);
+                            events.push(`[System] Your inventory is too full to pick that up.`);
+                        }
+                    }
+                }
+            }
+            source.interactionState = 'COOLDOWN';
+            return events;
+        }
 
         // 3. MORPHISM INTEGRITY CHECK
         const manifestedDef = await WorldForensicsLimb.getInstance().getObjectDefinition(activeId);

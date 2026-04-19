@@ -253,7 +253,7 @@ export class CNSGodheadPulseVolley {
         if (this.gameplay?.globalState) {
             let playerAgent: PlayerAgent | undefined;
             if (this.gameplay.avatar) {
-                playerAgent = new PlayerAgent(this.gameplay.avatar);
+                playerAgent = new PlayerAgent(this.gameplay.avatar as SovereignAvatarEntity);
             }
             const field = this.ghostSplat!.project(this.gameplay.globalState, 3, playerAgent);
             if (field) {

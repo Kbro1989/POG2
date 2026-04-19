@@ -286,7 +286,7 @@ export class NpcAgent {
         if (target.entityId === 'player_sovereign') {
             const playerState = state.players.get('Sovereign');
             if (playerState) {
-                target.currentHp = playerState.currentHp || 1000;
+                target.currentHp = playerState.currentHp ?? 1000;
             }
         }
         

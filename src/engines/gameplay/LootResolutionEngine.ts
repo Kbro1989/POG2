@@ -22,6 +22,8 @@ export interface ResolvedDrop {
         itemName: string;
         quantity: string;
         sourceNpcName: string;
+        /** GE mid-price in coins. 0 = unknown/untradeable. Forwarded to SimulationHarness for LootBeamRegistry. */
+        geValue: number;
         rollMeta: {
             luckTier: number;
             rarityLabel: string;
@@ -126,6 +128,7 @@ export class LootResolutionEngine {
                 itemName: i.itemName,
                 quantity: i.quantity,
                 sourceNpcName: wikiName,
+                geValue: i.geValue ?? 0,  // GE value from WikiDropEntry — used by LootBeamRegistry
                 rollMeta: {
                     luckTier: event.luckTier,
                     rarityLabel: i.rarity
@@ -138,9 +141,9 @@ export class LootResolutionEngine {
      * Execute the RNG rolls against the parsed drop tables.
      * Incorporates Player equipment Luck Tiers.
      */
-    private async rollTables(tables: WikiDropTable[], event: LootDeathEvent): Promise<{itemName: string, quantity: string, rarity: string}[]> {
-        const drops: {itemName: string, quantity: string, rarity: string}[] = [];
-        const mainRngDrops: {itemName: string, quantity: string, rarity: string}[] = [];
+    private async rollTables(tables: WikiDropTable[], event: LootDeathEvent): Promise<{itemName: string, quantity: string, rarity: string, geValue: number}[]> {
+        const drops: {itemName: string, quantity: string, rarity: string, geValue: number}[] = [];
+        const mainRngDrops: {itemName: string, quantity: string, rarity: string, geValue: number}[] = [];
 
         // Build deterministic RNG for this event
         const prng = this.seededRandom(`${event.npcId}:${event.killerId}:${event.tick}`);
@@ -156,9 +159,9 @@ export class LootResolutionEngine {
             for (const entry of table.entries) {
                 const r = entry.rarity.toLowerCase();
                 if (r.includes('always')) {
-                    drops.push(entry);
+                    drops.push({ itemName: entry.itemName, quantity: entry.quantity, rarity: entry.rarity, geValue: entry.geValue ?? 0 });
                 } else if (this.evaluateRarity(entry.rarity, event.luckTier, prng)) {
-                    mainRngDrops.push(entry);
+                    mainRngDrops.push({ itemName: entry.itemName, quantity: entry.quantity, rarity: entry.rarity, geValue: entry.geValue ?? 0 });
                 }
             }
         }
@@ -175,7 +178,7 @@ export class LootResolutionEngine {
      * Executes strict RS3 Rare Drop Table math based on Wiki weights.
      * Incorporates Gem (R), Super Rare (S), and Hazelmere (H) sub-table unlocking.
      */
-    private rollRDT(entries: any[], luckTier: number, prng: () => number): {itemName: string, quantity: string, rarity: string} | null {
+    private rollRDT(entries: any[], luckTier: number, prng: () => number): {itemName: string, quantity: string, rarity: string, geValue: number} | null {
         // Base RDT access chance
         let enterChance = 1 / 64.0;
         enterChance *= (1.0 + (luckTier * 0.01)); // standard 1% bump per luck tier

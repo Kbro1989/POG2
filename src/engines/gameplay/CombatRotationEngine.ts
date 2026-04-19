@@ -153,31 +153,29 @@ export class CombatRotationEngine {
 
         let bestProjection: { entityId: string; coord: Coord; heat: number } | null = null;
 
-        for (const [entityId, ghosts] of field.projections) {
+        for (const [entityId, ghost] of field.projections) {
             // Skip self-projections
             if (isPlayer && entityId === 'player_sovereign') continue;
             if (!isPlayer && entityId !== 'player_sovereign') continue;
 
-            for (const ghost of ghosts) {
-                const dist = chebyshevDistance(selfCoord, ghost.projectedCoord);
-                if (dist > maxRange) continue;
+            const dist = chebyshevDistance(selfCoord, ghost.projectedCoord);
+            if (dist > maxRange) continue;
 
-                // Sample heat at ghost's projected coord
-                const localX = ghost.projectedCoord.x - selfCoord.x + Math.floor(PADDED_SIZE / 2);
-                const localY = ghost.projectedCoord.y - selfCoord.y + Math.floor(PADDED_SIZE / 2);
+            // Sample heat at ghost's projected coord
+            const localX = ghost.projectedCoord.x - selfCoord.x + Math.floor(PADDED_SIZE / 2);
+            const localY = ghost.projectedCoord.y - selfCoord.y + Math.floor(PADDED_SIZE / 2);
 
-                if (localX < 0 || localX >= PADDED_SIZE || localY < 0 || localY >= PADDED_SIZE) continue;
+            if (localX < 0 || localX >= PADDED_SIZE || localY < 0 || localY >= PADDED_SIZE) continue;
 
-                const heatIdx = localY * PADDED_SIZE + localX;
-                const heat = heatMap[heatIdx] || 0;
+            const heatIdx = localY * PADDED_SIZE + localX;
+            const heat = heatMap[heatIdx] || 0;
 
-                if (!bestProjection || heat > bestProjection.heat) {
-                    bestProjection = {
-                        entityId,
-                        coord: ghost.projectedCoord,
-                        heat
-                    };
-                }
+            if (!bestProjection || heat > bestProjection.heat) {
+                bestProjection = {
+                    entityId,
+                    coord: ghost.projectedCoord,
+                    heat
+                };
             }
         }
 

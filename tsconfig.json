@@ -20,6 +20,8 @@
     "node_modules",
     "dist",
     "resources",
-    "logs"
+    "logs",
+    "src/rsmv",
+    "src/rsmv/**"
   ]
 }

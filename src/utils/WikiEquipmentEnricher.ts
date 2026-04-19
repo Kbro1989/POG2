@@ -48,6 +48,8 @@ export interface WikiItemMeta {
     weight: number;
     highAlch: number;
     lowAlch: number;
+    /** Grand Exchange price in coins. 0 = not on GE or unknown. */
+    geValue: number;
     quest: string;
     release: string;
 }
@@ -73,6 +75,8 @@ export interface WikiDropEntry {
     rarity: string;         // "Always", "Common", "Uncommon", "Rare", "Very rare", "1/128"
     isMembers: boolean;
     notes: string;
+    /** Grand Exchange value in coins. 0 = not tradeable or unknown. Used by LootBeamRegistry. */
+    geValue: number;
 }
 
 export interface WikiDropTable {
@@ -518,6 +522,8 @@ export class WikiEquipmentEnricher {
             weight: parseFloat(info['weight'] || '0') || 0,
             highAlch: this.safeInt(info['high'] || info['highalch'] || '0'),
             lowAlch: this.safeInt(info['low'] || info['lowalch'] || '0'),
+            // ge field: Grand Exchange mid-price (or ge_sell, exchange, value)
+            geValue: this.safeInt(info['ge'] || info['exchange'] || info['ge_buy'] || info['value'] || '0'),
             quest: info['quest'] || 'No',
             release: info['release'] || 'Unknown'
         };
@@ -569,7 +575,9 @@ export class WikiEquipmentEnricher {
                 quantity: dl['quantity'] || dl['_2'] || '1',
                 rarity: dl['rarity'] || dl['_3'] || 'Unknown',
                 isMembers: this.safeBool(dl['members']),
-                notes: dl['raritynotes'] || dl['altrarity'] || ''
+                notes: dl['raritynotes'] || dl['altrarity'] || '',
+                // ge: Some DropsLine templates include a |ge= param for price override
+                geValue: this.safeInt(dl['ge'] || dl['value'] || dl['price'] || '0')
             }));
 
             tables.push({
@@ -650,7 +658,10 @@ export class WikiEquipmentEnricher {
             quantity: dl['quantity'] || dl['_2'] || '1',
             rarity: dl['rarity'] || dl['_3'] || 'Unknown',
             isMembers: this.safeBool(dl['members']),
-            notes: `[${templateName}] ${dl['raritynotes'] || ''}`.trim()
+            notes: `[${templateName}] ${dl['raritynotes'] || ''}`.trim(),
+            // Sub-tables (RDT, Gem table) typically have no direct GE price in the template.
+            // geValue defaults to 0; LootBeamRegistry will use the rarity label (e.g. "Rare drop table") instead.
+            geValue: this.safeInt(dl['ge'] || dl['value'] || '0')
         }));
 
         // Cache the resolved sub-table

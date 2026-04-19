@@ -143,6 +143,7 @@ export interface SovereignIntent {
 
 export interface NPC extends CombatantState {
     id: number;
+    npcId?: number;           // Cache definition ID (Major 18 archiveId)
     name: string;
     coord: Coord;
     x: number;
@@ -157,6 +158,13 @@ export interface NPC extends CombatantState {
     interactionState: 'IDLE' | 'MOVING' | 'READY' | 'EXECUTING' | 'COOLDOWN';
     intent?: SovereignIntent;
     lastActionTick: number;
+    currentHp?: number;       // Live HP tracker for combat evaluation
+    combatStats?: {           // Optional combat metadata block
+        currentHp: number;
+        maxHp: number;
+        attackLevel?: number;
+        defenceLevel?: number;
+    };
     
     brain?: {
         think: (tick: number, state: GameState, avatar: any) => void;
@@ -307,6 +315,10 @@ export interface SovereignAvatar extends NPC {
 
 export interface GroundItem {
     id: number;
+    itemName?: string;
+    rarityLabel?: string;
+    /** Grand Exchange price in coins. 0 = unknown/untradeable. Used by LootBeamRegistry tier resolution. */
+    geValue?: number;
     amount: number;
     x: number;
     y: number;
@@ -337,6 +349,7 @@ export interface GameState {
     varcs: Map<number, number | string>;
     varbits: Map<number, number>; // Cache for resolved varbit values
     players: Map<string, SovereignAvatar>; 
+    tick?: number;              // Alias for tickNumber (used by NpcAgent)
     tickNumber?: number;
     lastTickTime?: number;
 }

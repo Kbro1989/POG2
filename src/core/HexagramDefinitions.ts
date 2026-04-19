@@ -247,6 +247,28 @@ export const INGESTION_TRIGGERS: Record<number, HexagramIngestionProfile> = {
         targetLayers: ['VectorDB', 'Rolodex'],
         description: 'Rapid ascent into cognitive layer. Spatial mappings, rolodex updates.'
     },
+    20: {
+        name: 'Contemplation',
+        chinese: 'Guan',
+        trigrams: ['Wind', 'Earth'],
+        ingestionMode: 'structural',
+        breathCycle: 600,
+        maxConcurrent: 5,
+        recursionDepth: 1,
+        targetLayers: ['GhostSplat', 'SpatialRadar', 'NxtTelemetry'],
+        description: 'Observe spatial REPLs and NXT padded-grid telemetry without interference. GhostSplat visualizer synchronization.'
+    },
+    30: {
+        name: 'The Clinging',
+        chinese: 'Li',
+        trigrams: ['Fire', 'Fire'],
+        ingestionMode: 'emergency',
+        breathCycle: 200,
+        maxConcurrent: 10,
+        recursionDepth: 3,
+        targetLayers: ['GhostSplat_Realtime', 'Logger'],
+        description: 'High-frequency GhostSplat pipeline for real-time NXT spatial event debugging and UI visualization.'
+    },
     23: {
         name: 'Splitting Apart',
         chinese: 'Bo',

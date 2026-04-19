@@ -188,25 +188,90 @@ export class SimulationHarness {
         if (commands.length > 0) {
             const worldState = WorldStateLimb.getInstance(avatar);
             for (const cmd of commands) {
-                await AdminCommandProcessor.execute(cmd, worldState);
+                if (cmd.type === 'WALK') {
+                    const tx = cmd.metadata?.x;
+                    const ty = cmd.metadata?.y;
+                    if (tx !== undefined && ty !== undefined) {
+                        avatar.startPath([{x: tx, y: ty, plane: avatar.plane}]);
+                        avatar.pendingInteraction = null;
+                        this.switchboard.broadcast({ type: 'EVENT', message: `Walking to ${tx}, ${ty}` });
+                    }
+                } else if (cmd.type === 'INTERACT') {
+                    const tx = cmd.metadata?.x;
+                    const ty = cmd.metadata?.y;
+                    if (tx !== undefined && ty !== undefined) {
+                        avatar.startPath([{x: tx, y: ty, plane: avatar.plane}]);
+                    }
+                    avatar.pendingInteraction = {
+                        action: cmd.metadata?.action,
+                        targetId: cmd.metadata?.targetId
+                    };
+                    this.switchboard.broadcast({ type: 'EVENT', message: `Walking to interact with ${cmd.metadata?.targetId}` });
+                } else {
+                    await AdminCommandProcessor.execute(cmd, worldState);
+                }
             }
             this.switchboard.clearAdminQueue();
         }
 
         // 0.5 Asynchronous Loot Syntheses
         const readyDrops = LootResolutionEngine.getInstance().popReadyDrops();
+        
+        if (!state.groundItems) {
+            state.groundItems = new Map();
+        }
+
         for (const drop of readyDrops) {
+            const coordKey = `${drop.coord.x},${drop.coord.y},${drop.coord.plane}`;
+            let cellItems = state.groundItems.get(coordKey) || [];
+
             for (const item of drop.items) {
+                const dropId = `drop_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+                // GE value: pulled from item if resolved by WikiEquipmentEnricher, else 0.
+                // Used by LootBeamRegistry.resolveLootBeamTier() for authentic tier logic.
+                const geValue: number = (item as any).geValue ?? 0;
+                
+                cellItems.push({
+                    id: parseInt(dropId.split('_')[1] || "0", 10),
+                    itemName: item.itemName,
+                    rarityLabel: item.rollMeta.rarityLabel,
+                    geValue,
+                    amount: parseInt(item.quantity || "1", 10),
+                    x: drop.coord.x,
+                    y: drop.coord.y,
+                    plane: drop.coord.plane || 0,
+                    spawnTick: tickCount
+                });
+
                 this.switchboard.broadcast({
                     type: 'tick_event',
                     tick: tickCount,
                     events: [{
-                        id: `drop_${Date.now()}_${Math.random()}`,
+                        id: dropId,
                         signature: 'ITEM_DROP',
-                        metadata: { source: item.sourceNpcName, itemName: item.itemName, quantity: item.quantity, rarity: item.rollMeta.rarityLabel, x: drop.coord.x, y: drop.coord.y },
+                        metadata: {
+                            source: item.sourceNpcName,
+                            itemName: item.itemName,
+                            quantity: item.quantity,
+                            rarity: item.rollMeta.rarityLabel,
+                            geValue,  // Passed to HUD for LootBeamRegistry tier resolution
+                            x: drop.coord.x,
+                            y: drop.coord.y
+                        },
                         timestamp: Date.now()
                     }]
                 });
+            }
+            state.groundItems.set(coordKey, cellItems);
+        }
+
+        // 0.6 Item Despawn Sweep (500 ticks)
+        for (const [coordKey, items] of state.groundItems.entries()) {
+            const remaining = items.filter(i => (tickCount - i.spawnTick) <= 500);
+            if (remaining.length === 0) {
+                state.groundItems.delete(coordKey);
+            } else if (remaining.length !== items.length) {
+                state.groundItems.set(coordKey, remaining);
             }
         }
 

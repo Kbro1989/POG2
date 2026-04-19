@@ -251,6 +251,25 @@ Respond in JSON ONLY:
         this.pushLine(card);
     }
 
+    /**
+     * Broadcasts a high-frequency GhostSplat spatial telemetry pulse.
+     * Integrates with the NXT padded-grid engine for real-time visualization.
+     */
+    public broadcastGhostSplat(splatId: string, intensity: number, sourceLabel: string, metadata?: any): void {
+        const energyState = intensity > 0.8 ? YaoState.OldYang : (intensity < 0.3 ? YaoState.OldYin : YaoState.YoungYang);
+        
+        const card: ContextCard = {
+            lineIndex: (this.lines.length % 6) + 1,
+            title: `GhostSplat: ${sourceLabel}`,
+            content: `[NXT Telemetry] Target: ${splatId} | Intensity: ${intensity.toFixed(2)} | Overdrive State: ${energyState === YaoState.OldYang ? 'BURST' : 'STABILE'}`,
+            state: energyState,
+            importance: intensity * 2.0 // High impact on metabolism based on physical/spatial intensity
+        };
+        
+        this.pushLine(card);
+        this.emit('ghost_splat', { splatId, intensity, sourceLabel, metadata, timestamp: Date.now() });
+    }
+
     public pinCognitiveCard(card: ContextCard): void {
         this.pushLine(card);
     }

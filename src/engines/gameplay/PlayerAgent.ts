@@ -47,7 +47,7 @@ export class PlayerAgent {
             confidence: source === 'path_queue' ? 1.0 : (source === 'intent' ? 0.8 : 0.5),
             combatState: {
                 hp: this.avatar.currentHp || 0,
-                adrenaline: this.avatar.adrenalinePercent || 0,
+                adrenaline: this.avatar.adrenaline || 0,
                 prayerActive: false // Simplified for now
             },
             source
@@ -67,7 +67,7 @@ export class PlayerAgent {
             confidence: 1.0,
             combatState: {
                 hp: this.avatar.currentHp || 0,
-                adrenaline: this.avatar.adrenalinePercent || 0,
+                adrenaline: this.avatar.adrenaline || 0,
                 prayerActive: false
             },
             source: 'offline_fallback'
@@ -85,10 +85,10 @@ export class PlayerAgent {
             // Process player-specific mechanics
             // Cooldowns are already managed via interaction intent, but we can manage adrenaline here
             if (!this.avatar.metadata.inCombat) {
-                // Decay adrenaline by 5% every tick if not in combat (simplified)
-                if (this.avatar.adrenalinePercent && this.avatar.adrenalinePercent > 0) {
-                    const newTotal = Math.max(0, this.avatar.adrenalinePercent - 5);
-                    this.avatar.consumeAdrenaline(this.avatar.adrenalinePercent - newTotal);
+                // Decay adrenaline by 500 (5%) every tick if not in combat (simplified)
+                if (this.avatar.adrenaline && this.avatar.adrenaline > 0) {
+                    const decay = Math.min(500, this.avatar.adrenaline);
+                    this.avatar.consumeAdrenaline(decay);
                 }
             }
         }
@@ -148,8 +148,8 @@ export class PlayerAgent {
         // Enrich target HP from live NPC state if available
         if (this.avatar.state?.npcMap) {
             for (const [, npc] of this.avatar.state.npcMap) {
-                if (String(npc.id) === target.entityId || String(npc.npcId) === target.entityId) {
-                    target.currentHp = npc.currentHp || 1000;
+                if (String(npc.id) === target.entityId || String(npc.npcId ?? npc.id) === target.entityId) {
+                    target.currentHp = npc.currentHp ?? npc.combatStats?.currentHp ?? 1000;
                     break;
                 }
             }
@@ -192,7 +192,7 @@ export class PlayerAgent {
         const isHeatCritical = currentHeat >= heatThreshold;
 
         // Composure Gate (Adrenaline vs HP)
-        const adrenaline = this.avatar.adrenalinePercent || 0;
+        const adrenaline = (this.avatar.adrenaline || 0) / 100; // Convert to percentage
         const currentHp = this.avatar.currentHp || 0;
         const maxHp = this.avatar.maxHp;
         const hpPercent = (currentHp / maxHp) * 100;
