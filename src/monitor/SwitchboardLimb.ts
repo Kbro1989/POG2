@@ -4,8 +4,10 @@ import express from 'express';
 import { createServer, Server as HttpServer } from 'http';
 import { join } from 'path';
 import { createLogger } from "../utils/logger.js";
+import { EventBus } from '../events/EventBus.js';
 import { DBRowOracleLimb } from '../limbs/spatial/DBRowOracleLimb.js';
 import { PedagogyForensicsLimb } from '../limbs/pedagogy/PedagogyForensicsLimb.js';
+import { getAtlasSpatialPath } from '../utils/SovereignPathResolver.js';
 
 const logger = createLogger('SwitchboardLimb');
 
@@ -26,6 +28,7 @@ export class SwitchboardLimb {
     private activePort: number | null = null;
     
     private adminQueue: AdminCommand[] = [];
+    private gameState: any = null;
     private privilege: string = 'standard';
 
     protected constructor() {
@@ -85,8 +88,21 @@ export class SwitchboardLimb {
                 // Allow Cross-Origin Requests for local diagnostics
                 app.use((req, res, next) => {
                     res.header('Access-Control-Allow-Origin', '*');
-                    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-                    res.header('Access-Control-Allow-Headers', 'Content-Type');
+                    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+                    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+                    res.header('Access-Control-Allow-Private-Network', 'true');
+                    
+                    // Permissive CSP for local Sovereign substrates
+                    res.header('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' *; connect-src 'self' ws: wss: http: https: *; img-src 'self' data: http: https: *;");
+                    
+                    if (req.method === 'OPTIONS') {
+                        return res.sendStatus(200);
+                    }
+                    next();
+                });
+
+                app.use((req, res, next) => {
+                    logger.info({ method: req.method, url: req.url }, '[SWITCHBOARD] Incoming Request');
                     next();
                 });
 
@@ -95,12 +111,13 @@ export class SwitchboardLimb {
                 // Serve SovereignEye captures via HTTP
                 const eyeDir = join(process.cwd(), 'captures', 'sovereign_eye');
                 const publicDir = join(process.cwd(), 'public');
-                const unifiedDir = 'D:\\sovereign\\atlas\\spatial\\unified_extract';
-                const worldDir = 'D:\\sovereign\\atlas\\spatial\\world_extract';
+                const spatialRoot = getAtlasSpatialPath();
+                const regionsDir = join(spatialRoot, 'regions');
                 
                 app.use('/captures', express.static(eyeDir));
-                app.use('/unified', express.static(unifiedDir));
-                app.use('/world', express.static(worldDir));
+                app.use('/unified', express.static(regionsDir));
+                app.use('/world', express.static(regionsDir));
+                app.use('/regions', express.static(regionsDir));
                 app.use(express.static(publicDir));
 
                 app.get('/ping', (req, res) => res.json({ status: 'PULSE_ACTIVE', timestamp: Date.now() }));
@@ -108,13 +125,14 @@ export class SwitchboardLimb {
                 let wss: WebSocketServer | null = null;
 
                 server.on('error', (err: any) => {
+                    logger.error({ err }, '[SWITCHBOARD] HTTP Server Error');
                     if (wss) wss.close();
                     server.close();
                     reject(err);
                 });
 
                 server.listen(port, '0.0.0.0', () => {
-                    // Only after successful listen do we attach WS and assign to this
+                    logger.info(`[SWITCHBOARD] Bridge ONLINE on port ${port} (0.0.0.0)`);
                     wss = new WebSocketServer({ server });
                     this.server = server;
                     this.wss = wss;
@@ -164,7 +182,7 @@ export class SwitchboardLimb {
      */
     public async startWithGracefulPort(orchestrator: any, startPort: number = 8788): Promise<{ port: number, url: string }> {
         let currentPort = startPort;
-        const maxTries = 5;
+        const maxTries = 20;
 
         for (let i = 0; i < maxTries; i++) {
             try {
@@ -281,9 +299,13 @@ export class SwitchboardLimb {
         // Map objects don't JSON.stringify natively. Convert projections to array.
         const serializableField = {
             ...field,
+            heatmap: Array.from(field.heatmap),
+            entityHeat: field.entityHeat ? Array.from(field.entityHeat) : undefined,
+            avatarHeat: field.avatarHeat ? Array.from(field.avatarHeat) : undefined,
             projections: field.projections instanceof Map 
                 ? Array.from(field.projections.entries()) 
-                : field.projections
+                : field.projections,
+            gaussians: field.gaussians ? Array.from(field.gaussians) : undefined
         };
 
         this.broadcast({
@@ -296,12 +318,25 @@ export class SwitchboardLimb {
     /**
      * syncGameState - Broadcasts the integrated POG2 world/player state to the UI.
      */
-    public syncGameState(state: any): void {
-        this.broadcast({
-            type: 'state_sync',
-            timestamp: Date.now(),
-            state
-        });
+    public syncGameState(state: any) {
+        this.gameState = state;
+        this.broadcast({ type: 'GAME_STATE', payload: state });
+
+        // Phase 19: Propagate player movement to the Global Consensus substrate
+        if (state.avatar) {
+            EventBus.getInstance().publish({
+                type: 'direct_perception',
+                source: 'Switchboard',
+                payload: {
+                    entityId: 'player_sovereign',
+                    name: state.avatar.username || 'Sovereign',
+                    x: state.avatar.x,
+                    y: state.avatar.y,
+                    plane: state.avatar.plane,
+                    timestamp: Date.now()
+                }
+            });
+        }
     }
 
     /**
@@ -351,5 +386,12 @@ export class SwitchboardLimb {
                 ? `Switchboard Bridge Active on port ${this.activePort}. ${this.wss?.clients.size || 0} remote mirroring links.`
                 : 'Switchboard Bridge Offline.'
         };
+    }
+
+    /**
+     * getActivePort - Returns the currently active port for dynamic discovery.
+     */
+    public getActivePort(): number | null {
+        return this.activePort;
     }
 }

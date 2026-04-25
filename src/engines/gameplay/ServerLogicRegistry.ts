@@ -1,4 +1,4 @@
-﻿import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
 import { LogicalSignature, Provenance } from '../../core/models.js';
 
 export { LogicalSignature };
@@ -61,6 +61,12 @@ export class ServerLogicRegistry {
         this.register(17, 5,  LogicalSignature.SPATIAL_SHIFT,      'Teleport Dispatcher (Enum 5)');
         this.register(17, 1,  LogicalSignature.ENTITY_MANIFEST,   'Spawn Dispatcher (Enum 1)');
         this.register(17, 33, LogicalSignature.PRIVILEGE_ELEVATION, 'Admin Auth Dispatcher (Enum 33)');
+
+        // --- 7. BREAKTHROUGH ENTITIES (Phase 117) ---
+        this.register(18, 2859, LogicalSignature.NPC_DIALOGUE, 'Hans (Sovereign Guide)');
+        this.register(18, 0,    LogicalSignature.NPC_DIALOGUE, 'Hans (Breakthrough Manifest 0)');
+        this.register(18, 30322, LogicalSignature.NPC_DIALOGUE, 'Cyrisus (Sovereign Ally)');
+        this.register(18, 115,  LogicalSignature.PRACTICE_SKILL_NODE, 'Melee Training Dummy (Dual Mapping)');
     }
 
     private static register(major: number, archive: number, signature: LogicalSignature, context: string, provenance?: Partial<Provenance>) {

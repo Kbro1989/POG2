@@ -26,8 +26,10 @@ export function getLastIOLatencyMs(): number {
     return _lastLatencyMs;
 }
 
-// Absolute path to the bridge script
-const BRIDGE_SCRIPT = join(process.cwd(), 'src', 'utils', 'rsmv_bridge.ts');
+// Absolute path to the bridge script (Phase 45: Location-independent resolution)
+const BRIDGE_SCRIPT = join(__dirname, 'rsmv_bridge.ts')
+    .replace(join('dist', 'src'), 'src')
+    .replace(/\.js$/, '.ts');
 
 const TIMEOUT_MS = 60000; // Increased to 60s for substrate stability during cold starts
 
@@ -169,6 +171,15 @@ export interface BridgeSequenceResult {
     raw: any;
 }
 
+export interface BridgeCollisionResult {
+    x: number;
+    z: number;
+    plane: number;
+    xsize: number;
+    zsize: number;
+    data: number[]; // Flat array of [height00, height01, height10, height11, collision3] x (xsize*zsize)
+}
+
 export interface BridgeHealthResult {
     online: boolean;
     reason?: string;
@@ -236,6 +247,26 @@ export class RSMVBridge {
 
     public async getSprite(id: number): Promise<Result<any>> {
         return await callBridge<any>('sprite', String(id));
+    }
+
+    public async getDBTables(): Promise<Result<any>> {
+        return await callBridge<any>('dbtables');
+    }
+
+    public async getDBRows(): Promise<Result<any>> {
+        return await callBridge<any>('dbrows');
+    }
+
+    public async getVarps(): Promise<Result<any>> {
+        return await callBridge<any>('varplayer');
+    }
+
+    public async getVarbits(): Promise<Result<any>> {
+        return await callBridge<any>('varbits');
+    }
+
+    public async getCollision(x: number, z: number, plane: number, xsize = 64, zsize = 64): Promise<Result<BridgeCollisionResult>> {
+        return await callBridge<BridgeCollisionResult>('collision', String(x), String(z), String(plane), String(xsize), String(zsize));
     }
 }
 

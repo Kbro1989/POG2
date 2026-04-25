@@ -9,6 +9,9 @@ import { tmpdir } from 'os';
 import { createLogger } from "../utils/logger.js";
 import { SovereignEye } from '../utils/SovereignEye.js';
 import { ChromaCore } from '../utils/ChromaCore.js';
+import { SwitchboardLimb } from '../monitor/SwitchboardLimb.js';
+import { SovereignKnowledgeDB } from '../utils/SovereignKnowledgeDB.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const logger = createLogger('SpatialVisionEngine');
 
@@ -57,6 +60,8 @@ export class SpatialVisionEngine {
     private readonly client: ModelClient;
     private readonly shell: ShellEngine;
     private readonly eye: SovereignEye;
+    private isObserving = false;
+
 
     private constructor(
         private readonly config: SovereignConfig,
@@ -134,15 +139,44 @@ export class SpatialVisionEngine {
     }
 
     async observe(params: SpatialVisionParams): Promise<Result<EngineOutput>> {
-        let imagePath = params.target && existsSync(params.target) ? params.target : '';
+        if (this.isObserving) {
+            return { ok: false, error: new Error('SpatialVisionEngine is already performing an observation. Pulse collision avoided.') };
+        }
+        this.isObserving = true;
+        try {
+            let imagePath = params.target && existsSync(params.target) ? params.target : '';
 
         // 1. Capture screen
         if (params.includeScreenshot !== false && !imagePath) {
-            this.renderer.info('ðŸ‘ï¸  Spatial capture initiated...');
-            // Target the live dashboard for ground-truth perception
-            const captureRes = await this.eye.capture({ type: 'url', target: 'http://localhost:5173' });
-            if (!captureRes.ok) return captureRes as any;
-            imagePath = captureRes.value.imagePath || '';
+            this.renderer.info('👁️   Spatial capture initiated...');
+            
+            // Phase 14: Dynamic port discovery via Switchboard singleton.
+            const ports = [
+                SwitchboardLimb.getInstance().getActivePort() || 8788,
+                8787, // Wrangler Dev / Worker
+                8081  // RSMV Inspector Dev
+            ];
+            
+            let lastErr: Error | null = null;
+            for (const port of ports) {
+                const targets = [
+                    `http://localhost:${port}/edge_radar.html`,
+                    `http://localhost:${port}/globe`
+                ];
+                
+                for (const targetUrl of targets) {
+                    const captureRes = await this.eye.capture({ type: 'url', target: targetUrl });
+                    
+                    if (captureRes.ok && captureRes.value.imagePath) {
+                        imagePath = captureRes.value.imagePath;
+                        break;
+                    }
+                    lastErr = captureRes.ok ? new Error(`Port ${port} path ${targetUrl} active but no screenshot produced`) : (captureRes.error as Error);
+                }
+                if (imagePath) break;
+            }
+            
+            if (!imagePath) return { ok: false, error: lastErr || new Error('All vision dashboard ports (8788, 8787, 8081) failed to produce a capture.') };
         }
 
         if (!imagePath || !existsSync(imagePath)) {
@@ -190,6 +224,18 @@ export class SpatialVisionEngine {
             }
         }
 
+        // 5. Persist sensory probe metadata (Phase 112 Resilience)
+        const captureId = uuidv4();
+        SovereignKnowledgeDB.getInstance().recordCapture(
+            captureId,
+            Date.now(),
+            'spatial_vision',
+            imagePath,
+            imagePath,
+            { response: result.value.response, spatialMap },
+            params
+        );
+
         return {
             ok: true,
             value: {
@@ -198,11 +244,15 @@ export class SpatialVisionEngine {
                     intent: params.intent,
                     spatialMap,
                     model: this.config.visionModel,
-                    source: imagePath
+                    source: imagePath,
+                    captureId
                 }
             }
         };
+    } finally {
+        this.isObserving = false;
     }
+}
 
     /**
      * Get dominant colors â€” delegates to ChromaCore.

@@ -1,3 +1,5 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import { GameState, Result, Item, SkillId, EquipmentSlot, NPC, SovereignAvatar, ok, err } from '../../core/models.js';
 import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { GameplayModule } from '../../engines/gameplay/MinigameInterfaces.js';
@@ -32,6 +34,8 @@ export class GameplaySovereigntyLimb {
     private isRunning: boolean = false;
     private tickInterval: NodeJS.Timeout | null = null;
     public tickCount: number = 0;
+    /** Dirty flag — set on any state mutation, cleared after disk write */
+    private stateDirty: boolean = false;
     
     public edgeSync: CloudflareSyncLimb;
     private switchboard: SwitchboardLimb | null = null;
@@ -40,6 +44,7 @@ export class GameplaySovereigntyLimb {
     public combat: CombatLimb;
     public items: ItemLifecycleLimb;
     public bankLimb: BankLimb;
+    private playerAgent: any; // PlayerAgent (typed as any to avoid circularity if needed)
     
     public globalState: GameState = {
         plane: 0,
@@ -70,6 +75,11 @@ export class GameplaySovereigntyLimb {
         this.combat = CombatLimb.getInstance();
         this.items = ItemLifecycleLimb.getInstance();
         this.bankLimb = BankLimb.getInstance();
+        
+        // Initialize Cognitive Agent
+        const { PlayerAgent } = require('../../engines/gameplay/PlayerAgent.js');
+        this.playerAgent = new PlayerAgent(this.avatar as SovereignAvatarEntity);
+        
         this.loadSovereignState();
         logger.info('GameplaySovereigntyLimb booted as a CNS-authoritative node.');
     }
@@ -148,7 +158,13 @@ export class GameplaySovereigntyLimb {
             timestamp: new Date().toISOString()
         };
         fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+        this.stateDirty = false;
         logger.debug('Sovereign State Saved.');
+    }
+
+    /** Mark state as dirty — call whenever any avatar field is mutated */
+    public markDirty(): void {
+        this.stateDirty = true;
     }
 
 
@@ -172,6 +188,7 @@ export class GameplaySovereigntyLimb {
             } else {
                 this.avatar.bank.push(item);
             }
+            this.stateDirty = true;
             this.saveSovereignState();
         }
     }
@@ -188,6 +205,7 @@ export class GameplaySovereigntyLimb {
 
     private awardCurrency(id: number, amount: number) {
         this.avatar.wallet[id] = (this.avatar.wallet[id] || 0) + amount;
+        this.stateDirty = true;
         this.saveSovereignState();
     }
 
@@ -283,6 +301,50 @@ export class GameplaySovereigntyLimb {
             }
         }
 
+        // 0.55 Follower Logic: Assign leader if not already set (Phase 46)
+        if (!this.avatar.metadata?.leaderId) {
+            for (const [id, player] of this.globalState.players) {
+                if (player.username !== (this.avatar as any).username) {
+                    if (!this.avatar.metadata) this.avatar.metadata = {};
+                    this.avatar.metadata.leaderId = id;
+                    this.playerAgent.setLeader(id);
+                    logger.info({ leader: id }, 'Sovereign promoted to Follower â€” establishing cooperative link.');
+                    break;
+                }
+            }
+        }
+
+        // Advance Cognitive Agent (Cooldowns / Adrenaline)
+        this.playerAgent.advanceTick(600);
+
+        // 0.75 Cognitive Intelligence (Phase 45: Solo Gameplay Integration)
+        const ghostSplat = (require('../../substrates/GhostSplatEngine.js')).GhostSplatEngine.getInstance();
+        const field = ghostSplat.getLatestField();
+        if (field) {
+            // Apply Strategic Archetype from Hexagram thinking layer
+            const hex = HexagramManager.getInstance().getInterpretation();
+            const strategy = hex.strategy || '';
+            
+            if (strategy.includes('EXPANSION') || strategy.includes('ACCELERATION')) {
+                this.avatar.metadata.combatArchetype = 'aggressive';
+            } else if (strategy.includes('STABILIZATION') || strategy.includes('CAUTION')) {
+                this.avatar.metadata.combatArchetype = 'methodical';
+            } else if (strategy.includes('RETREAT') || strategy.includes('PAUSE')) {
+                this.avatar.metadata.combatArchetype = 'cowardly';
+            }
+
+            // 2. Tactical Evaluation (Evasion / Cooperation)
+            this.playerAgent.evaluateTacticalPosition(field);
+
+            // 3. Combat Rotation (Intent Generation)
+            if (this.avatar.metadata?.tacticalState !== 'evading' && !this.avatar.isBusy()) {
+                const rotation = this.playerAgent.evaluateCombatRotation(field, this.tickCount);
+                if (rotation) {
+                    this.avatar.intent = rotation;
+                }
+            }
+        }
+
         // 1. Process Combat Intent (Prioritized before movement)
         this.processCombatTick();
 
@@ -305,8 +367,8 @@ export class GameplaySovereigntyLimb {
             await this.harness.processTick(this.tickCount, this.globalState, this.avatar);
         }
 
-        // 3. Autosave every 10 ticks (6 seconds) if needed, or trigger on change
-        if (this.tickCount % 10 === 0) {
+        // 3. Autosave every 10 ticks (6 seconds) — only write if state changed
+        if (this.stateDirty && this.tickCount % 10 === 0) {
             this.saveSovereignState();
         }
 
@@ -356,7 +418,7 @@ export class GameplaySovereigntyLimb {
         for (const actor of combatants) {
             if (!actor.intent) continue;
 
-            if (actor.intent.action === 'castAbility' || actor.intent.action === 'COMBAT_ABILITY') {
+            if (actor.intent.action === 'castAbility' || actor.intent.action === 'COMBAT_ABILITY' || actor.intent.action === 'execute_ability' || actor.intent.action === 'attack') {
                 this.resolveCombatIntent(actor);
             }
         }

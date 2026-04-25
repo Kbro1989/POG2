@@ -22,7 +22,8 @@ export enum LogicalSignature {
     CONSUMABLE_SKILL_STATION = 'CONSUMABLE_SKILL_STATION',
     SPATIAL_SHIFT = 'SPATIAL_SHIFT',
     ENTITY_MANIFEST = 'ENTITY_MANIFEST',
-    PRIVILEGE_ELEVATION = 'PRIVILEGE_ELEVATION'
+    PRIVILEGE_ELEVATION = 'PRIVILEGE_ELEVATION',
+    NPC_DIALOGUE = 'NPC_DIALOGUE'
 }
 export enum SubstrateState {
     ONLINE = 'ONLINE',          // Full actuation and vision OK
@@ -103,11 +104,20 @@ export interface CompositeCondition {
 }
 
 export interface DirectionalCollision {
+    // Walkable directions (true = can walk, false = blocked)
     north: boolean;
     south: boolean;
     east: boolean;
     west: boolean;
+    
+    // NPC-specific constraints (directions that only block NPCs, not players)
     npc_only_blocks?: Direction[];
+    
+    // Explicit blocked flags for API clarity (Derived: !north)
+    northBlocked?: boolean;
+    southBlocked?: boolean;
+    eastBlocked?: boolean;
+    westBlocked?: boolean;
 }
 
 export interface TileCollision {
@@ -127,6 +137,13 @@ export interface CombatantState {
     adrenaline?: number; // 0 - 10000 (0.00% to 100.00%)
     necrosisStacks?: number;
     residualSouls?: number;
+    bloodlustStacks?: number;           // New: Melee stack system (0-8)
+    animaCharged?: boolean;             // New: Magic empower buff
+    searingWindsTicksRemaining?: number; // New: Ranged buff duration
+    shadowImbuedTicksRemaining?: number; // New: Ranged adrenaline buff duration
+    stunCharges?: Record<string, number>; // New: Charge-based stun tracking (abilityId -> count)
+    hp?: number;                        // Current HP for survival heuristics
+    maxHp?: number;                     // Max HP for survival heuristics
     lastCombatTick: number; // Track for rhythm enforcement (e.g. 4-tick)
     cooldowns: Record<string, number>; // abilityId -> tickAvailable
 }
@@ -302,11 +319,34 @@ export interface SovereignAvatar extends NPC {
         pathfinder: any, 
         context: any, 
         collisionMatrix?: Map<string, any>
-    ): Promise<boolean>;
+    ): boolean;
     firstEmptySlot(): number | null;
+    appearanceEra?: 'pre_avatar' | 'transitional' | 'post_avatar';
     appearance?: {
-        bodyColors: [number, number][]; // [original, replacement]
-        gender: 'male' | 'female';
+        legacyAppearanceId?: number;
+        bodyColors?: [number, number][];
+        gender?: 'male' | 'female';
+        composition?: {
+            baseBodyId: number;
+            gender: 'male' | 'female';
+            skinTone: number;
+            hairStyle: number;
+            facialHair?: number;
+            equipment: {
+                head: number | null;
+                cape: number | null;
+                neck: number | null;
+                weapon: number | null;
+                body: number | null;
+                shield: number | null;
+                legs: number | null;
+                hands: number | null;
+                feet: number | null;
+                ring: number | null;
+                ammo: number | null;
+            };
+            chatheadId: number;
+        };
     };
     // Note: interactionState, intent, and lastActionTick are inherited from NPC
 }

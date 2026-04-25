@@ -26,6 +26,8 @@ export class RegistryB implements GroundingHydrator {
     private synthesis: any = {};
     private examineAuthority: any = { items: {}, npcs: {}, objects: {}, principles: {}, varbits: {} };
     private mechanicalRules: Map<number, MechanicalRule> = new Map();
+    private localFragments: Map<string, any> = new Map();
+    private localNpcs: Map<string, any[]> = new Map();
     private initialized = false;
 
     private constructor() {}
@@ -64,6 +66,9 @@ export class RegistryB implements GroundingHydrator {
             if (fs.existsSync(authorityPath)) {
                 this.examineAuthority = JSON.parse(fs.readFileSync(authorityPath, 'utf-8'));
             }
+
+            // Phase 117: Load Breakthrough Local Fragments from public/
+            await this.loadLocalBreakthroughs();
 
             await this.loadMechanicalRules();
 
@@ -109,6 +114,35 @@ export class RegistryB implements GroundingHydrator {
             }
         }
         logger.info({ count: this.mechanicalRules.size }, 'Ingested refilled mechanical rule stubs.');
+    }
+
+    /**
+     * loadLocalBreakthroughs - Scans public/ for ms_ and npcs_ files.
+     */
+    private async loadLocalBreakthroughs(): Promise<void> {
+        const publicDir = path.join(process.cwd(), 'public');
+        if (!fs.existsSync(publicDir)) return;
+
+        const files = fs.readdirSync(publicDir);
+        for (const file of files) {
+            if (file.startsWith('ms_') && file.endsWith('.json')) {
+                const match = file.match(/ms_(\d+)_(\d+)\.json/);
+                if (match) {
+                    const anchor = `m_${match[1]}_${match[2]}`;
+                    const data = JSON.parse(fs.readFileSync(path.join(publicDir, file), 'utf-8'));
+                    this.localFragments.set(anchor, data);
+                    logger.debug({ anchor }, 'Local Breakthrough Fragment loaded.');
+                }
+            } else if (file.startsWith('npcs_') && file.endsWith('.json')) {
+                const match = file.match(/npcs_(\d+)_(\d+)\.json/);
+                if (match) {
+                    const anchor = `m_${match[1]}_${match[2]}`;
+                    const data = JSON.parse(fs.readFileSync(path.join(publicDir, file), 'utf-8'));
+                    this.localNpcs.set(anchor, data);
+                    logger.debug({ anchor, count: data.length }, 'Local Breakthrough NPCs loaded.');
+                }
+            }
+        }
     }
 
     /**
@@ -187,6 +221,22 @@ export class RegistryB implements GroundingHydrator {
                     z.mechanical_rule_ids.forEach((id: number) => foundRules.add(id));
                 }
             }
+        }
+
+        // 2.5 Integrate Local Breakthrough Data (public/ms_ and public/npcs_)
+        const localFragment = this.localFragments.get(anchor);
+        if (localFragment && localFragment.pedagogy?.zones) {
+            for (const zone of localFragment.pedagogy.zones) {
+                customTriggers.push(`LOCAL_ZONE:${zone.internal_name || zone.name}`);
+                if (zone.mechanical_rule_ids) {
+                    zone.mechanical_rule_ids.forEach((id: number) => foundRules.add(id));
+                }
+            }
+        }
+
+        const localNpcList = this.localNpcs.get(anchor);
+        if (localNpcList) {
+            localNpcList.forEach((n: any) => foundNpcs.add(n.npcId));
         }
 
         // 3. Populate from Taxonomic Synthesis (B-side Truth)

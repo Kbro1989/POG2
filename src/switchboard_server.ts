@@ -6,6 +6,7 @@
  */
 
 import { SwitchboardLimb } from './monitor/SwitchboardLimb.js';
+import { rsmvBridge } from './utils/RSMVBridge.js';
 
 const PORT = 8788;
 
@@ -13,6 +14,23 @@ const PORT = 8788;
 const minimalOrchestrator = {
     async run(intent: string) {
         console.log(`[SWITCHBOARD] Received intent: ${intent}`);
+        
+        if (intent.startsWith('GET_LIVE_RSMV')) {
+            const parts = intent.split(' ');
+            const x = parseInt(parts[1] || '3200');
+            const z = parseInt(parts[2] || '3200');
+            const plane = parseInt(parts[3] || '0');
+            
+            console.log(`[SWITCHBOARD] ⚡ Requesting LIVE RSMV Extraction at [${x}, ${z}, ${plane}]`);
+            const result = await rsmvBridge.getCollision(x, z, plane);
+            
+            if (result.ok) {
+                return { ok: true, value: { type: 'LIVE_RSMV', ...result.value }, error: null };
+            } else {
+                return { ok: false, value: null, error: result.error.message };
+            }
+        }
+
         return { ok: true, value: { data: `ACK: ${intent}` }, error: null };
     }
 };

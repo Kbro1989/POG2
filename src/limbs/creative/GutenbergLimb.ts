@@ -1,4 +1,4 @@
-﻿import { type Result, YaoState } from '../../core/models.js';
+import { type Result, YaoState } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { VectorDB } from '../../utils/VectorDB.js';
 import { StyleAnalyzer, type StyleProfile } from '../../utils/StyleAnalyzer.js';
@@ -59,7 +59,8 @@ export class GutenbergLimb {
             return [];
         }
         try {
-            const data = JSON.parse(readFileSync(this.metadataPath, 'utf8'));
+            const rawData = readFileSync(this.metadataPath, 'utf8');
+            const data = JSON.parse(rawData.replace(/^\uFEFF/, ''));
             logger.debug({ count: data.length }, 'Library metadata loaded successfully.');
             return data;
         } catch (err) {

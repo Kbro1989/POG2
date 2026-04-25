@@ -20,7 +20,7 @@ const logger = createLogger('AbilityBook');
 // ═══════════════════════════════════════════════════════
 
 export type CombatStyle = 'melee' | 'ranged' | 'magic' | 'necromancy' | 'defense' | 'movement';
-export type AbilityType = 'basic' | 'threshold' | 'ultimate' | 'special' | 'conjure' | 'action' | 'teleport';
+export type AbilityType = 'basic' | 'enhanced' | 'ultimate' | 'special' | 'conjure' | 'action' | 'teleport';
 
 export interface AbilityGFX {
     spotAnimId: number;
@@ -110,88 +110,80 @@ const GCD = 3; // Global cooldown in ticks
  */
 const COMBAT_PARAMS: Record<string, CombatParams> = {
     // ─── MELEE BASICS ───
-    'Slice':          { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 5, damageRange: [23.6, 118], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
-    'Cleave':         { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 12, damageRange: [37.6, 188], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['aoe'] },
-    'Sever':          { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 25, damageRange: [37.6, 188], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['debuff'] },
-    'Havoc':          { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 17, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
-    'Smash':          { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 17, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['debuff'] },
-    'Dismember':      { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 25, damageRange: [37.6, 188], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
-    'Fury':           { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 9, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: true, channelTicks: 3, flags: [] },
-    'Punish':         { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 5, damageRange: [18.8, 94], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun-buff'] },
-    'Backhand':       { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 25, damageRange: [20, 100], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
-    'Kick':           { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 25, damageRange: [20, 100], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
-    'Decimate':       { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 12, damageRange: [37.6, 188], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+    'Sever':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [37.6, 188], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['debuff'] },
+    'Havoc':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+    'Smash':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['debuff'] },
+    'Dismember':      { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [37.6, 188], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
+    'Fury':           { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: true, channelTicks: 3, flags: [] },
+    'Punish':         { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 5, damageRange: [18.8, 94], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun-buff'] },
+    'Backhand':       { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [20, 100], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
 
-    // ─── MELEE THRESHOLDS ───
-    'Flurry':         { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: true, channelTicks: 6, flags: ['pbaoe'], aoeRadius: 1 },
-    'Hurricane':      { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [42, 210], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['pbaoe'], aoeRadius: 2 },
-    'Destroy':        { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [37.6, 188], range: MELEE_RANGE, isChanneled: true, channelTicks: 8, flags: ['stun'] },
+    // ─── MELEE EMPOWERED (Formerly Thresholds) ───
+    'Flurry':         { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: true, channelTicks: 6, flags: ['pbaoe', 'bloodlust-consumer'], aoeRadius: 1 },
+    'Hurricane':      { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [42, 210], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['pbaoe', 'bloodlust-consumer'], aoeRadius: 2 },
     'Quake':          { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [43.8, 219], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['pbaoe', 'debuff'], aoeRadius: 2 },
     'Slaughter':      { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 50, damageRange: [50, 250], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
+    'Assault':        { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [53, 265], range: MELEE_RANGE, isChanneled: true, channelTicks: 8, flags: ['bloodlust-consumer'] },
 
     // ─── MELEE ULTIMATES ───
     'Overpower':      { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
     'Meteor Strike':  { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['aoe'] },
-    'Berserk':        { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['buff'] },
+    'Berserk':        { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['buff', 'bloodlust-empower'] },
     'Pulverise':      { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
 
     // ─── RANGED BASICS ───
-    'Piercing Shot':  { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 5, damageRange: [18.8, 94], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun-buff'] },
-    'Dazing Shot':    { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 9, damageRange: [31.4, 157], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['debuff'] },
-    'Needle Strike':  { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 9, damageRange: [31.4, 157], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['debuff'] },
-    'Snipe':          { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 17, damageRange: [43.8, 219], range: RANGED_RANGE, isChanneled: true, channelTicks: 6, flags: [] },
-    'Fragmentation Shot': { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 25, damageRange: [37.6, 188], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
-    'Ricochet':       { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 17, damageRange: [20, 100], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['aoe'] },
-    'Binding Shot':   { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 25, damageRange: [20, 100], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
-    'Corruption Shot':{ adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 25, damageRange: [60, 300], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['corruption'] },
+    'Piercing Shot':  { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 5, damageRange: [18.8, 94], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun-buff'] },
+    'Snipe':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [43.8, 219], range: RANGED_RANGE, isChanneled: true, channelTicks: 6, flags: [] },
+    'Fragmentation Shot': { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [37.6, 188], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
+    'Ricochet':       { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [20, 100], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['aoe'] },
+    'Binding Shot':   { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [20, 100], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
+    'Corruption Shot':{ adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [60, 300], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['corruption'] },
+    'Galeshot':       { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 12, damageRange: [31.4, 157], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['searing-winds-trigger'] },
 
-    // ─── RANGED THRESHOLDS ───
+    // ─── RANGED EMPOWERED ───
     'Snap Shot':      { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [53, 265], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
-    'Rapid Fire':     { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [75.2, 376], range: RANGED_RANGE, isChanneled: true, channelTicks: 8, flags: [] },
+    'Rapid Fire':     { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [75.2, 376], range: RANGED_RANGE, isChanneled: true, channelTicks: 8, flags: ['searing-winds-extender'] },
     'Shadow Tendrils':{ adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 75, damageRange: [100, 500], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
     'Bombardment':    { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 50, damageRange: [43.8, 219], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['pbaoe'], aoeRadius: 3 },
-    'Tight Bindings': { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 25, damageRange: [60, 300], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
 
     // ─── RANGED ULTIMATES ───
     "Death's Swiftness": { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['buff'] },
     'Unload':         { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range: RANGED_RANGE, isChanneled: true, channelTicks: 6, flags: [] },
+    'Imbue Shadows':  { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['buff', 'shadow-imbue-trigger'] },
 
     // ─── MAGIC BASICS ───
-    'Wrack':          { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 5, damageRange: [18.8, 94], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun-buff'] },
-    'Dragon Breath':  { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 17, damageRange: [37.6, 188], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['cone'], coneHalfAngle: Math.PI / 4, aoeRadius: 2 },
-    'Sonic Wave':     { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 9, damageRange: [31.4, 157], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['debuff'] },
-    'Concentrated Blast':{ adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 9, damageRange: [31.4, 157], range: MAGIC_RANGE, isChanneled: true, channelTicks: 6, flags: ['debuff'] },
-    'Impact':         { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 25, damageRange: [20, 100], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
-    'Combust':        { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 25, damageRange: [37.6, 188], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
-    'Chain':          { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 17, damageRange: [20, 100], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['chain'], chainCount: 2, aoeRadius: 2 },
-    'Corruption Blast':{ adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 25, damageRange: [60, 300], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['corruption'] },
+    'Dragon Breath':  { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [37.6, 188], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['cone'], coneHalfAngle: Math.PI / 4, aoeRadius: 2 },
+    'Sonic Wave':     { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [31.4, 157], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['debuff', 'anima-trigger'] },
+    'Concentrated Blast':{ adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [31.4, 157], range: MAGIC_RANGE, isChanneled: true, channelTicks: 6, flags: ['debuff', 'anima-trigger'] },
+    'Impact':         { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [20, 100], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
+    'Combust':        { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [37.6, 188], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
+    'Chain':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [20, 100], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['chain'], chainCount: 2, aoeRadius: 2 },
+    'Corruption Blast':{ adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [60, 300], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['corruption'] },
 
-    // ─── MAGIC THRESHOLDS ───
+    // ─── MAGIC EMPOWERED ───
     'Asphyxiate':     { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [37.6, 188], range: MAGIC_RANGE, isChanneled: true, channelTicks: 8, flags: ['stun'] },
     'Wild Magic':     { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [53, 265], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
-    'Deep Impact':    { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 25, damageRange: [40, 200], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
-    'Detonate':       { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 50, damageRange: [50, 300], range: MAGIC_RANGE, isChanneled: true, channelTicks: 6, flags: ['aoe'] },
 
     // ─── MAGIC ULTIMATES ───
     'Sunshine':       { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['buff'] },
     'Omnipower':      { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 50, damageRange: [60, 300], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
 
     // ─── NECROMANCY BASICS ───
-    'Touch of Death': { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 25, damageRange: [40, 200], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
-    'Soul Sap':       { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 5, damageRange: [24, 120], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
-    'Soul Strike':    { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 9, damageRange: [31.4, 157], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
-    'Necrotic Burst': { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 9, damageRange: [37.6, 188], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: ['aoe'] },
+    'Touch of Death': { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [40, 200], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+    'Soul Sap':       { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 5, damageRange: [24, 120], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+    'Soul Strike':    { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [31.4, 157], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+    'Necrotic Burst': { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [37.6, 188], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: ['aoe'] },
     'Command Undead': { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 25, damageRange: [0, 0], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
     'Conjure Undead': { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 50, damageRange: [0, 0], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: ['conjure'] },
 
-    // ─── NECROMANCY THRESHOLDS ───
+    // ─── NECROMANCY EMPOWERED ───
     'Finger of Death':{ adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 25, damageRange: [60, 300], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
     'Volley of Souls':{ adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [50, 250], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
 
     // ─── NECROMANCY ULTIMATES ───
     'Death Skulls':   { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: ['aoe'] },
 
-    // ─── DEFENSE THRESHOLDS ───
+    // ─── DEFENSE EMPOWERED ───
     'Resonance':      { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 50, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['shield', 'heal'] },
     'Devotion':       { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['shield'] },
     'Debilitate':     { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 50, damageRange: [20, 100], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['debuff'] },
@@ -206,7 +198,20 @@ const COMBAT_PARAMS: Record<string, CombatParams> = {
     'Surge':          { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 34, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: [] },
     'Escape':         { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 34, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: [] },
     'Bladed Dive':    { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 34, damageRange: [24, 120], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+    'Eat Food':       { adrenalineCost: 300, adrenalineGain: 0, cooldownTicks: 3, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['heal'] },
 };
+
+// ═══════════════════════════════════════════════════════
+// Registry Type Normalizer
+// Backward-compatibility shim: sovereign_ability_registry.json was generated
+// with the pre-March-2026 "threshold" taxonomy. This maps it to "enhanced"
+// without requiring a mass-edit of the 6500-line JSON.
+// ═══════════════════════════════════════════════════════
+
+function normalizeAbilityType(raw: string): AbilityType {
+    if (raw === 'threshold') return 'enhanced';
+    return raw as AbilityType;
+}
 
 // ═══════════════════════════════════════════════════════
 // Default Parameters for Unparameterized Abilities
@@ -221,8 +226,8 @@ function getDefaultParams(type: AbilityType, style: CombatStyle): CombatParams {
 
     switch (type) {
         case 'basic':
-            return { adrenalineCost: 0, adrenalineGain: 800, cooldownTicks: 5, damageRange: [24, 120], range, isChanneled: false, channelTicks: 0, flags: [] };
-        case 'threshold':
+            return { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 5, damageRange: [24, 120], range, isChanneled: false, channelTicks: 0, flags: [] };
+        case 'enhanced':
             return { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [50, 250], range, isChanneled: false, channelTicks: 0, flags: [] };
         case 'ultimate':
             return { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range, isChanneled: false, channelTicks: 0, flags: [] };
@@ -271,7 +276,7 @@ export class AbilityBook {
             for (const [name, entry] of Object.entries(raw.abilities)) {
                 const id = name.toLowerCase().replace(/[\s()]/g, '_');
                 const style = (entry.style || 'melee') as CombatStyle;
-                const type = (entry.type || 'basic') as AbilityType;
+                const type = normalizeAbilityType(entry.type || 'basic');
                 const params = COMBAT_PARAMS[name] || getDefaultParams(type, style);
 
                 this.abilities.set(id, {
@@ -318,7 +323,7 @@ export class AbilityBook {
                 : 'defense';
             
             let type: AbilityType = 'basic';
-            if (params.adrenalineCost === 1500) type = 'threshold';
+            if (params.adrenalineCost === 1500) type = 'enhanced';
             if (params.adrenalineCost === 10000) type = 'ultimate';
             if (params.flags.includes('conjure')) type = 'conjure';
 
@@ -357,8 +362,8 @@ export class AbilityBook {
         return this.getByStyle(style).filter(a => a.type === 'basic');
     }
 
-    public getThresholds(style: CombatStyle): AbilityDefinition[] {
-        return this.getByStyle(style).filter(a => a.type === 'threshold');
+    public getEnhancedAbilities(style: CombatStyle): AbilityDefinition[] {
+        return this.getByStyle(style).filter(a => a.type === 'enhanced');
     }
 
     public getUltimates(style: CombatStyle): AbilityDefinition[] {

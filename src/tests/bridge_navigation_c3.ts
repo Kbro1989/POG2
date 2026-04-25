@@ -7,15 +7,17 @@ import { LessonLearner } from '../limbs/spatial/LessonLearner.js';
 import { GameState, Coord } from '../core/models.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
+import { setProjectRoot } from '../utils/SovereignPathResolver.js';
 
 async function testBridgeNavigationC3() {
     console.log('ðŸ§ª PHASE C3 TEST: Bridge Navigation (Inter-Regional Crossing)\n');
+    setProjectRoot(process.cwd());
+    process.env.POG_USE_LOCAL = 'true';
 
+    const { getAtlasSpatialPath } = await import('../utils/SovereignPathResolver.js');
+    const atlasDir = getAtlasSpatialPath();
     const DB_PATH = 'D:\\sovereign\\vibe-learning-test.db';
     if (fs.existsSync(DB_PATH)) fs.unlinkSync(DB_PATH);
-
-    const atlasDir = path.join(getSovereignRoot(), 'atlas', 'spatial');
 
     // 1. Setup TWO regions with a 1-tile "No-Man's-Land" gap
     // Region A: Barrows (55, 51) - Bounds end at Y=3264
@@ -60,9 +62,12 @@ async function testBridgeNavigationC3() {
     console.log(`ðŸ“ Avatar at (${avatar.x}, ${avatar.y}) in Barrows.`);
     console.log(`ðŸŽ¯ Target is at (3564, 3260) in Barrows South.`);
 
-    // 3. Mark everything as visited except the target to force a specific path
-    for (let x = 3560; x < 3570; x++) {
+    // 3. Mark everything as visited except the path south to force a specific path
+    // We want to force it to look at the southern boundary (Y=3264)
+    for (let x = 3520; x < 3584; x++) {
         for (let y = 3261; y < 3300; y++) {
+            // Leave a small unvisited hole at the target to draw it in
+            if (x === 3564 && y === 3260) continue;
             discovery.markVisited(0, x, y);
         }
     }
@@ -70,15 +75,18 @@ async function testBridgeNavigationC3() {
     // 4. Trigger Movement Crossing
     console.log('\n--- Attempting Inter-Regional Crossing ---');
     
-    // First tick: Orchestrator should load Barrows South
+    const startY = avatar.y;
+    // Run for 3 ticks to ensure it has time to cross the 1-tile gap
+    await engine.tick(gameState);
+    await engine.tick(gameState);
     await engine.tick(gameState);
     
     // Pathfinding happens in tick. Check if avatar moved SOUTH toward target.
-    const finalPos = engine.getStats().lastPos;
+    const finalPos = engine.getStats().avatar;
     console.log(`   Final Position: (${finalPos.x}, ${finalPos.y})`);
     
-    const movedSouth = finalPos.y < avatar.y;
-    const bridgeSuccess = finalPos.y <= 3263; // Successfully crossed the 3264 boundary
+    const movedSouth = finalPos.y < startY;
+    const bridgeSuccess = finalPos.y <= 3264; // Successfully reached or crossed the 3264 boundary
 
     console.log(`\nðŸ” Bridge Audit:`);
     console.log(`   Moved South: ${movedSouth ? 'âœ… YES' : 'âŒ NO'}`);

@@ -67,6 +67,14 @@ export interface WikiMonsterMeta {
     attackStyle: string;
     members: boolean;
     experience: number;
+    
+    // March 2026 Combat Affinities
+    defence: number;
+    armour: number;
+    affinityMelee: number;
+    affinityRanged: number;
+    affinityMagic: number;
+    affinityNecromancy: number;
 }
 
 export interface WikiDropEntry {
@@ -552,7 +560,15 @@ export class WikiEquipmentEnricher {
             poisonous: this.safeBool(info['poisonous'] || info['poison']),
             attackStyle: info['attack style'] || info['attackstyle'] || info['style'] || 'Melee',
             members: this.safeBool(info['members']),
-            experience: this.safeInt(info['experience'] || info['xp'] || '0')
+            experience: this.safeInt(info['experience'] || info['xp'] || '0'),
+            
+            // March 2026 Combat Affinities
+            defence: this.safeInt(info['defence'] || '0'),
+            armour: this.safeInt(info['armour'] || '0'),
+            affinityMelee: this.safeInt(info['aff_melee'] || '55'),
+            affinityRanged: this.safeInt(info['aff_ranged'] || '55'),
+            affinityMagic: this.safeInt(info['aff_magic'] || '55'),
+            affinityNecromancy: this.safeInt(info['aff_necromancy'] || '55')
         };
     }
 

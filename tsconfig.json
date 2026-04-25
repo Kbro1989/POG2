@@ -22,6 +22,11 @@
     "resources",
     "logs",
     "src/rsmv",
-    "src/rsmv/**"
+    "src/rsmv/**",
+    "src/scripts_backup",
+    "src/tests_backup"
+  ],
+  "references": [
+    { "path": "./src/rsmv" }
   ]
 }

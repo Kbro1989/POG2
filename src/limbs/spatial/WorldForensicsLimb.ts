@@ -4,6 +4,7 @@ import { getRSMVCachePath } from '../../utils/SovereignPathResolver.js';
 import { createLogger } from '../../utils/logger.js';
 import { ByteReader } from '../../utils/ByteReader.js';
 import { getBlockedDirections } from '../../utils/DirectionalRegistry.js';
+import { rsmvBridge } from '../../utils/RSMVBridge.js';
 import fs from 'fs';
 
 const logger = createLogger('WorldForensicsLimb');
@@ -49,7 +50,7 @@ export class WorldForensicsLimb {
     private static instance: WorldForensicsLimb;
     private cache: JagexCacheReader | null = null;
     private readonly cachePath: string;
-    private locationsCache: Map<number, GameObjectInstance[]> = new Map();
+    private locationsCache: Map<string, GameObjectInstance[]> = new Map();
     private objectDefs: Map<number, ObjectDefinition> = new Map();
 
     private constructor() {
@@ -95,8 +96,9 @@ export class WorldForensicsLimb {
         );
 
         // --- PHASE 43.8: JSON-FIRST SOVEREIGNTY ---
-        const jsonPath = `D:\\sovereign\\atlas\\spatial\\world_extract\\ms_${mapsquareX}_${mapsquareZ}.json`;
-        
+        const jsonPath = getRSMVCachePath().replace(/\\/g, '/').replace('cache_pedagogy/rsmv', `atlas/spatial/world_extract/ms_${mapsquareX}_${mapsquareZ}.json`);
+        // We do not have resolveSovereignPath imported in WorldForensicsLimb, so we derive it from getRSMVCachePath or we can import it.
+        // Wait, let's just import resolveSovereignPath or use a safe derivation.
         try {
             if (fs.existsSync(jsonPath)) {
                 const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
@@ -153,82 +155,32 @@ export class WorldForensicsLimb {
             console.log(`[WorldForensicsLimb] JSON Truth error for [${mapsquareX},${mapsquareZ}]:`, e);
         }
 
-        // --- CACHE FALLBACK: NXT Format (mapsquare_tiles_nxt.jsonc) ---
-        // Per mapsquare_tiles_nxt.jsonc from Kbro1989/rsmv:
-        //   4 levels × 4356 (66×66) tiles, each tile = struct {
-        //     flags: ubyte   → bit0=visible/has_rest, bit1=blocking(0x02), bit2=bridge, bit3=roofed, bit4=water
-        //     height: ushort (buildnr >= 936)
-        //     rest: [conditional on flags bit 0] {
-        //       waterheight: ushort (if flags & 0x10)
-        //       underlay: ushort
-        //       overlay: ushort
-        //       shape: ubyte
-        //     }
-        //   }
-        if (!this.cache) return err(new Error('Limb not initialized'));
-        const fileId = (mapsquareX << 8) | mapsquareZ;
-        const terrain = this.cache.readSubEntry(5, fileId, 3); 
-        
-        if (!terrain) {
-            return err(new Error(`Mapsquare terrain data missing for [${mapsquareX}, ${mapsquareZ}] (Sub 3 ID: ${fileId})`));
-        }
-
-        const reader = new ByteReader(terrain);
-
-        // NXT header: "JAGX\x01" (4 bytes magic + 1 byte version) for buildnr >= 936
-        if (terrain.length > 5 && terrain.slice(0, 4).toString() === 'JAGX') {
-            reader.skip(5); // Skip magic (4) + version (1)
-        }
-
-        // 4 levels: level0, level1, level2, level3
-        for (let level = 0; level < 4; level++) {
-            // 4356 tiles per level (66 × 66 = padded mapsquare)
-            for (let i = 0; i < 4356; i++) {
-                if (!reader.hasRemaining()) break;
-
-                const flags = reader.readU8();
-                const height = reader.readU16(); // ushort for buildnr >= 936
-
-                // "rest" data: present when flags bit 0 is set
-                if (flags & 0x01) {
-                    // waterheight: present when flags bit 4 (0x10) is set
-                    if (flags & 0x10) {
-                        reader.readU16(); // waterheight (ushort for buildnr >= 936)
-                    }
-                    reader.readU16(); // underlay (ushort for buildnr >= 936)
-                    reader.readU16(); // overlay (ushort for buildnr >= 936)
-                    reader.readU8();  // shape (ubyte)
-                }
-
-                // Map padded 66×66 index to (tx, tz) coordinates
-                const tx = Math.floor(i / 66); // column within the 66-wide row
-                const tz = i % 66;             // row position
-
-                // Core playable tiles are at padded indices [1..64].
-                // Index 0 and 65 are neighbor-bleed padding.
-                if (tx >= 1 && tx <= 64 && tz >= 1 && tz <= 64) {
-                    const coreX = tx - 1; // 0-63 in world-local space
-                    const coreZ = tz - 1; // 0-63 in world-local space
-
-                    // NXT Blocking: bit 1 (0x02) is the authoritative blocking flag
-                    grid[level][coreX][coreZ] = (flags & 0x02) !== 0 ? 1 : 0;
-
-                    if (level === plane) {
-                        const worldX = (mapsquareX << 6) + coreX;
-                        const worldZ = (mapsquareZ << 6) + coreZ;
-                        observations.push({
-                            x: worldX,
-                            z: worldZ,
-                            plane: level,
-                            collision: grid[level][coreX][coreZ],
-                            objects: []
-                        });
-                    }
-                }
+        // --- CACHE FALLBACK: RSMVBridge Collision Probing ---
+        const bridgeRes = await rsmvBridge.getCollision(mapsquareX << 6, mapsquareZ << 6, plane);
+        if (bridgeRes.ok) {
+            const { data } = bridgeRes.value;
+            // Bridge returns 5 shorts per tile: [h00, h01, h10, h11, collision3]
+            for (let i = 0; i < 64 * 64; i++) {
+                const tx = Math.floor(i / 64);
+                const tz = i % 64;
+                const col3 = data[i * 5 + 4];
+                // col3 is base-3: center is bits 0..1 (value 0=pass, 1=block, 2=sight)
+                // We want bits 0..1 for blocking.
+                const centerVal = col3 % 3;
+                grid[plane][tx + 1][tz + 1] = (centerVal === 1 || centerVal === 2) ? 1 : 0;
+                
+                observations.push({
+                    x: (mapsquareX << 6) + tx,
+                    z: (mapsquareZ << 6) + tz,
+                    plane: plane,
+                    collision: grid[plane][tx + 1][tz + 1],
+                    objects: []
+                });
             }
+            return ok(observations);
         }
 
-        return ok(observations);
+        return err(new Error(`Mapsquare terrain data missing for [${mapsquareX}, ${mapsquareZ}] and RSMVBridge failed.`));
     }
 
     /**
@@ -246,13 +198,14 @@ export class WorldForensicsLimb {
      */
     public async senseLocations(mapsquareX: number, mapsquareZ: number, plane: number): Promise<Result<GameObjectInstance[]>> {
         if (!this.cache) return err(new Error('Limb not initialized'));
-        const mapsquareId = (mapsquareX << 8) | mapsquareZ;
+        const cacheKey = `${mapsquareX}_${mapsquareZ}`;
+        const fileId = (mapsquareX << 8) | mapsquareZ;
         
-        if (this.locationsCache.has(mapsquareId)) {
-            return ok(this.locationsCache.get(mapsquareId)!.filter(l => l.plane === plane));
+        if (this.locationsCache.has(cacheKey)) {
+            return ok(this.locationsCache.get(cacheKey)!.filter(l => l.plane === plane));
         }
 
-        const buffer = this.cache.readSubEntry(5, mapsquareId, 0); // Sub 0 = Locations
+        const buffer = this.cache.readSubEntry(5, fileId, 0); // Sub 0 = Locations
         if (!buffer || buffer.length === 0) return ok([]);
 
         const reader = new ByteReader(buffer);
@@ -302,7 +255,7 @@ export class WorldForensicsLimb {
             }
         }
 
-        this.locationsCache.set(mapsquareId, instances);
+        this.locationsCache.set(cacheKey, instances);
         return ok(instances.filter(l => l.plane === plane));
     }
 
@@ -329,93 +282,32 @@ export class WorldForensicsLimb {
      */
     public async getObjectDefinition(id: number): Promise<ObjectDefinition> {
         if (this.objectDefs.has(id)) {
-            // logger.info({ id }, 'Forensics - Found definition in Map.');
             return this.objectDefs.get(id)!;
         }
         
-        if (!this.cache) {
-            logger.warn({ id }, 'Forensics - Attempted definition lookup without initialized cache. Returning fallback.');
-            return { id, name: `Object ${id}`, type: 0, blocksMovement: false, blocksSight: false, width: 1, length: 1 };
+        const bridgeRes = await rsmvBridge.getObject(id);
+        if (bridgeRes.ok) {
+            const b = bridgeRes.value;
+            const def: ObjectDefinition = {
+                id: b.id,
+                name: b.name,
+                type: 10,
+                width: b.sizeX || 1,
+                length: b.sizeZ || 1,
+                blocksMovement: !b.probably_nocollision,
+                blocksSight: false,
+                maybe_blocks_movement: b.maybe_blocks_movement,
+                actions: b.actions,
+                varbitId: b.raw.varbit,
+                varpId: b.raw.varp,
+                transforms: b.raw.transforms,
+                defaultTransformId: b.raw.defaultTransformId
+            };
+            this.objectDefs.set(id, def);
+            return def;
         }
 
-        const def: ObjectDefinition = {
-            id,
-            name: 'Object',
-            type: 10, // Default solid
-            width: 1,
-            length: 1,
-            blocksMovement: true,
-            blocksSight: false
-        };
-
-        const entry = this.cache.readEntry(16, id);
-        if (!entry || !entry.decompressed) return def;
-
-        const reader = new ByteReader(entry.decompressed);
-        while (reader.hasRemaining()) {
-            const opcode = reader.readU8();
-            if (opcode === 0) break;
-
-            switch (opcode) {
-                case 1: reader.readU8(); break;
-                case 2: def.name = "parsed_object"; break; 
-                case 14: def.width = reader.readU8(); break;
-                case 15: def.length = reader.readU8(); break;
-                case 17: def.blocksMovement = false; break;
-                case 18: def.blocksMovement = false; break;
-                case 19: reader.readU8(); break;
-                case 27: def.type = 1; break;
-                case 28: reader.readU8(); break;
-                case 30:
-                case 31:
-                case 32:
-                case 33:
-                case 34: {
-                    if (!def.actions) def.actions = [];
-                    const action = reader.readString();
-                    if (action.toLowerCase() !== 'hidden') {
-                        def.actions[opcode - 30] = action;
-                    }
-                    break;
-                }
-                case 60: reader.readU16(); break;
-                case 77: { // Varbit Transformation
-                    def.varbitId = reader.readU16();
-                    if (def.varbitId === 0xFFFF) def.varbitId = -1;
-                    def.varpId = reader.readU16();
-                    if (def.varpId === 0xFFFF) def.varpId = -1;
-                    def.defaultTransformId = reader.readU16();
-                    if (def.defaultTransformId === 0xFFFF) def.defaultTransformId = -1;
-                    const count = reader.readU8();
-                    def.transforms = [];
-                    for (let i = 0; i <= count; i++) {
-                        const tid = reader.readU16();
-                        def.transforms.push(tid === 0xFFFF ? -1 : tid);
-                    }
-                    break;
-                }
-                case 92: { // Varp Transformation (Alternative)
-                    def.varbitId = reader.readU16();
-                    if (def.varbitId === 0xFFFF) def.varbitId = -1;
-                    def.varpId = reader.readU16();
-                    if (def.varpId === 0xFFFF) def.varpId = -1;
-                    def.defaultTransformId = reader.readU16();
-                    if (def.defaultTransformId === 0xFFFF) def.defaultTransformId = -1;
-                    const count = reader.readU8();
-                    def.transforms = [];
-                    for (let i = 0; i <= count; i++) {
-                        const tid = reader.readU16();
-                        def.transforms.push(tid === 0xFFFF ? -1 : tid);
-                    }
-                    break;
-                }
-                case 163: reader.readU8(); reader.readU8(); reader.readU8(); reader.readU8(); break;
-                default: break;
-            }
-        }
-
-        this.objectDefs.set(id, def);
-        return def;
+        return { id, name: `Object ${id}`, type: 0, blocksMovement: false, blocksSight: false, width: 1, length: 1 };
     }
 
     /**

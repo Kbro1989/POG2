@@ -1,7 +1,7 @@
 /**
  * CombatRotationEngine.ts
  * 
- * Archetype-driven combat rotation evaluator.
+ * March 2026 Modernized combat rotation evaluator.
  * Given a combatant's state + target, returns the optimal next ability.
  * 
  * Constraint pipeline per ability:
@@ -10,12 +10,16 @@
  *  3. Does attacker have enough adrenaline?
  *  4. Is attacker locked? (channeling)
  *  5. Is target stun-immune? (prevents wasted stun GCDs)
+ *  6. Stack/buff gating (Bloodlust, Anima, Searing Winds, Shadow Imbued)
+ * 
+ * Damage model: Logarithmic scaling (March 2026)
+ *   baseDamage = 145 * weaponTier * ln(1 + 0.6 * level / 145) / ln(1.6)
  * 
  * Archetype priority chains:
- *  - aggressive: Ultimate → Threshold → Basic
- *  - methodical: Debuff → Threshold → Basic
- *  - cowardly:   Defensive ultimate → Defensive threshold → Basic → (flee)
- *  - predator:   Stun → Channeled threshold → Basic
+ *  - aggressive: Ultimate → Enhanced → Basic (promotes buff-window consumers)
+ *  - methodical: Debuff → Enhanced → Basic
+ *  - cowardly:   Eat Food → Defensive ultimate → Defensive enhanced → Basic → (flee)
+ *  - predator:   Stun → Channeled enhanced → Basic
  */
 
 import { AbilityBook, AbilityDefinition, CombatStyle } from './AbilityBook.js';
@@ -46,6 +50,8 @@ export interface CombatEvaluationContext {
     combatStyle: CombatStyle;
     /** Archetype driving priority chain */
     archetype: TacticalArchetype;
+    /** Attacker's full state for stack/buff checks */
+    state: CombatantState;
 }
 
 export interface TargetContext {
@@ -114,6 +120,21 @@ export class CombatRotationEngine {
         // Gate 3: Target alive
         if (target.currentHp <= 0) {
             return null;
+        }
+
+        // Gate 4: Survival (Eat food if HP < 40%)
+        if (ctx.state.hp && ctx.state.maxHp && (ctx.state.hp / ctx.state.maxHp) < 0.4) {
+            const food = this.book.getByName('Eat Food'); // Assuming 'Eat Food' is in the book
+            if (food && this.passesConstraints(food, ctx, target)) {
+                return {
+                    action: 'execute_ability',
+                    abilityId: food.id,
+                    abilityName: food.name,
+                    targetId: 'self',
+                    tickStarted: ctx.currentTick,
+                    contextHash: 'survival_heal',
+                };
+            }
         }
 
         // Get prioritized ability list based on archetype
@@ -209,15 +230,20 @@ export class CombatRotationEngine {
     }
 
     /**
-     * aggressive: Ultimate (if 100%) → Threshold (if 50%) → Basic
+     * aggressive: Ultimate → Enhanced → Basic
      * Dumps adrenaline as fast as possible into highest-damage abilities.
+     * March 2026: Promotes buff-window consumers when buffs are active.
      */
     private buildAggressiveList(ctx: CombatEvaluationContext): AbilityDefinition[] {
         const ults = this.book.getUltimates(ctx.combatStyle);
-        const thresholds = this.book.getThresholds(ctx.combatStyle);
+        const enhanced = this.book.getEnhancedAbilities(ctx.combatStyle);
         const basics = this.book.getBasics(ctx.combatStyle);
 
-        return [...ults, ...thresholds, ...basics];
+        // March 2026: Promote buff-window consumers when a buff is active
+        const buffConsumers = this.getActiveBuffConsumers(ctx, [...ults, ...enhanced, ...basics]);
+        const nonConsumers = [...ults, ...enhanced, ...basics].filter(a => !buffConsumers.includes(a));
+
+        return [...buffConsumers, ...nonConsumers];
     }
 
     /**
@@ -229,11 +255,11 @@ export class CombatRotationEngine {
         
         // Debuffs first
         const debuffs = all.filter(a => a.flags.includes('debuff'));
-        const thresholds = all.filter(a => a.type === 'threshold' && !a.flags.includes('debuff'));
+        const enhanced = all.filter(a => a.type === 'enhanced' && !a.flags.includes('debuff'));
         const basics = all.filter(a => a.type === 'basic' && !a.flags.includes('debuff'));
         const ults = all.filter(a => a.type === 'ultimate');
 
-        return [...debuffs, ...thresholds, ...basics, ...ults];
+        return [...debuffs, ...enhanced, ...basics, ...ults];
     }
 
     /**
@@ -243,10 +269,10 @@ export class CombatRotationEngine {
     private buildCowardlyList(ctx: CombatEvaluationContext): AbilityDefinition[] {
         const defensives = this.book.getDefensiveAbilities();
         const defUlts = defensives.filter(a => a.type === 'ultimate');
-        const defThresholds = defensives.filter(a => a.type === 'threshold');
+        const defEnhanced = defensives.filter(a => a.type === 'enhanced');
         const basics = this.book.getBasics(ctx.combatStyle);
 
-        return [...defUlts, ...defThresholds, ...basics];
+        return [...defUlts, ...defEnhanced, ...basics];
     }
 
     /**
@@ -260,11 +286,11 @@ export class CombatRotationEngine {
         const stuns = target.stunImmunityEndTick <= ctx.currentTick
             ? all.filter(a => a.flags.includes('stun'))
             : [];
-        const channels = all.filter(a => a.isChanneled && a.type === 'threshold');
-        const thresholds = all.filter(a => a.type === 'threshold' && !a.isChanneled && !a.flags.includes('stun'));
+        const channels = all.filter(a => a.isChanneled && a.type === 'enhanced');
+        const enhanced = all.filter(a => a.type === 'enhanced' && !a.isChanneled && !a.flags.includes('stun'));
         const basics = all.filter(a => a.type === 'basic' && !a.flags.includes('stun'));
 
-        return [...stuns, ...channels, ...thresholds, ...basics];
+        return [...stuns, ...channels, ...enhanced, ...basics];
     }
 
     // ═══════════════════════════════════════════════════════
@@ -294,7 +320,68 @@ export class CombatRotationEngine {
             return false;
         }
 
+        // 5. Stack-aware routing (March 2026 Paradigm)
+        if (ability.flags.includes('bloodlust-consumer')) {
+            const stacks = ctx.state.bloodlustStacks || 0;
+            // Enhanced abilities require a minimum of 4 stacks for optimal throughput
+            if (stacks < 4) return false;
+        }
+
+        if (ability.flags.includes('anima-consumer')) {
+            if (!ctx.state.animaCharged) return false;
+        }
+
+        // 6. Searing Winds: Only allow searing-winds-extender abilities during active Searing Winds
+        if (ability.flags.includes('searing-winds-extender')) {
+            if ((ctx.state.searingWindsTicksRemaining || 0) <= 0) {
+                // Not forbidden, but deprioritized — handled in priority builders
+            }
+        }
+
         return true;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // Buff Window Awareness (March 2026)
+    // ═══════════════════════════════════════════════════════
+
+    /**
+     * Returns abilities from the candidate list that consume an active buff.
+     * These should be promoted to the front of the priority queue to maximize
+     * damage within limited buff windows.
+     */
+    private getActiveBuffConsumers(ctx: CombatEvaluationContext, candidates: AbilityDefinition[]): AbilityDefinition[] {
+        const promoted: AbilityDefinition[] = [];
+
+        const hasBloodlust = (ctx.state.bloodlustStacks || 0) >= 4;
+        const hasAnima = !!ctx.state.animaCharged;
+        const hasSearingWinds = (ctx.state.searingWindsTicksRemaining || 0) > 0;
+        const hasShadowImbued = (ctx.state.shadowImbuedTicksRemaining || 0) > 0;
+
+        for (const ability of candidates) {
+            // Melee: Bloodlust consumers promoted when stacks are high
+            if (hasBloodlust && ability.flags.includes('bloodlust-consumer')) {
+                promoted.push(ability);
+                continue;
+            }
+            // Magic: Anima consumers promoted when charged
+            if (hasAnima && ability.flags.includes('anima-consumer')) {
+                promoted.push(ability);
+                continue;
+            }
+            // Ranged: Searing Winds extenders promoted during active window
+            if (hasSearingWinds && ability.flags.includes('searing-winds-extender')) {
+                promoted.push(ability);
+                continue;
+            }
+            // Ranged: Shadow Imbued makes adrenaline-spending abilities more efficient
+            if (hasShadowImbued && ability.adrenalineCost > 0 && ctx.combatStyle === 'ranged') {
+                promoted.push(ability);
+                continue;
+            }
+        }
+
+        return promoted;
     }
 
     // ═══════════════════════════════════════════════════════
@@ -302,13 +389,68 @@ export class CombatRotationEngine {
     // ═══════════════════════════════════════════════════════
 
     /**
-     * Calculate damage for an ability hit.
-     * Simplified formula: weaponDamage * random(min%, max%).
+     * Calculate base damage at a given combat level.
+     * March 2026: Logarithmic scaling replaces linear (2.5 × level).
+     * Formula: 145 × weaponTier × ln(1 + 0.6 × level / 145) / ln(1.6)
+     * 
+     * @param level       Combat skill level (1–120)
+     * @param weaponTier  Weapon tier (1–95+)
+     * @returns Base damage value before ability % modifiers
      */
-    public calculateDamage(ability: AbilityDefinition, weaponDamage: number): number {
+    public static logarithmicBaseDamage(level: number, weaponTier: number): number {
+        return Math.floor(
+            145 * weaponTier * Math.log(1 + 0.6 * level / 145) / Math.log(1.6)
+        );
+    }
+
+    /**
+     * Calculate damage for an ability hit.
+     * March 2026: Uses logarithmic base damage instead of linear.
+     * 
+     * @param ability      The ability being fired
+     * @param level        Attacker's combat skill level (1–120)
+     * @param weaponTier   Weapon tier (1–95+)
+     * @param buffState    Optional active buff multipliers
+     */
+    public calculateDamage(
+        ability: AbilityDefinition,
+        level: number,
+        weaponTier: number,
+        buffState?: { bloodlustStacks?: number; animaCharged?: boolean; shadowImbued?: boolean }
+    ): number {
         const [minPct, maxPct] = ability.damageRange;
         if (minPct === 0 && maxPct === 0) return 0; // Buff/defensive, no damage
 
+        const baseDamage = CombatRotationEngine.logarithmicBaseDamage(level, weaponTier);
+        const pct = minPct + Math.random() * (maxPct - minPct);
+        let damage = Math.floor(baseDamage * (pct / 100));
+
+        // Buff multipliers (March 2026)
+        if (buffState) {
+            // Bloodlust: Each stack adds 2.5% damage, consumed on enhanced ability use
+            if (buffState.bloodlustStacks && ability.flags.includes('bloodlust-consumer')) {
+                damage = Math.floor(damage * (1 + buffState.bloodlustStacks * 0.025));
+            }
+            // Anima Charged: 10% bonus on next magic ability
+            if (buffState.animaCharged && ability.style === 'magic') {
+                damage = Math.floor(damage * 1.10);
+            }
+            // Shadow Imbued: 5% bonus to ranged abilities during active window
+            if (buffState.shadowImbued && ability.style === 'ranged') {
+                damage = Math.floor(damage * 1.05);
+            }
+        }
+
+        return damage;
+    }
+
+    /**
+     * @deprecated Use calculateDamage(ability, level, weaponTier) instead.
+     * Legacy linear damage for backward compatibility during transition.
+     */
+    public calculateDamageLinear(ability: AbilityDefinition, weaponDamage: number): number {
+        const [minPct, maxPct] = ability.damageRange;
+        if (minPct === 0 && maxPct === 0) return 0;
         const pct = minPct + Math.random() * (maxPct - minPct);
         return Math.floor(weaponDamage * (pct / 100));
     }
@@ -317,7 +459,7 @@ export class CombatRotationEngine {
         const bookHealth = this.book.healthCheck();
         return {
             online: bookHealth.online,
-            details: `CombatRotationEngine: ${bookHealth.loaded} abilities available. Ready for rotation evaluation.`
+            details: `CombatRotationEngine [March2026]: ${bookHealth.loaded} abilities, logarithmic damage, buff-window routing.`
         };
     }
 }

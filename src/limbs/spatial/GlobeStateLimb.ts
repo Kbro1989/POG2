@@ -57,17 +57,25 @@ export class GlobeStateLimb {
         this.state.lastSync = Date.now();
 
         if (this.ws?.readyState === WebSocket.OPEN) {
-            // Strip large payloads if needed, or send the whole event envelope
-            this.ws.send(JSON.stringify({
-                type: 'event',
+            // Phase 19: Stream full envelope for visualization-critical events
+            const isVisualEvent = event.type === 'entity_spawn' || 
+                                 event.type === 'direct_perception' || 
+                                 event.type === 'telemetry';
+
+            const packet = {
+                type: event.type, // Use the actual event type for the globe dispatcher
                 id: event.id,
                 eventType: event.type,
                 source: event.source,
                 traceId: event.traceId,
                 timestamp: event.timestamp,
-                // Include latency if it's a metric or embedded in payload
+                payload: isVisualEvent ? event.payload : undefined,
                 latency: event.payload?.latencyMs,
-            }), (err: any) => { if (err) logger.debug({ err }, 'Failed to stream telemetry packet'); });
+            };
+
+            this.ws.send(JSON.stringify(packet), (err: any) => { 
+                if (err) logger.debug({ err }, 'Failed to stream telemetry packet'); 
+            });
         }
     }
 

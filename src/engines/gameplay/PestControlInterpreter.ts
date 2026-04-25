@@ -85,7 +85,7 @@ export class PestControlInterpreter implements GameplayModule {
                 let success = false;
                 const goal = { x: 2657, y: 2639 }; // Placeholder coordinates
                 if (avatar.plotPath) {
-                    success = await avatar.plotPath(goal.x, goal.y, null, state);
+                    success = avatar.plotPath(goal.x, goal.y, null, state);
                 }
             }
 

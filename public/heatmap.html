@@ -199,6 +199,7 @@
   </select></label>
   <label style="color:#00ffff"><input type="checkbox" id="compositeMode" onchange="render(currentData, parseInt(document.getElementById('plane').value), currentScale)"> Composite Radar</label>
   <button onclick="loadChunk()">Load Chunk</button>
+  <button id="btn-live" style="background: linear-gradient(135deg, #6b1a1a, #4a0f0f); border-color: #8a2a2a;" onclick="liveExtract()">Live Extract</button>
   <input type="file" id="filePicker" accept=".json" style="display:none">
   <button onclick="document.getElementById('filePicker').click()">Load File</button>
 </div>
@@ -247,10 +248,82 @@ if (window.location.protocol === 'file:') {
 
 let currentData = null;
 let currentScale = 8;
+let currentSize = 66; // NXT default, adapted per-chunk in render()
 let tileGrid = null; // [x][z] = { collision, height, overlay, underlay }
 let objectGrid = null; // [x][z] = [objectDef, ...]
 let layers = { npcs: true, zones: true, quests: true, terrain: true, height: false };
 let varbitState = {}; // id -> value
+let ws = null;
+
+function connectWS() {
+  const wsUrl = `ws://${window.location.hostname}:${window.location.port}`;
+  ws = new WebSocket(wsUrl);
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (data.type === 'result' && data.value && data.value.type === 'LIVE_RSMV') {
+      handleLiveRSMV(data.value);
+    }
+  };
+  ws.onopen = () => { document.getElementById('status').textContent = 'Pulse Link: ACTIVE'; };
+  ws.onclose = () => { 
+    document.getElementById('status').textContent = 'Pulse Link: LOST';
+    setTimeout(connectWS, 2000); 
+  };
+}
+connectWS();
+
+function liveExtract() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    alert("Switchboard Bridge not connected!");
+    return;
+  }
+  const cx = parseInt(document.getElementById('cx').value);
+  const cz = parseInt(document.getElementById('cz').value);
+  const plane = parseInt(document.getElementById('plane').value);
+  
+  const worldX = cx * 64;
+  const worldZ = cz * 64;
+  
+  document.getElementById('status').textContent = `Requesting Live Extraction at [${worldX}, ${worldZ}]...`;
+  ws.send(JSON.stringify({ type: 'command', intent: `GET_LIVE_RSMV ${worldX} ${worldZ} ${plane}` }));
+}
+
+function handleLiveRSMV(liveData) {
+  document.getElementById('status').textContent = `Live Data Received for [${liveData.x}, ${liveData.z}]`;
+  
+  // Convert Live format to heatmap format
+  const size = liveData.xsize;
+  const tileFlags = [];
+  const entriesPerTile = 5; // [h00, h01, h10, h11, col3]
+  
+  for (let i = 0; i < size * size; i++) {
+    const col3 = liveData.data[i * entriesPerTile + 4];
+    const h00 = liveData.data[i * entriesPerTile + 0];
+    
+    // Map base-3 col3 to bitmask (bit 1 = blocked)
+    const centerVal = col3 % 3;
+    const collision = (centerVal === 1 || centerVal === 2) ? 2 : 0;
+    
+    tileFlags.push({
+      collision: collision,
+      height: h00,
+      x: Math.floor(i / size),
+      z: i % size
+    });
+  }
+  
+  const mappedData = {
+    tileFlags: tileFlags,
+    worldX: liveData.x,
+    worldZ: liveData.z,
+    chunkX: liveData.x >> 6,
+    chunkZ: liveData.z >> 6,
+    objectDefs: {},
+    objects: []
+  };
+  
+  render(mappedData, 0, currentScale);
+}
 
 function toggleLayer(name) {
   layers[name] = !layers[name];
@@ -308,6 +381,7 @@ function render(data, planeIdx, scale) {
   // ADAPTIVE GRID SIZING (RS3 64x64 vs NXT 66x66)
   const tilesTotal = data.tileFlags.length;
   const size = tilesTotal >= 17424 ? 66 : 64;
+  currentSize = size;
   const tilesPerPlane = size * size;
   
   canvas.width = size * scale;
@@ -475,7 +549,7 @@ function render(data, planeIdx, scale) {
           const w = (b.src.xend - b.src.xstart) + 1;
           const h = (b.src.zend - b.src.zstart) + 1;
           // Flip Y/Z: world Z is north, canvas Y is down
-          const canvasY = (64 - (z + h)) * scale;
+          const canvasY = (currentSize - 2 - (z + h)) * scale;
           ctx.strokeRect(x * scale, canvasY, w * scale, h * scale);
           ctx.fillStyle = 'rgba(81, 255, 255, 0.1)';
           ctx.fillRect(x * scale, canvasY, w * scale, h * scale);
@@ -496,7 +570,7 @@ function render(data, planeIdx, scale) {
       
       // Calculate canvas coordinates
       const px = lx * scale + (scale / 2);
-      const py = (63 - lz) * scale + (scale / 2);
+      const py = (currentSize - 1 - lz) * scale + (scale / 2);
 
       // Pulse Glow
       const time = Date.now() / 1000;
@@ -532,7 +606,7 @@ canvas.addEventListener('click', (e) => {
   const px = e.clientX - rect.left;
   const py = e.clientY - rect.top;
   
-  const size = 64;
+  const size = currentSize;
   const scale = currentScale;
   
   const tx = Math.floor(px / scale);
@@ -582,9 +656,9 @@ canvas.addEventListener('mousemove', (e) => {
   const mx = e.clientX - rect.left;
   const my = e.clientY - rect.top;
   const tx = Math.floor(mx / currentScale);
-  const tz = 63 - Math.floor(my / currentScale); // flip
+  const tz = currentSize - 1 - Math.floor(my / currentScale); // flip
 
-  if (tx < 0 || tx >= 64 || tz < 0 || tz >= 64) {
+  if (tx < 0 || tx >= currentSize || tz < 0 || tz >= currentSize) {
     tooltip.style.display = 'none';
     return;
   }
@@ -657,8 +731,9 @@ async function loadChunk() {
 
     if (!resp.ok) {
         if (resp.status === 404) {
-            console.log(`%c[SOVEREIGN] Chunk ${filename} is not currently indexed. (Void)`, "color: #ff9d00");
-            document.getElementById('status').textContent = `Chunk ${filename} is Void.`;
+            console.log(`%c[SOVEREIGN] Chunk ${filename} is not currently indexed. (Void) — Attempting Live Extraction.`, "color: #ff9d00");
+            document.getElementById('status').textContent = `Chunk ${filename} is Void. Triggering LIVE...`;
+            liveExtract();
             return;
         }
         throw new Error(`${filename} failed: ${resp.status}`);

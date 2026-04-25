@@ -1,4 +1,4 @@
-﻿import { Result } from '../../core/models.js';
+import { Result } from '../../core/models.js';
 import { createLogger } from '../../utils/logger.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -177,4 +177,165 @@ export class WikiReconciliationLimb {
             return { ok: false, error: error as Error };
         }
     }
+
+    // ════════════════════════════════════════════════════════════
+    // Abilities Substrate (March 2026 Combat Modernisation)
+    // Uses MediaWiki parse API to extract canonical ability taxonomy.
+    // ════════════════════════════════════════════════════════════
+
+    /**
+     * Ability type classification as defined by the RS Wiki.
+     * Reflects the March 2026 paradigm: "Threshold" renamed to "Enhanced".
+     */
+    public readonly WIKI_ABILITY_TYPES = {
+        BASIC:    'basic',
+        ENHANCED: 'enhanced',    // Was "threshold" pre-March 2026
+        ULTIMATE: 'ultimate',
+        PASSIVE:  'passive',
+        UTILITY:  'utility',
+        SPECIAL:  'special',
+    } as const;
+
+    /**
+     * Adrenaline rules sourced directly from the wiki (March 2026 update).
+     * These are the ground-truth values we validate COMBAT_PARAMS against.
+     */
+    public readonly WIKI_ADRENALINE_RULES = {
+        BASIC_GEN_PCT:       9,    // All basics generate 9% (900/10000)
+        ENHANCED_COST_PCT:   null, // Variable per ability (no longer fixed 50%)
+        THRESHOLD_COST_PCT:  50,   // Legacy: pre-March 2026 fixed cost
+        THRESHOLD_DRAIN_PCT: 15,   // Legacy: pre-March 2026 fixed drain
+        ULTIMATE_60_PCT:     60,   // Some ultimates require 60%
+        ULTIMATE_100_PCT:    100,  // Most ultimates require 100%
+        GCD_TICKS:           3,    // Global cooldown: 3 ticks = 1.8s (unified March 2026)
+    } as const;
+
+    /**
+     * fetchAbilitiesData — Pulls the canonical Abilities page wikitext via MediaWiki parse API.
+     * Extracts: ability type taxonomy, adrenaline rules, update history.
+     * 
+     * Rate-limited via the existing applyRateLimit() infrastructure.
+     */
+    public async fetchAbilitiesData(): Promise<Result<WikiAbilitiesData>> {
+        try {
+            logger.info('Fetching RS Wiki Abilities taxonomy (March 2026 paradigm)...');
+            const data = await this.softFetch({
+                action: 'parse',
+                page: 'Abilities',
+                prop: 'wikitext',
+            });
+
+            if (!data?.parse?.wikitext?.['*']) {
+                return { ok: false, error: new Error('Wiki API returned empty wikitext for Abilities page.') };
+            }
+
+            const wikitext: string = data.parse.wikitext['*'];
+            const parsed = this.parseAbilitiesWikitext(wikitext);
+
+            logger.info({
+                typeCount: parsed.abilityTypes.length,
+                adrenalineRules: parsed.adrenalineRules,
+            }, 'Abilities wiki data extracted.');
+
+            return { ok: true, value: parsed };
+
+        } catch (error) {
+            logger.error({ error }, 'Failed to fetch Abilities wiki data.');
+            return { ok: false, error: error as Error };
+        }
+    }
+
+    /**
+     * fetchAbilitiesByStyle — Queries the wiki for ability names per combat style
+     * using the category member API (Category:Melee_abilities, etc.)
+     */
+    public async fetchAbilitiesByStyle(style: 'Melee' | 'Ranged' | 'Magic' | 'Necromancy' | 'Defence'): Promise<Result<string[]>> {
+        try {
+            logger.info({ style }, `Fetching ${style} ability list from Wiki...`);
+
+            const data = await this.softFetch({
+                action: 'query',
+                generator: 'categorymembers',
+                gcmtitle: `Category:${style} abilities`,
+                gcmlimit: '500',
+                prop: 'info',
+            });
+
+            const names: string[] = [];
+            if (data?.query?.pages) {
+                for (const pageId in data.query.pages) {
+                    const page = data.query.pages[pageId];
+                    if (page.ns === 0) {
+                        // Strip " (ability)" suffix that wiki uses for disambiguation
+                        const cleanName = page.title.replace(/\s*\(ability\)$/, '').trim();
+                        names.push(cleanName);
+                    }
+                }
+            }
+
+            logger.info({ style, count: names.length }, `${style} ability list fetched.`);
+            return { ok: true, value: names };
+
+        } catch (error) {
+            logger.error({ error, style }, `Failed to fetch ${style} ability list.`);
+            return { ok: false, error: error as Error };
+        }
+    }
+
+    /**
+     * parseAbilitiesWikitext — Extracts structured data from the raw wikitext.
+     * Reads the canonical ability type list and adrenaline rules.
+     */
+    private parseAbilitiesWikitext(wikitext: string): WikiAbilitiesData {
+        // Extract ability types from the bulleted list in the "Combat" section
+        const typeMatches = wikitext.match(/\[\[(Basic abilities|Enhanced abilities|Threshold abilities|Ultimate abilities)[^\]]*\]\]/g) || [];
+        const abilityTypes: string[] = typeMatches.map(m => {
+            const label = m.replace(/\[\[|\]\]|[|].*/g, '').trim();
+            return label;
+        });
+
+        // Extract the adrenaline rules paragraph
+        const adrenalineSection = wikitext.match(/===Adrenaline===([\s\S]*?)===Cooldown===/)?.[1] || '';
+        const basicGenMatch    = adrenalineSection.match(/Basic abilities generate (\d+)%/);
+        const gcdTicksMatch    = wikitext.match(/After using an ability.*?for (\d+) \[\[tick\]\]s/);
+
+        // Extract the March 2026 update note
+        const updateHistory = wikitext.match(/\* \{\{UL\|type=update\|update=Patch Notes: Part 1 - Combat Style Modernisation[\s\S]*?(?=\n\* \{\{UL)/)?.[0] || '';
+        const march2026Notes: string[] = updateHistory
+            .split('\n')
+            .filter(l => l.includes('**'))
+            .map(l => l.replace(/\*+\s*/g, '').trim())
+            .filter(Boolean);
+
+        return {
+            abilityTypes: [...new Set(abilityTypes)],
+            adrenalineRules: {
+                basicGenPct:  basicGenMatch ? parseInt(basicGenMatch[1]) : 9,
+                gcdTicks:     gcdTicksMatch ? parseInt(gcdTicksMatch[1]) : 3,
+                enhancedNote: 'Variable per ability — no longer fixed 50% (March 2026)',
+                ultimateNote: '60% or 100% adrenaline depending on ability',
+            },
+            march2026Changes: march2026Notes,
+            sourceUrl: 'https://runescape.wiki/w/Abilities',
+            fetchedAt: new Date().toISOString(),
+        };
+    }
 }
+
+// ════════════════════════════════════════════════════════════
+// Data shape returned by fetchAbilitiesData()
+// ════════════════════════════════════════════════════════════
+
+export interface WikiAbilitiesData {
+    abilityTypes: string[];
+    adrenalineRules: {
+        basicGenPct: number;       // Confirmed: 9 (March 2026)
+        gcdTicks: number;          // Confirmed: 3 (1.8s unified)
+        enhancedNote: string;
+        ultimateNote: string;
+    };
+    march2026Changes: string[];    // Bullet points from the March 2 2026 patch note
+    sourceUrl: string;
+    fetchedAt: string;
+}
+

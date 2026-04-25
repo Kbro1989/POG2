@@ -1,6 +1,6 @@
-﻿import { exec } from 'child_process';
+import { exec } from 'child_process';
 import { promisify } from 'util';
-import { Agent } from 'undici';
+import { Agent, fetch as undiciFetch } from 'undici';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import {
     type Result,
@@ -90,7 +90,7 @@ export class ModelClient implements ModelExecutor {
     /** Check if the Ollama substrate is online */
     async checkHealth(): Promise<{ online: boolean; version: string }> {
         try {
-            const resp = await fetch(`${this.config.ollamaBaseUrl}/api/version`, {
+            const resp = await undiciFetch(`${this.config.ollamaBaseUrl}/api/version`, {
                 signal: AbortSignal.timeout(5000)
             });
             if (resp.ok) {
@@ -106,7 +106,7 @@ export class ModelClient implements ModelExecutor {
     /** List locally available Ollama models */
     async listModels(): Promise<string[]> {
         try {
-            const resp = await fetch(`${this.config.ollamaBaseUrl}/api/tags`, {
+            const resp = await undiciFetch(`${this.config.ollamaBaseUrl}/api/tags`, {
                 signal: AbortSignal.timeout(5000)
             });
             if (resp.ok) {
@@ -400,7 +400,7 @@ export class ModelClient implements ModelExecutor {
             };
 
             try {
-                let response = await fetch(url, {
+                let response = await undiciFetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body),
@@ -424,7 +424,7 @@ export class ModelClient implements ModelExecutor {
                         const token = stdout.trim();
                         if (token) {
                             const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`;
-                            response = await fetch(fallbackUrl, {
+                            response = await undiciFetch(fallbackUrl, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -509,14 +509,14 @@ export class ModelClient implements ModelExecutor {
             const signal = params.signal || AbortSignal.timeout(86_400_000); // 24 hours
             const combinedSignal = AbortSignal.any([signal, controller.signal]);
 
-            const response = await fetch(url, {
+            const response = await undiciFetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
                 // Massive local timeout: natively handled by Undici dispatcher
                 dispatcher: this.customAgent,
                 signal: combinedSignal
-            } as RequestInit & { dispatcher: any });
+            } as any);
 
             // LOGGING LOOP: The Persistence Heartbeat
 
@@ -615,7 +615,7 @@ export class ModelClient implements ModelExecutor {
         };
 
         try {
-            const response = await fetch(url, {
+            const response = await undiciFetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -708,7 +708,7 @@ export class ModelClient implements ModelExecutor {
         };
 
         try {
-            const response = await fetch(url, {
+            const response = await undiciFetch(url, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${apiToken}`,
@@ -767,7 +767,7 @@ export class ModelClient implements ModelExecutor {
         messages.push({ role: 'user', content: params.prompt });
 
         try {
-            const response = await fetch(url, {
+            const response = await undiciFetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -820,7 +820,7 @@ export class ModelClient implements ModelExecutor {
         messages.push({ role: 'user', content: params.prompt });
 
         try {
-            const response = await fetch(url, {
+            const response = await undiciFetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -892,7 +892,7 @@ export class ModelClient implements ModelExecutor {
                 }
 
                 try {
-                    const response = await fetch(url, {
+                    const response = await undiciFetch(url, {
                         method: 'POST',
                         headers,
                         body: JSON.stringify({
@@ -970,7 +970,7 @@ export class ModelClient implements ModelExecutor {
                 }
 
                 try {
-                    const response = await fetch(url, {
+                    const response = await undiciFetch(url, {
                         method: 'POST',
                         headers,
                         body: JSON.stringify({
@@ -1046,7 +1046,7 @@ export class ModelClient implements ModelExecutor {
                 }
 
                 try {
-                    const response = await fetch(url, {
+                    const response = await undiciFetch(url, {
                         method: 'POST',
                         headers,
                         body: JSON.stringify({
@@ -1109,7 +1109,7 @@ export class ModelClient implements ModelExecutor {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:embedContent?key=${apiKey}`;
 
             try {
-                const response = await fetch(url, {
+                const response = await undiciFetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content: { parts: [{ text }] } }),
@@ -1148,7 +1148,7 @@ export class ModelClient implements ModelExecutor {
         const url = `${this.config.ollamaBaseUrl}/api/embeddings`;
 
         try {
-            const response = await fetch(url, {
+            const response = await undiciFetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1180,7 +1180,7 @@ export class ModelClient implements ModelExecutor {
         let ollamaOnline = false;
         let modelCount = 0;
         try {
-            const response = await fetch(`${ollamaBase}/api/tags`, { signal: AbortSignal.timeout(5000) });
+            const response = await undiciFetch(`${ollamaBase}/api/tags`, { signal: AbortSignal.timeout(5000) });
             if (response.ok) {
                 const data = await response.json() as { models?: any[] };
                 modelCount = data.models?.length || 0;

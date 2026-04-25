@@ -558,6 +558,12 @@ export function resolveSpatialAnchor(x: number, z: number): string {
  * Phase 44: Sovereign Spatial Engine Substrate (Authoritative Mapsquare Logic)
  */
 export function getAtlasSpatialPath(): string {
+    // Phase 44: Respect POG_USE_LOCAL flag for spatial logic resolution
+    if (process.env['POG_USE_LOCAL'] === 'true' && _projectRoot) {
+        const localPath = join(_projectRoot, 'atlas', 'spatial');
+        if (existsSync(localPath)) return localPath;
+    }
+
     // Phase 44: Force Sovereign D-drive authority for spatial substrates
     if (hasHighPerformanceSubstrate()) {
         return join(getSovereignRoot(PathTier.Sovereign), 'atlas', 'spatial');

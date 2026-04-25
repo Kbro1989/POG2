@@ -378,6 +378,12 @@ export class SpatialSovereigntyLimb {
         const galResult = this.gal.isNavigable(x, y, plane);
         if (galResult !== null) return galResult;
 
+        // --- LAYER 0.5: Vertical Transition Exemption ---
+        // Tiles with registered transitions (ladders, stairs) are walkable for approach/entry
+        if (PlaneTransitionRegistry.getInstance().hasLink({ x, y, plane })) {
+            return true;
+        }
+
         // --- LAYER 1: Logic Matrix (Decoded Artifacts) ---
         const matrix = this.findMatrixForCoords(x, y);
         if (matrix) {
@@ -398,23 +404,15 @@ export class SpatialSovereigntyLimb {
                         const edges = c.edges || c; // Support both {edges:{northBlocked}} and {north:true} formats
                         const dir = typeof direction === 'string' ? direction.toLowerCase() : direction;
                         
-                        // Handle modern 'edges' format
-                        if (edges.northBlocked && dir === 'north') return false;
-                        if (edges.southBlocked && dir === 'south') return false;
-                        if (edges.eastBlocked && dir === 'east') return false;
-                        if (edges.westBlocked && dir === 'west') return false;
+                        const northBlocked = edges.northBlocked ?? (edges.north === false);
+                        const southBlocked = edges.southBlocked ?? (edges.south === false);
+                        const eastBlocked = edges.eastBlocked ?? (edges.east === false);
+                        const westBlocked = edges.westBlocked ?? (edges.west === false);
 
-                        // Handle legacy 'barrows' format (north: true means walkable, unlike northBlocked)
-                        if (edges.north === false && dir === 'north') return false;
-                        if (edges.south === false && dir === 'south') return false;
-                        if (edges.east === false && dir === 'east') return false;
-                        if (edges.west === false && dir === 'west') return false;
-
-                        // Support root-level flags when 'edges' is missing (Direct Barrows Logic)
-                        if (c.north === false && dir === 'north') return false;
-                        if (c.south === false && dir === 'south') return false;
-                        if (c.east === false && dir === 'east') return false;
-                        if (c.west === false && dir === 'west') return false;
+                        if (northBlocked && dir === 'north') return false;
+                        if (southBlocked && dir === 'south') return false;
+                        if (eastBlocked && dir === 'east') return false;
+                        if (westBlocked && dir === 'west') return false;
                     }
 
                     // 2. Check general structural tile occupancy

@@ -1,10 +1,10 @@
-﻿import { SovereignDomain, classifyDomain, TOOL_DOMAIN_MAP } from '../types/SovereignDomain.js';
+import { SovereignDomain, classifyDomain, TOOL_DOMAIN_MAP } from '../types/SovereignDomain.js';
 import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger('DomainLocker');
 
 /**
- * DomainTransition â€” Record of domain context switches for audit trail.
+ * DomainTransition — Record of domain context switches for audit trail.
  */
 export interface DomainTransition {
     readonly from: SovereignDomain | null;
@@ -14,10 +14,10 @@ export interface DomainTransition {
 }
 
 /**
- * DispatchVerdict â€” Result of a tool dispatch check.
+ * DispatchVerdict — Result of a tool dispatch check.
  * Replaces the old hard-block model with wait/pass:
- *   PASS  â€” tool is in the active domain, execute immediately
- *   WAIT  â€” tool is cross-domain, Kimi dispatches to a worker and waits for return
+ *   PASS  — tool is in the active domain, execute immediately
+ *   WAIT  — tool is cross-domain, Kimi dispatches to a worker and waits for return
  */
 export type DispatchVerdict = {
     readonly action: 'PASS' | 'WAIT';
@@ -27,7 +27,7 @@ export type DispatchVerdict = {
 };
 
 /**
- * DomainViolationError â€” Kept for backwards compatibility but only thrown
+ * DomainViolationError — Kept for backwards compatibility but only thrown
  * for explicitly dangerous operations (reserved for future use).
  */
 export class DomainViolationError extends Error {
@@ -56,7 +56,7 @@ export class ToolAuthorizationError extends Error {
 }
 
 /**
- * DomainLocker â€” Wait/Pass Dispatch Model.
+ * DomainLocker — Wait/Pass Dispatch Model.
  *
  * Kimi is the orchestrating agent. It classifies domain, dispatches tools
  * to the right worker, waits for their output, and passes it back.
@@ -65,7 +65,7 @@ export class ToolAuthorizationError extends Error {
  * 1. Every task is classified into a domain for routing context.
  * 2. Same-domain tools get PASS (immediate execution).
  * 3. Cross-domain tools get WAIT (Kimi dispatches to a domain worker).
- * 4. No hard blocks. Kimi is the brain â€” it can reach any limb.
+ * 4. No hard blocks. Kimi is the brain — it can reach any limb.
  * 5. All transitions are logged for audit.
  */
 export class DomainLocker {
@@ -74,7 +74,7 @@ export class DomainLocker {
     private lockDepth = 0;
 
     /**
-     * Set the domain context for a task. Not a "lock" â€” just context.
+     * Set the domain context for a task. Not a "lock" — just context.
      */
     lockDomain(intent: string): DomainTransition {
         const previousDomain = this.activeDomain;
@@ -148,34 +148,34 @@ export class DomainLocker {
     }
 
     /**
-     * Dispatch check â€” returns PASS or WAIT instead of blocking.
+     * Dispatch check — returns PASS or WAIT instead of blocking.
      * Kimi uses this to decide whether to execute directly or dispatch to a worker.
      */
     dispatchCheck(toolName: string): DispatchVerdict {
         const toolDomain = (TOOL_DOMAIN_MAP[toolName] ?? 'UNKNOWN') as SovereignDomain | 'UNKNOWN';
 
-        // No active domain context â€” pass everything
+        // No active domain context — pass everything
         if (this.activeDomain === null) {
-            return { action: 'PASS', toolDomain, activeDomain: null, reasoning: 'No domain context â€” open dispatch' };
+            return { action: 'PASS', toolDomain, activeDomain: null, reasoning: 'No domain context — open dispatch' };
         }
 
-        // Same domain â€” immediate pass
+        // Same domain — immediate pass
         if (toolDomain === this.activeDomain) {
             return { action: 'PASS', toolDomain, activeDomain: this.activeDomain, reasoning: `Tool in active domain (${this.activeDomain})` };
         }
 
-        // Cross-domain â€” Kimi dispatches to the right worker and waits
-        logger.info({ tool: toolName, toolDomain, activeDomain: this.activeDomain }, 'Cross-domain dispatch â€” Kimi routing to worker');
+        // Cross-domain — Kimi dispatches to the right worker and waits
+        logger.info({ tool: toolName, toolDomain, activeDomain: this.activeDomain }, 'Cross-domain dispatch — Kimi routing to worker');
         return {
             action: 'WAIT',
             toolDomain,
             activeDomain: this.activeDomain,
-            reasoning: `Cross-domain: ${toolDomain} tool in ${this.activeDomain} context â€” dispatching to worker`
+            reasoning: `Cross-domain: ${toolDomain} tool in ${this.activeDomain} context — dispatching to worker`
         };
     }
 
     /**
-     * Legacy compatibility â€” isToolAllowed always returns true now.
+     * Legacy compatibility — isToolAllowed always returns true now.
      * Kimi can reach any limb.
      */
     isToolAllowed(_toolName: string): boolean {
@@ -183,7 +183,7 @@ export class DomainLocker {
     }
 
     /**
-     * Legacy compatibility â€” assertToolAllowed is now a no-op.
+     * Legacy compatibility — assertToolAllowed is now a no-op.
      * Use dispatchCheck() for routing decisions instead.
      */
     assertToolAllowed(_toolName: string): void {
@@ -195,7 +195,7 @@ export class DomainLocker {
     }
 
     getAllowedDomains(): ReadonlySet<SovereignDomain> {
-        // All domains are reachable â€” Kimi dispatches, workers execute
+        // All domains are reachable — Kimi dispatches, workers execute
         return new Set(Object.values(SovereignDomain));
     }
 

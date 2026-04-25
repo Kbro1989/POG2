@@ -24,6 +24,7 @@ export class SovereignKnowledgeDB {
         getTile: Database.Statement;
         getAllTiles: Database.Statement;
         countTiles: Database.Statement;
+        insertCapture: Database.Statement;
     };
 
     private constructor(dbPath: string = 'D:\\sovereign\\vibe-learning.db') {
@@ -56,7 +57,18 @@ export class SovereignKnowledgeDB {
                 last_observed TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
+            CREATE TABLE IF NOT EXISTS sensory_captures (
+                id TEXT PRIMARY KEY,
+                timestamp INTEGER NOT NULL,
+                source_type TEXT NOT NULL,
+                target TEXT,
+                image_path TEXT,
+                analysis_json TEXT,
+                metadata_json TEXT
+            );
+
             CREATE INDEX IF NOT EXISTS idx_plane_xy ON spatial_lessons(plane, x, y);
+            CREATE INDEX IF NOT EXISTS idx_sensory_timestamp ON sensory_captures(timestamp);
         `);
     }
 
@@ -81,6 +93,11 @@ export class SovereignKnowledgeDB {
 
             countTiles: this.db.prepare(`
                 SELECT COUNT(*) as count FROM spatial_lessons
+            `),
+
+            insertCapture: this.db.prepare(`
+                INSERT INTO sensory_captures (id, timestamp, source_type, target, image_path, analysis_json, metadata_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             `)
         };
     }
@@ -143,6 +160,22 @@ export class SovereignKnowledgeDB {
             return result.count;
         } catch (err) {
             return 0;
+        }
+    }
+
+    public recordCapture(id: string, timestamp: number, sourceType: string, target: string, imagePath: string | null, analysis: any, metadata: any): void {
+        try {
+            this.prepared.insertCapture.run(
+                id,
+                timestamp,
+                sourceType,
+                target,
+                imagePath,
+                JSON.stringify(analysis),
+                JSON.stringify(metadata)
+            );
+        } catch (err) {
+            logger.error({ err, id }, 'Failed to record sensory capture.');
         }
     }
 

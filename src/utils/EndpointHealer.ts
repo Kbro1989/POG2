@@ -1,4 +1,4 @@
-﻿import { exec } from 'child_process';
+import { exec } from 'child_process';
 import { promisify } from 'util';
 import type { TrainingCollector } from './TrainingCollector.js';
 
@@ -173,8 +173,13 @@ export class EndpointHealer {
         const envCheck = await this.runCheck('CF API Token', 'echo %CLOUDFLARE_API_TOKEN%');
         diag.checks.push(envCheck);
 
+        const portCheck = await this.runCheck('Wrangler Dev (8787)', 'curl -s -o NUL -w "%{http_code}" http://127.0.0.1:8787');
+        diag.checks.push(portCheck);
+
         if (!whoami.passed) {
             diag.resolution = 'Cloudflare auth failed. Run "wrangler login" to re-authenticate.';
+        } else if (!portCheck.passed) {
+            diag.resolution = 'Cloudflare Worker (wrangler dev) is offline. Execute "npx wrangler dev" in the worker directory.';
         }
     }
 

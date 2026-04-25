@@ -456,9 +456,15 @@ export class OrchestrateEngine {
 
             // Phase 300: Genomic Instincts (I Ching Routing)
             const currentHexagram = this.router.getHexagram().getInterpretation();
-            if (currentHexagram.id === 27) { // hexagram.id or hexagram.binary? We can check hexagram.id
+            if (currentHexagram.id === 27) { 
                 logger.info('Hexagram 27 (Nourishment) Active: Instinctively initializing DBRowOracleLimb for Genome Ingestion.');
                 await DBRowOracleLimb.getInstance().initialize();
+            }
+
+            if (currentHexagram.id === 20 || currentHexagram.id === 30) {
+                logger.info(`Hexagram ${currentHexagram.id} (${currentHexagram.name}) Active: Activating High-Frequency GhostSplat Telemetry.`);
+                // GhostSplatEngine is a lazy singleton — no explicit initialization required.
+                GhostSplatEngine.getInstance();
             }
 
             // Phase 7: Epistemology Activation
@@ -476,15 +482,6 @@ export class OrchestrateEngine {
 
             // Phase 109: Spatial Sovereignty Integration
             const spatialInit = await this.spatialSovereignty.initialize();
-            
-            // Phase 111: Gameplay Sovereignty (Heartbeat)
-            await this.gameplay.initialize();
-            
-            // Phase 112: Heartbeat Ignition (Substrate Logic Loop)
-            if (!options.diagnosticOnly) {
-                CNSGodheadPulseVolley.getInstance().startLoop();
-            }
-
             if (!spatialInit.ok) {
                 logger.error({ err: spatialInit.error }, 'Failed to initialize SpatialSovereigntyLimb');
             }
@@ -495,26 +492,32 @@ export class OrchestrateEngine {
                 logger.error({ err: mechanicalInit.error }, 'Failed to initialize MechanicalSovereigntyLimb');
             }
 
+            // Phase 111: Gameplay Sovereignty (Heartbeat)
+            await this.gameplay.initialize();
+            
+            // Phase 500: Substrate-Switchboard Integration
+            if (this.switchboard.injectSubstrates) {
+                this.switchboard.injectSubstrates({
+                    nodeTester: this.nodeTester,
+                    endpointHealer: this.client.getHealer()
+                });
+            }
+
+            // Phase 501: Graceful port selection (replaces fatal hard-coded port)
+            try {
+                const result = await this.switchboard.startWithGracefulPort(this);
+                logger.info({ port: result.port, url: result.url }, 'Switchboard Bridge active (graceful port)');
+            } catch (switchboardErr: any) {
+                // Non-fatal: Switchboard is enhancement, not critical path
+                logger.warn({ err: switchboardErr.message }, 'Switchboard failed to start — continuing without remote bridge');
+            }
+
+            // Phase 112: Heartbeat Ignition (Substrate Logic Loop)
             if (!options.diagnosticOnly) {
+                CNSGodheadPulseVolley.getInstance().startLoop();
+                
                 // Await external neural links (MCP)
                 await this.mcpEngine.initialize();
-
-                // Ã°Å¸Â§Â¬ Phase 14: Substrate-Switchboard Integration
-                if (this.switchboard.injectSubstrates) {
-                    this.switchboard.injectSubstrates({
-                        nodeTester: this.nodeTester,
-                        endpointHealer: this.client.getHealer()
-                    });
-                }
-
-                // Ã°Å¸Â§Â¬ Phase 14: Graceful port selection (replaces fatal hard-coded port)
-                try {
-                    const result = await this.switchboard.startWithGracefulPort(this);
-                    logger.info({ port: result.port, url: result.url }, 'Switchboard Bridge active (graceful port)');
-                } catch (switchboardErr: any) {
-                    // Non-fatal: Switchboard is enhancement, not critical path
-                    logger.warn({ err: switchboardErr.message }, 'Switchboard failed to start Ã¢â‚¬â€ continuing without remote bridge');
-                }
 
                 // Connect renderer and vision (safe regardless of port status)
                 this.switchboard.connectToSubstrates(this.renderer, this.vision);
@@ -570,7 +573,9 @@ export class OrchestrateEngine {
                     MemeticEngine: this.memetic,
                     SyntropyEngine: this.syntropy,
                     DiscoveryEngine: this.discovery,
-                    CacheForensicsLimb: this.cacheForensics
+                    CacheForensicsLimb: this.cacheForensics,
+                    GameplaySovereigntyLimb: this.gameplay,
+                    CloudflareSyncLimb: this.gameplay.edgeSync
                 });
                 this.client.getRolodex()?.refreshAll().catch(() => { /* non-blocking */ });
             }
@@ -1075,7 +1080,7 @@ export class OrchestrateEngine {
             execute: async () => {
                 // Phase 29: Systemic Health/Provider Audit & Autonomous Healing
                 const nodeResults = await nodeTester.auditNeuralNodes();
-                const providerResults = nodeTester.auditProviders();
+                const providerResults = await nodeTester.auditProviders();
 
                 let output = '=== SOVEREIGN HEALTH DIAGNOSTIC ===\n\n';
 

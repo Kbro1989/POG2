@@ -2,7 +2,7 @@ import { RSMVBridge } from '../utils/RSMVBridge.js';
 import * as fs from 'fs';
 
 async function run() {
-    const bridge = RSMVBridge.getInstance();
+    const bridge = RSMVBridge.instance;
     
     // In RuneScape 3, archive 2 contains config files. 
     // Hitmark configs are typically in group 46 or 47, but wait, let's just search the client script types.

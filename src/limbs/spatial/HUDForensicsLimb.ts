@@ -1,4 +1,4 @@
-﻿import { createRequire } from 'module';
+import { createRequire } from 'module';
 import * as path from 'path';
 const require = createRequire(import.meta.url);
 let GameCacheLoader: any = null;
@@ -33,6 +33,23 @@ export interface InterfaceForensics {
     textLabels: string[];
     isHudCandidate: boolean;
     wikiContext?: WikiData;
+    classification?: HUDClassification;
+}
+
+export interface HUDClassification {
+    interfaceId: number;
+    score: number;
+    confidence: "HIGH" | "MEDIUM" | "LOW" | "FALSE_POSITIVE";
+    category: "RIBBON" | "SETTINGS_PANEL" | "INVENTORY_HUD" | "CHAT_BOX" | "MINIMAP" | "UNKNOWN";
+    reasons: string[];
+    structuralMetrics: {
+        textRatio: number;
+        spriteRatio: number;
+        containerRatio: number;
+        maxDepth: number;
+        avgTextLength: number;
+        totalComponents: number;
+    };
 }
 
 /**
@@ -41,12 +58,54 @@ export interface InterfaceForensics {
  * Responsibilities:
  * 1. Real-time extraction of HUD/Interface data from Jagex Cache (Major 3).
  * 2. Forensic deconstruction of interface hierarchies.
- * 3. Semantic mapping of interface components to Atlas principles.
+ * 3. Structural + Lexical classification to eliminate false positives.
  */
 export class HUDForensicsLimb {
     private readonly cachePath = getRSMVCachePath();
     private cache: any | null = null;
     private readonly pedagogyCandidateDir: string;
+
+    // Anti-pattern lexicon — subtract score for tutorial/marketing content
+    private readonly TUTORIAL_MARKERS = [
+        /welcome/i, /tutorial/i, /html5/i, /new graphics/i,
+        /world event/i, /join the/i, /first time/i, /getting started/i,
+        /click here to/i, /try the new/i, /battle of/i, /now all in one place/i,
+        /the fastest way/i, /all new/i
+    ];
+
+    // HUD structural signatures — what TRUE persistent HUDs look like
+    private readonly HUD_STRUCTURAL_PROFILES = {
+        RIBBON: {
+            maxTextRatio: 0.15,
+            minContainerDepth: 2,
+            minSpriteRatio: 0.30,
+            lexicalTriggers: /ribbon|minimap|map|edit mode|customize|toolbar/i,
+        },
+        SETTINGS_PANEL: {
+            maxTextRatio: 0.40,
+            minContainerDepth: 1,
+            minSpriteRatio: 0.10,
+            lexicalTriggers: /settings|audio|display|controls|interface|gameplay|graphics/i,
+        },
+        INVENTORY_HUD: {
+            maxTextRatio: 0.10,
+            minContainerDepth: 2,
+            minSpriteRatio: 0.50,
+            lexicalTriggers: /inventory|bank|item|slot|gear|worn equipment/i,
+        },
+        CHAT_BOX: {
+            maxTextRatio: 0.60,
+            minContainerDepth: 1,
+            minSpriteRatio: 0.05,
+            lexicalTriggers: /chat|message|friend|clan|public|private|trade|guest/i,
+        },
+        MINIMAP: {
+            maxTextRatio: 0.05,
+            minContainerDepth: 1,
+            minSpriteRatio: 0.40,
+            lexicalTriggers: /minimap|compass|run|energy|world map|home teleport/i,
+        },
+    };
 
     constructor() {
         this.pedagogyCandidateDir = path.join(getSovereignRoot(), 'cache_pedagogy', 'atlas', 'interfaces');
@@ -54,7 +113,7 @@ export class HUDForensicsLimb {
         try {
             if (GameCacheLoader) {
                 this.cache = new GameCacheLoader(this.cachePath);
-                this.cache.buildnr = 940; // RS3 Build
+                this.cache.buildnr = 940;
                 logger.info({ path: this.cachePath }, 'HUDForensicsLimb connected to Jagex Cache substrate.');
             } else {
                 logger.warn('HUDForensicsLimb: GameCacheLoader not available.');
@@ -66,15 +125,15 @@ export class HUDForensicsLimb {
 
     /**
      * getInterface(id) - Extracts and deconstructs an interface from the cache.
+     * Now includes structural classification.
      */
     public async getInterface(id: number): Promise<Result<InterfaceForensics>> {
         if (!this.cache) return err(new Error('Cache substrate not connected.'));
         if (!parse) return err(new Error('HUDForensicsLimb: parse not available.'));
 
         try {
-            const rawBuffer = await this.cache.getFile(3, id); // Major 3 is Interfaces
+            const rawBuffer = await this.cache.getFile(3, id);
 
-            // Use internal parser and state for multi-component iteration
             const state = {
                 isWrite: false,
                 buffer: rawBuffer,
@@ -84,7 +143,7 @@ export class HUDForensicsLimb {
                 endoffset: rawBuffer.byteLength,
                 args: {
                     ...this.cache.getDecodeArgs(),
-                    clientVersion: 940 // Explicitly force RS3/NXT context
+                    clientVersion: 940
                 }
             };
 
@@ -97,7 +156,7 @@ export class HUDForensicsLimb {
                 const startScan = state.scan;
                 try {
                     const comp = parse.interfaces.parser.read(state);
-                    // Forensic check: Log if we see a weird type or version
+
                     if (compId === 0) {
                         logger.info({ id, version: comp.version, type: comp.type, firstByte: rawBuffer[startScan] }, 'First component forensic header.');
                     }
@@ -135,24 +194,24 @@ export class HUDForensicsLimb {
                         pointerAtHex: pointer,
                         error: err.message
                     }, 'Forensic decompile failure detected.');
-                    // Forensic salvage: If we can't parse more, we return what we have
                     break;
                 }
             }
 
-            // Fill children
             for (const comp of components) {
                 comp.children = parentToIndex.get(comp.componentId) || [];
             }
 
-            // Check if HUD candidate (has specific text hits or structure)
+            // Legacy flat check (kept for backward compat)
             const isHudCandidate = textLabels.some(t =>
                 /inventory|skill|chat|map|quest|ability|friend|clan/i.test(t)
             );
 
+            // NEW: Structural classification
+            const classification = this.classifyInterface(id, components, textLabels);
+
             let wikiContext: WikiData | undefined;
-            if (isHudCandidate && textLabels.length > 0) {
-                // Take the most descriptive text label (longest for now)
+            if (classification.confidence === "HIGH" && textLabels.length > 0) {
                 const query = textLabels.sort((a, b) => b.length - a.length)[0];
                 const wikiRes = await WikiEnricher.enrich(query);
                 if (wikiRes.ok) wikiContext = wikiRes.value;
@@ -163,7 +222,8 @@ export class HUDForensicsLimb {
                 components,
                 textLabels,
                 isHudCandidate,
-                wikiContext
+                wikiContext,
+                classification
             });
         } catch (error) {
             logger.error({ interfaceId: id, error }, 'Failed to decompile interface.');
@@ -172,7 +232,102 @@ export class HUDForensicsLimb {
     }
 
     /**
+     * classifyInterface - Structural + Lexical epistemology.
+     * Eliminates tutorial false positives by verifying topology, not just text.
+     */
+    public classifyInterface(
+        interfaceId: number,
+        components: InterfaceComponent[],
+        textLabels: string[]
+    ): HUDClassification {
+        const totalComponents = components.length;
+        const textComponents = components.filter(c => c.type === "TEXT").length;
+        const spriteComponents = components.filter(c => c.type === "SPRITE").length;
+        const containerComponents = components.filter(c => c.type === "CONTAINER").length;
+
+        const allText = textLabels.join(" ").toLowerCase();
+        const textRatio = totalComponents > 0 ? textComponents / totalComponents : 0;
+        const spriteRatio = totalComponents > 0 ? spriteComponents / totalComponents : 0;
+        const containerRatio = totalComponents > 0 ? containerComponents / totalComponents : 0;
+        const maxDepth = this.computeMaxDepth(components);
+        const avgTextLength = textLabels.length > 0
+            ? textLabels.reduce((a, b) => a + b.length, 0) / textLabels.length
+            : 0;
+
+        // ─── Anti-Pattern Penalty ───
+        let tutorialPenalty = 0;
+        const tutorialHits = this.TUTORIAL_MARKERS.filter(re => re.test(allText)).length;
+        if (tutorialHits >= 2) tutorialPenalty += 40;
+        if (avgTextLength > 80) tutorialPenalty += 20;
+        if (textComponents > 50) tutorialPenalty += 15;
+        if (allText.includes("world event") || allText.includes("battle of")) tutorialPenalty += 25;
+
+        // ─── Category Scoring ───
+        const scores: Record<string, number> = {};
+        const reasons: string[] = [];
+
+        for (const [category, profile] of Object.entries(this.HUD_STRUCTURAL_PROFILES)) {
+            let score = 50;
+
+            const lexMatches = (allText.match(profile.lexicalTriggers) || []).length;
+            score += lexMatches * 10;
+
+            if (textRatio <= profile.maxTextRatio) score += 15;
+            else score -= 20;
+
+            if (spriteRatio >= profile.minSpriteRatio) score += 10;
+            if (maxDepth >= profile.minContainerDepth) score += 10;
+
+            score -= tutorialPenalty;
+            scores[category] = Math.max(0, score);
+        }
+
+        const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+        const [topCategory, topScore] = sorted[0];
+        const runnerUpScore = sorted[1]?.[1] || 0;
+
+        let confidence: HUDClassification["confidence"];
+        if (tutorialPenalty > 50) {
+            confidence = "FALSE_POSITIVE";
+            reasons.push(`TUTORIAL_PENALTY: ${tutorialPenalty} — likely welcome/marketing screen`);
+        } else if (topScore - runnerUpScore > 20 && topScore > 60) {
+            confidence = "HIGH";
+        } else if (topScore > 40) {
+            confidence = "MEDIUM";
+        } else {
+            confidence = "LOW";
+        }
+
+        reasons.push(
+            `textRatio: ${(textRatio * 100).toFixed(1)}% (max: ${(this.HUD_STRUCTURAL_PROFILES[topCategory as keyof typeof this.HUD_STRUCTURAL_PROFILES]?.maxTextRatio || 0) * 100}%)`,
+            `spriteRatio: ${(spriteRatio * 100).toFixed(1)}%`,
+            `containerRatio: ${(containerRatio * 100).toFixed(1)}%`,
+            `maxDepth: ${maxDepth}`,
+            `avgTextLength: ${avgTextLength.toFixed(0)} chars`,
+            `textComponents: ${textComponents}`,
+            `lexMatches: ${(allText.match(this.HUD_STRUCTURAL_PROFILES[topCategory as keyof typeof this.HUD_STRUCTURAL_PROFILES]?.lexicalTriggers || /(?:)/) || []).length}`
+        );
+
+        return {
+            interfaceId,
+            score: topScore,
+            confidence,
+            category: confidence === "FALSE_POSITIVE" ? "UNKNOWN" : (topCategory as HUDClassification["category"]),
+            reasons,
+            structuralMetrics: {
+                textRatio,
+                spriteRatio,
+                containerRatio,
+                maxDepth,
+                avgTextLength,
+                totalComponents
+            }
+        };
+    }
+
+    /**
      * searchInterfaces(query) - Forensic scan across interface text labels.
+     * Now uses structural classification to filter false positives.
      */
     public async searchInterfaces(query: string, limit: number = 10): Promise<Result<InterfaceForensics[]>> {
         if (!this.cache) return err(new Error('Cache substrate not connected.'));
@@ -180,21 +335,63 @@ export class HUDForensicsLimb {
         const results: InterfaceForensics[] = [];
         const regex = new RegExp(query, 'i');
 
-        // Note: Scanning all interfaces (0-1600+) can be slow. 
-        // We scan first 2000 as a standard range for RS3.
         for (let id = 0; id < 2000; id++) {
             try {
                 const res = await this.getInterface(id);
-                if (res.ok && res.value.textLabels.some(t => regex.test(t))) {
-                    results.push(res.value);
-                    if (results.length >= limit) break;
+                if (res.ok) {
+                    const forensics = res.value;
+                    const hasLexicalHit = forensics.textLabels.some(t => regex.test(t));
+                    
+                    // NEW: Only promote to results if lexical hit AND not false positive
+                    if (hasLexicalHit && forensics.classification?.confidence !== "FALSE_POSITIVE") {
+                        results.push(forensics);
+                        if (results.length >= limit) break;
+                    }
                 }
             } catch {
                 continue;
             }
         }
 
+        // Sort by classification score descending
+        results.sort((a, b) => (b.classification?.score || 0) - (a.classification?.score || 0));
         return ok(results);
+    }
+
+    /**
+     * scanAtlas - Batch classify all decomposed JSON manifests in atlas directory.
+     */
+    public async scanAtlas(atlasDir?: string): Promise<HUDClassification[]> {
+        const dir = atlasDir || this.pedagogyCandidateDir;
+        const files = await fs.promises.readdir(dir);
+        const jsonFiles = files.filter(f => f.endsWith('_decomposed.json'));
+
+        const results: HUDClassification[] = [];
+        for (const file of jsonFiles) {
+            try {
+                const raw = await fs.promises.readFile(path.join(dir, file), 'utf-8');
+                const manifest = JSON.parse(raw);
+                const components: InterfaceComponent[] = manifest.components || [];
+                const textLabels = components
+                    .filter((c: any) => c.type === "TEXT")
+                    .map((c: any) => c.text || "")
+                    .filter(Boolean);
+
+                const id = parseInt(file.match(/interface_(\d+)_decomposed/)?.[1] || "0", 10);
+                const classification = this.classifyInterface(id, components, textLabels);
+                results.push(classification);
+            } catch (e) {
+                logger.warn({ file, error: (e as Error).message }, 'Failed to classify atlas manifest.');
+            }
+        }
+
+        const confOrder = { HIGH: 0, MEDIUM: 1, LOW: 2, FALSE_POSITIVE: 3 };
+        return results.sort((a, b) => {
+            if (confOrder[a.confidence] !== confOrder[b.confidence]) {
+                return confOrder[a.confidence] - confOrder[b.confidence];
+            }
+            return b.score - a.score;
+        });
     }
 
     /**
@@ -217,6 +414,30 @@ export class HUDForensicsLimb {
             16: 'TYPE_16'
         };
         return types[typeId] || `UNKNOWN_${typeId}`;
+    }
+
+    /**
+     * Compute maximum nesting depth of component hierarchy.
+     */
+    private computeMaxDepth(components: InterfaceComponent[]): number {
+        const idMap = new Map<number, InterfaceComponent>();
+        components.forEach(c => { if (c.componentId !== undefined) idMap.set(c.componentId, c); });
+
+        function getDepth(id: number, visited = new Set<number>()): number {
+            if (visited.has(id)) return 0;
+            visited.add(id);
+            const comp = idMap.get(id);
+            if (!comp || comp.parentId === -1 || comp.parentId === 65535) return 1;
+            return 1 + getDepth(comp.parentId, visited);
+        }
+
+        let max = 0;
+        components.forEach(c => {
+            if (c.componentId !== undefined) {
+                max = Math.max(max, getDepth(c.componentId));
+            }
+        });
+        return max;
     }
 
     /**

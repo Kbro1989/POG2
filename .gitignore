@@ -35,8 +35,8 @@ tmp/
 *.db
 google-key.json
 youtube_token.json
-C:\Users\
-D:\
+# C:\Users\
+# D:\
 
 # ═══════════════════════════════════════════════════
 # PROPRIETARY CACHE DATA — NEVER COMMIT

@@ -1,11 +1,11 @@
 import fs from 'fs';
-import { GameCacheLoader } from './tmp_rsmv_inspect/src/cache/sqlite.js';
-import { parse } from './tmp_rsmv_inspect/src/opdecoder.js';
+import { GameCacheLoader } from './src/rsmv/cache/sqlite.js';
+import { parse } from './src/rsmv/opdecoder.js';
 
 async function extractRecentRibbonHUD() {
     console.log("Locating recent RS3 Interface data for the Ribbon...");
     const cache = new GameCacheLoader('C:\\ProgramData\\Jagex\\RuneScape');
-    cache.buildnr = 940; // Force recent RS3 build logic
+    // cache.buildnr = 940; // Force recent RS3 build logic (no longer exists on GameCacheLoader)
     
     // The Ribbon is Interface 1430 to 1433 in modern RS3 and 1448
     const targetInterfaces = [1430, 1431, 1432, 1433, 1448];
@@ -18,7 +18,7 @@ async function extractRecentRibbonHUD() {
             if (!rawBuffer) continue;
             
             const state = {
-                isWrite: false,
+                isWrite: false as false,
                 buffer: rawBuffer,
                 stack: [],
                 hiddenstack: [],
@@ -46,7 +46,7 @@ async function extractRecentRibbonHUD() {
                     compId++;
                 } catch(e) { break; }
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error(`Failed to parse interface ${id}:`, err.message);
         }
     }

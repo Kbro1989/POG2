@@ -1,6 +1,7 @@
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { homedir } from 'os';
+import { fileURLToPath } from 'url';
 
 export interface SovereignConfig {
     mode: 'hybrid' | 'local' | 'sovereign';
@@ -200,8 +201,17 @@ const DEFAULT_CONFIG: SovereignConfig = {
     visionFastModel: 'moondream:latest'
 };
 
-function loadEnvFile(envPath: string): void {
-    if (!existsSync(envPath)) return;
+function loadEnvFile(envName: string = '.env'): void {
+    const cwdEnv = join(process.cwd(), envName);
+    
+    // Calculate package root
+    const thisDir = dirname(fileURLToPath(import.meta.url));
+    const pkgEnv = join(thisDir, '..', '..', '..', envName);
+
+    const envPath = existsSync(cwdEnv) ? cwdEnv : (existsSync(pkgEnv) ? pkgEnv : null);
+    
+    if (!envPath) return;
+    
     try {
         const content = readFileSync(envPath, 'utf8');
         for (const line of content.split('\n')) {
@@ -211,9 +221,7 @@ function loadEnvFile(envPath: string): void {
             if (match) {
                 const key = match[1].trim();
                 const value = match[2].trim().replace(/^['"]|['"]$/g, ''); // Strip quotes
-                if (!process.env[key]) {
-                    process.env[key] = value;
-                }
+                process.env[key] = value;
             }
         }
     } catch {

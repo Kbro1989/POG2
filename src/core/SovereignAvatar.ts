@@ -22,9 +22,35 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
     public skills: Record<number, Skill>;
     public quests: { points: number; completedCount: number; quests: Record<number, any> }; // QuestState
     
+    public appearanceEra: 'pre_avatar' | 'transitional' | 'post_avatar' = 'pre_avatar';
     public appearance?: {
-        bodyColors: [number, number][];
-        gender: 'male' | 'female';
+        // Legacy Pre-avatar appearance
+        legacyAppearanceId?: number;
+        bodyColors?: [number, number][];
+        gender?: 'male' | 'female';
+        
+        // Post-Avatar Compositional Schema
+        composition?: {
+            baseBodyId: number;
+            gender: 'male' | 'female';
+            skinTone: number;
+            hairStyle: number;
+            facialHair?: number;
+            equipment: {
+                head: number | null;
+                cape: number | null;
+                neck: number | null;
+                weapon: number | null;
+                body: number | null;
+                shield: number | null;
+                legs: number | null;
+                hands: number | null;
+                feet: number | null;
+                ring: number | null;
+                ammo: number | null;
+            };
+            chatheadId: number;
+        };
     };
 
     public lastHub: string = 'Lumbridge';
@@ -50,6 +76,10 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
     public adrenaline: number;
     public necrosisStacks: number;
     public residualSouls: number;
+    public bloodlustStacks: number; // March 2026 Melee Mechanics
+    public animaCharged: boolean; // March 2026 Magic Mechanics
+    public searingWindsTicksRemaining: number; // March 2026 Ranged Mechanics
+    public shadowImbuedTicksRemaining: number; // March 2026 Ranged Mechanics
     public lastCombatTick: number;
     public cooldowns: Record<string, number>;
 
@@ -103,6 +133,10 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
         this.adrenaline = 0;
         this.necrosisStacks = 0;
         this.residualSouls = 0;
+        this.bloodlustStacks = 0;
+        this.animaCharged = false;
+        this.searingWindsTicksRemaining = 0;
+        this.shadowImbuedTicksRemaining = 0;
         this.lastCombatTick = 0;
         this.cooldowns = {};
         
@@ -264,18 +298,19 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
     /**
      * Attempts to traverse to a target coordinate using the Quaternary Pathfinder.
      */
-    public async plotPath(
+    public plotPath(
         targetX: number, 
         targetY: number, 
         pathfinder: DirectionalPathfinder,
         context: any, // GameState
         collisionMatrix?: Map<string, any>
-    ): Promise<boolean> {
+    ): boolean {
         const start = this.coord;
         const end = { x: targetX, y: targetY, plane: this.coord.plane };
         
         try {
-            const path = await pathfinder.findPath(start, end, context);
+            const isPlayer = true; // For now, SovereignAvatars behave as players
+            const path = pathfinder.findPath(start, end, context, isPlayer);
             if (path && path.length > 0) {
                 if (path[0].x === this.coord.x && path[0].y === this.coord.y) {
                     path.shift();

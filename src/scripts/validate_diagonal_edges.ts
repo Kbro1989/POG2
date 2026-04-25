@@ -58,7 +58,7 @@ async function runTests() {
     };
 
     const test = async (name: string, from: Coord, to: Coord, dir: Direction, expect: boolean) => {
-        const allowed = await pathfinder.canMove(from, to, dir, mockState);
+        const allowed = await pathfinder.canMove(from, to, dir, mockState.npcSpatialIndex);
         const pass = allowed === expect;
         if (pass) passed++; else failed++;
         const icon = pass ? '✅' : '❌';

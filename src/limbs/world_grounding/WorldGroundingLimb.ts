@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { join } from 'path';
+import { getAtlasSystemPath, getAtlasSpatialPath } from '../../utils/SovereignPathResolver.js';
 import { createLogger } from '../../utils/logger.js';
 import type { GroundingManifest, GroundingEntry, GroundingHydrator } from '../../core/grounding.js';
 import type { Result, Provenance } from '../../core/models.js';
@@ -117,7 +118,8 @@ export class WorldGroundingLimb implements GroundingHydrator {
             const mappingPath = join(base, 'cache_logic_mapping.json');
             
             // Fallback to absolute system mapping if era-specific mapping missing
-            const fallbackPath = 'D:/sovereign/atlas/system/cache_logic_mapping.json';
+            const systemRoot = getAtlasSystemPath();
+            const fallbackPath = join(systemRoot, 'cache_logic_mapping.json');
             const effectivePath = fs.existsSync(mappingPath) ? mappingPath : fallbackPath;
 
             if (fs.existsSync(effectivePath)) {
@@ -134,10 +136,14 @@ export class WorldGroundingLimb implements GroundingHydrator {
         try {
             const base = targetDir ?? this.eraBaseDir;
             const eraManifestPath = join(base, 'grounding_manifest.json');
-            const target = fs.existsSync(eraManifestPath) ? eraManifestPath : this.manifestPath;
+            
+            // Phase 116: Prioritize public/grounding_manifest.json for breakthrough tests
+            const publicManifest = join(process.cwd(), 'public', 'grounding_manifest.json');
+            const target = fs.existsSync(publicManifest) ? publicManifest : (fs.existsSync(eraManifestPath) ? eraManifestPath : this.manifestPath);
 
             if (fs.existsSync(target)) {
                 const data = fs.readFileSync(target, 'utf8');
+                logger.info({ source: target }, 'Grounding manifest loaded from authoritative breakthrough source.');
                 return JSON.parse(data);
             }
         } catch (err) {
@@ -354,17 +360,22 @@ export class WorldGroundingLimb implements GroundingHydrator {
     private loadNpcSpawns(targetDir?: string) {
         if (this.npcsLoaded) return;
         try {
-            const base = targetDir ?? 'D:/sovereign/atlas/spatial/npc_extract';
+            // Phase 116: Check public/authentic_spawn_manifest.json for breakthrough tests
+            const publicSpawns = join(process.cwd(), 'public', 'authentic_spawn_manifest.json');
+            
+            const spatialRoot = getAtlasSpatialPath();
+            const base = targetDir ?? join(spatialRoot, 'npc_extract');
             const spawnsPath = join(base, 'npc_spawns.json');
             
             // Absolute fallback for global NPC truth
-            const fallbackPath = 'D:/sovereign/atlas/spatial/npc_extract/npc_spawns.json';
-            const effectivePath = fs.existsSync(spawnsPath) ? spawnsPath : fallbackPath;
+            const fallbackPath = join(spatialRoot, 'npc_extract', 'npc_spawns.json');
+            const effectivePath = fs.existsSync(publicSpawns) ? publicSpawns : (fs.existsSync(spawnsPath) ? spawnsPath : fallbackPath);
 
             if (fs.existsSync(effectivePath)) {
-                this.npcSpawns = JSON.parse(fs.readFileSync(effectivePath, 'utf8'));
+                const data = fs.readFileSync(effectivePath, 'utf8');
+                this.npcSpawns = JSON.parse(data);
                 this.npcsLoaded = true;
-                logger.debug({ count: this.npcSpawns.length, source: effectivePath }, 'NPC Spawns grounded.');
+                logger.debug({ count: this.npcSpawns.length, source: effectivePath }, 'NPC Spawns grounded via Breakthrough Manifest.');
             }
         } catch (err) {
             logger.warn('NPC Spawns database unavailable.');

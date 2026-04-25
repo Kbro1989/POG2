@@ -48,8 +48,9 @@ async function testBarrowsPathfinding() {
   }
   console.log('------------------------\n');
 
+  const mockState: any = { npcSpatialIndex: new Map(), plane: 0 };
   const startTime = Date.now();
-  const path = await pathfinder.findPath(start, goal, gameState, true);
+  const path = pathfinder.findPath(start, goal, mockState, true);
   const elapsed = Date.now() - startTime;
 
   console.log(`\nâ±ï¸  Elapsed: ${elapsed}ms`);

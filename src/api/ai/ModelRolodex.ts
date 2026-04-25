@@ -1,9 +1,10 @@
-﻿import { createRequire } from 'module';
+import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
+import { fetch as undiciFetch } from 'undici';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
 import type { AIServiceType } from '../../core/models.js';
 
@@ -349,7 +350,7 @@ export class ModelRolodex {
         try {
             const baseUrl = this.config.ollamaBaseUrl || 'http://localhost:11434';
             // Increase timeout to 60s for massive substrates
-            const response = await fetch(`${baseUrl}/api/tags`, { signal: AbortSignal.timeout(120000) });
+            const response = await undiciFetch(`${baseUrl}/api/tags`, { signal: AbortSignal.timeout(120000) });
             if (!response.ok) throw new Error(`Ollama API returned ${response.status}`);
 
             const data = await response.json() as { models?: { name: string; size?: number; details?: { parameter_size?: string; quantization_level?: string; family?: string } }[] };
@@ -432,7 +433,7 @@ export class ModelRolodex {
 
             // Model discovery via REST API
             const cfApiUrl = `https://api.cloudflare.com/client/v4/accounts/${this.config.cloudflareAccountId}/ai/models/search`;
-            const cfResponse = await fetch(cfApiUrl, {
+            const cfResponse = await undiciFetch(cfApiUrl, {
                 headers: { 'Authorization': `Bearer ${this.config.cloudflareApiToken}` },
                 signal: AbortSignal.timeout(60000)
             });
@@ -508,7 +509,7 @@ export class ModelRolodex {
 
             // Gemini model list via REST API
             const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-            const geminiResponse = await fetch(geminiUrl, { signal: AbortSignal.timeout(120000) }); // Increased to 120s
+            const geminiResponse = await undiciFetch(geminiUrl, { signal: AbortSignal.timeout(120000) }); // Increased to 120s
 
             if (geminiResponse.ok) {
                 const geminiData = await geminiResponse.json() as { models?: { name: string; displayName?: string; supportedGenerationMethods?: string[] }[] };
@@ -606,7 +607,7 @@ export class ModelRolodex {
         try {
             // HF Inference API health ping
             const hfUrl = 'https://api-inference.huggingface.co/models/gpt2';
-            const hfResponse = await fetch(hfUrl, {
+            const hfResponse = await undiciFetch(hfUrl, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ inputs: 'test', parameters: { max_new_tokens: 1 } }),
@@ -669,7 +670,7 @@ export class ModelRolodex {
         }
 
         try {
-            const response = await fetch('https://openrouter.ai/api/v1/models', {
+            const response = await undiciFetch('https://openrouter.ai/api/v1/models', {
                 headers: { 'Authorization': `Bearer ${apiKey}` },
                 signal: AbortSignal.timeout(120000)
             });
@@ -734,7 +735,7 @@ export class ModelRolodex {
         }
 
         try {
-            const response = await fetch('https://api.fireworks.ai/inference/v1/models', {
+            const response = await undiciFetch('https://api.fireworks.ai/inference/v1/models', {
                 headers: { 'Authorization': `Bearer ${apiKey}` },
                 signal: AbortSignal.timeout(60000)
             });

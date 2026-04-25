@@ -74,6 +74,8 @@
   </select></label>
   <label style="color:#51ffff"><input type="checkbox" id="showEdges" checked onchange="redraw()"> Edge Overlay</label>
   <label style="color:#ffaa33"><input type="checkbox" id="showEntities" checked onchange="redraw()"> Entities</label>
+  <label style="color:#ff51ff"><input type="checkbox" id="showGhosts" checked onchange="redraw()"> Ghost Splats</label>
+  <label style="color:#ff3333"><input type="checkbox" id="showHeatmap" onchange="redraw()"> Heatmap Overlay</label>
   <button onclick="loadRegion()">Load Region</button>
   <input type="file" id="filePicker" accept=".json" style="display:none">
   <button onclick="document.getElementById('filePicker').click()">Load File</button>
@@ -92,6 +94,8 @@
   <div class="legend-item"><div class="legend-swatch" style="background:#6b4a1a"></div> Bridge</div>
   <div class="legend-item"><div class="legend-swatch" style="background:#ff3030; border:2px solid #ff3030"></div> Wall Edge (blocked)</div>
   <div class="legend-item"><div class="legend-swatch" style="background:#51ffff"></div> NPC Spawn</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:rgba(0,255,200,0.7); border-color:#00ffc8"></div> Safespot (+)</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:linear-gradient(to right,#550000,#ff0000,#ff6600,#ffff00,#fff)"></div> Threat Heatmap</div>
 </div>
 
 <div class="stat-row" id="stats"></div>
@@ -106,7 +110,28 @@ const tooltip = document.getElementById('tooltip');
 let regionData = null;
 let matrixMap = {};   // "x_y" -> { walkable, surfaceType, edges, sourceFlags }
 let entities = [];
+let ghostGaussians = []; // Received via WebSocket
+let ghostHeatmap = null;
+let ghostSafespots = []; // Received via WebSocket — zero-heat predicted safe tiles
 let worldOriginX = 0, worldOriginY = 0;
+let ws = null;
+
+function connectWS() {
+  const wsUrl = `ws://${window.location.hostname}:${window.location.port}`;
+  ws = new WebSocket(wsUrl);
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (data.type === 'ghost_splat') {
+      ghostGaussians = data.payload.gaussians || [];
+      ghostHeatmap = data.payload.heatmap || null;
+      ghostSafespots = data.payload.safespots || [];
+      if (document.getElementById('showGhosts').checked || document.getElementById('showHeatmap').checked) redraw();
+    }
+  };
+  ws.onclose = () => setTimeout(connectWS, 2000);
+  ws.onerror = () => ws.close();
+}
+connectWS();
 
 function surfaceColor(tile) {
   if (!tile) return [8, 8, 14];
@@ -228,6 +253,123 @@ function redraw() {
       }
     }
   }
+  
+  // Pass 3.5: Thermal Heatmap Overlay (yellow → orange → red → white gradient)
+  if (document.getElementById('showHeatmap').checked && ghostHeatmap && ghostHeatmap.length > 0) {
+    const PADDED_SIZE = 66;
+    // Find max intensity for normalisation
+    let maxHeat = 1;
+    for (let i = 0; i < ghostHeatmap.length; i++) {
+      if (ghostHeatmap[i] > maxHeat) maxHeat = ghostHeatmap[i];
+    }
+
+    for (let ly = 0; ly < PADDED_SIZE; ly++) {
+      for (let lx = 0; lx < PADDED_SIZE; lx++) {
+        const raw = ghostHeatmap[ly * PADDED_SIZE + lx];
+        if (raw === 0) continue;
+
+        // Translate from padded (66x66) to 64x64 view (offset by 1)
+        const tx = lx - 1;
+        const ty = ly - 1;
+        if (tx < 0 || tx >= size || ty < 0 || ty >= size) continue;
+
+        const px = tx * scale;
+        const py = (size - 1 - ty) * scale;
+
+        // Normalised 0‥1, clamped
+        const t = Math.min(raw / maxHeat, 1.0);
+
+        // 5-stop gradient: dark-red → red → orange → yellow → white
+        let r, g, b, a;
+        if (t < 0.25) {
+          // dark-red → red
+          const s = t / 0.25;
+          r = Math.round(120 + 135 * s); g = 0; b = 0; a = 0.25 + 0.2 * s;
+        } else if (t < 0.5) {
+          // red → orange
+          const s = (t - 0.25) / 0.25;
+          r = 255; g = Math.round(100 * s); b = 0; a = 0.45 + 0.1 * s;
+        } else if (t < 0.75) {
+          // orange → yellow
+          const s = (t - 0.5) / 0.25;
+          r = 255; g = Math.round(100 + 155 * s); b = 0; a = 0.55 + 0.1 * s;
+        } else {
+          // yellow → white
+          const s = (t - 0.75) / 0.25;
+          r = 255; g = 255; b = Math.round(255 * s); a = 0.65 + 0.2 * s;
+        }
+
+        ctx.fillStyle = `rgba(${r},${g},${b},${a.toFixed(2)})`;
+        ctx.fillRect(px, py, scale, scale);
+      }
+    }
+  }
+
+  // Pass 3.6: Safespot Crosses (cyan '+' markers on zero-heat tiles)
+  if (document.getElementById('showGhosts').checked && Array.isArray(ghostSafespots) && ghostSafespots.length > 0) {
+    ctx.strokeStyle = 'rgba(0, 255, 200, 0.85)';
+    ctx.lineWidth = Math.max(1, scale / 8);
+    const arm = scale * 0.35;
+    for (const sp of ghostSafespots) {
+      const lx = sp.x - worldOriginX;
+      const ly = sp.y - worldOriginY;
+      if (lx < 0 || lx >= size || ly < 0 || ly >= size) continue;
+      const cx2 = lx * scale + scale / 2;
+      const cy2 = (size - 1 - ly) * scale + scale / 2;
+      // Glow shadow
+      ctx.shadowColor = '#00ffc8';
+      ctx.shadowBlur = 4;
+      ctx.beginPath();
+      ctx.moveTo(cx2 - arm, cy2); ctx.lineTo(cx2 + arm, cy2);
+      ctx.moveTo(cx2, cy2 - arm); ctx.lineTo(cx2, cy2 + arm);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+  }
+
+
+  // Pass 4: Ghost Splats (Gaussian Predictions)
+  if (document.getElementById('showGhosts').checked && ghostGaussians.length > 0) {
+    const PADDED_SIZE = 66;
+    for (let i = 0; i < ghostGaussians.length; i += 13) {
+      const lx_rel = ghostGaussians[i + 0];
+      const lz_rel = ghostGaussians[i + 1]; 
+      const ly_rel = ghostGaussians[i + 2];
+      
+      const s11 = ghostGaussians[i + 3];
+      const s33 = ghostGaussians[i + 8];
+      
+      const r = ghostGaussians[i + 9] * 255;
+      const g = ghostGaussians[i + 10] * 255;
+      const b = ghostGaussians[i + 11] * 255;
+      const a = ghostGaussians[i + 12];
+
+      const lx = lx_rel + (PADDED_SIZE / 2) - 1;
+      const ly = ly_rel + (PADDED_SIZE / 2) - 1;
+
+      if (lx < 0 || lx >= size || ly < 0 || ly >= size) continue;
+
+      const px = lx * scale + scale / 2;
+      const py = (size - 1 - ly) * scale + scale / 2;
+
+      const radiusX = Math.sqrt(s11) * scale * 2;
+      const radiusY = Math.sqrt(s33) * scale * 2;
+
+      const maxR = Math.max(radiusX, radiusY, 1);
+      const gradient = ctx.createRadialGradient(px, py, 0, px, py, maxR);
+      gradient.addColorStop(0, `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${a * 0.6})`);
+      gradient.addColorStop(1, `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},0)`);
+
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.scale(radiusX / maxR, radiusY / maxR);
+      ctx.beginPath();
+      ctx.arc(0, 0, maxR, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      ctx.restore();
+    }
+  }
 
   // Stats
   let totalTiles = 0, blockedTiles = 0, edgedTiles = 0;
@@ -280,7 +422,7 @@ async function loadRegion() {
   document.getElementById('status').textContent = `Loading ${filename}...`;
 
   try {
-    const resp = await fetch(`http://localhost:8080/${filename}`);
+    const resp = await fetch(`${window.location.origin}/${filename}`);
     if (!resp.ok) {
       document.getElementById('status').textContent = `${filename} not found (${resp.status})`;
       return;

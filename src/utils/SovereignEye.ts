@@ -3,6 +3,7 @@ import { promisify } from 'util';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';
 import { EventEmitter } from 'events';
+import { fetch as undiciFetch } from 'undici';
 import type { Result } from '../core/models.js';
 import { getDashboardPath } from './SovereignPathResolver.js';
 import { createLogger } from "./logger.js";
@@ -98,9 +99,12 @@ export class SovereignEye extends EventEmitter {
             let textContent: string | null = null;
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 200);
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // Reduced to 5s
                 
-                const response = await fetch(url, { signal: controller.signal });
+                const response = await undiciFetch(url, { 
+                    signal: controller.signal,
+                    headers: { 'User-Agent': 'SovereignEye/2.0' }
+                });
                 clearTimeout(timeoutId);
                 
                 textContent = await response.text();
@@ -109,7 +113,11 @@ export class SovereignEye extends EventEmitter {
                     textContent = textContent.substring(0, 10000) + '\n... [truncated]';
                 }
             } catch (fetchErr) {
-                logger.warn({ err: fetchErr }, 'Text fetch failed, screenshot-only mode');
+                logger.warn({ err: fetchErr, url }, 'Text fetch failed, screenshot-only mode');
+            }
+
+            if (!screenshotResult.ok && !textContent) {
+                return { ok: false, error: new Error(`Capture failed: No screenshot and no text content could be retrieved.`) };
             }
 
             const result: CaptureResult = {
@@ -280,7 +288,7 @@ $bitmap.Dispose()
 
         for (const browser of browsers) {
             try {
-                const browserTimeout = 2000; // Original sharp timeout
+                const browserTimeout = 5000; // Reduced to 5s for faster port switching
                 const cmd = `"${browser}" --headless --disable-gpu --screenshot="${outputPath}" --window-size=${viewport.width},${viewport.height} --hide-scrollbars --no-sandbox "${url}"`;
                 await execAsync(cmd, { timeout: browserTimeout });
 

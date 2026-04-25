@@ -117,11 +117,18 @@ export class NodeTester {
         return results;
     }
 
-    public auditProviders(): ProviderHealth[] {
+    public async auditProviders(): Promise<ProviderHealth[]> {
         const rolodex = this.router.getRolodex();
         if (!rolodex) {
             logger.warn('ModelRolodex not injected - provider audit unavailable.');
             return [];
+        }
+
+        // Trigger refresh if everything is offline to ensure accurate clinical state
+        const currentProviders = rolodex.getProviderStatus('ollama'); // Just a peek
+        if (!currentProviders.authenticated && !currentProviders.lastChecked) {
+            logger.info('Clinical audit triggering provider substrate refresh...');
+            await rolodex.refreshAll();
         }
 
         const providers: RolodexProvider[] = ['ollama', 'cloudflare', 'gemini', 'huggingface', 'fireworks', 'openrouter'];
@@ -207,21 +214,30 @@ export class NodeTester {
     }
 
     private async probeNode(node: NeuralNode): Promise<NodeHealth> {
-        let fullPath = node.path;
+        const pathsToTry = [
+            node.path,
+            node.path.replace(/\.ts$/, '.js'),
+            node.path.replace(/^src\//, 'dist/src/').replace(/\.ts$/, '.js'),
+            node.path.replace(/^src\//, 'dist/').replace(/\.ts$/, '.js')
+        ];
+
+        let fullPath = '';
         let exists = false;
 
-        if (isAbsolute(fullPath)) {
-            exists = existsSync(fullPath);
-        } else {
-            fullPath = join(this.projectRoot, node.path);
-            exists = existsSync(fullPath);
-        }
-
-        if (!exists) {
-            const pkgPath = join(this.packageRoot, node.path);
+        for (const p of pathsToTry) {
+            // Try project root
+            const projectPath = isAbsolute(p) ? p : join(this.projectRoot, p);
+            if (existsSync(projectPath)) {
+                fullPath = projectPath;
+                exists = true;
+                break;
+            }
+            // Try package root
+            const pkgPath = isAbsolute(p) ? p : join(this.packageRoot, p);
             if (existsSync(pkgPath)) {
                 fullPath = pkgPath;
                 exists = true;
+                break;
             }
         }
 

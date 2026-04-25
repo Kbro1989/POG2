@@ -49,12 +49,14 @@ export class DirectionalPathfinder {
     /**
      * findPath - Quaternary A* for worker environments.
      */
-    public async findPath(
+    public findPath(
         start: Coord,
         end: Coord,
-        gameState: GameState,
+        gameState?: GameState,
+        isPlayer = true,
         debug = false
-    ): Promise<Coord[]> {
+    ): Coord[] {
+        const npcIndex = gameState?.npcSpatialIndex;
         const openSet = new BinaryHeap<PathNode>();
         const closedSet = new Set<string>();
         const gScores = new Map<string, number>();
@@ -69,7 +71,7 @@ export class DirectionalPathfinder {
         gScores.set(startNode.key, 0);
 
         let iterations = 0;
-        const MAX_ITERATIONS = 5000;
+        const MAX_ITERATIONS = Math.max(5000, Math.floor(this.heuristic(start, end) * 100));
 
         while (!openSet.isEmpty() && iterations < MAX_ITERATIONS) {
             iterations++;
@@ -80,7 +82,7 @@ export class DirectionalPathfinder {
                 return this.reconstructPath(current);
             }
 
-            closedSet.add(currentKey(current));
+            closedSet.add(current.key);
 
             // Expand Neighbors
             const neighbors = this.getNeighbors(current);
@@ -90,7 +92,7 @@ export class DirectionalPathfinder {
                 if (closedSet.has(nKey)) continue;
 
                 // THE SOVEREIGN RULE: Verify Directional Collision
-                const canMove = await this.canMove(current.toCoord(), next, direction, gameState);
+                const canMove = this.canMove(current.toCoord(), next, direction, npcIndex, isPlayer);
                 if (!canMove) continue;
 
                 const tentativeG = current.gScore + 1;
@@ -120,12 +122,13 @@ export class DirectionalPathfinder {
      * 2. (to) does not block entry in REVERSE_DIRECTION.
      * 3. Diagonals strictly forbid corner-cutting if adjacent cardinals are blocked.
      */
-    public async canMove(
+    public canMove(
         from: Coord,
         to: Coord,
         direction: Direction,
-        gameState: GameState
-    ): Promise<boolean> {
+        npcIndex?: Map<string, any[]>,
+        isPlayer = true
+    ): boolean {
         // Target tile must be structurally walkable
         // Exception: 'up' / 'down' are portal transitions — bypass collision entirely
         if (direction === 'up' || direction === 'down') {
@@ -139,6 +142,16 @@ export class DirectionalPathfinder {
 
         if (!this.isWalkable(to.plane, to.x, to.y)) {
             return false;
+        }
+
+        // --- DYNAMIC OBSTACLE CHECK (Phase 43) ---
+        if (npcIndex) {
+            const key = `${to.x},${to.y},${to.plane}`;
+            const npcs = npcIndex.get(key);
+            if (npcs && npcs.length > 0) {
+                // If any NPC on the tile blocks movement
+                return false;
+            }
         }
 
         // --- DIAGONAL CLIP RULE ---
@@ -160,46 +173,58 @@ export class DirectionalPathfinder {
             if (!this.isWalkable(from.plane, orth2X, orth2Y)) return false;
 
             // 2. Both current and target tiles must permit orthogonal transit within the diagonal envelope
-            if (isNorth) { if (!this.canTransit(from, to, 'north')) return false; }
-            if (isSouth) { if (!this.canTransit(from, to, 'south')) return false; }
-            if (isEast)  { if (!this.canTransit(from, to, 'east')) return false; }
-            if (isWest)  { if (!this.canTransit(from, to, 'west')) return false; }
+            if (isNorth) { if (!this.canTransit(from, to, 'north', isPlayer)) return false; }
+            if (isSouth) { if (!this.canTransit(from, to, 'south', isPlayer)) return false; }
+            if (isEast)  { if (!this.canTransit(from, to, 'east', isPlayer)) return false; }
+            if (isWest)  { if (!this.canTransit(from, to, 'west', isPlayer)) return false; }
 
             return true;
         }
 
         // --- CARDINAL CHECK ---
-        return this.canTransit(from, to, direction);
+        return this.canTransit(from, to, direction, isPlayer);
     }
 
     /**
      * Helper to verify if transit across an exact cardinal edge is permitted safely.
      */
-    private canTransit(from: Coord, to: Coord, direction: Direction): boolean {
+    private canTransit(from: Coord, to: Coord, direction: Direction, isPlayer = true): boolean {
         const fromLogic = this.spatial.getLogicAt(from.plane, from.x, from.y);
         const toLogic = this.spatial.getLogicAt(to.plane, to.x, to.y);
 
+        if (fromLogic === null || toLogic === null) return false;
+
         // 1. From Tile Edge Blocking
-        if (typeof fromLogic === 'object' && (fromLogic as any).edges) {
-            const edges = (fromLogic as any).edges;
-            if (direction === 'north' && edges.northBlocked) return false;
-            if (direction === 'south' && edges.southBlocked) return false;
-            if (direction === 'east' && edges.eastBlocked) return false;
-            if (direction === 'west' && edges.westBlocked) return false;
-        } else if (typeof fromLogic === 'object' && (fromLogic as unknown as Record<string, boolean>)[direction] === false) {
-             return false;
+        if (typeof fromLogic === 'object') {
+            const c = fromLogic as any;
+            if (!isPlayer && c.npc_only_blocks?.includes(direction)) return false;
+
+            if (c.edges) {
+                const edges = c.edges;
+                if (direction === 'north' && edges.northBlocked) return false;
+                if (direction === 'south' && edges.southBlocked) return false;
+                if (direction === 'east' && edges.eastBlocked) return false;
+                if (direction === 'west' && edges.westBlocked) return false;
+            } else if (direction in c) {
+                if (c[direction] === false) return false;
+            }
         }
 
         // 2. To Tile Edge Blocking
         const reverseDir = this.getReverseDirection(direction);
-        if (typeof toLogic === 'object' && (toLogic as any).edges) {
-            const edges = (toLogic as any).edges;
-            if (reverseDir === 'north' && edges.northBlocked) return false;
-            if (reverseDir === 'south' && edges.southBlocked) return false;
-            if (reverseDir === 'east' && edges.eastBlocked) return false;
-            if (reverseDir === 'west' && edges.westBlocked) return false;
-        } else if (typeof toLogic === 'object' && (toLogic as unknown as Record<string, boolean>)[reverseDir] === false) {
-             return false;
+        if (typeof toLogic === 'object') {
+            const c = toLogic as any;
+            if (!isPlayer && c.npc_only_blocks?.includes(reverseDir)) return false;
+
+            if (c.edges) {
+                const edges = c.edges;
+                if (reverseDir === 'north' && edges.northBlocked) return false;
+                if (reverseDir === 'south' && edges.southBlocked) return false;
+                if (reverseDir === 'east' && edges.eastBlocked) return false;
+                if (reverseDir === 'west' && edges.westBlocked) return false;
+            } else if (reverseDir in c) {
+                if (c[reverseDir] === false) return false;
+            }
         }
 
         // Legacy compat (0x100 overlay block etc)
@@ -225,8 +250,11 @@ export class DirectionalPathfinder {
     }
 
     private heuristic(a: Coord, b: Coord): number {
-        // Manhattan with a slight multiplier (admissible)
-        return (Math.abs(a.x - b.x) + Math.abs(a.y - b.y)) * 1.01;
+        // Chebyshev distance for uniform diagonal cost, slightly scaled to prefer direct routes
+        const dx = Math.abs(a.x - b.x);
+        const dy = Math.abs(a.y - b.y);
+        const dp = Math.abs(a.plane - b.plane);
+        return (Math.max(dx, dy) + (dp * 10)) * 1.01;
     }
 
     private getNeighbors(node: PathNode): { coord: Coord; direction: Direction }[] {
@@ -278,6 +306,3 @@ export class DirectionalPathfinder {
     }
 }
 
-function currentKey(node: PathNode): string {
-    return `${node.plane}_${node.x}_${node.y}`;
-}

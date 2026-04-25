@@ -31,7 +31,7 @@ async function huntRibbon() {
                     
                     const ribbonComponents = iface.components.filter(c => c.text || c.spriteId);
                     for (const comp of ribbonComponents) {
-                        if (comp.text && ribbonKeys.some(k => comp.text.toLowerCase().includes(k))) {
+                        if (comp.text && ribbonKeys.some(k => comp.text?.toLowerCase().includes(k))) {
                             ogLog(`Comp ID ${comp.componentId}: Text: [${comp.text}], Sprite ID: ${comp.spriteId}`);
                         }
                     }

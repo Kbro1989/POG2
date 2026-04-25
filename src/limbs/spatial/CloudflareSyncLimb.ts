@@ -1,4 +1,4 @@
-﻿import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
 
 const logger = createLogger('CloudflareSyncLimb');
 
@@ -15,8 +15,8 @@ export interface VisualStateOverride {
 export class CloudflareSyncLimb {
     private endpoint: string;
 
-    constructor(edgeUrl: string = 'http://127.0.0.1:8787') {
-        this.endpoint = edgeUrl;
+    constructor(edgeUrl?: string) {
+        this.endpoint = edgeUrl || process.env['CLOUDFLARE_WORKER_URL'] || 'http://127.0.0.1:8787';
     }
 
     /**
@@ -40,6 +40,25 @@ export class CloudflareSyncLimb {
         } catch (error) {
             logger.error({ error }, 'Cloudflare Worker is offline or unreachable. Is wrangler dev running?');
             return false;
+        }
+    }
+
+    /**
+     * Clinical Health Check for NodeTester audit.
+     */
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        try {
+            const res = await fetch(`${this.endpoint}/api/health`).catch(() => fetch(this.endpoint));
+            const online = res.ok;
+            return {
+                online,
+                details: online ? `Cloudflare Worker active on ${this.endpoint}` : `Cloudflare Worker returned ${res.status}`
+            };
+        } catch (e) {
+            return {
+                online: false,
+                details: `Cloudflare Worker OFFLINE at ${this.endpoint}. Is wrangler dev running?`
+            };
         }
     }
 

@@ -1,4 +1,6 @@
 import * as fs from 'fs';
+import { join } from 'path';
+import { getAtlasSystemPath, getAtlasSpatialPath } from '../../utils/SovereignPathResolver.js';
 import { Coord, GameState, Result, YaoState, SkillId, EquipmentSlot, SovereignAvatar, Item } from '../../core/models.js';
 import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { WorldGroundingLimb } from '../../limbs/world_grounding/WorldGroundingLimb.js';
@@ -51,11 +53,20 @@ export class ServerLogicMapper {
 
     private loadSystemMapping() {
         try {
-            const data = fs.readFileSync('D:/sovereign/atlas/system/cache_logic_mapping.json', 'utf8');
-            const findings = JSON.parse(data);
-            // Flattens the categorized findings for easy lookup
-            this.systemMapping = Object.values(findings).flat();
-            logger.info({ count: this.systemMapping.length }, 'Authoritative System Logic Mapping loaded.');
+            const systemRoot = getAtlasSystemPath();
+            const fallbackPath = join(systemRoot, 'cache_logic_mapping.json');
+            
+            const spatialRoot = getAtlasSpatialPath();
+            const spatialPath = join(spatialRoot, 'npc_extract', 'cache_logic_mapping.json');
+            const effectivePath = fs.existsSync(spatialPath) ? spatialPath : fallbackPath;
+            
+            if (fs.existsSync(effectivePath)) {
+                const data = fs.readFileSync(effectivePath, 'utf8');
+                const findings = JSON.parse(data);
+                // Flattens the categorized findings for easy lookup
+                this.systemMapping = Object.values(findings).flat();
+                logger.info({ count: this.systemMapping.length, source: effectivePath }, 'Authoritative System Logic Mapping loaded.');
+            }
         } catch (e) {
             logger.warn('System logic mapping unavailable. Running in visceral mode.');
         }
@@ -192,7 +203,7 @@ export class SimulationHarness {
                     const tx = cmd.metadata?.x;
                     const ty = cmd.metadata?.y;
                     if (tx !== undefined && ty !== undefined) {
-                        avatar.startPath([{x: tx, y: ty, plane: avatar.plane}]);
+                        if (avatar.plotPath) avatar.plotPath(tx, ty, this.pathfinder, state);
                         avatar.pendingInteraction = null;
                         this.switchboard.broadcast({ type: 'EVENT', message: `Walking to ${tx}, ${ty}` });
                     }
@@ -200,7 +211,7 @@ export class SimulationHarness {
                     const tx = cmd.metadata?.x;
                     const ty = cmd.metadata?.y;
                     if (tx !== undefined && ty !== undefined) {
-                        avatar.startPath([{x: tx, y: ty, plane: avatar.plane}]);
+                        if (avatar.plotPath) avatar.plotPath(tx, ty, this.pathfinder, state);
                     }
                     avatar.pendingInteraction = {
                         action: cmd.metadata?.action,
@@ -309,6 +320,38 @@ export class SimulationHarness {
             this.grounding.manifestNearbyEntities(chunkX, chunkY).catch(err => {
                 logger.error({ err, chunkX, chunkY }, 'Forensic Manifestation Failed.');
             });
+
+            // Phase 115: Populate state.npcMap from the newly manifested entities
+            const manifest = this.grounding.getManifest();
+            const minX = chunkX << 6;
+            const minZ = chunkY << 6;
+            const maxX = minX + 63;
+            const maxZ = minZ + 63;
+
+            for (const [id, entity] of Object.entries(manifest.entities)) {
+                if (id.startsWith('npc_')) {
+                    const data = entity.grounded.data;
+                    if (data.spatial && data.spatial.x >= minX && data.spatial.x <= maxX && data.spatial.y >= minZ && data.spatial.y <= maxZ) {
+                        const npcId = data.npcId || parseInt(id.split('_')[1], 10);
+                        if (!state.npcMap.has(npcId)) {
+                            state.npcMap.set(npcId, {
+                                id: npcId,
+                                name: data.name || `NPC ${npcId}`,
+                                x: data.spatial.x,
+                                y: data.spatial.y,
+                                plane: data.spatial.plane || 0,
+                                combat: 0,
+                                adrenaline: 0,
+                                necrosisStacks: 0,
+                                residualSouls: 0,
+                                lastCombatTick: 0,
+                                cooldowns: {},
+                                metadata: data
+                            } as any);
+                        }
+                    }
+                }
+            }
         }
 
         // 3. Map Server-Only Logic to the Current Tick
@@ -365,7 +408,19 @@ export class SimulationHarness {
             this.reflexLoop(avatar, state);
         }
 
-        // 5. Strategic State Reconciliation (Every 6000ms)
+        // 5. Idle Wander Behavior (Phase 260)
+        // If the avatar is idle, has no goal, and is not busy, pick a random tile nearby every 10 ticks.
+        if (tickCount % 10 === 0 && !this.walkGoal && !avatar.isBusy() && (!avatar.currentPath || avatar.currentPath.length === 0)) {
+            // 20% chance to wander if idle
+            if (Math.random() < 0.2) {
+                const rx = avatar.coord.x + Math.floor(Math.random() * 7) - 3;
+                const ry = avatar.coord.y + Math.floor(Math.random() * 7) - 3;
+                this.setWalkGoal(rx, ry, avatar.coord.plane);
+                logger.debug({ x: rx, y: ry }, '[HARNESS] Avatar initiating autonomous idle wander.');
+            }
+        }
+
+        // 6. Strategic State Reconciliation (Every 6000ms)
         // Note: This is purely Game/Player State related (Brain Sync). 
         // Neurological Health (Heart Audit) has been decoupled to PulseMonitor.
         if (tickCount - this.lastDeepSync >= 10) {
@@ -493,12 +548,21 @@ export class SimulationHarness {
                 }
 
                 if (target) {
-                    let weaponScalar = 1000;
+                    let weaponTier = 1;
+                    let combatLevel = 10; // Default for NPCs without skill data
+                    
                     if (entity.id === avatar.id || entity.username === 'Sovereign') {
                         const wId = (avatar.equipment as any)?.['weapon']?.id;
-                        weaponScalar = itemBook.getWeaponScalar(wId);
+                        weaponTier = Math.max(1, Math.floor(itemBook.getWeaponScalar(wId) / 100));
+                        // Derive combat level from the relevant attack skill
+                        const attackSkill = avatar.skills?.[0]?.level || 10;  // SkillId.ATTACK = 0
+                        const strengthSkill = avatar.skills?.[2]?.level || 10; // SkillId.STRENGTH = 2
+                        const rangedSkill = avatar.skills?.[4]?.level || 10;  // SkillId.RANGED = 4
+                        const magicSkill = avatar.skills?.[7]?.level || 10;   // SkillId.MAGIC = 7
+                        combatLevel = Math.max(attackSkill, strengthSkill, rangedSkill, magicSkill);
                     } else {
-                        weaponScalar = entity.metadata?.weaponDamage || 1000;
+                        weaponTier = Math.max(1, Math.floor((entity.metadata?.weaponDamage || 1000) / 100));
+                        combatLevel = entity.metadata?.combatLevel || 10;
                     }
 
                     let ability: AbilityDefinition | undefined;
@@ -507,10 +571,24 @@ export class SimulationHarness {
                     if (intent.abilityId) {
                         ability = book.get(intent.abilityId);
                         if (ability) {
-                            damage = engine.calculateDamage(ability, weaponScalar);
+                            damage = engine.calculateDamage(ability, combatLevel, weaponTier, {
+                                bloodlustStacks: (entity as any).bloodlustStacks || 0,
+                                animaCharged: !!(entity as any).animaCharged,
+                                shadowImbued: ((entity as any).shadowImbuedTicksRemaining || 0) > 0
+                            });
+                            
+                            // ── Adrenaline Economy (March 2026) ──
+                            if (ability.adrenalineCost > 0) {
+                                entity.adrenaline = Math.max(0, (entity.adrenaline || 0) - ability.adrenalineCost);
+                            } else if (ability.adrenalineGain > 0) {
+                                entity.adrenaline = Math.min(10000, (entity.adrenaline || 0) + ability.adrenalineGain);
+                            }
                         }
                     } else if (intent.action === 'attack') {
-                        damage = weaponScalar * 0.5; // default auto attack formula
+                        // Auto-attack: use logarithmic base damage at 50%
+                        damage = Math.floor(CombatRotationEngine.logarithmicBaseDamage(combatLevel, weaponTier) * 0.5);
+                        // Auto-attacks generate 2% adrenaline (200)
+                        entity.adrenaline = Math.min(10000, (entity.adrenaline || 0) + 200);
                     }
                     
                     const applyDamage = (t: any, d: number, modifier: number = 1.0) => {
@@ -738,7 +816,7 @@ export class SimulationHarness {
             // Plot path to target
             let success = false;
             if (avatar.plotPath) {
-                success = await avatar.plotPath(goal.x, goal.y, this.pathfinder, state);
+                success = avatar.plotPath(goal.x, goal.y, this.pathfinder, state);
             }
             
             if (success) {

@@ -46,7 +46,7 @@ async function runGlobalDiscovery() {
         await orchestrator.update(current);
 
         // PASS THE GAMESTATE
-        const path = await pathfinder.findPath(current, destination, gameState);
+        const path = pathfinder.findPath(current, destination);
         
         if (path && path.length > 0) {
             // Simulate movement to the end of this fragment's path

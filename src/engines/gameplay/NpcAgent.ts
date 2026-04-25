@@ -2,6 +2,7 @@ import { Coord, GameState, NPC } from '../../core/models.js';
 import { DirectionalPathfinder } from '../../limbs/spatial/DirectionalPathfinder.js';
 import { SpatialSovereigntyLimb } from '../../limbs/spatial/SpatialSovereigntyLimb.js';
 import { createLogger } from '../../utils/logger.js';
+import { EventBus } from '../../events/EventBus.js';
 import { CombatRotationEngine, CombatEvaluationContext, TargetContext, CombatIntent, TacticalArchetype } from './CombatRotationEngine.js';
 import { CombatStyle } from './AbilityBook.js';
 
@@ -80,6 +81,21 @@ export class NpcAgent {
             this.npc.y = next.y;
             this.npc.plane = next.plane;
             this.npc.path = [...this.currentPath]; // Keep NPC model in sync
+
+            // Phase 19: Broadcast movement to the Global Consensus (Multiplayer Globe)
+            EventBus.getInstance().publish({
+                type: 'direct_perception',
+                source: 'NpcAgent',
+                payload: {
+                    entityId: `npc_${this.npc.id}`,
+                    name: this.npc.name,
+                    x: this.npc.x,
+                    y: this.npc.y,
+                    plane: this.npc.plane,
+                    timestamp: Date.now()
+                }
+            });
+
             return true;
         }
 
@@ -298,7 +314,16 @@ export class NpcAgent {
             gcdEndTick: this.npc.metadata.gcdEndTick,
             channelEndTick: this.npc.metadata.channelEndTick,
             combatStyle: style,
-            archetype: this.config.tacticalArchetype || 'aggressive'
+            archetype: this.config.tacticalArchetype || 'aggressive',
+            state: {
+                adrenaline: this.npc.adrenaline || 0,
+                hp: this.npc.combatStats?.currentHp,
+                maxHp: this.npc.combatStats?.maxHp,
+                bloodlustStacks: this.npc.metadata.bloodlustStacks || 0,
+                animaCharged: this.npc.metadata.animaCharged || false,
+                lastCombatTick: this.npc.metadata.lastCombatTick || 0,
+                cooldowns: this.npc.cooldowns || {},
+            },
         };
         
         const intent = engine.evaluateRotation(ctx, target);

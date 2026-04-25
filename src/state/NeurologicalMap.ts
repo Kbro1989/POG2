@@ -298,7 +298,7 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Spatial Cortex', input: 'Screenshot + coordinates', output: 'Spatial awareness data', constraints: 'Combines vision + location' }
     },
     {
-        path: 'src/core/SovereignEye.ts', role: 'Retinal Capture', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 5,
+        path: 'src/utils/SovereignEye.ts', role: 'Retinal Capture', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 5,
         biologicalRole: { organ: 'Retina', input: 'Screen coordinates', output: 'Screenshot buffer', constraints: 'Windows only; PowerShell capture' }
     },
     {

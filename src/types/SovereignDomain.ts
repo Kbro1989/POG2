@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SovereignDomain â€” Execution authority boundaries.
  * Every tool, model, and memory access must be scoped to a domain.
  * Cross-domain execution is a HARD ERROR. No silent fallback.
@@ -89,7 +89,7 @@ export const DOMAIN_ADJACENCY: Record<SovereignDomain, ReadonlySet<SovereignDoma
 const DOMAIN_PATTERNS: { domain: SovereignDomain; pattern: RegExp }[] = [
     { domain: SovereignDomain.SOCIAL, pattern: /\b(hello|hi|hey|how|what|why|who|help|discuss|converse|chat|talk)\b/i },
     { domain: SovereignDomain.VISION, pattern: /\b(screenshot|screen|look at|see|image|capture|pixel|color map|hex code|chromanumber|view screen|full screen)\b/i },
-    { domain: SovereignDomain.SYSTEM, pattern: /\b(git|commit|push|pull|deploy|wrangler|shell|npm|install|scaffold|build|run|execute command|powershell|terminal|process|service)\b/i },
+    { domain: SovereignDomain.SYSTEM, pattern: /\b(git|commit|push|pull|deploy|wrangler|shell|npm|install|scaffold|build|run|serve|execute command|powershell|terminal|process|service)\b/i },
     { domain: SovereignDomain.FORGE, pattern: /\b(sql|migration|database|schema|docs forge|documentation forge|refactor forge|architectural cleanup)\b/i },
     { domain: SovereignDomain.RESEARCH, pattern: /\b(search|google|find online|look up|fetch url|web|browse|documentation|api reference)\b/i },
     { domain: SovereignDomain.CODE, pattern: /\b(code|generate|create|implement|write|edit|fix|refactor|function|class|interface|module|file|component|readme|typescript|javascript)\b/i },

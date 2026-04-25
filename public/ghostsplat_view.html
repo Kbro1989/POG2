@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GhostSplat Visualizer — Predictive Spatial Intel</title>
+<style>
+  :root {
+    --bg: #050508;
+    --panel: #0a0a0f;
+    --border: #1a1a25;
+    --accent: #51ffff;
+    --threat: #ff4d4d;
+    --safe: #51ff9d;
+    --text: #c8c8d0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 40px;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(to right, var(--accent), #a0ffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: #666;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .main-layout {
+    display: flex;
+    gap: 30px;
+    max-width: 1200px;
+    width: 100%;
+  }
+  .canvas-container {
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  canvas {
+    display: block;
+    background: #000;
+    border-radius: 4px;
+    image-rendering: pixelated;
+    cursor: crosshair;
+  }
+  .sidebar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card h2 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+  }
+  .stat-label { font-size: 11px; color: #555; text-transform: uppercase; margin-bottom: 4px; }
+  .stat-value { font-size: 18px; font-weight: 600; color: #fff; }
+  
+  .legend {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  
+  #tooltip {
+    position: fixed;
+    background: rgba(10, 10, 20, 0.95);
+    border: 1px solid var(--accent);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    pointer-events: none;
+    display: none;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  }
+  .threat-value { font-weight: bold; }
+  .safe-value { color: var(--safe); }
+  
+  .controls {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+  }
+  button {
+    background: #1a1a25;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  button:hover { background: #2a2a35; border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>GHOSTSPLAT ENGINE</h1>
+  <div class="subtitle">Predictive Spatial Projection & Tactical Safespots</div>
+</div>
+
+<div class="main-layout">
+  <div class="canvas-container">
+    <canvas id="view" width="528" height="528"></canvas>
+    <div class="controls">
+      <button onclick="loadData()">Refresh Static</button>
+      <button id="live-btn" onclick="toggleLive()">Toggle Live</button>
+      <button onclick="toggleHeatmap()">Heatmap</button>
+      <button onclick="toggleSafespots()">Safespots</button>
+    </div>
+    <div id="live-indicator" style="margin-top:10px; font-size:10px; color:#555; font-weight:bold; letter-spacing:1px;">LIVE MODE: OFF</div>
+  </div>
+
+  <div class="sidebar">
+    <div class="card">
+      <h2>SYSTEM METRICS</h2>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="stat-label">Tick Depth</div>
+          <div id="depth-val" class="stat-value">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Total Heat</div>
+          <div id="heat-val" class="stat-value">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">NPC Ghosts</div>
+          <div id="npc-val" class="stat-value">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Safespots</div>
+          <div id="safe-val" class="stat-value">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>LEGEND</h2>
+      <div class="legend">
+        <div class="legend-item"><div class="dot" style="background: var(--accent)"></div> Player Ghost</div>
+        <div class="legend-item"><div class="dot" style="background: var(--threat)"></div> NPC Projection</div>
+        <div class="legend-item"><div class="dot" style="background: var(--safe)"></div> Tactical Safespot</div>
+        <div class="legend-item"><div class="dot" style="background: #222; border: 1px solid #444;"></div> Blocked Tile</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>COORDINATE FOCUS</h2>
+      <div id="focus-coords" class="stat-value" style="font-family: monospace; font-size: 14px; color: var(--accent);">—</div>
+    </div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+  const PADDED_SIZE = 66;
+  const SCALE = 8;
+  const canvas = document.getElementById('view');
+  const ctx = canvas.getContext('2d');
+  const tooltip = document.getElementById('tooltip');
+
+  let currentData = null;
+  let showHeatmap = true;
+  let showSafespots = true;
+  let isLive = false;
+  let ws = null;
+
+  async function loadData() {
+    try {
+      const resp = await fetch('test_output/ghostsplat_test.json');
+      if (!resp.ok) throw new Error('Failed to load test data');
+      currentData = await resp.json();
+      updateUI();
+      render();
+    } catch (err) {
+      console.log('Static test data not found, waiting for live stream...');
+    }
+  }
+
+  function toggleLive() {
+    if (isLive) {
+        if (ws) ws.close();
+        isLive = false;
+        document.getElementById('live-indicator').textContent = 'LIVE MODE: OFF';
+        document.getElementById('live-indicator').style.color = '#555';
+    } else {
+        connectWS();
+    }
+  }
+
+  function connectWS() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host || 'localhost:8788';
+    ws = new WebSocket(`${protocol}//${host}`);
+    
+    ws.onopen = () => {
+        isLive = true;
+        document.getElementById('live-indicator').textContent = 'LIVE MODE: ON';
+        document.getElementById('live-indicator').style.color = '#51ffff';
+        console.log('Connected to Sovereign Bridge');
+    };
+
+    ws.onmessage = (event) => {
+        try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'ghost_splat') {
+                currentData = msg.payload;
+                updateUI();
+                render();
+            }
+        } catch (e) { console.error('WS Error:', e); }
+    };
+
+    ws.onclose = () => {
+        if (isLive) {
+            document.getElementById('live-indicator').textContent = 'LIVE MODE: RECONNECTING...';
+            document.getElementById('live-indicator').style.color = '#ffa500';
+            setTimeout(connectWS, 2000); 
+        }
+    };
+  }
+
+  function updateUI() {
+    if (!currentData) return;
+    document.getElementById('depth-val').textContent = currentData.tickDepth;
+    const totalHeat = currentData.heatmap.reduce((a, b) => a + b, 0);
+    document.getElementById('heat-val').textContent = totalHeat;
+    document.getElementById('npc-val').textContent = currentData.projections.length - 1;
+    document.getElementById('safe-val').textContent = currentData.safespots.length;
+    document.getElementById('focus-coords').textContent = 
+      `CENTER: [${currentData.center.x}, ${currentData.center.y}] PLANE: ${currentData.center.plane}`;
+  }
+
+  function toggleHeatmap() { showHeatmap = !showHeatmap; render(); }
+  function toggleSafespots() { showSafespots = !showSafespots; render(); }
+
+  function render() {
+    if (!currentData) return;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const { heatmap, projections, safespots, center } = currentData;
+
+    // 1. Render Heatmap
+    if (showHeatmap) {
+      for (let y = 0; y < PADDED_SIZE; y++) {
+        for (let x = 0; x < PADDED_SIZE; x++) {
+          const idx = y * PADDED_SIZE + x;
+          const heat = heatmap[idx];
+          if (heat > 0) {
+            const intensity = Math.min(1.0, heat / 10);
+            ctx.fillStyle = `rgba(255, 77, 77, ${intensity * 0.5})`;
+            // Flip Y for visual consistency with map
+            ctx.fillRect(x * SCALE, (PADDED_SIZE - 1 - y) * SCALE, SCALE, SCALE);
+          }
+        }
+      }
+    }
+
+    // 2. Render Safespots
+    if (showSafespots) {
+      for (const spot of safespots) {
+        const lx = (spot.x % PADDED_SIZE);
+        const ly = (spot.y % PADDED_SIZE);
+        ctx.fillStyle = 'rgba(81, 255, 157, 0.4)';
+        ctx.beginPath();
+        ctx.arc(lx * SCALE + SCALE/2, (PADDED_SIZE - 1 - ly) * SCALE + SCALE/2, SCALE/3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // 3. Render Projections
+    projections.forEach(([id, ghost]) => {
+      const lx = ghost.projectedCoord.x % PADDED_SIZE;
+      const ly = ghost.projectedCoord.y % PADDED_SIZE;
+      const isPlayer = id.startsWith('player_');
+
+      ctx.fillStyle = isPlayer ? '#51ffff' : '#ff4d4d';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = ctx.fillStyle;
+      
+      ctx.beginPath();
+      ctx.arc(lx * SCALE + SCALE/2, (PADDED_SIZE - 1 - ly) * SCALE + SCALE/2, SCALE/2, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.shadowBlur = 0;
+
+      if (isPlayer) {
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    });
+
+    // 4. Draw Grid lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= PADDED_SIZE; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * SCALE, 0);
+      ctx.lineTo(i * SCALE, canvas.height);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, i * SCALE);
+      ctx.lineTo(canvas.width, i * SCALE);
+      ctx.stroke();
+    }
+  }
+
+  canvas.addEventListener('mousemove', (e) => {
+    if (!currentData) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const lx = Math.floor(mx / SCALE);
+    const ly = PADDED_SIZE - 1 - Math.floor(my / SCALE);
+
+    if (lx < 0 || lx >= PADDED_SIZE || ly < 0 || ly >= PADDED_SIZE) {
+      tooltip.style.display = 'none';
+      return;
+    }
+
+    const idx = ly * PADDED_SIZE + lx;
+    const heat = currentData.heatmap[idx];
+    const worldX = currentData.center.x + (lx - Math.floor(PADDED_SIZE / 2));
+    const worldY = currentData.center.y + (ly - Math.floor(PADDED_SIZE / 2));
+
+    let html = `<b>COORDS:</b> [${worldX}, ${worldY}]<br>`;
+    html += `<b>LOCAL:</b> [${lx}, ${ly}]<br>`;
+    html += `<b>HEAT INTENSITY:</b> <span class="threat-value" style="color:${heat > 0 ? '#ff4d4d' : '#51ff9d'}">${heat}</span><br>`;
+
+    // Find entities on this tile
+    const entities = currentData.projections.filter(([id, g]) => {
+      return (g.projectedCoord.x % PADDED_SIZE) === lx && (g.projectedCoord.y % PADDED_SIZE) === ly;
+    });
+
+    if (entities.length > 0) {
+      html += `<hr style="margin:8px 0; border:0; border-top:1px solid #333;">`;
+      entities.forEach(([id, g]) => {
+        html += `<b style="color:${id.startsWith('player') ? '#51ffff' : '#ff4d4d'}">${id.toUpperCase()}</b><br>`;
+        html += `Confidence: ${(g.confidence * 100).toFixed(0)}%<br>`;
+        html += `Source: ${g.source}<br>`;
+      });
+    }
+
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX + 20) + 'px';
+    tooltip.style.top = (e.clientY + 20) + 'px';
+  });
+
+  canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+  loadData();
+</script>
+
+</body>
+</html>

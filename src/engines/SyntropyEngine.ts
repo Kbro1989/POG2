@@ -1,4 +1,4 @@
-﻿import { readFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
@@ -41,8 +41,8 @@ export class SyntropyEngine {
     private readonly vscodeDir: string;
 
     constructor(private readonly config: SovereignConfig) {
-        // Phase 107.5: Use SovereignRoot (Default to Home tier which is now project-relative)
-        const root = getSovereignRoot(PathTier.Home);
+        // Phase 107.5: Use SovereignRoot (Auto-detected tier for D-drive sovereignty)
+        const root = getSovereignRoot();
         this.claudeDir = join(root, 'guest', '.claude');
         this.geminiExtensionsDir = join(root, 'guest', '.gemini', 'extensions');
         this.vscodeDir = join(root, 'guest', '.vscode');

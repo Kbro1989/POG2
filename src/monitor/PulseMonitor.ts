@@ -99,15 +99,16 @@ export class PulseMonitor extends EventEmitter {
         try {
             const report = await this.nodeTester.auditNeuralNodes();
             const onlineCount = report.filter(r => r.status === 'ONLINE').length;
-            const offlineCount = report.filter(r => r.status !== 'ONLINE').length;
+            const offlineCount = report.filter(r => r.status === 'OFFLINE').length;
+            const degradedCount = report.filter(r => r.status === 'DEGRADED').length;
 
             const noRecentErrors = this.checkErrors();
             const buildPass = this.checkBuildStatus();
 
             // Resolve global substrate state
             let globalStatus = SubstrateState.ONLINE;
-            if (offlineCount >= 5) globalStatus = SubstrateState.OFFLINE;
-            else if (offlineCount > 0) globalStatus = SubstrateState.DEGRADED;
+            if (offlineCount >= 10) globalStatus = SubstrateState.OFFLINE; // Only stop heartbeat if 10+ nodes are fully missing
+            else if (offlineCount > 0 || degradedCount > 0) globalStatus = SubstrateState.DEGRADED;
 
             // Update Metabolic Registries
             SubstrateResolver.setStatus(globalStatus);

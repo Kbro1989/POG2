@@ -59,7 +59,7 @@ export class SpatialRadarLimb {
         for (let y = yStart; y >= yEnd; y--) {
             let line = chalk.dim('│ ');
             for (let x = xStart; x <= xEnd; x++) {
-                line += this.renderTile(x, y, center.plane, state, avatar, projectedNpcs, projectedPlayers);
+                line += this.renderTile(x, y, center.plane, state, avatar, projectedNpcs, projectedPlayers, ghostSplat || undefined);
             }
             output += line + chalk.dim(' │\n');
         }
@@ -70,7 +70,25 @@ export class SpatialRadarLimb {
         return output;
     }
 
-    private renderTile(x: number, y: number, plane: number, state: GameState, avatar: SovereignAvatar, projectedNpcs: Set<string>, projectedPlayers: Set<string>): string {
+    private renderTile(x: number, y: number, plane: number, state: GameState, avatar: SovereignAvatar, projectedNpcs: Set<string>, projectedPlayers: Set<string>, field?: GhostSplatField): string {
+        const center = avatar.coord;
+        const centerOffset = Math.floor(PADDED_SIZE / 2);
+        
+        // 0. Thermal Compositing (Phase 45: Thermal Overlay)
+        let thermalBg: (s: string) => string = (s) => s;
+        if (field) {
+            const lx = x - center.x + centerOffset;
+            const ly = y - center.y + centerOffset;
+            if (lx >= 0 && lx < PADDED_SIZE && ly >= 0 && ly < PADDED_SIZE) {
+                const heat = field.heatmap[ly * PADDED_SIZE + lx];
+                if (heat > 0) {
+                    if (heat >= 3) thermalBg = chalk.bgRed.black; // Critical Heat
+                    else if (heat >= 2) thermalBg = chalk.bgYellow.black; // High Heat
+                    else thermalBg = chalk.bgAnsi256(226).black; // Low Heat (Yellowish)
+                }
+            }
+        }
+
         // 1. Resolve Entity Priority
         if (avatar.coord.x === x && avatar.coord.y === y && avatar.coord.plane === plane) {
             let char = '@ ';
@@ -82,9 +100,9 @@ export class SpatialRadarLimb {
                 // Return total damage in this tick
                 const total = avatar.metadata.activeHitsplats.reduce((acc: number, h: any) => acc + h.amount, 0);
                 char = `!${Math.min(9, Math.floor(total/100))}`; // Show intensity 0-9
-                return chalk.bgRed.white.bold(char);
+                return thermalBg(chalk.white.bold(char));
             }
-            return chalk.cyan.bold(char);
+            return thermalBg(chalk.cyan.bold(char));
         }
 
         const coordKey = `${x},${y},${plane}`;
@@ -101,7 +119,7 @@ export class SpatialRadarLimb {
             if (npc.interactionState === 'MOVING') char = '! ';
             if (npc.interactionState === 'EXECUTING') char = '* ';
 
-            return color(char);
+            return thermalBg(color(char));
         }
 
         if (projectedPlayers.has(coordKey)) {
@@ -116,6 +134,15 @@ export class SpatialRadarLimb {
         const audit = this.spatialLimb.auditTile(plane, x, y);
         let char = '. ';
         let tileColor = (text: string) => text;
+
+        // 2.5 Safespot Highlighting (Phase 45)
+        if (field) {
+            const isSafespot = field.safespots.some(s => s.x === x && s.y === y && s.plane === plane);
+            if (isSafespot) {
+                char = '+ ';
+                tileColor = chalk.green.bold;
+            }
+        }
 
         if (audit.collisionType === 'mapsquare_fragment' && audit.stack) {
             const layer = audit.stack.layers.find(l => l.plane === plane);

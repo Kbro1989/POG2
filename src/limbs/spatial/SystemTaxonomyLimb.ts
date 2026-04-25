@@ -1,17 +1,10 @@
-﻿import { createRequire } from 'module';
-import * as path from 'path';
-const require = createRequire(import.meta.url);
-let GameCacheLoader: any = null;
-let parse: any = null;
-
 import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-import { getRSMVCachePath, getCachePedagogyPath, getRSMVSubstratePath } from '../../utils/SovereignPathResolver.js';
-
-const RSMV = getRSMVSubstratePath();
-try { ({ GameCacheLoader } = require(path.join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch {}
-try { ({ parse } = require(path.join(RSMV, 'src', 'opdecoder.js'))); } catch {}
+import { getRSMVCachePath, getCachePedagogyPath } from '../../utils/SovereignPathResolver.js';
+import { rsmvBridge } from '../../utils/RSMVBridge.js';
 import * as fs from 'fs';
+
+import * as path from 'path';
 
 const logger = createLogger('SystemTaxonomyLimb');
 
@@ -22,70 +15,68 @@ const logger = createLogger('SystemTaxonomyLimb');
  * into the Sovereign Atlas.
  */
 export class SystemTaxonomyLimb {
-    private readonly cachePath = getRSMVCachePath();
     private readonly outDir = getCachePedagogyPath();
-    private cache: any | null = null;
     
     constructor() {
-        try {
-            if (GameCacheLoader) {
-                this.cache = new GameCacheLoader(this.cachePath);
-                logger.info({ path: this.cachePath }, 'SystemTaxonomyLimb connected to substrate.');
-            } else {
-                logger.warn('SystemTaxonomyLimb: GameCacheLoader not available.');
-            }
-        } catch (e) {
-            logger.error({ error: (e as Error).message }, 'Failed to connect GameCacheLoader.');
-        }
+        logger.info('SystemTaxonomyLimb initialized (Bridge-mediated).');
     }
 
     /**
      * Extracts DB Tables and DB Rows into a cohesive relational JSON.
      */
     public async extractSystemTaxonomy(): Promise<Result<boolean>> {
-        if (!this.cache) return err(new Error('Cache connection offline.'));
-        if (!parse || !parse.dbtables || !parse.dbrows) return err(new Error('Required RS3 parsers (dbtables/dbrows) not available.'));
-
         try {
-            logger.info('Commencing System Taxonomy Extraction (Major 2, Page 40/41)...');
-            const MAJOR_CONFIG = 2;
-            const ARCHIVE_DBTABLES = 40;
-            const ARCHIVE_DBROWS = 41;
+            logger.info('Commencing System Taxonomy Extraction (Bridge-mediated)...');
 
-            const tablesArchive = await this.cache.getArchiveById(MAJOR_CONFIG, ARCHIVE_DBTABLES);
-            const tables: Record<number, any> = {};
-            for (const f of tablesArchive) {
-                try {
-                    tables[f.fileid] = parse.dbtables.read(f.buffer, this.cache);
-                    tables[f.fileid].id = f.fileid;
-                } catch (e) {
-                    // skip malformed entries
-                }
-            }
+            const tablesResult = await rsmvBridge.getDBTables();
+            if (!tablesResult.ok) return err(new Error(`Failed to extract DBTables: ${tablesResult.error}`));
 
-            const rowsArchive = await this.cache.getArchiveById(MAJOR_CONFIG, ARCHIVE_DBROWS);
-            const rows: Record<number, any> = {};
-            for (const f of rowsArchive) {
-                try {
-                    rows[f.fileid] = parse.dbrows.read(f.buffer, this.cache);
-                    rows[f.fileid].id = f.fileid;
-                } catch (e) {
-                    // skip malformed entries
-                }
-            }
+            const rowsResult = await rsmvBridge.getDBRows();
+            if (!rowsResult.ok) return err(new Error(`Failed to extract DBRows: ${rowsResult.error}`));
+
+            const varpsResult = await rsmvBridge.getVarps();
+            if (!varpsResult.ok) logger.warn(`Failed to extract Varps: ${varpsResult.error}`);
+
+            const varbitsResult = await rsmvBridge.getVarbits();
+            if (!varbitsResult.ok) logger.warn(`Failed to extract Varbits: ${varbitsResult.error}`);
 
             const payload = {
                 metadata: {
                     extractedAt: new Date().toISOString(),
-                    tableCount: Object.keys(tables).length,
-                    rowCount: Object.keys(rows).length
+                    tableCount: tablesResult.value.count,
+                    rowCount: rowsResult.value.count,
+                    varpCount: varpsResult.ok ? varpsResult.value.count : 0,
+                    varbitCount: varbitsResult.ok ? varbitsResult.value.count : 0
                 },
-                tables,
-                rows
+                tables: tablesResult.value.results,
+                rows: rowsResult.value.results,
+                varps: varpsResult.ok ? varpsResult.value.results : [],
+                varbits: varbitsResult.ok ? varbitsResult.value.results : []
             };
 
-            const outPath = path.join(this.outDir, 'dbtables.json');
+            const outPath = path.join(this.outDir, 'system_taxonomy.json');
             fs.writeFileSync(outPath, JSON.stringify(payload, null, 2));
+
+            // Legacy support for dbtables.json
+            const legacyPath = path.join(this.outDir, 'dbtables.json');
+            fs.writeFileSync(legacyPath, JSON.stringify(payload, null, 2));
+
+            const legacyRowsPath = path.join(this.outDir, 'dbrows.json');
+            // Ensure we remove the directory if it exists before writing a file
+            if (fs.existsSync(legacyRowsPath) && fs.lstatSync(legacyRowsPath).isDirectory()) {
+                fs.rmSync(legacyRowsPath, { recursive: true, force: true });
+            }
+            fs.writeFileSync(legacyRowsPath, JSON.stringify(rowsResult.value.results, null, 2));
+
+            // Extra pedagogy exports
+            const varbitsRegistryPath = path.join(this.outDir, 'varbits_registry_new.json');
+            if (varbitsResult.ok) {
+                const varbitsMap: Record<number, any> = {};
+                varbitsResult.value.results.forEach((v: any) => {
+                    varbitsMap[v.id] = { varid: v.varid, bits: v.bits };
+                });
+                fs.writeFileSync(varbitsRegistryPath, JSON.stringify(varbitsMap, null, 2));
+            }
 
             logger.info({ path: outPath, tables: payload.metadata.tableCount }, 'System Taxonomy successfully anchored.');
             return ok(true);
@@ -96,23 +87,15 @@ export class SystemTaxonomyLimb {
     }
 
     public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' } {
-        const cacheExists = this.cache !== null;
-        let status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' = 'ONLINE';
-        let details = `Systax: ${cacheExists ? 'NOMINAL' : 'OFFLINE'}`;
-
-        if (!cacheExists) {
-            status = 'OFFLINE';
-        }
-        return { online: cacheExists, details, status };
+        const isOnline = rsmvBridge.isOnline;
+        return { 
+            online: isOnline, 
+            details: `Systax: ${isOnline ? 'NOMINAL' : 'OFFLINE'} (Bridge)`,
+            status: isOnline ? 'ONLINE' : 'OFFLINE'
+        };
     }
 
     public close() {
-        if (this.cache) {
-            try {
-                this.cache.close();
-                this.cache = null;
-                logger.info('SystemTaxonomyLimb cache connection closed.');
-            } catch (e) {}
-        }
+        // Bridge manages its own lifecycle
     }
 }

@@ -9,6 +9,7 @@ import { ExtrasOracle } from './ExtrasOracle.js';
 import { ClueLogicLimb } from './ClueLogicLimb.js';
 import { WorldForensicsLimb } from '../spatial/WorldForensicsLimb.js';
 import { createLogger } from '../../utils/logger.js';
+import { getInteractionResult, isTransversal } from '../../forensics/ObjectBinaryStore.js';
 
 const logger = createLogger('InteractionGateway');
 
@@ -128,7 +129,7 @@ export class InteractionGateway {
                         state.groundItems!.delete(key);
                     }
                     
-                    if (source.inventory && 'addItem' in source) {
+                    if ('inventory' in source && (source as any).inventory && 'addItem' in source) {
                         const added = (source as any).addItem(pickedUp);
                         if (added) {
                             events.push(`[System] You picked up: ${pickedUp.itemName || 'Item ' + pickedUp.id}`);
@@ -175,6 +176,35 @@ export class InteractionGateway {
                 const isMatch = this.clueLimb.isCorrectSpot(numericId, { x: sourceX, y: sourceY, plane: source.plane });
                 if (isMatch) events.push(`[ClueLogicLimb] SUCCESS 🏆 ─ Treasures found at [${sourceX}, ${sourceY}].`);
                 else events.push(`[ClueLogicLimb] Nothing interesting happens.`);
+            }
+        }
+
+        // 6.5 FORENSIC OBJECT INTERACTION (Phase 44)
+        const forensicPair = getInteractionResult(activeId);
+        if (forensicPair) {
+            if (forensicPair.type === 'DOOR') {
+                // Morph the object in the global state to its "Open" version
+                // In a real server, this would be a world-state mutation broadcasted to all players.
+                const manifestedDef = await WorldForensicsLimb.getInstance().getObjectDefinition(forensicPair.resultId);
+                state.objectMap.set(numericId, { 
+                    ...target, 
+                    id: forensicPair.resultId, 
+                    name: manifestedDef.name,
+                    actions: manifestedDef.actions 
+                });
+                events.push(`[InteractionGateway] Door opened: ${target.name} (ID ${activeId}) -> ${manifestedDef.name} (ID ${forensicPair.resultId})`);
+            } else if (forensicPair.type === 'LADDER' || forensicPair.type === 'CAVE' || forensicPair.type === 'PORTAL') {
+                // Plane Transition Logic
+                const isUp = forensicPair.action.toLowerCase().includes('up');
+                const isDown = forensicPair.action.toLowerCase().includes('down') || forensicPair.type === 'CAVE';
+                
+                if (isUp) {
+                    source.coord.plane = Math.min(3, source.coord.plane + 1);
+                    events.push(`[InteractionGateway] Climbing UP to plane ${source.coord.plane}.`);
+                } else if (isDown) {
+                    source.coord.plane = Math.max(0, source.coord.plane - 1);
+                    events.push(`[InteractionGateway] Climbing DOWN to plane ${source.coord.plane}.`);
+                }
             }
         }
 
