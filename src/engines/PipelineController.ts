@@ -1,4 +1,4 @@
-﻿import { type Result, ok } from '../core/models.js';
+import { type Result, ok } from '../core/models.js';
 import { StoryboardLimbV2, type StoryboardScene } from '../limbs/creative/StoryboardLimbV2.js';
 import { ChromanumberEngine } from './ChromanumberEngine.js';
 import { VoiceLimb } from '../limbs/creative/VoiceLimb.js';
@@ -7,6 +7,7 @@ import { VideoAssemblerLimb } from '../limbs/creative/VideoAssemblerLimb.js';
 import { BlenderRenderer, type Clip } from './BlenderRenderer.js';
 import { ShellEngine } from './ShellEngine.js';
 import { GutenbergLimb } from '../limbs/creative/GutenbergLimb.js';
+import { QuestSynthesisLimb } from '../limbs/technical/QuestSynthesisLimb.js';
 import { YouTubeLimb } from '../limbs/creative/YouTubeLimb.js';
 import { existsSync, mkdirSync, writeFileSync, readFileSync, unlinkSync, statSync, readdirSync, renameSync } from 'fs';
 import { join, basename } from 'path';
@@ -32,6 +33,7 @@ export interface PipelineRequest {
     feedbackLoop?: 'Engage' | 'Skip' | 'Auto';
     youtubeUpload?: 'Upload' | 'Skip' | 'Auto';
     dimension?: '2D' | '3D'; // Stage 2.5 toggle
+    generateQuest?: 'Execute' | 'Skip' | 'Auto'; // Stage 4.5 toggle
 }
 
 export interface SceneArtifact {
@@ -83,6 +85,7 @@ export class PipelineController {
         private readonly shell: ShellEngine,
         private readonly blender: BlenderRenderer,
         private readonly hexagram: HexagramManager,
+        private readonly questSynthesis: QuestSynthesisLimb,
         private readonly vectorDB?: any, // Made optional for backwards compatibility during refactor
         private readonly youtubeLimb?: YouTubeLimb // Injected for dependency handling
     ) {
@@ -101,11 +104,12 @@ export class PipelineController {
             'pipeline',
             2, // YoungYin Priority
             async () => {
-                const { bookId, sceneCount = 5, personality, voiceGeneration = 'Auto', videoAssembly = 'Auto', youtubeUpload = 'Auto', dimension = '2D' } = request;
+                const { bookId, sceneCount = 5, personality, voiceGeneration = 'Auto', videoAssembly = 'Auto', youtubeUpload = 'Auto', dimension = '2D', generateQuest = 'Auto' } = request;
 
                 const skipVoice = voiceGeneration === 'Skip';
                 const skipVideo = videoAssembly === 'Skip';
                 const skipYoutube = youtubeUpload === 'Skip';
+                const skipQuest = generateQuest === 'Skip';
 
                 const storageRes = this.gutenberg.getBookStorageInfo(bookId);
                 if (!storageRes.ok) return storageRes as any;
@@ -118,13 +122,14 @@ export class PipelineController {
                 const stage4Path = join(pipelinePath, '4-assembly');
                 const stage5Path = join(pipelinePath, '5-scene-clips');
                 const stage6Path = join(pipelinePath, '6-final');
+                const stageQuestPath = join(pipelinePath, 'quest-derivatives');
 
                 const checkpointPath = join(stage1Path, `checkpoint.json`);
 
                 logger.info({ bookId, category, folderName, sceneCount }, 'Ã°Å¸Å½Â¬ Pipeline initiated with Tiered Storage.');
 
                 // Initialize directories
-                [stage1Path, stage2Path, stage3Path, stage4Path, stage5Path, stage6Path].forEach(p => {
+                [stage1Path, stage2Path, stage3Path, stage4Path, stage5Path, stage6Path, stageQuestPath].forEach(p => {
                     if (!existsSync(p)) mkdirSync(p, { recursive: true });
                 });
 

@@ -25,13 +25,20 @@ async function findInEnums(source: GameCacheLoader) {
                 const enumDef = parse.enums.read(file.buffer, source);
                 // Check if any of the values or keys match our target DBRows
                 let hasMatch = false;
-                if (enumDef.enumMap) {
-                    for (const [k, v] of enumDef.enumMap.entries()) {
-                        if (targetDbRows.has(k) || targetDbRows.has(v as number)) {
-                            hasMatch = true;
-                            break;
+                const maps = [enumDef.intArrayValue1, enumDef.stringArrayValue1, enumDef.intArrayValue2?.values, enumDef.stringArrayValue2?.values];
+                for (const map of maps) {
+                    if (map && Array.isArray(map)) {
+                        for (const entry of map) {
+                            if (Array.isArray(entry) && entry.length >= 2) {
+                                const [k, v] = entry;
+                                if (targetDbRows.has(Number(k)) || targetDbRows.has(Number(v))) {
+                                    hasMatch = true;
+                                    break;
+                                }
+                            }
                         }
                     }
+                    if (hasMatch) break;
                 }
                 
                 if (hasMatch) {
@@ -59,8 +66,8 @@ async function findInStructs(source: GameCacheLoader) {
                 if (!structDef.extra) continue;
                 
                 let hasMatch = false;
-                for (const param of structDef.extra) {
-                    if (targetDbRows.has(param.intvalue)) {
+                for (const param of (structDef.extra || [])) {
+                    if (param.intvalue !== undefined && param.intvalue !== null && targetDbRows.has(param.intvalue)) {
                         hasMatch = true;
                     }
                     // Struct might BE the coordinate payload, let's also just check if the ID matches 
@@ -105,13 +112,11 @@ async function findInObjects(source: GameCacheLoader) {
                     console.log(`\n[OBJECT TARGET MATCH] ID: ${objId} - ${objDef.name || 'Null'}`);
                     
                     let opOutput = "None";
-                    if (objDef.actions) opOutput = JSON.stringify(objDef.actions);
-                    else if (objDef.options) opOutput = JSON.stringify(objDef.options);
-                    else if (objDef.actions_0 || objDef.actions_1 || objDef.actions_2) {
-                        opOutput = JSON.stringify([objDef.actions_0, objDef.actions_1, objDef.actions_2, objDef.actions_3, objDef.actions_4].filter(x => x));
-                    }
+                    const actions = [objDef.actions_0, objDef.actions_1, objDef.actions_2, objDef.actions_3, objDef.actions_4].filter(x => x);
+                    if (actions.length > 0) opOutput = JSON.stringify(actions);
+                    
                     console.log(`  Actions/Op: ${opOutput}`);
-                    console.log(`  Extra/Params: ${JSON.stringify(objDef.extra || objDef.params || 'None')}`);
+                    console.log(`  Extra/Params: ${JSON.stringify(objDef.extra || 'None')}`);
                 }
             }
             if (!found) {

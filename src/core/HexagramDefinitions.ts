@@ -279,5 +279,16 @@ export const INGESTION_TRIGGERS: Record<number, HexagramIngestionProfile> = {
         recursionDepth: 0,
         targetLayers: ['GhostLimb', 'R2_ColdStorage'],
         description: 'Emergency brake. Dump to cold storage, clear buffers.'
+    },
+    58: {
+        name: 'The Joyous',
+        chinese: 'Dui',
+        trigrams: ['Lake', 'Lake'],
+        ingestionMode: 'structural',
+        breathCycle: 400,
+        maxConcurrent: 5,
+        recursionDepth: 2,
+        targetLayers: ['Gutenberg', 'Storyboard', 'QuestSubstrate'],
+        description: 'Gameplay and Narrative synthesis. Feeding literary derivatives into the quest engine.'
     }
 };

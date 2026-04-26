@@ -179,31 +179,49 @@ export class InteractionGateway {
             }
         }
 
-        // 6.5 FORENSIC OBJECT INTERACTION (Phase 44)
-        const forensicPair = getInteractionResult(activeId);
-        if (forensicPair) {
-            if (forensicPair.type === 'DOOR') {
-                // Morph the object in the global state to its "Open" version
-                // In a real server, this would be a world-state mutation broadcasted to all players.
-                const manifestedDef = await WorldForensicsLimb.getInstance().getObjectDefinition(forensicPair.resultId);
-                state.objectMap.set(numericId, { 
-                    ...target, 
-                    id: forensicPair.resultId, 
-                    name: manifestedDef.name,
-                    actions: manifestedDef.actions 
-                });
-                events.push(`[InteractionGateway] Door opened: ${target.name} (ID ${activeId}) -> ${manifestedDef.name} (ID ${forensicPair.resultId})`);
-            } else if (forensicPair.type === 'LADDER' || forensicPair.type === 'CAVE' || forensicPair.type === 'PORTAL') {
-                // Plane Transition Logic
-                const isUp = forensicPair.action.toLowerCase().includes('up');
-                const isDown = forensicPair.action.toLowerCase().includes('down') || forensicPair.type === 'CAVE';
-                
-                if (isUp) {
-                    source.coord.plane = Math.min(3, source.coord.plane + 1);
-                    events.push(`[InteractionGateway] Climbing UP to plane ${source.coord.plane}.`);
-                } else if (isDown) {
-                    source.coord.plane = Math.max(0, source.coord.plane - 1);
-                    events.push(`[InteractionGateway] Climbing DOWN to plane ${source.coord.plane}.`);
+        // 6.5 FORENSIC OBJECT INTERACTION & AUTHORITATIVE MORPHISM
+        const rootDef = await WorldForensicsLimb.getInstance().getObjectDefinition(numericId);
+        const varbitLimb = VarbitSovereigntyLimb.getInstance();
+
+        if (rootDef.varbitId !== undefined && rootDef.varbitId !== -1 && rootDef.transforms) {
+            // Authoritative Cache-driven Varbit Toggle
+            const currentVal = varbitLimb.resolveVarbitValue(rootDef.varbitId, state);
+            let nextVal = (currentVal + 1) % rootDef.transforms.length;
+            
+            // Skip invalid transforms (-1)
+            let safeCounter = 0;
+            while (rootDef.transforms[nextVal] === -1 && safeCounter < rootDef.transforms.length) {
+                nextVal = (nextVal + 1) % rootDef.transforms.length;
+                safeCounter++;
+            }
+
+            await varbitLimb.setVarbit(rootDef.varbitId, nextVal, state);
+            events.push(`[InteractionGateway] 🧬 Genome Morph: Toggled Varbit ${rootDef.varbitId} from ${currentVal} to ${nextVal} for ${target.name}.`);
+        } else {
+            // Fallback to legacy forensic mappings for non-varbit transitions
+            const forensicPair = getInteractionResult(activeId);
+            if (forensicPair) {
+                if (forensicPair.type === 'DOOR') {
+                    const manifestedDef = await WorldForensicsLimb.getInstance().getObjectDefinition(forensicPair.resultId);
+                    state.objectMap.set(numericId, { 
+                        ...target, 
+                        id: forensicPair.resultId, 
+                        name: manifestedDef.name,
+                        actions: manifestedDef.actions 
+                    });
+                    events.push(`[InteractionGateway] Door opened via legacy override: ${target.name} (ID ${activeId}) -> ${manifestedDef.name} (ID ${forensicPair.resultId})`);
+                } else if (forensicPair.type === 'LADDER' || forensicPair.type === 'CAVE' || forensicPair.type === 'PORTAL') {
+                    // Plane Transition Logic
+                    const isUp = forensicPair.action.toLowerCase().includes('up');
+                    const isDown = forensicPair.action.toLowerCase().includes('down') || forensicPair.type === 'CAVE';
+                    
+                    if (isUp) {
+                        source.coord.plane = Math.min(3, source.coord.plane + 1);
+                        events.push(`[InteractionGateway] Climbing UP to plane ${source.coord.plane}.`);
+                    } else if (isDown) {
+                        source.coord.plane = Math.max(0, source.coord.plane - 1);
+                        events.push(`[InteractionGateway] Climbing DOWN to plane ${source.coord.plane}.`);
+                    }
                 }
             }
         }

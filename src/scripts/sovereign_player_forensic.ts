@@ -43,10 +43,11 @@ async function run() {
             const buf = await source.getFileById(cacheMajors.npcs, id);
             const npc = parse.npc.read(buf, source);
             
-            if (npc.name && replicaKeywords.some(k => npc.name.includes(k))) {
+            const npcName = npc.name || "Unknown";
+            if (npcName && replicaKeywords.some(k => npcName.includes(k))) {
                 const entry: any = {
                     id,
-                    name: npc.name,
+                    name: npcName,
                     combat: npc.combat || 0,
                     models: npc.models || [],
                     headModels: npc.headModels || [],

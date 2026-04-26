@@ -593,7 +593,7 @@ export class ModelClient implements ModelExecutor {
             return { ok: false, error: new Error('PRIMARY_CLOUD_API_KEY not set Ã¢â‚¬â€ cannot call primary cloud substrate') };
         }
 
-        // Format: huggingface:provider/model-name (e.g., huggingface:openai-compat/kimi-k2.5-thinking)
+        // Format: huggingface:provider/model-name (e.g., huggingface:openai-compat/kimi-k2.6-thinking)
         // HF Router API: model goes in the request body, NOT the URL path
         const modelPath = params.model.replace('huggingface:', '');
         const url = `https://router.huggingface.co/v1/chat/completions`;

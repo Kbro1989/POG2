@@ -130,7 +130,7 @@ export class SimulationHarness {
     // AI Models assigned per role (Pinned to local substrate)
     private readonly REFLEX_MODEL = 'vibethinker:1.5b'; // 600ms heartbeat
     private readonly TACTICAL_MODEL = 'deepseek-r1:8b';    // Combat Logic
-    private readonly STRATEGIC_MODEL = 'kimi-k2.5:cloud';  // Strategic reasoning
+    private readonly STRATEGIC_MODEL = 'kimi-k2.6:cloud';  // Strategic reasoning
 
     private lastChunkX: number = -1;
     private lastChunkZ: number = -1;
@@ -333,9 +333,12 @@ export class SimulationHarness {
                     const data = entity.grounded.data;
                     if (data.spatial && data.spatial.x >= minX && data.spatial.x <= maxX && data.spatial.y >= minZ && data.spatial.y <= maxZ) {
                         const npcId = data.npcId || parseInt(id.split('_')[1], 10);
-                        if (!state.npcMap.has(npcId)) {
-                            state.npcMap.set(npcId, {
+                        // Use the unique entity ID as the key to prevent collisions and support pruning
+                        const entityKey = id; 
+                        if (!state.npcMap.has(entityKey as any)) {
+                            state.npcMap.set(entityKey as any, {
                                 id: npcId,
+                                entityId: entityKey,
                                 name: data.name || `NPC ${npcId}`,
                                 x: data.spatial.x,
                                 y: data.spatial.y,
@@ -352,6 +355,9 @@ export class SimulationHarness {
                     }
                 }
             }
+            
+            // Phase 116: Prune distant entities to prevent OOM
+            this.pruneEntities(state, avatar);
         }
 
         // 3. Map Server-Only Logic to the Current Tick
@@ -427,7 +433,49 @@ export class SimulationHarness {
             this.syncGodhead(state, avatar).catch(err => {
                 logger.error({ err }, 'Strategic Deep Path sync stalled — retaining last known reality.');
             });
-            this.lastDeepSync = tickCount;
+        this.lastDeepSync = tickCount;
+        }
+    }
+
+    /**
+     * pruneEntities - Removes entities from the active simulation state if they are
+     * too far from the player to prevent memory exhaustion (FatalOOM).
+     */
+    private pruneEntities(state: GameState, avatar: SovereignAvatar): void {
+        const PRUNE_RADIUS = 100; // 100 tiles
+        const PRUNE_RADIUS_SQ = PRUNE_RADIUS * PRUNE_RADIUS;
+        
+        let npcPruneCount = 0;
+        let itemPruneCount = 0;
+
+        // Prune NPCs
+        for (const [key, npc] of state.npcMap.entries()) {
+            const dx = npc.x - avatar.coord.x;
+            const dy = npc.y - avatar.coord.y;
+            if (dx * dx + dy * dy > PRUNE_RADIUS_SQ) {
+                state.npcMap.delete(key);
+                this.agentRegistry.delete(key as any);
+                npcPruneCount++;
+            }
+        }
+
+        // Prune Ground Items
+        if (state.groundItems) {
+            for (const [coordKey, items] of state.groundItems.entries()) {
+                const parts = coordKey.split(',');
+                const x = parseInt(parts[0]);
+                const y = parseInt(parts[1]);
+                const dx = x - avatar.coord.x;
+                const dy = y - avatar.coord.y;
+                if (dx * dx + dy * dy > PRUNE_RADIUS_SQ) {
+                    state.groundItems.delete(coordKey);
+                    itemPruneCount++;
+                }
+            }
+        }
+
+        if (npcPruneCount > 0 || itemPruneCount > 0) {
+            logger.info({ npcPruneCount, itemPruneCount }, '[HARNESS] Pruned distant entities to maintain V8 stability.');
         }
     }
 

@@ -303,6 +303,7 @@ export interface SovereignAvatar extends NPC {
     removeItem(slot: number): Item | null;
     authenticDie(): Item[];
     respawn(): void;
+    setEquipmentSlot(slot: EquipmentSlot, item: Item | null): void;
     pendingInteraction: { action: string; targetId: string } | null;
     
     // Adrenaline / Combat logic

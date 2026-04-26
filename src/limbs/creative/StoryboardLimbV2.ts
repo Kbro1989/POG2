@@ -1,4 +1,4 @@
-﻿
+
 import { type Result, type ProsodyVector, ok, YaoState } from '../../core/models.js'
 import { ModelClient } from '../../clients/ModelClient.js';
 import { GutenbergLimb } from './GutenbergLimb.js';
@@ -416,6 +416,31 @@ Vary prosody based on narrative tension and ${yaostate} influence.
     }
 
     /**
+     * generateQuestDerivative - Generates a full quest structure based on a literary source.
+     * Uses GutenbergLimb's authoritative gameplay substrate.
+     */
+    public async generateQuestDerivative(bookId: number, sceneCount: number = 5): Promise<Result<any>> {
+        const scenesRes = await this.generateScenes(bookId, sceneCount);
+        if (!scenesRes.ok) return scenesRes;
+
+        const narrativeBeats = scenesRes.value.map(s => s.description);
+        const questStructure = this.gutenberg.deriveQuestStructure(narrativeBeats);
+
+        // Enhance with authoritative pedagogy references
+        questStructure.stages = questStructure.stages.map((stage: any, i: number) => {
+            const scene = scenesRes.value[i];
+            const npcPedagogy = scene.modelId ? this.gutenberg.getAuthoritativePedagogy('dbrow', scene.modelId) : null;
+            return {
+                ...stage,
+                grounding: npcPedagogy ? { npcId: scene.modelId, pedagogy: npcPedagogy } : null
+            };
+        });
+
+        logger.info({ bookId, sceneCount }, 'Quest Derivative generated from narrative substrate.');
+        return ok(questStructure);
+    }
+
+    /**
      * performForensicCasting - Maps characters torsmv IDs using affective resonance.
      */
     public async performForensicCasting(scenes: StoryboardScene | StoryboardScene[]): Promise<Result<StoryboardScene[]>> {
@@ -489,6 +514,15 @@ Vary prosody based on narrative tension and ${yaostate} influence.
                             };
                             logger.info({ scene: scene.index, name: bestMatch.name, npcId: bestMatch.id }, 'Forensic Casting: Exact Substrate Match Resolved.');
                         }
+                    }
+                }
+
+                // Stage 1.5: Authoritative Pedagogy Check (Atlas System)
+                if (!scene.modelId) {
+                    const pedagogy = this.gutenberg.getAuthoritativePedagogy('dbrow', speaker);
+                    if (pedagogy) {
+                        scene.modelId = pedagogy.id;
+                        logger.info({ scene: scene.index, speaker, npcId: pedagogy.id }, 'Forensic Casting: Authoritative Pedagogy Match Found.');
                     }
                 }
             }

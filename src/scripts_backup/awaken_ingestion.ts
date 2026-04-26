@@ -1,4 +1,4 @@
-﻿import { SovereignIngestionEngine } from '../engines/SovereignIngestionEngine.js';
+import { SovereignIngestionEngine } from '../engines/SovereignIngestionEngine.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { SovereignConfig } from '../config/SovereignConfig.js';
@@ -14,9 +14,9 @@ async function main() {
     // 1. Initialize Substrate Dependencies
     const config: SovereignConfig = {
         masterLocalModel: 'deepseek-r1:8b', // Typical local thinker
-        fastPathModel: 'kimi-k2.5:cloud',
-        midPathModel: 'kimi-k2.5:cloud',
-        deepPathModel: 'kimi-k2.5:cloud'
+        fastPathModel: 'kimi-k2.6:cloud',
+        midPathModel: 'kimi-k2.6:cloud',
+        deepPathModel: 'kimi-k2.6:cloud'
     } as any;
 
     const client = new ModelClient(config);

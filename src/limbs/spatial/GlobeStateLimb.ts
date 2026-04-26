@@ -26,7 +26,7 @@ export class GlobeStateLimb {
         nodes: {},
         lastSync: Date.now()
     };
-    private endpoint: string = 'ws://localhost:8787/party/globe';
+    private endpoint: string = 'ws://127.0.0.1:8787/party/globe';
     private subscribers: Map<string, Array<(data: any) => void>> = new Map();
     private connectPromise: Promise<Result<boolean>> | null = null;
 
@@ -102,9 +102,26 @@ export class GlobeStateLimb {
             try {
                 this.ws = new WebSocket(this.endpoint);
 
+                let pingInterval: NodeJS.Timeout;
+
                 this.ws.on('open', () => {
                     logger.info({ endpoint: this.endpoint }, 'Connected to Multiplayer Globe Substrate');
+                    
+                    // Phase 22: Keep-alive interval to prevent Cloudflare 100s idle timeout
+                    pingInterval = setInterval(() => {
+                        if (this.ws?.readyState === WebSocket.OPEN) {
+                            this.ws.ping();
+                            // Also send an application-level ping just in case
+                            this.ws.send(JSON.stringify({ type: 'ping', timestamp: Date.now() }));
+                        }
+                    }, 30000);
+
                     resolve(ok(true));
+                });
+
+                this.ws.on('close', () => {
+                    if (pingInterval) clearInterval(pingInterval);
+                    logger.warn('Globe connection closed');
                 });
 
                 this.ws.on('message', (data: string) => {

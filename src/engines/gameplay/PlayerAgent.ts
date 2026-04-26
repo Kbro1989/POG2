@@ -9,6 +9,17 @@ import { DirectionalPathfinder } from '../../limbs/spatial/DirectionalPathfinder
 import { CombatRotationEngine, CombatEvaluationContext, TargetContext, CombatIntent, TacticalArchetype } from './CombatRotationEngine.js';
 import { CombatStyle } from './AbilityBook.js';
 import { HexagramManager } from '../../routing/HexagramManager.js';
+import { ObjectiveLimb, SovereignObjective } from '../../limbs/technical/ObjectiveLimb.js';
+import * as fs from 'fs';
+import * as path from 'path';
+
+/**
+ * Teleport Grounding Manifest Schema
+ */
+interface GroundingTeleport {
+    name: string;
+    dest: Coord | null;
+}
 
 /**
  * PlayerAgent
@@ -20,8 +31,27 @@ import { HexagramManager } from '../../routing/HexagramManager.js';
 export class PlayerAgent {
     private pathfinder: DirectionalPathfinder = new DirectionalPathfinder(SpatialSovereigntyLimb.getInstance());
     private leaderId: string | null = null;
+    private ticksIdle: number = 0;
+    private lastX: number = -1;
+    private lastY: number = -1;
+    private teleportManifest: Record<string, GroundingTeleport> = {};
+    private objectives: ObjectiveLimb = ObjectiveLimb.getInstance();
+    private currentObjective: SovereignObjective | null = null;
 
-    constructor(private avatar: SovereignAvatarEntity) {}
+    constructor(private avatar: SovereignAvatarEntity) {
+        this.loadTeleportManifest();
+    }
+
+    private loadTeleportManifest() {
+        try {
+            const p = path.join(process.cwd(), 'public', 'teleport_grounding.json');
+            if (fs.existsSync(p)) {
+                this.teleportManifest = JSON.parse(fs.readFileSync(p, 'utf8'));
+            }
+        } catch (err) {
+            // Silently fail, grounding will just use fallback respawn
+        }
+    }
 
     public setLeader(id: string | null): void {
         this.leaderId = id;
@@ -233,6 +263,24 @@ export class PlayerAgent {
             this.avatar.metadata.ticksInRetreat = 0;
         }
 
+        // --- STUCK DETECTION (Phase 112: Grounding Healer) ---
+        if (this.avatar.x === this.lastX && this.avatar.y === this.lastY) {
+            this.ticksIdle++;
+        } else {
+            this.ticksIdle = 0;
+            this.lastX = this.avatar.x;
+            this.lastY = this.avatar.y;
+        }
+
+        // If z=0 (Hollow) or stuck for 30 ticks (18s) while trying to move
+        const isHollow = this.avatar.coord.plane === 0 && !this.avatar.metadata.grounded; // Simplified check
+        const isStuck = this.ticksIdle > 30 && (this.avatar.currentPath?.length || 0) > 0;
+
+        if (isStuck) {
+            this.attemptEmergencyTeleport();
+            return;
+        }
+
         // 1. Sample current tile heat
         const centerOffset = Math.floor(PADDED_SIZE / 2);
         const idx = centerOffset * PADDED_SIZE + centerOffset;
@@ -309,6 +357,14 @@ export class PlayerAgent {
             }
         }
 
+        // --- IDLE EXPLORATION (Wandering / Objectives) ---
+        if (this.avatar.metadata.tacticalState === 'idle' && !this.avatar.isBusy() && !this.avatar.currentPath) {
+            if (this.ticksIdle > 5) { // If standing for 3s
+                this.seekObjective(field);
+                return;
+            }
+        }
+
         // --- HYSTERESIS ENTRY CONDITION ---
         if (this.avatar.metadata.tacticalState === 'idle') {
             if (!isHeatCritical || !composureBroken) {
@@ -328,10 +384,6 @@ export class PlayerAgent {
         for (const spot of field.safespots) {
             // Distance (Manhattan is fine for heuristic scoring)
             const dist = Math.abs(spot.x - this.avatar.coord.x) + Math.abs(spot.y - this.avatar.coord.y);
-            
-            // Try to align away from central threat mass. Wait, GhostSplatField heatmap can't easily give a threat vector without sampling.
-            // For now, prioritize closest safespot.
-            // In the future: incorporate directional vector from NPC ghosts to favor safespots behind cover.
             scored.push({ coord: spot, score: dist });
         }
 
@@ -349,7 +401,6 @@ export class PlayerAgent {
                 
                 if (isReachable) {
                     // Valid route to safespot found!
-                    // Emit a retreat intent bridging the tactical evaluator to the actuation loop
                     this.avatar.intent = {
                         action: 'run_tactical_evade',
                         targetId: -1, // No entity target
@@ -363,5 +414,122 @@ export class PlayerAgent {
                 // Path failed, evaluate next best
             }
         }
+    }
+
+    /**
+     * seekObjective - Prioritizes Discovery and Completion over random wandering.
+     */
+    private seekObjective(field: GhostSplatField): void {
+        const best = this.objectives.selectBestObjective(this.avatar as any);
+        this.currentObjective = best;
+
+        if (best && best.targetCoord) {
+            // Check if we are already there
+            const dist = Math.abs(this.avatar.x - best.targetCoord.x) + Math.abs(this.avatar.y - best.targetCoord.y);
+            if (dist < 3) {
+                // Goal reached! Wait for syncState in next tick
+                this.wander(field); // Keep moving slightly while "discovering"
+                return;
+            }
+
+            // Move towards objective
+            const success = this.avatar.plotPath(best.targetCoord.x, best.targetCoord.y, this.pathfinder, this.avatar.state);
+            if (success) {
+                this.avatar.intent = {
+                    action: `seek_${best.type.toLowerCase()}`,
+                    targetId: best.id,
+                    tickStarted: this.avatar.state?.tickNumber || 0,
+                    contextHash: 'objective_seeking',
+                    coord: best.targetCoord
+                };
+                this.ticksIdle = 0;
+                return;
+            }
+        }
+
+        // Fallback to wandering if no objective or path failed
+        this.wander(field);
+    }
+
+    /**
+     * wander - Picks a random nearby safespot to keep the splat echoes active and simulate gameplay.
+     */
+    private wander(field: GhostSplatField): void {
+        if (!field.safespots || field.safespots.length === 0) return;
+
+        // Filter for local safespots within ~5 tiles
+        const localSpots = field.safespots.filter(s => {
+            const dx = Math.abs(s.x - this.avatar.coord.x);
+            const dy = Math.abs(s.y - this.avatar.coord.y);
+            return dx <= 5 && dy <= 5 && (dx > 0 || dy > 0);
+        });
+
+        if (localSpots.length === 0) return;
+
+        const randomSpot = localSpots[Math.floor(Math.random() * localSpots.length)];
+        
+        const success = this.avatar.plotPath(randomSpot.x, randomSpot.y, this.pathfinder, this.avatar.state);
+        if (success) {
+            this.avatar.intent = {
+                action: 'wander_sovereign',
+                targetId: -1,
+                tickStarted: this.avatar.state?.tickNumber || 0,
+                contextHash: 'idle_exploration',
+                coord: randomSpot
+            };
+            this.ticksIdle = 0;
+            // Clear movement stats to prevent immediate stuck detection
+            this.lastX = -1; 
+        }
+    }
+
+    /**
+     * attemptEmergencyTeleport - Uses grounding manifest to reset spatial state.
+     */
+    private attemptEmergencyTeleport(): void {
+        const validTeles = Object.entries(this.teleportManifest)
+            .filter(([, data]) => data.dest !== null)
+            .map(([id, data]) => ({ id, ...data }));
+
+        if (validTeles.length === 0) {
+            // Fallback: Hard respawn
+            this.avatar.respawn();
+            return;
+        }
+
+        // Find closest grounded teleport
+        validTeles.sort((a, b) => {
+            const distA = Math.abs(a.dest!.x - this.avatar.x) + Math.abs(a.dest!.y - this.avatar.y);
+            const distB = Math.abs(b.dest!.x - this.avatar.x) + Math.abs(b.dest!.y - this.avatar.y);
+            return distA - distB;
+        });
+
+        const best = validTeles[0]!;
+        const oldCoord = { ...this.avatar.coord };
+        console.warn(`[GROUNDING] Sovereign Stuck! Emergency Teleport to ${best.name} [ID: ${best.id}]`);
+        
+        this.avatar.intent = {
+            action: 'teleport',
+            targetId: best.id,
+            tickStarted: this.avatar.state?.tickNumber || 0,
+            contextHash: 'emergency_grounding',
+            coord: best.dest!
+        };
+        
+        // Execute movement immediately for the pulse kernel to pick up
+        this.avatar.coord = { ...best.dest! };
+        this.avatar.x = best.dest!.x;
+        this.avatar.y = best.dest!.y;
+        this.avatar.plane = best.dest!.plane;
+        this.avatar.currentPath = null;
+        this.ticksIdle = 0;
+        this.avatar.lock(5); // Teleport animation lock
+
+        // Phase 112: Notify viewport for camera snap/FX
+        (this.avatar as any).emit?.('teleport', {
+            from: oldCoord,
+            to: best.dest,
+            animationLock: 5
+        });
     }
 }

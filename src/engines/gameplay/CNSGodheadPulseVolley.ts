@@ -9,6 +9,7 @@ import { SwitchboardLimb, type AdminCommand } from '../../monitor/SwitchboardLim
 import { SpatialVisionEngine } from '../SpatialVisionEngine.js';
 import { WorldGroundingLimb } from '../../limbs/world_grounding/WorldGroundingLimb.js';
 import { GameplaySovereigntyLimb } from '../../limbs/spatial/GameplaySovereigntyLimb.js';
+import { GlobeStateLimb } from '../../limbs/spatial/GlobeStateLimb.js';
 import { GameplayModule } from './MinigameInterfaces.js';
 import { SubstrateResolver } from './SubstrateResolver.js';
 import { NodeTester } from '../../monitor/NodeTester.js';
@@ -33,8 +34,9 @@ interface VolleyBatch {
  */
 export class CNSGodheadPulseVolley {
     private static instance: CNSGodheadPulseVolley | undefined;
-    private readonly TICK_INTERVAL = 600; // 600ms Pulse
-    private readonly BUDGET_MS = 200;      // Warning threshold for tick overflow
+    private readonly TICK_INTERVAL = 300; // 300ms Player Reflex Pulse
+    private readonly GAME_TICK_INTERVAL = 600; // 600ms World Pulse
+    private readonly BUDGET_MS = 150;      // Warning threshold for tick overflow
     
     // Dependencies resolved lazily via resolve() to avoid boot-order violations.
     private switchboard?: SwitchboardLimb;
@@ -47,9 +49,10 @@ export class CNSGodheadPulseVolley {
     private nodeTester?: NodeTester;
     private renderer?: Renderer;
     private ghostSplat?: GhostSplatEngine;
+    private globe?: GlobeStateLimb;
     private readonly ledger = CNSCausalityLedger.getInstance();
     private pulseStartTime: number = 0;
-    private readonly PULSE_DEADLINE_MS = 600;
+    private readonly PULSE_DEADLINE_MS = 300;
     private deferredOps: Array<() => Promise<void>> = [];
 
     /**
@@ -64,6 +67,7 @@ export class CNSGodheadPulseVolley {
         if (!this.rsmv) this.rsmv = RSMVController.getInstance();
         if (!this.forensics) this.forensics = CacheForensicsLimb.getInstance();
         if (!this.ghostSplat) this.ghostSplat = GhostSplatEngine.getInstance();
+        if (!this.globe) this.globe = (this.gameplay as any)?.globe; // Usually initialized in NeurologicalMap
     }
 
     private static readonly PRIORITY: Record<EventSource, number> = {
@@ -132,10 +136,33 @@ export class CNSGodheadPulseVolley {
         }
 
         this.isStarted = true;
-        logger.info('CNS Godhead Pulse (Hardened Heartbeat) Started.');
+        logger.info('CNS Godhead Pulse (Hardened Heartbeat) Started. Player Tick: 300ms | Game Tick: 600ms');
         
+        // POG2 Thinking Sub-loop (Async User-behind-Player)
+        this.startPog2ThinkingLoop();
+
         // Phase 112: Immediate bootstrap tick
         this.tick();
+    }
+
+    private async startPog2ThinkingLoop(): Promise<void> {
+        // Runs entirely independently of the deterministic tick
+        while (this.isStarted) {
+            try {
+                this.resolve();
+                if (this.gameplay?.globalState && this.gameplay.avatar) {
+                    // This mirrors "user looking at screen, then clicking"
+                    const harness = (this.gameplay as any).harness;
+                    if (harness && harness.syncGodhead) {
+                        await harness.syncGodhead(this.gameplay.globalState, this.gameplay.avatar);
+                    }
+                }
+            } catch (err) {
+                logger.error({ err }, 'POG2 Async Thinking Loop Error');
+            }
+            // Think every 5-8 seconds asynchronously
+            await new Promise(resolve => setTimeout(resolve, 5000 + Math.random() * 3000));
+        }
     }
 
     private async tick(): Promise<void> {
@@ -162,9 +189,9 @@ export class CNSGodheadPulseVolley {
             await this.pulse(pendingCommands);
 
             // 3. Post-Actuation Verification (Spatial Vision) - Non-blocking to pulse rhythm
-            if (this.substrateState === SubstrateState.ONLINE && this.vision) {
-                // We do NOT await this, as LLM vision latency often exceeds the 600ms tick budget.
-                // It runs as a 'sidecar' verification that logs drift but doesn't stall the world logic.
+            // Throttle to every 10th tick (6s) — LLM vision latency far exceeds 600ms,
+            // and the game world doesn't change visually that fast.
+            if (this.substrateState === SubstrateState.ONLINE && this.vision && this.tickCount % 10 === 0) {
                 this.vision.verifySpatialAnchor().then(verification => {
                     if (!verification.ok) {
                         logger.warn({ error: (verification.error as Error)?.message }, '[CNS GODHEAD] Visual verification drift detected. Substrate link degraded.');
@@ -217,9 +244,6 @@ export class CNSGodheadPulseVolley {
     }
 
 
-    /**
-     * pulse - The 7-step deterministic execution loop.
-     */
     public async pulse(commands: AdminCommand[]): Promise<GameState | undefined> {
         this.pulseStartTime = performance.now();
         this.resolve();
@@ -232,7 +256,9 @@ export class CNSGodheadPulseVolley {
         // 3. Resolve Conflicts (Tile Locking)
         const resolved = this.resolveConflicts(sorted);
 
-        // 4. Atomic World Transaction
+        const isGameTick = this.tickCount % 2 === 0;
+
+        // 4. Atomic World Transaction (Only full commits on game tick)
         const tx = this.grounding!.beginTick();
 
         // 5. Execute valid events
@@ -247,22 +273,37 @@ export class CNSGodheadPulseVolley {
         // Apply world changes
         await this.grounding!.commitTick(tx);
 
-        // Authoritative Gameplay Tick
-        await this.gameplay!.processTick();
+        // Authoritative Gameplay Tick (Dual-Tick Architecture)
+        await this.gameplay!.processTick(isGameTick);
 
         if (this.gameplay?.globalState) {
-            let playerAgent: PlayerAgent | undefined;
-            if (this.gameplay.avatar) {
-                playerAgent = new PlayerAgent(this.gameplay.avatar as SovereignAvatarEntity);
-            }
+            const playerAgent = (this.gameplay as any).playerAgent;
+            // We project ghost splats on player ticks too for smooth client visuals
             const field = this.ghostSplat!.project(this.gameplay.globalState, 3, playerAgent);
             if (field) {
                 this.switchboard!.broadcastGhostSplat(field);
             }
+
+            // Phase 112: Sovereign Live Bridge - Sync Avatar State to Globe
+            if (this.gameplay.avatar && this.globe) {
+                const avatar = this.gameplay.avatar as SovereignAvatarEntity;
+                this.globe.pushNodeState('player_sovereign', {
+                    coord: avatar.coord,
+                    equipment: avatar.equipment,
+                    adrenaline: avatar.adrenaline,
+                    bloodlustStacks: avatar.bloodlustStacks,
+                    hp: avatar.currentHp,
+                    maxHp: avatar.maxHp,
+                    intent: avatar.intent,
+                    lockTicks: avatar.lockTicks
+                });
+            }
         }
 
         // 7. Commit Ledger (Logs & history rotation)
-        this.ledger.commitTick();
+        if (isGameTick) {
+            this.ledger.commitTick();
+        }
 
         const elapsed = performance.now() - this.pulseStartTime;
         if (elapsed > this.PULSE_DEADLINE_MS * 0.8) {

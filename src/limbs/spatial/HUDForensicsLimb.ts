@@ -40,7 +40,7 @@ export interface HUDClassification {
     interfaceId: number;
     score: number;
     confidence: "HIGH" | "MEDIUM" | "LOW" | "FALSE_POSITIVE";
-    category: "RIBBON" | "SETTINGS_PANEL" | "INVENTORY_HUD" | "CHAT_BOX" | "MINIMAP" | "UNKNOWN";
+    category: "RIBBON" | "SETTINGS_PANEL" | "INVENTORY_HUD" | "CHAT_BOX" | "MINIMAP" | "SPRITE_OVERLAY" | "UNKNOWN";
     reasons: string[];
     structuralMetrics: {
         textRatio: number;
@@ -76,10 +76,16 @@ export class HUDForensicsLimb {
     // HUD structural signatures — what TRUE persistent HUDs look like
     private readonly HUD_STRUCTURAL_PROFILES = {
         RIBBON: {
-            maxTextRatio: 0.15,
+            maxTextRatio: 0.25,           // Relaxed: ribbon labels (Inventory, Skills…) add ~15-25% text
             minContainerDepth: 2,
             minSpriteRatio: 0.30,
-            lexicalTriggers: /ribbon|minimap|map|edit mode|customize|toolbar/i,
+            lexicalTriggers: /ribbon|minimap|map|edit mode|customize|toolbar|action bar/i,
+        },
+        SPRITE_OVERLAY: {
+            maxTextRatio: 0.0,             // Zero text — pure sprite fragments
+            minContainerDepth: 1,
+            minSpriteRatio: 1.0,           // 100% sprite only
+            lexicalTriggers: /overlay|buff|debuff|icon|orb|status|aura/i,
         },
         SETTINGS_PANEL: {
             maxTextRatio: 0.40,
@@ -133,6 +139,27 @@ export class HUDForensicsLimb {
 
         try {
             const rawBuffer = await this.cache.getFile(3, id);
+
+            // ─── Version Gate ───
+            const firstByte = rawBuffer[0];
+            if (firstByte === 0x01) {
+                logger.info({ id, size: rawBuffer.byteLength }, 'iftype2 interface detected — needs post-932 decoder');
+                const isLikelyRibbon = rawBuffer.byteLength > 50000; // 98KB ribbon
+                return ok({
+                    interfaceId: id,
+                    components: [],
+                    textLabels: [],
+                    isHudCandidate: isLikelyRibbon,
+                    classification: {
+                        interfaceId: id,
+                        score: isLikelyRibbon ? 80 : 0,
+                        confidence: isLikelyRibbon ? "MEDIUM" : "LOW",
+                        category: isLikelyRibbon ? "RIBBON" : "UNKNOWN",
+                        reasons: [`iftype2 format (post-932) — ${rawBuffer.byteLength} bytes, needs decoder`],
+                        structuralMetrics: { textRatio: 0, spriteRatio: 0, containerRatio: 0, maxDepth: 0, avgTextLength: 0, totalComponents: 0 }
+                    }
+                });
+            }
 
             const state = {
                 isWrite: false,
@@ -254,6 +281,18 @@ export class HUDForensicsLimb {
             ? textLabels.reduce((a, b) => a + b.length, 0) / textLabels.length
             : 0;
 
+        // ─── Minimum Component Thresholds ───
+        // Bare stub containers (1-4 components, zero text, zero sprite) are scaffolding,
+        // not real HUDs. Force LOW confidence to avoid RIBBON over-population.
+        const MIN_COMPONENTS: Record<string, number> = {
+            RIBBON: 10,          // Real ribbon has tab icons, buttons, containers
+            SPRITE_OVERLAY: 1,   // Single sprite is valid
+            SETTINGS_PANEL: 5,
+            INVENTORY_HUD: 8,
+            CHAT_BOX: 4,
+            MINIMAP: 3,
+        };
+
         // ─── Anti-Pattern Penalty ───
         let tutorialPenalty = 0;
         const tutorialHits = this.TUTORIAL_MARKERS.filter(re => re.test(allText)).length;
@@ -277,6 +316,10 @@ export class HUDForensicsLimb {
 
             if (spriteRatio >= profile.minSpriteRatio) score += 10;
             if (maxDepth >= profile.minContainerDepth) score += 10;
+
+            // Minimum component gate — stub frames below threshold get penalized
+            const minComps = MIN_COMPONENTS[category] ?? 1;
+            if (totalComponents < minComps) score -= 30;
 
             score -= tutorialPenalty;
             scores[category] = Math.max(0, score);
@@ -448,5 +491,80 @@ export class HUDForensicsLimb {
             online: !!this.cache,
             details: this.cache ? 'HUDForensicsLimb active; Major 3 connected.' : 'HUDForensicsLimb OFFLINE; cache path invalid.'
         };
+    }
+
+    /**
+     * extractAllInterfaces - Bulk extract and decompose all Major 3 interfaces to disk.
+     * Writes interface_<id>_decomposed.json for every interface with >0 components.
+     * Skips IDs where the file already exists unless force=true.
+     */
+    public async extractAllInterfaces(options: {
+        range?: [number, number];
+        outputDir?: string;
+        force?: boolean;
+        onProgress?: (current: number, total: number, found: number, errors: number) => void;
+    } = {}): Promise<{ extracted: number; skipped: number; errors: number; errorIds: number[] }> {
+        if (!this.cache) throw new Error('Cache substrate not connected.');
+        if (!parse) throw new Error('HUDForensicsLimb: parse not available.');
+
+        const [start, end] = options.range ?? [0, 2000];
+        const outputDir = options.outputDir ?? this.pedagogyCandidateDir;
+        const force = options.force ?? false;
+        const total = end - start + 1;
+
+        await fs.promises.mkdir(outputDir, { recursive: true });
+
+        let extracted = 0;
+        let skipped = 0;
+        let errors = 0;
+        const errorIds: number[] = [];
+
+        for (let id = start; id <= end; id++) {
+            const outPath = path.join(outputDir, `interface_${id}_decomposed.json`);
+
+            // Skip if already exists and not forcing
+            if (!force && fs.existsSync(outPath)) {
+                skipped++;
+                options.onProgress?.(id - start + 1, total, extracted, errors);
+                continue;
+            }
+
+            const res = await this.getInterface(id);
+
+            if (res.ok && res.value.components.length > 0) {
+                // Compute type distribution for the manifest
+                const comps = res.value.components;
+                const typeDistribution: Record<string, number> = {};
+                for (const c of comps) {
+                    typeDistribution[c.type] = (typeDistribution[c.type] || 0) + 1;
+                }
+
+                const manifest = {
+                    interfaceId: res.value.interfaceId,
+                    totalComponents: comps.length,
+                    parsedComponents: comps.length,
+                    parseErrors: 0,
+                    spriteReferences: [...new Set(comps.map(c => c.spriteId).filter(Boolean))],
+                    modelReferences: [...new Set(comps.map(c => c.modelId).filter(Boolean))],
+                    textLabels: res.value.textLabels,
+                    typeDistribution,
+                    classification: res.value.classification,
+                    components: comps,
+                    extractedAt: new Date().toISOString(),
+                };
+
+                await fs.promises.writeFile(outPath, JSON.stringify(manifest, null, 2));
+                extracted++;
+                logger.info({ id, components: comps.length }, 'Interface extracted.');
+            } else if (!res.ok) {
+                errors++;
+                errorIds.push(id);
+            }
+            // Empty interfaces (0 components) are valid skips — not errors
+
+            options.onProgress?.(id - start + 1, total, extracted, errors);
+        }
+
+        return { extracted, skipped, errors, errorIds };
     }
 }

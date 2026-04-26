@@ -11,6 +11,10 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
     public coord: Coord;
     public metadata: Record<string, any> = {};
     
+    // Live Bridge (Phase 112)
+    public onStateChange?: (type: string, delta: any) => void;
+    private subscribers: Map<string, Set<(delta: any) => void>> = new Map();
+    
     // Global State Bus (Phase 11)
     public state: GameState;
     
@@ -144,6 +148,32 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
         this.currentHp = this.maxHp; // Refine to actual grounded max
     }
 
+    /**
+     * hydrate - Inject authoritative substrate data into the avatar.
+     * This allows loading from public manifests like sovereign_entity_player.json.
+     */
+    public hydrate(data: any) {
+        if (data.entity) {
+            this.id = data.entity.npcId ?? this.id;
+            this.name = data.entity.name ?? this.name;
+            this.metadata.entityDefinition = data.entity;
+        }
+        if (data.geometry) {
+            this.metadata.geometry = data.geometry;
+        }
+        if (data.skeleton) {
+            this.metadata.skeleton = data.skeleton;
+        }
+        if (data.kinematics) {
+            this.metadata.kinematics = data.kinematics;
+        }
+        
+        // Mark Era transition
+        if (this.appearanceEra === 'pre_avatar') {
+            this.appearanceEra = 'transitional';
+        }
+    }
+
     public get maxHp(): number {
         const conSkill = this.skills[6]; // SkillId.CONSTITUTION = 6
         return (conSkill?.level || 10) * 100;
@@ -188,7 +218,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
         // 3. Clear Inventory & Equipment
         this.inventory = this.inventory.map((item, idx) => idx < 3 ? item : null);
         Object.keys(this.equipment).forEach(slot => {
-             this.equipment[slot] = null;
+             this.setEquipmentSlot(slot as any, null);
         });
 
         this.lastDeathCoord = { ...this.coord };
@@ -235,6 +265,19 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
             return true;
         }
         return false;
+    }
+
+    /**
+     * setEquipmentSlot - Authoritative equipment update with viewport notification.
+     */
+    public setEquipmentSlot(slot: EquipmentSlot, item: Item | null) {
+        const old = this.equipment[slot];
+        this.equipment[slot] = item;
+        this.emit('equipment_swap', {
+            slot,
+            oldId: old?.id ?? null,
+            newId: item?.id ?? null
+        });
     }
 
     private initializeDefaultSkills() {
@@ -361,6 +404,30 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
 
     public isBusy(): boolean {
         return this.lockTicks > 0;
+    }
+
+    /**
+     * subscribe - Register for specific state change events (e.g., 'teleport', 'equipment_swap')
+     */
+    public subscribe(type: string, callback: (delta: any) => void): () => void {
+        if (!this.subscribers.has(type)) {
+            this.subscribers.set(type, new Set());
+        }
+        this.subscribers.get(type)!.add(callback);
+        return () => this.subscribers.get(type)!.delete(callback);
+    }
+
+    /**
+     * emit - Internal helper to notify subscribers and the global callback.
+     */
+    public emit(type: string, delta: any) {
+        if (this.onStateChange) {
+            this.onStateChange(type, delta);
+        }
+        const set = this.subscribers.get(type);
+        if (set) {
+            set.forEach(cb => cb(delta));
+        }
     }
 }
 

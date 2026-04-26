@@ -206,6 +206,46 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         path: 'src/limbs/technical/SovereignEditorLimb.ts', role: 'Motor Hand (RS3 Cache Editor)', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 25,
         biologicalRole: { organ: 'Surgical Hand', input: 'CacheEntity + EditCommand', output: 'Modified Pedagogy State', constraints: 'Mod-layer persistence; ternary-router undo/redo' }
     },
+    {
+        path: 'src/limbs/spatial/SpatialSovereigntyLimb.ts', role: 'Proprioceptive Orientation (Physics)', category: NeuralCategory.PNS, docDomain: 'SYSTEM', metabolicBaseCost: 20,
+        biologicalRole: { organ: 'Vestibular System', input: 'World coordinates + collision matrix', output: 'SurfaceStack + Walkability', constraints: 'Authoritative collision arbiter' }
+    },
+    {
+        path: 'src/limbs/technical/ObjectiveLimb.ts', role: 'Discovery and Completion (Task Master)', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 25,
+        biologicalRole: { organ: 'Executive Function', input: 'Skill milestones + Discovery POIs', output: 'Sovereign Goals', constraints: 'Prioritizes uncompleted objectives' }
+    },
+    {
+        path: 'src/limbs/technical/QuestSynthesisLimb.ts', role: 'Quest Generator (Higher)', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 20,
+        biologicalRole: { organ: 'Quest Cortex', input: 'Game state', output: 'Synthesized Quest', constraints: 'Complex narrative generation' }
+    },
+    {
+        path: 'src/limbs/technical/QuestForgeLimb.ts', role: 'Quest Production Engine', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 25,
+        biologicalRole: { organ: 'Forge Motor', input: 'Blueprint', output: 'Production-ready Quest', constraints: 'No mocks; full integration' }
+    },
+    {
+        path: 'src/limbs/technical/LogicBrainLimb.ts', role: 'Higher Logic Processor', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 30,
+        biologicalRole: { organ: 'Higher Logic Center', input: 'Logic Manifests', output: 'Logical Consistency', constraints: 'Authoritative logic arbiter' }
+    },
+    {
+        path: 'src/limbs/logical/SovereignVocabularyLimb.ts', role: 'Linguistic Mapping', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'Broca Area (Mapping)', input: 'Game Jargon', output: 'Sovereign Terms', constraints: 'Semantic alignment' }
+    },
+    {
+        path: 'src/limbs/technical/ValidationLimb.ts', role: 'Structural Validator (Limb)', category: NeuralCategory.IMMUNE, docDomain: 'IMMUNE', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Limb Antibody', input: 'Asset data', output: 'Validation report', constraints: 'Multi-layer validation' }
+    },
+    {
+        path: 'src/limbs/technical/UISubstrateLimb.ts', role: 'UI/HUD Orchestrator', category: NeuralCategory.PNS, docDomain: 'VISION', metabolicBaseCost: 20,
+        biologicalRole: { organ: 'HUD Center', input: 'UI Components', output: 'Grounded HUD', constraints: 'Tri-layer synthesis' }
+    },
+    {
+        path: 'src/limbs/technical/SovereignSandboxLimb.ts', role: 'Sandbox Sculptor', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Surgical Sandbox Hand', input: 'Sandbox command', output: 'Modified Sandbox manifest', constraints: 'Persistence to D:/sovereign' }
+    },
+    {
+        path: 'src/substrates/GhostSplatEngine.ts', role: 'Predictive Spatial Intelligence', category: NeuralCategory.CNS, docDomain: 'VISION', metabolicBaseCost: 30,
+        biologicalRole: { organ: 'Superior Colliculus', input: 'Live world state + entity movement', output: 'GhostSplatField (Heatmap/Safespots)', constraints: 'Predicts N+1 to N+3 ticks' }
+    },
     // --- Phase 48: New Physicalized Limbs ---
     {
         path: 'src/limbs/technical/AILimb.ts', role: 'Neural Orchestration Interface', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 10,

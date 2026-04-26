@@ -11,6 +11,9 @@
 
 import 'dotenv/config';
 import { createRequire } from 'module';
+import { GameCacheLoader } from './rsmv/cache/sqlite.js';
+import { cacheMajors, cacheConfigPages } from './rsmv/constants.js';
+import { parse } from './rsmv/opdecoder.js';
 const require = createRequire(import.meta.url);
 if (typeof (globalThis as any).__non_webpack_require__ === 'undefined') {
     (globalThis as any).__non_webpack_require__ = require;
@@ -87,6 +90,8 @@ import { ArchaeologyEngine } from './limbs/spatial/ArchaeologyEngine.js';
 import { SpatialSovereigntyLimb } from './limbs/spatial/SpatialSovereigntyLimb.js';
 import { GameplaySovereigntyLimb } from './limbs/spatial/GameplaySovereigntyLimb.js';
 import { SpatialRadarLimb } from './limbs/spatial/SpatialRadarLimb.js';
+import { GlobeStateLimb } from './limbs/spatial/GlobeStateLimb.js';
+import { SwitchboardLimb } from './monitor/SwitchboardLimb.js';
 import { PrifddinasInterpreter } from './engines/gameplay/PrifddinasInterpreter.js';
 import { BarrowsInterpreter } from './engines/gameplay/BarrowsInterpreter.js';
 import { PestControlInterpreter } from './engines/gameplay/PestControlInterpreter.js';
@@ -96,6 +101,7 @@ import { SovereignGrounding } from './utils/SovereignGrounding.js';
 import { ObservationEngine } from './engines/spatial/ObservationEngine.js';
 import { getPedagogyPath, getAtlasLogicPath, getAtlasSystemPath } from './utils/SovereignPathResolver.js';
 import { SpatialVisionEngine } from './engines/SpatialVisionEngine.js';
+import { QuestForgeLimb } from './limbs/technical/QuestForgeLimb.js';
 
 
 
@@ -557,10 +563,100 @@ export async function main(): Promise<void> {
         });
 
     atlas
+        .command('hud-scan')
+        .description('Batch classify all decomposed HUD manifests in atlas, filter false positives, optionally write clean JSON')
+        .option('--atlas-dir <dir>', 'Path to atlas/interfaces directory', 'D:\\D-sovereign-\\cache_pedagogy\\atlas\\interfaces')
+        .option('--output <file>', 'Write clean classifications to this JSON file')
+        .option('--all', 'Include all results (not just HIGH/MEDIUM confidence)', false)
+        .action(async (opts: { atlasDir: string; output?: string; all: boolean }) => {
+            const limb = new HUDForensicsLimb();
+            renderer.info(`\u{1F52C} Running HUD Forensics Atlas Scan: ${opts.atlasDir}...`);
+
+            const results = await limb.scanAtlas(opts.atlasDir);
+            const clean = opts.all
+                ? results
+                : results.filter(r => r.confidence !== 'FALSE_POSITIVE');
+
+            const fps = results.filter(r => r.confidence === 'FALSE_POSITIVE').length;
+            const highs = clean.filter(r => r.confidence === 'HIGH').length;
+            const mediums = clean.filter(r => r.confidence === 'MEDIUM').length;
+
+            renderer.success(`Atlas scan complete: ${results.length} total, ${clean.length} clean, ${fps} false positives suppressed.`);
+            renderer.info(`  HIGH: ${highs}  MEDIUM: ${mediums}  FP: ${fps}`);
+            renderer.json(clean.slice(0, 10).map(r => ({
+                id: r.interfaceId,
+                category: r.category,
+                confidence: r.confidence,
+                score: r.score,
+                depth: r.structuralMetrics.maxDepth,
+                textRatio: `${(r.structuralMetrics.textRatio * 100).toFixed(1)}%`,
+                spriteRatio: `${(r.structuralMetrics.spriteRatio * 100).toFixed(1)}%`,
+            })));
+
+            if (opts.output) {
+                await fs.promises.writeFile(opts.output, JSON.stringify(clean, null, 2));
+                renderer.success(`Clean classifications written to: ${opts.output}`);
+            }
+            process.exit(0);
+        });
+
+    atlas
+        .command('hud-extract')
+        .description('Bulk extract and decompose all Major 3 interfaces to disk (expands atlas coverage)')
+        .option('--output-dir <dir>', 'Output directory for decomposed JSON files', 'D:\\D-sovereign-\\cache_pedagogy\\atlas\\interfaces')
+        .option('--range <range>', 'ID range to extract, e.g. 0-2000', '0-2000')
+        .option('--force', 'Overwrite existing decomposed files', false)
+        .action(async (opts: { outputDir: string; range: string; force: boolean }) => {
+            const [startStr, endStr] = opts.range.split('-');
+            const start = parseInt(startStr ?? '0');
+            const end = parseInt(endStr ?? '2000');
+
+            if (isNaN(start) || isNaN(end) || start > end) {
+                renderer.error(`Invalid range: ${opts.range}. Use format: 0-2000`);
+                process.exit(1);
+            }
+
+            const limb = new HUDForensicsLimb();
+            const health = limb.healthCheck();
+            if (!health.online) {
+                renderer.error(`HUDForensicsLimb OFFLINE: ${health.details}`);
+                process.exit(1);
+            }
+
+            renderer.info(`\u{1F5C4} Extracting Major 3 interfaces [${start}\u2013${end}] \u2192 ${opts.outputDir}`);
+            renderer.info(`Force overwrite: ${opts.force}`);
+
+            let lastProgress = 0;
+            const result = await limb.extractAllInterfaces({
+                range: [start, end],
+                outputDir: opts.outputDir,
+                force: opts.force,
+                onProgress: (current, total, found, errors) => {
+                    if (current - lastProgress >= 100 || current === total) {
+                        lastProgress = current;
+                        const pct = ((current / total) * 100).toFixed(1);
+                        process.stdout.write(`\r  [${pct.padStart(5)}%] ${current}/${total} scanned | found: ${found} | errors: ${errors}   `);
+                    }
+                },
+            });
+
+            process.stdout.write('\n');
+            renderer.success(`Extraction complete!`);
+            renderer.info(`  Extracted: ${result.extracted}`);
+            renderer.info(`  Skipped (existing): ${result.skipped}`);
+            renderer.info(`  Errors: ${result.errors}`);
+            if (result.errorIds.length > 0 && result.errorIds.length <= 20) {
+                renderer.warn(`  Error IDs: ${result.errorIds.join(', ')}`);
+            }
+            renderer.info(`Run 'pog2 atlas hud-scan' to classify the newly extracted interfaces.`);
+            process.exit(0);
+        });
+
+    atlas
         .command('dbtables')
         .description('Extract Major 2 Config (dbtables/dbrows) into memory/pedagogy')
         .action(async () => {
-            renderer.info('ðŸ” Initiating System Taxonomy Extraction...');
+            renderer.info('ðŸ”  Initiating System Taxonomy Extraction...');
             const configLimb = new SystemTaxonomyLimb();
             const res = await configLimb.extractSystemTaxonomy();
             if (res.ok) {
@@ -861,12 +957,77 @@ export async function main(): Promise<void> {
     pedagogySub
         .command('extract-grounding <region>')
         .description('Extract world coordinates from cache DBRows (Major 2, Page 39)')
-        .action(async (region: string) => {
-            renderer.info(`Ã°Å¸Å¡â‚¬ Starting Targeted Grounding Extraction for: ${region}...`);
-            // This is a placeholder for the logic in extract_prifddinas_logic.ts
-            // In a real implementation, we would use the Cache Learning substrate.
-            renderer.warn("Extraction subsystem requires the Jagex Cache bridge to be fully active.");
-            renderer.info("Tip: Use 'pog2 atlas spatial grounding' for pre-extracted data.");
+                .action(async (region: string) => {
+            renderer.info(`\u{2692} Starting Targeted Grounding Extraction for: ${region}...`);
+            try {
+                const [minX, minY, maxX, maxY] = region.split(',').map(Number);
+                if (isNaN(minX) || isNaN(minY) || isNaN(maxX) || isNaN(maxY)) {
+                    renderer.error("Invalid region format. Use minX,minY,maxX,maxY (e.g., 2112,3264,2432,3584)");
+                    process.exit(1);
+                }
+
+                const CACHE_DIR = "C:\\ProgramData\\Jagex\\RuneScape";
+                const source = new GameCacheLoader(CACHE_DIR);
+                const results: any[] = [];
+                const TABLE_ID = 39; // NPC Grounding
+
+                renderer.info(`Connecting to Jagex Cache bridge at ${CACHE_DIR}...`);
+                const archInfo = (await source.getCacheIndex(cacheMajors.config))[cacheConfigPages.dbrows];
+                const arch = await source.getFileArchive(archInfo);
+                
+                renderer.info(`Auditing ${arch.length} DBRows for Table ${TABLE_ID}...`);
+
+                for (const file of arch) {
+                    if (file.buffer.length < 2 || file.buffer[1] !== TABLE_ID) continue;
+
+                    try {
+                        const row = parse.dbrows.read(file.buffer, source) as any;
+                        const colGroups = row.unk01?.columndata || row.unk02?.columndata;
+                        
+                        if (colGroups) {
+                            let coord: number | null = null;
+                            let name: string = "Unknown NPC";
+                            let npcId: number = 0;
+
+                            for (const group of colGroups) {
+                                for (const col of group.columns) {
+                                    if (col.type === 33 || col.type === 22) {
+                                        if (col.value?.[0] !== undefined) coord = Number(col.value[0]);
+                                    }
+                                    if (col.type === 36) {
+                                        if (col.value?.[0] !== undefined) name = String(col.value[0]);
+                                    }
+                                    if (col.type === 32) {
+                                        if (col.value?.[0] !== undefined) npcId = Number(col.value[0]);
+                                    }
+                                }
+                            }
+
+                            if (coord !== null) {
+                                const x = (coord >> 14) & 0x3FFF;
+                                const y = coord & 0x3FFF;
+                                const plane = (coord >> 28);
+
+                                if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                                    renderer.info(`[TARGET FOUND] ${name} (ID: ${npcId}) at (${x}, ${y}, ${plane})`);
+                                    results.push({ npcId, name, x, y, plane, rawCoord: coord, rowId: file.fileid });
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        // Skip malformed rows
+                    }
+                }
+
+                const outputPath = `D:/sovereign/memory/pedagogy/grounding_extraction_${minX}_${minY}.json`;
+                fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
+                renderer.info(`\u{2705} Successfully extracted ${results.length} entities to ${outputPath}`);
+
+                source.close();
+            } catch (error: any) {
+                renderer.error(`Extraction failed: ${error.message}`);
+                process.exit(1);
+            }
         });
 
     const mechanicalSub = atlas.command('mechanical').description('Sovereign Mechanical Substrate commands');
@@ -1629,6 +1790,103 @@ export async function main(): Promise<void> {
         });
 
     pipe
+        .command('forge-quest <bookId>')
+        .description('Forge a complete playable quest package from a Gutenberg book (spatial sandbox, NPCs, items, varbits)')
+        .option('--difficulty <level>', 'Quest difficulty: Novice, Intermediate, Experienced, Master, Grandmaster', 'Intermediate')
+        .option('--scenes <number>', 'Number of storyboard scenes to use', '9')
+        .option('--enhanced', 'Use LLM for enhanced dialogue generation', false)
+        .action(async (bookId: string, options: { difficulty: string; scenes: string; enhanced: boolean }) => {
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const forensics = CacheForensicsLimb.getInstance();
+            const pedagogy = engine.getPedagogy();
+            const questForge = new QuestForgeLimb(client, forensics, pedagogy);
+
+            renderer.info(`\u{2692} Forging Quest Package for Book ${bookId}...`);
+            const health = questForge.healthCheck();
+            if (!health.online) {
+                renderer.error(`QuestForge OFFLINE: ${health.details}`);
+                process.exit(1);
+            }
+
+            // Load existing storyboard scenes from the pipeline folder
+            const pipelinesDir = path.join(getSovereignRoot(), 'pipelines');
+            let storyboardPath = null;
+            
+            // Search for the book ID in the pipelines folder
+            const searchPipelines = (dir: string) => {
+                if (!fs.existsSync(dir)) return;
+                const items = fs.readdirSync(dir);
+                for (const item of items) {
+                    const fullPath = path.join(dir, item);
+                    if (fs.statSync(fullPath).isDirectory()) {
+                        if (item.startsWith(bookId + '_')) {
+                            // Found the book folder
+                            const sbDir = path.join(fullPath, '1-storyboard');
+                            if (fs.existsSync(sbDir)) {
+                                const files = fs.readdirSync(sbDir);
+                                const jsonFile = files.find(f => f.endsWith('.json'));
+                                if (jsonFile) {
+                                    storyboardPath = path.join(sbDir, jsonFile);
+                                    return;
+                                }
+                            }
+                        } else {
+                            searchPipelines(fullPath);
+                        }
+                    }
+                }
+            };
+            searchPipelines(pipelinesDir);
+
+            if (!storyboardPath || !fs.existsSync(storyboardPath)) {
+                renderer.error(`Storyboard for book ${bookId} not found in pipelines directory. You must run the storyboard pipeline first.`);
+                process.exit(1);
+            }
+
+            let scenes: any[] = [];
+            try {
+                const data = JSON.parse(fs.readFileSync(storyboardPath, 'utf8'));
+                scenes = data.scenes || [];
+            } catch (e: any) {
+                renderer.error(`Failed to parse storyboard JSON: ${e.message}`);
+                process.exit(1);
+            }
+
+            if (scenes.length === 0) {
+                renderer.error(`Storyboard file found, but 'scenes' array is empty.`);
+                process.exit(1);
+            }
+
+            // Trim to requested scene count
+            const requestedCount = parseInt(options.scenes);
+            if (scenes.length > requestedCount) {
+                scenes = scenes.slice(0, requestedCount);
+            }
+
+            const result = options.enhanced
+                ? await questForge.forgeWithNarrative(`Book_${bookId}_Quest`, scenes as any, options.difficulty)
+                : await questForge.forgeQuest(`Book_${bookId}_Quest`, scenes as any, options.difficulty);
+
+            if (result.ok) {
+                renderer.success(`\u{2705} Quest package forged at: ${result.value.exportPath}`);
+                renderer.json({
+                    quest: result.value.quest.name,
+                    stages: result.value.quest.stages.length,
+                    npcs: result.value.sandbox.npcs.length,
+                    items: result.value.items.length,
+                    varbits: result.value.varbits.length,
+                    sandbox: `ms_${result.value.sandbox.mapsquareX}_${result.value.sandbox.mapsquareZ}`,
+                    difficulty: result.value.quest.difficulty,
+                    exportPath: result.value.exportPath
+                });
+            } else {
+                renderer.error(`Quest forge failed: ${result.error.message}`);
+            }
+            process.exit(result.ok ? 0 : 1);
+        });
+
+    
+    pipe
         .command('queue')
         .description('List active and completed pipelines in the sovereign substrate')
         .action(async () => {
@@ -2021,6 +2279,9 @@ export async function main(): Promise<void> {
             
             const gameplay = GameplaySovereigntyLimb.getInstance();
             const radar = SpatialRadarLimb.getInstance();
+            const globe = new GlobeStateLimb(config);
+            await globe.connect();
+            gameplay.injectSwitchboard(SwitchboardLimb.getInstance());
             
             renderer.success('Ã°Å¸Â§  Cognitive Substrate: Synchronized (64 Hexagrams)');
             renderer.success('Ã°Å¸â€˜â‚¬ Predictive Vision: Online (GhostSplat)');
@@ -3110,10 +3371,10 @@ function resetConfig(configPath: string): Result<void> {
         if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
         writeFileSync(configPath, JSON.stringify({
             mode: 'hybrid',
-            planningModel: 'kimi-k2.5:cloud',
+            planningModel: 'kimi-k2.6:cloud',
             codingModel: 'deepseek-r1:8b',
             embeddingModel: 'nomic-embed-text',
-            criticModel: 'kimi-k2.5:cloud',
+            criticModel: 'kimi-k2.6:cloud',
             projectId: 'global',
             embeddingDimensions: 768,
             wsPort: -1

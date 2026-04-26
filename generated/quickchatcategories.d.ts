@@ -1,0 +1,1 @@
+export type quickchatcategories = any;

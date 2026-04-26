@@ -1,4 +1,4 @@
-﻿import { type AICapability, type AITaskType, type AIServiceType, type Result } from '../../core/models.js';
+import { type AICapability, type AITaskType, type AIServiceType, type Result } from '../../core/models.js';
 import { StaticModelRegistry, CatalogMetadata } from './StaticModelRegistry.js';
 import { CloudflareModelRegistry } from './CloudflareModelRegistry.js';
 
@@ -204,7 +204,7 @@ export const CapabilityRegistry: Record<string, AICapability> = {
         name: 'Esoteric Reasoning Forge',
         serviceType: 'HUGGINGFACE',
         taskType: 'TEXT',
-        modelId: 'moonshotai/Kimi-K2.5:novita',
+        modelId: 'huggingface:moonshotai/Kimi-K2.6:novita',
         description: 'ULTIMATE TIER: High-intelligence reasoning forge for complex mental models.',
         passthroughEnabled: true,
         fallback: 'gold_gemini_2_5_pro'

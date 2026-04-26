@@ -114,9 +114,9 @@ export interface SovereignConfig {
 const DEFAULT_CONFIG: SovereignConfig = {
     mode: 'hybrid',
     metabolicCostScale: 1.0,
-    planningModel: 'kimi-k2.5:cloud',
+    planningModel: 'kimi-k2.6:cloud',
     codingModel: 'deepseek-r1:8b', // Upgraded to thinking model
-    orchestratorModel: 'kimi-k2.5:cloud',
+    orchestratorModel: 'kimi-k2.6:cloud',
     visionModel: 'moondream:latest',
     voiceModel: 'tinyllama:latest',
     codingHeavyModel: 'deepseek-r1:8b',
@@ -125,7 +125,7 @@ const DEFAULT_CONFIG: SovereignConfig = {
     cloudflareAccountId: undefined,
     cloudflareApiToken: undefined,
     cloudflareAuthEmail: undefined,
-    criticModel: 'kimi-k2.5:cloud',
+    criticModel: 'kimi-k2.6:cloud',
     lightAuditorModel: 'all-minilm:latest',
     geminiFlashModel: 'gemini-1.5-flash',
     geminiProModel: 'gemini-1.5-pro',
@@ -140,21 +140,21 @@ const DEFAULT_CONFIG: SovereignConfig = {
     memoryConsolidationModel: 'deepseek-r1:8b',
 
     // Phase 71 Hierarchy Defaults
-    masterReasoningModel: 'kimi-k2.5:cloud',
+    masterReasoningModel: 'kimi-k2.6:cloud',
     executiveCoderModel: 'deepseek-r1:8b',
     reactiveAgentModel: 'deepseek-r1:8b', // VibeThinker fallback for demo stability
 
     // Phase 78 Economic Budget Paths (Layer 3)
     fastPathModel: 'deepseek-r1:8b',
     midPathModel: 'deepseek-r1:8b',
-    deepPathModel: 'kimi-k2.5:cloud',
+    deepPathModel: 'kimi-k2.6:cloud',
 
     // Phase 72 Failover & Specialized Defaults
-    masterFallbackModel: 'huggingface:openai-compat/kimi-k2.5-thinking',
+    masterFallbackModel: 'huggingface:openai-compat/kimi-k2.6-thinking',
     masterLocalModel: 'deepseek-r1:8b',
     imageGenModel: 'cloudflare:@cf/stabilityai/stable-diffusion-xl-base-1.0',
 
-    huggingfaceFallbackModel: 'huggingface:openai-compat/kimi-k2.5-thinking',
+    huggingfaceFallbackModel: 'huggingface:openai-compat/kimi-k2.6-thinking',
     localFallbackModel: 'deepseek-r1:8b',
     ollamaBaseUrl: 'http://localhost:11434',
     projectId: 'global',

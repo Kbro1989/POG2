@@ -4,6 +4,7 @@ import { GameState } from '../../core/models.js';
 import { WorldForensicsLimb, ObjectDefinition } from './WorldForensicsLimb.js';
 import { createLogger } from '../../utils/logger.js';
 import { SpatialSovereigntyLimb } from './SpatialSovereigntyLimb.js';
+import { GameplaySovereigntyLimb } from './GameplaySovereigntyLimb.js';
 
 const logger = createLogger('VarbitSovereigntyLimb');
 
@@ -114,6 +115,29 @@ export class VarbitSovereigntyLimb {
     }
 
     /**
+     * setVarbit - Mutates a specific varbit, calculates the new parent Varp value, and triggers invalidation.
+     */
+    public async setVarbit(id: number, value: number, gameState: GameState): Promise<void> {
+        const def = this.getVarbitDefinition(id);
+        if (!def) {
+            logger.warn({ id }, 'Attempted to set an undefined varbit. Storing in isolated cache.');
+            gameState.varbits.set(id, value);
+            return;
+        }
+
+        const parentValue = gameState.varps.get(def.parentVarpId) || 0;
+        const mask = ((1 << (def.msb - def.lsb + 1)) - 1);
+        
+        // Clear the old bit-window
+        let newVarpValue = parentValue & ~(mask << def.lsb);
+        // Insert the new value
+        newVarpValue |= ((value & mask) << def.lsb);
+
+        logger.info({ varbitId: id, value, parentVarp: def.parentVarpId, oldVarp: parentValue, newVarp: newVarpValue }, 'Authoritative VARBIT Update');
+        await this.setVarp(def.parentVarpId, newVarpValue, gameState);
+    }
+
+    /**
      * setVarp - Updates a player variable and triggers varbit cache invalidation.
      * In Phase 13, this also triggers Spatial manifestations for affected objects.
      */
@@ -122,6 +146,7 @@ export class VarbitSovereigntyLimb {
         if (oldValue === value) return;
 
         gameState.varps.set(id, value);
+        GameplaySovereigntyLimb.getInstance().markDirty();
         logger.info({ id, oldValue, newValue: value }, 'Authoritative VARP Update');
 
         // Phase 13: World Manifestation Trigger

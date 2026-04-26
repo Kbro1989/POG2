@@ -373,7 +373,9 @@ export class WorldGroundingLimb implements GroundingHydrator {
 
             if (fs.existsSync(effectivePath)) {
                 const data = fs.readFileSync(effectivePath, 'utf8');
-                this.npcSpawns = JSON.parse(data);
+                const parsed = JSON.parse(data);
+                // Support both raw array and { entities: [...] } manifest formats
+                this.npcSpawns = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.entities) ? parsed.entities : []);
                 this.npcsLoaded = true;
                 logger.debug({ count: this.npcSpawns.length, source: effectivePath }, 'NPC Spawns grounded via Breakthrough Manifest.');
             }

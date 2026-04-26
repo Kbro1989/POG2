@@ -1,4 +1,4 @@
-﻿import { type AICapability, type AITaskType } from '../../core/models.js';
+import { type AICapability, type AITaskType } from '../../core/models.js';
 
 export const CatalogMetadata = {
     tasks: {
@@ -80,20 +80,20 @@ export const StaticModelRegistry: Record<string, AICapability> = {
     },
     'gold_huggingface_kimi': {
         id: 'gold_huggingface_kimi',
-        name: 'Kimi K2.5 Thinking (HuggingFace)',
+        name: 'Kimi K2.6 Thinking (HuggingFace)',
         serviceType: 'HUGGINGFACE',
         taskType: 'TEXT',
-        modelId: 'kimi-k2.5-think',
-        description: 'TOP-TIER REASONING: Kimi K2.5 thinking model via HuggingFace.',
+        modelId: 'kimi-k2.6-think',
+        description: 'TOP-TIER REASONING: Kimi K2.6 thinking model via HuggingFace.',
         passthroughEnabled: true,
         fallback: 'gold_ollama_kimi'
     },
     'gold_ollama_kimi': {
         id: 'gold_ollama_kimi',
-        name: 'Kimi K2.5 Thinking (Local)',
+        name: 'Kimi K2.6 Thinking (Local)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'kimi-k2.5-think',
+        modelId: 'kimi-k2.6:cloud',
         description: 'Local instance of Kimi Thinking.',
         passthroughEnabled: true
     },

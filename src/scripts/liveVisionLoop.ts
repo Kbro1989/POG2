@@ -23,7 +23,7 @@ async function runLiveCycle() {
 
     const config: SovereignConfig = {
         visionModel: 'ollama:llava',
-        codingHeavyModel: 'kimi-k2.5:cloud',
+        codingHeavyModel: 'kimi-k2.6:cloud',
         codingFastModel: 'ollama:qwen2.5-coder:1.5b',
         ollamaBaseUrl: 'http://localhost:11434',
     } as any;

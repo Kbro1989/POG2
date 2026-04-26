@@ -725,18 +725,23 @@ async function loadChunk() {
 
   try {
     // Attempt Unified (High Fidelity) first, then fallback to World Extract, then to root (Public)
-    let resp = await fetch(`/unified/${filename}`);
-    if (!resp.ok) resp = await fetch(`/world/${filename}`);
-    if (!resp.ok) resp = await fetch(`/${filename}`);
+    const targets = [`/unified/${filename}`, `/world/${filename}`, `/${filename}`];
+    let resp = null;
+    
+    for (const url of targets) {
+        console.log(`%c[SOVEREIGN] Probing ${url}...`, "color: #51ffff");
+        resp = await fetch(url);
+        if (resp.ok) break;
+    }
 
-    if (!resp.ok) {
-        if (resp.status === 404) {
+    if (!resp || !resp.ok) {
+        if (resp && resp.status === 404) {
             console.log(`%c[SOVEREIGN] Chunk ${filename} is not currently indexed. (Void) — Attempting Live Extraction.`, "color: #ff9d00");
             document.getElementById('status').textContent = `Chunk ${filename} is Void. Triggering LIVE...`;
             liveExtract();
             return;
         }
-        throw new Error(`${filename} failed: ${resp.status}`);
+        throw new Error(`${filename} failed: ${resp ? resp.status : 'Network Error'}`);
     }
     const data = await resp.json();
     document.getElementById('status').textContent = `Pulse Rendered: ${filename}`;
@@ -744,6 +749,7 @@ async function loadChunk() {
   } catch (err) {
     document.getElementById('status').textContent = `Pulse Error: ${err.message}`;
     console.error("Sovereign Link Severed:", err);
+    console.error("Failed URL target:", filename);
   }
 }
 

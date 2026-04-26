@@ -8,6 +8,7 @@ import { EventBus } from '../events/EventBus.js';
 import { DBRowOracleLimb } from '../limbs/spatial/DBRowOracleLimb.js';
 import { PedagogyForensicsLimb } from '../limbs/pedagogy/PedagogyForensicsLimb.js';
 import { getAtlasSpatialPath } from '../utils/SovereignPathResolver.js';
+import { rsmvBridge } from '../utils/RSMVBridge.js';
 
 const logger = createLogger('SwitchboardLimb');
 
@@ -113,10 +114,12 @@ export class SwitchboardLimb {
                 const publicDir = join(process.cwd(), 'public');
                 const spatialRoot = getAtlasSpatialPath();
                 const regionsDir = join(spatialRoot, 'regions');
+                const unifiedDir = join(spatialRoot, 'unified_extract');
+                const worldExtractDir = join(spatialRoot, 'world_extract');
                 
                 app.use('/captures', express.static(eyeDir));
-                app.use('/unified', express.static(regionsDir));
-                app.use('/world', express.static(regionsDir));
+                app.use('/unified', express.static(unifiedDir));
+                app.use('/world', express.static(worldExtractDir));
                 app.use('/regions', express.static(regionsDir));
                 app.use(express.static(publicDir));
 
@@ -146,6 +149,41 @@ export class SwitchboardLimb {
                                 const msg = JSON.parse(data);
                                 if (msg.type === 'command') {
                                     logger.info({ intent: msg.intent }, 'Bridge received task command');
+                                    
+                                    // Fast-path for Live Cache Radar bypasses the slow LLM
+                                    if (typeof msg.intent === 'string' && msg.intent.startsWith('GET_LIVE_RSMV')) {
+                                        const parts = msg.intent.split(' ');
+                                        const x = parseInt(parts[1] || '3200');
+                                        const z = parseInt(parts[2] || '3200');
+                                        const plane = parseInt(parts[3] || '0');
+                                        
+                                        logger.info(`[SWITCHBOARD] ⚡ Requesting LIVE RSMV Extraction at [${x}, ${z}, ${plane}]`);
+                                        
+                                        const MAX_RETRIES = 3;
+                                        const RETRY_BASE_MS = 2000;
+                                        let lastError = 'Unknown extraction failure';
+                                        
+                                        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                                            const result = await rsmvBridge.getCollision(x, z, plane);
+                                            
+                                            if (result.ok) {
+                                                ws.send(JSON.stringify({ type: 'result', ok: true, value: { type: 'LIVE_RSMV', ...result.value }, error: null }));
+                                                return;
+                                            }
+                                            
+                                            lastError = result.error.message;
+                                            if (attempt < MAX_RETRIES) {
+                                                const waitMs = RETRY_BASE_MS * attempt;
+                                                logger.warn({ attempt, waitMs, err: lastError }, `[SWITCHBOARD] RSMV extraction failed, retrying in ${waitMs}ms...`);
+                                                await new Promise(r => setTimeout(r, waitMs));
+                                            }
+                                        }
+                                        
+                                        logger.error({ retries: MAX_RETRIES, err: lastError }, '[SWITCHBOARD] RSMV extraction exhausted all retries');
+                                        ws.send(JSON.stringify({ type: 'result', ok: false, value: null, error: lastError }));
+                                        return;
+                                    }
+                                    
                                     const result = await orchestrator.run(msg.intent);
                                     ws.send(JSON.stringify({ type: 'result', ok: result.ok, value: result.value, error: result.error }));
                                 } else if (msg.type === 'ADMIN_COMMAND') {

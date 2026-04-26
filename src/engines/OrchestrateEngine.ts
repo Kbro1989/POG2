@@ -60,6 +60,7 @@ import { RSMVExtractor } from '../utils/RSMVExtractor.js';
 import { CacheLearningLimb } from '../limbs/spatial/CacheLearningLimb.js';
 import { GhostSplatEngine } from '../substrates/GhostSplatEngine.js';
 import { CacheForensicsLimb } from '../limbs/spatial/CacheForensicsLimb.js';
+import { HUDForensicsLimb } from '../limbs/spatial/HUDForensicsLimb.js';
 import { SystemTaxonomyLimb } from '../limbs/spatial/SystemTaxonomyLimb.js';
 import { MaterialLimb } from '../limbs/spatial/MaterialLimb.js';
 import { SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
@@ -110,6 +111,14 @@ import { CompositeStrategy } from '../routing/strategies/CompositeStrategy.js';
 import { homedir } from 'os';
 import { QuotaTracker } from '../utils/QuotaTracker.js';
 import { QuestSynthesisLimb } from '../limbs/technical/QuestSynthesisLimb.js';
+import { QuestForgeLimb } from '../limbs/technical/QuestForgeLimb.js';
+import { LogicBrainLimb } from '../limbs/technical/LogicBrainLimb.js';
+import { SovereignVocabularyLimb } from '../limbs/logical/SovereignVocabularyLimb.js';
+import { ValidationLimb } from '../limbs/technical/ValidationLimb.js';
+import { UISubstrateLimb } from '../limbs/technical/UISubstrateLimb.js';
+import { SovereignSandboxLimb } from '../limbs/technical/SovereignSandboxLimb.js';
+import { ObjectiveLimb } from '../limbs/technical/ObjectiveLimb.js';
+
 import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger('OrchestrateEngine');
@@ -192,18 +201,6 @@ export class OrchestrateEngine {
     private readonly mechanicalSovereignty: MechanicalSovereigntyLimb;
     private readonly gameplay: GameplaySovereigntyLimb;
     private readonly pulseVolley: CNSGodheadPulseVolley;
-    private readonly harness: SimulationHarness;
-
-    private readonly EXTREME_THRESHOLD = 80;
-    private initialized = false;
-    private initPromise: Promise<void> | null = null;
-    questSynthesis: any;
-    nodeTester: any;
-
-    constructor(
-        private readonly config: SovereignConfig,
-        private readonly router: TernaryRouter,
-        private readonly renderer: Renderer
     ) {
         logger.debug('Initializing Orchestrate Engines...');
         this.client = new ModelClient(config, router);
@@ -327,9 +324,16 @@ export class OrchestrateEngine {
         this.rsmvController = RSMVController.getInstance();
         this.cacheLearning = new CacheLearningLimb(rsmvCachePath, this.cacheForensics, extractionDir);
         this.questSynthesis = new QuestSynthesisLimb(this.client, this.cacheForensics, this.pedagogy);
+        this.logicBrain = LogicBrainLimb.getInstance();
+        this.questForge = new QuestForgeLimb(this.client, this.cacheForensics, this.pedagogy);
+        this.vocabulary = new SovereignVocabularyLimb();
+        this.validation = new ValidationLimb(this.chroma);
+        this.uiSubstrate = UISubstrateLimb.getInstance();
+        this.sandbox = new SovereignSandboxLimb();
+        this.objective = ObjectiveLimb.getInstance();
         this.pulseMonitor = new PulseMonitor(process.cwd(), this.router.getHexagram());
 
-        // PulseMonitor already created above (line 271) to satisfy BlenderRenderer dependency.
+        // PulseMonitor already created above to satisfy BlenderRenderer dependency.
         // It will be started gracefully in initialize() to prevent CLI hangs.
 
         this.blender = new BlenderRenderer(
@@ -347,6 +351,7 @@ export class OrchestrateEngine {
             this.shell,
             this.blender,
             this.router.getHexagram(),
+            this.questSynthesis,
             this.vectorDB,
             this.ytLimb // Injected YouTubeLimb
         );
@@ -860,6 +865,15 @@ export class OrchestrateEngine {
         nodeTester.registerLimbs({ ArchitecturalValidator: undefined });
         nodeTester.registerLimbs({ ASTWatcher: undefined });
         nodeTester.registerLimbs({ CacheLearningLimb: this.cacheLearning });
+        nodeTester.registerLimbs({ QuestSynthesisLimb: this.questSynthesis });
+        nodeTester.registerLimbs({ QuestForgeLimb: this.questForge });
+        nodeTester.registerLimbs({ LogicBrainLimb: this.logicBrain });
+        nodeTester.registerLimbs({ SovereignVocabularyLimb: this.vocabulary });
+        nodeTester.registerLimbs({ ValidationLimb: this.validation });
+        nodeTester.registerLimbs({ UISubstrateLimb: this.uiSubstrate });
+        nodeTester.registerLimbs({ SovereignSandboxLimb: this.sandbox });
+        nodeTester.registerLimbs({ ObjectiveLimb: this.objective });
+
 
         // Phase 21: Wire PulseMonitor to use NodeTester for lightweight limb health after first pass
         this.pulseMonitor.setNodeTester(nodeTester);
@@ -893,6 +907,38 @@ export class OrchestrateEngine {
                     output: `Global Shadow Substrate Summary:\n\n${output}`,
                     data: { insights: all.value, skipNormalization: true, skipReflection: true }
                 });
+            }
+        });
+
+        // ─── HEX 20 (Guan) / HEX 23 (Po) / HEX 27 (Yi) ───
+        this.registry.register({
+            name: 'hud_forensics_scan',
+            description: 'Scans the cache for HUD interfaces using structural epistemology.',
+            humanDescription: 'Check the game cache for user interfaces like the ribbon, action bar, or settings panel.',
+            jargonDescription: 'Executes topology-aware structural epistemology to filter out tutorial interfaces and isolate SPRITE_OVERLAY, SETTINGS_PANEL, or RIBBON candidates based on ratio scoring. Maps to Hex 20 (Observation), Hex 23 (Splitting/Filtering), and Hex 27 (Nourishment/Heuristics).',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.OBSERVE,
+            category: 'sensory',
+            parameters: {
+                query: { type: 'string', description: 'Search term for text labels (optional)' },
+                atlasPath: { type: 'string', description: 'Path to atlas directory containing decomposed JSONs', default: 'D:/D-sovereign-/cache_pedagogy/atlas/interfaces' }
+            },
+            execute: async (args) => {
+                const limb = new HUDForensicsLimb();
+                if (args.query) {
+                    const res = await limb.searchInterfaces(args.query as string);
+                    if (!res.ok) return res as any;
+                    return ok({
+                        output: `HUD Search for "${args.query}":\n` + JSON.stringify(res.value, null, 2),
+                        data: { results: res.value, skipNormalization: true }
+                    });
+                } else {
+                    const res = await limb.scanAtlas(args.atlasPath as string);
+                    return ok({
+                        output: `HUD Forensics Scan Complete. Found ${res.length} interfaces.`,
+                        data: { results: res, skipNormalization: true }
+                    });
+                }
             }
         });
 
@@ -2384,7 +2430,7 @@ OUTPUT FORMAT:
             name: 'gutenberg_organize',
             description: 'Use the Sovereign AI to categorize unorganized books into proper genres.',
             humanDescription: 'Let Kimi read the first pages of your uncategorized books and sort them into genre folders.',
-            jargonDescription: 'Prompts Kimi-k2.5 to execute zero-shot classification on the opening byte-chunks of the uncategorized corpus, re-mapping physical paths recursively.',
+            jargonDescription: 'Prompts Kimi-k2.6 to execute zero-shot classification on the opening byte-chunks of the uncategorized corpus, re-mapping physical paths recursively.',
             idealYaoState: YaoState.OldYang,
             domain: SovereignDomain.RESEARCH,
             category: 'literary',
@@ -3980,6 +4026,8 @@ Output JSON ONLY:
         return this.switchboard;
     }
 
+    public getGutenberg(): GutenbergLimb { return this.gutenberg; }
+    public getPedagogy(): PedagogyLimb { return this.pedagogy; }
     public getStoryboard(): StoryboardLimbV2 {
         return this.storyboard;
     }

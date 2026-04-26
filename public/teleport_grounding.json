@@ -68,7 +68,7 @@
     },
     "16870": {
       "name": "Lumbridge",
-      "dest": null
+      "dest": { "x": 3222, "z": 3218, "plane": 0 }
     },
     "16871": {
       "name": "Lumbridge",
