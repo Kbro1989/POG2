@@ -999,11 +999,19 @@ export type AIServiceType =
 
 export type AITaskType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'HEALTH' | 'GEO' | 'EMBEDDING' | 'VISION';
 
+export type TaskClass =
+  | "COMPLETION"
+  | "AGENTIC_REASONING"
+  | "VISION"
+  | "RETRIEVAL"
+  | "CREATIVE_EXPANSION";
+
 export interface AICapability {
     id: string;
     name: string;
     serviceType: AIServiceType;
     taskType: AITaskType;
+    taskClass?: TaskClass;
     description: string;
     passthroughEnabled: boolean;
     domain?: SovereignDomain;

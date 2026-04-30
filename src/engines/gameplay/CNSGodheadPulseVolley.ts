@@ -28,6 +28,23 @@ interface VolleyBatch {
     commands: AdminCommand[];
 }
 
+type DeferredOp = () => Promise<void> | void;
+
+interface QueueBudget {
+    maxMs: number;              // hard time cap for queue execution
+    maxOps?: number;            // optional safety cap per tick
+    label?: string;             // debug tagging
+}
+
+interface QueueResult {
+    executed: number;
+    skipped: number;
+    durationMs: number;
+    budgetExceeded: boolean;
+}
+
+export type QueueTier = "CRITICAL" | "NORMAL" | "VISUAL_ONLY";
+
 /**
  * CNSGodheadPulseVolley
  * The deterministic execution kernel for POG2 Sovereign.
@@ -54,15 +71,24 @@ export class CNSGodheadPulseVolley {
     private readonly ledger = CNSCausalityLedger.getInstance();
     private pulseStartTime: number = 0;
     private readonly PULSE_DEADLINE_MS = 300;
-    private currentTickQueue: Array<() => Promise<void>> = [];
-    private nextTickQueue: Array<() => Promise<void>> = [];
+    
+    private currentTickQueues: Record<QueueTier, DeferredOp[]> = {
+        CRITICAL: [],
+        NORMAL: [],
+        VISUAL_ONLY: []
+    };
+    private nextTickQueues: Record<QueueTier, DeferredOp[]> = {
+        CRITICAL: [],
+        NORMAL: [],
+        VISUAL_ONLY: []
+    };
 
-    public enqueueNow(op: () => Promise<void>): void {
-        this.currentTickQueue.push(op);
+    public enqueueNow(op: DeferredOp, tier: QueueTier = "NORMAL"): void {
+        this.currentTickQueues[tier].push(op);
     }
 
-    public enqueueNextTick(op: () => Promise<void>): void {
-        this.nextTickQueue.push(op);
+    public enqueueNextTick(op: DeferredOp, tier: QueueTier = "NORMAL"): void {
+        this.nextTickQueues[tier].push(op);
     }
 
     /**
@@ -185,8 +211,12 @@ export class CNSGodheadPulseVolley {
         this.tickCount++;
 
         // Swap deterministic queues at start of tick
-        this.currentTickQueue = this.nextTickQueue;
-        this.nextTickQueue = [];
+        this.currentTickQueues = { ...this.nextTickQueues };
+        this.nextTickQueues = {
+            CRITICAL: [],
+            NORMAL: [],
+            VISUAL_ONLY: []
+        };
 
         try {
             // Resolve lazy dependencies before first pulse
@@ -289,15 +319,41 @@ export class CNSGodheadPulseVolley {
             this.ledger.record(event);
         }
 
-        // Execute deterministic queue ops for this tick
-        for (const op of this.currentTickQueue) {
-            try {
-                await op();
-            } catch (e) {
-                logger.error({ err: e }, '[CNS] Deterministic op failed');
-            }
+        // --- TIERED BUDGET EXECUTION (Torpor-Safe) ---
+        const tickBudgetMs = this.PULSE_DEADLINE_MS * 0.35; // Reserve 35% for deferred
+        const state = this.substrateState;
+
+        // 1. CRITICAL Tier (Always runs if possible)
+        await this.processQueueWithBudget(this.currentTickQueues.CRITICAL, {
+            maxMs: tickBudgetMs * 0.5,
+            maxOps: 100,
+            label: `tick_${this.ledger.getCurrentTick()}_CRITICAL`
+        });
+
+        // 2. NORMAL Tier (Skipped in OFFLINE/Torpor)
+        if (state !== SubstrateState.OFFLINE) {
+            await this.processQueueWithBudget(this.currentTickQueues.NORMAL, {
+                maxMs: tickBudgetMs * 0.3,
+                maxOps: 50,
+                label: `tick_${this.ledger.getCurrentTick()}_NORMAL`
+            });
+        } else {
+            logger.debug('[CNS] Skipping NORMAL queue: Torpor Stasis active.');
         }
-        this.currentTickQueue = [];
+
+        // 3. VISUAL_ONLY Tier (Skipped in DEGRADED/OFFLINE)
+        if (state === SubstrateState.ONLINE) {
+            await this.processQueueWithBudget(this.currentTickQueues.VISUAL_ONLY, {
+                maxMs: tickBudgetMs * 0.2,
+                maxOps: 20,
+                label: `tick_${this.ledger.getCurrentTick()}_VISUAL`
+            });
+        } else {
+            logger.debug('[CNS] Skipping VISUAL_ONLY queue: Substrate DEGRADED.');
+        }
+        
+        // Clear all current queues
+        this.currentTickQueues = { CRITICAL: [], NORMAL: [], VISUAL_ONLY: [] };
 
         // Apply world changes
         await this.grounding!.commitTick(tx);
@@ -307,26 +363,29 @@ export class CNSGodheadPulseVolley {
 
         if (this.gameplay?.globalState) {
             const playerAgent = (this.gameplay as any).playerAgent;
-            // We project ghost splats on player ticks too for smooth client visuals
-            const field = this.ghostSplat!.project(this.gameplay.globalState, 3, playerAgent);
-            if (field) {
-                this.switchboard!.broadcastGhostSplat(field);
-            }
+            // Enqueue visual side-effects to the VISUAL_ONLY tier
+            this.enqueueNow(async () => {
+                // We project ghost splats on player ticks too for smooth client visuals
+                const field = this.ghostSplat!.project(this.gameplay!.globalState!, 3, playerAgent);
+                if (field) {
+                    this.switchboard!.broadcastGhostSplat(field);
+                }
 
-            // Phase 112: Sovereign Live Bridge - Sync Avatar State to Globe
-            if (this.gameplay.avatar && this.globe) {
-                const avatar = this.gameplay.avatar as SovereignAvatarEntity;
-                this.globe.pushNodeState('player_sovereign', {
-                    coord: avatar.coord,
-                    equipment: avatar.equipment,
-                    adrenaline: avatar.adrenaline,
-                    bloodlustStacks: avatar.bloodlustStacks,
-                    hp: avatar.currentHp,
-                    maxHp: avatar.maxHp,
-                    intent: avatar.intent,
-                    lockTicks: avatar.lockTicks
-                });
-            }
+                // Phase 112: Sovereign Live Bridge - Sync Avatar State to Globe
+                if (this.gameplay!.avatar && this.globe) {
+                    const avatar = this.gameplay!.avatar as SovereignAvatarEntity;
+                    this.globe!.pushNodeState('player_sovereign', {
+                        coord: avatar.coord,
+                        equipment: avatar.equipment,
+                        adrenaline: avatar.adrenaline,
+                        bloodlustStacks: avatar.bloodlustStacks,
+                        hp: avatar.currentHp,
+                        maxHp: avatar.maxHp,
+                        intent: avatar.intent,
+                        lockTicks: avatar.lockTicks
+                    });
+                }
+            }, "VISUAL_ONLY");
         }
 
         // 7. Commit Ledger (Logs & history rotation)
@@ -404,6 +463,84 @@ export class CNSGodheadPulseVolley {
             }
         }
         return events;
+    }
+
+    /**
+     * processQueueWithBudget - Deterministic, bounded execution of deferred operations.
+     * Prevents async leakage and runaway tick duration.
+     */
+    private async processQueueWithBudget(
+        queue: DeferredOp[],
+        budget: QueueBudget
+    ): Promise<QueueResult> {
+
+        const start = performance.now();
+        let executed = 0;
+        let skipped = 0;
+
+        const maxOps = budget.maxOps ?? Number.MAX_SAFE_INTEGER;
+
+        for (let i = 0; i < queue.length; i++) {
+            const op = queue[i];
+
+            // hard op cap first (prevents death spirals)
+            if (executed >= maxOps) {
+                skipped += (queue.length - i);
+                logger.warn({
+                    label: budget.label,
+                    executed,
+                    skipped,
+                    reason: 'MAX_OPS_REACHED'
+                }, '[QUEUE_BUDGET] Ops cap hit, truncating execution');
+                break;
+            }
+
+            const now = performance.now();
+            const elapsed = now - start;
+
+            // time budget check (core deterministic safety rail)
+            if (elapsed >= budget.maxMs) {
+                skipped += (queue.length - i);
+
+                logger.warn({
+                    label: budget.label,
+                    executed,
+                    skipped,
+                    elapsed,
+                    maxMs: budget.maxMs,
+                    reason: 'TIME_BUDGET_EXCEEDED'
+                }, '[QUEUE_BUDGET] Tick budget exhausted, deferring remaining ops');
+
+                break;
+            }
+
+            try {
+                const result = op();
+
+                // allow sync or async ops without breaking tick determinism
+                if (result instanceof Promise) {
+                    await result;
+                }
+
+                executed++;
+            } catch (err) {
+                skipped++;
+
+                logger.error({
+                    label: budget.label,
+                    err
+                }, '[QUEUE_BUDGET] Deferred op failed');
+            }
+        }
+
+        const durationMs = performance.now() - start;
+
+        return {
+            executed,
+            skipped,
+            durationMs,
+            budgetExceeded: skipped > 0
+        };
     }
 
     private async executeEvent(tx: Map<string, any>, event: TickEvent): Promise<void> {

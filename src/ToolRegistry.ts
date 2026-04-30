@@ -1,19 +1,19 @@
-﻿import { type Result, type EngineOutput, YaoState } from './core/models.js';
+import { type Result, type EngineOutput, YaoState } from './core/models.js';
 import { SovereignDomain, DOMAIN_ADJACENCY } from './types/SovereignDomain.js';
 import { createLogger } from "./utils/logger.js";
 
 const logger = createLogger('ToolRegistry');
 
 export interface ToolDefinition {
-    name: string;
-    description: string;
-    humanDescription?: string;      // High-level explanation for non-specialists
-    jargonDescription?: string;     // Technical, low-level explanation
-    idealYaoState?: YaoState;       // Preferred metabolic state for execution
-    domain: SovereignDomain;
-    category?: 'core' | 'filesystem' | 'network' | 'ai' | 'mcp' | 'sensory' | 'forge' | 'literary' | 'creative' | 'vscode';
-    parameters: Record<string, unknown>;
-    execute: (args: Record<string, unknown>) => Promise<Result<EngineOutput>>;
+    readonly name: string;
+    readonly description: string;
+    readonly humanDescription?: string;      // High-level explanation for non-specialists
+    readonly jargonDescription?: string;     // Technical, low-level explanation
+    readonly idealYaoState?: YaoState;       // Preferred metabolic state for execution
+    readonly domain: SovereignDomain;
+    readonly category?: 'core' | 'filesystem' | 'network' | 'ai' | 'mcp' | 'sensory' | 'forge' | 'literary' | 'creative' | 'vscode';
+    readonly parameters: Record<string, unknown>;
+    readonly execute: (args: Record<string, unknown>) => Promise<Result<EngineOutput>>;
 }
 
 /**
@@ -26,7 +26,7 @@ export class ToolRegistry {
     /**
      * Register a tool with the sovereign substrate.
      */
-    register(tool: ToolDefinition): void {
+    public register(tool: ToolDefinition): void {
         this.tools.set(tool.name, tool);
         logger.debug({ tool: tool.name, domain: tool.domain, category: tool.category }, 'Tool registered');
     }
@@ -34,7 +34,7 @@ export class ToolRegistry {
     /**
      * Retrieve a tool by name (case-insensitive and format-agnostic).
      */
-    getTool(name: string): ToolDefinition | undefined {
+    public getTool(name: string): ToolDefinition | undefined {
         const exact = this.tools.get(name);
         if (exact) return exact;
 
@@ -50,14 +50,14 @@ export class ToolRegistry {
     /**
      * Get all registered tool definitions.
      */
-    getDefinitions(): ToolDefinition[] {
+    public getDefinitions(): ToolDefinition[] {
         return Array.from(this.tools.values());
     }
 
     /**
      * Get tools scoped to a specific domain (including adjacent domains).
      */
-    getToolsForDomain(domain: SovereignDomain): ToolDefinition[] {
+    public getToolsForDomain(domain: SovereignDomain): ToolDefinition[] {
         const allowedDomains = DOMAIN_ADJACENCY[domain];
         if (!allowedDomains) {
             logger.warn({ domain }, 'No adjacency mapping found for domain');
@@ -69,14 +69,14 @@ export class ToolRegistry {
     /**
      * Get tools by category.
      */
-    getToolsByCategory(category: string): ToolDefinition[] {
+    public getToolsByCategory(category: string): ToolDefinition[] {
         return this.getDefinitions().filter(t => t.category === category);
     }
 
     /**
      * Get formatted definitions for ALL tools (unscoped).
      */
-    getFormattedDefinitions(): string {
+    public getFormattedDefinitions(): string {
         return this.getDefinitions()
             .map(t => `- ${t.name} [${t.domain}${t.category ? `:${t.category}` : ''}]: ${t.description}`)
             .join('\n');
@@ -85,7 +85,7 @@ export class ToolRegistry {
     /**
      * Get formatted definitions scoped to a domain for LLM context.
      */
-    getFormattedDefinitionsForDomain(domain: SovereignDomain): string {
+    public getFormattedDefinitionsForDomain(domain: SovereignDomain): string {
         return this.getToolsForDomain(domain)
             .map(t => `- ${t.name}: ${t.description}. Params: ${JSON.stringify(t.parameters)}`)
             .join('\n');
@@ -94,14 +94,14 @@ export class ToolRegistry {
     /**
      * Get the domain for a specific tool.
      */
-    getToolDomain(toolName: string): SovereignDomain | undefined {
+    public getToolDomain(toolName: string): SovereignDomain | undefined {
         return this.getTool(toolName)?.domain;
     }
 
     /**
      * Get all registered tool names.
      */
-    getToolNames(): string[] {
+    public getToolNames(): string[] {
         return Array.from(this.tools.keys());
     }
 }

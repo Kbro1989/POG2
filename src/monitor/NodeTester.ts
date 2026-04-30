@@ -159,13 +159,25 @@ export class NodeTester {
             });
         }
 
-        const quotaTracker = this.router.getQuotaTracker();
-        if (quotaTracker) {
-            for (const result of results) {
-                const health = quotaTracker.getQuotaHealth(result.provider as QuotaProvider);
-                result.quotaPct = Math.round(health.usedPct * 10) / 10;
-                result.quotaExhausted = health.exhausted;
-            }
+        const cloudProviders = results.filter(r => r.provider !== 'ollama');
+        const cloudOffline = cloudProviders.every(r => r.status === 'OFFLINE' || r.quotaExhausted);
+        const cloudDegraded = cloudProviders.some(r => r.status === 'DEGRADED' || r.status === 'OFFLINE' || r.quotaExhausted);
+
+        const { SubstrateResolver } = await import('../engines/gameplay/SubstrateResolver.js');
+        if (cloudOffline) {
+            SubstrateResolver.setCloudSignal({ 
+                status: 'OFFLINE', 
+                effect: 'BLOCK_CLOUD_TASKS',
+                lastError: 'All primary cloud providers exhausted or unreachable.' 
+            });
+        } else if (cloudDegraded) {
+            SubstrateResolver.setCloudSignal({ 
+                status: 'DEGRADED', 
+                effect: 'ROUTING_BIAS_ONLY',
+                lastError: cloudProviders.find(r => r.error)?.error
+            });
+        } else {
+            SubstrateResolver.setCloudSignal({ status: 'ONLINE', effect: 'NONE' });
         }
 
         return results;

@@ -76,7 +76,7 @@ export class DomainLocker {
     /**
      * Set the domain context for a task. Not a "lock" — just context.
      */
-    lockDomain(intent: string): DomainTransition {
+    public lockDomain(intent: string): DomainTransition {
         const previousDomain = this.activeDomain;
         const newDomain = classifyDomain(intent);
 
@@ -105,7 +105,7 @@ export class DomainLocker {
     /**
      * Force-set a specific domain context (sensory interception / manual override).
      */
-    forceLock(domain: SovereignDomain, reason: string): DomainTransition {
+    public forceLock(domain: SovereignDomain, reason: string): DomainTransition {
         const previousDomain = this.activeDomain;
         this.activeDomain = domain;
         this.lockDepth++;
@@ -126,7 +126,7 @@ export class DomainLocker {
     /**
      * Release the current domain context.
      */
-    releaseDomain(): void {
+    public releaseDomain(): void {
         if (this.lockDepth > 0) {
             this.lockDepth--;
         }
@@ -139,7 +139,7 @@ export class DomainLocker {
     /**
      * Complete reset of domain state to prevent cross-contamination between commands.
      */
-    forceReleaseAll(): void {
+    public forceReleaseAll(): void {
         if (this.lockDepth > 0 || this.activeDomain !== null) {
             logger.info({ releasedDomain: this.activeDomain, clearedDepth: this.lockDepth }, 'Domain context forcefully reset for new command isolation');
             this.activeDomain = null;
@@ -151,7 +151,7 @@ export class DomainLocker {
      * Dispatch check — returns PASS or WAIT instead of blocking.
      * Kimi uses this to decide whether to execute directly or dispatch to a worker.
      */
-    dispatchCheck(toolName: string): DispatchVerdict {
+    public dispatchCheck(toolName: string): DispatchVerdict {
         const toolDomain = (TOOL_DOMAIN_MAP[toolName] ?? 'UNKNOWN') as SovereignDomain | 'UNKNOWN';
 
         // No active domain context — pass everything
@@ -178,7 +178,7 @@ export class DomainLocker {
      * Legacy compatibility — isToolAllowed always returns true now.
      * Kimi can reach any limb.
      */
-    isToolAllowed(_toolName: string): boolean {
+    public isToolAllowed(_toolName: string): boolean {
         return true;
     }
 
@@ -186,24 +186,24 @@ export class DomainLocker {
      * Legacy compatibility — assertToolAllowed is now a no-op.
      * Use dispatchCheck() for routing decisions instead.
      */
-    assertToolAllowed(_toolName: string): void {
+    public assertToolAllowed(_toolName: string): void {
         // Wait/pass model: never blocks. Kimi is the brain.
     }
 
-    getActiveDomain(): SovereignDomain | null {
+    public getActiveDomain(): SovereignDomain | null {
         return this.activeDomain;
     }
 
-    getAllowedDomains(): ReadonlySet<SovereignDomain> {
+    public getAllowedDomains(): ReadonlySet<SovereignDomain> {
         // All domains are reachable — Kimi dispatches, workers execute
         return new Set(Object.values(SovereignDomain));
     }
 
-    getTransitionHistory(): readonly DomainTransition[] {
+    public getTransitionHistory(): readonly DomainTransition[] {
         return this.transitionHistory;
     }
 
-    getLockDepth(): number {
+    public getLockDepth(): number {
         return this.lockDepth;
     }
 }

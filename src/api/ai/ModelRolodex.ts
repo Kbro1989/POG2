@@ -215,6 +215,33 @@ export class ModelRolodex {
         return status.authenticated && status.models.length > 0;
     }
 
+    /** Check if a specific model is healthy and available */
+    isModelHealthy(modelId: string): boolean {
+        // 1. Identify provider
+        let provider: RolodexProvider = 'ollama';
+        let id = modelId;
+        
+        if (modelId.includes(':')) {
+            const parts = modelId.split(':');
+            provider = ModelRolodex.toRolodexProvider(parts[0]);
+            id = parts.slice(1).join(':');
+        }
+
+        // 2. Check provider state
+        const status = this.state.providers[provider];
+        if (!status || !status.authenticated || !!status.error) return false;
+
+        // 3. Check if model exists in discovered list
+        if (!status.models.includes(id)) return false;
+
+        // 4. Check reputation floor (Phase 108: 0.2 floor)
+        const key = `${provider}:${id}`;
+        const model = this.state.models[key];
+        if (model && model.reputation < 0.2) return false;
+
+        return true;
+    }
+
     /** Get best available models for a failover sequence, sorted by learned reputation. */
     getHealthyModelsByTaskType(taskType: 'text' | 'image' | 'audio' | 'embedding' | 'vision'): string[] {
         const allModels = this.getAllModels();
