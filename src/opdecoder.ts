@@ -4,7 +4,7 @@ import * as path from "path";
 import { fileURLToPath } from "url";
 import * as opcode_reader from "./opcode_reader.js";
 import commentJson from "comment-json";
-import type { CacheFileSource } from "./cache";
+import type { CacheFileSource } from "./rsmv/cache/index.js";
 
 // Use a local identifier to avoid throwing SyntaxErrors under Node CJS compilation where __dirname is global
 // We use eval to hide import.meta from tsc's static analysis during CommonJS builds
@@ -99,7 +99,7 @@ export class FileParser<T> {
 		state.buffer.copyWithin(state.scan, state.endoffset, scratchbuf.byteLength);
 		state.scan += scratchbuf.byteLength - state.endoffset;
 		//do the weird prototype slice since we need a copy, not a ref
-		let r: Buffer = Uint8Array.prototype.slice.call(scratchbuf, 0, state.scan);
+		let r: Buffer = Buffer.from(Uint8Array.prototype.slice.call(scratchbuf, 0, state.scan));
 		//clear it for next use
 		scratchbuf.fill(0, 0, state.scan);
 		return r;

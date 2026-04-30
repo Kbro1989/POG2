@@ -97,23 +97,43 @@ export class SovereignEye extends EventEmitter {
 
             // 2. Always fetch text content as fallback/supplement
             let textContent: string | null = null;
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // Reduced to 5s
-                
-                const response = await undiciFetch(url, { 
-                    signal: controller.signal,
-                    headers: { 'User-Agent': 'SovereignEye/2.0' }
-                });
-                clearTimeout(timeoutId);
-                
-                textContent = await response.text();
-                // Trim for AI context
-                if (textContent.length > 10000) {
-                    textContent = textContent.substring(0, 10000) + '\n... [truncated]';
+            let attempts = 0;
+            const maxAttempts = 3;
+
+            while (attempts < maxAttempts && !textContent) {
+                attempts++;
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); // Extended to 15s
+                    
+                    const response = await undiciFetch(url, { 
+                        signal: controller.signal,
+                        headers: { 'User-Agent': 'SovereignEye/2.0' }
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if (response.ok) {
+                        textContent = await response.text();
+                        // Trim for AI context
+                        if (textContent.length > 10000) {
+                            textContent = textContent.substring(0, 10000) + '\n... [truncated]';
+                        }
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                } catch (fetchErr: any) {
+                    const isTimeout = fetchErr.name === 'AbortError' || fetchErr.message?.includes('Timeout');
+                    if (attempts < maxAttempts) {
+                        logger.warn({ url, attempt: attempts, isTimeout }, 'Text fetch failed, retrying...');
+                        await new Promise(res => setTimeout(res, 2000 * attempts)); // Exponential backoff
+                    } else {
+                        if (isTimeout) {
+                            logger.warn({ url }, 'Text fetch timed out (15s) after 3 attempts, screenshot-only mode');
+                        } else {
+                            logger.warn({ err: fetchErr.message, url }, 'Text fetch failed after 3 attempts, screenshot-only mode');
+                        }
+                    }
                 }
-            } catch (fetchErr) {
-                logger.warn({ err: fetchErr, url }, 'Text fetch failed, screenshot-only mode');
             }
 
             if (!screenshotResult.ok && !textContent) {

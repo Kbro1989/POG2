@@ -34,7 +34,7 @@ Summoning	14,250,978	99
 `;
 
 async function ingestHighFidelityStats() {
-    const limb = new EntityLimb();
+    const limb = EntityLimb.getInstance();
     const id = 'pog2:player';
 
     console.log(chalk.bold.cyan('\n--- High-Fidelity Statistical Ingestion ---'));

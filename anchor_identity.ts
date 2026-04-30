@@ -2,7 +2,7 @@ import { EntityLimb } from './src/limbs/technical/EntityLimb.js';
 import chalk from 'chalk';
 
 async function injectIdentityPerception() {
-    const limb = new EntityLimb();
+    const limb = EntityLimb.getInstance();
     const id = 'pog2:player';
     
     console.log(chalk.bold.cyan('\n--- Final Identity Anchor Injection ---'));

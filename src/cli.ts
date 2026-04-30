@@ -2077,11 +2077,38 @@ export async function main(): Promise<void> {
     ped
         .option('--ground-quest <id>', 'Ground a quest in functional Varbit logic')
         .option('--verify-state-machine', 'Verify the state machine of the grounded quest')
-        .action(async (options: { groundQuest: string; verifyStateMachine: any; }) => {
+        .option('--analyze-all', 'Synthesize and archive all cache-related studies for recreation and gameplay logic')
+        .action(async (options: { groundQuest: string; verifyStateMachine: any; analyzeAll: any; }) => {
+            const vectorDB = new VectorDB({ client });
+            const limb = new PedagogyLimb(router, vectorDB, client);
+
+            if (options.analyzeAll) {
+                renderer.info('Initiating total synthesis of cache-related studies for gameplay logic...');
+                
+                const results = [];
+                results.push(await limb.analyzeDbTables());
+                results.push(await limb.analyzeDbRows());
+                results.push(await limb.analyzeVarbits());
+                results.push(await limb.analyzeVarps());
+                results.push(await limb.analyzeWorldmap());
+                results.push(await limb.analyzeEnums());
+                results.push(await limb.analyzeQuests());
+                results.push(await limb.analyzeAllKinematics());
+                results.push(await limb.analyzeAllDynamics());
+
+                renderer.success('Cache-related study synthesis complete.');
+                for (const res of results) {
+                    if (res.ok) {
+                        renderer.info(`SUCCESS: ${res.value?.profile?.name || 'Dataset synthesis'}`);
+                    } else {
+                        renderer.warn(`PARTIAL DEGRADATION: ${res.error?.message}`);
+                    }
+                }
+                return;
+            }
+
             if (options.groundQuest) {
                 const questId = parseInt(options.groundQuest);
-                const vectorDB = new VectorDB({ client });
-                const limb = new PedagogyLimb(router, vectorDB, client);
 
                 if (options.verifyStateMachine) {
                     renderer.info(`Verifying State Machine for Quest ${questId}...`);

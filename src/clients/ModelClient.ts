@@ -89,34 +89,40 @@ export class ModelClient implements ModelExecutor {
 
     /** Check if the Ollama substrate is online */
     async checkHealth(): Promise<{ online: boolean; version: string }> {
-        try {
-            const resp = await undiciFetch(`${this.config.ollamaBaseUrl}/api/version`, {
-                signal: AbortSignal.timeout(5000)
-            });
-            if (resp.ok) {
-                const data = await resp.json() as { version?: string };
-                return { online: true, version: data.version || 'unknown' };
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                const resp = await undiciFetch(`${this.config.ollamaBaseUrl}/api/version`, {
+                    signal: AbortSignal.timeout(15000)
+                });
+                if (resp.ok) {
+                    const data = await resp.json() as { version?: string };
+                    return { online: true, version: data.version || 'unknown' };
+                }
+            } catch {
+                if (attempt === 3) return { online: false, version: 'unreachable' };
+                await new Promise(res => setTimeout(res, 2000 * attempt));
             }
-            return { online: false, version: 'offline' };
-        } catch {
-            return { online: false, version: 'unreachable' };
         }
+        return { online: false, version: 'offline' };
     }
 
     /** List locally available Ollama models */
     async listModels(): Promise<string[]> {
-        try {
-            const resp = await undiciFetch(`${this.config.ollamaBaseUrl}/api/tags`, {
-                signal: AbortSignal.timeout(5000)
-            });
-            if (resp.ok) {
-                const data = await resp.json() as { models?: Array<{ name: string }> };
-                return (data.models || []).map(m => m.name);
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                const resp = await undiciFetch(`${this.config.ollamaBaseUrl}/api/tags`, {
+                    signal: AbortSignal.timeout(15000)
+                });
+                if (resp.ok) {
+                    const data = await resp.json() as { models?: Array<{ name: string }> };
+                    return (data.models || []).map(m => m.name);
+                }
+            } catch {
+                if (attempt === 3) return [];
+                await new Promise(res => setTimeout(res, 2000 * attempt));
             }
-            return [];
-        } catch {
-            return [];
         }
+        return [];
     }
 
 
@@ -1179,15 +1185,23 @@ export class ModelClient implements ModelExecutor {
         const ollamaBase = this.config.ollamaBaseUrl || 'http://localhost:11434';
         let ollamaOnline = false;
         let modelCount = 0;
-        try {
-            const response = await undiciFetch(`${ollamaBase}/api/tags`, { signal: AbortSignal.timeout(5000) });
-            if (response.ok) {
-                const data = await response.json() as { models?: any[] };
-                modelCount = data.models?.length || 0;
-                ollamaOnline = true;
+        
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                const response = await undiciFetch(`${ollamaBase}/api/tags`, { signal: AbortSignal.timeout(15000) });
+                if (response.ok) {
+                    const data = await response.json() as { models?: any[] };
+                    modelCount = data.models?.length || 0;
+                    ollamaOnline = true;
+                    break;
+                }
+            } catch (e) {
+                if (attempt === 3) {
+                    ollamaOnline = false;
+                } else {
+                    await new Promise(res => setTimeout(res, 2000 * attempt));
+                }
             }
-        } catch (e) {
-            ollamaOnline = false;
         }
 
         const cloudKeys = [

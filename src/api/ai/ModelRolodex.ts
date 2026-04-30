@@ -369,7 +369,7 @@ export class ModelRolodex {
                         id: m.name,
                         name: m.name,
                         provider: 'ollama',
-                        taskType: m.name.includes('embed') ? 'embedding' : m.name.includes('llava') || m.name.includes('moondream') ? 'vision' : 'text',
+                        taskType: m.name.includes('embed') ? 'embedding' : m.name.includes('llava') || m.name.includes('moondream') ? 'vision' : m.name.includes('audio') || m.name.includes('whisper') ? 'audio' : m.name.includes('image') || m.name.includes('draw') ? 'image' : 'text',
                         parameterSize: m.details?.parameter_size,
                         quantization: m.details?.quantization_level,
                         lastSeen: Date.now(),

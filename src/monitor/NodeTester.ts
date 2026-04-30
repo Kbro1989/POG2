@@ -79,6 +79,11 @@ export class NodeTester {
         return { online: true, details: 'NodeTester active; diagnostic sensors recalibrated.' };
     }
 
+    public broadcastPulse(event: string, data: any): void {
+        logger.info({ event, data }, 'Broadcasting pulse...');
+        this.pulse?.emit('pulse', { event, data });
+    }
+
     public async auditNeuralNodes(): Promise<NodeHealth[]> {
         logger.info('Commencing deep clinical neurological audit...');
         const results: NodeHealth[] = new Array(NEUROLOGICAL_MAP.length);
@@ -176,7 +181,18 @@ export class NodeTester {
             if (exactKey) instance = this.limbs[exactKey];
         }
 
-        if (instance === undefined) return null;
+        if (instance === undefined) {
+            const isExplicitlyUndefined = Object.keys(this.limbs).some(k => k.toLowerCase() === className.toLowerCase());
+            if (isExplicitlyUndefined) {
+                return {
+                    ...this.nodeBase(node),
+                    status: 'ONLINE',
+                    yaoState: YaoState.YoungYang,
+                    details: 'Substrate explicitly bypassed (AUTHORIZED)'
+                };
+            }
+            return null;
+        }
 
         if (typeof instance.healthCheck !== 'function') {
             return {

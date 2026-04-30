@@ -129,6 +129,8 @@ const logger = createLogger('OrchestrateEngine');
  * Phase 15: Now enforces domain isolation, workforce authority, and scoped tool access.
  */
 export class OrchestrateEngine {
+    private initialized: boolean = false;
+    private initPromise: Promise<void> | null = null;
     private readonly client: ModelClient;
     private readonly registry: ToolRegistry;
     private readonly todoEngine: TodoEngine;
@@ -138,6 +140,17 @@ export class OrchestrateEngine {
     private readonly chroma: ChromanumberEngine;
     private readonly verifier: IntentVerifier;
     private readonly dispatcher: AIDispatcher;
+    private readonly questSynthesis: QuestSynthesisLimb;
+    private readonly logicBrain: LogicBrainLimb;
+    private readonly questForge: QuestForgeLimb;
+    private readonly vocabulary: SovereignVocabularyLimb;
+    private readonly validation: ValidationLimb;
+    private readonly uiSubstrate: UISubstrateLimb;
+    private readonly sandbox: SovereignSandboxLimb;
+    private readonly objective: ObjectiveLimb;
+    private readonly harness: SimulationHarness;
+    private nodeTester!: NodeTester;
+    private readonly EXTREME_THRESHOLD = 50;
     private readonly domainLocker: DomainLocker;
     private readonly workforce: WorkforceManifest;
     private readonly maintenance: DBMaintenance;
@@ -201,6 +214,10 @@ export class OrchestrateEngine {
     private readonly mechanicalSovereignty: MechanicalSovereigntyLimb;
     private readonly gameplay: GameplaySovereigntyLimb;
     private readonly pulseVolley: CNSGodheadPulseVolley;
+    constructor(
+        private readonly config: SovereignConfig,
+        private readonly router: TernaryRouter,
+        private readonly renderer: Renderer
     ) {
         logger.debug('Initializing Orchestrate Engines...');
         this.client = new ModelClient(config, router);
@@ -527,10 +544,8 @@ export class OrchestrateEngine {
                 // Connect renderer and vision (safe regardless of port status)
                 this.switchboard.connectToSubstrates(this.renderer, this.vision);
 
-                // ðŸ§¬ Phase 14: Register with NodeTester if method exists
-                if (this.nodeTester?.registerSwitchboard) {
-                    this.nodeTester.registerSwitchboard(this.switchboard);
-                }
+                // ðŸ§¬ Phase 14: Register with NodeTester
+                this.nodeTester.registerLimbs({ SwitchboardLimb: this.switchboard });
 
                 // ðŸ§¬ Phase 14: Awaken background health & reflection substrates (Non-blocking)
                 logger.debug('Awakening background health and reflection substrates...');
@@ -664,7 +679,7 @@ export class OrchestrateEngine {
             shell
         );
 
-        const nodeTester = new NodeTester(
+        this.nodeTester = new NodeTester(
             getGodHeadRoot() ?? process.cwd(),
             this.router,
             this.embedEngine,
@@ -673,8 +688,8 @@ export class OrchestrateEngine {
             this.trainingCollector
         );
 
-        if (!nodeTester.hasRegistry()) {
-            nodeTester.registerLimbs({
+        if (!this.nodeTester.hasRegistry()) {
+            this.nodeTester.registerLimbs({
                 RSMVController: this.rsmvController,
                 CNSGodheadPulseVolley: this.pulseVolley,
                 WorldGroundingLimb: this.grounding,
@@ -714,10 +729,10 @@ export class OrchestrateEngine {
         // Inject Pulse Volley dependencies
         this.pulseVolley.setRouter(this.router);
         this.pulseVolley.setRenderer(this.renderer);
-        this.pulseVolley.setNodeTester(nodeTester);
+        this.pulseVolley.setNodeTester(this.nodeTester);
         
-        // Idempotent registration of key singletons to prevent DEGRADED statuses in NodeTester
-        nodeTester.registerLimbs({
+        // Idempotent registration of key singletons to prevent DEGRADED statuses in this.nodeTester
+        this.nodeTester.registerLimbs({
             OrchestrateEngine: this,
             SimulationHarness: this.harness,
             ChromaLimb: this.chromaLimb,
@@ -766,118 +781,118 @@ export class OrchestrateEngine {
             EmbedEngine: this.embedEngine,
             MemoryConsolidationEngine: this.memoryConsolidation,
             MemeticEngine: this.memetic,
-            NodeTester: nodeTester,
+            nodeTester: this.nodeTester,
             QuotaTracker: this.quotaTracker,
             VolumeSovereigntyLimb: this.volumeSovereignty,
             InteractionGateway: this.interactionGateway
         });
 
 
-        nodeTester.registerLimbs({ NodeTester: nodeTester });
-        nodeTester.registerLimbs({ QuotaTracker: this.quotaTracker });
-        nodeTester.registerLimbs({ OrchestrateEngine: this });
-        nodeTester.registerLimbs({ SimulationHarness: this.harness });
-        nodeTester.registerLimbs({ ChromaLimb: this.chromaLimb });
-        nodeTester.registerLimbs({ SwitchboardLimb: this.switchboard });
-        nodeTester.registerLimbs({ rsmvController: this.rsmvController });
-        nodeTester.registerLimbs({ CacheForensicsLimb: this.cacheForensics });
-        nodeTester.registerLimbs({ GhostSplatEngine: GhostSplatEngine.getInstance() });
+        this.nodeTester.registerLimbs({ nodeTester: this.nodeTester });
+        this.nodeTester.registerLimbs({ QuotaTracker: this.quotaTracker });
+        this.nodeTester.registerLimbs({ OrchestrateEngine: this });
+        this.nodeTester.registerLimbs({ SimulationHarness: this.harness });
+        this.nodeTester.registerLimbs({ ChromaLimb: this.chromaLimb });
+        this.nodeTester.registerLimbs({ SwitchboardLimb: this.switchboard });
+        this.nodeTester.registerLimbs({ rsmvController: this.rsmvController });
+        this.nodeTester.registerLimbs({ CacheForensicsLimb: this.cacheForensics });
+        this.nodeTester.registerLimbs({ GhostSplatEngine: GhostSplatEngine.getInstance() });
         
         // Massive Registry Injection to prevent DEGRADED statuses
-        nodeTester.registerLimbs({ HexagramManager: undefined });
-        nodeTester.registerLimbs({ HexagramManager: undefined });
-        nodeTester.registerLimbs({ OrchestrateEngine: undefined });
-        nodeTester.registerLimbs({ TernaryRouter: this.router });
-        nodeTester.registerLimbs({ CognitiveEngine: this.cognitive });
-        nodeTester.registerLimbs({ PipelineController: this.pipeline });
-        nodeTester.registerLimbs({ CodeEngine: this.code });
-        nodeTester.registerLimbs({ GenerateEngine: this.codeGen });
-        nodeTester.registerLimbs({ ShellEngine: this.shell });
-        nodeTester.registerLimbs({ ShellLibrary: undefined });
-        nodeTester.registerLimbs({ WebSearchEngine: undefined });
-        nodeTester.registerLimbs({ CompletionEngine: undefined });
-        nodeTester.registerLimbs({ TodoEngine: this.todoEngine });
-        nodeTester.registerLimbs({ MCPEngine: this.mcpEngine });
-        nodeTester.registerLimbs({ ChromanumberEngine: this.chroma });
-        nodeTester.registerLimbs({ MultiModelExecutor: undefined });
-        nodeTester.registerLimbs({ RSCLimb: this.rscLimb });
-        nodeTester.registerLimbs({ RSMVExtractor: this.rsmvExtractor });
-        nodeTester.registerLimbs({ RSMVController: this.rsmvController });
-        nodeTester.registerLimbs({ CacheForensicsLimb: this.cacheForensics });
-        nodeTester.registerLimbs({ CacheLearningLimb: this.cacheLearning });
-        nodeTester.registerLimbs({ YouTubeLimb: this.ytLimb });
-        nodeTester.registerLimbs({ VideoAssemblerLimb: undefined });
-        nodeTester.registerLimbs({ GutenbergLimb: this.gutenberg });
-        nodeTester.registerLimbs({ StoryboardLimbV2: this.storyboard });
-        nodeTester.registerLimbs({ WebAppForgeLimb: this.forge });
-        nodeTester.registerLimbs({ ForgeEngine: undefined });
-        nodeTester.registerLimbs({ ReimaginationEngine: undefined });
-        nodeTester.registerLimbs({ VisionActuationHarness: undefined });
-        nodeTester.registerLimbs({ DynamicsLimb: undefined });
-        nodeTester.registerLimbs({ HiScoreLimb: undefined });
-        nodeTester.registerLimbs({ KinematicsLimb: this.kinematics });
-        nodeTester.registerLimbs({ PedagogyLimb: this.pedagogy });
-        nodeTester.registerLimbs({ TopologyLimb: undefined });
-        nodeTester.registerLimbs({ VectorPedagogyLimb: undefined });
-        nodeTester.registerLimbs({ AILimb: this.aiLimb });
-        nodeTester.registerLimbs({ ControlPlaneLimb: this.controlPlane });
-        nodeTester.registerLimbs({ SwitchboardLimb: this.switchboard });
-        nodeTester.registerLimbs({ EntityLimb: this.entityLimb });
-        nodeTester.registerLimbs({ MediaForgeLimb: this.mediaForge });
-        nodeTester.registerLimbs({ NeuralForgeLimb: this.neuralForge });
-        nodeTester.registerLimbs({ WebSensoryLimb: this.webSensory });
-        nodeTester.registerLimbs({ ChromaLimb: this.chromaLimb });
-        nodeTester.registerLimbs({ DiscoveryEngine: this.discovery });
-        nodeTester.registerLimbs({ ShadowEngine: this.shadow });
-        nodeTester.registerLimbs({ BioIntelligenceLimb: this.bioIntel });
-        nodeTester.registerLimbs({ GhostLimb: this.ghost });
-        nodeTester.registerLimbs({ QuantumLimb: this.quantum });
-        nodeTester.registerLimbs({ OmegaLimb: this.omega });
-        nodeTester.registerLimbs({ RelicLimb: this.relic });
-        nodeTester.registerLimbs({ GlobeStateLimb: this.globeState });
-        nodeTester.registerLimbs({ VSCodeEngine: this.vscode });
-        nodeTester.registerLimbs({ VisionEngine: this.vision });
-        nodeTester.registerLimbs({ SpatialVisionEngine: this.visionEngine });
-        nodeTester.registerLimbs({ SovereignEye: undefined });
-        nodeTester.registerLimbs({ PulseMonitor: this.pulseMonitor });
-        nodeTester.registerLimbs({ verify_advanced_audio: undefined });
-        nodeTester.registerLimbs({ verify_rsmv_capabilities: undefined });
-        nodeTester.registerLimbs({ WikiReconciliationLimb: undefined });
-        nodeTester.registerLimbs({ WikiEnricher: undefined });
-        nodeTester.registerLimbs({ PuppeteerEye: undefined });
-        nodeTester.registerLimbs({ StructuralAnalyzer: undefined });
-        nodeTester.registerLimbs({ TransientObserver: undefined });
-        nodeTester.registerLimbs({ ContextBuilder: undefined });
-        nodeTester.registerLimbs({ VectorDB: this.vectorDB });
-        nodeTester.registerLimbs({ StateManager: undefined });
-        nodeTester.registerLimbs({ SovereignProprioception: this.proprioception });
-        nodeTester.registerLimbs({ TrainingCollector: undefined });
-        nodeTester.registerLimbs({ EmbedEngine: this.embedEngine });
-        nodeTester.registerLimbs({ MemoryConsolidationEngine: this.memoryConsolidation });
-        nodeTester.registerLimbs({ MemeticEngine: this.memetic });
-        nodeTester.registerLimbs({ 'cloudflare-templates': undefined });
-        nodeTester.registerLimbs({ rsmv: this.rsmvExtractor });
-        nodeTester.registerLimbs({ ValidationSystem: undefined });
-        nodeTester.registerLimbs({ IntentVerifier: this.verifier });
-        nodeTester.registerLimbs({ SelfHealingEngine: undefined });
-        nodeTester.registerLimbs({ ClinicalAuditTool: this.clinicalAudit });
-        nodeTester.registerLimbs({ EndpointHealer: undefined });
-        nodeTester.registerLimbs({ ArchitecturalValidator: undefined });
-        nodeTester.registerLimbs({ ASTWatcher: undefined });
-        nodeTester.registerLimbs({ CacheLearningLimb: this.cacheLearning });
-        nodeTester.registerLimbs({ QuestSynthesisLimb: this.questSynthesis });
-        nodeTester.registerLimbs({ QuestForgeLimb: this.questForge });
-        nodeTester.registerLimbs({ LogicBrainLimb: this.logicBrain });
-        nodeTester.registerLimbs({ SovereignVocabularyLimb: this.vocabulary });
-        nodeTester.registerLimbs({ ValidationLimb: this.validation });
-        nodeTester.registerLimbs({ UISubstrateLimb: this.uiSubstrate });
-        nodeTester.registerLimbs({ SovereignSandboxLimb: this.sandbox });
-        nodeTester.registerLimbs({ ObjectiveLimb: this.objective });
+        this.nodeTester.registerLimbs({ HexagramManager: undefined });
+        this.nodeTester.registerLimbs({ HexagramManager: undefined });
+        this.nodeTester.registerLimbs({ OrchestrateEngine: undefined });
+        this.nodeTester.registerLimbs({ TernaryRouter: this.router });
+        this.nodeTester.registerLimbs({ CognitiveEngine: this.cognitive });
+        this.nodeTester.registerLimbs({ PipelineController: this.pipeline });
+        this.nodeTester.registerLimbs({ CodeEngine: this.code });
+        this.nodeTester.registerLimbs({ GenerateEngine: this.codeGen });
+        this.nodeTester.registerLimbs({ ShellEngine: this.shell });
+        this.nodeTester.registerLimbs({ ShellLibrary: undefined });
+        this.nodeTester.registerLimbs({ WebSearchEngine: undefined });
+        this.nodeTester.registerLimbs({ CompletionEngine: undefined });
+        this.nodeTester.registerLimbs({ TodoEngine: this.todoEngine });
+        this.nodeTester.registerLimbs({ MCPEngine: this.mcpEngine });
+        this.nodeTester.registerLimbs({ ChromanumberEngine: this.chroma });
+        this.nodeTester.registerLimbs({ MultiModelExecutor: undefined });
+        this.nodeTester.registerLimbs({ RSCLimb: this.rscLimb });
+        this.nodeTester.registerLimbs({ RSMVExtractor: this.rsmvExtractor });
+        this.nodeTester.registerLimbs({ RSMVController: this.rsmvController });
+        this.nodeTester.registerLimbs({ CacheForensicsLimb: this.cacheForensics });
+        this.nodeTester.registerLimbs({ CacheLearningLimb: this.cacheLearning });
+        this.nodeTester.registerLimbs({ YouTubeLimb: this.ytLimb });
+        this.nodeTester.registerLimbs({ VideoAssemblerLimb: undefined });
+        this.nodeTester.registerLimbs({ GutenbergLimb: this.gutenberg });
+        this.nodeTester.registerLimbs({ StoryboardLimbV2: this.storyboard });
+        this.nodeTester.registerLimbs({ WebAppForgeLimb: this.forge });
+        this.nodeTester.registerLimbs({ ForgeEngine: undefined });
+        this.nodeTester.registerLimbs({ ReimaginationEngine: undefined });
+        this.nodeTester.registerLimbs({ VisionActuationHarness: undefined });
+        this.nodeTester.registerLimbs({ DynamicsLimb: undefined });
+        this.nodeTester.registerLimbs({ HiScoreLimb: undefined });
+        this.nodeTester.registerLimbs({ KinematicsLimb: this.kinematics });
+        this.nodeTester.registerLimbs({ PedagogyLimb: this.pedagogy });
+        this.nodeTester.registerLimbs({ TopologyLimb: undefined });
+        this.nodeTester.registerLimbs({ VectorPedagogyLimb: undefined });
+        this.nodeTester.registerLimbs({ AILimb: this.aiLimb });
+        this.nodeTester.registerLimbs({ ControlPlaneLimb: this.controlPlane });
+        this.nodeTester.registerLimbs({ SwitchboardLimb: this.switchboard });
+        this.nodeTester.registerLimbs({ EntityLimb: this.entityLimb });
+        this.nodeTester.registerLimbs({ MediaForgeLimb: this.mediaForge });
+        this.nodeTester.registerLimbs({ NeuralForgeLimb: this.neuralForge });
+        this.nodeTester.registerLimbs({ WebSensoryLimb: this.webSensory });
+        this.nodeTester.registerLimbs({ ChromaLimb: this.chromaLimb });
+        this.nodeTester.registerLimbs({ DiscoveryEngine: this.discovery });
+        this.nodeTester.registerLimbs({ ShadowEngine: this.shadow });
+        this.nodeTester.registerLimbs({ BioIntelligenceLimb: this.bioIntel });
+        this.nodeTester.registerLimbs({ GhostLimb: this.ghost });
+        this.nodeTester.registerLimbs({ QuantumLimb: this.quantum });
+        this.nodeTester.registerLimbs({ OmegaLimb: this.omega });
+        this.nodeTester.registerLimbs({ RelicLimb: this.relic });
+        this.nodeTester.registerLimbs({ GlobeStateLimb: this.globeState });
+        this.nodeTester.registerLimbs({ VSCodeEngine: this.vscode });
+        this.nodeTester.registerLimbs({ VisionEngine: this.vision });
+        this.nodeTester.registerLimbs({ SpatialVisionEngine: this.visionEngine });
+        this.nodeTester.registerLimbs({ SovereignEye: undefined });
+        this.nodeTester.registerLimbs({ PulseMonitor: this.pulseMonitor });
+        this.nodeTester.registerLimbs({ verify_advanced_audio: undefined });
+        this.nodeTester.registerLimbs({ verify_rsmv_capabilities: undefined });
+        this.nodeTester.registerLimbs({ WikiReconciliationLimb: undefined });
+        this.nodeTester.registerLimbs({ WikiEnricher: undefined });
+        this.nodeTester.registerLimbs({ PuppeteerEye: undefined });
+        this.nodeTester.registerLimbs({ StructuralAnalyzer: undefined });
+        this.nodeTester.registerLimbs({ TransientObserver: undefined });
+        this.nodeTester.registerLimbs({ ContextBuilder: undefined });
+        this.nodeTester.registerLimbs({ VectorDB: this.vectorDB });
+        this.nodeTester.registerLimbs({ StateManager: undefined });
+        this.nodeTester.registerLimbs({ SovereignProprioception: this.proprioception });
+        this.nodeTester.registerLimbs({ TrainingCollector: undefined });
+        this.nodeTester.registerLimbs({ EmbedEngine: this.embedEngine });
+        this.nodeTester.registerLimbs({ MemoryConsolidationEngine: this.memoryConsolidation });
+        this.nodeTester.registerLimbs({ MemeticEngine: this.memetic });
+        this.nodeTester.registerLimbs({ 'cloudflare-templates': undefined });
+        this.nodeTester.registerLimbs({ rsmv: this.rsmvExtractor });
+        this.nodeTester.registerLimbs({ ValidationSystem: undefined });
+        this.nodeTester.registerLimbs({ IntentVerifier: this.verifier });
+        this.nodeTester.registerLimbs({ SelfHealingEngine: undefined });
+        this.nodeTester.registerLimbs({ ClinicalAuditTool: this.clinicalAudit });
+        this.nodeTester.registerLimbs({ EndpointHealer: undefined });
+        this.nodeTester.registerLimbs({ ArchitecturalValidator: undefined });
+        this.nodeTester.registerLimbs({ ASTWatcher: undefined });
+        this.nodeTester.registerLimbs({ CacheLearningLimb: this.cacheLearning });
+        this.nodeTester.registerLimbs({ QuestSynthesisLimb: this.questSynthesis });
+        this.nodeTester.registerLimbs({ QuestForgeLimb: this.questForge });
+        this.nodeTester.registerLimbs({ LogicBrainLimb: this.logicBrain });
+        this.nodeTester.registerLimbs({ SovereignVocabularyLimb: this.vocabulary });
+        this.nodeTester.registerLimbs({ ValidationLimb: this.validation });
+        this.nodeTester.registerLimbs({ UISubstrateLimb: this.uiSubstrate });
+        this.nodeTester.registerLimbs({ SovereignSandboxLimb: this.sandbox });
+        this.nodeTester.registerLimbs({ ObjectiveLimb: this.objective });
 
 
-        // Phase 21: Wire PulseMonitor to use NodeTester for lightweight limb health after first pass
-        this.pulseMonitor.setNodeTester(nodeTester);
-        this.nodeTester = nodeTester;
+        // Phase 21: Wire PulseMonitor to use this.nodeTester for lightweight limb health after first pass
+        this.pulseMonitor.setNodeTester(this.nodeTester);
+        this.nodeTester = this.nodeTester;
 
         // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â OBSERVE DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         this.registry.register({
@@ -1125,8 +1140,8 @@ export class OrchestrateEngine {
             parameters: {},
             execute: async () => {
                 // Phase 29: Systemic Health/Provider Audit & Autonomous Healing
-                const nodeResults = await nodeTester.auditNeuralNodes();
-                const providerResults = await nodeTester.auditProviders();
+                const nodeResults = await this.nodeTester.auditNeuralNodes();
+                const providerResults = await this.nodeTester.auditProviders();
 
                 let output = '=== SOVEREIGN HEALTH DIAGNOSTIC ===\n\n';
 
@@ -3774,7 +3789,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
             this.trainingCollector,
             { GlobeStateLimb: this.globeState }
         );
-        const beforeHealth = await nodeTester.auditNeuralNodes();
+        const beforeHealth = await this.nodeTester.auditNeuralNodes();
         const beforeOffline = beforeHealth.filter(h => h.status !== 'ONLINE').length;
 
         // Ã¢â€â‚¬Ã¢â€â‚¬ 4. Git-Atomic Branch Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
@@ -3824,7 +3839,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         await shell.execute({ command: `git branch -d ${branch}`, silent: true });
 
         // Ã¢â€â‚¬Ã¢â€â‚¬ 9. Post-flight Health & Regression Check Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-        const afterHealth = await nodeTester.auditNeuralNodes();
+        const afterHealth = await this.nodeTester.auditNeuralNodes();
         const afterOffline = afterHealth.filter(h => h.status !== 'ONLINE').length;
 
         if (afterOffline > beforeOffline) {

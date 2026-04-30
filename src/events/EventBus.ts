@@ -1,4 +1,4 @@
-﻿import { v7 as uuidv7 } from 'uuid';
+import { v7 as uuidv7 } from 'uuid';
 
 /**
  * The OpenTelemetry / Distributed AI Envelope Event Standard.
@@ -37,10 +37,24 @@ export class EventBus {
         return EventBus.instance;
     }
 
+    private queueHandler?: (op: () => void) => void;
+
+    public setQueueHandler(handler: (op: () => void) => void) {
+        this.queueHandler = handler;
+    }
+
+    private defer(op: () => void) {
+        if (this.queueHandler) {
+            this.queueHandler(op);
+        } else {
+            setImmediate(op);
+        }
+    }
+
     /**
-     * Pushes an event to the bus immediately. 
-     * Uses Node's `setImmediate` to guarantee the current V8 execution thread 
-     * never blocks on downstream event processing (like fs.writeFile).
+     * Pushes an event to the bus. 
+     * Uses the injected deterministic queue handler (CNSGodheadPulseVolley) 
+     * or falls back to Node's `setImmediate`.
      */
     public publish(event: Omit<SovereignEvent, 'id' | 'timestamp'> & { id?: string, timestamp?: number }): string {
         const fullEvent: SovereignEvent = {
@@ -51,12 +65,12 @@ export class EventBus {
 
         const subs = this.handlers.get(fullEvent.type) || [];
         for (const handler of subs) {
-            setImmediate(() => handler(fullEvent));
+            this.defer(() => handler(fullEvent));
         }
 
         // Dispatch to universal listeners (like GlobeStateLimb)
         for (const handler of this.globalHandlers) {
-            setImmediate(() => handler(fullEvent));
+            this.defer(() => handler(fullEvent));
         }
 
         return fullEvent.id;

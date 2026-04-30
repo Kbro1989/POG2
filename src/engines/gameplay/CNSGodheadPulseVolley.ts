@@ -1,4 +1,5 @@
 import { getLastIOLatencyMs } from '../../utils/RSMVBridge.js';
+import { EventBus } from '../../events/EventBus.js';
 import { createLogger } from '../../utils/logger.js';
 import { performance } from 'perf_hooks';
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
@@ -53,7 +54,16 @@ export class CNSGodheadPulseVolley {
     private readonly ledger = CNSCausalityLedger.getInstance();
     private pulseStartTime: number = 0;
     private readonly PULSE_DEADLINE_MS = 300;
-    private deferredOps: Array<() => Promise<void>> = [];
+    private currentTickQueue: Array<() => Promise<void>> = [];
+    private nextTickQueue: Array<() => Promise<void>> = [];
+
+    public enqueueNow(op: () => Promise<void>): void {
+        this.currentTickQueue.push(op);
+    }
+
+    public enqueueNextTick(op: () => Promise<void>): void {
+        this.nextTickQueue.push(op);
+    }
 
     /**
      * resolve - Lazy dependency resolution.
@@ -137,12 +147,17 @@ export class CNSGodheadPulseVolley {
 
         this.isStarted = true;
         logger.info('CNS Godhead Pulse (Hardened Heartbeat) Started. Player Tick: 300ms | Game Tick: 600ms');
-        
-        // POG2 Thinking Sub-loop (Async User-behind-Player)
-        this.startPog2ThinkingLoop();
+
+        // Phase 112: Inject deterministic execution boundary into the global EventBus
+        EventBus.getInstance().setQueueHandler((op) => {
+            this.enqueueNextTick(async () => op());
+        });
 
         // Phase 112: Immediate bootstrap tick
         this.tick();
+        
+        // POG2 Thinking Sub-loop (Async User-behind-Player)
+        this.startPog2ThinkingLoop();
     }
 
     private async startPog2ThinkingLoop(): Promise<void> {
@@ -168,6 +183,10 @@ export class CNSGodheadPulseVolley {
     private async tick(): Promise<void> {
         const start = performance.now();
         this.tickCount++;
+
+        // Swap deterministic queues at start of tick
+        this.currentTickQueue = this.nextTickQueue;
+        this.nextTickQueue = [];
 
         try {
             // Resolve lazy dependencies before first pulse
@@ -270,6 +289,16 @@ export class CNSGodheadPulseVolley {
             this.ledger.record(event);
         }
 
+        // Execute deterministic queue ops for this tick
+        for (const op of this.currentTickQueue) {
+            try {
+                await op();
+            } catch (e) {
+                logger.error({ err: e }, '[CNS] Deterministic op failed');
+            }
+        }
+        this.currentTickQueue = [];
+
         // Apply world changes
         await this.grounding!.commitTick(tx);
 
@@ -307,13 +336,7 @@ export class CNSGodheadPulseVolley {
 
         const elapsed = performance.now() - this.pulseStartTime;
         if (elapsed > this.PULSE_DEADLINE_MS * 0.8) {
-            logger.warn({ duration: elapsed.toFixed(1) }, `[CNS] Pulse at ${elapsed.toFixed(1)}ms, deferring ${this.deferredOps.length} ops`);
-        }
-
-        // Execute deferred work post-pulse
-        while (this.deferredOps.length > 0) {
-            const op = this.deferredOps.shift();
-            if (op) await op().catch(e => logger.error({ err: e }, `[CNS] Deferred op failed`));
+            logger.warn({ duration: elapsed.toFixed(1) }, `[CNS] Pulse at ${elapsed.toFixed(1)}ms`);
         }
 
         return this.gameplay?.globalState;
@@ -387,13 +410,13 @@ export class CNSGodheadPulseVolley {
         switch (event.action) {
             case 'teleport':
                 if (event.coord) {
-                    // DEFERRED: Spatial recalculation off main pulse
-                    setImmediate(() => {
-                        this.grounding!.applyWorldTransform(tx, { x: event.coord!.x, y: event.coord!.y, z: event.coord!.z }).catch(err => 
+                    // DEFERRED: Spatial recalculation inside tick boundaries
+                    this.enqueueNow(async () => {
+                        await this.grounding!.applyWorldTransform(tx, { x: event.coord!.x, y: event.coord!.y, z: event.coord!.z }).catch(err => 
                             logger.error({ err: err.message }, `[CNS] Deferred transform failed`)
                         );
                     });
-                    logger.debug({ coords: event.coord }, '[VOLLEY] SPATIAL_SHIFT deferred for next tick.');
+                    logger.debug({ coords: event.coord }, '[VOLLEY] SPATIAL_SHIFT deferred for tick execution.');
                 }
                 break;
 
@@ -420,11 +443,13 @@ export class CNSGodheadPulseVolley {
                     if (event.coord) {
                         defWithId.coord = event.coord;
                     }
-                    // DEFERRED: Entity spawn off main pulse
-                    this.grounding!.spawnEntity(tx, defWithId).catch(err =>
-                        logger.error({ err: err.message }, `[CNS] Deferred spawn failed`)
-                    );
-                    logger.debug({ id: sid }, '[VOLLEY] ENTITY_MANIFEST staged for async spawn.');
+                    // DEFERRED: Entity spawn inside tick boundaries
+                    this.enqueueNow(async () => {
+                        await this.grounding!.spawnEntity(tx, defWithId).catch(err =>
+                            logger.error({ err: err.message }, `[CNS] Deferred spawn failed`)
+                        );
+                    });
+                    logger.debug({ id: sid }, '[VOLLEY] ENTITY_MANIFEST staged for deterministic spawn.');
                 }
                 break;
 

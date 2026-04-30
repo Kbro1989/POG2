@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"]
   },
   "include": [
     "src/**/*",
@@ -22,7 +23,6 @@
     "resources",
     "logs",
     "src/scripts_backup",
-    "src/tests_backup",
-    "src/rsmv"
+    "src/tests_backup"
   ]
 }

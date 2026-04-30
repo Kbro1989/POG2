@@ -112,7 +112,7 @@ export function buildParser(parent: ChunkParentCallback | null, chunkdef: unknow
 
 function opcodesParser(chunkdef: Record<string, any>, parent: ChunkParentCallback, typedef: TypeDef) {
 	let r: ChunkParser = {
-		read(state) {
+		read(state: DecodeState) {
 			let r: Record<string, any> = {};
 			let hidden: any = { $opcode: 0 };
 			state.stack.push(r);
@@ -140,7 +140,7 @@ function opcodesParser(chunkdef: Record<string, any>, parent: ChunkParentCallbac
 			state.hiddenstack.pop();
 			return r;
 		},
-		write(state, value) {
+		write(state: EncodeState, value: any) {
 			if (typeof value != "object" || !value) { throw new Error("oject expected") }
 			state.stack.push(value);
 			state.hiddenstack.push({});
@@ -157,7 +157,7 @@ function opcodesParser(chunkdef: Record<string, any>, parent: ChunkParentCallbac
 			state.stack.pop();
 			state.hiddenstack.pop();
 		},
-		getTypescriptType(indent) {
+		getTypescriptType(indent: string) {
 			let r = "{\n";
 			let newindent = indent + "\t";
 			for (let val of map.values()) {
@@ -224,7 +224,7 @@ function opcodesParser(chunkdef: Record<string, any>, parent: ChunkParentCallbac
 
 function tuppleParser(args: unknown[], parent: ChunkParentCallback, typedef: TypeDef) {
 	let r: ChunkParser = {
-		read(state) {
+		read(state: DecodeState) {
 			let r: any[] = [];
 			for (let prop of props) {
 				let v = prop.read(state);
@@ -232,13 +232,13 @@ function tuppleParser(args: unknown[], parent: ChunkParentCallback, typedef: Typ
 			}
 			return r;
 		},
-		write(state, value) {
+		write(state: EncodeState, value: any) {
 			if (!Array.isArray(value)) { throw new Error("array expected"); }
 			for (let [i, prop] of props.entries()) {
 				prop.write(state, value[i]);
 			}
 		},
-		getTypescriptType(indent) {
+		getTypescriptType(indent: string) {
 			let r = "[\n";
 			let newindent = indent + "\t";
 			for (let prop of props) { r += newindent + prop.getTypescriptType(newindent) + ",\n"; }
@@ -294,7 +294,7 @@ function refgetter(refparent: ChunkParentCallback | null, propname: string, reso
 function structParser(args: unknown[], parent: ChunkParentCallback, typedef: TypeDef) {
 	let refs: Record<string, ResolvedReference[] | undefined> = {};
 	let r: ChunkParser = {
-		read(state) {
+		read(state: DecodeState) {
 			let r = {};
 			let hidden = {};
 			state.stack.push(r);
@@ -315,7 +315,7 @@ function structParser(args: unknown[], parent: ChunkParentCallback, typedef: Typ
 			state.hiddenstack.pop();
 			return r;
 		},
-		write(state, value) {
+		write(state: EncodeState, value: any) {
 			if (typeof value != "object" || !value) { throw new Error("object expected"); }
 			let hiddenvalue = {};
 			state.stack.push(value);
@@ -342,7 +342,7 @@ function structParser(args: unknown[], parent: ChunkParentCallback, typedef: Typ
 			state.stack.pop();
 			state.hiddenstack.pop();
 		},
-		getTypescriptType(indent) {
+		getTypescriptType(indent: string) {
 			let r = "{\n";
 			let newindent = indent + "\t";
 			for (let key of keys) {
@@ -395,17 +395,17 @@ function structParser(args: unknown[], parent: ChunkParentCallback, typedef: Typ
 
 function optParser(args: unknown[], parent: ChunkParentCallback, typedef: TypeDef) {
 	let r: ChunkParser = {
-		read(state) {
+		read(state: DecodeState) {
 			let matchindex = condchecker.match(state);
 			if (matchindex == -1) { return null; }
 			return type.read(state);
 		},
-		write(state, value) {
+		write(state: EncodeState, value: any) {
 			if (value != null) {
 				return type.write(state, value);
 			}
 		},
-		getTypescriptType(indent) {
+		getTypescriptType(indent: string) {
 			return type.getTypescriptType(indent) + " | null";
 		},
 		getJsonSchema() {
@@ -475,7 +475,7 @@ function optParser(args: unknown[], parent: ChunkParentCallback, typedef: TypeDe
 
 function chunkedArrayParser(args: unknown[], parent: ChunkParentCallback, typedef: TypeDef) {
 	let r: ChunkParser = {
-		read(state) {
+		read(state: DecodeState) {
 			let len = lengthtype.read(state);
 			// Jagex rev 221+ version sentinel: 0xFFFF means versioned header
 			// Format: [0xFFFF][version_ubyte][actual_ushort_length]
@@ -523,7 +523,7 @@ function chunkedArrayParser(args: unknown[], parent: ChunkParentCallback, typede
 			}
 			return r;
 		},
-		write(state, v) {
+		write(state: EncodeState, v: any) {
 			if (!Array.isArray(v)) { throw new Error("array expected"); }
 			lengthtype.write(state, v.length);
 
@@ -559,7 +559,7 @@ function chunkedArrayParser(args: unknown[], parent: ChunkParentCallback, typede
 				}
 			}
 		},
-		getTypescriptType(indent) {
+		getTypescriptType(indent: string) {
 			let r = "{\n";
 			let newindent = indent + "\t";
 			for (let [key, prop] of Object.entries(fullobj)) {
@@ -652,7 +652,7 @@ function bufferParserValue(value: unknown, type: typeof BufferTypes[keyof typeof
 
 function bufferParser(args: unknown[], parent: ChunkParentCallback, typedef: TypeDef) {
 	let r: ChunkParser = {
-		read(state) {
+		read(state: DecodeState) {
 			let len = lengthtype.read(state);
 			let bytelen = len * vectorLength * type.constr.BYTES_PER_ELEMENT;
 			let backing = new ArrayBuffer(bytelen);
@@ -675,7 +675,7 @@ function bufferParser(args: unknown[], parent: ChunkParentCallback, typedef: Typ
 			state.buffer.set(bytes, state.scan);
 			state.scan += bytes.byteLength;
 		},
-		getTypescriptType(indent) {
+		getTypescriptType(indent: string) {
 			return type.constr.name;
 		},
 		getJsonSchema() {
@@ -683,7 +683,7 @@ function bufferParser(args: unknown[], parent: ChunkParentCallback, typedef: Typ
 		}
 	};
 
-	const resolveLengthReference: ChunkParentCallback = function (name, child) {
+	const resolveLengthReference: ChunkParentCallback = function (name: string, child: any) {
 		return buildReference(name, parent, {
 			stackdepth: child.stackdepth,
 			resolve(rawvalue, old) {
@@ -708,7 +708,7 @@ function bufferParser(args: unknown[], parent: ChunkParentCallback, typedef: Typ
 
 function arrayParser(args: unknown[], parent: ChunkParentCallback, typedef: TypeDef) {
 	let r: ChunkParser = {
-		read(state) {
+		read(state: DecodeState) {
 			let len = lengthtype.read(state);
 			let r: any[] = [];
 			for (let i = 0; i < len; i++) {
@@ -716,14 +716,14 @@ function arrayParser(args: unknown[], parent: ChunkParentCallback, typedef: Type
 			}
 			return r;
 		},
-		write(state, value) {
+		write(state: EncodeState, value: any) {
 			if (!Array.isArray(value)) { throw new Error("array expected"); }
 			lengthtype.write(state, value.length);
 			for (let i = 0; i < value.length; i++) {
 				subtype.write(state, value[i]);
 			}
 		},
-		getTypescriptType(indent) {
+		getTypescriptType(indent: string) {
 			return `${subtype.getTypescriptType(indent)}[]`;
 		},
 		getJsonSchema() {
@@ -733,7 +733,7 @@ function arrayParser(args: unknown[], parent: ChunkParentCallback, typedef: Type
 			}
 		}
 	};
-	const resolveLengthReference: ChunkParentCallback = function (name, child) {
+	const resolveLengthReference: ChunkParentCallback = function (name: string, child: any) {
 		return buildReference(name, parent, {
 			stackdepth: child.stackdepth,
 			resolve(v, old) {
@@ -763,7 +763,7 @@ function arrayParser(args: unknown[], parent: ChunkParentCallback, typedef: Type
 
 function arrayNullTerminatedParser(args: unknown[], parent: ChunkParentCallback, typedef: TypeDef) {
 	let r: ChunkParser = {
-		read(state) {
+		read(state: DecodeState) {
 			let r: any[] = [];
 			let ctx = { $opcode: 0 };
 			state.hiddenstack.push(ctx);
@@ -783,7 +783,7 @@ function arrayNullTerminatedParser(args: unknown[], parent: ChunkParentCallback,
 			state.stack.pop();
 			return r;
 		},
-		write(state, value) {
+		write(state: EncodeState, value: any) {
 			if (!Array.isArray(value)) { throw new Error("array expected"); }
 			//TODO probably very wrong
 			state.stack.push(value);
@@ -796,7 +796,7 @@ function arrayNullTerminatedParser(args: unknown[], parent: ChunkParentCallback,
 			state.stack.pop();
 			state.hiddenstack.pop();
 		},
-		getTypescriptType(indent) {
+		getTypescriptType(indent: string) {
 			return `${subtype.getTypescriptType(indent)}[]`;
 		},
 		getJsonSchema() {
@@ -806,7 +806,7 @@ function arrayNullTerminatedParser(args: unknown[], parent: ChunkParentCallback,
 			};
 		}
 	};
-	const resolveReference: ChunkParentCallback = function (name, child) {
+	const resolveReference: ChunkParentCallback = function (name: string, child: any) {
 		if (name == "$opcode") {
 			return {
 				stackdepth: child.stackdepth + 1,
@@ -837,13 +837,13 @@ function literalValueParser(constvalue: unknown) {
 		throw new Error("only bool, number, string or null literals allowed");
 	}
 	let r: ChunkParser = {
-		read(state) {
+		read(state: DecodeState) {
 			return constvalue;
 		},
 		readConst() {
 			return constvalue;
 		},
-		write(state, value) {
+		write(state: EncodeState, value: any) {
 			if (value != constvalue) throw new Error(`expected constant ${constvalue} was not present during write`);
 			//this is a nop, the existence of this field implies its value
 		},
@@ -867,7 +867,7 @@ function referenceValueParser(args: unknown[], parent: ChunkParentCallback, type
 	let r: ChunkParser = {
 		read,
 		readConst: read,
-		write(state, value) {
+		write(state: EncodeState, value: any) {
 			//noop, the referenced value does the writing and will get its value from this prop through refgetter
 		},
 		getTypescriptType() {
@@ -911,10 +911,10 @@ function referenceValueParser(args: unknown[], parent: ChunkParentCallback, type
 }
 function bytesRemainingParser(): ChunkParser {
 	return {
-		read(state) {
+		read(state: DecodeState) {
 			return state.endoffset - state.scan;
 		},
-		write(state, value) {
+		write(state: EncodeState, value: any) {
 			//nop, value exists only in context of output
 		},
 		getTypescriptType() {
@@ -928,7 +928,7 @@ function bytesRemainingParser(): ChunkParser {
 
 function intAccumolatorParser(args: unknown[], parent: ChunkParentCallback, typedef: TypeDef) {
 	let r: ChunkParser = {
-		read(state) {
+		read(state: DecodeState) {
 			//TODO fix the context situation
 			let increment = value.read(state);
 			let newvalue: number;
@@ -943,7 +943,7 @@ function intAccumolatorParser(args: unknown[], parent: ChunkParentCallback, type
 			ref.write(state, newvalue);
 			return (mode == "postadd" ? refvalue : newvalue);
 		},
-		write(state, v) {
+		write(state: EncodeState, v: any) {
 			if (typeof v != "number") { throw new Error("number expected"); }
 
 			let refvalue = ref.read(state) ?? 0;
@@ -985,7 +985,7 @@ function intAccumolatorParser(args: unknown[], parent: ChunkParentCallback, type
 function stringParser(prebytes: number[]): ChunkParser {
 	const encoding = "latin1";
 	return {
-		read(state) {
+		read(state: DecodeState) {
 			let terminator = (getClientVersion(state.args) <= lastLegacyBuildnr ? 0xA : 0);
 			for (let i = 0; i < prebytes.length; i++, state.scan++) {
 				if (state.buffer.readUInt8(state.scan) != prebytes[i]) {
@@ -1006,7 +1006,7 @@ function stringParser(prebytes: number[]): ChunkParser {
 			state.scan = end + 1;
 			return outputstr;
 		},
-		write(state, value) {
+		write(state: EncodeState, value: any) {
 			if (typeof value != "string") throw new Error(`string expected`);
 			let terminator = (getClientVersion(state.args) <= lastLegacyBuildnr ? 0xA : 0);
 			let writebytes = [
@@ -1130,7 +1130,7 @@ function conditionParser(parent: ChunkParentCallback, optionstrings: string[], w
 hardcodes = {
 	playeritem: function () {
 		return {
-			read(state) {
+			read(state: DecodeState) {
 				let byte0 = state.buffer.readUInt8(state.scan++);
 				if (byte0 == 0) { return 0; }
 				let byte1 = state.buffer.readUInt8(state.scan++);
@@ -1157,7 +1157,7 @@ hardcodes = {
 
 		//yes this is hacky af...
 		return {
-			read(state) {
+			read(state: DecodeState) {
 				let activeitem = (typeof state.args.activeitem == "number" ? state.args.activeitem : -1);
 				if (type == "ref") {
 					activeitem++;
@@ -1180,20 +1180,20 @@ hardcodes = {
 	},
 	buildnr: function (args: any[], typedef: TypeDef) {
 		return {
-			readConst(state) {
+			readConst(state: DecodeState) {
 				return getClientVersion(state.args);
 			},
-			read(state) {
+			read(state: DecodeState) {
 				return getClientVersion(state.args);
 			},
-			write(state, v) {/*noop*/ },
-			getTypescriptType(indent) { return "number"; },
+			write(state: EncodeState, v: any) {/*noop*/ },
+			getTypescriptType(indent: string) { return "number"; },
 			getJsonSchema() { return { type: "number" } }
 		}
 	},
 	match: function (args, parent, typedef) {
 		let r: ChunkParser = {
-			read(state) {
+			read(state: DecodeState) {
 				let opcodeprop = { $opcode: 0 };
 				state.stack.push({});
 				state.hiddenstack.push(opcodeprop);
@@ -1209,7 +1209,7 @@ hardcodes = {
 				state.hiddenstack.pop();
 				return res;
 			},
-			write(state, v) {
+			write(state: EncodeState, v: any) {
 				let opcodeprop = { $opcode: 0 };
 				state.stack.push({});
 				state.hiddenstack.push(opcodeprop);
@@ -1226,7 +1226,7 @@ hardcodes = {
 				state.stack.pop();
 				state.hiddenstack.pop();
 			},
-			getTypescriptType(indent) {
+			getTypescriptType(indent: string) {
 				return "(" + optionvalues.map(opt => opt.getTypescriptType(indent + "\t")).join("|") + ")";
 			},
 			getJsonSchema() {
@@ -1234,7 +1234,7 @@ hardcodes = {
 			}
 		}
 
-		const resolveReference: ChunkParentCallback = function (name, child) {
+		const resolveReference: ChunkParentCallback = function (name: string, child: any) {
 			let res: ResolvedReference = {
 				stackdepth: child.stackdepth + 1,
 				resolve(v, old) {
@@ -1260,7 +1260,7 @@ hardcodes = {
 		let lentype = buildParser(parent, args[0] as any, typedef);
 		let subtype = buildParser(parent, args[1] as any, typedef);
 		return {
-			read(state) {
+			read(state: DecodeState) {
 				let len = lentype.read(state);
 				let oldscan = state.scan;
 				let footstart = state.endoffset - len;
@@ -1279,7 +1279,7 @@ hardcodes = {
 
 				return res;
 			},
-			write(state, v) {
+			write(state: EncodeState, v: any) {
 				let oldscan = state.scan;
 				subtype.write(state, v);
 				let len = state.scan - oldscan;
@@ -1287,7 +1287,7 @@ hardcodes = {
 				state.scan = oldscan;
 				state.endoffset -= len;
 			},
-			getTypescriptType(indent) {
+			getTypescriptType(indent: string) {
 				return subtype.getTypescriptType(indent);
 			},
 			getJsonSchema() {
@@ -1298,7 +1298,7 @@ hardcodes = {
 	"tailed varushort": function (args, parent, typedef) {
 		const overflowchunk = 0x7fff;
 		return {
-			read(state) {
+			read(state: DecodeState) {
 				let sum = 0;
 				while (true) {
 					let byte0 = state.buffer.readUint8(state.scan++);
@@ -1315,7 +1315,7 @@ hardcodes = {
 					}
 				}
 			},
-			write(state, v) {
+			write(state: EncodeState, v: any) {
 				if (typeof v != "number") { throw new Error("number expected"); }
 				while (v >= 0) {
 					let chunk = Math.min(overflowchunk, v);
@@ -1328,7 +1328,7 @@ hardcodes = {
 					v -= chunk;
 				}
 			},
-			getTypescriptType(indent) {
+			getTypescriptType(indent: string) {
 				return "number";
 			},
 			getJsonSchema() {
@@ -1371,7 +1371,7 @@ hardcodes = {
 			write(state) {
 				throw new Error("not implemented");
 			},
-			getTypescriptType(indent) {
+			getTypescriptType(indent: string) {
 				let newindent = indent + "\t";
 				return `{\n`
 					+ `${newindent}flags: number,\n`
@@ -1389,7 +1389,7 @@ hardcodes = {
 	},
 	scriptopt: function (args, parent, typedef) {
 		return {
-			read(state) {
+			read(state: DecodeState) {
 				let cali = state.args.clientScriptDeob as ClientscriptObfuscation | undefined;
 				//don't explicitly check prototype here as we would have to import the constructor
 				if (!cali) {
@@ -1401,7 +1401,7 @@ hardcodes = {
 				let res = (cali as ClientscriptObfuscation).readOpcode(state);
 				return res;
 			},
-			write(state, v) {
+			write(state: EncodeState, v: any) {
 				let cali = state.args.clientScriptDeob as ClientscriptObfuscation | undefined;;
 				if (!cali) {
 					throw new Error("opcode callibration not set for clientscript with obfuscated opcodes");
@@ -1418,7 +1418,7 @@ hardcodes = {
 					}
 				}
 			},
-			getTypescriptType(indent) {
+			getTypescriptType(indent: string) {
 				let newindent = indent + "\t";
 				return `{\n`
 					+ `${newindent}opcode:number,\n`
@@ -1444,54 +1444,54 @@ function checkBounds(s: DecodeState, bytes: number) {
 
 const numberTypes: Record<string, { read: (s: DecodeState) => number, write: (s: EncodeState, v: number) => void, min: number, max: number }> = {
 	ubyte: {
-		read(s) { checkBounds(s, 1); let r = s.buffer.readUInt8(s.scan); s.scan += 1; return r; },
-		write(s, v) { s.buffer.writeUInt8(v, s.scan); s.scan += 1; },
+		read(s: DecodeState) { checkBounds(s, 1); let r = s.buffer.readUInt8(s.scan); s.scan += 1; return r; },
+		write(s: EncodeState, v: number) { s.buffer.writeUInt8(v, s.scan); s.scan += 1; },
 		min: 0, max: 255
 	},
 	byte: {
-		read(s) { checkBounds(s, 1); let r = s.buffer.readInt8(s.scan); s.scan += 1; return r; },
-		write(s, v) { s.buffer.writeInt8(v, s.scan); s.scan += 1; },
+		read(s: DecodeState) { checkBounds(s, 1); let r = s.buffer.readInt8(s.scan); s.scan += 1; return r; },
+		write(s: EncodeState, v: number) { s.buffer.writeInt8(v, s.scan); s.scan += 1; },
 		min: -128, max: 127
 	},
 	ushort: {
-		read(s) { checkBounds(s, 2); let r = s.buffer.readUInt16BE(s.scan); s.scan += 2; return r; },
-		write(s, v) { s.buffer.writeUInt16BE(v, s.scan); s.scan += 2; },
+		read(s: DecodeState) { checkBounds(s, 2); let r = s.buffer.readUInt16BE(s.scan); s.scan += 2; return r; },
+		write(s: EncodeState, v: number) { s.buffer.writeUInt16BE(v, s.scan); s.scan += 2; },
 		min: 0, max: 2 ** 16 - 1
 	},
 	short: {
-		read(s) { checkBounds(s, 2); let r = s.buffer.readInt16BE(s.scan); s.scan += 2; return r; },
-		write(s, v) { s.buffer.writeInt16BE(v, s.scan); s.scan += 2; },
+		read(s: DecodeState) { checkBounds(s, 2); let r = s.buffer.readInt16BE(s.scan); s.scan += 2; return r; },
+		write(s: EncodeState, v: number) { s.buffer.writeInt16BE(v, s.scan); s.scan += 2; },
 		min: -(2 ** 15), max: 2 ** 15 - 1
 	},
 	uint: {
-		read(s) { checkBounds(s, 4); let r = s.buffer.readUInt32BE(s.scan); s.scan += 4; return r; },
-		write(s, v) { s.buffer.writeUInt32BE(v, s.scan); s.scan += 4; },
+		read(s: DecodeState) { checkBounds(s, 4); let r = s.buffer.readUInt32BE(s.scan); s.scan += 4; return r; },
+		write(s: EncodeState, v: number) { s.buffer.writeUInt32BE(v, s.scan); s.scan += 4; },
 		min: 0, max: 2 ** 32 - 1
 	},
 	int: {
-		read(s) { checkBounds(s, 4); let r = s.buffer.readInt32BE(s.scan); s.scan += 4; return r; },
-		write(s, v) { s.buffer.writeInt32BE(v, s.scan); s.scan += 4; },
+		read(s: DecodeState) { checkBounds(s, 4); let r = s.buffer.readInt32BE(s.scan); s.scan += 4; return r; },
+		write(s: EncodeState, v: number) { s.buffer.writeInt32BE(v, s.scan); s.scan += 4; },
 		min: -(2 ** 31), max: 2 ** 31 - 1
 	},
 
 	uint_le: {
-		read(s) { checkBounds(s, 4); let r = s.buffer.readUInt32LE(s.scan); s.scan += 4; return r; },
-		write(s, v) { s.buffer.writeUint32LE(v, s.scan); s.scan += 4; },
+		read(s: DecodeState) { checkBounds(s, 4); let r = s.buffer.readUInt32LE(s.scan); s.scan += 4; return r; },
+		write(s: EncodeState, v: number) { s.buffer.writeUint32LE(v, s.scan); s.scan += 4; },
 		min: 0, max: 2 ** 32 - 1
 	},
 	ushort_le: {
-		read(s) { checkBounds(s, 2); let r = s.buffer.readUInt16LE(s.scan); s.scan += 2; return r; },
-		write(s, v) { s.buffer.writeUint16LE(v, s.scan); s.scan += 2; },
+		read(s: DecodeState) { checkBounds(s, 2); let r = s.buffer.readUInt16LE(s.scan); s.scan += 2; return r; },
+		write(s: EncodeState, v: number) { s.buffer.writeUint16LE(v, s.scan); s.scan += 2; },
 		min: 0, max: 2 ** 16 - 1
 	},
 	utribyte: {
-		read(s) { checkBounds(s, 3); let r = s.buffer.readUIntBE(s.scan, 3); s.scan += 3; return r; },
-		write(s, v) { s.buffer.writeUintBE(v, s.scan, 3); s.scan += 3; },
+		read(s: DecodeState) { checkBounds(s, 3); let r = s.buffer.readUIntBE(s.scan, 3); s.scan += 3; return r; },
+		write(s: EncodeState, v: number) { s.buffer.writeUintBE(v, s.scan, 3); s.scan += 3; },
 		min: 0, max: 2 ** 24 - 1
 	},
 	float: {
-		read(s) { checkBounds(s, 4); let r = s.buffer.readFloatBE(s.scan); s.scan += 4; return r; },
-		write(s, v) { s.buffer.writeFloatBE(v, s.scan); s.scan += 4; },
+		read(s: DecodeState) { checkBounds(s, 4); let r = s.buffer.readFloatBE(s.scan); s.scan += 4; return r; },
+		write(s: EncodeState, v: number) { s.buffer.writeFloatBE(v, s.scan); s.scan += 4; },
 		min: Number.MIN_VALUE, max: Number.MAX_VALUE
 	},
 
@@ -1635,7 +1635,7 @@ parserPrimitives = {
 		getJsonSchema() {
 			return { type: "number", maximum: e.max, minimum: e.min };
 		},
-		getTypescriptType(indent) {
+		getTypescriptType(indent: string) {
 			return "number";
 		}
 	}])),
@@ -1652,7 +1652,7 @@ parserPrimitives = {
 		getJsonSchema() {
 			return { type: "boolean" };
 		},
-		getTypescriptType(indent) {
+		getTypescriptType(indent: string) {
 			return "boolean";
 		}
 	},

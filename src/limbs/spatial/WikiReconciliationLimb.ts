@@ -29,7 +29,7 @@ export class WikiReconciliationLimb {
         try {
             const response = await fetch(`${this.API_BASE}?action=query&meta=siteinfo&format=json`, {
                 headers: { 'User-Agent': this.USER_AGENT },
-                signal: AbortSignal.timeout(5000)
+                signal: AbortSignal.timeout(15000)
             });
             const online = response.ok;
             return {
