@@ -1,6 +1,6 @@
-﻿import { exec } from 'child_process';
+import { exec } from 'child_process';
 import { promisify } from 'util';
-import { type TSCError, CognitiveChoice, YaoState, BuildStatus, HealthStatus, type ExecutionPlan } from '../core/models.js';
+import { type TSCError, CognitiveChoice, YaoState, BuildStatus, HealthStatus, type ExecutionPlan, CognitivePolarity } from '../core/models.js';
 import { ModelClient as ModelExecutor } from '../clients/ModelClient.js';
 import { ArchitectureDigest } from '../core/ArchitectureDigest.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
@@ -42,13 +42,15 @@ export class SelfHealingEngine {
 
     async diagnose(error: TSCError, plan?: ExecutionPlan): Promise<{ decision: CognitiveChoice; reasoning: string }> {
         const filePath = error.file;
+        const contract = this.hexagramManager.getContract();
         const yao = this.hexagramManager.getYaoState?.() || YaoState.YoungYang;
-        const isYin = this.hexagramManager.isYin?.() || false;
+        const ternary = contract.polarity;
+        const riskTolerance = contract.behavioralBias.riskTolerance;
         
-        logger.info({ code: error.code, file: filePath, yao, isYin }, 'Diagnosing error with Cognitive Immunology rules');
+        logger.info({ code: error.code, file: filePath, yao, ternary, riskTolerance }, 'Diagnosing error with Cognitive Immunology rules');
 
         // Cognitive Immunology Phase 1: Chaos Constraint
-        if (yao === YaoState.OldMixed) {
+        if (!contract.gates.allowStructuralRepair) {
             await this.hexagramManager.pinCard(4, 'Immunology Restraint', `Refusing algorithmic auto-repair of [${filePath || error.code}] due to chaotic OldMixed emotional state.`, yao);
             return {
                 decision: CognitiveChoice.META,
@@ -76,11 +78,11 @@ export class SelfHealingEngine {
             await this.hexagramManager.pinCard(1, 'Structural Breach', `Critical fault in ${filePath}: ${senseCheck.analysis}`, YaoState.OldYin);
             
             // Cognitive Immunology Phase 2: Meditative Constraints
-            if (isYin) {
-                 logger.info('System is highly Yin (Receptive). Downgrading critical auto-repair severity to observational.');
+            if (ternary === CognitivePolarity.YIN || riskTolerance < 0.3) {
+                 logger.info({ ternary, riskTolerance }, 'System is highly Yin or risk-averse. Downgrading critical auto-repair severity to observational.');
                  return {
                      decision: CognitiveChoice.META,
-                     reasoning: `Observational Restraint: Critical structural break in [${filePath}], but system is highly Yin. Prioritizing manual developer observation or Read-Only Shell diagnostics over aggressive auto-patching.`
+                     reasoning: `Observational Restraint: Critical structural break in [${filePath}], but system is in ${ternary} mode (Risk: ${riskTolerance}). Prioritizing manual developer observation.`
                  };
             }
             
@@ -92,7 +94,7 @@ export class SelfHealingEngine {
 
         // Cognitive Immunology Phase 3: Holistic Visual Diagnostic for UI
         const isUI = filePath?.toLowerCase().includes('renderer') || filePath?.toLowerCase().includes('ui') || filePath?.toLowerCase().includes('dashboard');
-        if (isUI && !isYin && (this.visionEngine || this.spatialVisionEngine) && this.chromaEngine) {
+        if (isUI && ternary === CognitivePolarity.YANG && (this.visionEngine || this.spatialVisionEngine) && this.chromaEngine) {
              logger.info('UI fault detected during assertive Yang state. Invoking Visual/Spatial Sensory array.');
              await this.hexagramManager.pinCard(3, 'Visual Diagnostic', `Deploying Chromanumber and SpatialVision to physically inspect failure in ${filePath}`, yao);
              // We do not await full vision execution here, we just shape the decision heuristic to request physical inspection

@@ -1,4 +1,4 @@
-﻿import { exec, spawn } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import { loadavg, totalmem, freemem } from 'os';
 import { existsSync } from 'fs';
@@ -36,15 +36,14 @@ export class ShellEngine {
         // Ternary Safety Gating
         if (this.router) {
             const hex = this.router.getHexagram();
+            const contract = hex.getContract();
             const yao = hex.getYaoState();
             const directive = hex.getInterpretation().strategy;
 
             const destructivePatterns = /\b(rm\s+-[rf]|git\s+push\s+-f|del\s+\/q|rd\s+\/s|format\b|shred\b)/i;
             if (destructivePatterns.test(params.command)) {
-                // YaoState genre check: YoungYin (0) covers both YoungYin and OldYin (retreat/decay)
-                // OldMixed (4) or the genre-normalized YoungMixed (5) in some contexts covers chaos
-                if (yao === YaoState.YoungYin || yao === YaoState.OldYin || yao === YaoState.OldMixed) {
-                    const msg = `âŒ COGNITIVE BLOCK: Destructive command rejected due to unstable/retreating state (${yao}). Strategy: ${directive}`;
+                if (!contract.gates.allowDestructiveCommands) {
+                    const msg = `â Œ COGNITIVE BLOCK: Destructive command rejected due to unstable/retreating state (Contract Restraint). Strategy: ${directive}`;
                     logger.warn({ command: params.command, yao, directive }, msg);
                     this.renderer.error(msg);
                     return { ok: false, error: new Error(msg) };

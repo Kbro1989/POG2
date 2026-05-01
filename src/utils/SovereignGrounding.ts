@@ -1,4 +1,4 @@
-﻿// src/utils/SovereignGrounding.ts
+// src/utils/SovereignGrounding.ts
 // Ported from D:\sovereign\cache_pedagogy\rsmv_inspector\src\map\grounding_logic.ts
 // Integrated into POG2 Sovereign Core
 
@@ -108,14 +108,16 @@ export class SovereignGrounding {
         const load = (file: string) => {
             const p = join(pedagogyDir, file);
             if (!existsSync(p)) {
-                logger.warn({ path: p }, `Pedagogical substrate file missing: ${file}`);
-                return {};
+                const err = `Pedagogical substrate file missing: ${file} at ${p}`;
+                logger.error({ path: p }, err);
+                throw new Error(err);
             }
             try {
                 return JSON.parse(readFileSync(p, "utf-8"));
             } catch (e) {
-                logger.error({ path: p, error: (e as Error).message }, `Failed to parse pedagogical file: ${file}`);
-                return {};
+                const err = `Failed to parse pedagogical file: ${file}. Error: ${(e as Error).message}`;
+                logger.error({ path: p, error: (e as Error).message }, err);
+                throw new Error(err);
             }
         };
 

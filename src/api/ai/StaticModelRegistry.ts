@@ -74,7 +74,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Gemini 1.5 Pro',
         serviceType: 'GEMINI',
         taskType: 'TEXT',
-        modelId: 'gemini-1.5-pro',
+        modelId: 'gemini-3.0-pro',
         description: 'Google Gemini 1.5 Pro - High reasoning capability.',
         passthroughEnabled: true
     },

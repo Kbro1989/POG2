@@ -44,7 +44,7 @@ export class GameplaySovereigntyLimb {
     public combat: CombatLimb;
     public items: ItemLifecycleLimb;
     public bankLimb: BankLimb;
-    private playerAgent: any; // PlayerAgent (typed as any to avoid circularity if needed)
+    public playerAgent: any; // PlayerAgent brain
     
     public globalState: GameState = {
         plane: 0,

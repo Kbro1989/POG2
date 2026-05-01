@@ -31,7 +31,7 @@ async function runLiveCycle() {
     const client = new ModelClient(config);
     const renderer = new Renderer();
     const spatialVision = SpatialVisionEngine.getInstance(config, renderer);
-    const engine = new ChromanumberEngine();
+    const engine = ChromanumberEngine.getInstance();
     const harness = new VisionActuationHarness(engine, spatialVision);
 
     const { getRSMVSubstratePath } = await import('../utils/SovereignPathResolver.js');

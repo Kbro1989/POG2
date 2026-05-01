@@ -1,4 +1,4 @@
-﻿import { createRequire } from 'module';
+import { createRequire } from 'module';
 import * as path from 'path';
 const require = createRequire(import.meta.url);
 // Graceful substrate imports â€” these may not exist in all environments
@@ -146,6 +146,8 @@ export class CacheLearningLimb {
                 targetId = res.value.rawModelIds[0];
                 cleanName = res.value.itemContext.name.replace(/[^a-zA-Z0-9]/g, '_');
             }
+
+            if (targetId === undefined) return err(new Error('Target ID resolution failed.'));
 
             logger.info({ id: targetId, name: cleanName }, 'Physically translating model to GLTF substrate...');
 

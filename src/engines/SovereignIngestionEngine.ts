@@ -1,9 +1,10 @@
-﻿import { EventBus } from '../events/EventBus.js';
+import { EventBus } from '../events/EventBus.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { GhostLimb } from '../limbs/metaphysical/GhostLimb.js';
 import { MetabolicEngine } from './MetabolicEngine.js';
 import { VectorDB } from '../utils/VectorDB.js';
+import { TrainingCollector } from '../utils/TrainingCollector.js';
 import { ClinicalLogger } from '../monitor/ClinicalLogger.js';
 import { INGESTION_TRIGGERS, HexagramIngestionProfile } from '../core/HexagramDefinitions.js';
 import { YaoState } from '../core/models.js';
@@ -134,7 +135,7 @@ export class SovereignIngestionEngine {
             this.outputBuffer.push(digested);
             
             const docId = `cache_${batch.checksum}`;
-            this.vectorStore.addLesson({
+            await TrainingCollector.getInstance().recordLesson({
                 id: docId,
                 text: typeof digested.payload === 'string' ? digested.payload : JSON.stringify(digested.payload),
                 embedding: new Float32Array(0),
@@ -180,7 +181,7 @@ export class SovereignIngestionEngine {
     private async pushBatch(batch: IngestionBatch): Promise<void> {
         this.outputBuffer.push(batch);
         const docId = `push_${batch.checksum}`;
-        this.vectorStore.addLesson({
+        await TrainingCollector.getInstance().recordLesson({
             id: docId,
             text: typeof batch.payload === 'string' ? batch.payload : JSON.stringify(batch.payload),
             embedding: new Float32Array(0),

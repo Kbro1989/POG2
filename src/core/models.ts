@@ -379,6 +379,204 @@ export interface GraveMarker {
     expiryTick: number;
 }
 
+export type EventSource = "ADMIN" | "SYSTEM" | "AI" | "WORLD_SCRIPT";
+
+export type EventOutcome =
+  | "SUCCESS"
+  | "REJECTED_COLLISION"
+  | "REJECTED_AUTHORITY"
+  | "DEFERRED";
+
+export type SignalSource = "SPATIAL" | "POLICY" | "DOMAIN" | "INFRASTRUCTURE" | "EXTERNAL";
+
+export enum TruthClass {
+    EXECUTION = 'EXECUTION',           // Raw substrate events (The "What Happened")
+    CAUSAL = 'CAUSAL',                 // Hash-chained records (The "Provable History")
+    INTERPRETATION = 'INTERPRETATION', // Derived patterns/pedagogy (The "What it Means")
+    POLICY = 'POLICY',                 // Active gating/ISA rules (The "What is Allowed")
+    ANOMALY = 'ANOMALY',               // Deviations/Shadow captures (The "What is Broken")
+    INVARIANT = 'INVARIANT',           // Hardened structural laws (The "What is Constant")
+    POLICY_DENIED = 'POLICY_DENIED'     // Gated by EpistemicValidator/ISA
+}
+
+/**
+ * Epistemic Invariants - The "Physics of Truth" for POG2.
+ * Hard-coded constraints that prevent semantic contamination across layers.
+ */
+export const EPISTEMIC_INVARIANTS = {
+    LEDGER_CAUSALLY_CLOSED: true,    // Nothing can mutate past ledger records.
+    INTERPRETATION_READ_ONLY: true,  // Interpretation cannot mutate Execution Truth.
+    GOVERNANCE_OBSERVATIONAL: true,  // Governance must be derived from Truth, not vice-versa.
+    ANOMALY_IMMUTABLE: true          // Anomalies cannot be reclassified as Truth without a replay.
+} as const;
+
+/**
+ * TruthLattice - Formal precedence model for reconciliation.
+ * Precedence: EXECUTION > INVARIANT > INTERPRETATION > ANOMALY
+ */
+export const TRUTH_PRECEDENCE: readonly TruthClass[] = [
+    TruthClass.EXECUTION,
+    TruthClass.CAUSAL,
+    TruthClass.INVARIANT,
+    TruthClass.POLICY,
+    TruthClass.INTERPRETATION,
+    TruthClass.ANOMALY
+] as const;
+
+export interface CausalEvidence {
+    readonly source: SignalSource;
+    readonly code: string;
+    readonly description: string;
+    readonly severity: "INFO" | "WARNING" | "BLOCKER";
+    readonly metadata?: Record<string, any>;
+}
+
+export interface CausalTrace {
+    readonly eventId: string;
+    readonly tick: number;
+    readonly signals: readonly CausalEvidence[];
+    readonly resolvedOutcome: EventOutcome;
+    readonly resolutionPointIndex?: number;
+}
+
+export interface LearningTrace {
+    readonly eventId: string;
+    readonly summary: string;
+    readonly causalChain: readonly string[];
+    readonly primaryDrivers: readonly string[];
+}
+
+export interface CausalPattern {
+    readonly id: string;
+    readonly label: string;
+    readonly archetype: string;
+    readonly frequency: number;
+    readonly lastOccurredTick: number;
+    readonly heuristic: string;
+    readonly contributingSignals: readonly string[];
+    readonly truthClass: TruthClass;
+}
+
+export interface PatternMemory {
+    activePatterns: Map<string, CausalPattern>;
+    totalTracesAnalyzed: number;
+}
+
+export interface InvariantRule {
+    readonly id: string;
+    readonly domain: string;
+    readonly constraint: string;
+    readonly validationPath: readonly string[];
+    readonly confidence: number;
+    readonly isTransferable: boolean;
+    readonly truthClass: TruthClass;
+}
+
+export interface InvariantManifest {
+    rules: InvariantRule[];
+    lastCompiledTick: number;
+}
+
+export enum LearningFidelity {
+    RAW = 0,
+    CAUSAL = 1,
+    PATTERN = 2,
+    INVARIANT = 3,
+    PEDAGOGY = 4
+}
+
+export enum LearningMode {
+    SAFE = 'SAFE',       // Gated, authoritative updates allowed.
+    SHADOW = 'SHADOW',   // Observational only. Capture anomalies/drift without belief mutation.
+    HYBRID = 'HYBRID'    // Mixed mode for transition states.
+}
+
+export enum CognitivePolarity {
+    YIN = 'YIN',
+    YANG = 'YANG',
+    YINYANG = 'YINYANG'
+}
+
+/**
+ * InterpretationContract - The unified schema for how a state means across the system.
+ */
+export interface InterpretationContract {
+    polarity: CognitivePolarity;
+    mode: LearningMode;
+    permissions: CognitivePermissionMatrix;
+    aesthetics: GenerativeAesthetics;
+    behavioralBias: {
+        riskTolerance: number;      // 0.0 to 1.0
+        creativeTemperature: number; // 0.0 to 2.0
+        metabolicCeiling: number;   // VRAM/CPU threshold (percentage)
+    };
+    // Explicit behavioral gates to prevent limbs from performing manual state interpretation
+    gates: {
+        allowStructuralRepair: boolean;
+        allowActiveRecovery: boolean;
+        allowForeignDirectives: boolean;
+        allowDestructiveCommands: boolean;
+    };
+    // Phase-aware control surface (Phase 2: Predictive Kernel)
+    phase?: ChaosPhase;
+    phaseGateMultiplier?: number; // 0.0–1.0 continuous gate from EpistemicTransitionKernel
+}
+
+export interface CognitivePermissionMatrix {
+    mode: LearningMode;
+    allowPedagogy: boolean;
+    allowPatternExtraction: boolean;
+    allowInvariantCompilation: boolean;
+    allowMemoryConsolidation: boolean;
+    allowForensics: boolean;
+    allowClinicalAudit: boolean;
+    allowSubstrateIngestion: boolean;
+}
+
+export interface LearningEvent {
+    tick: number;
+    timestamp: number;
+    fidelity: LearningFidelity;
+    
+    // Raw Truth (Causal Trace)
+    trace?: CausalTrace;
+    
+    // Deterministic Resolution (The finalized event)
+    resolution: any; // TickEvent (functionally typed to avoid circularity in models)
+    
+    // Abstracted Intelligence (Optional)
+    patterns?: CausalPattern[];
+    invariants?: InvariantRule[];
+    
+    // Higher-Order Lessons
+    lesson?: string;
+    tags?: string[];
+}
+
+export interface WorldDelta {
+    tick: number;
+    entityId: string;
+    type: "MOVE" | "SPAWN" | "DESPAWN" | "TILE_MUTATION";
+    x: number;
+    y: number;
+    z: number;
+    source: "POG2" | "RS3" | "CACHE";
+    confidence: number;
+    metadata?: Record<string, any>;
+}
+
+export interface ReconciliationResult {
+    tile: { x: number; y: number; z: number };
+    consensus: "STABLE" | "INSTABILITY_FIELD" | "CONFLICT";
+    primarySource: "POG2" | "RS3" | "CACHE";
+    uncertainty: number; // 0.0 to 1.0
+    layers: Array<{
+        source: string;
+        value: any;
+        confidence: number;
+    }>;
+}
+
 export interface GameState {
     plane: number;
     npcMap: Map<number, NPC>;
@@ -485,6 +683,54 @@ export enum YaoState {
     YinYao = 0,     // Alias
     SovereignAvatar = 6, // Active Entity / Spatial Sandbox Participant
     SovereignEngine = 7  // World Container / Master Tick Heartbeat
+}
+
+export enum ChaosPhase {
+    STABLE = 'STABLE',
+    DEGRADING = 'DEGRADING',
+    EXPLORING = 'EXPLORING',
+    RECOVERING = 'RECOVERING',
+    FALSE_STABILITY = 'FALSE_STABILITY'
+}
+
+export interface TransitionPrediction {
+    targetPhase: ChaosPhase;
+    confidence: number;
+    expectedVolatility: number;
+    causalAttributionId?: string;
+}
+
+export interface YaoTransitionEvent {
+    id: string;
+    timestamp: number;
+    sourceState: YaoState;
+    targetState: YaoState;
+    phase: ChaosPhase;
+    volatility: number;
+    stabilityTrend: number;
+    prediction?: TransitionPrediction;
+    observed?: boolean;
+}
+
+export interface MovingLine {
+    position: 1 | 2 | 3 | 4 | 5 | 6;
+    fromState: 'YIN' | 'YANG';
+    toState: 'YIN' | 'YANG';
+    confidence: number;
+    source: string;        // which limb detected it
+    timestamp: number;
+}
+
+export interface PredictionRecord {
+    id: string;
+    timestamp: number;
+    predictedState: YaoState;
+    predictedPhase: ChaosPhase;
+    movingLines: MovingLine[];
+    actualState?: YaoState;      // filled by observeTransition
+    actualPhase?: ChaosPhase;    // filled by observeTransition
+    errorMagnitude?: number;     // hamming distance between predicted/actual
+    limbErrors?: Map<string, number>; // per-limb error contribution
 }
 
 // â”€â”€ PEDAGOGICAL LOGIC SUBSTRATES â”€â”€
@@ -1191,6 +1437,29 @@ export interface MetabolicAudit {
     consolidationRecommendations: string[];
 }
 
+export interface RoutingSnapshot {
+    tick: number;
+    cloudHealth: {
+        status: 'ONLINE' | 'DEGRADED' | 'OFFLINE';
+        effect: 'NONE' | 'ROUTING_BIAS_ONLY' | 'BLOCK_CLOUD_TASKS';
+    };
+    substrateHealth: SubstrateState;
+    modelHealthMap: Record<string, boolean>;
+    timestamp: number;
+}
+
+export interface RoutingDecisionAudit {
+    tick: number;
+    taskClass: TaskClass;
+    policy: any; // RoutingPolicy
+    snapshotHash: string;
+    selectedModel: string;
+    selectedTier: string; // ModelTier
+    latencyMs: number;
+    success: boolean;
+    error?: string;
+}
+
 export interface SessionLog {
     modifiedFiles: string[];
     completedTasks: Array<{ id: string; referencesPedagogyId: string | null }>;
@@ -1234,3 +1503,77 @@ export interface ReimaginationSpec {
 export const CURRENCY_COINS = 995;
 export const CURRENCY_CHRONOTES = 49219;
 export const CURRENCY_SPIRIT_SHARDS = 12183;
+
+export interface RetryPolicy {
+    mode: "NONE" | "NEXT_TICK";
+    maxAttempts?: number;
+    attempt?: number;
+}
+
+export interface TickEvent {
+    readonly id: string;
+    readonly tick: number;
+    readonly timestamp: number;
+    readonly action: string;
+    readonly source: EventSource;
+    readonly inputs: any;
+    readonly outputs?: any;
+    readonly truthClass: TruthClass;
+    readonly coord?: { readonly x: number; readonly y: number; readonly z: number; readonly plane?: number };
+    readonly outcome?: EventOutcome;
+    readonly signals?: readonly CausalEvidence[];
+    readonly resolutionPointIndex?: number;
+    readonly causedBy?: string;
+    readonly retryPolicy?: RetryPolicy;
+
+    // Sealing Layer (Epistemic Integrity)
+    readonly hash?: string;
+    readonly parentHash?: string;
+    readonly signature?: string;      // Authoritative HMAC signature
+    readonly substrateAnchor?: string; // RS3 Cache Version / Substrate Salt
+}
+
+export interface TileLock {
+    ownerEventId: string;
+    action: string;
+    tick: number;
+}export interface GovernanceResult {
+    readonly mode: LearningMode;
+    readonly allowPedagogy: boolean;
+    readonly allowPatternExtraction: boolean;
+    readonly allowActiveRecovery: boolean;
+    readonly metadata?: Record<string, any>;
+}
+
+export type ExecutionEvent = TickEvent & { readonly __brand: 'EXECUTION' };
+export type CausalEvent = TickEvent & { readonly __brand: 'CAUSAL' };
+export type Interpretation = CausalPattern & { readonly __brand: 'INTERPRETATION' };
+export type PolicyDecision = GovernanceResult & { readonly __brand: 'POLICY' };
+
+export interface EpistemicProof {
+    readonly id: string;
+    readonly artifactId: string; // The ID of the event or pattern being justified
+    readonly parentArtifactId?: string; // The ID of the artifact this was derived from
+    readonly sourceLayer: TruthClass;
+    readonly targetLayer: TruthClass;
+    readonly rule: string;
+    readonly justification: string;
+    readonly evidenceHash: string;
+    readonly timestamp: number;
+    readonly substrateAnchor?: string; // e.g. C:\ProgramData\Jagex\RuneScape\js5-16.jcache
+}
+
+export interface EpistemicQuery {
+    readonly targetId: string; // ID of the Invariant, Pattern, or Event
+    readonly queryType: 'JUSTIFY' | 'VERIFY' | 'FALSIFY';
+    readonly depth?: number; // How far back in the causal chain to trace
+}
+
+export interface QueryResponse {
+    readonly query: EpistemicQuery;
+    readonly status: 'VERIFIED' | 'REFUTED' | 'INCONCLUSIVE';
+    readonly confidence: number;
+    readonly proofChain: readonly EpistemicProof[];
+    readonly evidenceSummary: string;
+    readonly counterEvidence?: readonly string[]; // IDs of events that contradict the target
+}

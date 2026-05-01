@@ -1,10 +1,12 @@
-import { GameState, Coord, NPC } from '../core/models.js';
+import { GameState, Coord, NPC, ChaosPhase, YaoState } from '../core/models.js';
 import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
 import { EntityGhost } from '../core/EntityGhost.js';
 import { PlayerAgent } from '../engines/gameplay/PlayerAgent.js';
 import { PADDED_SIZE, SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
+import { NecromancerBrain, type NTXBuffer, type SpatialGaussian } from '../engines/core/NecromancerBrain.js';
 import { createLogger } from '../utils/logger.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
+import { EpistemicTransitionKernel, PredictionRegistry } from '../engines/core/EpistemicTransitionKernel.js';
 import { performance } from 'perf_hooks';
 import { SwitchboardLimb } from '../monitor/SwitchboardLimb.js';
 
@@ -61,6 +63,14 @@ export class GhostSplatEngine {
             this.projectPlayer(playerAgent, field);
             this.calculateThreatHeatmap(field, state); // Pass state for cache-derived aggro ranges
             this.identifySafespots(playerAgent, field);
+
+            // Weight entity confidence by historical prediction accuracy
+            const registry = PredictionRegistry.getInstance();
+            const limbAccuracy = registry.getLimbAccuracy('GhostSplatEngine', 10);
+            field.projections.forEach(ghost => {
+                ghost.confidence *= limbAccuracy; // downweight if we've been wrong
+            });
+
             this.generateGaussianTensor(field);
 
             const duration = performance.now() - start;
@@ -71,6 +81,9 @@ export class GhostSplatEngine {
             }
 
             this.latestField = field;
+
+            // ── Kernel Integration: Feed spatial volatility into predictive controller ──
+            this.feedKernelSpatialSignal(field, duration);
 
             // Broadcast to Switchboard if connected
             const switchboard = SwitchboardLimb.getInstance();
@@ -263,14 +276,119 @@ export class GhostSplatEngine {
     }
 
     private generateGaussianTensor(field: GhostSplatField): void {
-        const count = field.projections.size;
-        const tensor = new Float32Array(count * 13);
-        let offset = 0;
+        const entityCount = field.projections.size;
+        const tileCount = PADDED_SIZE * PADDED_SIZE;
+        const totalCount = entityCount + tileCount;
 
+        // ── Phase-Aware Compute Scaling ──
+        // During DEGRADING, the kernel restricts resources. Scale gaussian
+        // resolution by the phase multiplier to shed load gracefully.
+        let effectiveCount = totalCount;
+        let downscaleFactor = 1.0;
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const multiplier = kernel.getPhaseGateMultiplier();
+            downscaleFactor = multiplier;
+            if (multiplier < 1.0) {
+                effectiveCount = Math.max(1, Math.floor(totalCount * multiplier));
+                if (effectiveCount < totalCount) {
+                    logger.debug({ original: totalCount, effective: effectiveCount, phase: kernel.getCurrentPhase() },
+                        'Gaussian tensor downscaled by kernel phase gate');
+                }
+            }
+        } catch {
+            // Kernel not yet initialized
+        }
+
+        const tensor = new Float32Array(effectiveCount * 13);
+        let offset = 0;
+        let processed = 0;
+
+        // ── 1. NTX 66x66 Environment Splats (The Echo Buffer) ──
+        // We only generate the background if we have enough compute budget
+        if (effectiveCount > entityCount) {
+            const center = this.getCenterCoord(field);
+            const spatial = SpatialSovereigntyLimb.getInstance();
+            const brain = NecromancerBrain.getInstance();
+            
+            const startX = center.x - Math.floor(PADDED_SIZE / 2);
+            const startY = center.y - Math.floor(PADDED_SIZE / 2);
+            const plane = center.plane;
+
+            // Extract NTXBuffer
+            const ntxBuffer: NTXBuffer = new Array(PADDED_SIZE);
+            const baseSH = new Float32Array([
+                0.5, 0.5, 0.5, 
+                0.5, 0.5, 0.5, 
+                0.5, 0.5, 0.5
+            ]);
+
+            for (let x = 0; x < PADDED_SIZE; x++) {
+                ntxBuffer[x] = new Array(PADDED_SIZE);
+                for (let y = 0; y < PADDED_SIZE; y++) {
+                    const wx = startX + x;
+                    const wy = startY + y;
+                    const height = spatial.getAltitude(plane, wx, wy) / 32;
+                    const flags = spatial.getLegacyMask(plane, wx, wy);
+                    ntxBuffer[x][y] = {
+                        mu: [wx, height, wy],
+                        sigma: [[0.5, 0, 0], [0, 0.1, 0], [0, 0, 0.5]],
+                        opacity: 1.0,
+                        sh_coeffs: baseSH,
+                        tile_flags: flags
+                    };
+                }
+            }
+
+            // Apply predictive lighting (Spherical Harmonics)
+            const litBuffer = brain.predictLighting(ntxBuffer, field.tickDepth);
+
+            // Serialize into tensor (skipping based on downscale to maintain spread)
+            const skipStep = Math.max(1, Math.floor(1 / downscaleFactor));
+            
+            for (let x = 0; x < PADDED_SIZE; x += skipStep) {
+                for (let y = 0; y < PADDED_SIZE; y += skipStep) {
+                    if (processed >= effectiveCount - entityCount) break;
+                    
+                    const g = litBuffer[x][y];
+                    if (!g) continue;
+
+                    // Position (relative to center)
+                    tensor[offset + 0] = g.mu[0] - center.x;
+                    tensor[offset + 1] = g.mu[1]; // height
+                    tensor[offset + 2] = g.mu[2] - center.y;
+
+                    // Covariance (Diag approx)
+                    tensor[offset + 3] = 0.5;
+                    tensor[offset + 4] = 0;
+                    tensor[offset + 5] = 0;
+                    tensor[offset + 6] = 0.1;
+                    tensor[offset + 7] = 0;
+                    tensor[offset + 8] = 0.5;
+
+                    // Color (extract SH degree 0)
+                    tensor[offset + 9]  = g.sh_coeffs[0];
+                    tensor[offset + 10] = g.sh_coeffs[1];
+                    tensor[offset + 11] = g.sh_coeffs[2];
+
+                    // Opacity
+                    tensor[offset + 12] = g.opacity;
+
+                    offset += 13;
+                    processed++;
+                }
+            }
+        }
+
+        // ── 2. Dynamic Entity Splats ──
         field.projections.forEach((ghost, id) => {
+            if (processed >= effectiveCount) return;
+            processed++;
+
             // 1. Position (Relative to local 66x66 center)
-            const lx = (ghost.projectedCoord.x % PADDED_SIZE) - (PADDED_SIZE / 2);
-            const ly = (ghost.projectedCoord.y % PADDED_SIZE) - (PADDED_SIZE / 2);
+            const center = this.getCenterCoord(field);
+            const lx = ghost.projectedCoord.x - center.x;
+            const ly = ghost.projectedCoord.y - center.y;
             const lz = (ghost.projectedCoord.plane || 0) * 2; // Vertical separation
 
             tensor[offset + 0] = lx;
@@ -308,5 +426,77 @@ export class GhostSplatEngine {
         });
 
         field.gaussians = tensor;
+    }
+
+    private getCenterCoord(field: GhostSplatField): Coord {
+        const playerGhost = field.projections.get('player_sovereign');
+        if (playerGhost) return playerGhost.projectedCoord;
+        
+        // Fallback if no player
+        if (field.projections.size > 0) {
+            const firstProjection = field.projections.values().next().value;
+            if (firstProjection) {
+                return firstProjection.projectedCoord;
+            }
+        }
+        return { x: 3200, y: 3200, plane: 0 };
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  KERNEL INTEGRATION: Spatial Volatility Signal Feed
+    // ══════════════════════════════════════════════════════════════
+
+    /**
+     * feedKernelSpatialSignal — Converts the GhostSplat heatmap into a
+     * causal confidence value for the EpistemicTransitionKernel.
+     *
+     * High threat density + low prediction confidence = high spatial volatility.
+     * This signal feeds into the kernel's EMA, allowing the phase classifier
+     * to distinguish between genuine spatial chaos and background noise.
+     */
+    private feedKernelSpatialSignal(field: GhostSplatField, computeMs: number): void {
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const hexManager = HexagramManager.getInstance();
+            const currentYao = hexManager.getYaoState();
+
+            // 1. Spatial threat density: ratio of hot tiles to total tiles
+            let hotTiles = 0;
+            for (let i = 0; i < field.heatmap.length; i++) {
+                if (field.heatmap[i] > 0) hotTiles++;
+            }
+            const threatDensity = hotTiles / (PADDED_SIZE * PADDED_SIZE);
+
+            // 2. Average projection confidence
+            let totalConfidence = 0;
+            let projCount = 0;
+            field.projections.forEach(ghost => {
+                totalConfidence += ghost.confidence;
+                projCount++;
+            });
+            const avgConfidence = projCount > 0 ? totalConfidence / projCount : 1.0;
+
+            // 3. Compute budget pressure: how close to the limit
+            const computePressure = Math.min(1.0, computeMs / this.MAX_COMPUTE_MS);
+
+            // 4. Synthesize causal confidence:
+            //    High confidence + low threat + low compute pressure = high causal confidence (stable)
+            //    Low confidence + high threat + high compute pressure = low causal confidence (volatile)
+            const causalConfidence = Math.max(0.1, avgConfidence * (1 - threatDensity * 0.5) * (1 - computePressure * 0.3));
+
+            // 5. Feed into kernel observation loop
+            kernel.observeTransition(currentYao, causalConfidence);
+
+            logger.debug({
+                threatDensity: threatDensity.toFixed(4),
+                avgConfidence: avgConfidence.toFixed(3),
+                computePressure: computePressure.toFixed(3),
+                causalConfidence: causalConfidence.toFixed(3),
+                kernelPhase: kernel.getCurrentPhase()
+            }, '🔮 GhostSplat → Kernel: Spatial volatility signal emitted.');
+
+        } catch {
+            // Kernel or HexagramManager not yet initialized — silently skip
+        }
     }
 }

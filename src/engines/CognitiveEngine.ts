@@ -1,4 +1,3 @@
-```typescript
 import { type Result, type Lesson, ok, err } from '../core/models.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { ModelClient } from '../clients/ModelClient.js';
@@ -20,7 +19,7 @@ interface LiteraryWisdomMetadata {
     title?: string;
     author?: string;
     reflection?: string;
-    [key: string]: unknown; // Allow for other properties not explicitly defined
+    [key: string]: unknown;
 }
 
 /**
@@ -39,7 +38,7 @@ interface PersonalityRow {
  */
 export class CognitiveEngine {
     constructor(
-        private readonly vectorDB: VectorDB, // Assumes VectorDB class implements the necessary methods/properties
+        private readonly vectorDB: VectorDB,
         private readonly client: ModelClient
     ) { }
 
@@ -48,9 +47,7 @@ export class CognitiveEngine {
      * @returns A promise resolving to an object indicating online status and details.
      */
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
-        // Assuming VectorDB.healthCheck() is synchronous and returns the expected object.
-        // If it were asynchronous, 'await' would be required.
-        const vCheck = this.vectorDB.healthCheck();
+        const vCheck = (this.vectorDB as any).healthCheck();
         const cCheck = await this.client.healthCheck();
         const isOnline = vCheck.online && cCheck.online;
         return {
@@ -71,11 +68,67 @@ export class CognitiveEngine {
         // 1. Generate embedding for the specific task
         const embedRes = await this.client.embed(task);
         if (!embedRes.ok) {
-            // Propagate the error from the embedding operation.
-            // Assumes embedRes.error is of type string, as per Result<T, E = string>.
             return err(embedRes.error);
         }
 
-        // 2. Search VectorDB for "literary_wisdom" types in the 'literary' domain
-        // Assumes VectorDB has a public 'projectId' property.
-        const searchRes = await this.vectorDB.searchSimilar(embedRes.value, limit, this.vectorDB.projectId || '
+        // 2. Search VectorDB for relevant wisdom
+        const projectId = (this.vectorDB as any).projectId || 'literary';
+        const searchRes = await (this.vectorDB as any).searchSimilar(embedRes.value, limit, projectId);
+        if (!searchRes.ok) {
+            return err(searchRes.error);
+        }
+
+        const lessons: Lesson[] = searchRes.value;
+        if (lessons.length === 0) {
+            return ok('No relevant wisdom fragments found in literary substrate.');
+        }
+
+        // 3. Synthesize into a readable wisdom string
+        const wisdomFragments = lessons.map((lesson: Lesson, i: number) => {
+            const meta = (lesson.metadata || {}) as LiteraryWisdomMetadata;
+            const source = meta.title
+                ? `"${meta.title}"${meta.author ? ` by ${meta.author}` : ''}`
+                : 'Unknown Source';
+            return `[${i + 1}] ${source}: ${lesson.text}`;
+        });
+
+        return ok(wisdomFragments.join('\n\n'));
+    }
+
+    /**
+     * getPersonalityCore - Derives the dominant personality archetypes from absorbed wisdom.
+     * @returns A Result containing an array of PersonalityArchetype objects or an error.
+     */
+    public async getPersonalityCore(): Promise<Result<PersonalityArchetype[]>> {
+        logger.info('Deriving personality archetypes from literary substrate');
+
+        try {
+            const db = (this.vectorDB as any).db;
+            if (!db) {
+                return err(new Error('VectorDB has no db instance for personality query'));
+            }
+
+            const rows: PersonalityRow[] = db.prepare(`
+                SELECT metadata->>'$.author' as author, COUNT(*) as weight
+                FROM lessons
+                WHERE type = 'literary_wisdom'
+                GROUP BY author
+                ORDER BY weight DESC
+                LIMIT 5
+            `).all();
+
+            const archetypes: PersonalityArchetype[] = rows
+                .filter((r: PersonalityRow) => r.author)
+                .map((r: PersonalityRow) => ({
+                    name: r.author!,
+                    weight: r.weight,
+                    description: `Dominant literary influence from ${r.author}`,
+                    influence: `${r.weight} absorbed passages`
+                }));
+
+            return ok(archetypes);
+        } catch (e) {
+            return err(e instanceof Error ? e : new Error(String(e)));
+        }
+    }
+}

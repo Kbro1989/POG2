@@ -1,5 +1,5 @@
 
-import { type Result, type ProsodyVector, ok, YaoState } from '../../core/models.js'
+import { type Result, type ProsodyVector, ok, YaoState, CognitivePolarity } from '../../core/models.js'
 import { ModelClient } from '../../clients/ModelClient.js';
 import { GutenbergLimb } from './GutenbergLimb.js';
 import { NarrativeSegment } from '../../utils/NarrativeExtractor.js';
@@ -152,11 +152,13 @@ Respond strictly in this JSON format:
         outputPath?: string,
         personality?: string
     ): Promise<Result<StoryboardScene[]>> {
-        // Retrieve current YaoState/Hexagram context
+        // Neurological Context
+        const contract = this.hexagram.getContract();
         const yaostate = this.hexagram.getYaoState();
-        const interpretation = this.hexagram.getInterpretation();
         const emotionalPool = this.hexagram.getEmotionalPool();
-        const yinYang = this.hexagram.isYin() ? 'Yin (Static/Receptive)' : 'Yang (Active/Projective)';
+        const interpretation = this.hexagram.getInterpretation();
+        const ternary = contract.polarity;
+        const yinYang = ternary === CognitivePolarity.YINYANG ? 'YinYang (Equilibrium/Integration)' : (ternary === CognitivePolarity.YIN ? 'Yin (Static/Receptive)' : 'Yang (Active/Projective)');
         const aesthetics = this.hexagram.getGenerativeAesthetics();
 
         const prompt = `
@@ -499,7 +501,7 @@ Vary prosody based on narrative tension and ${yaostate} influence.
             // STAGE 1: SUBSTRATE FORENSICS â€” High-Fidelity Match
             // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             if (speaker && speaker !== 'narrator' && speaker !== 'pov' && speaker !== 'player') {
-                const searchRes = this.forensics.searchByName(speaker, 'npc');
+                const searchRes = await this.forensics.search(speaker, 'npc');
                 if (searchRes.ok && searchRes.value.length > 0) {
                     const bestMatch = searchRes.value[0];
                     if (bestMatch.matchScore === 1.0) { // Exact match

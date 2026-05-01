@@ -17,6 +17,7 @@ import { GenerativeAesthetics, EmotionalState } from '../core/models.js';
 import { getPipelinePath, getPipelineRootPath } from '../utils/SovereignPathResolver.js';
 import { createLogger } from "../utils/logger.js";
 import { TaskScheduler } from '../routing/TaskScheduler.js';
+import { EpistemicTransitionKernel } from './core/EpistemicTransitionKernel.js';
 
 const logger = createLogger('PipelineController');
 
@@ -100,6 +101,17 @@ export class PipelineController {
      * Takes a book ID, generates scenes, images, voice, and assembles everything.
      */
     public async run(request: PipelineRequest): Promise<Result<PipelineResult>> {
+        // Phase-aware gating: defer expensive pipeline runs during DEGRADING
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const multiplier = kernel.getPhaseGateMultiplier();
+            if (multiplier < 0.5) {
+                logger.warn({ phase: kernel.getCurrentPhase(), multiplier },
+                    'Pipeline run deferred: kernel below operational threshold.');
+                return { ok: false, error: new Error(`Pipeline deferred: system in ${kernel.getCurrentPhase()} phase (multiplier=${multiplier.toFixed(2)})`) };
+            }
+        } catch { /* kernel not initialized — proceed normally */ }
+
         return TaskScheduler.getInstance().schedule(
             'pipeline',
             2, // YoungYin Priority

@@ -1,4 +1,4 @@
-﻿export interface IntentPathway {
+export interface IntentPathway {
     id: string;
     description: string;
     targetCapabilityId: string;
@@ -11,7 +11,7 @@ export const IntentMap: Record<string, IntentPathway[]> = {
         {
             id: 'deployment',
             description: 'Deployment and cloud infrastructure',
-            targetCapabilityId: 'gemini-1.5-pro',
+            targetCapabilityId: 'gemini-3.0-pro',
             keywords: ['wrangler', 'deploy', 'production', 'cloud'],
             reasoning: 'Cloud tasks require pro-tier reasoning.'
         }

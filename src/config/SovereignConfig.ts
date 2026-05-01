@@ -127,8 +127,8 @@ const DEFAULT_CONFIG: SovereignConfig = {
     cloudflareAuthEmail: undefined,
     criticModel: 'kimi-k2.6:cloud',
     lightAuditorModel: 'all-minilm:latest',
-    geminiFlashModel: 'gemini-1.5-flash',
-    geminiProModel: 'gemini-1.5-pro',
+    geminiFlashModel: 'gemini-3.0-flash',
+    geminiProModel: 'gemini-3.0-pro',
     geminiEmbeddingModel: 'text-embedding-004',
     
     // specialized Generation Defaults (Phase 104)
@@ -339,7 +339,7 @@ export function loadConfig(configPath: string): SovereignConfig {
 
     // Phase 106: Normalize wsPort defaults (Default to 8765 if -1 or missing)
     if (config.wsPort === -1 || config.wsPort === undefined) {
-        config.wsPort = 8765;
+        config.wsPort = 8788;
     }
 
     return config as SovereignConfig;

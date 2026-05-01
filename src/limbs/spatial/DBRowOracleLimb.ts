@@ -1,8 +1,10 @@
 import { createLogger } from "../../utils/logger.js";
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
-import { ServerSideInjector } from "../../core/models.js";
+import { ServerSideInjector, YaoState } from "../../core/models.js";
 import { PedagogyForensicsLimb } from "../pedagogy/PedagogyForensicsLimb.js";
+import { EpistemicTransitionKernel } from '../../engines/core/EpistemicTransitionKernel.js';
+import { HexagramManager } from '../../routing/HexagramManager.js';
 
 const logger = createLogger('DBRowOracleLimb');
 
@@ -83,9 +85,14 @@ export class DBRowOracleLimb {
             if (Array.isArray(data)) {
                 data.forEach(row => this.dbrows.set(row.id, row));
                 logger.info({ count: this.dbrows.size }, 'Genomic Rows Indexed.');
+
+                // Kernel signal: Cache substrate loaded = maximum confidence
+                this.emitKernelSignal(1.0);
             }
         } catch (err) {
             logger.error({ error: (err as Error).message }, 'Failed to parse DBRow catalog');
+            // Kernel signal: substrate parse failure = degraded
+            this.emitKernelSignal(0.2);
         }
     }
 
@@ -175,6 +182,10 @@ export class DBRowOracleLimb {
 
         this._cachedInjectors = injectors;
         logger.info({ count: injectors.length }, 'Genomic Injectors Published and Memoized.');
+
+        // Kernel signal: injector publication is a confirmed cache-authority event
+        this.emitKernelSignal(1.0);
+
         return injectors;
     }
 
@@ -184,5 +195,18 @@ export class DBRowOracleLimb {
             online: isOnline,
             details: isOnline ? `Genome Active: ${this.dbrows.size} rows ready.` : 'Genome Substrate Offline.'
         });
+    }
+
+    /**
+     * emitKernelSignal — Feeds a causal confidence observation into the predictive kernel.
+     */
+    private emitKernelSignal(confidence: number): void {
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const yao = HexagramManager.getInstance().getYaoState();
+            kernel.observeTransition(yao, confidence);
+        } catch {
+            // Kernel or HexagramManager not yet initialized
+        }
     }
 }

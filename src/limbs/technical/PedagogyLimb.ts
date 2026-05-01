@@ -17,6 +17,7 @@ import { RSMVExtractor } from '../../utils/RSMVExtractor.js';
 import { WikiEnricher } from '../../utils/WikiEnricher.js';
 import { VectorPedagogyLimb } from './VectorPedagogyLimb.js';
 import { ModelClient } from '../../clients/ModelClient.js';
+import { EventBus } from '../../events/EventBus.js';
 // import { HudResearchLimb } from './HudResearchLimb.js';
 // Stubbing missing HudResearchLimb until it appears in origin
 class HudResearchLimb { findCandidates(): any { return ok([]); } }
@@ -63,7 +64,35 @@ export class PedagogyLimb {
             logger.error({ error: err.message }, 'Failed to initialize Logic Hub');
         });
 
+        // Phase 240: Behavioral Learning Integration
+        EventBus.getInstance().subscribe('cognitive.learning', (event: any) => {
+            this.processLearningEvent(event.payload);
+        });
+
         logger.info('PedagogyLimb initialized. Linked to Forensics, Topology, Router, and Substrate.');
+    }
+
+    private processLearningEvent(event: any): void {
+        // Phase 260: ISA Governance Check
+        const contract = this.router.getHexagram().getContract();
+        const permissions = contract.permissions;
+        if (!permissions.allowPedagogy) return;
+
+        const patterns = event.patterns || [];
+        const invariants = event.invariants || [];
+
+        if (patterns.length > 0 || invariants.length > 0) {
+            // Update pedagogical strategies with discovered causal patterns
+            if (!this.logic.strategies) this.logic.strategies = { causalPatterns: [], discoveredInvariants: [] };
+            
+            this.logic.strategies.causalPatterns = patterns.map((p: any) => p.label);
+            this.logic.strategies.discoveredInvariants = invariants.map((i: any) => i.constraint);
+            
+            logger.debug({ 
+                patterns: patterns.length, 
+                invariants: invariants.length 
+            }, 'PedagogyLimb internal strategies updated via Causal Learning Event.');
+        }
     }
 
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
@@ -134,7 +163,7 @@ export class PedagogyLimb {
         const wikiRes = await WikiEnricher.enrich(itemData.forensics.name);
         const wikiData = wikiRes.ok ? wikiRes.value : null;
 
-        const slot = this.forensics.findItemSlot(itemId) as string | null;
+        const slot = this.forensics.findItemSlot(itemId);
 
         const profile = this.synthesizeProfile(`ITEM_${itemId}`, itemData.forensics.name, 'ITEM', topologicalProfiles, {
             role: wikiData?.role || itemData.pedagogy.summary,

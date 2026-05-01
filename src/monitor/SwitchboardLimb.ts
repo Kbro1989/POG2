@@ -1,4 +1,5 @@
-import { type Result, ok } from '../core/models.js';
+import { type Result, ok, type WorldDelta, type LearningTrace } from '../core/models.js';
+import { GlobeReconciliationKernel } from '../routing/GlobeReconciliationKernel.js';
 import { WebSocketServer, WebSocket } from 'ws';
 import express from 'express';
 import { createServer, Server as HttpServer } from 'http';
@@ -350,6 +351,65 @@ export class SwitchboardLimb {
             type: 'ghost_splat',
             timestamp: Date.now(),
             payload: serializableField
+        });
+    }
+
+    /**
+     * broadcastKernelDiagnostics - Pushes EpistemicTransitionKernel state to remote HUDs.
+     * Includes: ChaosPhase, volatilityEMA, stabilityTrend, predictionAccuracy, phaseGateMultiplier.
+     * Called from the CNS pulse loop to keep the public dashboard current.
+     */
+    public broadcastKernelDiagnostics(diagnostics: {
+        phase: string;
+        volatilityEMA: number;
+        stabilityTrendEMA: number;
+        predictionAccuracyEMA: number;
+        phaseGateMultiplier: number;
+        transitionCount: number;
+        yaoState: string;
+    }): void {
+        this.broadcast({
+            type: 'kernel_diagnostics',
+            timestamp: Date.now(),
+            payload: diagnostics
+        });
+    }
+
+    /**
+     * broadcastWorldDelta - Reconciles a live delta and broadcasts the result.
+     */
+    public async broadcastWorldDelta(delta: WorldDelta): Promise<void> {
+        const kernel = GlobeReconciliationKernel.getInstance();
+        kernel.ingestDelta(delta);
+        
+        const reconciliation = await kernel.reconcileTile(delta.x, delta.y, delta.z);
+        
+        this.broadcast({
+            type: 'WORLD_DELTA_RECONCILIATION',
+            timestamp: Date.now(),
+            payload: {
+                delta,
+                reconciliation
+            }
+        });
+
+        if (reconciliation.consensus !== 'STABLE') {
+            logger.warn({ 
+                tile: reconciliation.tile, 
+                consensus: reconciliation.consensus, 
+                uncertainty: reconciliation.uncertainty 
+            }, 'Reality Disagreement Broadcasted to Globe.');
+        }
+    }
+
+    /**
+     * broadcastLearningTrace - Propagates a post-hoc causal explanation to the observation layer.
+     */
+    public broadcastLearningTrace(trace: LearningTrace): void {
+        this.broadcast({
+            type: 'CAUSAL_EXPLANATION',
+            timestamp: Date.now(),
+            payload: trace
         });
     }
 

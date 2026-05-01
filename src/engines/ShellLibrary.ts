@@ -1,4 +1,4 @@
-﻿import { ShellEngine } from './ShellEngine.js';
+import { ShellEngine } from './ShellEngine.js';
 import { Renderer } from '../ui/Renderer.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { type Result, type EngineOutput, YaoState } from '../core/models.js';
@@ -134,9 +134,9 @@ Please analyze this context and construct a corrected command or deployment conf
 
     async npmInstall(args: { packages?: string[]; saveDev?: boolean }): Promise<Result<EngineOutput>> {
         if (this.router) {
-            const yao = this.router.getHexagram().getYaoState();
-            if (yao === YaoState.OldMixed || yao === YaoState.OldYin) {
-                this.renderer.warn(`âš ï¸ METABOLIC WARNING: Performing npm install in unstable state (${yao}). Dependency flux detected.`);
+            const contract = this.router.getHexagram().getContract();
+            if (!contract.gates.allowStructuralRepair) {
+                this.renderer.warn(`âš ï¸ METABOLIC WARNING: Performing npm install in unstable state. Dependency flux detected.`);
             }
         }
         const pkgStr = args.packages?.join(' ') || '';

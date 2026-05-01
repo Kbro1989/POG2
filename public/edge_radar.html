@@ -422,9 +422,10 @@ async function loadRegion() {
   document.getElementById('status').textContent = `Loading ${filename}...`;
 
   try {
-    const resp = await fetch(`${window.location.origin}/${filename}`);
+    const url = `${window.location.origin}/world/${filename}`;
+    const resp = await fetch(url);
     if (!resp.ok) {
-      document.getElementById('status').textContent = `${filename} not found (${resp.status})`;
+      document.getElementById('status').textContent = `${filename} not found in /world/ (${resp.status})`;
       return;
     }
     const data = await resp.json();

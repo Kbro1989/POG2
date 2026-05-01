@@ -1,9 +1,11 @@
-﻿import { SovereignEye, type CaptureSource, type CaptureResult } from '../utils/SovereignEye.js';
+import { SovereignEye, type CaptureSource, type CaptureResult } from '../utils/SovereignEye.js';
 import { createLogger } from '../utils/logger.js';
-import type { Result } from '../core/models.js';
+import type { Result, YaoState } from '../core/models.js';
 import puppeteer, { type Browser, type Page } from 'puppeteer';
 import { existsSync, mkdirSync } from 'fs';
 import { TaskScheduler } from '../routing/TaskScheduler.js';
+import { EpistemicTransitionKernel } from '../engines/core/EpistemicTransitionKernel.js';
+import { HexagramManager } from '../routing/HexagramManager.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -64,6 +66,16 @@ export class PuppeteerEye extends SovereignEye {
      * Initialize the headless/headful browser substrate.
      */
     public async awaken(headless: boolean = true): Promise<Result<void>> {
+        // Phase-aware: defer browser launch during DEGRADING
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            if (kernel.getPhaseGateMultiplier() < 0.3) {
+                logger.warn({ phase: kernel.getCurrentPhase() },
+                    'PuppeteerEye awaken deferred: kernel in DEGRADING phase.');
+                return { ok: false, error: new Error('Deferred: DEGRADING phase') };
+            }
+        } catch { /* kernel not initialized */ }
+
         return TaskScheduler.getInstance().schedule('vision', 2, async () => {
             try {
                 if (this.browser) return { ok: true, value: undefined };
@@ -72,9 +84,11 @@ export class PuppeteerEye extends SovereignEye {
                     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
                 });
                 logger.info('PuppeteerEye substrate AWAKENED.');
+                this.emitKernelSignal(0.8); // Browser substrate online
                 return { ok: true, value: undefined };
             } catch (err) {
                 logger.error({ err }, 'Failed to awaken PuppeteerEye');
+                this.emitKernelSignal(0.2); // Vision substrate failed
                 return { ok: false, error: err as Error };
             }
         });
@@ -115,9 +129,11 @@ export class PuppeteerEye extends SovereignEye {
             
             await page.close();
             this.activePages.delete(page);
+            this.emitKernelSignal(0.8); // Successful DOM inspection
             return { ok: true, value: { html, screenshot: screenshotPath, elements } };
         } catch (err) {
             logger.error({ err, url }, 'DOM inspection failed');
+            this.emitKernelSignal(0.3); // Failed perception
             return { ok: false, error: err as Error };
         }
     }
@@ -199,6 +215,20 @@ export class PuppeteerEye extends SovereignEye {
             await this.browser.close();
             this.browser = null;
             logger.info('PuppeteerEye substrate SLEEPING.');
+            this.emitKernelSignal(0.5); // Vision substrate going offline (planned)
+        }
+    }
+
+    /**
+     * emitKernelSignal — Feeds a causal confidence observation into the predictive kernel.
+     */
+    private emitKernelSignal(confidence: number): void {
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const yao = HexagramManager.getInstance().getYaoState();
+            kernel.observeTransition(yao, confidence);
+        } catch {
+            // Kernel or HexagramManager not yet initialized
         }
     }
 }

@@ -1,7 +1,7 @@
-﻿import { writeFileSync, existsSync } from 'fs';
+import { writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
-import { type Result, ok, type ProsodyVector } from '../../core/models.js';
+import { type Result, ok, type ProsodyVector, CognitivePolarity } from '../../core/models.js';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
 
 import { HexagramManager } from '../../routing/HexagramManager.js';
@@ -186,11 +186,9 @@ export class SoundtrackLimb {
         const lightWeight = prosody.whimsy * (1 - prosody.darkTone);
 
         // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ 1. Derive I-Ching States + Real-time Biasing Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-        const interpretation = this.hexagram.getInterpretation();
+        const contract = this.hexagram.getContract();
+        const ternary = contract.polarity;
         const currentYao = this.hexagram.getYaoState();
-        const isYin = this.hexagram.isYin();
-
-        const ternary: 'Yang' | 'Yin' | 'YinYang' = isYin ? 'Yin' : 'Yang';
 
         // Mix local prosody chaos with global Yao density
         let yaoIdx = 1;
@@ -212,7 +210,7 @@ export class SoundtrackLimb {
 
         // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ 2. Derive Audio Parameters Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         // Base Freq: Yin=Low (minor/dark), Yang=High (major/bright)
-        const baseFreq = ternary === 'Yin' ? 55 : ternary === 'Yang' ? 110 : 73.42; // A1, A2, D2
+        const baseFreq = ternary === CognitivePolarity.YIN ? 55 : ternary === CognitivePolarity.YANG ? 110 : 73.42; // A1, A2, D2
 
         // BPM / Sequence Rate based on Yao
         const bps = yaoState === 0 ? 8 : yaoState === 2 ? 4 : yaoState === 3 ? 1 : 2; // Beats per second
@@ -237,7 +235,7 @@ export class SoundtrackLimb {
         // Convert the 6-bit hexagram into a mathematical step sequence.
         // E.g., '101100' -> arr[mod(trunc(t*bps), 6)] -> yields base multipliers
         const stepMultipliers = hexagram.split('').map((bit: string) =>
-            bit === '1' ? (ternary === 'Yin' ? 1.5 : 2.0) : (ternary === 'Yin' ? 1.2 : 1.0)
+            bit === '1' ? (ternary === CognitivePolarity.YIN ? 1.5 : 2.0) : (ternary === CognitivePolarity.YIN ? 1.2 : 1.0)
         );
 
         // 1. Voice Definitions
@@ -285,7 +283,7 @@ export class SoundtrackLimb {
 }
 
 interface SynthParams {
-    ternary: 'Yang' | 'Yin' | 'YinYang';
+    ternary: CognitivePolarity;
     yaoState: number;
     hexagram: string;
     baseFreq: number;

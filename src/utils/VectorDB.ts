@@ -141,6 +141,15 @@ export class VectorDB {
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (line_index, projectId)
             );
+
+            CREATE TABLE IF NOT EXISTS cognitive_anomalies (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tick INTEGER NOT NULL,
+                event_id TEXT,
+                anomaly_type TEXT NOT NULL,
+                data_json TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            );
         `);
 
         // Migration/Hardening: Ensure columns exist
@@ -585,6 +594,22 @@ export class VectorDB {
         if (best) return ok(best.metadata);
 
         return ok(null);
+    }
+
+    /**
+     * addAnomaly - Direct persistence of forensic structural deviations.
+     */
+    public addAnomaly(tick: number, eventId: string | null, type: string, data: any): Result<void> {
+        if (!this.db) return { ok: false, error: new Error('Database not initialized') };
+        try {
+            this.db.prepare(`
+                INSERT INTO cognitive_anomalies (tick, event_id, anomaly_type, data_json, created_at)
+                VALUES (?, ?, ?, ?, ?)
+            `).run(tick, eventId, type, JSON.stringify(data), Date.now());
+            return ok(undefined);
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
     }
 
     public close(): void {

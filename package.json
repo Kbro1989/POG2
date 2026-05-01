@@ -19,7 +19,7 @@
     "lint": "eslint src --ext .ts",
     "learn-rsmv": "tsx src/demo_rsmv_learning.ts",
     "ingest-reference": "tsx ingest_full_reference_sets.ts",
-    "test-kbd": "tsx src/tests/kbd_roar_cinema.ts",
+    "test-pog": "tsx src/tests/kbd_roar_cinema.ts",
     "inspect-cache": "tsx inspect_objcache.ts",
     "extract-npc": "tsx extract_npc_raw.ts",
     "extract-item": "tsx extract_item_raw.ts",

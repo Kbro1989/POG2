@@ -1,4 +1,4 @@
-﻿import { createRequire } from 'module';
+import { createRequire } from 'module';
 import * as path from 'path';
 const require = createRequire(import.meta.url);
 let GameCacheLoader: any = null;
@@ -67,7 +67,7 @@ export class MaterialLimb {
                         materials[matId] = decoded;
                         count++;
                     } catch (e) {
-                         // Some files might fail parsing if they are corrupt or unexpected version
+                        logger.warn({ archive: archiveInfo.minor, file: f.fileid, error: (e as Error).message }, 'Failed to decode material substrate entry. Skipping corrupt file.');
                     }
                 }
             }
@@ -108,7 +108,9 @@ export class MaterialLimb {
                 this.cache.close();
                 this.cache = null;
                 logger.info('MaterialLimb cache connection closed.');
-            } catch (e) {}
+            } catch (e) {
+                logger.error({ error: (e as Error).message }, 'Failed to gracefully close MaterialLimb cache connection.');
+            }
         }
     }
 }

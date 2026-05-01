@@ -47,19 +47,20 @@ export class EndpointHealer {
     async diagnoseAndHeal(provider: string, error: string, model?: string): Promise<HealerDiagnostic> {
         logger.info({ provider, error, model }, 'Endpoint healer activated');
 
+        const contract = this.hexagram.getContract();
         const yao = this.hexagram.getYaoState?.() || YaoState.YoungYang;
 
         // Cognitive Immunology Phase 1: Deep Dormancy & Chaos Restraints
-        if (yao === YaoState.OldYin || yao === YaoState.OldMixed) {
-            logger.warn({ provider, yao }, 'Immunology Restraint: Endpoint Healer refusing active shell recovery due to dormant/chaotic state.');
+        if (!contract.gates.allowActiveRecovery) {
+            logger.warn({ provider, yao }, 'Immunology Restraint: Endpoint Healer refusing active shell recovery due to contract restraint.');
             await this.hexagram.pushLine({
                 lineIndex: 0,
                 importance: 0.9,
                 title: 'Healer Suppressed',
-                content: `Refused aggressive restart of ${provider}. Operating in local/dormant state.`,
+                content: `Refused aggressive restart of ${provider}. Operating in local/dormant state based on global gates.`,
                 state: yao
             });
-            return { provider, checks: [], resolved: false, resolution: `Suppressed recovery loop: Cognitive state is ${yao}.` };
+            return { provider, checks: [], resolved: false, resolution: `Suppressed recovery loop: Cognitive gate blocked active recovery.` };
         }
 
         // Pin diagnostic start to Hexagram

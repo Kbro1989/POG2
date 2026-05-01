@@ -1,10 +1,11 @@
-import { type Result, type Ternary, type TaskClass, type AICapability } from '../../core/models.js';
+import { type Result, type Ternary, type TaskClass, type AICapability, type RoutingSnapshot, type RoutingDecisionAudit } from '../../core/models.js';
 import { CapabilityRegistry, type AIServiceType } from './CapabilityRegistry.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { WorkforceManifest } from '../../routing/WorkforceManifest.js';
 import { SovereignDomain } from '../../types/SovereignDomain.js';
 import { createLogger } from "../../utils/logger.js";
 import { SubstrateResolver } from '../../engines/gameplay/SubstrateResolver.js';
+import { CNSGodheadPulseVolley } from '../../engines/gameplay/CNSGodheadPulseVolley.js';
 
 const logger = createLogger('AIDispatcher');
 
@@ -17,25 +18,6 @@ export interface RoutingPolicy {
   fallback: ModelTier[];
   allowCloud: boolean;
   cloudOptional: boolean;
-}
-
-export interface DispatchRequest {
-    readonly capabilityId: string;
-    readonly payload: string;
-    readonly modelOverride?: string;
-    readonly systemPrompt?: string;
-    readonly taskClass?: TaskClass; // Optional override for classification
-}
-
-export interface DispatchResponse {
-    readonly success: boolean;
-    readonly result: string;
-    readonly error?: string;
-    readonly serviceUsed: AIServiceType | 'NONE';
-    readonly state: ServiceState;
-    readonly model?: string;
-    readonly status: Ternary; // 1: OK, 0: IDLE, -1: ERROR
-    readonly [key: string]: string | number | boolean | null | undefined | object;
 }
 
 const MODEL_POLICY: Record<TaskClass, RoutingPolicy> = {
@@ -91,81 +73,44 @@ export class AIDispatcher {
         types.forEach(t => this.serviceStates.set(t, 'IDLE'));
     }
 
-    async dispatch(request: DispatchRequest): Promise<DispatchResponse> {
+    async dispatch(request: { capabilityId: string; payload: string; context?: any; snapshot?: RoutingSnapshot; modelOverride?: string }): Promise<Result<any>> {
         const capability = CapabilityRegistry[request.capabilityId];
         if (!capability) {
-            return {
-                success: false,
-                result: '',
-                error: `Unknown capability: ${request.capabilityId}`,
-                serviceUsed: 'NONE',
-                state: 'ERROR',
-                status: -1
-            };
+            return { ok: false, error: new Error(`Capability ${request.capabilityId} not registered.`) };
         }
 
-        // 1. Determine Task Class and Policy
-        const taskClass = request.taskClass || capability.taskClass || this.classifyTask(request.capabilityId, request.payload);
+        const taskClass = capability.taskClass || this.classifyTask(request.capabilityId, request.payload);
         const policy = MODEL_POLICY[taskClass] || MODEL_POLICY.AGENTIC_REASONING;
+        
+        // Use provided snapshot or get current from CNS
+        const snapshot = request.snapshot || CNSGodheadPulseVolley.getInstance()?.getRoutingSnapshot();
 
-        logger.info({ 
-            capabilityId: request.capabilityId, 
-            taskClass, 
-            primary: policy.primary 
-        }, 'Dispatching AI task via policy');
-
-        // 2. Select Model based on Policy + Current Health
-        let model = request.modelOverride || this.resolveModelFromPolicy(policy, capability);
-
+        const modelId = request.modelOverride || this.resolveModelFromPolicy(policy, capability, snapshot);
+        
+        const start = Date.now();
         try {
-            this.serviceStates.set(capability.serviceType, 'CONNECTING');
-
-            const result = await this.client.call({
-                model,
+            this.serviceStates.set(capability.serviceType, 'READY');
+            const result = await this.client.execute({
+                model: modelId,
                 prompt: request.payload,
-                systemPrompt: request.systemPrompt || 'You are a specialized Sovereign Limb agent.'
+                systemPrompt: `Capability: ${capability.name}\nTask: ${taskClass}\nDomain: ${capability.domain || 'GENERAL'}`
             });
 
-            if (result.ok) {
-                this.serviceStates.set(capability.serviceType, 'READY');
-                return {
-                    success: true,
-                    result: result.value.response,
-                    serviceUsed: capability.serviceType,
-                    state: 'READY',
-                    model: result.value.model,
-                    status: 1
-                };
-            } else {
-                this.serviceStates.set(capability.serviceType, 'ERROR');
+            const latency = Date.now() - start;
+            
+            // Causal Routing Audit
+            this.auditDecision({
+                tick: snapshot?.tick || -1,
+                taskClass,
+                policy,
+                snapshotHash: snapshot ? this.hashSnapshot(snapshot) : 'LIVE',
+                selectedModel: modelId,
+                selectedTier: this.getTierFromModel(modelId, capability),
+                latencyMs: latency,
+                success: result.ok
+            });
 
-                // If primary policy model fails, trigger the "Sovereign Guarantee" fallback
-                // but NOT by recursive dispatch, instead by finding the next best tier.
-                logger.warn({ 
-                    capabilityId: request.capabilityId, 
-                    failedModel: model, 
-                    error: result.error.message 
-                }, 'Policy model failed. Engaging Sovereign Guarantee fallback.');
-
-                const nextModel = this.resolveNextTierModel(policy, model);
-                if (nextModel && nextModel !== model) {
-                     return this.dispatch({ ...request, modelOverride: nextModel });
-                }
-
-                // If all tiers in policy fail, check if there's a hardcoded capability fallback
-                if (capability.fallback) {
-                    return this.dispatch({ ...request, capabilityId: capability.fallback });
-                }
-
-                return {
-                    success: false,
-                    result: '',
-                    error: result.error.message,
-                    serviceUsed: capability.serviceType,
-                    state: 'ERROR',
-                    status: -1
-                };
-            }
+            return result;
         } catch (error) {
             this.serviceStates.set(capability.serviceType, 'ERROR');
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -176,12 +121,8 @@ export class AIDispatcher {
             }
 
             return {
-                status: -1,
-                success: false,
-                result: '',
-                error: errorMessage,
-                serviceUsed: capability.serviceType,
-                state: 'ERROR'
+                ok: false,
+                error: new Error(errorMessage)
             };
         }
     }
@@ -194,44 +135,41 @@ export class AIDispatcher {
         return "AGENTIC_REASONING";
     }
 
-    private resolveModelFromPolicy(policy: RoutingPolicy, capability: AICapability): string {
+    private resolveModelFromPolicy(policy: RoutingPolicy, capability: AICapability, snapshot?: RoutingSnapshot): string {
         const rolodex = this.client.getRolodex();
-        const cloudSignal = SubstrateResolver.getCloudSignal();
+        
+        // 0. Policy-Driven Cloud Gate
+        let cloudStatus = 'ONLINE';
+        let cloudEffect = 'NONE';
 
-        // 0. Policy-Driven Cloud Gate: If cloud is blocked or not allowed, skip to local
-        const forceLocal = !policy.allowCloud || cloudSignal.effect === 'BLOCK_CLOUD_TASKS';
+        if (snapshot) {
+            cloudStatus = snapshot.cloudHealth.status;
+            cloudEffect = snapshot.cloudHealth.effect;
+        } else {
+            const signal = SubstrateResolver.getCloudSignal();
+            cloudStatus = signal.status;
+            cloudEffect = signal.effect;
+        }
+
+        const forceLocal = !policy.allowCloud || cloudEffect === 'BLOCK_CLOUD_TASKS';
 
         // 1. Try Primary Tier (if not forced local or primary is already local)
         if (!forceLocal || policy.primary !== 'CLOUD') {
             const primaryModel = this.getModelForTier(policy.primary, capability);
-            if (rolodex && rolodex.isModelHealthy(primaryModel)) {
-                return primaryModel;
-            }
+            const isHealthy = snapshot ? snapshot.modelHealthMap[primaryModel] : rolodex?.isModelHealthy(primaryModel);
+            if (isHealthy) return primaryModel;
         }
 
         // 2. Try Fallback Tiers in order
         for (const tier of policy.fallback) {
             if (forceLocal && tier === 'CLOUD') continue;
             const fallbackModel = this.getModelForTier(tier, capability);
-            if (rolodex && rolodex.isModelHealthy(fallbackModel)) {
-                return fallbackModel;
-            }
+            const isHealthy = snapshot ? snapshot.modelHealthMap[fallbackModel] : rolodex?.isModelHealthy(fallbackModel);
+            if (isHealthy) return fallbackModel;
         }
 
         // 3. Absolute Floor: Sovereign Local
         return this.getModelForTier("SOVEREIGN_LOCAL", capability);
-    }
-
-    private resolveNextTierModel(policy: RoutingPolicy, currentModel: string): string | null {
-        // Find which tier the current model belongs to, and return the next one in the fallback list
-        const tiers: ModelTier[] = [policy.primary, ...policy.fallback];
-        for (let i = 0; i < tiers.length - 1; i++) {
-            const tierModel = this.getModelForTier(tiers[i], {} as any);
-            if (currentModel.includes(tierModel) || currentModel === tierModel) {
-                 return this.getModelForTier(tiers[i+1], {} as any);
-            }
-        }
-        return null;
     }
 
     private getModelForTier(tier: ModelTier, capability: AICapability): string {
@@ -243,6 +181,28 @@ export class AIDispatcher {
             case "CLOUD": 
                 return capability.modelId || this.client.config.orchestratorModel;
         }
+    }
+
+    private getTierFromModel(modelId: string, capability: AICapability): ModelTier {
+        if (modelId === (this.client.config.masterLocalModel || 'deepseek-r1:8b')) return "SOVEREIGN_LOCAL";
+        if (modelId === capability.modelId) return "CLOUD";
+        return "ENRICHED_LOCAL";
+    }
+
+    private hashSnapshot(snapshot: RoutingSnapshot): string {
+        // Simple hash of the snapshot state
+        const data = `${snapshot.tick}-${snapshot.cloudHealth.status}-${snapshot.substrateHealth}`;
+        return `snap:${snapshot.tick}`;
+    }
+
+    private auditDecision(audit: RoutingDecisionAudit): void {
+        logger.info({ 
+            tick: audit.tick, 
+            task: audit.taskClass, 
+            model: audit.selectedModel, 
+            snap: audit.snapshotHash,
+            tier: audit.selectedTier
+        }, '🧬 Cognitive Routing Audit');
     }
 
     public getServiceState(type: AIServiceType): ServiceState {
@@ -259,4 +219,3 @@ export class AIDispatcher {
         };
     }
 }
-

@@ -1,10 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { GameState } from '../../core/models.js';
+import { GameState, YaoState, MovingLine } from '../../core/models.js';
 import { WorldForensicsLimb, ObjectDefinition } from './WorldForensicsLimb.js';
 import { createLogger } from '../../utils/logger.js';
 import { SpatialSovereigntyLimb } from './SpatialSovereigntyLimb.js';
 import { GameplaySovereigntyLimb } from './GameplaySovereigntyLimb.js';
+import { EpistemicTransitionKernel } from '../../engines/core/EpistemicTransitionKernel.js';
+import { HexagramManager } from '../../routing/HexagramManager.js';
 
 const logger = createLogger('VarbitSovereigntyLimb');
 
@@ -149,9 +151,37 @@ export class VarbitSovereigntyLimb {
         GameplaySovereigntyLimb.getInstance().markDirty();
         logger.info({ id, oldValue, newValue: value }, 'Authoritative VARP Update');
 
+        // Kernel signal: Varp mutation is a high-confidence gameplay state change
+        // Emit as MovingLine Line 4 (external world engagement)
+        const line: MovingLine = {
+            position: 4,
+            fromState: oldValue > 0 ? 'YANG' : 'YIN',
+            toState: value > 0 ? 'YANG' : 'YIN',
+            confidence: 1.0,
+            source: 'VarbitSovereigntyLimb',
+            timestamp: Date.now()
+        };
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const yao = HexagramManager.getInstance().getYaoState();
+            kernel.observeTransition(yao, 1.0, [line]);
+        } catch {
+            // Initialization phase
+        }
+
         // Phase 13: World Manifestation Trigger
         const affectedVarbits = this.varpToVarbits.get(id) || [];
         
+        // Phase-aware gating: skip heavy remanifest during DEGRADING
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            if (kernel.getPhaseGateMultiplier() < 0.3) {
+                logger.warn({ varpId: id, phase: kernel.getCurrentPhase() },
+                    'Remanifest deferred: kernel in DEGRADING phase.');
+                return;
+            }
+        } catch { /* kernel not initialized */ }
+
         // Find all objects in the current local area and check if they depend on these varbits/varp
         await this.remanifestAffectedObjects(id, affectedVarbits, gameState);
     }
@@ -195,6 +225,9 @@ export class VarbitSovereigntyLimb {
                         
                         obj.id = newManifestedId;
                         await spatial.swapObjectManifestation(obj.x, obj.y, obj.plane, oldManifestedId, newManifestedId);
+
+                        // Kernel signal: Confirmed world-state change = maximum confidence
+                        this.emitKernelSignal(1.0);
                     } else {
                         logger.info({ id: numericId }, 'Morphism skip: Manifested ID unchanged.');
                     }
@@ -215,5 +248,19 @@ export class VarbitSovereigntyLimb {
 
     public getForensics(): WorldForensicsLimb {
         return this.forensics;
+    }
+
+    /**
+     * emitKernelSignal — Feeds a causal confidence observation into the predictive kernel.
+     * Safe to call even if the kernel or HexagramManager aren't initialized yet.
+     */
+    private emitKernelSignal(confidence: number): void {
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const yao = HexagramManager.getInstance().getYaoState();
+            kernel.observeTransition(yao, confidence);
+        } catch {
+            // Kernel or HexagramManager not yet initialized
+        }
     }
 }

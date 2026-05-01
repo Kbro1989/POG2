@@ -546,7 +546,7 @@ export class ModelRolodex {
                 // Explicitly anchor the Substrate's configured priority routing targets
                 const expectedSovereignTargets = [
                     this.config.geminiFlashModel || 'gemini-1.5-flash',
-                    this.config.geminiProModel || 'gemini-1.5-pro',
+                    this.config.geminiProModel || 'gemini-3.0-pro',
                     this.config.geminiEmbeddingModel || 'text-embedding-004',
                     'gemini-1.5-flash-001'
                 ];

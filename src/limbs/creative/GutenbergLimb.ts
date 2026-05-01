@@ -1,6 +1,7 @@
 import { type Result, YaoState } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { VectorDB } from '../../utils/VectorDB.js';
+import { TrainingCollector } from '../../utils/TrainingCollector.js';
 import { StyleAnalyzer, type StyleProfile } from '../../utils/StyleAnalyzer.js';
 import { getGutenbergPath } from '../../utils/SovereignPathResolver.js';
 import { NarrativeExtractor, type NarrativeSegment } from '../../utils/NarrativeExtractor.js';
@@ -231,7 +232,7 @@ export class GutenbergLimb {
             books.push(metadata);
             this.saveMetadata(books);
 
-            await this.vectorDB.addLesson({
+            await TrainingCollector.getInstance().recordLesson({
                 id: `gutenberg-${id}`,
                 text: bookContent!.slice(0, 10000),
                 embedding: new Float32Array(0),
@@ -504,7 +505,7 @@ export class GutenbergLimb {
                 }
                 const response = await this.client.call({ model: this.client.config.soulIngestionModel, prompt, temperature: 0.7 });
                 if (response.ok) {
-                    await this.vectorDB.addLesson({
+                    await TrainingCollector.getInstance().recordLesson({
                         id: `lesson-${bookId}-${i}-${Date.now()}`,
                         text: response.value.response,
                         embedding: new Float32Array(0),

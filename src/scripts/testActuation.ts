@@ -15,7 +15,7 @@ async function testFlow() {
     } as any;
 
     const client = new ModelClient(config);
-    const engine = new ChromanumberEngine();
+    const engine = ChromanumberEngine.getInstance();
 
     // 1. Simulate a prompt that implies mutation
     const prompt = 'Mutate the shader to add a crimson glow effect';

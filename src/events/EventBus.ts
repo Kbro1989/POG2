@@ -12,6 +12,7 @@ export interface SovereignEvent<T = any> {
     traceId?: string;    // Binds events together across a single cognitive pipeline execution
     spanId?: string;     // Secondary grouping (e.g., trial #4 within an experiment)
     sequence?: number;   // Incremental ordering within a trace
+    fidelity?: number;   // Cognitive Fidelity Level (LearningFidelity)
     payload: T;          // The actual data payload
     meta?: Record<string, any>; // Arbitrary context (model versions, hardware constraints)
 }
@@ -56,11 +57,12 @@ export class EventBus {
      * Uses the injected deterministic queue handler (CNSGodheadPulseVolley) 
      * or falls back to Node's `setImmediate`.
      */
-    public publish(event: Omit<SovereignEvent, 'id' | 'timestamp'> & { id?: string, timestamp?: number }): string {
+    public publish(event: Omit<SovereignEvent, 'id' | 'timestamp'> & { id?: string, timestamp?: number, fidelity?: number }): string {
         const fullEvent: SovereignEvent = {
             ...event,
             id: event.id || uuidv7(),
-            timestamp: event.timestamp || Date.now()
+            timestamp: event.timestamp || Date.now(),
+            fidelity: event.fidelity
         };
 
         const subs = this.handlers.get(fullEvent.type) || [];

@@ -270,10 +270,27 @@ export class AbilityBook {
         }
 
         try {
-            const raw: RegistryFile = JSON.parse(readFileSync(registryPath, 'utf8'));
-            this.registryMeta = raw._meta;
+            const raw: any = JSON.parse(readFileSync(registryPath, 'utf8'));
+            this.registryMeta = raw._meta || { generated: new Date().toISOString(), knownAbilities: 0 };
 
-            for (const [name, entry] of Object.entries(raw.abilities)) {
+            // Handle both legacy (abilities object) and modern (styles manifest) shapes
+            const abilitiesSource: Record<string, any> = raw.abilities || {};
+            
+            // If abilities is empty but styles exists, populate from styles
+            if (Object.keys(abilitiesSource).length === 0 && raw.styles) {
+                for (const [styleName, names] of Object.entries(raw.styles)) {
+                    for (const name of (names as string[])) {
+                        abilitiesSource[name] = {
+                            style: styleName.toLowerCase(),
+                            type: 'basic', // default, refined by COMBAT_PARAMS
+                            gfx: [],
+                            wired: false
+                        };
+                    }
+                }
+            }
+
+            for (const [name, entry] of Object.entries(abilitiesSource)) {
                 const id = name.toLowerCase().replace(/[\s()]/g, '_');
                 const style = (entry.style || 'melee') as CombatStyle;
                 const type = normalizeAbilityType(entry.type || 'basic');

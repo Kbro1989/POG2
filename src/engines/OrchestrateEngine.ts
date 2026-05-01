@@ -93,7 +93,7 @@ import { VideoAssemblerLimb } from '../limbs/creative/VideoAssemblerLimb.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import { getSovereignRoot, getGodHeadRoot, getLearningDbPath, getPipelineRootPath, getRSMVCachePath, resolveSovereignPath } from '../utils/SovereignPathResolver.js';
 import { IntentVerifier } from './IntentVerifier.js';
-import { type Result, type EngineOutput, YaoState, isOk, ok, err, type ThinkingNexus, type ContextCard, type Todo, type TodoStatus, CircuitState, YAO_PRODUCTION_PREREQUISITES, type Plan, type OraclePlan, type ArchitectureManifest, SovereignDomain, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, type ActuationResult } from '../core/models.js';
+import { type Result, type EngineOutput, YaoState, isOk, ok, err, type ThinkingNexus, type ContextCard, type Todo, type TodoStatus, CircuitState, YAO_PRODUCTION_PREREQUISITES, type Plan, type OraclePlan, type ArchitectureManifest, SovereignDomain, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, type ActuationResult, CognitivePolarity, InterpretationContract } from '../core/models.js';
 import { AIDispatcher } from '../api/ai/Dispatcher.js';
 import { DomainLocker, DomainViolationError } from '../routing/DomainLocker.js';
 import { WorkforceManifest } from '../routing/WorkforceManifest.js';
@@ -250,7 +250,7 @@ export class OrchestrateEngine {
         this.pulseVolley = CNSGodheadPulseVolley.getInstance();
         this.rsmvController = RSMVController.getInstance();
         this.mcpEngine = new MCPEngine(config, this.registry);
-        this.chroma = new ChromanumberEngine();
+        this.chroma = ChromanumberEngine.getInstance();
         this.maintenance = new DBMaintenance();
         this.embedEngine = new EmbedEngine(config, renderer, router);
 
@@ -413,6 +413,7 @@ export class OrchestrateEngine {
 
         this.clinicalAudit = new ClinicalAuditTool();
         this.trainingCollector = TrainingCollector.getInstance();
+        this.trainingCollector.setVectorDB(this.vectorDB);
 
         // Sovereign AI Hive Mind: Wire hippocampus (TrainingCollector) state sharing
         this.trainingCollector.setGlobeStateLimb(this.globeState);
@@ -613,25 +614,26 @@ export class OrchestrateEngine {
      */
     private assimilateHiveEvent(type: 'rolodex' | 'error_fix' | 'fprag', payload: any, rolodex?: any): void {
         const hex = this.router.getHexagram();
+        const contract = hex.getContract();
         const yao = hex.getYaoState();
-        const isYin = hex.isYin(); // Receptive
+        const ternary = contract.polarity;
+        const isYin = ternary === CognitivePolarity.YIN; // Receptive
+        const isYang = ternary === CognitivePolarity.YANG; // Assertive
 
-        logger.debug({ type, yao, isYin }, 'Cognitive Immunology: Filtering incoming Hive event');
+        logger.debug({ type, yao, ternary }, 'Cognitive Immunology: Filtering incoming Hive event');
 
-        // Unstable transition state (OldMixed) drops external philosophy/reputation changes, but might accept error fixes.
-        if (yao === YaoState.OldMixed && type !== 'error_fix') {
-            logger.warn({ type }, 'Cognitive Immunology: Philosophy/Reputation Event rejected due to internal chaos (OldMixed).');
+        // Unstable transition state (OldMixed/Chaos) drops external philosophy/reputation changes, but might accept error fixes.
+        if (!contract.gates.allowStructuralRepair && type !== 'error_fix') {
+            logger.warn({ type }, 'Cognitive Immunology: Philosophy/Reputation Event rejected due to internal chaos (Contract Restraint).');
             hex.pinPulse(YaoState.OldMixed, `Rejected hive mind ${type} event due to chaotic transition. Maintaining local boundaries.`);
             return;
         }
 
-        if (!isYin && type === 'fprag') {
+        if (!contract.gates.allowForeignDirectives && type === 'fprag') {
             // Node is heavily Yang (Projective, assertive). It resists external instruction unless it's a critical error fix.
-            if (yao === YaoState.OldYang || yao === YaoState.YoungYang) {
-                logger.warn('Cognitive Immunology: FPRAG directive rejected. Sovereign node is heavily Projective/Yang and refuses protocol override.');
-                hex.pinPulse(YaoState.OldYang, `Rejected foreign FPRAG directive. Asserting current unified architecture.`);
-                return;
-            }
+            logger.warn('Cognitive Immunology: FPRAG directive rejected. Sovereign node refuses protocol override based on global gates.');
+            hex.pinPulse(YaoState.OldYang, `Rejected foreign FPRAG directive. Asserting current unified architecture.`);
+            return;
         }
 
         // Acceptance
@@ -1800,7 +1802,7 @@ export class OrchestrateEngine {
 
                 const embedRes = await this.client.embed(packet.content);
                 if (embedRes.ok) {
-                    this.vectorDB.addLesson({
+                    await this.trainingCollector.recordLesson({
                         id: `rsmv-wisdom-${modelData.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
                         text: packet.content,
                         embedding: embedRes.value,
@@ -2050,8 +2052,8 @@ OUTPUT FORMAT:
                     payload: params.task,
                     modelOverride: params.model
                 });
-                if (!res.success) return { ok: false, error: new Error(res.error || 'SQL Forge failed') };
-                return { ok: true, value: { output: res.result, data: res } };
+                if (!res.ok) return { ok: false, error: new Error(res.error instanceof Error ? res.error.message : (res.error || 'SQL Forge failed')) };
+                return ok({ output: res.value, data: res });
             }
         });
 
@@ -2071,8 +2073,8 @@ OUTPUT FORMAT:
                     payload: params.task,
                     modelOverride: params.model
                 });
-                if (!res.success) return { ok: false, error: new Error(res.error || 'Docs Forge failed') };
-                return { ok: true, value: { output: res.result, data: res } };
+                if (!res.ok) return { ok: false, error: new Error(res.error instanceof Error ? res.error.message : (res.error || 'Docs Forge failed')) };
+                return ok({ output: res.value, data: res });
             }
         });
 
@@ -2092,8 +2094,8 @@ OUTPUT FORMAT:
                     payload: params.task,
                     modelOverride: params.model
                 });
-                if (!res.success) return { ok: false, error: new Error(res.error || 'Refactor Forge failed') };
-                return { ok: true, value: { output: res.result, data: res } };
+                if (!res.ok) return { ok: false, error: new Error(res.error instanceof Error ? res.error.message : (res.error || 'Refactor Forge failed')) };
+                return ok({ output: res.value, data: res });
             }
         });
 
@@ -2285,7 +2287,7 @@ OUTPUT FORMAT:
             execute: async () => {
                 const res = await this.cognitive.getPersonalityCore();
                 if (!res.ok) return res as any;
-                const output = res.value.map(a => `- ${a.name} (${a.weight} fragments): ${a.description}`).join('\n');
+                const output = (res.value as any[]).map(a => `- ${a.name} (${a.weight} fragments): ${a.description}`).join('\n');
                 return ok({ output: `SOVEREIGN PERSONALITY PROFILE:\n${output || 'No active archetypes detected.'}` });
             }
         });
@@ -2630,8 +2632,8 @@ OUTPUT FORMAT:
                     payload: params.payload,
                     modelOverride: params.modelOverride
                 });
-                if (!res.success) return { ok: false, error: new Error(res.error || 'Dispatch failed') };
-                return ok({ output: res.result, data: res });
+                if (!res.ok) return { ok: false, error: new Error(res.error instanceof Error ? res.error.message : (res.error || 'Dispatch failed')) };
+                return ok({ output: res.value, data: res });
             }
         });
 
@@ -2874,10 +2876,11 @@ OUTPUT FORMAT:
                 const duration = (args as any).duration || 5;
                 const outPath = join(process.cwd(), 'procedural_metabolic_test.wav');
                 const hex = this.router.getHexagram();
+                const contract = hex.getContract();
                 const prosody = {
                     chaos: hex.getYaoState() === 0 ? 0.9 : 0.3,
-                    whimsy: hex.isYin() ? 0.2 : 0.8,
-                    darkTone: hex.isYin() ? 0.8 : 0.2,
+                    whimsy: contract.polarity === CognitivePolarity.YIN ? 0.2 : 0.8,
+                    darkTone: contract.polarity === CognitivePolarity.YIN ? 0.8 : 0.2,
                     coherence: 0.8
                 };
                 const res = await this.soundtrack.generateScore(prosody, duration, outPath);
@@ -3526,6 +3529,24 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
         if (!plan.tool) {
             return { ok: false, error: new Error('Execution plan is missing a tool.') };
         }
+
+        // --- Cognitive ISA Governance Check (Phase 220) ---
+        const contract = this.router.getHexagram().getContract();
+        const permissions = contract.permissions;
+        const toolDomain = this.registry.getToolDomain(plan.tool) || SovereignDomain.SYSTEM;
+
+        if (toolDomain === SovereignDomain.FORGE && plan.tool.includes('pedagogy') && !permissions.allowPedagogy) {
+             this.renderer.error(`[ISA Violation] Pedagogy blocked by current metabolic state.`);
+             return { ok: false, error: new Error(`Cognitive ISA Violation: Pedagogy is forbidden.`) };
+        }
+        if (plan.tool.includes('consolidate') && !permissions.allowMemoryConsolidation) {
+             this.renderer.error(`[ISA Violation] Consolidation blocked by current metabolic state.`);
+             return { ok: false, error: new Error(`Cognitive ISA Violation: Memory Consolidation is forbidden.`) };
+        }
+        if (toolDomain === SovereignDomain.RESEARCH && (plan.tool.includes('gutenberg') || plan.tool.includes('library')) && !permissions.allowSubstrateIngestion) {
+             this.renderer.error(`[ISA Violation] Substrate ingestion blocked by current metabolic state.`);
+             return { ok: false, error: new Error(`Cognitive ISA Violation: Substrate Ingestion is forbidden.`) };
+        }
         // Phase 38: Wait/Pass dispatch ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Kimi routes, workers execute
         const verdict = this.domainLocker.dispatchCheck(plan.tool);
         if (verdict.action === 'WAIT') {
@@ -3610,7 +3631,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
         }
 
         // Phase 34: Adversarial Refinement for Yang Complexity tasks
-        const toolDomain = this.registry.getToolDomain(plan.tool);
+        // toolDomain is already defined above in Phase 220
         let finalResult: Result<EngineOutput> = result as Result<EngineOutput>;
         if ((plan.yaoState === YaoState.OldYang || plan.yaoState === YaoState.YoungYang) && toolDomain !== SovereignDomain.OBSERVE) {
             this.renderer.info(`[Adversarial Audit] High Yang complexity detected. Initiating refinement loop...`);
@@ -3955,7 +3976,7 @@ Output JSON ONLY:
                 const embedRes = await this.client.embed(lessonText);
 
                 if (embedRes.ok) {
-                    await this.vectorDB.addLesson({
+                    await this.trainingCollector.recordLesson({
                         id: `retro_${Date.now()}`,
                         text: lessonText,
                         embedding: embedRes.value,

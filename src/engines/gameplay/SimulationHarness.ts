@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import { getAtlasSystemPath, getAtlasSpatialPath } from '../../utils/SovereignPathResolver.js';
-import { Coord, GameState, Result, YaoState, SkillId, EquipmentSlot, SovereignAvatar, Item } from '../../core/models.js';
+import { Coord, GameState, Result, YaoState, SkillId, EquipmentSlot, SovereignAvatar, Item, TruthClass } from '../../core/models.js';
 import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { WorldGroundingLimb } from '../../limbs/world_grounding/WorldGroundingLimb.js';
 import { HexagramManager } from '../../routing/HexagramManager.js';
@@ -26,12 +26,14 @@ import { AbilityBook, AbilityDefinition } from './AbilityBook.js';
 import { ItemBook } from './ItemBook.js';
 import { LuckTierRegistry } from './LuckTierRegistry.js';
 import { LootResolutionEngine } from './LootResolutionEngine.js';
+import { EpistemicTransitionKernel } from '../core/EpistemicTransitionKernel.js';
 
 export interface TickEvent {
-    id: string;
-    signature: 'COMBAT_HIT' | 'COMBAT_MISS' | 'SKILL_SUCCESS' | 'SKILL_FAIL' | 'ITEM_DROP' | 'EXPRESSION_TRIGGER';
-    metadata: any;
-    timestamp: number;
+    readonly id: string;
+    readonly signature: 'COMBAT_HIT' | 'COMBAT_MISS' | 'SKILL_SUCCESS' | 'SKILL_FAIL' | 'ITEM_DROP' | 'EXPRESSION_TRIGGER';
+    readonly metadata: any;
+    readonly timestamp: number;
+    readonly truthClass: TruthClass;
 }
 
 const logger = createLogger('SimulationHarness');
@@ -257,20 +259,25 @@ export class SimulationHarness {
                 this.switchboard.broadcast({
                     type: 'tick_event',
                     tick: tickCount,
-                    events: [{
-                        id: dropId,
-                        signature: 'ITEM_DROP',
-                        metadata: {
-                            source: item.sourceNpcName,
-                            itemName: item.itemName,
-                            quantity: item.quantity,
-                            rarity: item.rollMeta.rarityLabel,
-                            geValue,  // Passed to HUD for LootBeamRegistry tier resolution
-                            x: drop.coord.x,
-                            y: drop.coord.y
-                        },
-                        timestamp: Date.now()
-                    }]
+                    events: [
+                        EpistemicTransitionKernel.getInstance().emitExecutionEvent({
+                            id: dropId,
+                            action: 'ITEM_DROP',
+                            metadata: {
+                                source: item.sourceNpcName,
+                                itemName: item.itemName,
+                                quantity: item.quantity,
+                                rarity: item.rollMeta.rarityLabel,
+                                geValue,
+                                x: drop.coord.x,
+                                y: drop.coord.y
+                            },
+                            timestamp: Date.now(),
+                            tick: tickCount,
+                            source: 'SIMULATION' as any,
+                            inputs: {}
+                        } as any)
+                    ]
                 });
             }
             state.groundItems.set(coordKey, cellItems);
@@ -503,7 +510,8 @@ export class SimulationHarness {
                             id: `npc_${npcId}`,
                             signature: 'SKILL_SUCCESS',
                             metadata: { practice: true, type: mapping.context, exp: 12.5 },
-                            timestamp: Date.now()
+                            timestamp: Date.now(),
+                            truthClass: TruthClass.EXECUTION
                         });
                     }
                     break;
@@ -512,7 +520,8 @@ export class SimulationHarness {
                         id: `npc_${npcId}`,
                         signature: 'EXPRESSION_TRIGGER',
                         metadata: { pose: 'movement_pulse', duration: 600 },
-                        timestamp: Date.now()
+                        timestamp: Date.now(),
+                        truthClass: TruthClass.EXECUTION
                     });
                     break;
             }
@@ -534,7 +543,8 @@ export class SimulationHarness {
                             id: `obj_${objId}`,
                             signature: 'SKILL_SUCCESS',
                             metadata: { substrate: substrate.bucket, amount: substrate.amount, stackable: substrate.stackable, station: true, type: mapping.context, exp: 45.0 },
-                            timestamp: Date.now()
+                            timestamp: Date.now(),
+                            truthClass: TruthClass.EXECUTION
                         });
                         logger.debug({ objId, bucket: substrate.bucket, amount: substrate.amount }, 'Consumable success verified across buckets with stackability.');
                     }
@@ -547,7 +557,8 @@ export class SimulationHarness {
                             id: `obj_${objId}`,
                             signature: 'ITEM_DROP',
                             metadata: { effect: 'deposit_vfx', source: coalSubstrate.bucket, amount: coalSubstrate.amount, destination: 'bank' },
-                            timestamp: Date.now()
+                            timestamp: Date.now(),
+                            truthClass: TruthClass.EXECUTION
                         });
                     }
                     break;
@@ -652,7 +663,8 @@ export class SimulationHarness {
                             id: entity.id || 'player_sovereign',
                             signature: 'COMBAT_HIT',
                             metadata: { target: t.id || 'player', damage: finalDamage, type: intent.action, abilityId: intent.abilityId, status: isDead ? 'DEAD' : 'ALIVE' },
-                            timestamp: Date.now()
+                            timestamp: Date.now(),
+                            truthClass: TruthClass.EXECUTION
                         });
                         
                         logger.info({ 
@@ -835,7 +847,7 @@ export class SimulationHarness {
                 })
             });
 
-            if (insight.success) {
+            if (insight.ok) {
                 logger.info('[GODHEAD] Simulation drift reconciled. Aligning metabolic vectors.');
             }
         } finally {

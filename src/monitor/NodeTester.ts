@@ -59,6 +59,10 @@ export class NodeTester {
         this.packageRoot = join(thisDir, '..', '..');
     }
 
+    public getRouter(): TernaryRouter {
+        return this.router;
+    }
+
     private nodeBase(node: NeuralNode): Pick<NeuralNode, 'path' | 'role' | 'category' | 'docDomain'> {
         return { path: node.path, role: node.role, category: node.category, docDomain: node.docDomain };
     }
@@ -112,7 +116,7 @@ export class NodeTester {
             logger.info('All nodes reporting ONLINE - full neurological integrity confirmed.');
             SubstrateResolver.setStatus(SubstrateState.ONLINE);
         } else if (offline.length === 0 && degraded.length > 0) {
-            logger.warn({ degraded: degraded.length }, 'Substrate operating in DEGRADED mode (Catalogs only). AUTHORIZED.');
+            logger.warn({ degraded: degraded.length, nodes: degraded.map(n => `${n.path} (${n.details})`) }, 'Substrate operating in DEGRADED mode (Catalogs only). AUTHORIZED.');
             SubstrateResolver.setStatus(SubstrateState.DEGRADED);
         } else {
             logger.error({ offline: offline.length }, 'Substrate CRITICAL FAILURE. Heartbeat VETOED.');

@@ -3,7 +3,7 @@ import { EventBus } from '../../events/EventBus.js';
 import { createLogger } from '../../utils/logger.js';
 import { performance } from 'perf_hooks';
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
-import { SubstrateState, YaoState, GameState, SovereignAvatar } from '../../core/models.js';
+import { SubstrateState, YaoState, GameState, SovereignAvatar, LearningFidelity, type RoutingSnapshot, type WorldDelta, type CausalEvidence, type EventOutcome, type EventSource, type TickEvent, type TileLock, TruthClass, ChaosPhase } from '../../core/models.js';
 import { RSMVController } from '../../vision/RSMVController.js';
 import { CacheForensicsLimb } from '../../limbs/spatial/CacheForensicsLimb.js';
 import { SwitchboardLimb, type AdminCommand } from '../../monitor/SwitchboardLimb.js';
@@ -12,14 +12,25 @@ import { WorldGroundingLimb } from '../../limbs/world_grounding/WorldGroundingLi
 import { GameplaySovereigntyLimb } from '../../limbs/spatial/GameplaySovereigntyLimb.js';
 import { GlobeStateLimb } from '../../limbs/spatial/GlobeStateLimb.js';
 import { GameplayModule } from './MinigameInterfaces.js';
+import { TransientObserver } from '../../vision/TransientObserver.js';
+import { ChromanumberEngine } from '../ChromanumberEngine.js';
 import { SubstrateResolver } from './SubstrateResolver.js';
+import { GlobeReconciliationKernel } from '../../routing/GlobeReconciliationKernel.js';
 import { NodeTester } from '../../monitor/NodeTester.js';
-import { CNSCausalityLedger, type TickEvent, type EventOutcome, type TileLock, type EventSource } from '../core/CNSCausalityLedger.js';
+import { CNSCausalityLedger } from '../core/CNSCausalityLedger.js';
+import { CausalPatternExtractor } from '../core/CausalPatternExtractor.js';
+import { EpistemicTransitionKernel } from '../core/EpistemicTransitionKernel.js';
+import { InvariantCompiler } from '../core/InvariantCompiler.js';
+import { TruthReconciler } from '../core/TruthReconciler.js';
 import { Renderer } from '../../ui/Renderer.js';
 import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { GhostSplatEngine } from '../../substrates/GhostSplatEngine.js';
 import { PlayerAgent } from './PlayerAgent.js';
 import crypto from 'crypto';
+import { WaitDecisionMaker } from '../core/WaitDecisionMaker.js';
+import { HexagramManager } from '../../routing/HexagramManager.js';
+import { TransitionPrediction } from '../../core/models.js';
+import type { TransitionalVector } from '../core/WaitDecisionMaker.js';
 
 const logger = createLogger('CNSGodheadPulseVolley');
 
@@ -45,6 +56,15 @@ interface QueueResult {
 
 export type QueueTier = "CRITICAL" | "NORMAL" | "VISUAL_ONLY";
 
+interface PendingCommand {
+    id: string;
+    action: any; // We'll simplify Action typing for now since it wasn't provided fully
+    predictedOutcome: TransitionPrediction;
+    transitionalVector: TransitionalVector;
+    commitDeadline: number;
+    state: 'PENDING' | 'COMMITTED' | 'CANCELLED';
+}
+
 /**
  * CNSGodheadPulseVolley
  * The deterministic execution kernel for POG2 Sovereign.
@@ -53,8 +73,13 @@ export type QueueTier = "CRITICAL" | "NORMAL" | "VISUAL_ONLY";
 export class CNSGodheadPulseVolley {
     private static instance: CNSGodheadPulseVolley | undefined;
     private readonly TICK_INTERVAL = 300; // 300ms Player Reflex Pulse
+    private readonly BUDGET_MS = 150; // max budget for simulation
+    
+    private pendingCommands: Map<string, PendingCommand> = new Map();
+    private waitDecisionMaker: WaitDecisionMaker;
+    private lastAuditScore: number = 1.0; // Perceptual grounding persistence
+    private lastTickStart: number = 0;
     private readonly GAME_TICK_INTERVAL = 600; // 600ms World Pulse
-    private readonly BUDGET_MS = 150;      // Warning threshold for tick overflow
     
     // Dependencies resolved lazily via resolve() to avoid boot-order violations.
     private switchboard?: SwitchboardLimb;
@@ -68,6 +93,7 @@ export class CNSGodheadPulseVolley {
     private renderer?: Renderer;
     private ghostSplat?: GhostSplatEngine;
     private globe?: GlobeStateLimb;
+    private observer?: TransientObserver;
     private readonly ledger = CNSCausalityLedger.getInstance();
     private pulseStartTime: number = 0;
     private readonly PULSE_DEADLINE_MS = 300;
@@ -82,6 +108,11 @@ export class CNSGodheadPulseVolley {
         NORMAL: [],
         VISUAL_ONLY: []
     };
+    private routingSnapshot?: RoutingSnapshot;
+
+    public getRoutingSnapshot(): RoutingSnapshot | undefined {
+        return this.routingSnapshot;
+    }
 
     public enqueueNow(op: DeferredOp, tier: QueueTier = "NORMAL"): void {
         this.currentTickQueues[tier].push(op);
@@ -104,13 +135,17 @@ export class CNSGodheadPulseVolley {
         if (!this.forensics) this.forensics = CacheForensicsLimb.getInstance();
         if (!this.ghostSplat) this.ghostSplat = GhostSplatEngine.getInstance();
         if (!this.globe) this.globe = (this.gameplay as any)?.globe; // Usually initialized in NeurologicalMap
+        if (!this.observer) this.observer = TransientObserver.getInstance();
     }
 
-    private static readonly PRIORITY: Record<EventSource, number> = {
+    private static readonly PRIORITY: Record<string, number> = {
         ADMIN: 0,
         SYSTEM: 1,
         AI: 2,
-        WORLD_SCRIPT: 3
+        WORLD_SCRIPT: 3,
+        USER: 4,
+        POG2: 5,
+        NETWORK: 6
     };
 
     private substrateState: SubstrateState = SubstrateState.OFFLINE;
@@ -124,6 +159,7 @@ export class CNSGodheadPulseVolley {
         // Router will be injected by OrchestrateEngine to ensure shared context.
         // It's initialized with a dummy config first to satisfy types.
         this.router = new TernaryRouter({} as any);
+        this.waitDecisionMaker = WaitDecisionMaker.getInstance();
     }
 
     public static getInstance(): CNSGodheadPulseVolley {
@@ -232,14 +268,124 @@ export class CNSGodheadPulseVolley {
                 return;
             }
 
-            const pendingCommands = this.switchboard!.drainAdminQueue();
+            const pendingAdminCommands = this.switchboard!.drainAdminQueue();
+            this.lastTickStart = performance.now();
+            const tickId = crypto.randomUUID();
+
+            // ═══════════════════════════════════════════════════════════════
+            // PHASE 1: PREDICTION [0-150ms]
+            // ═══════════════════════════════════════════════════════════════
+
+            // [0-50ms] GhostSplat projection
+            const ghostSplat = GhostSplatEngine.getInstance();
+            const field = ghostSplat.project(this.gameplay?.globalState as any, 2, this.gameplay?.playerAgent);
             
-            // Phase 32: Tick-Accurate World Simulation (7-Step Flow)
-            await this.pulse(pendingCommands);
+            if (!field) {
+                logger.warn('GhostSplat projection failed — executing fallback');
+                await this.pulse(pendingAdminCommands);
+                return;
+            }
+
+            // [50-100ms] Transitional state computation
+            const hexManager = HexagramManager.getInstance();
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const diagnostics = kernel.getDiagnostics();
+
+            const transitionalState = hexManager.getTransitionalState(field, diagnostics as any);
+            const transitionalVector: TransitionalVector = {
+                movingLines: transitionalState.movingLines,
+                transitionProgress: transitionalState.transitionProgress,
+                energyFlow: transitionalState.energyFlow,
+                falseStability: transitionalState.falseStability
+            };
+
+            logger.debug({
+                tickId,
+                movingLines: transitionalVector.movingLines.length,
+                energyFlow: transitionalVector.energyFlow,
+                falseStability: transitionalVector.falseStability,
+                progress: transitionalVector.transitionProgress.toFixed(3)
+            }, '🔮 Transitional vector computed');
+
+            // [100-150ms] Prediction
+            const currentYao = this.getHexYaoState();
+            const proposedAction = { type: 'PULSE', commands: pendingAdminCommands }; // simplified
+
+            const prediction = kernel.predictTransition(currentYao, `action-${tickId}`);
+
+            // ═══════════════════════════════════════════════════════════════
+            // PHASE 2: WAIT DECISION [150-300ms]
+            // ═══════════════════════════════════════════════════════════════
+
+            const decision = this.waitDecisionMaker.evaluate(
+                prediction,
+                transitionalVector,
+                0, // timeInWaitMs = 0 (fresh decision)
+                this.lastAuditScore
+            );
+
+            logger.debug({
+                tickId,
+                decision: decision.state,
+                confidence: decision.confidence.toFixed(3),
+                deadline: decision.deadlineMs
+            }, '⏳ Wait decision rendered');
+
+            // Broadcast Hysteresis Telemetry
+            if (this.switchboard) {
+                this.switchboard.broadcast({
+                    type: 'hysteresis_state',
+                    payload: {
+                        tickId,
+                        decision: decision.state,
+                        confidence: decision.confidence,
+                        deadlineMs: decision.deadlineMs,
+                        movingLines: transitionalVector.movingLines,
+                        abilityQueue: this.getCurrentAbilityQueue(),
+                        timestamp: Date.now()
+                    }
+                });
+            }
+
+            // ── HARD COMMIT ──
+            if (decision.state === 'COMMIT') {
+                await this.executeAction(tickId, pendingAdminCommands, prediction, transitionalVector);
+                this.scheduleObservation(tickId, currentYao, prediction, 300);
+            } 
+            // ── PREPARE (deferred commit at 300ms) ──
+            else if (decision.state === 'PREPARE') {
+                const cmd: PendingCommand = {
+                    id: tickId,
+                    action: pendingAdminCommands,
+                    predictedOutcome: prediction,
+                    transitionalVector,
+                    commitDeadline: this.lastTickStart + 300,
+                    state: 'PENDING'
+                };
+                this.pendingCommands.set(tickId, cmd);
+
+                // Schedule commit at 300ms boundary
+                setTimeout(() => this.commitPendingCommand(tickId), 300);
+                this.scheduleObservation(tickId, currentYao, prediction, 300);
+            }
+            // ── HARD WAIT ──
+            else if (decision.state === 'WAIT') {
+                const cmd: PendingCommand = {
+                    id: tickId,
+                    action: pendingAdminCommands,
+                    predictedOutcome: prediction,
+                    transitionalVector,
+                    commitDeadline: this.lastTickStart + decision.deadlineMs,
+                    state: 'PENDING'
+                };
+                this.pendingCommands.set(tickId, cmd);
+
+                this.installTriggerListeners(tickId, decision.triggerConditions);
+                setTimeout(() => this.evaluateWaitTimeout(tickId), decision.deadlineMs);
+                this.scheduleObservation(tickId, currentYao, prediction, 300);
+            }
 
             // 3. Post-Actuation Verification (Spatial Vision) - Non-blocking to pulse rhythm
-            // Throttle to every 10th tick (6s) — LLM vision latency far exceeds 600ms,
-            // and the game world doesn't change visually that fast.
             if (this.substrateState === SubstrateState.ONLINE && this.vision && this.tickCount % 10 === 0) {
                 this.vision.verifySpatialAnchor().then(verification => {
                     if (!verification.ok) {
@@ -255,22 +401,179 @@ export class CNSGodheadPulseVolley {
         } finally {
             const duration = performance.now() - start;
             
-
             // Self-Correcting Scheduling (Drift Compensation)
             const nextDelay = Math.max(0, this.TICK_INTERVAL - duration);
             
-            logger.debug({
-                duration,
-                drift: duration - this.TICK_INTERVAL,
-                limit: this.TICK_INTERVAL
-            }, '[CNS GODHEAD] Tick metrics');
-
             if (duration > this.BUDGET_MS) {
                 logger.warn({ duration, limit: this.TICK_INTERVAL }, 'CNS Tick Overflow â€” authoritative simulation drift detected.');
             }
 
             setTimeout(() => this.tick(), nextDelay);
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // DEFERRED EXECUTION HANDLERS
+    // ═══════════════════════════════════════════════════════════════
+
+    private commitPendingCommand(tickId: string): void {
+        const cmd = this.pendingCommands.get(tickId);
+        if (!cmd || cmd.state !== 'PENDING') return;
+
+        const kernel = EpistemicTransitionKernel.getInstance();
+        const currentDiagnostics = kernel.getDiagnostics();
+        
+        if (currentDiagnostics.phaseGateMultiplier < 0.3) {
+            logger.warn({ tickId }, 'Phase gate too low — cancelling deferred commit');
+            cmd.state = 'CANCELLED';
+            this.pendingCommands.delete(tickId);
+            return;
+        }
+
+        cmd.state = 'COMMITTED';
+        this.executeAction(tickId, cmd.action, cmd.predictedOutcome, cmd.transitionalVector);
+        this.pendingCommands.delete(tickId);
+    }
+
+    private evaluateWaitTimeout(tickId: string): void {
+        const cmd = this.pendingCommands.get(tickId);
+        if (!cmd || cmd.state !== 'PENDING') return;
+
+        const kernel = EpistemicTransitionKernel.getInstance();
+        const currentYao = this.getHexYaoState();
+        
+        const freshPrediction = kernel.predictTransition(currentYao, `action-${tickId}`);
+
+        if (freshPrediction.confidence > 0.3) {
+            logger.info({ tickId }, 'Wait deadline — forced commit');
+            cmd.state = 'COMMITTED';
+            this.executeAction(tickId, cmd.action, freshPrediction, cmd.transitionalVector);
+        } else {
+            logger.warn({ tickId }, 'Wait deadline — forced cancel');
+            cmd.state = 'CANCELLED';
+        }
+        
+        this.pendingCommands.delete(tickId);
+    }
+
+    private getCurrentAbilityQueue(): any[] {
+        return Array.from(this.pendingCommands.values())
+            .filter(cmd => cmd.state === 'PENDING')
+            .map(cmd => {
+                // Determine the primary action name from the command batch
+                let actionName = 'PULSE_SYNC';
+                if (Array.isArray(cmd.action) && cmd.action.length > 0) {
+                    const first = cmd.action[0];
+                    actionName = first.type || (first.metadata?.abilityName) || 'ADMIN_CMD';
+                }
+                
+                return {
+                    id: cmd.id,
+                    actionType: actionName,
+                    deadlineMs: Math.max(0, cmd.commitDeadline - Date.now()),
+                    confidence: cmd.predictedOutcome.confidence
+                };
+            });
+    }
+
+    private installTriggerListeners(tickId: string, conditions: string[]): void {
+        const kernel = EpistemicTransitionKernel.getInstance();
+        for (const condition of conditions) {
+            // Simplified: we'll just listen to phase shifts for now as an example trigger
+            if (condition === 'phase_shifts_to_recovering') {
+                kernel.once('phaseShift', (phase: any) => {
+                    if (phase === 'RECOVERING') this.onTrigger(tickId, condition);
+                });
+            }
+        }
+    }
+
+    private onTrigger(tickId: string, condition: string): void {
+        const cmd = this.pendingCommands.get(tickId);
+        if (!cmd || cmd.state !== 'PENDING') return;
+
+        logger.debug({ tickId, condition }, 'Wait trigger fired — early commit');
+        cmd.state = 'COMMITTED';
+        this.executeAction(tickId, cmd.action, cmd.predictedOutcome, cmd.transitionalVector);
+        this.pendingCommands.delete(tickId);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // OBSERVATION PHASE [300ms]
+    // ═══════════════════════════════════════════════════════════════
+
+    private scheduleObservation(
+        tickId: string,
+        prevYao: YaoState,
+        prediction: TransitionPrediction,
+        delayMs: number
+    ): void {
+        setTimeout(async () => {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const actualYao = this.getHexYaoState();
+
+            // Observe transition
+            kernel.observeTransition(actualYao, prediction.confidence);
+
+            // Phase 42: Autonomous Chromatic Auditing
+            if (this.observer) {
+                // We use the predicted name to verify the chromatic reality
+                const targetName = (prediction as any).targetName || 'Sovereign';
+                const obsRes = await this.observer.observe(targetName, 'latest_frame.png');
+                if (obsRes.ok) {
+                    const engine = ChromanumberEngine.getInstance();
+                    const auditRes = await engine.analyzeImage({
+                        imagePath: obsRes.value.imagePath || 'latest_frame.png',
+                        prompt: `Validate ${targetName} chromaticity`,
+                        anatomyFacts: {},
+                        expectedPalette: obsRes.value.expectedPalette
+                    });
+                    
+                    // Update authoritative grounding score
+                    if (auditRes.ok) {
+                        this.lastAuditScore = auditRes.value.confidence || 0.95;
+                        logger.info({ score: this.lastAuditScore }, 'Perceptual grounding updated');
+                    } else {
+                        this.lastAuditScore *= 0.8; // Decay on failure
+                    }
+                }
+            }
+
+            // Fetch latest error metrics from registry
+            const error = 0.1; // placeholder for derived error
+            
+            // Feed error back to GhostSplat
+            this.feedbackToGhostSplat(tickId, error);
+
+        }, delayMs);
+    }
+
+    private feedbackToGhostSplat(tickId: string, error: number): void {
+        // Reduced confidence feedback loop
+    }
+
+    private async executeAction(
+        tickId: string,
+        commands: AdminCommand[],
+        prediction: TransitionPrediction,
+        transitionalVector: TransitionalVector
+    ): Promise<void> {
+        const kernel = EpistemicTransitionKernel.getInstance();
+        const gate = kernel.getPhaseGateMultiplier();
+        
+        logger.info({
+            tickId,
+            actionCount: commands.length,
+            phase: prediction.targetPhase,
+            gate: gate.toFixed(2),
+            movingLines: transitionalVector.movingLines.length
+        }, '⚡ Action committed');
+
+        // Phase 11: Action Pipeline Feedback
+        kernel.recordAction('PULSE_COMMIT', prediction.confidence);
+
+        // Execute via pulse (which contains original conflict resolution logic)
+        await this.pulse(commands);
     }
 
 
@@ -292,11 +595,37 @@ export class CNSGodheadPulseVolley {
         }
     }
 
+    /**
+     * getHexYaoState — Safe accessor for the HexagramManager's current Yao state.
+     * Falls back to substrate-based inference if the manager is unavailable.
+     */
+    private getHexYaoState(): YaoState {
+        try {
+            const { HexagramManager } = require('../../routing/HexagramManager.js');
+            return HexagramManager.getInstance().getYaoState();
+        } catch {
+            // Fallback: infer from substrate state
+            return this.substrateState === SubstrateState.ONLINE ? YaoState.YoungYang
+                : this.substrateState === SubstrateState.OFFLINE ? YaoState.OldYin
+                : YaoState.YoungYin;
+        }
+    }
+
 
     public async pulse(commands: AdminCommand[]): Promise<GameState | undefined> {
         this.pulseStartTime = performance.now();
         this.resolve();
-        // 1. Collect & Normalize
+        // 0. Resolve Substrate Health once per pulse
+        this.substrateState = await SubstrateResolver.resolve();
+        this.updateTernaryState(this.substrateState);
+
+        // 1. Build Routing Snapshot (Pure function of substrate state)
+        this.routingSnapshot = await this.buildRoutingSnapshot(this.substrateState);
+
+        // 2. Prepare Local Pulse Scopes (No temporal bleed)
+        const pulseDeltas: WorldDelta[] = [];
+
+        // 3. Snapshot valid events
         const events = commands.map(cmd => this.createTickEvent(cmd));
 
         // 2. Sort (Priority -> Time -> ID)
@@ -311,12 +640,93 @@ export class CNSGodheadPulseVolley {
         const tx = this.grounding!.beginTick();
 
         // 5. Execute valid events
-        for (const event of resolved) {
-            if (event.outcome === "SUCCESS") {
-                await this.executeEvent(tx, event);
+        for (let event of resolved) {
+            // A. Signal Accumulation Phase
+            const signals: CausalEvidence[] = [];
+
+            // 1. Spatial Signal (from resolveConflicts)
+            if (event.outcome === "REJECTED_COLLISION") {
+                signals.push({
+                    source: "SPATIAL",
+                    code: "TILE_LOCK_CONTENTION",
+                    description: "Target tile is locked by a higher-priority event.",
+                    severity: "BLOCKER"
+                });
             }
-            // 6. Record Outcome
-            this.ledger.record(event);
+
+            // 2. Policy Signal (from Ledger Validation)
+            const validation = this.ledger.validateCausality(event);
+            signals.push(...validation.signals);
+
+            // B. Resolve Final Outcome (Causal Signal Reduction)
+            // We pass the signals to the ledger which will resolve them deterministically
+            event = {
+                ...event,
+                signals: [...(event.signals || []), ...signals],
+                outputs: { ...(event.outputs || {}), ...(validation.outputs || {}) }
+            };
+
+            // C. Final Decision Gate (Sealing: EXECUTION -> CAUSAL)
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const finalized = kernel.promoteToCausal(event, (ev) => {
+                this.ledger.record(ev);
+                return this.ledger.getTickEvents(this.ledger.getCurrentTick())?.find(e => e.id === ev.id)!;
+            });
+
+            // D. Post-Hoc Explanation (Non-inferential)
+            if (finalized) {
+                const trace = this.ledger.compileLearningTrace(finalized);
+                SwitchboardLimb.getInstance().broadcastLearningTrace(trace);
+                
+                // Phase 200: Wisdom Ingestion (Lossy Abstraction: CAUSAL -> INTERPRETATION)
+                kernel.deriveInterpretation(finalized, (ev) => {
+                    return CausalPatternExtractor.getInstance().ingestTrace(ev)!;
+                });
+
+                // Phase 210: CANONICAL LEARNING EVENT (The Spine)
+                EventBus.getInstance().publish({
+                    type: 'cognitive.learning',
+                    source: 'CNSGodheadPulseVolley',
+                    fidelity: LearningFidelity.CAUSAL,
+                    payload: {
+                        tick: finalized.tick,
+                        timestamp: finalized.timestamp,
+                        trace: this.ledger.getTickTrace(finalized.id),
+                        resolution: finalized,
+                        patterns: CausalPatternExtractor.getInstance().getTopInsights(5),
+                        invariants: InvariantCompiler.getInstance().getManifest().rules
+                    }
+                });
+            }
+
+            // E. Execution Phase (Layer 3)
+            if (finalized && finalized.outcome === "SUCCESS") {
+                await this.executeEvent(tx, finalized, pulseDeltas);
+            }
+        }
+
+        // 6. Broadcast Cognitive Insights (Every 10 ticks)
+        if (this.tickCount % 10 === 0) {
+            const insights = CausalPatternExtractor.getInstance().getTopInsights(3);
+            if (insights.length > 0) {
+                SwitchboardLimb.getInstance().broadcast({
+                    type: 'COGNITIVE_INSIGHTS',
+                    payload: insights
+                });
+            }
+        }
+
+        // 7. Compile Structural Invariants (Every 100 ticks)
+        if (this.tickCount % 100 === 0) {
+            const memory = CausalPatternExtractor.getInstance().getMemory();
+            const rules = InvariantCompiler.getInstance().compilePatterns(memory, this.tickCount);
+            if (rules.length > 0) {
+                SwitchboardLimb.getInstance().broadcast({
+                    type: 'INVARIANT_MANIFEST',
+                    payload: InvariantCompiler.getInstance().getManifest()
+                });
+                logger.info({ rules: rules.length }, '[CNS] Structural Invariant Manifest updated and broadcasted.');
+            }
         }
 
         // --- TIERED BUDGET EXECUTION (Torpor-Safe) ---
@@ -388,9 +798,18 @@ export class CNSGodheadPulseVolley {
             }, "VISUAL_ONLY");
         }
 
-        // 7. Commit Ledger (Logs & history rotation)
+        // 7. BROADCAST Phase (Layer 4)
+        for (const delta of pulseDeltas) {
+            this.switchboard?.broadcastWorldDelta(delta).catch(err => 
+                logger.error({ err: err.message }, '[CNS] World delta broadcast failed')
+            );
+        }
+
+        // 8. Commit Ledger (Logs & history rotation)
         if (isGameTick) {
             this.ledger.commitTick();
+            // Phase 250: Epistemic Reconciliation (Reality Lattice Audit)
+            await TruthReconciler.getInstance().reconcileTick(this.ledger.getCurrentTick() - 1);
         }
 
         const elapsed = performance.now() - this.pulseStartTime;
@@ -417,9 +836,7 @@ export class CNSGodheadPulseVolley {
         }
 
         const action = cmd.type;
-        const stableId = crypto.createHash('md5')
-            .update(`${action}-${source}-${JSON.stringify(inputs)}-${timestamp}`)
-            .digest('hex');
+        const stableId = `ev_${this.ledger.getCurrentTick()}_${timestamp}_${Math.floor(Math.random() * 1000)}`;
 
         return {
             id: stableId,
@@ -429,7 +846,8 @@ export class CNSGodheadPulseVolley {
             source: source as EventSource,
             inputs,
             coord,
-            outcome: "SUCCESS"
+            outcome: "SUCCESS",
+            truthClass: TruthClass.EXECUTION
         };
     }
 
@@ -445,15 +863,14 @@ export class CNSGodheadPulseVolley {
     }
 
     private resolveConflicts(events: TickEvent[]): TickEvent[] {
-        for (const event of events) {
+        return events.map(event => {
             if (event.coord) {
                 const tileKey = `${event.coord.x},${event.coord.y},${event.coord.plane}`;
                 const activeLocks = this.ledger.getActiveLocks();
 
                 if (activeLocks.has(tileKey)) {
-                    event.outcome = "REJECTED_COLLISION";
                     logger.warn({ eventId: event.id, tileKey }, '[CNS GODHEAD] REJECTED_COLLISION: Tile already locked.');
-                    continue;
+                    return { ...event, outcome: "REJECTED_COLLISION" as EventOutcome };
                 }
 
                 this.ledger.setTileLock(tileKey, {
@@ -461,8 +878,8 @@ export class CNSGodheadPulseVolley {
                     action: event.action
                 });
             }
-        }
-        return events;
+            return event;
+        });
     }
 
     /**
@@ -543,17 +960,30 @@ export class CNSGodheadPulseVolley {
         };
     }
 
-    private async executeEvent(tx: Map<string, any>, event: TickEvent): Promise<void> {
+    private async executeEvent(tx: Map<string, any>, event: TickEvent, deltas: WorldDelta[]): Promise<void> {
         switch (event.action) {
             case 'teleport':
                 if (event.coord) {
-                    // DEFERRED: Spatial recalculation inside tick boundaries
-                    this.enqueueNow(async () => {
+                    // DEFERRED to NEXT TICK to prevent re-entrancy corruption
+                    this.enqueueNextTick(async () => {
                         await this.grounding!.applyWorldTransform(tx, { x: event.coord!.x, y: event.coord!.y, z: event.coord!.z }).catch(err => 
                             logger.error({ err: err.message }, `[CNS] Deferred transform failed`)
                         );
+                    }, "CRITICAL");
+                    
+                    logger.debug({ coords: event.coord }, '[VOLLEY] SPATIAL_SHIFT enqueued for NEXT_TICK.');
+                    
+                    // Collect World Delta
+                    deltas.push({
+                        tick: event.tick,
+                        entityId: 'player_sovereign',
+                        type: 'MOVE',
+                        x: event.coord!.x,
+                        y: event.coord!.y,
+                        z: event.coord!.z,
+                        source: 'POG2',
+                        confidence: 1.0
                     });
-                    logger.debug({ coords: event.coord }, '[VOLLEY] SPATIAL_SHIFT deferred for tick execution.');
                 }
                 break;
 
@@ -587,6 +1017,20 @@ export class CNSGodheadPulseVolley {
                         );
                     });
                     logger.debug({ id: sid }, '[VOLLEY] ENTITY_MANIFEST staged for deterministic spawn.');
+
+                    // Collect World Delta
+                    if (event.coord) {
+                        deltas.push({
+                            tick: event.tick,
+                            entityId: sid,
+                            type: 'SPAWN',
+                            x: event.coord.x,
+                            y: event.coord.y,
+                            z: event.coord.z,
+                            source: 'POG2',
+                            confidence: 1.0
+                        });
+                    }
                 }
                 break;
 
@@ -597,8 +1041,10 @@ export class CNSGodheadPulseVolley {
                 break;
 
             default:
-                logger.warn({ action: event.action }, '[VOLLEY] Unknown action â€” dropping from execution.');
-                event.outcome = "REJECTED_AUTHORITY";
+                logger.error({ action: event.action, eventId: event.id }, '[VOLLEY] Critical Execution Failure: Unknown action passed validation.');
+                // We cannot mutate the finalized event outcome here.
+                // Instead, we record this as a severe cognitive/mechanical divergence.
+                TruthReconciler.getInstance().reconcileTick(event.tick); // Force an audit
         }
     }
 
@@ -607,7 +1053,7 @@ export class CNSGodheadPulseVolley {
      */
     public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'DEGRADED_IO' | 'OFFLINE' } {
         const ioLatency = getLastIOLatencyMs();
-        const online = this.substrateState !== 'OFFLINE';
+        const online = this.substrateState !== SubstrateState.OFFLINE;
         return {
             online,
             status: this.substrateState as any,
@@ -622,5 +1068,32 @@ export class CNSGodheadPulseVolley {
         this.resolve();
         commands.forEach(cmd => this.switchboard!.pushAdminCommand(cmd));
         logger.info({ count: commands.length }, 'Programmatic Volley Injection confirmed.');
+    }
+
+    private async buildRoutingSnapshot(substrateHealth: SubstrateState): Promise<RoutingSnapshot> {
+        const cloudSignal = SubstrateResolver.getCloudSignal();
+        // const substrateState = await SubstrateResolver.resolve(); // REMOVED: redundant call
+        
+        const modelHealthMap: Record<string, boolean> = {};
+        if (this.nodeTester) {
+            const rolodex = this.nodeTester.getRouter()?.getRolodex();
+            if (rolodex) {
+                const models = rolodex.getAllModels();
+                for (const m of models) {
+                    modelHealthMap[m.id] = rolodex.isModelHealthy(m.id);
+                }
+            }
+        }
+
+        return {
+            tick: this.ledger.getCurrentTick(),
+            cloudHealth: {
+                status: cloudSignal.status,
+                effect: cloudSignal.effect
+            },
+            substrateHealth: substrateHealth,
+            modelHealthMap,
+            timestamp: Date.now()
+        };
     }
 }

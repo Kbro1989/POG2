@@ -1,4 +1,4 @@
-﻿import { createLogger } from './logger.js';
+import { createLogger } from './logger.js';
 import type { Result } from '../core/models.js';
 
 const logger = createLogger('WikiEnricher');
@@ -47,7 +47,29 @@ export class WikiEnricher {
                 origin: '*'
             });
 
-            const searchResponse = await fetch(`${this.API_URL}?${searchParams.toString()}`);
+            const headers = {
+                'User-Agent': 'SovereignVisionBot/1.1 (https://github.com/POG2; admin@pog2.internal)'
+            };
+
+            const fetchWithRetry = async (url: string, options: any, retries = 3): Promise<Response> => {
+                for (let i = 0; i < retries; i++) {
+                    try {
+                        const res = await fetch(url, options);
+                        if (res.ok) return res;
+                        if (res.status === 429) {
+                            const delay = parseInt(res.headers.get('Retry-After') || '2') * 1000;
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            continue;
+                        }
+                    } catch (err) {
+                        if (i === retries - 1) throw err;
+                        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+                    }
+                }
+                throw new Error('Fetch failed after retries');
+            };
+
+            const searchResponse = await fetchWithRetry(`${this.API_URL}?${searchParams.toString()}`, { headers });
             const searchData = await searchResponse.json() as any;
 
             const searchResult = searchData.query?.search?.[0];
@@ -76,7 +98,7 @@ export class WikiEnricher {
                 origin: '*'
             });
 
-            const contentResponse = await fetch(`${this.API_URL}?${contentParams.toString()}`);
+            const contentResponse = await fetchWithRetry(`${this.API_URL}?${contentParams.toString()}`, { headers });
             const contentData = await contentResponse.json() as any;
             
             const pages = contentData.query?.pages || {};
@@ -159,8 +181,9 @@ export class WikiEnricher {
             }
             return variables;
         } catch (e) {
-            logger.error({ title, error: (e as Error).message }, 'Infobox parsing failed.');
-            return {};
+            const err = `Wiki Infobox parsing failed for "${title}": ${(e as Error).message}`;
+            logger.error({ title, error: (e as Error).message }, err);
+            throw new Error(err);
         }
     }
     /**
@@ -185,8 +208,9 @@ export class WikiEnricher {
             const links = pages[pageId]?.links || [];
             return (links as any[]).map((l: any) => l.title);
         } catch (e) {
-            logger.error({ title, error: (e as Error).message }, 'Link extraction failed.');
-            return [];
+            const err = `Wiki Link extraction failed for "${title}": ${(e as Error).message}`;
+            logger.error({ title, error: (e as Error).message }, err);
+            throw new Error(err);
         }
     }
 }

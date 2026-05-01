@@ -1,7 +1,7 @@
-﻿import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/logger.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { type Ternary, type Result, YaoState, type DecisionAuditRecord, type RoutingComplexity, type ContextCard, EmotionalState, type AIServiceType, type ActuationResult } from '../core/models.js';
+import { type Ternary, type Result, YaoState, type DecisionAuditRecord, type RoutingComplexity, type ContextCard, EmotionalState, type AIServiceType, type ActuationResult, CognitivePolarity, InterpretationContract } from '../core/models.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import { HexagramManager } from './HexagramManager.js';
 import type { ModelClient } from '../clients/ModelClient.js';
@@ -80,14 +80,17 @@ export class TernaryRouter {
     
     // Phase 7: Temporal Routing Gates
     public get temporalState(): 'PAST' | 'PRESENT' | 'FUTURE' {
+        const contract = this.hexagram.getContract();
         const hex = this.hexagram.getInterpretation();
-        if (hex.name.includes('Arriving') || hex.name.includes('Return') || this.hexagram.isYin()) {
+        const polarity = contract.polarity;
+        
+        if (hex.name.includes('Arriving') || hex.name.includes('Return') || polarity === CognitivePolarity.YIN) {
             return 'PAST'; // Stable, historical, or retrieval-focused
         }
-        if (this.hexagram.isYang()) {
+        if (polarity === CognitivePolarity.YANG) {
             return 'FUTURE'; // Expansion, creative, or generative
         }
-        return 'PRESENT'; // Mixed, transformation, or hybrid
+        return 'PRESENT'; // Mixed, transformation, or hybrid (YINYANG)
     }
 
     // Cooldown tracking for Kimi endpoints (Ollama vs HF 61-min alternating)
@@ -497,10 +500,11 @@ export class TernaryRouter {
         // 4. Consult hexagram decision matrix
         const directive = this.hexagram.decide(currentYao, intentYao);
 
-        let decision: RouteDecision;
+        const contract = this.hexagram.getContract();
+        const ternary = contract.polarity;
+        const organicYao = ternary === CognitivePolarity.YINYANG ? YaoState.YoungMixed : (ternary === CognitivePolarity.YIN ? YaoState.YoungYin : YaoState.YoungYang);
 
-        // Organic Polarized Routing for Specialized Substrates
-        const organicYao = this.hexagram.isYin() ? YaoState.YoungYin : YaoState.YoungYang;
+        let decision: RouteDecision;
 
         // 1. Specialized Substrate Routing
         if (complexity === 'Chromanumber') {

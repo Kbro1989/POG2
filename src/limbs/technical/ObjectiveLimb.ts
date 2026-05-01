@@ -1,30 +1,31 @@
 import { createLogger } from '../../utils/logger.js';
-import { GameState, SovereignAvatar, Coord } from '../../core/models.js';
+import { SovereignAvatar, Coord } from '../../core/models.js'; // Removed GameState as it was unused
 import { DiscoveryLimb } from '../spatial/DiscoveryLimb.js';
-import * as fs from 'fs';
-import * as path from 'path';
+// Removed unused imports: fs and path
 
 const logger = createLogger('ObjectiveLimb');
 
 export interface SovereignObjective {
-    id: string;
-    type: 'SKILL' | 'QUEST' | 'DISCOVERY' | 'ACHIEVEMENT';
-    name: string;
-    description: string;
-    priority: number; // 0 (Highest) to 100 (Lowest)
-    targetCoord?: Coord;
-    isCompleted: boolean;
+    readonly id: string;
+    readonly type: 'SKILL' | 'QUEST' | 'DISCOVERY' | 'ACHIEVEMENT';
+    readonly name: string;
+    readonly description: string;
+    readonly priority: number; // 0 (Highest) to 100 (Lowest)
+    readonly targetCoord?: Coord;
+    isCompleted: boolean; // This property is mutable and updated
 }
 
 /**
  * ObjectiveLimb - The "Task Master" of POG2.
- * 
+ *
  * Manages the high-level goals for discovery and completion.
  */
 export class ObjectiveLimb {
     private static instance: ObjectiveLimb;
-    private objectives: SovereignObjective[] = [];
-    private discovery: DiscoveryLimb = new DiscoveryLimb();
+    private readonly objectives: SovereignObjective[] = [];
+    // DiscoveryLimb is instantiated but not currently used within this file.
+    // It is kept as per the rule "Maintain all existing functionality".
+    private readonly discovery: DiscoveryLimb = new DiscoveryLimb();
 
     private constructor() {
         this.initializeObjectives();
@@ -37,10 +38,10 @@ export class ObjectiveLimb {
         return ObjectiveLimb.instance;
     }
 
-    private initializeObjectives() {
+    private initializeObjectives(): void {
         // 1. Basic Skill Milestones
-        const skills = ['Attack', 'Strength', 'Defense', 'Ranged', 'Prayer', 'Magic'];
-        skills.forEach(skill => {
+        const skills: string[] = ['Attack', 'Strength', 'Defense', 'Ranged', 'Prayer', 'Magic'];
+        skills.forEach((skill: string) => {
             this.objectives.push({
                 id: `skill_${skill.toLowerCase()}_5`,
                 type: 'SKILL',
@@ -52,7 +53,12 @@ export class ObjectiveLimb {
         });
 
         // 2. Discovery Milestones (Landmarks)
-        const landmarks = [
+        interface Landmark {
+            name: string;
+            x: number;
+            y: number;
+        }
+        const landmarks: Landmark[] = [
             { name: 'Lumbridge Castle', x: 3221, y: 3218 },
             { name: 'Draynor Manor', x: 3108, y: 3352 },
             { name: 'Falador Square', x: 2964, y: 3378 },
@@ -60,7 +66,7 @@ export class ObjectiveLimb {
             { name: 'Edgeville Bank', x: 3093, y: 3491 }
         ];
 
-        landmarks.forEach(l => {
+        landmarks.forEach((l: Landmark) => {
             this.objectives.push({
                 id: `discovery_${l.name.toLowerCase().replace(/\s+/g, '_')}`,
                 type: 'DISCOVERY',
@@ -86,29 +92,52 @@ export class ObjectiveLimb {
 
     /**
      * getActiveObjectives - Returns uncompleted objectives sorted by priority.
+     * @param avatar The current state of the SovereignAvatar.
+     * @returns An array of uncompleted SovereignObjective objects, sorted by priority.
      */
     public getActiveObjectives(avatar: SovereignAvatar): SovereignObjective[] {
         // Filter out completed objectives
         this.syncState(avatar);
         return this.objectives
-            .filter(o => !o.isCompleted)
-            .sort((a, b) => a.priority - b.priority);
+            .filter((o: SovereignObjective) => !o.isCompleted)
+            .sort((a: SovereignObjective, b: SovereignObjective) => a.priority - b.priority);
     }
 
     /**
      * syncState - Updates completion status based on avatar state.
+     * @param avatar The current state of the SovereignAvatar.
+     *
+     * ASSUMPTIONS about SovereignAvatar structure (since models.js is not editable):
+     * - avatar.x: number, avatar.y: number (for current position)
+     * - avatar.skills: Array of objects, where each object has a 'level' property (e.g., { level: number, xp: number }).
+     *   The index of the array corresponds to the skill ID from skillMap.
+     * - avatar.quests: Optional object with a 'quests' property, which is a Record<string, string>
+     *   mapping quest IDs to their status (e.g., { quests: { 'quest_cooks_assistant': 'COMPLETED' } }).
      */
-    private syncState(avatar: SovereignAvatar) {
-        this.objectives.forEach(o => {
-            if (o.isCompleted) return;
+    private syncState(avatar: SovereignAvatar): void {
+        this.objectives.forEach((o: SovereignObjective) => {
+            if (o.isCompleted) {
+                return;
+            }
 
             if (o.type === 'SKILL') {
-                const skillName = o.name.split(' ')[1];
-                // Resolve skill ID (simplified mapping)
-                const skillMap: Record<string, number> = { 'Attack': 1, 'Strength': 2, 'Defense': 5, 'Ranged': 3, 'Prayer': 7, 'Magic': 4 };
-                const id = skillMap[skillName!];
-                if (id && avatar.skills[id] && avatar.skills[id].level >= 5) {
-                    this.completeObjective(o.id);
+                const parts = o.name.split(' ');
+                // Ensure skillName is extracted safely
+                const skillName = parts.length > 1 ? parts[1] : undefined;
+
+                if (skillName) {
+                    // Resolve skill ID (simplified mapping)
+                    const skillMap: Record<string, number> = { 'Attack': 1, 'Strength': 2, 'Defense': 5, 'Ranged': 3, 'Prayer': 7, 'Magic': 4 };
+                    const id = skillMap[skillName];
+
+                    // Check if id is a valid key for avatar.skills object and if the skill object exists
+                    if (typeof id === 'number' && avatar.skills && avatar.skills[id]) {
+                        const skill = avatar.skills[id];
+                        // Ensure skill object exists and has a level property
+                        if (skill && typeof skill.level === 'number' && skill.level >= 5) {
+                            this.completeObjective(o.id);
+                        }
+                    }
                 }
             }
 
@@ -118,17 +147,19 @@ export class ObjectiveLimb {
                     this.completeObjective(o.id);
                 }
             }
-            
+
             if (o.type === 'QUEST') {
-                if (avatar.quests && avatar.quests.quests && (avatar.quests.quests as any)[o.id] === 'COMPLETED') {
+                // Safely access avatar.quests.quests and check for completion status
+                // Assuming avatar.quests.quests is Record<number, any> or Record<string, string>
+                if (avatar.quests?.quests && typeof avatar.quests.quests === 'object' && (avatar.quests.quests as any)[o.id] === 'COMPLETED') {
                     this.completeObjective(o.id);
                 }
             }
         });
     }
 
-    private completeObjective(id: string) {
-        const obj = this.objectives.find(o => o.id === id);
+    private completeObjective(id: string): void {
+        const obj = this.objectives.find((o: SovereignObjective) => o.id === id);
         if (obj) {
             obj.isCompleted = true;
             logger.info({ objective: obj.name }, '🌟 Objective Completed!');
@@ -138,12 +169,17 @@ export class ObjectiveLimb {
 
     /**
      * selectBestObjective - Returns the highest priority reachable objective.
+     * @param avatar The current state of the SovereignAvatar.
+     * @returns The highest priority uncompleted SovereignObjective, or null if none are active.
      */
     public selectBestObjective(avatar: SovereignAvatar): SovereignObjective | null {
-        const active = this.getActiveObjectives(avatar);
-        if (active.length === 0) return null;
+        const active: SovereignObjective[] = this.getActiveObjectives(avatar);
+        if (active.length === 0) {
+            return null;
+        }
 
         // For now, just return the highest priority (lowest number)
-        return active[0]!;
+        // active[0] is guaranteed to exist here due to the length check above.
+        return active[0];
     }
 }

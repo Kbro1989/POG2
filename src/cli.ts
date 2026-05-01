@@ -48,8 +48,8 @@ const originalDescription = Command.prototype.description;
 import pino from 'pino';
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import * as fs from 'fs';
-import { resolve, join, dirname, sep } from 'path';
 import * as path from 'path';
+import { resolve, join, dirname, sep } from 'path';
 import { homedir } from 'os';
 import * as readline from 'readline/promises';
 import { StateManager } from './state/StateManager.js';
@@ -64,6 +64,7 @@ import { OrchestrateEngine } from './engines/OrchestrateEngine.js';
 import { MemoryConsolidationEngine } from './engines/MemoryConsolidationEngine.js';
 import { VectorDB } from './utils/VectorDB.js';
 import { RSMVExtractor } from './utils/RSMVExtractor.js';
+import { SovereignEye } from './utils/SovereignEye.js';
 import { SovereignConfig, loadConfig } from './config/SovereignConfig.js';
 import { Renderer } from './ui/Renderer.js';
 import { PathNormalizer } from './utils/PathNormalizer.js';
@@ -692,16 +693,16 @@ export async function main(): Promise<void> {
         .action(async () => {
             renderer.info('ðŸŒ Opening Sovereign Spatial Grounding Radar...');
             const port = 4999;
-            
+
             // Integrated Static Server for Grounding Radar
             try {
                 const http = await import('http');
                 const fs = await import('fs');
                 const path = await import('path');
-                
+
                 const server = http.createServer((req, res) => {
                     let filePath = join('public', req.url === '/' ? 'heatmap.html' : req.url!);
-                    
+
                     // Root fallback for collision data: Check the bulk extraction directory on D-drive
                     if (!fs.existsSync(filePath) && req.url?.startsWith('/ms_')) {
                         const dPath = join('D:\\sovereign\\atlas\\spatial\\world_extract', req.url.substring(1));
@@ -720,7 +721,7 @@ export async function main(): Promise<void> {
                     res.writeHead(200, { 'Content-Type': contentType });
                     fs.createReadStream(filePath).pipe(res);
                 });
-                
+
                 server.listen(port, () => {
                     renderer.success(`Radar Active: http://localhost:${port}/heatmap.html`);
                 });
@@ -734,11 +735,11 @@ export async function main(): Promise<void> {
         .description('Analyze 3D Spatial Metrics (rsmv format)')
         .action(async (target: string) => {
             renderer.info(`ðŸ“ Performing Metric Forensic on: ${target}...`);
-            
+
             // Re-routing to authoritative CacheLearningLimb for metrics
             const forensics = CacheForensicsLimb.getInstance();
             const learning = new CacheLearningLimb(getRSMVCachePath(), forensics, join(getSovereignRoot(), 'library', 'spatial'));
-            
+
             const resolveRes = await forensics.crossReferenceItem(target);
             if (resolveRes.ok && resolveRes.value.rawModelIds.length > 0) {
                 const modelId = resolveRes.value.rawModelIds[0];
@@ -761,10 +762,10 @@ export async function main(): Promise<void> {
             const x = parseInt(xStr);
             const y = parseInt(yStr);
             const plane = planeStr ? parseInt(planeStr) : 0;
-            
+
             const limb = SpatialSovereigntyLimb.getInstance();
             const mechanical = MechanicalSovereigntyLimb.getInstance();
-            
+
             await limb.initialize();
             await mechanical.initialize();
 
@@ -774,7 +775,7 @@ export async function main(): Promise<void> {
             await limb.loadUnifiedGrounding(msX, msZ);
 
             renderer.info(`ðŸ” Querying Spatial Logic at [${x}, ${y}, plane ${plane}]...`);
-            
+
             let walkable = false;
 
             if (options.context) {
@@ -806,7 +807,7 @@ export async function main(): Promise<void> {
                     reason = `Blocked Directionally (${blocked.join(',')})`;
                 } else if ((mask & 0x200000) !== 0) reason = "Blocked by Terrain";
                 else if ((mask & 0x100) !== 0) reason = "Blocked by Object";
-                
+
                 if (limb.isWalkable(plane, x, y) && !walkable) {
                     reason = "Blocked by DYNAMIC ENTITY (Platypus/Follower/Grounded NPC)";
                     // Check specifically for grounded NPC interference
@@ -828,10 +829,10 @@ export async function main(): Promise<void> {
             const x = xStr ? parseInt(xStr) : 0;
             const y = yStr ? parseInt(yStr) : 0;
             const plane = planeStr ? parseInt(planeStr) : 0;
-            
+
             renderer.info('ðŸ•¶ï¸ Initializing Observation Lens...');
             await engine.initialize();
-            
+
             const res = await engine.observe(x, y, plane, 10, true);
             if (res.ok) {
                 renderer.success(`Observation Snapshot Complete for [${x}, ${y}, ${plane}]`);
@@ -884,7 +885,7 @@ export async function main(): Promise<void> {
             await engine.initialize();
             await engine.registerModule(module);
             renderer.success(`[Simulator] ${module.name} active at [${engine.avatar.coord.x}, ${engine.avatar.coord.y}]`);
-            
+
             const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
             const promptLoop = async () => {
                 const answer = await rl.question(`> `);
@@ -925,19 +926,19 @@ export async function main(): Promise<void> {
         .description('Perform a forensic audit of pedagogical logic bridges')
         .action(async (query: string) => {
             renderer.info(`Ã°Å¸â€Â Sovereign Pedagogical Audit - Searching for: "${query}"...`);
-            
+
             const dirs = [getPedagogyPath(), getAtlasLogicPath(), getAtlasSystemPath()];
             let foundCount = 0;
 
             for (const dir of dirs) {
                 if (!existsSync(dir)) continue;
                 const files = fs.readdirSync(dir, { recursive: true }) as string[];
-                
+
                 for (const file of files) {
                     if (!file.endsWith(".json")) continue;
                     const filePath = join(dir, file);
                     if (fs.statSync(filePath).isDirectory()) continue;
-                    
+
                     try {
                         const content = fs.readFileSync(filePath, "utf-8");
                         if (content.toLowerCase().includes(query.toLowerCase())) {
@@ -946,10 +947,10 @@ export async function main(): Promise<void> {
                             console.log(`   Snippet: ...${content.substring(index - 40, index + 60).replace(/\n/g, ' ')}...`);
                             foundCount++;
                         }
-                    } catch (e) {}
+                    } catch (e) { }
                 }
             }
-            
+
             if (foundCount === 0) renderer.warn("No logic bridges found for this query.");
             else renderer.success(`Audit complete. Found ${foundCount} matches.`);
         });
@@ -957,7 +958,7 @@ export async function main(): Promise<void> {
     pedagogySub
         .command('extract-grounding <region>')
         .description('Extract world coordinates from cache DBRows (Major 2, Page 39)')
-                .action(async (region: string) => {
+        .action(async (region: string) => {
             renderer.info(`\u{2692} Starting Targeted Grounding Extraction for: ${region}...`);
             try {
                 const [minX, minY, maxX, maxY] = region.split(',').map(Number);
@@ -974,7 +975,7 @@ export async function main(): Promise<void> {
                 renderer.info(`Connecting to Jagex Cache bridge at ${CACHE_DIR}...`);
                 const archInfo = (await source.getCacheIndex(cacheMajors.config))[cacheConfigPages.dbrows];
                 const arch = await source.getFileArchive(archInfo);
-                
+
                 renderer.info(`Auditing ${arch.length} DBRows for Table ${TABLE_ID}...`);
 
                 for (const file of arch) {
@@ -983,7 +984,7 @@ export async function main(): Promise<void> {
                     try {
                         const row = parse.dbrows.read(file.buffer, source) as any;
                         const colGroups = row.unk01?.columndata || row.unk02?.columndata;
-                        
+
                         if (colGroups) {
                             let coord: number | null = null;
                             let name: string = "Unknown NPC";
@@ -1092,7 +1093,7 @@ export async function main(): Promise<void> {
                     if (options.evaluateCondition) {
                         renderer.info(`Ã°Å¸Â§Âª Evaluating Condition for Object ${objIdStr}...`);
                         const context = createMockGameState(options);
-                        
+
                         let isUnlocked = false;
                         const rule = res.value;
                         const lootRes = limb.evaluateLootLogic(objectId, regionName);
@@ -1142,7 +1143,7 @@ export async function main(): Promise<void> {
         .description('Unified learning: Extraction + Spatial Metrics + Wiki Enrichment')
         .action(async (type, idOrName) => {
             renderer.info(`\nÃ°Å¸Â§Â¬ Commencing Unified Learning for ${type}: ${idOrName}...`);
-            
+
             const apiLimb = new OfficialApiLimb();
             const metricEngine = new SpatialMetricEngine();
             const forensics = CacheForensicsLimb.getInstance();
@@ -1157,7 +1158,7 @@ export async function main(): Promise<void> {
                     if (!resolveRes.ok || resolveRes.value.rawModelIds.length === 0) {
                         throw new Error(`Could not resolve semantic name: ${idOrName}`);
                     }
-                    
+
                     const item = resolveRes.value;
                     const modelId = item.rawModelIds[0];
                     learnedObject.id = item.id;
@@ -1811,7 +1812,7 @@ export async function main(): Promise<void> {
             // Load existing storyboard scenes from the pipeline folder
             const pipelinesDir = path.join(getSovereignRoot(), 'pipelines');
             let storyboardPath = null;
-            
+
             // Search for the book ID in the pipelines folder
             const searchPipelines = (dir: string) => {
                 if (!fs.existsSync(dir)) return;
@@ -1885,7 +1886,7 @@ export async function main(): Promise<void> {
             process.exit(result.ok ? 0 : 1);
         });
 
-    
+
     pipe
         .command('queue')
         .description('List active and completed pipelines in the sovereign substrate')
@@ -2084,7 +2085,7 @@ export async function main(): Promise<void> {
 
             if (options.analyzeAll) {
                 renderer.info('Initiating total synthesis of cache-related studies for gameplay logic...');
-                
+
                 const results = [];
                 results.push(await limb.analyzeDbTables());
                 results.push(await limb.analyzeDbRows());
@@ -2303,16 +2304,16 @@ export async function main(): Promise<void> {
         .option('--headless', 'Run without radar visualization', false)
         .action(async (opts: { headless: boolean }) => {
             renderer.info('Ã°Å¸â€¢Â¸Ã¯Â¸  POG2 Sovereign Organism: Initiating boot sequence...');
-            
+
             const gameplay = GameplaySovereigntyLimb.getInstance();
             const radar = SpatialRadarLimb.getInstance();
             const globe = new GlobeStateLimb(config);
             await globe.connect();
             gameplay.injectSwitchboard(SwitchboardLimb.getInstance());
-            
+
             renderer.success('Ã°Å¸Â§  Cognitive Substrate: Synchronized (64 Hexagrams)');
             renderer.success('Ã°Å¸â€˜â‚¬ Predictive Vision: Online (GhostSplat)');
-            
+
             // Start the authoritative pulse
             const pulse = async () => {
                 const report = await gameplay.processTick();
@@ -2324,7 +2325,7 @@ export async function main(): Promise<void> {
                 }
                 setTimeout(pulse, 600);
             };
-            
+
             pulse();
         });
     program
@@ -2930,6 +2931,37 @@ export async function main(): Promise<void> {
     // SPECIALIZED SOVEREIGN COMMANDS
     // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
     program
+        .command('screenshot [target]')
+        .description('Trigger a SovereignEye capture and update the latest_frame.png bridge')
+        .option('-t, --type <type>', 'Capture type: url, window, file', 'url')
+        .option('-o, --output <path>', 'Custom output path', 'latest_frame.png')
+        .action(async (target: string | undefined, opts: { type: string, output: string }) => {
+            const eye = new SovereignEye('cli-vision');
+            let captureTarget = target;
+
+            if (!captureTarget && opts.type === 'url') {
+                const port = SwitchboardLimb.getInstance().getActivePort() || 8788;
+                captureTarget = `http://localhost:${port}/edge_radar.html`;
+            }
+
+            if (!captureTarget) {
+                renderer.error('Capture target required (URL or Window Title)');
+                return;
+            }
+
+            renderer.info(`📸 Capturing ${opts.type}: ${captureTarget}...`);
+            const res = await eye.capture({ type: opts.type as any, target: captureTarget });
+
+            if (res.ok && res.value.imagePath) {
+                const { copyFileSync } = await import('fs');
+                copyFileSync(res.value.imagePath, opts.output);
+                renderer.success(`Screenshot captured and synced to ${opts.output}`);
+            } else {
+                renderer.error(`Capture failed: ${res.error?.message || 'Unknown error'}`);
+            }
+        });
+
+    program
         .command('forge <prompt>')
         .description('Professional image/visual generation via Flux')
         .option('-m, --model <model>', 'Override model selection')
@@ -3088,55 +3120,55 @@ export async function main(): Promise<void> {
             handleResult(result, renderer, state);
         });
 
-/**
- * createMockGameState - Tactical helper for CLI queries to simulate world state.
- */
-function createMockGameState(options: any): GameState {
-    const varbits = new Map<number, number>();
-    if (options.varbits) {
-        options.varbits.split(',').forEach((s: string) => {
-            const [id, val] = s.split('=');
-            varbits.set(parseInt(id), parseInt(val));
-        });
+    /**
+     * createMockGameState - Tactical helper for CLI queries to simulate world state.
+     */
+    function createMockGameState(options: any): GameState {
+        const varbits = new Map<number, number>();
+        if (options.varbits) {
+            options.varbits.split(',').forEach((s: string) => {
+                const [id, val] = s.split('=');
+                varbits.set(parseInt(id), parseInt(val));
+            });
+        }
+
+        const inventory: (Item | null)[] = Array(28).fill(null);
+        if (options.context) {
+            let slot = 0;
+            options.context.split(',').forEach((s: string) => {
+                const [key, val] = s.split('=');
+                if (key === 'inventory' && slot < 28) {
+                    inventory[slot++] = { id: parseInt(val), amount: 1 };
+                }
+            });
+        }
+
+        const players = new Map<string, SovereignAvatar>();
+        const mockAvatar: SovereignAvatar = {
+            id: -1,
+            name: 'Mock Player',
+            username: 'Mock_Player',
+            x: 0, y: 0, plane: 0,
+            inventory,
+            bank: [],
+            wallet: {},
+            equipment: {},
+            skills: {},
+            quests: { points: 0, completedCount: 0, quests: {} }
+        } as any as SovereignAvatar;
+        players.set(mockAvatar.username, mockAvatar);
+
+        return {
+            plane: 0,
+            varbits,
+            players,
+            varps: new Map(),
+            varcs: new Map(),
+            npcMap: new Map(),
+            npcSpatialIndex: new Map(),
+            objectMap: new Map()
+        };
     }
-
-    const inventory: (Item | null)[] = Array(28).fill(null);
-    if (options.context) {
-        let slot = 0;
-        options.context.split(',').forEach((s: string) => {
-            const [key, val] = s.split('=');
-            if (key === 'inventory' && slot < 28) {
-                inventory[slot++] = { id: parseInt(val), amount: 1 };
-            }
-        });
-    }
-
-    const players = new Map<string, SovereignAvatar>();
-    const mockAvatar: SovereignAvatar = {
-        id: -1,
-        name: 'Mock Player',
-        username: 'Mock_Player',
-        x: 0, y: 0, plane: 0,
-        inventory,
-        bank: [],
-        wallet: {},
-        equipment: {},
-        skills: {},
-        quests: { points: 0, completedCount: 0, quests: {} }
-    } as any as SovereignAvatar;
-    players.set(mockAvatar.username, mockAvatar);
-
-    return {
-        plane: 0,
-        varbits,
-        players,
-        varps: new Map(),
-        varcs: new Map(),
-        npcMap: new Map(),
-        npcSpatialIndex: new Map(),
-        objectMap: new Map()
-    };
-}
 
 
     await program.parseAsync(process.argv);
