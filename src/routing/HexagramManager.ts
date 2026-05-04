@@ -7,6 +7,7 @@ import type { GhostSplatField } from '../substrates/GhostSplatEngine.js';
 import type { EntityGhost } from '../core/EntityGhost.js';
 import type { TransitionalVector } from '../engines/core/WaitDecisionMaker.js';
 import type { MovingLine } from '../core/models.js';
+import { CanonicalClock } from '../utils/CanonicalClock.js';
 
 export interface KernelDiagnostics {
     phase: ChaosPhase;
@@ -155,7 +156,7 @@ export class HexagramManager extends EventEmitter {
         diag: KernelDiagnostics
     ): MovingLine[] {
         const lines: MovingLine[] = [];
-        const now = Date.now();
+        const now = CanonicalClock.getInstance().simulatedNow();
 
         // ── Line 1: Cache Substrate Health (internal) ──
         const cacheTime = diag.cacheParseTime || 0;
@@ -489,7 +490,7 @@ Respond in JSON ONLY:
         };
         
         this.pushLine(card);
-        this.emit('ghost_splat', { splatId, intensity, sourceLabel, metadata, timestamp: Date.now() });
+        this.emit('ghost_splat', { splatId, intensity, sourceLabel, metadata, timestamp: CanonicalClock.getInstance().simulatedNow() });
     }
 
     public pinCognitiveCard(card: ContextCard): void {

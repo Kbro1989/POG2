@@ -3442,22 +3442,22 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
 
                 const result = await this.executePlan(stepPlanResult.value);
                 if (!result.ok) {
-                    this.renderer.error(`ÃƒÂ¢Ã‚ÂÃ…â€™ Step ${i + 1} failed: ${result.error?.message}. Initiating rollback...`);
+                    this.renderer.error(`❌ Step ${i + 1} failed: ${result.error?.message}. Initiating rollback...`);
                     await this.runGlobalRollback(completedTodos);
                     return result as Result<EngineOutput>;
                 }
 
                 // VERIFICATION TURN: Post-action audit
-                this.renderer.info(`ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂºÃ‚Â¡ÃƒÂ¯Ã‚Â¸Ã‚Â VERIFYING STEP ${i + 1}...`);
+                this.renderer.info(`🔍 VERIFYING STEP ${i + 1}...`);
                 const verification = await this.verifier.verify(currentTodo.task, result.value.output);
                 if (!verification.isAligned) {
-                    this.renderer.warn(`ÃƒÂ¢Ã‚ÂÃ¢â‚¬â€ ALIGNMENT DRIFT(Score: ${verification.score})`);
+                    this.renderer.warn(`— ALIGNMENT DRIFT(Score: ${verification.score})`);
                     this.renderer.warn(`Reasoning: ${verification.reasoning} `);
                     if (verification.correction) {
-                        this.renderer.info(`ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¡ Suggested Correction: ${verification.correction} `);
+                        this.renderer.info(`💡 Suggested Correction: ${verification.correction} `);
                     }
                 } else {
-                    this.renderer.success(`ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ ALIGNED(Score: ${verification.score})`);
+                    this.renderer.success(`✔ ALIGNED(Score: ${verification.score})`);
                 }
 
                 completedTodos.push({ ...currentTodo, rollback: stepPlanResult.value.rollback });
@@ -3477,7 +3477,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
     }
 
     private async runGlobalRollback(completedTodos: Todo[]): Promise<void> {
-        this.renderer.info(`Ã°Å¸â€â€ž Rolling back ${completedTodos.length} steps...`);
+        this.renderer.info(`🔄 Rolling back ${completedTodos.length} steps...`);
         const shell = new ShellEngine(this.renderer);
 
         for (let i = completedTodos.length - 1; i >= 0; i--) {
@@ -3489,7 +3489,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
                 this.renderer.warn(`[ROLLBACK] ${todo.task}: No rollback command defined.`);
             }
         }
-        this.renderer.success('Ã¢Å“â€ Rollback sequence complete.');
+        this.renderer.success('✔ Rollback sequence complete.');
     }
 
     private async narrate(task: string, result: string): Promise<string> {
@@ -3530,10 +3530,16 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
             return { ok: false, error: new Error('Execution plan is missing a tool.') };
         }
 
+        const tool = this.registry.getTool(plan.tool);
+        if (!tool) {
+            this.pulseMonitor.recordError();
+            return { ok: false, error: new Error(`Unknown tool: ${plan.tool}`) };
+        }
+
         // --- Cognitive ISA Governance Check (Phase 220) ---
         const contract = this.router.getHexagram().getContract();
         const permissions = contract.permissions;
-        const toolDomain = this.registry.getToolDomain(plan.tool) || SovereignDomain.SYSTEM;
+        const toolDomain = tool.domain;
 
         if (toolDomain === SovereignDomain.FORGE && plan.tool.includes('pedagogy') && !permissions.allowPedagogy) {
              this.renderer.error(`[ISA Violation] Pedagogy blocked by current metabolic state.`);
@@ -3546,6 +3552,12 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
         if (toolDomain === SovereignDomain.RESEARCH && (plan.tool.includes('gutenberg') || plan.tool.includes('library')) && !permissions.allowSubstrateIngestion) {
              this.renderer.error(`[ISA Violation] Substrate ingestion blocked by current metabolic state.`);
              return { ok: false, error: new Error(`Cognitive ISA Violation: Substrate Ingestion is forbidden.`) };
+        }
+
+        // Phase 260: Just-in-Time (JIT) Limb Activation
+        if (tool?.category === 'literary' && this.gutenberg) {
+            this.gutenberg.enable();
+            logger.info({ tool: plan.tool }, 'GutenbergLimb JIT-enabled for literary task.');
         }
         // Phase 38: Wait/Pass dispatch ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Kimi routes, workers execute
         const verdict = this.domainLocker.dispatchCheck(plan.tool);
@@ -3584,11 +3596,6 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
             }
         }
 
-        const tool = this.registry.getTool(plan.tool);
-        if (!tool) {
-            this.pulseMonitor.recordError();
-            return { ok: false, error: new Error(`Unknown tool: ${plan.tool}`) };
-        }
         const result = await tool.execute({ ...(plan.parameters || {}), model: modelId } as any);
 
         // Metabolic Feedback Loop - Drive hexagram from outcomes

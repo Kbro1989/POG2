@@ -10,6 +10,7 @@ import { CombatRotationEngine, CombatEvaluationContext, TargetContext, CombatInt
 import { CombatStyle } from './AbilityBook.js';
 import { HexagramManager } from '../../routing/HexagramManager.js';
 import { ObjectiveLimb, SovereignObjective } from '../../limbs/technical/ObjectiveLimb.js';
+import { CanonicalClock } from '../../utils/CanonicalClock.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -466,7 +467,8 @@ export class PlayerAgent {
 
         if (localSpots.length === 0) return;
 
-        const randomSpot = localSpots[Math.floor(Math.random() * localSpots.length)];
+        const rng = CanonicalClock.getInstance().rng();
+        const randomSpot = localSpots[rng.range(0, localSpots.length - 1)];
         
         const success = this.avatar.plotPath(randomSpot.x, randomSpot.y, this.pathfinder, this.avatar.state);
         if (success) {

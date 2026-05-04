@@ -1,4 +1,4 @@
-﻿import { Direction } from '../core/models.js';
+import { Direction } from '../core/models.js';
 
 /**
  * DirectionalRegistry - Canonical mapping of object types and rotations 
@@ -47,6 +47,9 @@ export const OBJECT_BLOCKING_MAP: Record<string, Direction[]> = {
 
     // TYPE 22: Floor Decorations (Non-blocking by default)
     '22_0': [],
+    '22_1': [],
+    '22_2': [],
+    '22_3': [],
 };
 
 /**

@@ -27,6 +27,7 @@ import { ItemBook } from './ItemBook.js';
 import { LuckTierRegistry } from './LuckTierRegistry.js';
 import { LootResolutionEngine } from './LootResolutionEngine.js';
 import { EpistemicTransitionKernel } from '../core/EpistemicTransitionKernel.js';
+import { CanonicalClock } from '../../utils/CanonicalClock.js';
 
 export interface TickEvent {
     readonly id: string;
@@ -239,7 +240,8 @@ export class SimulationHarness {
             let cellItems = state.groundItems.get(coordKey) || [];
 
             for (const item of drop.items) {
-                const dropId = `drop_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+                const clock = CanonicalClock.getInstance();
+                const dropId = `drop_${clock.simulatedNow()}_${clock.rng().range(0, 999)}`;
                 // GE value: pulled from item if resolved by WikiEquipmentEnricher, else 0.
                 // Used by LootBeamRegistry.resolveLootBeamTier() for authentic tier logic.
                 const geValue: number = (item as any).geValue ?? 0;
@@ -272,7 +274,7 @@ export class SimulationHarness {
                                 x: drop.coord.x,
                                 y: drop.coord.y
                             },
-                            timestamp: Date.now(),
+                            timestamp: CanonicalClock.getInstance().simulatedNow(),
                             tick: tickCount,
                             source: 'SIMULATION' as any,
                             inputs: {}
@@ -347,6 +349,7 @@ export class SimulationHarness {
                                 id: npcId,
                                 entityId: entityKey,
                                 name: data.name || `NPC ${npcId}`,
+                                coord: { x: data.spatial.x, y: data.spatial.y, plane: data.spatial.plane || 0 },
                                 x: data.spatial.x,
                                 y: data.spatial.y,
                                 plane: data.spatial.plane || 0,
@@ -425,9 +428,10 @@ export class SimulationHarness {
         // If the avatar is idle, has no goal, and is not busy, pick a random tile nearby every 10 ticks.
         if (tickCount % 10 === 0 && !this.walkGoal && !avatar.isBusy() && (!avatar.currentPath || avatar.currentPath.length === 0)) {
             // 20% chance to wander if idle
-            if (Math.random() < 0.2) {
-                const rx = avatar.coord.x + Math.floor(Math.random() * 7) - 3;
-                const ry = avatar.coord.y + Math.floor(Math.random() * 7) - 3;
+            const wanderRng = CanonicalClock.getInstance().rng();
+            if (wanderRng.next() < 0.2) {
+                const rx = avatar.coord.x + wanderRng.range(-3, 3);
+                const ry = avatar.coord.y + wanderRng.range(-3, 3);
                 this.setWalkGoal(rx, ry, avatar.coord.plane);
                 logger.debug({ x: rx, y: ry }, '[HARNESS] Avatar initiating autonomous idle wander.');
             }
@@ -510,7 +514,7 @@ export class SimulationHarness {
                             id: `npc_${npcId}`,
                             signature: 'SKILL_SUCCESS',
                             metadata: { practice: true, type: mapping.context, exp: 12.5 },
-                            timestamp: Date.now(),
+                            timestamp: CanonicalClock.getInstance().simulatedNow(),
                             truthClass: TruthClass.EXECUTION
                         });
                     }
@@ -520,7 +524,7 @@ export class SimulationHarness {
                         id: `npc_${npcId}`,
                         signature: 'EXPRESSION_TRIGGER',
                         metadata: { pose: 'movement_pulse', duration: 600 },
-                        timestamp: Date.now(),
+                        timestamp: CanonicalClock.getInstance().simulatedNow(),
                         truthClass: TruthClass.EXECUTION
                     });
                     break;
@@ -543,7 +547,7 @@ export class SimulationHarness {
                             id: `obj_${objId}`,
                             signature: 'SKILL_SUCCESS',
                             metadata: { substrate: substrate.bucket, amount: substrate.amount, stackable: substrate.stackable, station: true, type: mapping.context, exp: 45.0 },
-                            timestamp: Date.now(),
+                            timestamp: CanonicalClock.getInstance().simulatedNow(),
                             truthClass: TruthClass.EXECUTION
                         });
                         logger.debug({ objId, bucket: substrate.bucket, amount: substrate.amount }, 'Consumable success verified across buckets with stackability.');
@@ -557,7 +561,7 @@ export class SimulationHarness {
                             id: `obj_${objId}`,
                             signature: 'ITEM_DROP',
                             metadata: { effect: 'deposit_vfx', source: coalSubstrate.bucket, amount: coalSubstrate.amount, destination: 'bank' },
-                            timestamp: Date.now(),
+                            timestamp: CanonicalClock.getInstance().simulatedNow(),
                             truthClass: TruthClass.EXECUTION
                         });
                     }
@@ -663,7 +667,7 @@ export class SimulationHarness {
                             id: entity.id || 'player_sovereign',
                             signature: 'COMBAT_HIT',
                             metadata: { target: t.id || 'player', damage: finalDamage, type: intent.action, abilityId: intent.abilityId, status: isDead ? 'DEAD' : 'ALIVE' },
-                            timestamp: Date.now(),
+                            timestamp: CanonicalClock.getInstance().simulatedNow(),
                             truthClass: TruthClass.EXECUTION
                         });
                         
@@ -815,13 +819,13 @@ export class SimulationHarness {
      */
     private rollSkillSuccess(low: number, high: number, level: number): boolean {
         const threshold = Math.floor((low * (99 - level)) / 98) + Math.floor((high * (level - 1)) / 98) + 1;
-        const roll = Math.floor(Math.random() * 257);
+        const roll = CanonicalClock.getInstance().rng().range(0, 256);
         return roll <= threshold;
     }
 
     private calcProductionSuccessful(levelReq: number, skillLevel: number, levelStopFail: number): boolean {
         if (skillLevel < levelReq) return false;
-        const roll = Math.floor(Math.random() * 256) + 1;
+        const roll = CanonicalClock.getInstance().rng().range(1, 256);
         const threshold = Math.min(255, Math.floor(64 + (skillLevel - 1) * (19200.0 / (levelStopFail * 98))));
         return roll <= threshold;
     }
@@ -888,7 +892,7 @@ export class SimulationHarness {
                     type: 'tick_event',
                     tick: state.tickNumber,
                     events: [{
-                        id: `walk_${Date.now()}`,
+                        id: `walk_${CanonicalClock.getInstance().simulatedNow()}`,
                         signature: 'EXPRESSION_TRIGGER',
                         metadata: {
                             pose: 'walk',
@@ -896,7 +900,7 @@ export class SimulationHarness {
                             to: goal,
                             steps,
                         },
-                        timestamp: Date.now()
+                        timestamp: CanonicalClock.getInstance().simulatedNow()
                     }]
                 });
             } else {

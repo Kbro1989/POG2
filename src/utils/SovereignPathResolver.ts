@@ -36,11 +36,17 @@ function getEffectiveSovereignLair(): string {
 
     // Direct redirection to the Sovereign substrate drive
     if (process.platform === 'win32') {
-        const dDrive = 'D:\\sovereign';
-        if (!existsSync(dDrive)) {
-            try { mkdirSync(dDrive, { recursive: true }); } catch { /* Fallback to home */ }
-        }
-        if (existsSync(dDrive)) return dDrive;
+        const primaryD = 'D:\\D-sovereign-';
+        const fallbackD = 'D:\\sovereign';
+        
+        if (existsSync(primaryD)) return primaryD;
+        if (existsSync(fallbackD)) return fallbackD;
+
+        // If neither exists, attempt to create the primary one
+        try { 
+            mkdirSync(primaryD, { recursive: true }); 
+            return primaryD;
+        } catch { /* Fallback to home */ }
     }
 
     return SOVEREIGN_HOME_ROOT;

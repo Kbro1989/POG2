@@ -2,6 +2,7 @@ import { GameplayModule } from './MinigameInterfaces.js';
 import { SubstrateState, YaoState, GameState, SovereignAvatar } from '../../core/models.js';
 import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { existsSync, readFileSync } from 'fs';
+import { CanonicalClock } from '../../utils/CanonicalClock.js';
 
 export class BarrowsInterpreter implements GameplayModule {
     public readonly name = 'Barrows';
@@ -22,7 +23,7 @@ export class BarrowsInterpreter implements GameplayModule {
         }
 
         // Randomize the hidden tunnel for this run
-        this.hiddenTunnel = this.BROTHERS[Math.floor(Math.random() * this.BROTHERS.length)];
+        this.hiddenTunnel = this.BROTHERS[CanonicalClock.getInstance().rng().range(0, this.BROTHERS.length - 1)];
         this.killedBrothers.clear();
         this.activeBrother = null;
         

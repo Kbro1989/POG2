@@ -33,31 +33,51 @@ async function run() {
         logger.error({ error: questRes.error }, 'Quest reconciliation failed.');
     }
 
-    // 2. Populate Skills (Simplified for now, as SkillId enum is in models.ts)
+    // 2. Populate Skills (Full Wiki Parity)
     logger.info('Populating Skills...');
     const skillManifestPath = join(logicDir, 'skill_manifest.json');
     const skills = [
-        { id: 1, name: 'Attack' }, { id: 2, name: 'Strength' }, { id: 3, name: 'Ranged' },
-        { id: 4, name: 'Magic' }, { id: 5, name: 'Defence' }, { id: 6, name: 'Constitution' },
-        { id: 7, name: 'Prayer' }, { id: 8, name: 'Agility' }, { id: 9, name: 'Herblore' },
-        { id: 10, name: 'Thieving' }, { id: 11, name: 'Crafting' }, { id: 12, name: 'Runecrafting' },
-        { id: 13, name: 'Mining' }, { id: 14, name: 'Smithing' }, { id: 15, name: 'Fishing' },
-        { id: 16, name: 'Cooking' }, { id: 17, name: 'Firemaking' }, { id: 18, name: 'Woodcutting' },
-        { id: 19, name: 'Fletching' }, { id: 20, name: 'Slayer' }, { id: 21, name: 'Farming' },
-        { id: 22, name: 'Construction' }, { id: 23, name: 'Hunter' }, { id: 24, name: 'Summoning' },
-        { id: 25, name: 'Dungeoneering' }, { id: 26, name: 'Divination' }, { id: 27, name: 'Invention' },
-        { id: 28, name: 'Archaeology' }, { id: 29, name: 'Necromancy' }
+        { id: 1, name: 'Attack', maxLevel: 120, f2pMaxLevel: 120, isMembers: false, isElite: false, type: 'Combat' },
+        { id: 2, name: 'Strength', maxLevel: 120, f2pMaxLevel: 120, isMembers: false, isElite: false, type: 'Combat' },
+        { id: 3, name: 'Ranged', maxLevel: 120, f2pMaxLevel: 120, isMembers: false, isElite: false, type: 'Combat' },
+        { id: 4, name: 'Magic', maxLevel: 120, f2pMaxLevel: 120, isMembers: false, isElite: false, type: 'Combat' },
+        { id: 5, name: 'Defence', maxLevel: 99, f2pMaxLevel: 99, isMembers: false, isElite: false, type: 'Combat' },
+        { id: 6, name: 'Constitution', maxLevel: 99, f2pMaxLevel: 99, isMembers: false, isElite: false, type: 'Combat' },
+        { id: 7, name: 'Prayer', maxLevel: 99, f2pMaxLevel: 99, isMembers: false, isElite: false, type: 'Combat' },
+        { id: 8, name: 'Agility', maxLevel: 99, f2pMaxLevel: 5, isMembers: true, isElite: false, type: 'Support' },
+        { id: 9, name: 'Herblore', maxLevel: 120, f2pMaxLevel: 5, isMembers: true, isElite: false, type: 'Artisan' },
+        { id: 10, name: 'Thieving', maxLevel: 120, f2pMaxLevel: 5, isMembers: true, isElite: false, type: 'Support' },
+        { id: 11, name: 'Crafting', maxLevel: 110, f2pMaxLevel: 110, isMembers: false, isElite: false, type: 'Artisan' },
+        { id: 12, name: 'Runecrafting', maxLevel: 110, f2pMaxLevel: 110, isMembers: false, isElite: false, type: 'Artisan' },
+        { id: 13, name: 'Mining', maxLevel: 110, f2pMaxLevel: 110, isMembers: false, isElite: false, type: 'Gathering' },
+        { id: 14, name: 'Smithing', maxLevel: 110, f2pMaxLevel: 110, isMembers: false, isElite: false, type: 'Artisan' },
+        { id: 15, name: 'Fishing', maxLevel: 99, f2pMaxLevel: 99, isMembers: false, isElite: false, type: 'Gathering' },
+        { id: 16, name: 'Cooking', maxLevel: 99, f2pMaxLevel: 99, isMembers: false, isElite: false, type: 'Artisan' },
+        { id: 17, name: 'Firemaking', maxLevel: 110, f2pMaxLevel: 110, isMembers: false, isElite: false, type: 'Artisan' },
+        { id: 18, name: 'Woodcutting', maxLevel: 110, f2pMaxLevel: 110, isMembers: false, isElite: false, type: 'Gathering' },
+        { id: 19, name: 'Fletching', maxLevel: 110, f2pMaxLevel: 110, isMembers: false, isElite: false, type: 'Artisan' },
+        { id: 20, name: 'Slayer', maxLevel: 120, f2pMaxLevel: 5, isMembers: true, isElite: false, type: 'Support' },
+        { id: 21, name: 'Farming', maxLevel: 120, f2pMaxLevel: 5, isMembers: true, isElite: false, type: 'Gathering' },
+        { id: 22, name: 'Construction', maxLevel: 99, f2pMaxLevel: 5, isMembers: true, isElite: false, type: 'Artisan' },
+        { id: 23, name: 'Hunter', maxLevel: 110, f2pMaxLevel: 5, isMembers: true, isElite: false, type: 'Gathering' },
+        { id: 24, name: 'Summoning', maxLevel: 99, f2pMaxLevel: 5, isMembers: true, isElite: false, type: 'Combat' },
+        { id: 25, name: 'Dungeoneering', maxLevel: 120, f2pMaxLevel: 120, isMembers: false, isElite: false, type: 'Support' },
+        { id: 26, name: 'Divination', maxLevel: 99, f2pMaxLevel: 5, isMembers: true, isElite: false, type: 'Gathering' },
+        { id: 27, name: 'Invention', maxLevel: 120, f2pMaxLevel: 1, isMembers: true, isElite: true, type: 'Elite' },
+        { id: 28, name: 'Archaeology', maxLevel: 120, f2pMaxLevel: 20, isMembers: true, isElite: false, type: 'Gathering' },
+        { id: 29, name: 'Necromancy', maxLevel: 120, f2pMaxLevel: 20, isMembers: true, isElite: false, type: 'Combat' }
     ];
-    
+
     const skillManifest = {
-        version: "1.1.0",
+        version: "2.0.0",
         total_skills: skills.length,
         skills: skills,
         categories: {
-            combat: ['Attack', 'Strength', 'Ranged', 'Magic', 'Defence', 'Constitution', 'Prayer', 'Summoning', 'Necromancy'],
-            gathering: ['Mining', 'Fishing', 'Woodcutting', 'Farming', 'Hunter', 'Divination', 'Archaeology'],
-            artisan: ['Herblore', 'Crafting', 'Runecrafting', 'Smithing', 'Cooking', 'Firemaking', 'Fletching', 'Construction', 'Invention'],
-            support: ['Agility', 'Thieving', 'Slayer', 'Dungeoneering']
+            combat: skills.filter(s => s.type === 'Combat').map(s => s.name),
+            gathering: skills.filter(s => s.type === 'Gathering').map(s => s.name),
+            artisan: skills.filter(s => s.type === 'Artisan').map(s => s.name),
+            support: skills.filter(s => s.type === 'Support').map(s => s.name),
+            elite: skills.filter(s => s.type === 'Elite').map(s => s.name)
         }
     };
     

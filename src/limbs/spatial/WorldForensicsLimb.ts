@@ -52,6 +52,7 @@ export class WorldForensicsLimb {
     private readonly cachePath: string;
     private locationsCache: Map<string, GameObjectInstance[]> = new Map();
     private objectDefs: Map<number, ObjectDefinition> = new Map();
+    private terrainCache: Map<string, WorldObservation[]> = new Map();
 
     private constructor() {
         this.cachePath = getRSMVCachePath();
@@ -89,6 +90,11 @@ export class WorldForensicsLimb {
     public async senseLocalArea(x: number, z: number, plane: number): Promise<Result<WorldObservation[]>> {
         const mapsquareX = x >> 6;
         const mapsquareZ = z >> 6;
+        const cacheKey = `${mapsquareX}_${mapsquareZ}_${plane}`;
+
+        if (this.terrainCache.has(cacheKey)) {
+            return ok(this.terrainCache.get(cacheKey)!);
+        }
         
         const observations: WorldObservation[] = [];
         const grid: number[][][] = Array.from({ length: 4 }, () => 
@@ -149,6 +155,7 @@ export class WorldForensicsLimb {
                         });
                     }
                 }
+                this.terrainCache.set(cacheKey, observations);
                 return ok(observations);
             }
         } catch (e) {
@@ -177,6 +184,7 @@ export class WorldForensicsLimb {
                     objects: []
                 });
             }
+            this.terrainCache.set(cacheKey, observations);
             return ok(observations);
         }
 
@@ -326,8 +334,8 @@ export class WorldForensicsLimb {
             npc_only_blocks: []
         };
 
-        // Terrain blocking
-        if (obs && (obs.collision & 0x1)) {
+        // Terrain blocking (obs.collision is a base-3 packed int, center is index 0)
+        if (obs && (obs.collision % 3 !== 0)) {
             mask.north = mask.east = mask.south = mask.west = false;
             return ok(mask);
         }

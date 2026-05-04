@@ -9,6 +9,7 @@ export interface WikiData {
     race?: string;
     intent: string;
     url: string;
+    imageUrl?: string;
     variables?: Record<string, string>;
 }
 
@@ -125,6 +126,13 @@ export class WikiEnricher {
             else if (lowerExtract.includes('demon')) race = 'Demon';
             else if (lowerExtract.includes('beast')) race = 'Beast';
 
+            let imageUrl: string | undefined;
+            try {
+                imageUrl = await this.fetchImageUrl(pageTitle);
+            } catch (e) {
+                // Ignore missing images
+            }
+
             return {
                 ok: true,
                 value: {
@@ -133,6 +141,7 @@ export class WikiEnricher {
                     race,
                     intent,
                     url,
+                    imageUrl,
                     variables: await this.fetchInfoboxData(pageTitle)
                 }
             };
@@ -140,6 +149,31 @@ export class WikiEnricher {
             logger.error({ err, name }, 'Wiki enrichment failed');
             return { ok: false, error: err as Error };
         }
+    }
+
+    /**
+     * fetchImageUrl(title) - Extracts the main image URL from the wiki page.
+     */
+    public static async fetchImageUrl(title: string): Promise<string | undefined> {
+        const params = new URLSearchParams({
+            action: 'query',
+            format: 'json',
+            titles: title,
+            prop: 'pageimages',
+            piprop: 'original',
+            origin: '*'
+        });
+
+        const headers = {
+            'User-Agent': 'SovereignVisionBot/1.1 (https://github.com/POG2; admin@pog2.internal)'
+        };
+
+        const response = await fetch(`${this.API_URL}?${params.toString()}`, { headers });
+        const data = await response.json() as any;
+        const pages = data.query?.pages || {};
+        const pageId = Object.keys(pages)[0];
+        
+        return pages[pageId]?.original?.source;
     }
 
     /**

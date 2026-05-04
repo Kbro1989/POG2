@@ -3,6 +3,7 @@ import { GameplayModule } from './MinigameInterfaces.js';
 import { GameState, SovereignAvatar } from '../../core/models.js';
 import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { resolve } from 'path';
+import { CanonicalClock } from '../../utils/CanonicalClock.js';
 
 export class PrifddinasInterpreter implements GameplayModule {
     public readonly name = 'Prifddinas';
@@ -29,9 +30,10 @@ export class PrifddinasInterpreter implements GameplayModule {
         // Rotate Voice of Seren every hour (6000 ticks = 1 Hour real time)
         if (tickCount % 6000 === 0) {
             // Randomly select 2 clans
-            const a = Math.floor(Math.random() * 8);
+            const rng = CanonicalClock.getInstance().rng();
+            const a = rng.range(0, 7);
             let b = a;
-            while (b === a) b = Math.floor(Math.random() * 8);
+            while (b === a) b = rng.range(0, 7);
             
             // Just a mock rotation logic for CLI visualization
             state.varbits.set(this.VOICE_OF_SEREN_VARBIT, a * 10 + b); 

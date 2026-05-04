@@ -50,6 +50,7 @@ export class GutenbergLimb {
     private readonly cachePath: string;
     private readonly metadataPath: string;
     private substrate: GameplaySubstrate;
+    private bypassed: boolean = true;
 
     constructor(
         private readonly client: ModelClient,
@@ -62,6 +63,11 @@ export class GutenbergLimb {
             mkdirSync(this.cachePath, { recursive: true });
         }
 
+        if (process.env.GUTENBERG_ENABLED === 'true') {
+            this.enable();
+        }
+
+        // Initialize empty substrate in case it stays bypassed
         this.substrate = {
             dbTables: new Map(),
             varps: new Map(),
@@ -70,9 +76,21 @@ export class GutenbergLimb {
             dbColumns: new Map(),
             kinetics: new Map()
         };
+    }
 
-        // Initialize gameplay data from authoritative substrate
+    /**
+     * enable - Explicitly activates the Gutenberg substrate.
+     * Required for StoryboardLimbV2 and video pipelines.
+     */
+    public enable(): void {
+        if (!this.bypassed) return;
+        this.bypassed = false;
+        logger.info('Gutenberg Limb Enabled. Synchronizing gameplay substrate...');
         this.syncGameplayData();
+    }
+
+    public isBypassed(): boolean {
+        return this.bypassed;
     }
 
     private loadMetadata(): BookMetadata[] {
@@ -102,6 +120,7 @@ export class GutenbergLimb {
     }
 
     public async analyzeStyle(bookId: number): Promise<Result<{ profile: StyleProfile; book: BookMetadata }>> {
+        if (this.bypassed) return { ok: false, error: new Error('Gutenberg is bypassed. Call enable() to activate literary substrates.') };
         const books = this.loadMetadata();
         const book = books.find(b => b.id === bookId);
 
@@ -139,6 +158,7 @@ export class GutenbergLimb {
      * getSequencedSegments - Uses NarrativeExtractor to get specific beats from a book.
      */
     public async getSequencedSegments(bookId: number, count: number): Promise<Result<NarrativeSegment[]>> {
+        if (this.bypassed) return { ok: false, error: new Error('Gutenberg is bypassed.') };
         const books = this.loadMetadata();
         const book = books.find(b => b.id === bookId);
         if (!book) return { ok: false, error: new Error(`Book ${bookId} not found in library.`) };
@@ -175,6 +195,7 @@ export class GutenbergLimb {
     }
 
     public async ingestBook(id: number, title: string, author: string, domain: string, content?: string): Promise<Result<BookMetadata>> {
+        if (this.bypassed) return { ok: false, error: new Error('Gutenberg is bypassed.') };
         if (!this.cachePath) return { ok: false, error: new Error('Gutenberg cache path not initialized.') };
 
         const existingBooks = this.getLibrary();
@@ -255,6 +276,7 @@ export class GutenbergLimb {
     }
 
     public async searchCatalog(query: string): Promise<Result<GutenbergBook[]>> {
+        if (this.bypassed) return { ok: false, error: new Error('Gutenberg is bypassed.') };
         // Redirect to Local Gutendex instance (Django default port)
         const url = `http://localhost:8000/books/?search=${encodeURIComponent(query)}`;
         try {
@@ -457,6 +479,7 @@ export class GutenbergLimb {
 
 
     public async readBook(bookId: number, personality?: string, emotion?: string): Promise<Result<void>> {
+        if (this.bypassed) return { ok: false, error: new Error('Gutenberg is bypassed.') };
         const books = this.loadMetadata();
         const book = books.find(b => b.id === bookId);
         if (!book) return { ok: false, error: new Error(`Book ${bookId} not found.`) };
@@ -532,6 +555,7 @@ export class GutenbergLimb {
     }
 
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        if (this.bypassed) return { online: true, details: 'Gutenberg: BYPASSED (Dormant substrate)' };
         const books = this.getLibrary();
         const exists = existsSync(this.cachePath);
         const metadataExists = existsSync(this.metadataPath);
@@ -556,6 +580,7 @@ export class GutenbergLimb {
         return { online: true, details };
     }
     public getCacheSize(): Result<{ totalBytes: number; bookCount: number; formatted: string }> {
+        if (this.bypassed) return { ok: false, error: new Error('Gutenberg is bypassed.') };
         try {
             const books = this.loadMetadata();
             let total = 0;

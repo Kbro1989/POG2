@@ -19,6 +19,7 @@ import { createLogger } from '../../utils/logger.js';
 import { EpistemicValidator } from './EpistemicValidator.js';
 import { rsmvBridge } from '../../utils/RSMVBridge.js';
 import { createHash } from 'crypto';
+import { ClockAuthorityRegistry, ClockDomain } from '../../utils/ClockAuthorityRegistry.js';
 
 const logger = createLogger('EpistemicTransitionKernel');
 
@@ -123,7 +124,7 @@ export class EpistemicTransitionKernel extends EventEmitter {
             rule: 'SUBSTRATE_GROUNDING_MANDATE',
             justification: `Execution event ${sealed.id} aligned with authoritative substrate at ${substratePath}`,
             evidenceHash: sealed.hash || 'NO_HASH',
-            timestamp: Date.now(),
+            timestamp: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'EpistemicKernel'),
             substrateAnchor: substratePath
         });
 
@@ -151,7 +152,7 @@ export class EpistemicTransitionKernel extends EventEmitter {
             rule: 'CAUSAL_ABSTRACTION',
             justification: `Cognitive pattern ${pattern.archetype} derived from causal event ${event.id}`,
             evidenceHash: event.hash || 'NO_HASH',
-            timestamp: Date.now()
+            timestamp: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'EpistemicKernel')
         });
 
         return {
@@ -177,7 +178,7 @@ export class EpistemicTransitionKernel extends EventEmitter {
             rule: 'STRUCTURAL_GENERALIZATION',
             justification: `Heuristic rule ${rule.constraint} promoted to universal invariant.`,
             evidenceHash: createHash('sha256').update(JSON.stringify(rule)).digest('hex'),
-            timestamp: Date.now()
+            timestamp: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'EpistemicKernel')
         });
 
          return {
@@ -297,8 +298,8 @@ export class EpistemicTransitionKernel extends EventEmitter {
             }
 
             PredictionRegistry.getInstance().addRecord({
-                id: `pr-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-                timestamp: Date.now(),
+                id: ClockAuthorityRegistry.resolveEntropy(ClockDomain.INFERENCE, 'EpistemicKernel').id('pr'),
+                timestamp: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'EpistemicKernel'),
                 predictedState: this.lastYaoState, // Approximate
                 predictedPhase,
                 movingLines,
@@ -339,8 +340,8 @@ export class EpistemicTransitionKernel extends EventEmitter {
 
         // 8. Build transition event
         const event: YaoTransitionEvent = {
-            id: `yte-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-            timestamp: Date.now(),
+            id: ClockAuthorityRegistry.resolveEntropy(ClockDomain.INFERENCE, 'EpistemicKernel').id('yte'),
+            timestamp: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'EpistemicKernel'),
             sourceState: this.lastYaoState,
             targetState: observedYao,
             phase: this.currentPhase,
@@ -460,7 +461,7 @@ export class EpistemicTransitionKernel extends EventEmitter {
      * This feeds the "Intentionality" signal back into the epistemic loop.
      */
     public recordAction(actionType: string, confidence: number): void {
-        this.emit('actionCommitted', { actionType, confidence, timestamp: Date.now() });
+        this.emit('actionCommitted', { actionType, confidence, timestamp: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'EpistemicKernel') });
         
         // Intentional action slightly increases volatility (system is moving/changing)
         // but stabilizes the trend if confidence is high.

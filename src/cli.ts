@@ -92,6 +92,7 @@ import { SpatialSovereigntyLimb } from './limbs/spatial/SpatialSovereigntyLimb.j
 import { GameplaySovereigntyLimb } from './limbs/spatial/GameplaySovereigntyLimb.js';
 import { SpatialRadarLimb } from './limbs/spatial/SpatialRadarLimb.js';
 import { GlobeStateLimb } from './limbs/spatial/GlobeStateLimb.js';
+import { CNSGodheadPulseVolley } from './engines/gameplay/CNSGodheadPulseVolley.js';
 import { SwitchboardLimb } from './monitor/SwitchboardLimb.js';
 import { PrifddinasInterpreter } from './engines/gameplay/PrifddinasInterpreter.js';
 import { BarrowsInterpreter } from './engines/gameplay/BarrowsInterpreter.js';
@@ -103,6 +104,8 @@ import { ObservationEngine } from './engines/spatial/ObservationEngine.js';
 import { getPedagogyPath, getAtlasLogicPath, getAtlasSystemPath } from './utils/SovereignPathResolver.js';
 import { SpatialVisionEngine } from './engines/SpatialVisionEngine.js';
 import { QuestForgeLimb } from './limbs/technical/QuestForgeLimb.js';
+import { GutenbergLimb } from './limbs/creative/GutenbergLimb.js';
+import { CanonicalClock } from './utils/CanonicalClock.js';
 
 
 
@@ -263,6 +266,9 @@ export async function main(): Promise<void> {
 
     // Phase 0: Initialize the Thought Processor (HexagramManager singleton)
     // Must happen BEFORE TernaryRouter construction Ã¢â‚¬â€ the router calls getInstance()
+    // Phase 0.1: Initialize Temporal Origin
+    CanonicalClock.bootstrap(42);
+
     const hexagram = new HexagramManager(null, process.cwd());
     await hexagram.initialize();
 
@@ -1696,6 +1702,64 @@ export async function main(): Promise<void> {
             handleResult(result, renderer, state);
         });
 
+    gut
+        .command('analyze <id>')
+        .description('Extract stylistic metrics (ARI, tone, richness) from a library book')
+        .action(async (id: string) => {
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const result = await engine.executePlan({
+                goal: `Style analysis: Book ${id}`,
+                steps: ["Extracting stylistic metrics and readability scores"],
+                tool: 'analyze_book_style',
+                parameters: { bookId: parseInt(id) },
+                reasoning: 'Manual literary style analysis.',
+                model: config.orchestratorModel,
+                severity: 10,
+                interaction: 'text',
+                yaoState: YaoState.YoungYin,
+                todos: []
+            });
+            handleResult(result, renderer, state);
+        });
+
+    gut
+        .command('personality <id>')
+        .description('Absorb the stylistic profile of a book and pin it as the active personality archetype')
+        .action(async (id: string) => {
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const result = await engine.executePlan({
+                goal: `Personality mapping: Book ${id}`,
+                steps: ["Mapping literary tone to cognitive archetypes"],
+                tool: 'personality_book',
+                parameters: { bookId: parseInt(id) },
+                reasoning: 'Manual personality bias adjustment.',
+                model: config.orchestratorModel,
+                severity: 30,
+                interaction: 'text',
+                yaoState: YaoState.OldYin,
+                todos: []
+            });
+            handleResult(result, renderer, state);
+        });
+
+    gut
+        .command('status')
+        .description('Check Gutenberg limb health and substrate size')
+        .action(async () => {
+            const vectorDB = new VectorDB({ client });
+            const limb = new GutenbergLimb(client, vectorDB);
+            const health = await limb.healthCheck();
+            const size = limb.getCacheSize();
+            
+            if (health.online) renderer.success(health.details);
+            else renderer.error(health.details);
+
+            if (size.ok) {
+                renderer.info(`Substrate Size: ${size.value.formatted} (${size.value.bookCount} books)`);
+            }
+        });
+
+
     // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
     // RSMV INTEGRATION Loop
     // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
@@ -2303,31 +2367,48 @@ export async function main(): Promise<void> {
         .description('Boot the full Sovereign Organism and begin autonomous interaction')
         .option('--headless', 'Run without radar visualization', false)
         .action(async (opts: { headless: boolean }) => {
-            renderer.info('Ã°Å¸â€¢Â¸Ã¯Â¸  POG2 Sovereign Organism: Initiating boot sequence...');
+            renderer.info('🕸️ POG2 Sovereign Organism: Initiating boot sequence...');
 
             const gameplay = GameplaySovereigntyLimb.getInstance();
             const radar = SpatialRadarLimb.getInstance();
             const globe = new GlobeStateLimb(config);
             await globe.connect();
-            gameplay.injectSwitchboard(SwitchboardLimb.getInstance());
 
-            renderer.success('Ã°Å¸Â§  Cognitive Substrate: Synchronized (64 Hexagrams)');
-            renderer.success('Ã°Å¸â€˜â‚¬ Predictive Vision: Online (GhostSplat)');
+            const switchboard = SwitchboardLimb.getInstance();
+            switchboard.initialize();
+            await switchboard.startWithGracefulPort({ run: async () => ({ ok: true }) }, 8788);
+            gameplay.injectSwitchboard(switchboard);
 
-            // Start the authoritative pulse
-            const pulse = async () => {
-                const report = await gameplay.processTick();
-                if (!opts.headless) {
-                    const view = radar.render(gameplay.globalState, gameplay.avatar);
-                    process.stdout.write('\x1Bc'); // Clear screen (ANSI escape)
-                    process.stdout.write(view + '\n');
-                    if (report) process.stdout.write(`\n\x1b[38;5;208m[CNS PULSE]\x1b[0m ${report}\n`);
-                }
-                setTimeout(pulse, 600);
-            };
+            renderer.success('🧠 Cognitive Substrate: Synchronized (64 Hexagrams)');
+            renderer.success('👀 Predictive Vision: Online (GhostSplat)');
 
-            pulse();
+            // Boot the full CNS Godhead deterministic heartbeat
+            const cns = CNSGodheadPulseVolley.getInstance();
+            cns.setRenderer(renderer);
+            cns.startLoop();
+
+            // Persistent radar render loop (visual only, non-blocking)
+            if (!opts.headless) {
+                const renderRadar = () => {
+                    try {
+                        const view = radar.render(gameplay.globalState, gameplay.avatar);
+                        process.stdout.write('\x1Bc'); // Clear screen (ANSI escape)
+                        process.stdout.write(view + '\n');
+                    } catch (e) {
+                        // Silently skip render failures
+                    }
+                    setTimeout(renderRadar, 600);
+                };
+                renderRadar();
+            }
+
+            // Keep process alive indefinitely
+            process.on('SIGINT', () => {
+                renderer.info('🛑 Sovereign Organism: Graceful shutdown initiated.');
+                process.exit(0);
+            });
         });
+
     program
         .command('heal <path>')
         .description('Heal a file Ã¢â‚¬â€ fill missing implementations via sovereign self-modification')

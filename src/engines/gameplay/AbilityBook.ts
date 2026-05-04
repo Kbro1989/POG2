@@ -251,6 +251,20 @@ export class AbilityBook {
 
     private constructor() {
         this.loadRegistry();
+        this.loadHudForensics();
+    }
+
+    private loadHudForensics(): void {
+        try {
+            const hudPath = resolveSovereignPath('cache_pedagogy/atlas/interfaces/interface_1496_decomposed.json');
+            if (existsSync(hudPath)) {
+                const raw = readFileSync(hudPath, 'utf8');
+                const parsed = JSON.parse(raw);
+                logger.info({ interfaceId: parsed.interfaceId, components: parsed.totalComponents }, 'AbilityBook HUD forensics bound.');
+            }
+        } catch (e) {
+            logger.warn('Failed to bind AbilityBook HUD forensics');
+        }
     }
 
     public static getInstance(): AbilityBook {

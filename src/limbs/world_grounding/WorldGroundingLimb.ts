@@ -391,20 +391,30 @@ export class WorldGroundingLimb implements GroundingHydrator {
         const maxX = minX + 63;
         const maxZ = minZ + 63;
 
-        const localSpawns = this.npcSpawns.filter(s => s.worldX >= minX && s.worldX <= maxX && s.worldZ >= minZ && s.worldZ <= maxZ);
+        const localSpawns = this.npcSpawns.filter(s => {
+            const x = s.worldX ?? s.coord?.x;
+            const z = s.worldZ ?? s.coord?.z ?? s.coord?.y;
+            return x >= minX && x <= maxX && z >= minZ && z <= maxZ;
+        });
         if (localSpawns.length === 0) return;
 
         const tx = this.beginTick();
         const spatial = SpatialSovereigntyLimb.getInstance();
 
         for (const spawn of localSpawns) {
-            const entId = `npc_${spawn.npcId}_${spawn.worldX}_${spawn.worldZ}`;
+            const x = spawn.worldX ?? spawn.coord?.x;
+            const z = spawn.worldZ ?? spawn.coord?.z ?? spawn.coord?.y;
+            const plane = spawn.plane ?? spawn.coord?.plane ?? 0;
+            const npcId = spawn.npcId ?? spawn.entityId;
+            const npcName = spawn.npcName ?? spawn.title ?? `Entity ${npcId}`;
+
+            const entId = `npc_${npcId}_${x}_${z}`;
             if (this.manifest.entities[entId]) continue;
             tx.set(entId, {
                 id: entId,
-                npcId: spawn.npcId,
-                name: spawn.npcName,
-                spatial: { x: spawn.worldX, y: spawn.worldZ, z: spatial.getAltitude(spawn.plane, spawn.worldX, spawn.worldZ), plane: spawn.plane },
+                npcId: npcId,
+                name: npcName,
+                spatial: { x: x, y: z, z: spatial.getAltitude(plane, x, z), plane: plane },
                 behavior: 'STATIC_FORENSIC'
             });
         }

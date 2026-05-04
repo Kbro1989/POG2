@@ -23,6 +23,7 @@
  */
 
 import { AbilityBook, AbilityDefinition, CombatStyle } from './AbilityBook.js';
+import { CanonicalClock } from '../../utils/CanonicalClock.js';
 import { Coord, CombatantState } from '../../core/models.js';
 import { GhostSplatField } from '../../substrates/GhostSplatEngine.js';
 import { PADDED_SIZE } from '../../limbs/spatial/SpatialSovereigntyLimb.js';
@@ -422,7 +423,8 @@ export class CombatRotationEngine {
         if (minPct === 0 && maxPct === 0) return 0; // Buff/defensive, no damage
 
         const baseDamage = CombatRotationEngine.logarithmicBaseDamage(level, weaponTier);
-        const pct = minPct + Math.random() * (maxPct - minPct);
+        const rng = CanonicalClock.getInstance().rng();
+        const pct = minPct + rng.next() * (maxPct - minPct);
         let damage = Math.floor(baseDamage * (pct / 100));
 
         // Buff multipliers (March 2026)
@@ -451,7 +453,8 @@ export class CombatRotationEngine {
     public calculateDamageLinear(ability: AbilityDefinition, weaponDamage: number): number {
         const [minPct, maxPct] = ability.damageRange;
         if (minPct === 0 && maxPct === 0) return 0;
-        const pct = minPct + Math.random() * (maxPct - minPct);
+        const rng = CanonicalClock.getInstance().rng();
+        const pct = minPct + rng.next() * (maxPct - minPct);
         return Math.floor(weaponDamage * (pct / 100));
     }
 

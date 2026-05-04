@@ -7,6 +7,7 @@ import { CausalPatternExtractor } from './CausalPatternExtractor.js';
 import { HexagramManager } from '../../routing/HexagramManager.js';
 import { TrainingCollector } from '../../utils/TrainingCollector.js';
 import { EpistemicValidator } from './EpistemicValidator.js';
+import { ClockAuthorityRegistry, ClockDomain } from '../../utils/ClockAuthorityRegistry.js';
 
 const logger = createLogger('TruthReconciler');
 
@@ -60,6 +61,33 @@ export class TruthReconciler {
 
         // 4. Sealing Audit: Verify cryptographic integrity of the tick
         this.verifyChainIntegrity(executionTruth);
+
+        // 5. Temporal Domain Audit: Ensure INFERENCE and OBSERVABILITY clocks have not drifted
+        this.auditTemporalMonotonicity(tick);
+    }
+
+    /**
+     * auditTemporalMonotonicity - Asserts cross-domain ordering rules to prevent silent 
+     * desynchronization between causal logic, inference traces, and observability timelines.
+     */
+    private auditTemporalMonotonicity(tick: number): void {
+        const simTime = ClockAuthorityRegistry.resolveTime(ClockDomain.SIMULATION, 'TruthReconciler');
+        const infTime = ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'TruthReconciler');
+        const obsTime = ClockAuthorityRegistry.resolveTime(ClockDomain.OBSERVABILITY, 'TruthReconciler');
+
+        // Rule 1: Causal Monotonicity. INFERENCE must never drift behind SIMULATION
+        if (infTime < simTime) {
+            const err = `Temporal Invariant Violation: INFERENCE time (${infTime}) drifted behind SIMULATION time (${simTime}) at tick ${tick}`;
+            logger.fatal({ rule: 'CAUSAL_MONOTONICITY', simTime, infTime, tick }, err);
+            throw new Error(err);
+        }
+
+        // Rule 2: Observability Progression. Must proxy simulation without negative drift.
+        if (obsTime < simTime) {
+            const err = `Temporal Invariant Violation: OBSERVABILITY time (${obsTime}) fell behind SIMULATION time (${simTime})`;
+            logger.fatal({ rule: 'OBSERVABILITY_DESYNC', simTime, obsTime, tick }, err);
+            throw new Error(err);
+        }
     }
 
     /**

@@ -1,6 +1,7 @@
 import { getLastIOLatencyMs } from '../../utils/RSMVBridge.js';
 import { EventBus } from '../../events/EventBus.js';
 import { createLogger } from '../../utils/logger.js';
+import { CanonicalClock } from '../../utils/CanonicalClock.js';
 import { performance } from 'perf_hooks';
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
 import { SubstrateState, YaoState, GameState, SovereignAvatar, LearningFidelity, type RoutingSnapshot, type WorldDelta, type CausalEvidence, type EventOutcome, type EventSource, type TickEvent, type TileLock, TruthClass, ChaosPhase } from '../../core/models.js';
@@ -237,14 +238,20 @@ export class CNSGodheadPulseVolley {
             } catch (err) {
                 logger.error({ err }, 'POG2 Async Thinking Loop Error');
             }
-            // Think every 5-8 seconds asynchronously
-            await new Promise(resolve => setTimeout(resolve, 5000 + Math.random() * 3000));
+            // Think every 5-8 seconds asynchronously (T3 cognitive — wall-clock acceptable here since this is outside tick boundary)
+            const thinkDelay = 5000 + CanonicalClock.getInstance().rng().range(0, 3000);
+            await new Promise(resolve => setTimeout(resolve, thinkDelay));
         }
     }
 
     private async tick(): Promise<void> {
         const start = performance.now();
         this.tickCount++;
+
+        // CANONICAL CLOCK ADVANCEMENT — This is the heartbeat.
+        // Every tick advances the deterministic clock by one phase (300ms).
+        // All downstream simulatedNow() and rng() calls derive from this.
+        CanonicalClock.getInstance().pulse();
 
         // Swap deterministic queues at start of tick
         this.currentTickQueues = { ...this.nextTickQueues };
@@ -342,7 +349,7 @@ export class CNSGodheadPulseVolley {
                         deadlineMs: decision.deadlineMs,
                         movingLines: transitionalVector.movingLines,
                         abilityQueue: this.getCurrentAbilityQueue(),
-                        timestamp: Date.now()
+                        timestamp: CanonicalClock.getInstance().simulatedNow()
                     }
                 });
             }
@@ -470,7 +477,7 @@ export class CNSGodheadPulseVolley {
                 return {
                     id: cmd.id,
                     actionType: actionName,
-                    deadlineMs: Math.max(0, cmd.commitDeadline - Date.now()),
+                    deadlineMs: Math.max(0, cmd.commitDeadline - CanonicalClock.getInstance().simulatedNow()),
                     confidence: cmd.predictedOutcome.confidence
                 };
             });
@@ -601,7 +608,6 @@ export class CNSGodheadPulseVolley {
      */
     private getHexYaoState(): YaoState {
         try {
-            const { HexagramManager } = require('../../routing/HexagramManager.js');
             return HexagramManager.getInstance().getYaoState();
         } catch {
             // Fallback: infer from substrate state
@@ -822,7 +828,10 @@ export class CNSGodheadPulseVolley {
 
     private createTickEvent(cmd: AdminCommand): TickEvent {
         const source = (cmd as any).source || cmd.metadata?.source || "ADMIN";
-        const timestamp = (cmd as any).timestamp || cmd.metadata?.timestamp || Date.now();
+        // CANONICAL TIME AUTHORITY: External timestamps are forensic-only.
+        // The simulation clock is the sole source of truth for event ordering.
+        const timestamp = CanonicalClock.getInstance().simulatedNow();
+        const originalTimestamp = (cmd as any).timestamp || cmd.metadata?.timestamp; // preserved for audit trail
         const inputs = cmd.metadata || {};
         
         // Resolve coordinate if present
@@ -836,7 +845,7 @@ export class CNSGodheadPulseVolley {
         }
 
         const action = cmd.type;
-        const stableId = `ev_${this.ledger.getCurrentTick()}_${timestamp}_${Math.floor(Math.random() * 1000)}`;
+        const stableId = `ev_${this.ledger.getCurrentTick()}_${timestamp}_${CanonicalClock.getInstance().rng().range(0, 999)}`;
 
         return {
             id: stableId,
@@ -1093,7 +1102,7 @@ export class CNSGodheadPulseVolley {
             },
             substrateHealth: substrateHealth,
             modelHealthMap,
-            timestamp: Date.now()
+            timestamp: CanonicalClock.getInstance().simulatedNow()
         };
     }
 }

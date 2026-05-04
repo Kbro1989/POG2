@@ -30,6 +30,7 @@ export class ItemBook {
 
     private constructor() {
         this.loadItems();
+        this.loadHudForensics();
     }
 
     public static getInstance(): ItemBook {
@@ -65,6 +66,19 @@ export class ItemBook {
             }
         } catch (e) {
             console.error(`[ItemBook] Failed to load taxonomy:`, e);
+        }
+    }
+
+    private loadHudForensics() {
+        try {
+            const hudPath = 'D:\\sovereign\\cache_pedagogy\\atlas\\interfaces\\interface_1404_decomposed.json';
+            if (fs.existsSync(hudPath)) {
+                const rawBuffer = fs.readFileSync(hudPath, 'utf8');
+                const parsed = JSON.parse(rawBuffer);
+                console.log(`[ItemBook] HUD Forensics Bound: Interface ${parsed.interfaceId} (${parsed.totalComponents} components).`);
+            }
+        } catch (e) {
+            console.error(`[ItemBook] Failed to bind HUD forensics:`, e);
         }
     }
 

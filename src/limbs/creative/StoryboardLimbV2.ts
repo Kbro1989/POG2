@@ -55,7 +55,9 @@ export class StoryboardLimbV2 {
         private readonly kinematics: KinematicsLimb,
         private readonly forensics: CacheForensicsLimb,
         private readonly modelName: string = 'deepseek-r1:8b'
-    ) { }
+    ) { 
+        this.gutenberg.enable();
+    }
 
     /**
      * analyzeGlobalContext - "Reads the story before making scenes".

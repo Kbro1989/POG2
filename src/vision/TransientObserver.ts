@@ -15,6 +15,10 @@ const logger = createLogger('TransientObserver');
  */
 export class TransientObserver {
     private static instance: TransientObserver | undefined;
+    private eye: any = null;
+    private lastCaptureTime = 0;
+    private lastCaptureResult: any = null;
+    private static readonly CAPTURE_THROTTLE_MS = 5000; // Live vision loop cadence
 
     public static getInstance(): TransientObserver {
         if (!this.instance) {
@@ -111,18 +115,28 @@ export class TransientObserver {
     public async observe(targetName: string, imagePath: string): Promise<Result<any>> {
         logger.info({ targetName }, 'Initiating real-time chromatic observation');
         
-        // 1. Capture the frame if we are using the standard bridge
+        // 1. Live Vision Loop — reuse singleton eye, throttle captures
         let activePath = imagePath;
+        const now = Date.now();
         if (imagePath === 'latest_frame.png') {
-             const eye = new (require('../utils/SovereignEye.js')).SovereignEye('pulse-vision');
-             // We capture the edge radar as the primary visual source for POG2
-             const port = (require('../monitor/SwitchboardLimb.js')).SwitchboardLimb.getInstance().getActivePort() || 8788;
-             const captureRes = await eye.capture({ type: 'url', target: `http://localhost:${port}/edge_radar.html` });
-             if (captureRes.ok && captureRes.value.imagePath) {
-                 activePath = captureRes.value.imagePath;
-                 // Copy to bridge
-                 const { copyFileSync } = require('fs');
-                 copyFileSync(activePath, 'latest_frame.png');
+             // Throttle: skip capture if within cadence window and we have a cached result
+             if (this.lastCaptureResult && (now - this.lastCaptureTime) < TransientObserver.CAPTURE_THROTTLE_MS) {
+                 activePath = this.lastCaptureResult;
+             } else {
+                 // Reuse singleton eye (never allocate a new one per tick)
+                 if (!this.eye) {
+                     this.eye = new (require('../utils/SovereignEye.js')).SovereignEye('live-vision-loop');
+                 }
+                 const port = (require('../monitor/SwitchboardLimb.js')).SwitchboardLimb.getInstance().getActivePort() || 8788;
+                 const captureRes = await this.eye.capture({ type: 'url', target: `http://localhost:${port}/edge_radar.html` });
+                 if (captureRes.ok && captureRes.value.imagePath) {
+                     activePath = captureRes.value.imagePath;
+                     this.lastCaptureResult = activePath;
+                     this.lastCaptureTime = now;
+                     // Copy to bridge
+                     const { copyFileSync } = require('fs');
+                     copyFileSync(activePath, 'latest_frame.png');
+                 }
              }
         }
 

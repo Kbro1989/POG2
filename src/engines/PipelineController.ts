@@ -90,6 +90,7 @@ export class PipelineController {
         private readonly vectorDB?: any, // Made optional for backwards compatibility during refactor
         private readonly youtubeLimb?: YouTubeLimb // Injected for dependency handling
     ) {
+        this.gutenberg.enable();
         this.assembler = new VideoAssemblerLimb(this.shell, this.hexagram);
         if (!existsSync(this.basePath)) {
             mkdirSync(this.basePath, { recursive: true });
