@@ -6,7 +6,7 @@ export type fontmetrics = {
 	type: number,
 	sprite: {
 		complexkerning: number,
-		sourceid: (number|-1),
+		sourceid: (number | -1),
 		chars: {
 			width: number,
 			height: number,
@@ -18,7 +18,7 @@ export type fontmetrics = {
 			x: number,
 			y: number,
 		}[],
-		baseline: (0|number),
+		baseline: (0 | number),
 		uppercaseascent: number,
 		median: number,
 		maxascent: number,

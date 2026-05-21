@@ -100,7 +100,7 @@ async function run() {
                         morphVarp,
                     };
                     npcCount++;
-                } catch {}
+                } catch { }
             }
         }
     } catch (e) {
@@ -167,7 +167,7 @@ async function run() {
                         });
                         spawnCount++;
                     }
-                } catch {}
+                } catch { }
             }
 
             console.log(`✅ Found ${spawnCount} NPC spawn entries with coordinates`);

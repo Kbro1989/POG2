@@ -1,4 +1,4 @@
-﻿import { join, relative, sep } from 'path';
+import { join, relative, sep } from 'path';
 
 /**
  * SovereignIgnoreManager - Centralized exclusion logic for POG2.
@@ -30,7 +30,11 @@ export class SovereignIgnoreManager {
         'system_health_final_check.txt',
         'system_health_utf8.txt',
         'system_health_final_utf8.txt',
-        'system_health_complete.txt'
+        'system_health_complete.txt',
+        'System Volume Information',
+        '$RECYCLE.BIN',
+        '$Recycle.Bin',
+        'Recovery'
     ];
 
     private static readonly IGNORE_EXTENSIONS = [
@@ -58,9 +62,13 @@ export class SovereignIgnoreManager {
             return true;
         }
 
-        // Directory boundary safety (Root-scoped patterns)
+        // Directory boundary safety (Root-scoped or nested patterns)
         return this.IGNORE_PATTERNS.some(pattern => {
-            return relPath === pattern || relPath.startsWith(pattern + '/');
+            if (relPath === pattern || relPath.startsWith(pattern + '/')) {
+                return true;
+            }
+            const searchStr = '/' + pattern;
+            return relPath.includes(searchStr + '/') || relPath.endsWith(searchStr);
         });
     }
 

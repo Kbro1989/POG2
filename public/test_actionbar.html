@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign Avatar - Action Bar Volition</title>
+    <link rel="icon" href="data:,">
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0a0a0a; font-family: 'Courier New', monospace; overflow: hidden; }
+        #renderCanvas { width: 100%; height: 100vh; touch-action: none; }
+
+        #hud {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+        }
+
+        /* Adrenaline Orb */
+        #adrenaline-container {
+            position: absolute;
+            bottom: 120px; left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            pointer-events: none;
+        }
+        #adrenaline-orb {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            border: 3px solid #ffaa00;
+            background: radial-gradient(circle, rgba(255,170,0,0.2), transparent);
+            position: relative;
+            overflow: hidden;
+        }
+        #adrenaline-fill {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: linear-gradient(to top, #ff6600, #ffaa00);
+            transition: height 0.3s ease;
+        }
+        #adrenaline-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 2;
+        }
+        #adrenaline-label { color: #ffaa00; font-size: 11px; margin-top: 4px; }
+
+        /* Action Bar */
+        #action-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+            background: rgba(0,0,0,0.8);
+            padding: 6px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            pointer-events: all;
+        }
+        .ability-slot {
+            width: 46px; height: 46px;
+            border: 1px solid #444;
+            border-radius: 3px;
+            background: #111;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            cursor: pointer;
+            transition: border-color 0.1s;
+        }
+        .ability-slot:hover { border-color: #ffaa00; }
+        .ability-slot.ready { border-color: #ffaa00; box-shadow: 0 0 6px rgba(255,170,0,0.4); }
+        .ability-slot.cooldown { border-color: #555; }
+        .ability-slot.unavailable { border-color: #333; opacity: 0.5; }
+        .ability-slot .ability-name {
+            position: absolute;
+            bottom: 2px;
+            width: 100%;
+            font-size: 8px;
+            color: #fff;
+            text-align: center;
+            z-index: 2;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 2px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+            box-sizing: border-box;
+        }
+        .ability-slot .tier-badge {
+            position: absolute;
+            top: 2px; right: 3px;
+            font-size: 8px;
+            font-weight: bold;
+            z-index: 2;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+        }
+        .tier-BASIC .tier-badge { color: #aaa; }
+        .tier-THRESHOLD .tier-badge { color: #aa88ff; }
+        .tier-ULTIMATE .tier-badge { color: #ffaa00; }
+        .ability-slot .cooldown-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 3px;
+        }
+        .empty-slot { opacity: 0.2; }
+
+        /* Combat Log */
+        #combat-log {
+            position: absolute;
+            top: 20px; left: 20px;
+            width: 280px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #ffaa00;
+            border-radius: 4px;
+            padding: 12px;
+            color: #ffaa00;
+            pointer-events: none;
+            max-height: 400px;
+            overflow: hidden;
+        }
+        #combat-log h3 { font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 4px; }
+        .log-entry { font-size: 11px; line-height: 1.6; opacity: 0.9; }
+        .log-entry.damage { color: #ff4444; }
+        .log-entry.threshold { color: #aa88ff; }
+        .log-entry.ultimate { color: #ffaa00; }
+        .log-entry.basic { color: #aaa; }
+        .log-entry.system { color: #44aaff; }
+
+        /* Info panel */
+        #info {
+            position: absolute;
+            top: 20px; right: 20px;
+            color: #00ffcc;
+            font-size: 11px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border: 1px solid #00ffcc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <div id="hud">
+        <div id="combat-log">
+            <h3>&#x26A1; Combat Log</h3>
+            <div id="log-entries">
+                <div class="log-entry system">> Adrenaline State Machine initializing...</div>
+            </div>
+        </div>
+        <div id="info">
+            <div>Kit: 31149 (Draconic)</div>
+            <div>Style: MELEE</div>
+            <div>Tick: <span id="tick-counter">0</span></div>
+        </div>
+        <div id="adrenaline-container">
+            <div id="adrenaline-orb">
+                <div id="adrenaline-fill" style="height: 0%"></div>
+                <div id="adrenaline-text">0%</div>
+            </div>
+            <div id="adrenaline-label">ADRENALINE</div>
+        </div>
+        <div id="action-bar"></div>
+    </div>
+
+    <script>
+    // ─── RS3 Ability Library ─────────────────────────────────────────
+    const ABILITIES = {
+        SLICE:        { name: 'Slice',    tier: 'BASIC',     cooldown: 3,  adrenGain: 80,  adrenReq: 0,    dmg: [12,30]   },
+        FURY:         { name: 'Fury',     tier: 'BASIC',     cooldown: 3,  adrenGain: 80,  adrenReq: 0,    dmg: [16,38]   },
+        CLEAVE:       { name: 'Cleave',   tier: 'BASIC',     cooldown: 3,  adrenGain: 80,  adrenReq: 0,    dmg: [14,34]   },
+        ASSAULT:      { name: 'Assault',  tier: 'THRESHOLD', cooldown: 30, adrenGain: -500, adrenReq: 500, dmg: [94,217]  },
+        DESTROY:      { name: 'Destroy',  tier: 'THRESHOLD', cooldown: 25, adrenGain: -500, adrenReq: 500, dmg: [50,120]  },
+        METEOR:       { name: 'Meteor',   tier: 'ULTIMATE',  cooldown: 100, adrenGain: -1000, adrenReq: 1000, dmg: [200,400] },
+        BERSERK:      { name: 'Berserk',  tier: 'ULTIMATE',  cooldown: 100, adrenGain: -1000, adrenReq: 1000, dmg: [0,0]    },
+    };
+
+    const BAR_LAYOUT = ['SLICE','FURY','CLEAVE',null,'ASSAULT','DESTROY',null,null,'METEOR','BERSERK',null,null,null,null];
+
+    // ─── State ─────────────────────────────────────────────────────
+    const state = {
+        adrenaline: 0,        // 0-1000
+        tick: 0,
+        cooldowns: {},        // abilityId → ticks remaining
+    };
+
+    // Init cooldowns
+    for (const id of Object.keys(ABILITIES)) state.cooldowns[id] = 0;
+
+    // ─── DOM ───────────────────────────────────────────────────────
+    const actionBar = document.getElementById('action-bar');
+    const logEntries = document.getElementById('log-entries');
+    const adrenalineFill = document.getElementById('adrenaline-fill');
+    const adrenalineText = document.getElementById('adrenaline-text');
+    const tickCounter = document.getElementById('tick-counter');
+
+    // Render slots
+    const slotEls = BAR_LAYOUT.map((id, i) => {
+        const div = document.createElement('div');
+        div.className = 'ability-slot' + (id ? ` tier-${ABILITIES[id]?.tier || 'BASIC'}` : ' empty-slot');
+        div.id = `slot-${i}`;
+        if (id) {
+            const ab = ABILITIES[id];
+            const iconName = ab.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            div.style.backgroundImage = `url('icons/${iconName}.png')`;
+            div.innerHTML = `
+                <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.85)); border-radius: 3px; z-index: 1;"></div>
+                <span class="ability-name">${ab.name}</span>
+                <span class="tier-badge">${ab.tier === 'ULTIMATE' ? 'U' : ab.tier === 'THRESHOLD' ? 'T' : 'B'}</span>
+            `;
+            div.addEventListener('click', () => useAbility(id, i));
+        }
+        actionBar.appendChild(div);
+        return { el: div, abilityId: id };
+    });
+
+    function log(msg, cls = '') {
+        const div = document.createElement('div');
+        div.className = 'log-entry ' + cls;
+        div.textContent = '> ' + msg;
+        logEntries.insertBefore(div, logEntries.firstChild);
+        while (logEntries.children.length > 12) logEntries.removeChild(logEntries.lastChild);
+    }
+
+    // ─── Adrenaline UI ────────────────────────────────────────────
+    function updateAdrenalineUI() {
+        const pct = state.adrenaline / 10;
+        adrenalineFill.style.height = pct + '%';
+        adrenalineText.textContent = Math.floor(pct) + '%';
+        // Color: white < 50%, purple 50-99%, gold 100%
+        const color = pct >= 100 ? '#ffaa00' : pct >= 50 ? '#aa88ff' : '#fff';
+        adrenalineText.style.color = color;
+    }
+
+    // ─── Slot UI ──────────────────────────────────────────────────
+    function updateSlotUI() {
+        slotEls.forEach(({ el, abilityId }) => {
+            if (!abilityId) return;
+            const ab = ABILITIES[abilityId];
+            const cd = state.cooldowns[abilityId];
+            const canUse = state.adrenaline >= ab.adrenReq && cd === 0;
+
+            // Remove old overlays
+            const oldOverlay = el.querySelector('.cooldown-overlay');
+            if (oldOverlay) oldOverlay.remove();
+
+            el.classList.remove('ready', 'cooldown', 'unavailable');
+
+            if (cd > 0) {
+                el.classList.add('cooldown');
+                const overlay = document.createElement('div');
+                overlay.className = 'cooldown-overlay';
+                overlay.textContent = cd;
+                el.appendChild(overlay);
+            } else if (canUse) {
+                el.classList.add('ready');
+            } else {
+                el.classList.add('unavailable');
+            }
+        });
+    }
+
+    // ─── Ability Execution ─────────────────────────────────────────
+    function useAbility(abilityId, slotIndex) {
+        const ab = ABILITIES[abilityId];
+        if (!ab) return;
+        if (state.cooldowns[abilityId] > 0) { log(`${ab.name}: on cooldown (${state.cooldowns[abilityId]}t)`, 'system'); return; }
+        if (state.adrenaline < ab.adrenReq) { log(`${ab.name}: insufficient adrenaline (${Math.floor(state.adrenaline/10)}% / ${ab.adrenReq/10}% needed)`, 'system'); return; }
+
+        const prevAdren = state.adrenaline;
+        state.adrenaline = Math.max(0, Math.min(1000, state.adrenaline + ab.adrenGain));
+        state.cooldowns[abilityId] = ab.cooldown;
+
+        const damage = ab.dmg[0] > 0
+            ? Math.floor(Math.random() * (ab.dmg[1] - ab.dmg[0] + 1)) + ab.dmg[0]
+            : 0;
+
+        const tierCls = ab.tier.toLowerCase();
+        log(`${ab.name} → ${damage > 0 ? damage + ' dmg' : 'ACTIVE'}`, tierCls === 'basic' ? 'basic' : tierCls);
+
+        if (damage > 0) emitGhostSplat(ab.tier === 'ULTIMATE' ? 'crit' : ab.tier === 'THRESHOLD' ? 'damage' : 'damage', damage, ab.tier);
+        updateAdrenalineUI();
+        updateSlotUI();
+    }
+
+    // ─── RS3 Live Telemetry Hydration ──────────────────────────────
+    const ws = new WebSocket('ws://localhost:8788');
+    ws.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'harness-sync') {
+                const sovereign = data.entities?.find(e => e.id === 'player_sovereign' || e.name === 'player_sovereign');
+                if (sovereign) {
+                    state.tick++;
+                    tickCounter.textContent = state.tick;
+                    
+                    // The DO sidecar sends raw node telemetry via playerNode updates
+                    // Fallback to reading adrenaline if passed via custom batch_perception
+                    if (sovereign.adrenaline !== undefined) {
+                        state.adrenaline = sovereign.adrenaline * 10; // Assuming 0-100 from telemetry to 0-1000 UI
+                    }
+                    
+                    if (sovereign.intent) {
+                        log(`Godhead Intent: ${sovereign.intent}`, 'system');
+                    }
+                }
+                
+                updateAdrenalineUI();
+                updateSlotUI();
+            } else if (data.type === 'update-node' && data.nodeId === 'player_sovereign') {
+                // Direct updates from POG2
+                state.tick++;
+                tickCounter.textContent = state.tick;
+                
+                if (data.data.adrenaline !== undefined) {
+                    state.adrenaline = data.data.adrenaline * 10;
+                }
+                
+                if (data.data.intent && data.data.intent !== 'IDLE') {
+                    // Try to trigger the ability icon if intent matches
+                    const intentStr = data.data.intent.toUpperCase().replace(/[^A-Z]/g, '');
+                    const matchingAbilityId = Object.keys(ABILITIES).find(k => k.replace(/[^A-Z]/g, '') === intentStr);
+                    
+                    if (matchingAbilityId) {
+                        log(`Godhead Executing: ${ABILITIES[matchingAbilityId].name}`, 'system');
+                        const ab = ABILITIES[matchingAbilityId];
+                        state.cooldowns[matchingAbilityId] = ab.cooldown;
+                        // Mock splat for feedback since we aren't tracking full damage here
+                        emitGhostSplat(ab.tier === 'ULTIMATE' ? 'crit' : 'damage', Math.floor(Math.random()*100)+50, ab.tier);
+                    } else {
+                        log(`Intent: ${data.data.intent}`, 'system');
+                    }
+                }
+                
+                // Decrement cooldowns
+                for (const id of Object.keys(state.cooldowns)) {
+                    if (state.cooldowns[id] > 0) state.cooldowns[id]--;
+                }
+                
+                updateAdrenalineUI();
+                updateSlotUI();
+            }
+        } catch (err) {
+            console.error("Telemetry parse error", err);
+        }
+    };
+    
+    ws.onopen = () => log('Connected to Sovereign Globe DO Telemetry', 'system');
+    ws.onerror = () => log('Telemetry connection error', 'damage');
+
+    // ─── GhostSplat Integration ───────────────────────────────────
+    let scene;
+    const ghostSplats = new Map();
+    let ghostId = 0;
+
+    function emitGhostSplat(type, value, tier) {
+        if (!scene) return;
+        const id = 'splat_' + (++ghostId);
+        const colorMap = { crit: '#ffaa00', damage: '#ff4444', basic: '#aaa', THRESHOLD: '#aa88ff', ULTIMATE: '#ffaa00' };
+        const color = colorMap[tier] || colorMap[type] || '#ff4444';
+        const size = tier === 'ULTIMATE' ? 50 : tier === 'THRESHOLD' ? 40 : 30;
+
+        const plane = BABYLON.MeshBuilder.CreatePlane(id, { size }, scene);
+        plane.position = new BABYLON.Vector3((Math.random()-0.5)*60, 120 + Math.random()*30, -20);
+        plane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+
+        const tex = new BABYLON.DynamicTexture(`tex_${id}`, { width: 256, height: 128 }, scene, false);
+        tex.hasAlpha = true;
+        const ctx = tex.getContext();
+        ctx.clearRect(0, 0, 256, 128);
+        ctx.font = `bold ${tier === 'ULTIMATE' ? 80 : 64}px Verdana`;
+        ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.strokeText(value || type, 128, 64);
+        ctx.fillStyle = color;
+        ctx.fillText(value || type, 128, 64);
+        tex.update();
+
+        const mat = new BABYLON.StandardMaterial(`mat_${id}`, scene);
+        mat.diffuseTexture = tex;
+        mat.disableLighting = true;
+        mat.useAlphaFromDiffuseTexture = true;
+        plane.material = mat;
+
+        const animate = () => {
+            if (!ghostSplats.has(id)) return;
+            plane.position.y += 0.5;
+            mat.alpha -= 0.015;
+            if (mat.alpha <= 0) { plane.dispose(); ghostSplats.delete(id); return; }
+            requestAnimationFrame(animate);
+        };
+        requestAnimationFrame(animate);
+        ghostSplats.set(id, plane);
+    }
+
+    // ─── Babylon.js Scene ─────────────────────────────────────────
+    const canvas = document.getElementById('renderCanvas');
+    const engine = new BABYLON.Engine(canvas, true);
+
+    async function createScene() {
+        const s = new BABYLON.Scene(engine);
+        s.clearColor = new BABYLON.Color4(0.04, 0.04, 0.06, 1);
+        scene = s;
+
+        const camera = new BABYLON.ArcRotateCamera('cam', -Math.PI/2, Math.PI/2.5, 200, BABYLON.Vector3.Zero(), s);
+        camera.attachControl(canvas, true);
+        new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0,1,0), s).intensity = 0.9;
+
+        const skinPacked = 12104087;
+        const r = ((skinPacked>>16)&0xFF)/255, g = ((skinPacked>>8)&0xFF)/255, b = (skinPacked&0xFF)/255;
+
+        try {
+            const res = await fetch('/models/kit_31149.json');
+            const md = await res.json();
+            const pcs = new BABYLON.PointsCloudSystem('pcs', 1, s);
+            const pos = md.positions;
+            pcs.addPoints(pos.length/3, (p,i) => {
+                p.position = new BABYLON.Vector3(pos[i*3], pos[i*3+1], pos[i*3+2]);
+                p.color = new BABYLON.Color4(r, g, b, 1);
+            });
+            await pcs.buildMeshAsync();
+            camera.target = pcs.mesh.getBoundingInfo().boundingBox.center;
+        } catch(e) { console.error('Model load failed:', e); }
+
+        log('Action Bar wired. Click abilities or wait for auto-attacks.', 'system');
+        return s;
+    }
+
+    createScene().then(s => engine.runRenderLoop(() => s.render()));
+    window.addEventListener('resize', () => engine.resize());
+    </script>
+</body>
+</html>

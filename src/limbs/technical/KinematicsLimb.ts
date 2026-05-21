@@ -141,5 +141,5 @@ export class KinematicsLimb {
         }
     }
 
-    public close(): void {}
+    public close(): void { }
 }

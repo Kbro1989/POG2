@@ -1,5 +1,5 @@
 import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+const nodeRequire = createRequire(import.meta.url);
 import { Result, ok, err, YaoState, EmotionalState } from '../../core/models.js';
 import type { PedagogyProfile } from '../../core/models.js';
 export { PedagogyProfile }; // Re-export for dependent limbs
@@ -13,12 +13,12 @@ import * as fs from 'fs';
 
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
 import { VectorDB } from '../../utils/VectorDB.js';
-import { RSMVExtractor } from '../../utils/RSMVExtractor.js';
+import { rsmvExtractor } from '../../utils/RSMVExtractor.js';
 import { WikiEnricher } from '../../utils/WikiEnricher.js';
 import { VectorPedagogyLimb } from './VectorPedagogyLimb.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { EventBus } from '../../events/EventBus.js';
-// import { HudResearchLimb } from './HudResearchLimb.js';
+// import { HudResearchLimb } from './HudResearchLimb';
 // Stubbing missing HudResearchLimb until it appears in origin
 class HudResearchLimb { findCandidates(): any { return ok([]); } }
 
@@ -58,7 +58,7 @@ export class PedagogyLimb {
         this.client = client;
         this.vectorIndex = new VectorPedagogyLimb(client);
         this.hudResearcher = new HudResearchLimb();
-        
+
         // Asynchronously initialize the Logic Hub
         this.initialize().catch(err => {
             logger.error({ error: err.message }, 'Failed to initialize Logic Hub');
@@ -84,13 +84,13 @@ export class PedagogyLimb {
         if (patterns.length > 0 || invariants.length > 0) {
             // Update pedagogical strategies with discovered causal patterns
             if (!this.logic.strategies) this.logic.strategies = { causalPatterns: [], discoveredInvariants: [] };
-            
+
             this.logic.strategies.causalPatterns = patterns.map((p: any) => p.label);
             this.logic.strategies.discoveredInvariants = invariants.map((i: any) => i.constraint);
-            
-            logger.debug({ 
-                patterns: patterns.length, 
-                invariants: invariants.length 
+
+            logger.debug({
+                patterns: patterns.length,
+                invariants: invariants.length
             }, 'PedagogyLimb internal strategies updated via Causal Learning Event.');
         }
     }
@@ -250,7 +250,7 @@ The second should define its cinematic intent.
         const maxBoneCount = Math.max(0, ...topology.map(p => p.boneCount));
 
         // Affective Inference (Phase 7)
-        const resonance = RSMVExtractor.inferEmotionalResonance(name, totalPolyCount, 0);
+        const resonance = rsmvExtractor.inferEmotionalResonance(name, totalPolyCount, 0);
 
         const structuralMetrics = {
             polyCount: totalPolyCount,
@@ -435,7 +435,7 @@ The second should define its cinematic intent.
         if (!res.ok) return res;
 
         const candidates = res.value;
-        const pedagogyResults = [];
+        const pedagogyResults: any[] = [];
 
         for (const candidate of candidates) {
             const profile = await this.storePrinciple(
@@ -687,7 +687,7 @@ Output JSON ONLY:
             if (!fs.existsSync(pathSeq)) return err(new Error('sequences.json missing.'));
             // sequences.json is 155MB, don't parse fully just stat it or read a stream, but we will assume ~40k sequences based on cache major max ids.
             const stats = fs.statSync(pathSeq);
-            const principle = await this.storePrinciple('GLOBAL_KINEMATICS_LAYER', `Jagex Cache Sequences (${Math.floor(stats.size/1024/1024)}MB dataset)`, 0.98);
+            const principle = await this.storePrinciple('GLOBAL_KINEMATICS_LAYER', `Jagex Cache Sequences (${Math.floor(stats.size / 1024 / 1024)}MB dataset)`, 0.98);
             return ok({ profile: principle.ok ? principle.value : null });
         } catch (e) {
             return err(e instanceof Error ? e : new Error(String(e)));

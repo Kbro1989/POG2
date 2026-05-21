@@ -7,7 +7,7 @@ async function run() {
     const source = new GameCacheLoader(CACHE_DIR);
     const index = await source.getCacheIndex(41); // DBRows
     const tableCounts: Record<number, number> = {};
-    
+
     console.log(`🔍 Probing unique tables in Major 41 (${index.length} archives)...`);
 
     for (const group of index.slice(0, 100)) { // Just sample first 100
@@ -18,7 +18,7 @@ async function run() {
                 const row = parse.dbrows.read(file.buffer, source) as any;
                 const tid = row.table ?? -1;
                 tableCounts[tid] = (tableCounts[tid] || 0) + 1;
-            } catch {}
+            } catch { }
         }
     }
 

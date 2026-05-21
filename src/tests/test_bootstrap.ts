@@ -32,8 +32,8 @@ export function resetAllSingletons(): void {
 
     // Re-initialize critical static substrates for test environment
     HexagramManager.initializeMock();
-    
+
     const mockConfig = { visionModel: 'test-vision' } as any;
-    const mockRenderer = { info: () => {}, error: () => {}, warn: () => {}, debug: () => {} } as any;
+    const mockRenderer = { info: () => { }, error: () => { }, warn: () => { }, debug: () => { } } as any;
     SpatialVisionEngine.getInstance(mockConfig, mockRenderer);
 }

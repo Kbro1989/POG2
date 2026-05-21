@@ -1,5 +1,33 @@
 import { Coord, NPC, CombatantState, Item, Skill, SkillId, Wallet, Equipment, EquipmentSlot, GameState, SovereignAvatar as ISovereignAvatar } from './models.js';
 import { DirectionalPathfinder } from '../limbs/spatial/DirectionalPathfinder.js';
+import { AdrenalineStateMachine } from '../limbs/combat/AdrenalineStateMachine.js';
+
+export enum SkillRelevance {
+    COMBAT_DIRECT = 'combat_direct',     // Affects rotation/damage
+    COMBAT_INDIRECT = 'combat_indirect', // Affects preparation/validation
+    NON_COMBAT = 'non_combat',           // Ignored by combat engine
+}
+
+export const SKILL_RELEVANCE_MAP: Record<number, SkillRelevance> = {
+    [SkillId.ATTACK]: SkillRelevance.COMBAT_DIRECT,
+    [SkillId.STRENGTH]: SkillRelevance.COMBAT_DIRECT,
+    [SkillId.DEFENCE]: SkillRelevance.COMBAT_DIRECT,
+    [SkillId.RANGED]: SkillRelevance.COMBAT_DIRECT,
+    [SkillId.MAGIC]: SkillRelevance.COMBAT_DIRECT,
+    [SkillId.CONSTITUTION]: SkillRelevance.COMBAT_DIRECT,
+    [SkillId.PRAYER]: SkillRelevance.COMBAT_DIRECT,
+    [SkillId.SUMMONING]: SkillRelevance.COMBAT_DIRECT,
+    [SkillId.NECROMANCY]: SkillRelevance.COMBAT_DIRECT,
+    [SkillId.HERBLORE]: SkillRelevance.COMBAT_INDIRECT,
+    [SkillId.SLAYER]: SkillRelevance.COMBAT_INDIRECT,
+    [SkillId.AGILITY]: SkillRelevance.COMBAT_INDIRECT,
+    [SkillId.SMITHING]: SkillRelevance.COMBAT_INDIRECT,
+    [SkillId.INVENTION]: SkillRelevance.COMBAT_INDIRECT,
+    [SkillId.ARCHAEOLOGY]: SkillRelevance.COMBAT_INDIRECT,
+    [SkillId.DIVINATION]: SkillRelevance.COMBAT_INDIRECT,
+    [SkillId.RUNECRAFTING]: SkillRelevance.COMBAT_INDIRECT,
+    // Remainder non-combat
+};
 
 export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAvatar {
     public id: number = -1; // Local player ID proxy
@@ -10,11 +38,14 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
     public plane: number;
     public coord: Coord;
     public metadata: Record<string, any> = {};
-    
+    // Combat State Machine
+    public combatEngine: AdrenalineStateMachine;
+    public animationId: number = -1;
+
     // Live Bridge (Phase 112)
     public onStateChange?: (type: string, delta: any) => void;
     private subscribers: Map<string, Set<(delta: any) => void>> = new Map();
-    
+
     // Global State Bus (Phase 11)
     public state: GameState;
     
@@ -26,35 +57,65 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
     public skills: Record<number, Skill>;
     public quests: { points: number; completedCount: number; quests: Record<number, any> }; // QuestState
     
-    public appearanceEra: 'pre_avatar' | 'transitional' | 'post_avatar' = 'pre_avatar';
-    public appearance?: {
-        // Legacy Pre-avatar appearance
-        legacyAppearanceId?: number;
-        bodyColors?: [number, number][];
-        gender?: 'male' | 'female';
-        
-        // Post-Avatar Compositional Schema
-        composition?: {
-            baseBodyId: number;
-            gender: 'male' | 'female';
-            skinTone: number;
-            hairStyle: number;
-            facialHair?: number;
-            equipment: {
-                head: number | null;
-                cape: number | null;
-                neck: number | null;
-                weapon: number | null;
-                body: number | null;
-                shield: number | null;
-                legs: number | null;
-                hands: number | null;
-                feet: number | null;
-                ring: number | null;
-                ammo: number | null;
-            };
-            chatheadId: number;
+    public appearanceEra: 'pre_avatar' | 'transitional' | 'post_avatar' = 'post_avatar';
+    
+    public get appearance() {
+        return {
+            gender: this.visualState.morphology.bodyType === 'refresh_female' ? 'female' as const : 'male' as const
         };
+    }
+    
+    // Sovereign Rendering State
+    public visualState: {
+        // From AvatarStateLimb
+        skinRgb: number;        // Enum 1195 lookup
+        hairRgb: number;        // Enum 1195 lookup  
+        bodyKit: number;        // Appearance Kit model ID
+        faceMorph: Float32Array; // Sub-morph weights
+        
+        // Avatar Refresh (Varp 5745, 5746, 524476)
+        morphology: {
+            // Varp 5745
+            bodyBase: number;
+            torsoLegsStyle: number;
+            bodyType: 'classic' | 'refresh_male' | 'refresh_female';
+            gameMode: number;
+            oldHeadFallback: boolean;
+            torsoOverride: boolean;
+            
+            // Varp 5746 (category indices)
+            categoryIndices: {
+                head: number; torso: number; legs: number;
+                shoes: number; beard: number; skinMat: number; hairMat: number;
+            };
+            
+            // Varp 524476 (color/style indices)
+            appearanceIndices: {
+                skinColor: number; hairColor: number; torsoColor: number;
+                randomSeed: number; shoeColor: number;
+            };
+        };
+        
+        // From Wardrobe (1797)
+        dgTheme: 'frozen' | 'furnished' | 'abandoned' | 'occult' | 'warped';
+        dgSlots: boolean[];     // 5 slots unlocked bitmap
+        
+        // Dynamic animation/material states
+        combatStance: 'melee' | 'ranged' | 'magic' | 'necromancy';
+    } = {
+        skinRgb: 12104087, // Default to a neutral skin tone from enum 1195
+        hairRgb: 1907226,  // Default dark hair
+        bodyKit: -1,
+        faceMorph: new Float32Array(8),
+        morphology: {
+            bodyBase: 0, torsoLegsStyle: 0, bodyType: 'refresh_male', gameMode: 0,
+            oldHeadFallback: false, torsoOverride: false,
+            categoryIndices: { head: 0, torso: 0, legs: 0, shoes: 0, beard: 0, skinMat: 0, hairMat: 0 },
+            appearanceIndices: { skinColor: 0, hairColor: 0, torsoColor: 0, randomSeed: 0, shoeColor: 0 }
+        },
+        dgTheme: 'frozen',
+        dgSlots: [false, false, false, false, false],
+        combatStance: 'melee'
     };
 
     public lastHub: string = 'Lumbridge';
@@ -73,6 +134,8 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
         tickStarted: number;
         contextHash: string;
         coord?: { x: number; y: number; plane: number };
+        abilityId?: string;
+        abilityName?: string;
     };
 
     // Combat State (Implements CombatantState)
@@ -84,8 +147,25 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
     public animaCharged: boolean; // March 2026 Magic Mechanics
     public searingWindsTicksRemaining: number; // March 2026 Ranged Mechanics
     public shadowImbuedTicksRemaining: number; // March 2026 Ranged Mechanics
+    
+    // Necromancy Specifics
+    public conjureActive: { skeleton: boolean, zombie: boolean, ghost: boolean, phantom: boolean } = {
+        skeleton: false, zombie: false, ghost: false, phantom: false
+    };
+    public ritualState: { soulsCaptured: number, corruptionLevel: number } = {
+        soulsCaptured: 0, corruptionLevel: 0
+    };
+
     public lastCombatTick: number;
     public cooldowns: Record<string, number>;
+    
+    // Sovereign Action Bar (Interface 1841/1840)
+    public actionBarSlots: (string | null)[] = [
+        'slice', 'fury', 'cleave', null,
+        'assault', 'destroy', null, null,
+        'meteor_strike', 'berserk', null, null,
+        null, null
+    ];
 
     constructor(username: string = 'Sovereign') {
         this.username = username;
@@ -103,7 +183,8 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
             varps: new Map(),
             varcs: new Map(),
             varbits: new Map(),
-            players: new Map()
+            players: new Map(),
+            messages: []
         };
         
         // Initialize 28 empty slots
@@ -144,8 +225,25 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
         this.lastCombatTick = 0;
         this.cooldowns = {};
         
+        // Wire up the Adrenaline State Machine
+        this.combatEngine = new AdrenalineStateMachine('MELEE');
+        this.combatEngine.on(event => {
+            if (event.type === 'ADRENALINE_CHANGED') {
+                this.adrenaline = event.to;
+                this.emit('adrenaline_changed', { from: event.from, to: event.to });
+            } else if (event.type === 'ABILITY_USED') {
+                this.emit('ability_used', { ability: event.ability, damage: event.damage });
+            }
+        });
+        
         this.initializeDefaultSkills();
         this.currentHp = this.maxHp; // Refine to actual grounded max
+    }
+    
+    public updateMorphology(state: any): void {
+        if (state && state.morphology) {
+            this.visualState.morphology = JSON.parse(JSON.stringify(state.morphology));
+        }
     }
 
     /**
@@ -265,6 +363,24 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
             return true;
         }
         return false;
+    }
+
+    /**
+     * executeAbility - Queues an ability intent for the SimulationHarness combat rotation engine to process.
+     * The actual execution, damage calculation, and adrenaline mutation occurs during the 600ms tick.
+     */
+    public executeAbility(abilityId: string, targetId: number | string = 'Sovereign') {
+        if (this.isBusy()) return false;
+        
+        this.intent = {
+            action: 'execute_ability',
+            targetId: targetId,
+            abilityId: abilityId,
+            tickStarted: 0,
+            contextHash: `ability_${abilityId}_${Date.now()}`
+        } as any;
+        
+        return true;
     }
 
     /**

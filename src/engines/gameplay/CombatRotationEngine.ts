@@ -22,12 +22,14 @@
  *  - predator:   Stun → Channeled enhanced → Basic
  */
 
+import { performance } from 'perf_hooks';
 import { AbilityBook, AbilityDefinition, CombatStyle } from './AbilityBook.js';
 import { CanonicalClock } from '../../utils/CanonicalClock.js';
 import { Coord, CombatantState } from '../../core/models.js';
 import { GhostSplatField } from '../../substrates/GhostSplatEngine.js';
 import { PADDED_SIZE } from '../../limbs/spatial/SpatialSovereigntyLimb.js';
 import { createLogger } from '../../utils/logger.js';
+import { PVMERotationLimb } from '../../limbs/gameplay/PVMERotationLimb.js';
 
 const logger = createLogger('CombatRotationEngine');
 
@@ -53,24 +55,64 @@ export interface CombatEvaluationContext {
     archetype: TacticalArchetype;
     /** Attacker's full state for stack/buff checks */
     state: CombatantState;
+    /** Dynamically discovered abilities available to the attacker */
+    availableAbilities: AbilityDefinition[];
+    /** Secondary entities in range (minions, spawns) */
+    availableTargets?: TargetContext[];
+}
+
+export interface PhaseTrigger {
+    boss: string;
+    phase: string;
+    triggers: {
+        chat?: RegExp[];
+        hpThreshold?: number;
+        animationId?: number;
+        gfxId?: number;
+    };
 }
 
 export interface TargetContext {
     entityId: string;
+    name: string;
     coord: Coord;
     currentHp: number;
     /** Stun immunity end tick — stun abilities wasted if currentTick < this */
     stunImmunityEndTick: number;
+    /** Secondary entities in range (minions, spawns) */
+    availableTargets?: TargetContext[];
 }
 
-export interface CombatIntent {
-    action: 'execute_ability';
-    abilityId: string;
-    abilityName: string;
-    targetId: string;
-    tickStarted: number;
-    contextHash: string;
-    coord?: Coord;  // target coord for ranged/magic
+export type CombatIntent = 
+    | {
+        action: 'execute_ability';
+        abilityId: string;
+        abilityName: string;
+        targetId: string;
+        tickStarted: number;
+        contextHash: string;
+        coord?: Coord;
+      }
+    | {
+        action: 'switch_target';
+        targetId: string;
+        tickStarted: number;
+        contextHash: string;
+      };
+
+export interface CombatCausalEvidence {
+    signal: string;           // e.g., 'TARGET_RESOLVED_HEAT', 'PVME_PREDICATE_FAILED'
+    timestamp: number;        // tick
+    elapsedMs?: number;       // ms from tick start
+    detail: Record<string, any>;  // contextual data
+    confidence: number;       // 0-1, how certain this signal is
+}
+
+export interface CombatDecisionTrace {
+    intent: CombatIntent;
+    evidence: CombatCausalEvidence[];
+    finalConfidence: number;  // product of all gate confidences
+    fallbackUsed: boolean;    // true if Build Phase or archetype fallback triggered
 }
 
 // ═══════════════════════════════════════════════════════
@@ -104,30 +146,58 @@ export class CombatRotationEngine {
      * Evaluate the optimal next ability given the attacker's state and a target.
      * Returns null if no valid ability can fire this tick (GCD, channel lock, no target, etc.)
      */
+    private pushSignal(
+        evidence: CombatCausalEvidence[],
+        tick: number,
+        tickStart: number,
+        signal: string,
+        detail: any,
+        confidence = 1.0
+    ) {
+        evidence.push({
+            signal,
+            timestamp: tick,
+            elapsedMs: parseFloat((performance.now() - tickStart).toFixed(3)),
+            detail,
+            confidence
+        });
+    }
+
     public evaluateRotation(
         ctx: CombatEvaluationContext,
         target: TargetContext
-    ): CombatIntent | null {
+    ): CombatDecisionTrace | null {
+        const tickStart = performance.now();
+        const evidence: CombatCausalEvidence[] = [];
+        let finalConfidence = 1.0;
+        let fallbackUsed = false;
+
+        const push = (sig: string, det: any, conf = 1.0) => 
+            this.pushSignal(evidence, ctx.currentTick, tickStart, sig, det, conf);
+
         // Gate 1: Channel lock
         if (ctx.currentTick < ctx.channelEndTick) {
+            push('GATE_CHANNEL_LOCKED', { remaining: ctx.channelEndTick - ctx.currentTick });
             return null;
         }
 
         // Gate 2: Global cooldown
         if (ctx.currentTick < ctx.gcdEndTick) {
+            push('GATE_GCD_LOCKED', { remaining: ctx.gcdEndTick - ctx.currentTick });
             return null;
         }
 
         // Gate 3: Target alive
         if (target.currentHp <= 0) {
+            push('GATE_TARGET_DEAD', { targetId: target.entityId });
             return null;
         }
 
         // Gate 4: Survival (Eat food if HP < 40%)
         if (ctx.state.hp && ctx.state.maxHp && (ctx.state.hp / ctx.state.maxHp) < 0.4) {
             const food = this.book.getByName('Eat Food'); // Assuming 'Eat Food' is in the book
-            if (food && this.passesConstraints(food, ctx, target)) {
-                return {
+            if (food && this.passesConstraints(food, ctx, target, evidence, tickStart)) {
+                const intent: CombatIntent = {
                     action: 'execute_ability',
                     abilityId: food.id,
                     abilityName: food.name,
@@ -135,16 +205,185 @@ export class CombatRotationEngine {
                     tickStarted: ctx.currentTick,
                     contextHash: 'survival_heal',
                 };
+                push('INTENT_COMMITTED', { action: intent.action, abilityId: intent.abilityId, targetId: intent.targetId });
+                return { intent, evidence, finalConfidence, fallbackUsed };
+            }
+        }
+
+        // Gate 5: PVME High-Fidelity Sequence
+        const pvme = PVMERotationLimb.getInstance();
+        const pvmeAbilityObj = pvme.peekNextAbility(target.entityId, target.name);
+        
+        if (pvmeAbilityObj) {
+            // Target Switching Forensic: Check if rotation calls for a different target (e.g. "Tag Fumus")
+            if (pvmeAbilityObj.name.toLowerCase().includes('tag ')) {
+                // Robust extraction: Match "Tag Fumus" or "Tag with [Ability] Fumus"
+                // Extract last word as probable target name
+                const words = pvmeAbilityObj.name.split(' ');
+                const targetName = words[words.length - 1].replace(/[}{]/g, '').trim(); 
+                const secondaryTarget = ctx.availableTargets?.find(t => t.name.toLowerCase().includes(targetName.toLowerCase()));
+                
+                if (secondaryTarget) {
+                    logger.info({ targetName, entityId: secondaryTarget.entityId }, 'PVME: Target switch detected in rotation.');
+                    pvme.getNextAbility(target.entityId, target.name); // Advance sequence
+                    push('GATE_PVME_TARGET_SWITCH', { targetName, entityId: secondaryTarget.entityId });
+                    const intent: CombatIntent = {
+                        action: 'switch_target',
+                        targetId: secondaryTarget.entityId,
+                        tickStarted: ctx.currentTick,
+                        contextHash: 'pvme_target_switch'
+                    };
+                    return { intent, evidence, finalConfidence, fallbackUsed };
+                } else {
+                    logger.warn({ targetName }, 'PVME: Target switch requested but minion not found in context. Skipping.');
+                    push('GATE_PVME_TARGET_SWITCH_FAILED', { targetName });
+                    pvme.getNextAbility(target.entityId, target.name);
+                    // Continue to next check
+                }
+            }
+
+            const pvmeAbility = this.book.getByName(pvmeAbilityObj.name);
+            const predicatePassed = !pvmeAbilityObj.predicate || this.evaluatePredicate(pvmeAbilityObj.predicate, ctx);
+
+            if (pvmeAbilityObj.predicate) {
+                push(predicatePassed ? 'PVME_PREDICATE_PASSED' : 'PVME_PREDICATE_FAILED', { predicate: pvmeAbilityObj.predicate, evaluatedResult: predicatePassed });
+            }
+
+            if (pvmeAbility) {
+                push('PVME_SEQUENCE_LOCKED', { abilityName: pvmeAbilityObj.name, category: pvmeAbility.category });
+
+                // Necromancy Conjure Gate: Avoid redundant summons
+                if (pvmeAbility.type === 'conjure' || pvmeAbility.name.toLowerCase().includes('conjure')) {
+                    const name = pvmeAbility.name.toLowerCase();
+                    let alreadyActive = false;
+                    const ca = ctx.state.conjureActive;
+                    if (ca) {
+                        if (name.includes('skeleton')) alreadyActive = ca.skeleton;
+                        else if (name.includes('zombie')) alreadyActive = ca.zombie;
+                        else if (name.includes('ghost')) alreadyActive = ca.ghost;
+                        else if (name.includes('phantom')) alreadyActive = ca.phantom;
+                    }
+                    
+                    if (alreadyActive) {
+                        push('CONJURE_ALREADY_ACTIVE', { abilityName: pvmeAbility.name });
+                        // Skip this step and proceed to next in PVME sequence
+                        pvme.getNextAbility(target.entityId, target.name);
+                        return null;
+                    }
+                }
+
+                if (pvmeAbility.category !== 'combat') {
+                    // Soft Rejection: Advisory warning but allows execution if it's the intended rotation
+                    push('CATEGORY_MISMATCH_ADVISORY', { 
+                        abilityName: pvmeAbility.name, 
+                        category: pvmeAbility.category, 
+                        expected: 'combat',
+                        status: 'WARNING_PASSTHROUGH' 
+                    });
+                    // Skip and continue for now as a safeguard, but logs clearly
+                    pvme.getNextAbility(target.entityId, target.name);
+                }
+
+                const canExecute = predicatePassed && this.passesConstraints(pvmeAbility, ctx, target, evidence, tickStart);
+                
+                if (canExecute) {
+                    // Success: Pop the ability and execute
+                    pvme.getNextAbility(target.entityId, target.name); 
+                    const intent: CombatIntent = {
+                        action: 'execute_ability',
+                        abilityId: pvmeAbility.id,
+                        abilityName: pvmeAbility.name,
+                        targetId: target.entityId,
+                        tickStarted: ctx.currentTick,
+                        contextHash: 'pvme_sequence',
+                        coord: target.coord,
+                    };
+
+                    push('INTENT_COMMITTED', { action: intent.action, abilityId: intent.abilityId, targetId: intent.targetId });
+
+                    return { intent, evidence, finalConfidence, fallbackUsed };
+                } else if (!predicatePassed) {
+                    // Skip if predicate fails (e.g., conditional branches in guide)
+                    logger.debug({ ability: pvmeAbility.name, predicate: pvmeAbilityObj.predicate }, 'Skipping PVME ability: Predicate failed');
+                    pvme.getNextAbility(target.entityId, target.name);
+                } else {
+                    // Ability on cooldown or constraints failed - WAIT to preserve sync
+                    const isThresholdOrUlt = pvmeAbility.type === 'enhanced' || pvmeAbility.type === 'ultimate';
+                    
+                    if (isThresholdOrUlt) {
+                        // Build Phase Fallback: If insufficient adrenaline, bridge with a filler basic
+                        const currentAdrenaline = ctx.state.adrenaline || 0;
+                        if (currentAdrenaline < (pvmeAbility.adrenalineCost || 0)) {
+                            // Style-Lock: Ensure filler matches current combat style to preserve buffs
+                            const filler = ctx.availableAbilities
+                                .filter(a => a.type === 'basic' && 
+                                            a.style === ctx.combatStyle && 
+                                            this.passesConstraints(a, ctx, target, evidence, tickStart))
+                                .sort((a, b) => (b.adrenalineGain || 0) - (a.adrenalineGain || 0))[0];
+                            
+                            if (filler) {
+                                logger.info({ waitingFor: pvmeAbility.name, fillingWith: filler.name }, 'PVME: Building adrenaline. Executing filler basic.');
+                                fallbackUsed = true;
+                                push('BUILD_PHASE_TRIGGERED', { 
+                                    stalledAbility: pvmeAbility.name, 
+                                    fillerAbility: filler.name, 
+                                    adrenDelta: (pvmeAbility.adrenalineCost || 0) - currentAdrenaline,
+                                    reason: 'highest_gain_in_style'
+                                });
+
+                                push('BUILD_PHASE_FILLER_SELECTED', { 
+                                    name: filler.name, 
+                                    style: filler.style, 
+                                    gained: filler.adrenalineGain,
+                                    needed: (pvmeAbility.adrenalineCost || 0),
+                                    remaining: (pvmeAbility.adrenalineCost || 0) - currentAdrenaline - (filler.adrenalineGain || 0),
+                                    reason: 'highest_gain_in_style' 
+                                });
+
+                                const intent: CombatIntent = {
+                                    action: 'execute_ability',
+                                    abilityId: filler.id,
+                                    abilityName: filler.name,
+                                    targetId: target.entityId,
+                                    tickStarted: ctx.currentTick,
+                                    contextHash: 'pvme_build_phase',
+                                    coord: target.coord,
+                                };
+
+                                push('INTENT_COMMITTED', { action: intent.action, abilityId: intent.abilityId, targetId: intent.targetId });
+
+                                return { intent, evidence, finalConfidence, fallbackUsed };
+                            }
+                        }
+
+                        logger.warn({ ability: pvmeAbility.name }, 'PVME Desync: Threshold/Ultimate on cooldown. Waiting.');
+                        return null; // Wait to preserve sequence
+                    } else {
+                        logger.info({ ability: pvmeAbility.name }, 'PVME Desync: Basic on cooldown. Skipping to maintain tempo.');
+                        pvme.getNextAbility(target.entityId, target.name);
+                    }
+                }
+            } else {
+                logger.warn({ name: pvmeAbilityObj.name }, 'PVME ability not found in book. Skipping.');
+                pvme.getNextAbility(target.entityId, target.name);
             }
         }
 
         // Get prioritized ability list based on archetype
         const candidates = this.buildPriorityList(ctx, target);
+        fallbackUsed = true;
+        evidence.push({
+            signal: 'ARCHETYPE_FALLBACK',
+            timestamp: ctx.currentTick,
+            elapsedMs: parseFloat((performance.now() - tickStart).toFixed(3)),
+            detail: { archetype: ctx.archetype, candidateCount: candidates.length },
+            confidence: 1.0
+        });
 
         // Evaluate each candidate through the constraint pipeline
         for (const ability of candidates) {
-            if (this.passesConstraints(ability, ctx, target)) {
-                return {
+            if (this.passesConstraints(ability, ctx, target, evidence, tickStart)) {
+                const intent: CombatIntent = {
                     action: 'execute_ability',
                     abilityId: ability.id,
                     abilityName: ability.name,
@@ -153,6 +392,10 @@ export class CombatRotationEngine {
                     contextHash: `${ability.type}_${ability.style}`,
                     coord: target.coord,
                 };
+
+                push('INTENT_COMMITTED', { action: intent.action, abilityId: intent.abilityId, targetId: intent.targetId });
+
+                return { intent, evidence, finalConfidence, fallbackUsed };
             }
         }
 
@@ -205,6 +448,7 @@ export class CombatRotationEngine {
 
         return {
             entityId: bestProjection.entityId,
+            name: bestProjection.entityId.split('_')[0], // Simplified; should be real name
             coord: bestProjection.coord,
             currentHp: 1000, // Default; overridden by live NPC state when available
             stunImmunityEndTick: 0,
@@ -236,9 +480,9 @@ export class CombatRotationEngine {
      * March 2026: Promotes buff-window consumers when buffs are active.
      */
     private buildAggressiveList(ctx: CombatEvaluationContext): AbilityDefinition[] {
-        const ults = this.book.getUltimates(ctx.combatStyle);
-        const enhanced = this.book.getEnhancedAbilities(ctx.combatStyle);
-        const basics = this.book.getBasics(ctx.combatStyle);
+        const ults = ctx.availableAbilities.filter(a => a.type === 'ultimate');
+        const enhanced = ctx.availableAbilities.filter(a => a.type === 'enhanced');
+        const basics = ctx.availableAbilities.filter(a => a.type === 'basic');
 
         // March 2026: Promote buff-window consumers when a buff is active
         const buffConsumers = this.getActiveBuffConsumers(ctx, [...ults, ...enhanced, ...basics]);
@@ -252,7 +496,7 @@ export class CombatRotationEngine {
      * Applies debuffs/vulnerability before damage, respects all cooldowns.
      */
     private buildMethodicalList(ctx: CombatEvaluationContext): AbilityDefinition[] {
-        const all = [...this.book.getByStyle(ctx.combatStyle)];
+        const all = ctx.availableAbilities;
         
         // Debuffs first
         const debuffs = all.filter(a => a.flags.includes('debuff'));
@@ -264,61 +508,113 @@ export class CombatRotationEngine {
     }
 
     /**
-     * cowardly: Defensive ultimate → Defensive threshold → Basic → flee
-     * Prioritizes survival. Uses offensive basics only when no defensive option available.
+     * cowardly: Survival → Ultimate defensive → Enhanced defensive → Basic
      */
     private buildCowardlyList(ctx: CombatEvaluationContext): AbilityDefinition[] {
-        const defensives = this.book.getDefensiveAbilities();
-        const defUlts = defensives.filter(a => a.type === 'ultimate');
-        const defEnhanced = defensives.filter(a => a.type === 'enhanced');
-        const basics = this.book.getBasics(ctx.combatStyle);
+        const all = ctx.availableAbilities;
 
-        return [...defUlts, ...defEnhanced, ...basics];
+        const survival = all.filter(a => a.name === 'Resonance' || a.name === 'Barricade');
+        const defensives = all.filter(a => a.flags.includes('defensive'));
+        const basics = all.filter(a => a.type === 'basic');
+
+        return [...survival, ...defensives, ...basics];
     }
 
     /**
-     * predator: Stun → Channeled threshold → Basic
-     * Maximizes target control. Locks targets down before channeling damage.
+     * predator: Stun/Bind (if target not immune) → Channeled enhanced → Basic
      */
     private buildPredatorList(ctx: CombatEvaluationContext, target: TargetContext): AbilityDefinition[] {
-        const all = this.book.getByStyle(ctx.combatStyle);
-        
-        // Only include stuns if target is not immune
-        const stuns = target.stunImmunityEndTick <= ctx.currentTick
-            ? all.filter(a => a.flags.includes('stun'))
-            : [];
-        const channels = all.filter(a => a.isChanneled && a.type === 'enhanced');
-        const enhanced = all.filter(a => a.type === 'enhanced' && !a.isChanneled && !a.flags.includes('stun'));
-        const basics = all.filter(a => a.type === 'basic' && !a.flags.includes('stun'));
+        const all = ctx.availableAbilities;
 
-        return [...stuns, ...channels, ...enhanced, ...basics];
+        const stuns = all.filter(a => a.flags.includes('stun') || a.flags.includes('bind'));
+        const channeled = all.filter(a => a.isChanneled);
+        const enhanced = all.filter(a => a.type === 'enhanced');
+        const basics = all.filter(a => a.type === 'basic');
+
+        const isTargetImmune = ctx.currentTick < target.stunImmunityEndTick;
+        if (isTargetImmune) {
+            // Deprioritize stuns if immune
+            return [...channeled, ...enhanced, ...basics, ...stuns];
+        } else {
+            return [...stuns, ...channeled, ...enhanced, ...basics];
+        }
     }
 
     // ═══════════════════════════════════════════════════════
     // Constraint Pipeline
     // ═══════════════════════════════════════════════════════
 
+    private evaluatePredicate(predicate: string, ctx: CombatEvaluationContext): boolean {
+        const p = predicate.toLowerCase();
+
+        // 1. Adrenaline Checks
+        const adMatch = p.match(/adrenaline\s*([><=]+)\s*(\d+)/);
+        if (adMatch) {
+            const op = adMatch[1];
+            const val = parseInt(adMatch[2]) * 100; // Convert % to 0-10000
+            if (op === '>') return ctx.adrenaline > val;
+            if (op === '<') return ctx.adrenaline < val;
+            if (op === '>=') return ctx.adrenaline >= val;
+            if (op === '<=') return ctx.adrenaline <= val;
+        }
+
+        // 2. Health Checks
+        const hpMatch = p.match(/hp\s*([><=]+)\s*(\d+)/);
+        if (hpMatch) {
+            const op = hpMatch[1];
+            const val = parseInt(hpMatch[2]); // Assuming percentage or raw
+            const currentHpPct = ((ctx.state.hp ?? 0) / (ctx.state.maxHp || 10000)) * 100;
+            if (op === '>') return currentHpPct > val;
+            if (op === '<') return currentHpPct < val;
+        }
+
+        // 3. Status Checks (Simplified)
+        if (p.includes('stunned')) return ctx.currentTick < (ctx.channelEndTick || 0); // Not quite right but placeholder
+
+        return true; // Default to pass if unhandled
+    }
+
     private passesConstraints(
         ability: AbilityDefinition,
         ctx: CombatEvaluationContext,
-        target: TargetContext
+        target: TargetContext,
+        evidence: CombatCausalEvidence[],
+        tickStart: number
     ): boolean {
+        const push = (sig: string, det: any, conf = 1.0) => 
+            this.pushSignal(evidence, ctx.currentTick, tickStart, sig, det, conf);
         // 1. Range check (Chebyshev) — skip for self-targeted abilities (range 0)
         if (ability.range > 0) {
             const dist = chebyshevDistance(ctx.coord, target.coord);
-            if (dist > ability.range) return false;
+            if (dist > ability.range) {
+                push('GATE_RANGE_FAILED', { distance: dist, abilityRange: ability.range });
+                return false;
+            }
+            push('GATE_RANGE_PASSED', { distance: dist, abilityRange: ability.range });
         }
 
         // 2. Per-ability cooldown
         const cdEnd = ctx.cooldowns[ability.id] || 0;
-        if (ctx.currentTick < cdEnd) return false;
+        if (ctx.currentTick < cdEnd) {
+            push('GATE_COOLDOWN_FAILED', { cdEndTick: cdEnd, currentTick: ctx.currentTick });
+            return false;
+        }
+        push('GATE_COOLDOWN_PASSED', { cdEndTick: cdEnd, currentTick: ctx.currentTick });
 
         // 3. Adrenaline
-        if (ctx.adrenaline < ability.adrenalineCost) return false;
+        if (ctx.adrenaline < ability.adrenalineCost) {
+            push('GATE_ADRENALINE_FAILED', { currentAdr: ctx.adrenaline, requiredAdr: ability.adrenalineCost });
+            return false;
+        }
+        push('GATE_ADRENALINE_PASSED', { currentAdr: ctx.adrenaline, requiredAdr: ability.adrenalineCost });
 
         // 4. Stun waste prevention
-        if (ability.flags.includes('stun') && ctx.currentTick < target.stunImmunityEndTick) {
+        if (ability.flags.includes('stun') && ctx.currentTick < (target.stunImmunityEndTick || 0)) {
+            push('GATE_STUN_FAILED', { immunityEndTick: target.stunImmunityEndTick });
             return false;
+        }
+        if (ability.flags.includes('stun')) {
+            push('GATE_STUN_PASSED', { immunityEndTick: target.stunImmunityEndTick });
         }
 
         // 5. Stack-aware routing (March 2026 Paradigm)
@@ -456,6 +752,14 @@ export class CombatRotationEngine {
         const rng = CanonicalClock.getInstance().rng();
         const pct = minPct + rng.next() * (maxPct - minPct);
         return Math.floor(weaponDamage * (pct / 100));
+    }
+
+    public handleAbilityDispatch(abilityId: string, ctx: any): void {
+        logger.info({ abilityId, currentTick: ctx.currentTick }, '[CombatRotationEngine] Ability dispatch handshake completed.');
+        const ability = this.book.get(abilityId) || this.book.getByName(abilityId);
+        if (ability && ctx.cooldowns) {
+            ctx.cooldowns[abilityId] = ctx.currentTick + (ability.cooldownTicks || 0);
+        }
     }
 
     public healthCheck(): { online: boolean; details: string } {

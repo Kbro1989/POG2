@@ -1,4 +1,4 @@
-import { GameCacheLoader } from "../rsmv/cache/sqlite.js";
+import { GameCacheLoader } from "rsmv/cache/sqlite";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -9,12 +9,12 @@ const SPOT_OUTPUT = "D:\\sovereign\\atlas\\spatial\\system_taxonomy\\spotanims.j
 async function run() {
     console.log("🚀 Sovereign Global Animation Forensic — Sequential & Graphic Truth (RS3)");
     const source = new GameCacheLoader(CACHE_DIR);
-    
+
     // 1. Extract All Sequences (Major 20)
     console.log("🎬 Extracting NPC Sequences (Major 20)...");
     const seqIndex = await source.getCacheIndex(20);
     const sequences: Record<number, any> = {};
-    
+
     for (const group of seqIndex) {
         if (!group) continue;
         const arch = await source.getFileArchive(group);
@@ -31,20 +31,20 @@ async function run() {
     console.log("✨ Extracting SpotAnims (Major 21)...");
     const spotIndex = await source.getCacheIndex(21);
     const spotAnims: Record<number, any> = {};
-    
+
     for (const group of spotIndex) {
         if (!group) continue;
         const arch = await source.getFileArchive(group);
         for (const file of arch) {
             const buf = file.buffer;
             const spotId = group.minor * 256 + file.fileid; // RS3 SpotAnim archive size is usually 256
-            
+
             // Forensic Opcode identification:
             // Opcode 1 (2-byte): Model ID
             // Opcode 2 (2-byte): Animation/Sequence ID
-            let modelId = null;
-            let animId = null;
-            
+            let modelId: number | null = null;
+            let animId: number | null = null;
+
             if (buf[0] === 1) modelId = buf.readUInt16BE(1);
             if (buf[3] === 2) animId = buf.readUInt16BE(4);
 

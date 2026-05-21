@@ -14,16 +14,16 @@ const PORT = 8788;
 const minimalOrchestrator = {
     async run(intent: string) {
         console.log(`[SWITCHBOARD] Received intent: ${intent}`);
-        
+
         if (intent.startsWith('GET_LIVE_RSMV')) {
             const parts = intent.split(' ');
             const x = parseInt(parts[1] || '3200');
             const z = parseInt(parts[2] || '3200');
             const plane = parseInt(parts[3] || '0');
-            
+
             console.log(`[SWITCHBOARD] ⚡ Requesting LIVE RSMV Extraction at [${x}, ${z}, ${plane}]`);
             const result = await rsmvBridge.getCollision(x, z, plane);
-            
+
             if (result.ok) {
                 return { ok: true, value: { type: 'LIVE_RSMV', ...result.value }, error: null };
             } else {
@@ -42,7 +42,7 @@ async function main() {
     try {
         const result = await switchboard.startWithGracefulPort(minimalOrchestrator, PORT);
         console.log(`\x1b[32m[SWITCHBOARD] ✅ Sovereign Bridge ACTIVE on ${result.url}\x1b[0m`);
-        console.log(`\x1b[36m[SWITCHBOARD] rsmv_inspector SovereignBridge can now connect.\x1b[0m`);
+        console.log(`\x1b[36m[SWITCHBOARD] rsmv SovereignBridge can now connect.\x1b[0m`);
     } catch (err: any) {
         console.error(`\x1b[31m[SWITCHBOARD] ❌ Failed to start: ${err.message}\x1b[0m`);
         process.exit(1);

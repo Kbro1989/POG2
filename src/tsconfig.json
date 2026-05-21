@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "outDir": "../dist",
+    "strict": true,
+    "noImplicitAny": false,
+    "noImplicitReturns": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "jsx": "react-jsx",
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "paths": {}
+  },
+  "include": [
+    "**/*"
+  ],
+  "exclude": [
+    "../node_modules",
+    "../dist",
+    "../resources",
+    "../logs",
+    "../rsmv",
+    "scripts_backup",
+    "tests_backup",
+    "scripts/sovereign_world_extract.ts"
+  ]
+}

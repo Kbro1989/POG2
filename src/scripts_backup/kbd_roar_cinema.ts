@@ -46,12 +46,12 @@ class KBDRoarCinema {
 
   constructor(config: Partial<CinemaConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
-    
+
     const manifestPath = join(ASSET_DIR, 'manifest.json');
     if (!existsSync(manifestPath)) {
       throw new Error('KBD manifest not found. Run extract_kbd_assets.ts first.');
     }
-    
+
     this.manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
     console.log('ðŸŽ¬ KBD Roar Cinema Initialized');
     console.log(`   Attack Animation: ${this.manifest.animationIds.attack || 'NOT FOUND'}`);
@@ -59,10 +59,10 @@ class KBDRoarCinema {
 
   async synthesize(): Promise<void> {
     console.log('\nðŸŽ­ Temporal Synthesis Beginning...');
-    
+
     const modelData = this.loadModels();
     const animData = this.loadAnimations();
-    
+
     if (!animData.attack) {
       throw new Error('Attack/roar animation required for cinema');
     }
@@ -74,22 +74,22 @@ class KBDRoarCinema {
     const ctx = canvas.getContext('2d');
 
     const totalFrames = this.config.fps * this.config.duration;
-    
+
     for (let frame = 0; frame < totalFrames; frame++) {
       const progress = frame / totalFrames;
-      
+
       ctx.fillStyle = '#0a0a0a';
       ctx.fillRect(0, 0, this.config.width, this.config.height);
-      
+
       const pose = this.sampleAnimation(animData.attack, progress);
       this.renderKBD(ctx, modelData, pose, progress);
       this.applyCinematicEffects(ctx, progress);
-      
+
       if (frame % 10 === 0) {
         process.stdout.write(`\r   Rendering: ${((progress * 100).toFixed(1))}%`);
       }
     }
-    
+
     console.log('\nâœ… Cinema synthesis complete');
     this.saveOutput(canvas);
   }
@@ -125,14 +125,14 @@ class KBDRoarCinema {
   private renderKBD(ctx: any, models: Buffer[], pose: any, progress: number): void {
     const centerX = this.config.width / 2;
     const centerY = this.config.height / 2;
-    
+
     ctx.strokeStyle = `hsl(${10 + progress * 30}, 80%, 50%)`;
     ctx.lineWidth = 2;
     ctx.beginPath();
 
     const headX = centerX + Math.sin(pose.headRotation) * 100;
     const headY = centerY - 100 + pose.jawOpen * 50;
-    
+
     ctx.moveTo(headX - 50, headY);
     ctx.lineTo(headX + 50, headY);
     ctx.lineTo(headX, headY - 80);
@@ -148,9 +148,9 @@ class KBDRoarCinema {
     const wingY = centerY - 50;
     ctx.moveTo(centerX - 30, wingY);
     ctx.quadraticCurveTo(
-      centerX - 150 - pose.wingSpread * 100, 
+      centerX - 150 - pose.wingSpread * 100,
       wingY - 50 - pose.wingSpread * 100,
-      centerX - 100, 
+      centerX - 100,
       wingY + 100
     );
     ctx.moveTo(centerX + 30, wingY);
@@ -170,16 +170,16 @@ class KBDRoarCinema {
 
   private renderFireBreath(ctx: any, x: number, y: number, intensity: number): void {
     const particles = Math.floor(intensity * 20);
-    
+
     for (let i = 0; i < particles; i++) {
       const angle = (Math.random() - 0.5) * 0.5;
       const distance = Math.random() * 200 * intensity;
       const px = x + Math.sin(angle) * distance;
       const py = y + Math.cos(angle) * distance + (i * 5);
-      
+
       const size = Math.random() * 10 * intensity;
       const hue = 10 + Math.random() * 40;
-      
+
       ctx.fillStyle = `hsla(${hue}, 100%, 50%, ${0.3 + Math.random() * 0.4})`;
       ctx.beginPath();
       ctx.arc(px, py, size, 0, Math.PI * 2);
@@ -189,8 +189,8 @@ class KBDRoarCinema {
 
   private applyCinematicEffects(ctx: any, progress: number): void {
     const gradient = ctx.createRadialGradient(
-      this.config.width/2, this.config.height/2, 100,
-      this.config.width/2, this.config.height/2, 800
+      this.config.width / 2, this.config.height / 2, 100,
+      this.config.width / 2, this.config.height / 2, 800
     );
     gradient.addColorStop(0, 'rgba(0,0,0,0)');
     gradient.addColorStop(1, 'rgba(0,0,0,0.6)');
@@ -209,7 +209,7 @@ class KBDRoarCinema {
     if (!existsSync(this.config.outputPath)) {
       mkdirSync(this.config.outputPath, { recursive: true });
     }
-    
+
     const outPath = join(this.config.outputPath, 'rsmv_kbd_0.png');
     const buffer = canvas.toBuffer('image/png');
     writeFileSync(outPath, buffer);

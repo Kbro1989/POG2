@@ -7,6 +7,7 @@ import { join, dirname } from 'path';
 import { fetch as undiciFetch } from 'undici';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
 import type { AIServiceType } from '../../core/models.js';
+import { getCapability, isCapabilityTier } from '../../config/OllamaCapabilityConfig.js';
 
 import { $ } from '../../utils/shell.js';
 import { createLogger } from "../../utils/logger.js";
@@ -62,15 +63,23 @@ export interface RolodexState {
  *
  * Dynamically discovers available models from each provider via API/shell calls.
  * Tracks per-model health (success/failure/latency/tokens).
- * Persists state to D:\sovereign\rolodex.json for cross-session memory.
+ * Persists state to D:\sovereign
+olodex.json for cross-session memory.
  * Ollama models are always the sovereign final fallback.
  */
 export class ModelRolodex {
-    private state: RolodexState;
+    private static instance?: ModelRolodex;
+
+    public static getInstance(): ModelRolodex | undefined {
+        return ModelRolodex.instance;
+    }
+
+    public state: RolodexState;
     private readonly persistPath: string;
     private refreshInProgress = false;
 
     constructor(private readonly config: SovereignConfig) {
+        ModelRolodex.instance = this;
         this.persistPath = join(config.pog2Dir || process.cwd(), 'rolodex.json');
 
         // Attempt to load persisted state
@@ -115,6 +124,15 @@ export class ModelRolodex {
         };
         return { models: {}, providers, lastRefresh: 0, version: '1.0.0' };
     }
+
+    public getAllProviderStatuses(): Record<RolodexProvider, ProviderIdentity> {
+        return this.state.providers;
+    }
+
+    public getProviderStatus(provider: RolodexProvider): ProviderIdentity {
+        return this.state.providers[provider];
+    }
+
 
 
     /** 
@@ -190,13 +208,64 @@ export class ModelRolodex {
     }
 
     /** Get provider identity & status */
-    getProviderStatus(provider: RolodexProvider): ProviderIdentity {
-        return this.state.providers[provider];
+
+    // Add inside ModelRolodex class:
+
+    /**
+     * Resolve capability tier to best healthy local model.
+     * Checks health, reputation, walks fallback chain.
+     */
+    public resolveCapability(tier: string): { model: string; ctx: number; reputation: number } | null {
+        const cap = getCapability(tier);
+        if (!cap) return null;
+
+        // Preferred
+        if (this.isModelHealthy(cap.preferredModel)) {
+            const key = `ollama:${cap.preferredModel}`;
+            const rep = this.state.models[key]?.reputation ?? 1.0;
+            if (rep > 0.3) return { model: cap.preferredModel, ctx: cap.minCtx, reputation: rep };
+        }
+
+        // Fallback chain
+        for (const fb of cap.fallbackModels) {
+            if (fb === cap.preferredModel) continue;
+            if (this.isModelHealthy(fb)) {
+                const key = `ollama:${fb}`;
+                const rep = this.state.models[key]?.reputation ?? 0.5;
+                if (rep > 0.2) {
+                    logger.info({ tier, fallback: fb }, 'Capability fallback');
+                    return { model: fb, ctx: cap.minCtx, reputation: rep };
+                }
+            }
+        }
+
+        // Emergency: any healthy text model
+        const emergency = this.getAllModels()
+            .filter(m => m.provider === 'ollama' && m.taskType === 'text' && m.reputation > 0.2)
+            .sort((a, b) => b.reputation - a.reputation)[0];
+
+        if (emergency) {
+            logger.warn({ tier, emergency: emergency.id }, 'Emergency fallback');
+            return { model: emergency.id, ctx: 4096, reputation: emergency.reputation };
+        }
+
+        return null;
     }
 
-    /** Get all provider statuses */
-    getAllProviderStatuses(): ProviderIdentity[] {
-        return Object.values(this.state.providers);
+    /**
+     * If modelOrTier is a capability name, resolve it. Otherwise pass through.
+     */
+    public resolveModelOrCapability(modelOrTier: string): { model: string; ctx: number; isCapability: boolean; reputation: number } {
+        if (isCapabilityTier(modelOrTier)) {
+            const resolved = this.resolveCapability(modelOrTier);
+            if (resolved) return { ...resolved, isCapability: true };
+        }
+        return {
+            model: modelOrTier,
+            ctx: 4096,
+            isCapability: false,
+            reputation: this.state.models[`ollama:${modelOrTier}`]?.reputation ?? 1.0
+        };
     }
 
     /** Check if ALL cloud providers are down (triggers sovereign Ollama override) */
@@ -220,7 +289,7 @@ export class ModelRolodex {
         // 1. Identify provider
         let provider: RolodexProvider = 'ollama';
         let id = modelId;
-        
+
         if (modelId.includes(':')) {
             const parts = modelId.split(':');
             provider = ModelRolodex.toRolodexProvider(parts[0]);
@@ -251,7 +320,7 @@ export class ModelRolodex {
             .filter(m => m.taskType === taskType)
             .sort((a, b) => b.reputation - a.reputation);
 
-        return scored.map(m => this.toPrefixedModelId(m));
+        return scored.map(m => `${m.provider}:${m.id}`);
     }
 
     /** Record a model call result (called by ModelClient after each call) */
@@ -814,20 +883,6 @@ export class ModelRolodex {
         }
     }
 
-    // â•â•â• UTILITIES â•â•â•
-
-    /** Convert a RolodexModel to a prefixed model ID usable by ModelClient */
-    private toPrefixedModelId(model: RolodexModel): string {
-        switch (model.provider) {
-            case 'ollama': return model.id;
-            case 'gemini': return `gemini:${model.id}`;
-            case 'huggingface': return `huggingface:${model.id}`;
-            case 'cloudflare': return `cloudflare:${model.id}`;
-            case 'fireworks': return `fireworks:${model.id}`;
-            case 'openrouter': return `openrouter:${model.id}`;
-            default: return model.id;
-        }
-    }
 
     /** Map a ModelClient provider string to a RolodexProvider */
     static toRolodexProvider(provider: string): RolodexProvider {
@@ -901,7 +956,7 @@ export class ModelRolodex {
 
         lines.push(`Last Refresh: ${this.state.lastRefresh ? new Date(this.state.lastRefresh).toISOString() : 'Never'}`);
         lines.push(`Total Models: ${Object.keys(this.state.models).length}`);
-        return lines.join('\n');
+        return lines.join('');
     }
 
     /** ðŸ§¬ Reputation Decay - Exponential Convergence toward baseline 1.0 */
@@ -946,7 +1001,67 @@ export class ModelRolodex {
 
         return {
             online: totalModels > 0 || this.state.providers.rsmv?.authenticated,
-            details: `Rolodex: ${totalModels} models across ${onlineProviders}/7 providers. [RSMV: ${rsmvOnline}]. Last refresh: ${this.state.lastRefresh ? new Date(this.state.lastRefresh).toLocaleTimeString() : 'Never'}`
+            details: `Rolodex: ${totalModels} models across ${onlineProviders}/7 providers. [rsmv: ${rsmvOnline}]. Last refresh: ${this.state.lastRefresh ? new Date(this.state.lastRefresh).toLocaleTimeString() : 'Never'}`
         };
     }
 }
+
+// â• â• â•  ORCHESTRATION & ROUTING HELPERS â• â• â• 
+// Add inside ModelRolodex class:
+
+/**
+ * Resolve capability tier to best healthy local model.
+ * Checks health, reputation, walks fallback chain.
+ */
+export const resolveCapability = (tier: string, rolodex: ModelRolodex, config: SovereignConfig): { model: string; ctx: number; reputation: number } | null => {
+    const cap = getCapability(tier);
+    if (!cap) return null;
+
+    // Preferred
+    if (rolodex.isModelHealthy(cap.preferredModel)) {
+        const key = `ollama:${cap.preferredModel}`;
+        const rep = rolodex.state.models[key]?.reputation ?? 1.0;
+        if (rep > 0.3) return { model: cap.preferredModel, ctx: cap.minCtx, reputation: rep };
+    }
+
+    // Fallback chain
+    for (const fb of cap.fallbackModels) {
+        if (fb === cap.preferredModel) continue;
+        if (rolodex.isModelHealthy(fb)) {
+            const key = `ollama:${fb}`;
+            const rep = rolodex.state.models[key]?.reputation ?? 0.5;
+            if (rep > 0.2) {
+                logger.info({ tier, fallback: fb }, 'Capability fallback');
+                return { model: fb, ctx: cap.minCtx, reputation: rep };
+            }
+        }
+    }
+
+    // Emergency: any healthy text model
+    const emergency = rolodex.getAllModels()
+        .filter(m => m.provider === 'ollama' && m.taskType === 'text' && m.reputation > 0.2)
+        .sort((a, b) => b.reputation - a.reputation)[0];
+
+    if (emergency) {
+        logger.warn({ tier, emergency: emergency.id }, 'Emergency fallback');
+        return { model: emergency.id, ctx: 4096, reputation: emergency.reputation };
+    }
+
+    return null;
+};
+
+/**
+ * If modelOrTier is a capability name, resolve it. Otherwise pass through.
+ */
+export const resolveModelOrCapability = (modelOrTier: string, rolodex: ModelRolodex, config: SovereignConfig): { model: string; ctx: number; isCapability: boolean; reputation: number } => {
+    if (isCapabilityTier(modelOrTier)) {
+        const resolved = resolveCapability(modelOrTier, rolodex, config);
+        if (resolved) return { ...resolved, isCapability: true };
+    }
+    return {
+        model: modelOrTier,
+        ctx: 4096,
+        isCapability: false,
+        reputation: rolodex.state.models[`ollama:${modelOrTier}`]?.reputation ?? 1.0
+    };
+};

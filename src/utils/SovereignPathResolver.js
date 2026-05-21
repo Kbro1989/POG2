@@ -18,11 +18,11 @@ exports.hasSovereignDrive = hasSovereignDrive;
 exports.detectPathTier = detectPathTier;
 exports.getSovereignRoot = getSovereignRoot;
 exports.resolveSovereignPath = resolveSovereignPath;
-exports.getRSMVSubstratePath = getRSMVSubstratePath;
+exports.getrsmvSubstratePath = getrsmvSubstratePath;
 exports.getTransientClonePath = getTransientClonePath;
 exports.getAgentSubstratePath = getAgentSubstratePath;
 exports.getStaticResourcesPath = getStaticResourcesPath;
-exports.getRSMVCachePath = getRSMVCachePath;
+exports.getrsmvCachePath = getrsmvCachePath;
 exports.getGodHeadRoot = getGodHeadRoot;
 exports.getOllamaModelsPath = getOllamaModelsPath;
 exports.getGutenbergPath = getGutenbergPath;
@@ -228,11 +228,11 @@ function bootstrapSovereignSubstrate(root) {
     }
 }
 /**
- * Returns the absolute path to the RSMV Inspector substrate.
+ * Returns the absolute path to the rsmv Inspector substrate.
  * Authoritative: D:\sovereign\cache_pedagogy\rsmv_inspector
  */
-function getRSMVSubstratePath() {
-    var envPath = process.env['POG_RSMV_SUBSTRATE_PATH'];
+function getrsmvSubstratePath() {
+    var envPath = process.env['POG_rsmv_SUBSTRATE_PATH'];
     if (envPath && (0, fs_1.existsSync)(envPath))
         return envPath;
     // Sovereign substrate location (authoritative D: drive inspector)
@@ -244,7 +244,7 @@ function getRSMVSubstratePath() {
 }
 /**
  * Resolves the path to the transient/tmp repository clones (like Kbro1989/rsmv)
- * This is distinct from the active runtime substrate (RSMV Inspector).
+ * This is distinct from the active runtime substrate (rsmv Inspector).
  */
 function getTransientClonePath(repoPath) {
     if (_projectRoot) {
@@ -279,9 +279,9 @@ function getStaticResourcesPath() {
  * Returns the formal structural path to the local Jagex/RuneScape cache.
  * Governs the vision bridge's access to underlying model data.
  */
-function getRSMVCachePath() {
-    if (process.env['POG_RSMV_CACHE_DIR'])
-        return process.env['POG_RSMV_CACHE_DIR'];
+function getrsmvCachePath() {
+    if (process.env['POG_rsmv_CACHE_DIR'])
+        return process.env['POG_rsmv_CACHE_DIR'];
     if (process.platform === 'win32') {
         var rs3Path = 'C:\\ProgramData\\Jagex\\RuneScape';
         if ((0, fs_1.existsSync)(rs3Path))

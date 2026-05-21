@@ -1,6 +1,6 @@
 import { lastLegacyBuildnr } from "./CacheConstants.js";
 import type * as jsonschema from "json-schema";
-import type { ClientscriptObfuscation } from "./clientscript/callibrator.js";
+import type { ClientscriptObfuscation } from "rsmv/clientscript/callibrator.js";
 
 export type TypeDef = { [name: string]: unknown };
 

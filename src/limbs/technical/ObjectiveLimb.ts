@@ -1,6 +1,7 @@
 import { createLogger } from '../../utils/logger.js';
 import { SovereignAvatar, Coord } from '../../core/models.js'; // Removed GameState as it was unused
 import { DiscoveryLimb } from '../spatial/DiscoveryLimb.js';
+import { LocationResolver } from '../../utils/LocationResolver.js';
 // Removed unused imports: fs and path
 
 const logger = createLogger('ObjectiveLimb');
@@ -53,27 +54,22 @@ export class ObjectiveLimb {
         });
 
         // 2. Discovery Milestones (Landmarks)
-        interface Landmark {
-            name: string;
-            x: number;
-            y: number;
-        }
-        const landmarks: Landmark[] = [
-            { name: 'Lumbridge Castle', x: 3221, y: 3218 },
-            { name: 'Draynor Manor', x: 3108, y: 3352 },
-            { name: 'Falador Square', x: 2964, y: 3378 },
-            { name: 'Varrock Center', x: 3212, y: 3422 },
-            { name: 'Edgeville Bank', x: 3093, y: 3491 }
+        const landmarks = [
+            'Lumbridge Castle',
+            'Draynor Manor',
+            'Falador Square',
+            'Varrock Center',
+            'Edgeville Bank'
         ];
 
-        landmarks.forEach((l: Landmark) => {
+        landmarks.forEach((name: string) => {
             this.objectives.push({
-                id: `discovery_${l.name.toLowerCase().replace(/\s+/g, '_')}`,
+                id: `discovery_${name.toLowerCase().replace(/\s+/g, '_')}`,
                 type: 'DISCOVERY',
-                name: `Discover ${l.name}`,
-                description: `Visit the heart of ${l.name}.`,
+                name: `Discover ${name}`,
+                description: `Visit the heart of ${name}.`,
                 priority: 10,
-                targetCoord: { x: l.x, y: l.y, plane: 0 },
+                // Target coord is resolved dynamically, flow not locked.
                 isCompleted: false
             });
         });
@@ -85,7 +81,7 @@ export class ObjectiveLimb {
             name: "Cook's Assistant",
             description: "Help the Lumbridge cook find ingredients.",
             priority: 5,
-            targetCoord: { x: 3206, y: 3214, plane: 0 },
+            // Target coord dynamically resolved.
             isCompleted: false
         });
     }
@@ -141,10 +137,16 @@ export class ObjectiveLimb {
                 }
             }
 
-            if (o.type === 'DISCOVERY' && o.targetCoord) {
-                const dist = Math.abs(avatar.x - o.targetCoord.x) + Math.abs(avatar.y - o.targetCoord.y);
-                if (dist < 10) {
-                    this.completeObjective(o.id);
+            if (o.type === 'DISCOVERY') {
+                const resolver = LocationResolver.getInstance();
+                const targetName = o.name.replace('Discover ', '');
+                const targetCoord = resolver.resolveLocationByName(targetName);
+                
+                if (targetCoord) {
+                    const dist = Math.abs(avatar.x - targetCoord.x) + Math.abs(avatar.y - targetCoord.y);
+                    if (dist < 10 && avatar.plane === (targetCoord.plane ?? 0)) {
+                        this.completeObjective(o.id);
+                    }
                 }
             }
 

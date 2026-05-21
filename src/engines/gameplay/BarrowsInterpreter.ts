@@ -3,6 +3,7 @@ import { SubstrateState, YaoState, GameState, SovereignAvatar } from '../../core
 import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { existsSync, readFileSync } from 'fs';
 import { CanonicalClock } from '../../utils/CanonicalClock.js';
+import { stateProvider } from '../../utils/StateProvider.js';
 
 export class BarrowsInterpreter implements GameplayModule {
     public readonly name = 'Barrows';
@@ -13,6 +14,12 @@ export class BarrowsInterpreter implements GameplayModule {
 
     private readonly BROTHERS = ['Ahrim', 'Dharok', 'Guthan', 'Karil', 'Torag', 'Verac'];
 
+    // RS3 Barrows state varbits/varps:
+    //   Varbit 457 — Crypt progress (which crypts have been entered)
+    //   Varp 24   — Killed brothers bitmask (bit 0=Ahrim, 1=Dharok, etc.)
+    private static readonly VARBIT_CRYPT_PROGRESS = 457;
+    private static readonly VARP_KILLED_BROTHERS = 24;
+
     public async mount(state: GameState, avatar: SovereignAvatar): Promise<void> {
         // Drop them at Barrows 
         avatar.coord = { x: 3564, y: 3288, plane: 0 };
@@ -22,11 +29,18 @@ export class BarrowsInterpreter implements GameplayModule {
             this.logicMap = JSON.parse(readFileSync(path, 'utf8'));
         }
 
+        // Pre-resolve Barrows varbit definitions from live cache
+        await stateProvider.preResolveVarbits([BarrowsInterpreter.VARBIT_CRYPT_PROGRESS]);
+
         // Randomize the hidden tunnel for this run
         this.hiddenTunnel = this.BROTHERS[CanonicalClock.getInstance().rng().range(0, this.BROTHERS.length - 1)];
         this.killedBrothers.clear();
         this.activeBrother = null;
         
+        // Reset Barrows state via authoritative varps
+        await stateProvider.setVarp(BarrowsInterpreter.VARP_KILLED_BROTHERS, 0, state);
+        await stateProvider.setVarbit(BarrowsInterpreter.VARBIT_CRYPT_PROGRESS, 0, state);
+
         console.log(`[BARROWS] Initialization complete. Hidden tunnel is randomized.`);
     }
 
@@ -84,6 +98,14 @@ export class BarrowsInterpreter implements GameplayModule {
             this.killedBrothers.add(this.activeBrother);
             const killed = this.activeBrother;
             this.activeBrother = null;
+
+            // Update killed brothers bitmask via authoritative varp
+            const brotherIndex = this.BROTHERS.indexOf(killed);
+            if (brotherIndex !== -1) {
+                const currentMask = stateProvider.getVarp(BarrowsInterpreter.VARP_KILLED_BROTHERS, state);
+                await stateProvider.setVarp(BarrowsInterpreter.VARP_KILLED_BROTHERS, currentMask | (1 << brotherIndex), state);
+            }
+
             return `[BARROWS] You have defeated ${killed}. (${this.killedBrothers.size}/${this.BROTHERS.length})`;
         }
 

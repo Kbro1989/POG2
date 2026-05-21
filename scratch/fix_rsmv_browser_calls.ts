@@ -11,11 +11,11 @@ files.forEach(file => {
     if (!fs.existsSync(filePath)) return;
 
     let content = fs.readFileSync(filePath, 'utf8');
-    
+
     // Replace document.body.append(cnv) with document.body.appendChild(cnv)
     // and check if document/document.body exists
     content = content.replace(/document\.body\.append\((.*?)\);/g, 'if (typeof document !== "undefined" && document.body) document.body.appendChild($1 as any);');
-    
+
     fs.writeFileSync(filePath, content);
     console.log(`Patched browser calls in ${file}`);
 });

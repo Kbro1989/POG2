@@ -1,0 +1,112 @@
+import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
+import { PlayerAgent } from '../engines/gameplay/PlayerAgent.js';
+import { createLogger } from '../utils/logger.js';
+import { SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
+import { GameplaySovereigntyLimb } from '../limbs/spatial/GameplaySovereigntyLimb.js';
+
+const logger = createLogger('ConfidenceStressTester');
+
+export interface StressTestScenario {
+    name: string;
+    setup: (avatar: SovereignAvatarEntity) => void;
+    expectedConfidence: number;
+    shouldTriggerAnchor: boolean;
+}
+
+/**
+ * ConfidenceStressTester
+ * Diagnostic tool to simulate spatial failures and tune the Sovereign Anchor.
+ */
+export class ConfidenceStressTester {
+    private avatar: SovereignAvatarEntity;
+    private agent: PlayerAgent;
+
+    constructor() {
+        this.avatar = new SovereignAvatarEntity('StressTest_Agent');
+        this.agent = new PlayerAgent(this.avatar);
+    }
+
+    public async runSuite(threshold: number = 0.8): Promise<any> {
+        const scenarios: StressTestScenario[] = [
+            {
+                name: 'NOMINAL_PATHING',
+                setup: (av) => {
+                    av.metadata.currentPath = [{ x: 3222, y: 3218, plane: 0 }];
+                    // Mock spatial check to be walkable
+                },
+                expectedConfidence: 1.0,
+                shouldTriggerAnchor: false
+            },
+            {
+                name: 'INTENT_ONLY',
+                setup: (av) => {
+                    av.metadata.currentPath = [];
+                    av.intent = { action: 'move', targetId: 'test_coord', coord: { x: 3222, y: 3219, plane: 0 }, tickStarted: 0, contextHash: 'test' };
+                },
+                expectedConfidence: 0.8,
+                shouldTriggerAnchor: false
+            },
+            {
+                name: 'EXTRAPOLATION_FALLBACK',
+                setup: (av) => {
+                    av.metadata.currentPath = [];
+                    av.intent = undefined;
+                },
+                expectedConfidence: 0.5,
+                shouldTriggerAnchor: true
+            },
+            {
+                name: 'COLLISION_AVOIDANCE',
+                setup: (av) => {
+                    const gameplay = GameplaySovereigntyLimb.getInstance();
+                    const spatial = SpatialSovereigntyLimb.getInstance();
+                    
+                    // Inject Virtual Hallvar at (3222, 3218)
+                    const virtualHallvar = { 
+                        id: 12, 
+                        name: 'Hallvar', 
+                        x: 3222, 
+                        y: 3218, 
+                        plane: 0,
+                        coord: { x: 3222, y: 3218, plane: 0 },
+                        interactionState: 'IDLE' as const,
+                        lastActionTick: 0,
+                        lastCombatTick: 0,
+                        cooldowns: {}
+                    };
+                    gameplay.globalState.npcMap.set(12, virtualHallvar as any);
+                    spatial.ingestLiveEntities([virtualHallvar]);
+
+                    av.metadata.currentPath = [];
+                    av.intent = { action: 'move', targetId: 'hallvar', coord: { x: 3222, y: 3218, plane: 0 }, tickStarted: 0, contextHash: 'test' };
+                },
+                expectedConfidence: 0.5, // Source is intent, but tile is BLOCKED. Wait. 
+                // If tile is blocked, PlayerAgent.projectSelf should return 0.5 confidence (extrapolation) 
+                // because intent.coord is blocked.
+                shouldTriggerAnchor: true
+            }
+        ];
+
+        const results: any[] = [];
+        for (const scenario of scenarios) {
+            // Reset avatar state
+            this.avatar.metadata = {};
+            this.avatar.intent = undefined;
+
+            scenario.setup(this.avatar);
+
+            const ghosts = this.agent.projectSelf(1);
+            const confidence = ghosts[0]?.confidence ?? 0;
+            const triggered = confidence < threshold;
+
+            results.push({
+                scenario: scenario.name,
+                confidence,
+                triggered,
+                pass: triggered === scenario.shouldTriggerAnchor && Math.abs(confidence - scenario.expectedConfidence) < 0.01
+            });
+        }
+
+        return results;
+    }
+}

@@ -1,0 +1,21 @@
+import { GameCacheLoader } from "../src/rsmv/cache/sqlite.js";
+import { cacheMajors } from "../src/rsmv/constants.js";
+
+async function main() {
+    const cachePath = "C:\\ProgramData\\Jagex\\RuneScape-BETA";
+    const loader = new GameCacheLoader(cachePath);
+
+    const id = 15627;
+    const buf = await loader.getFileById(cacheMajors.clientscript, id);
+
+    const target = 14500;
+    const tBuf = Buffer.alloc(4);
+    tBuf.writeUInt32BE(target);
+    if (buf.indexOf(tBuf) !== -1) {
+        console.log(`Script 15627 references script 14500`);
+    } else {
+        console.log(`Script 15627 DOES NOT reference script 14500`);
+    }
+}
+
+main();

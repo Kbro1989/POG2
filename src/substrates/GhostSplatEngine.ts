@@ -2,6 +2,7 @@ import { GameState, Coord, NPC, ChaosPhase, YaoState } from '../core/models.js';
 import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
 import { EntityGhost } from '../core/EntityGhost.js';
 import { PlayerAgent } from '../engines/gameplay/PlayerAgent.js';
+import type { TacticalArchetype } from '../engines/gameplay/CombatRotationEngine.js';
 import { PADDED_SIZE, SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
 import { NecromancerBrain, type NTXBuffer, type SpatialGaussian } from '../engines/core/NecromancerBrain.js';
 import { createLogger } from '../utils/logger.js';
@@ -9,6 +10,8 @@ import { HexagramManager } from '../routing/HexagramManager.js';
 import { EpistemicTransitionKernel, PredictionRegistry } from '../engines/core/EpistemicTransitionKernel.js';
 import { performance } from 'perf_hooks';
 import { SwitchboardLimb } from '../monitor/SwitchboardLimb.js';
+import { SpatialMetricsRegistry } from '../limbs/spatial/SpatialMetricsRegistry.js';
+import { CanonicalClock } from '../utils/CanonicalClock.js';
 
 const logger = createLogger('GhostSplatEngine');
 
@@ -22,6 +25,13 @@ export interface GhostSplatField {
     gaussians?: Float32Array; // Packed [N, 13]: pos(3), cov(6), color(3), opacity(1)
 }
 
+export interface ThreatModulation {
+    intent: TacticalArchetype;
+    multiplier: number; // Range scaling
+    safespotWeight: number; // How much to value safespots
+    targetFocus: number; // How much to ignore non-primary NPCs
+}
+
 /**
  * GhostSplatEngine
  * 
@@ -32,14 +42,30 @@ export class GhostSplatEngine {
     private static instance: GhostSplatEngine;
     private readonly MAX_COMPUTE_MS = 50;
     private latestField: GhostSplatField | null = null;
+    private spatialRegistry: SpatialMetricsRegistry;
 
-    private constructor() {}
+    private persistentHeat: Uint8Array = new Uint8Array(PADDED_SIZE * PADDED_SIZE);
+    private throttleMs: number = 0;
+
+    private constructor() {
+        this.spatialRegistry = SpatialMetricsRegistry.getInstance();
+    }
 
     public static getInstance(): GhostSplatEngine {
         if (!GhostSplatEngine.instance) {
             GhostSplatEngine.instance = new GhostSplatEngine();
         }
         return GhostSplatEngine.instance;
+    }
+
+    public purgePersistentHeat(): void {
+        logger.info('[GhostSplatEngine] Purging persistent red-splat heat memory.');
+        this.persistentHeat.fill(0);
+    }
+
+    public setThrottle(ms: number): void {
+        logger.info({ throttleMs: ms }, '[GhostSplatEngine] Setting predictive compute throttle.');
+        this.throttleMs = ms;
     }
 
     /**
@@ -61,7 +87,7 @@ export class GhostSplatEngine {
             // Calculate entity projections
             this.projectNpcMovement(state, field);
             this.projectPlayer(playerAgent, field);
-            this.calculateThreatHeatmap(field, state); // Pass state for cache-derived aggro ranges
+            this.calculateThreatHeatmap(field, state, playerAgent); // Pass state and playerAgent for modulation
             this.identifySafespots(playerAgent, field);
 
             // Weight entity confidence by historical prediction accuracy
@@ -102,7 +128,23 @@ export class GhostSplatEngine {
         return {
             tickDepth: field.tickDepth,
             heatmap: Array.from(field.heatmap),
-            projections: Array.from(field.projections.entries()),
+            projections: Array.from(field.projections.entries()).map(([id, ghost]) => {
+                // Enrich projections with cache-derived metrics
+                let metrics: any = null;
+                if (id.startsWith('npc_')) {
+                    const npcId = parseInt(id.replace('npc_', ''), 10);
+                    metrics = this.spatialRegistry.getMetrics(npcId);
+                }
+                return [id, {
+                    ...ghost,
+                    metrics: metrics ? {
+                        radius: metrics.tileScale.radius,
+                        height: metrics.tileScale.height,
+                        volume: metrics.tileScale.volume
+                    } : null
+                }];
+            }),
+            gaussians: field.gaussians ? Array.from(field.gaussians) : null,
             safespots: field.safespots,
             center: (() => {
                 if (!state) return { x: 0, y: 0, plane: 0 };
@@ -145,12 +187,44 @@ export class GhostSplatEngine {
             
             field.projections.set(ghost.entityId, ghost);
             
+            // Log prediction
+            const clock = CanonicalClock.getInstance();
+            const currentTick = clock.simulatedNow();
+            const metrics = this.spatialRegistry.getMetrics(npc.id);
+            const contextStr = JSON.stringify({
+                name: npc.name || `NPC ${npc.id}`,
+                radius: metrics?.tileScale?.radius || 1,
+                source: source,
+                pathLength: npc.path?.length || 0,
+                targetCoord: npc.metadata?.targetCoord,
+                tickDepth: field.tickDepth
+            });
+            
+            PredictionRegistry.getInstance().logSpatialPrediction({
+                tick: currentTick + field.tickDepth,
+                entityId: ghost.entityId,
+                predictedCoord: projectedCoord,
+                confidence: ghost.confidence,
+                context: contextStr
+            });
+            
             // Splat the projection onto the heatmap
             if (projectedCoord) {
-                const localX = projectedCoord.x % PADDED_SIZE;
-                const localY = projectedCoord.y % PADDED_SIZE;
-                
-                if (localX >= 0 && localX < PADDED_SIZE && localY >= 0 && localY < PADDED_SIZE) {
+                // Map world coords to inner 64x64 grid (indices 1-64), padding at 0 and 65
+                const INNER_SIZE = 64;
+                const PADDING = 1;
+
+                // Euclidean modulo: handles negative world coords correctly
+                const innerX = ((projectedCoord.x % INNER_SIZE) + INNER_SIZE) % INNER_SIZE;
+                const innerY = ((projectedCoord.y % INNER_SIZE) + INNER_SIZE) % INNER_SIZE;
+
+                // Offset by padding to place in 1-64 range
+                const localX = innerX + PADDING;
+                const localY = innerY + PADDING;
+
+                // Only splat on inner tiles, never on sentinel padding
+                if (localX >= PADDING && localX < PADDING + INNER_SIZE && 
+                    localY >= PADDING && localY < PADDING + INNER_SIZE) {
                     const idx = localY * PADDED_SIZE + localX;
                     field.heatmap[idx] += 1; // Increase combined threat weight
                     if (field.entityHeat) field.entityHeat[idx] += 1; // Factional weighting
@@ -198,14 +272,31 @@ export class GhostSplatEngine {
         return npc.coord;
     }
 
-    private calculateThreatHeatmap(field: GhostSplatField, state?: GameState): void {
+    private getThreatModulation(playerAgent?: PlayerAgent): ThreatModulation {
+        const intent = playerAgent?.getCombatIntent() || 'aggressive';
+        switch (intent) {
+            case 'cowardly': return { intent, multiplier: 1.5, safespotWeight: 2.0, targetFocus: 0.3 };
+            case 'aggressive': return { intent, multiplier: 0.7, safespotWeight: 0.5, targetFocus: 1.5 };
+            case 'predator': return { intent, multiplier: 0.4, safespotWeight: 0.1, targetFocus: 2.0 };
+            case 'methodical': return { intent, multiplier: 1.0, safespotWeight: 1.0, targetFocus: 1.0 };
+            default: return { intent, multiplier: 1.0, safespotWeight: 1.0, targetFocus: 1.0 };
+        }
+    }
+
+    private calculateThreatHeatmap(field: GhostSplatField, state?: GameState, playerAgent?: PlayerAgent): void {
         const tempHeatmap = new Uint8Array(PADDED_SIZE * PADDED_SIZE);
+        const mod = this.getThreatModulation(playerAgent);
         
         field.projections.forEach((ghost, entityId) => {
             if (entityId.startsWith('player_')) return;
 
-            const localX = ghost.projectedCoord.x % PADDED_SIZE;
-            const localY = ghost.projectedCoord.y % PADDED_SIZE;
+            const INNER_SIZE = 64;
+            const PADDING = 1;
+
+            const innerX = ((ghost.projectedCoord.x % INNER_SIZE) + INNER_SIZE) % INNER_SIZE;
+            const innerY = ((ghost.projectedCoord.y % INNER_SIZE) + INNER_SIZE) % INNER_SIZE;
+            const localX = innerX + PADDING;
+            const localY = innerY + PADDING;
             
             // ── Cache-Derived Attack Range ─────────────────────────────────────
             // Pull attack range from live NPC state (populated by CacheForensicsLimb
@@ -235,11 +326,20 @@ export class GhostSplatEngine {
                 // Fallback to base aggroRange
             }
 
+            // Apply combat intent modulation
+            aggroRange = Math.max(1, Math.round(aggroRange * mod.multiplier));
+
+            // Target focus check: ignore minor NPCs if focus is high
+            const primaryTargetId = (playerAgent as any)?.avatar?.metadata?.currentTargetId;
+            if (mod.targetFocus > 1.0 && primaryTargetId && entityId !== primaryTargetId && aggroRange > 2) {
+                return; // Skip this NPC in heatmap
+            }
+
             for (let dx = -aggroRange; dx <= aggroRange; dx++) {
                 for (let dy = -aggroRange; dy <= aggroRange; dy++) {
                     const nx = localX + dx;
                     const ny = localY + dy;
-                    if (nx >= 0 && nx < PADDED_SIZE && ny >= 0 && ny < PADDED_SIZE) {
+                    if (nx >= PADDING && nx < PADDING + INNER_SIZE && ny >= PADDING && ny < PADDING + INNER_SIZE) {
                         tempHeatmap[ny * PADDED_SIZE + nx] += 1;
                     }
                 }
@@ -398,13 +498,33 @@ export class GhostSplatEngine {
             // 2. Covariance (Approximated as a sphere/ellipsoid)
             // [s11, s12, s13, s22, s23, s33]
             const isNpc = id.startsWith('npc_');
-            const scale = isNpc ? 0.8 : 0.5;
-            tensor[offset + 3] = scale; // s11
+            let scale = isNpc ? 0.8 : 0.5; // Fallback default
+
+            if (isNpc) {
+                const npcId = parseInt(id.replace('npc_', ''), 10);
+                if (!isNaN(npcId)) {
+                    const metrics = this.spatialRegistry.getMetrics(npcId);
+                    if (metrics) {
+                        // Cache-derived physical presence shapes the Gaussian
+                        scale = metrics.tileScale.radius;
+                        
+                        // Optional: Shape the ellipsoid based on actual proportions
+                        // If height > radius*2, stretch vertically (flying/crawling entities)
+                        const heightScale = metrics.tileScale.height / (metrics.tileScale.radius * 2);
+                        if (heightScale > 1.5) {
+                            // Tall entity — stretch Y (s33 in Y-up convention)
+                            tensor[offset + 8] = scale * Math.min(heightScale, 3.0); // Cap at 3x
+                        }
+                    }
+                }
+            }
+
+            tensor[offset + 3] = scale; // s11 (X)
             tensor[offset + 4] = 0;     // s12
             tensor[offset + 5] = 0;     // s13
-            tensor[offset + 6] = scale; // s22
+            tensor[offset + 6] = scale; // s22 (Z, horizontal)
             tensor[offset + 7] = 0;     // s23
-            tensor[offset + 8] = scale; // s33
+            tensor[offset + 8] = isNpc && tensor[offset + 8] > scale ? tensor[offset + 8] : scale; // s33 (Y, vertical)
 
             // 3. Color (SH Level 0 - RGB)
             if (isNpc) {

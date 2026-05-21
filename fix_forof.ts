@@ -112,15 +112,15 @@ for (const relPath of files) {
         console.log(`SKIP: ${relPath} not found`);
         continue;
     }
-    
+
     let content = fs.readFileSync(fullPath, "utf8");
     let count = 0;
-    
+
     const newContent = content.replace(FOR_OF_REGEX, (match, keyword, varName) => {
         count++;
         return `for (${keyword} ${varName} of`;
     });
-    
+
     if (count > 0) {
         fs.writeFileSync(fullPath, newContent, "utf8");
         console.log(`FIXED ${count} for-of annotations in ${relPath}`);

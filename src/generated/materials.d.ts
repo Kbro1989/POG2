@@ -3,7 +3,7 @@
 // run `npm run filetypes` to rebuild
 
 export type materials = {
-	version: (number|0),
+	version: (number | 0),
 	v0: {
 		unk0: number,
 		texsize: number,
@@ -17,10 +17,10 @@ export type materials = {
 			value: number,
 		}[],
 		textureflags: number,
-		diffuse: (number|0) | null,
-		normal: (number|0) | null,
-		texrepeatflags: (number|0),
-		unk3_skybox: (Uint8Array|null),
+		diffuse: (number | 0) | null,
+		normal: (number | 0) | null,
+		texrepeatflags: (number | 0),
+		unk3_skybox: (Uint8Array | null),
 		flags2: number,
 		unkfloats: [
 			number,
@@ -28,15 +28,15 @@ export type materials = {
 		] | null,
 		unk7: number,
 		weirdshit: Uint8Array | null,
-		diffuse_related1: (number | null|number),
+		diffuse_related1: (number | null | number),
 		normal_related: Uint8Array | null,
-		diffuse_related2: (number | null|number),
+		diffuse_related2: (number | null | number),
 		diffuse_ralated2_data: number | null,
 		alphamode: number,
 		alphacutoff: number | null,
 		animtex: number,
-		animtexU: (number|number) | null,
-		animtexV: (number|number) | null,
+		animtexU: (number | number) | null,
+		animtexV: (number | number) | null,
 		flagextra: boolean,
 		extra: {
 			unk00_flags: number,

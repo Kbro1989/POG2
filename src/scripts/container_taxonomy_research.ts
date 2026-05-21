@@ -1,5 +1,5 @@
-import { GameCacheLoader } from "../rsmv/cache/sqlite.js";
-import { cacheMajors } from "../rsmv/constants.js";
+import { GameCacheLoader } from "rsmv/cache/sqlite";
+import { cacheMajors } from "rsmv/constants";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -10,7 +10,7 @@ const OUTPUT_FILE = "D:\\sovereign\\atlas\\spatial\\system_taxonomy\\container_l
 async function run() {
     console.log("🚀 Sovereign Container Taxonomy Research");
     const source = new GameCacheLoader(CACHE_DIR);
-    
+
     const invDefs = JSON.parse(fs.readFileSync(INVENTORY_DEFS, "utf-8"));
     const invIds = new Set(Object.keys(invDefs).map(Number));
 
@@ -28,7 +28,7 @@ async function run() {
         for (const file of arch) {
             const buf = file.buffer;
             const npcId = group.minor * 128 + file.fileid;
-            
+
             // Search for potential Inventory IDs and Action patterns
             // In RS3, Opcodes 30-34 are Actions (Trade, Shop, etc.)
             // We'll search the first few bytes for string "Trade" or "Shop"

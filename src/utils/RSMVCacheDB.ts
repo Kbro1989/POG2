@@ -4,7 +4,7 @@ import { getSovereignRoot } from './SovereignPathResolver.js';
 import { createLogger } from './logger.js';
 import { SovereignDBLifecycle } from './SovereignDBLifecycle.js';
 
-const logger = createLogger('RSMVCacheDB');
+const logger = createLogger('rsmvCacheDB');
 
 export interface GroundedEntity {
     entity_type: 'npc' | 'object';
@@ -21,8 +21,8 @@ export interface GroundedEntity {
     learned_at?: string;
 }
 
-export class RSMVCacheDB {
-    private static instance: RSMVCacheDB;
+export class rsmvCacheDB {
+    private static instance: rsmvCacheDB;
     private db: Database.Database;
     private readonly dbPath: string;
 
@@ -30,15 +30,15 @@ export class RSMVCacheDB {
         this.dbPath = join(getSovereignRoot(), 'memory', 'rsmv_cache.db');
         this.db = new Database(this.dbPath);
         this.initSchema();
-        SovereignDBLifecycle.getInstance().register('RSMVCacheDB', this);
-        logger.info({ path: this.dbPath }, 'RSMV Cache DB initialized');
+        SovereignDBLifecycle.getInstance().register('rsmvCacheDB', this);
+        logger.info({ path: this.dbPath }, 'rsmv Cache DB initialized');
     }
 
-    public static getInstance(): RSMVCacheDB {
-        if (!RSMVCacheDB.instance) {
-            RSMVCacheDB.instance = new RSMVCacheDB();
+    public static getInstance(): rsmvCacheDB {
+        if (!rsmvCacheDB.instance) {
+            rsmvCacheDB.instance = new rsmvCacheDB();
         }
-        return RSMVCacheDB.instance;
+        return rsmvCacheDB.instance;
     }
 
     private initSchema() {

@@ -1,5 +1,6 @@
 import { createLogger } from '../../utils/logger.js';
 import { Item, SovereignAvatar, EquipmentSlot, Result, ok, err, SkillId } from '../../core/models.js';
+import { CacheForensicsLimb } from './CacheForensicsLimb.js';
 
 const logger = createLogger('ItemLifecycleLimb');
 
@@ -22,10 +23,31 @@ export class ItemLifecycleLimb {
         const item = avatar.inventory[slot];
         if (!item) return err(new Error('No item in slot.'));
 
-        // Placeholder for Item Metadata lookup (Slot typing)
-        // In a full implementation, we'd query the Cache (Major 19) for 'equipSlot'
-        // For now, we'll use metadata or a hardcoded mapping if available.
-        const targetSlot: EquipmentSlot = item.metadata?.equipSlot || EquipmentSlot.WEAPON;
+        // Retrieve authentic, cache-backed equipment slot from the forensic registry
+        const rawSlot = CacheForensicsLimb.getInstance().findItemSlot(item.id);
+        let targetSlot: EquipmentSlot = item.metadata?.equipSlot || EquipmentSlot.WEAPON;
+        if (rawSlot) {
+            const slotMap: Record<string, EquipmentSlot> = {
+                helm: EquipmentSlot.HEAD,
+                face: EquipmentSlot.HEAD,
+                beard: EquipmentSlot.HEAD,
+                cape: EquipmentSlot.CAPE,
+                necklace: EquipmentSlot.NECK,
+                weapon: EquipmentSlot.WEAPON,
+                body: EquipmentSlot.BODY,
+                arms: EquipmentSlot.BODY,
+                offhand: EquipmentSlot.SHIELD,
+                legs: EquipmentSlot.LEGS,
+                gloves: EquipmentSlot.HANDS,
+                boots: EquipmentSlot.FEET,
+                ring: EquipmentSlot.RING,
+                ammo: EquipmentSlot.AMMO,
+                aura: EquipmentSlot.AURA
+            };
+            if (slotMap[rawSlot]) {
+                targetSlot = slotMap[rawSlot];
+            }
+        }
 
         // Unequip current item first if exists
         const current = avatar.equipment[targetSlot];

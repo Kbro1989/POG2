@@ -9,6 +9,7 @@ import { MechanicalSovereigntyLimb } from '../technical/MechanicalSovereigntyLim
 import { DirectionalPathfinder } from './DirectionalPathfinder.js';
 import { GeometryAnnotationLayer } from './GeometryAnnotationLayer.js';
 import { PlaneTransitionRegistry } from './PlaneTransitionRegistry.js';
+import { rsmvBridge } from '../../utils/RSMVBridge.js';
 
 // const logger = createLogger('SpatialSovereigntyLimb');
 const logger = {
@@ -81,6 +82,13 @@ export class SpatialSovereigntyLimb {
     private groundedNPCs: Map<string, any[]> = new Map(); // "x_z_plane" -> npc objects
     private gal: GeometryAnnotationLayer;
 
+    private getSourceDir(): string {
+        const source = (globalThis as any).SOVEREIGN_SUBSTRATE || 'ATLAS_FALLBACK';
+        return source === 'NXT_LIVE_CACHE'
+            ? 'D:/sovereign/cache_pedagogy/rsmv_inspector/generated'
+            : this.atlasDir;
+    }
+
     public static getInstance(): SpatialSovereigntyLimb {
         if (!this.instance) {
             this.instance = new SpatialSovereigntyLimb();
@@ -123,11 +131,8 @@ export class SpatialSovereigntyLimb {
                 return ok(true);
             }
 
-            // Load known regions
-            await this.loadLogic('prifddinas');
-            await this.loadLogic('barrows');
-            
-            logger.info(`SpatialSovereigntyLimb active with ${this.loadedMatrices.size} mapped regions. (${[...this.loadedMatrices.keys()].join(',')})`);
+            // Load known regions via dynamic cache queries instead of eager JSON files
+            logger.info('SpatialSovereigntyLimb active in dynamic cache query mode.');
             return ok(true);
         } catch (error) {
             logger.error({ error }, 'Failed to initialize SpatialSovereigntyLimb.');
@@ -135,17 +140,20 @@ export class SpatialSovereigntyLimb {
         }
     }
 
-    /**
-     * loadLogic - Ingests a specific region's collision matrix.
-     * Aligned with Phase 44: Sovereign Path Authority resolution.
-     */
     public async loadLogic(name: string): Promise<Result<void>> {
+        // NXT Live Cache dynamic check
+        const sourceDir = this.getSourceDir();
+        let filename = name.endsWith('.json') ? name : `${name}_logic.json`;
+        const cachePath = path.join(sourceDir, filename);
+        if (fs.existsSync(cachePath)) {
+            return this.performLoad(cachePath);
+        }
+
         // Resolve path via Sovereign Authority (Priority: D:\atlas\spatial -> D:\atlas\logic)
         const fullPath = resolveLogicFragment(name);
         
         if (!fullPath || !fs.existsSync(fullPath)) {
             // Fallback to internal name resolution if authority fails
-            let filename = name.endsWith('.json') ? name : `${name}_logic.json`;
             const fallbackPath = path.join(this.atlasDir, filename);
             if (!fs.existsSync(fallbackPath)) {
                 return err(new Error(`Spatial Authority: fragment '${name}' not resolved.`));
@@ -194,11 +202,50 @@ export class SpatialSovereigntyLimb {
         // Phase 41: Eager marking to prevent redundant loads or false-negatives
         this.loadedMapsquares.set(key, { flags: new Uint16Array(0), heights: new Int16Array(0) });
 
-        const worldExtractDir = path.join(this.atlasDir, 'world_extract');
-        const fullPath = path.join(worldExtractDir, `ms_${x}_${z}.json`);
+        const sourceDir = this.getSourceDir();
+        let fullPath = path.join(sourceDir, 'world_extract', `ms_${x}_${z}.json`);
+        if (!fs.existsSync(fullPath)) {
+            // Try flat in sourceDir
+            const flatPath = path.join(sourceDir, `ms_${x}_${z}.json`);
+            if (fs.existsSync(flatPath)) {
+                fullPath = flatPath;
+            }
+        }
 
         if (!fs.existsSync(fullPath)) {
-            return err(new Error(`Mapsquare fragment not found: ${fullPath}`));
+            // FALLBACK: Dynamically query rsmvBridge for mapsquare tiles from local cache!
+            logger.info({ x, z }, 'Static Mapsquare fragment missing on disk. Querying NXT Live Cache via RSMVBridge...');
+            try {
+                const res = await rsmvBridge.getMapsquareTiles(x, z);
+                if (!res.ok) {
+                    return err(new Error(`Failed to load mapsquare [${x}, ${z}] dynamically: ${res.error.message}`));
+                }
+
+                const data = res.value;
+                if (data.tiles) {
+                    const flags = new Uint16Array(4 * TILES_PER_LEVEL);
+                    const heights = new Int16Array(4 * TILES_PER_LEVEL);
+                    for (const tile of data.tiles) {
+                        const tx = tile.x;
+                        const tz = tile.z;
+                        const plane = tile.plane;
+                        if (tx < 0 || tx > 65 || tz < 0 || tz > 65 || plane < 0 || plane > 3) continue;
+
+                        const index = (plane * TILES_PER_LEVEL) + (tx * PADDED_SIZE) + tz;
+                        flags[index] |= (tile.collision || 0);
+                        if (tile.height !== null && tile.height !== undefined) {
+                            heights[index] = Math.max(heights[index], tile.height);
+                        }
+                    }
+                    this.loadedMapsquares.set(key, { flags, heights });
+                    logger.info({ x, z, count: data.tiles.length }, 'Successfully ingested Mapsquare from NXT Live Cache dynamically.');
+                    return ok(undefined);
+                } else {
+                    return err(new Error(`No tile definitions returned for mapsquare [${x}, ${z}]`));
+                }
+            } catch (fallbackError) {
+                return err(fallbackError as Error);
+            }
         }
 
         try {
@@ -257,12 +304,15 @@ export class SpatialSovereigntyLimb {
         }
     }
 
-    /**
-     * loadUnifiedGrounding - Loads NPC spawns from unified_extract.
-     */
     public async loadUnifiedGrounding(x: number, z: number): Promise<void> {
-        const unifiedDir = path.join(this.atlasDir, 'unified_extract');
-        const fullPath = path.join(unifiedDir, `ms_${x}_${z}.json`);
+        const sourceDir = this.getSourceDir();
+        let fullPath = path.join(sourceDir, 'unified_extract', `ms_${x}_${z}.json`);
+        if (!fs.existsSync(fullPath)) {
+            const flatPath = path.join(sourceDir, `ms_${x}_${z}.json`);
+            if (fs.existsSync(flatPath)) {
+                fullPath = flatPath;
+            }
+        }
 
         if (!fs.existsSync(fullPath)) return;
 

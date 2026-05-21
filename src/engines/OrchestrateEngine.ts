@@ -54,9 +54,10 @@ import { OmegaLimb } from '../limbs/metaphysical/OmegaLimb.js';
 import { RelicLimb } from '../limbs/metaphysical/RelicLimb.js';
 import { RSCLimb } from '../limbs/spatial/RSCLimb.js';
 import { GlobeStateLimb } from '../limbs/spatial/GlobeStateLimb.js';
+import { GameplayProjectionLimb } from '../limbs/spatial/GameplayProjectionLimb.js';
 import { MemoryConsolidationEngine } from './MemoryConsolidationEngine.js';
 import { StateManager } from '../state/StateManager.js';
-import { RSMVExtractor } from '../utils/RSMVExtractor.js';
+import { rsmvExtractor } from '../utils/RSMVExtractor.js';
 import { CacheLearningLimb } from '../limbs/spatial/CacheLearningLimb.js';
 import { GhostSplatEngine } from '../substrates/GhostSplatEngine.js';
 import { CacheForensicsLimb } from '../limbs/spatial/CacheForensicsLimb.js';
@@ -66,7 +67,7 @@ import { MaterialLimb } from '../limbs/spatial/MaterialLimb.js';
 import { SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
 import { DBRowOracleLimb } from '../limbs/spatial/DBRowOracleLimb.js';
 import { SovereignKnowledgeDB } from '../utils/SovereignKnowledgeDB.js';
-import { RSMVCacheDB } from '../utils/RSMVCacheDB.js';
+import { rsmvCacheDB } from '../utils/RSMVCacheDB.js';
 import { MechanicalSovereigntyLimb } from '../limbs/technical/MechanicalSovereigntyLimb.js';
 import { GameplaySovereigntyLimb } from '../limbs/spatial/GameplaySovereigntyLimb.js';
 import { VolumeSovereigntyLimb } from '../limbs/spatial/VolumeSovereigntyLimb.js';
@@ -91,7 +92,7 @@ import { ASTWatcher } from './ASTWatcher.js';
 import { ChromaLimb } from '../limbs/spatial/ChromaLimb.js';
 import { VideoAssemblerLimb } from '../limbs/creative/VideoAssemblerLimb.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
-import { getSovereignRoot, getGodHeadRoot, getLearningDbPath, getPipelineRootPath, getRSMVCachePath, resolveSovereignPath } from '../utils/SovereignPathResolver.js';
+import { getSovereignRoot, getGodHeadRoot, getLearningDbPath, getPipelineRootPath, getrsmvCachePath, resolveSovereignPath } from '../utils/SovereignPathResolver.js';
 import { IntentVerifier } from './IntentVerifier.js';
 import { type Result, type EngineOutput, YaoState, isOk, ok, err, type ThinkingNexus, type ContextCard, type Todo, type TodoStatus, CircuitState, YAO_PRODUCTION_PREREQUISITES, type Plan, type OraclePlan, type ArchitectureManifest, SovereignDomain, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, type ActuationResult, CognitivePolarity, InterpretationContract } from '../core/models.js';
 import { AIDispatcher } from '../api/ai/Dispatcher.js';
@@ -204,14 +205,14 @@ export class OrchestrateEngine {
     private readonly ytLimb?: YouTubeLimb;
     private readonly quotaTracker: QuotaTracker;
     private readonly chromaLimb: ChromaLimb; // Phase 108 - Metaphysical color signature
-    private readonly rsmvExtractor: RSMVExtractor;
-    private readonly rsmvController: RSMVController;
-    private readonly cacheForensics: CacheForensicsLimb;
+    private readonly rsmvExtractor: rsmvExtractor;
+    private readonly RSMVController: RSMVController;
+    public readonly cacheForensics: CacheForensicsLimb;
     private readonly cacheLearning: CacheLearningLimb;
     private readonly todoCloud: TodoCloudLimb;
     private readonly grounding: WorldGroundingLimb;
-    private readonly spatialSovereignty: SpatialSovereigntyLimb;
-    private readonly mechanicalSovereignty: MechanicalSovereigntyLimb;
+    public readonly spatialSovereignty: SpatialSovereigntyLimb;
+    public readonly mechanicalSovereignty: MechanicalSovereigntyLimb;
     private readonly gameplay: GameplaySovereigntyLimb;
     private readonly pulseVolley: CNSGodheadPulseVolley;
     constructor(
@@ -224,31 +225,31 @@ export class OrchestrateEngine {
         this.shell = new ShellEngine(renderer, router);
         this.vscode = new VSCodeEngine(renderer, router);
         this.registry = new ToolRegistry();
-        
+
         // Connect Database Organs
         DBRowOracleLimb.getInstance();
         SovereignKnowledgeDB.getInstance();
-        RSMVCacheDB.getInstance();
+        rsmvCacheDB.getInstance();
 
         this.cacheForensics = CacheForensicsLimb.getInstance();
         this.spatialSovereignty = SpatialSovereigntyLimb.getInstance();
         this.mechanicalSovereignty = MechanicalSovereigntyLimb.getInstance();
         this.gameplay = GameplaySovereigntyLimb.getInstance();
         this.grounding = WorldGroundingLimb.getInstance();
-        
+
         // Critical: Initialize Vision Substrates before Heartbeat
         this.visionEngine = SpatialVisionEngine.getInstance(config, renderer);
         this.vision = VisionEngine.getInstance(config, renderer);
 
         this.todoEngine = new TodoEngine(renderer);
-        this.todoCloud = new TodoCloudLimb({ 
+        this.todoCloud = new TodoCloudLimb({
             endpoint: 'https://pog2-todo-list.kristain33rs.workers.dev/api/todos',
             token: 'multiplayer-globe-pog2 build token'
         });
         this.todoEngine.setCloudLimb(this.todoCloud);
 
         this.pulseVolley = CNSGodheadPulseVolley.getInstance();
-        this.rsmvController = RSMVController.getInstance();
+        this.RSMVController = RSMVController.getInstance();
         this.mcpEngine = new MCPEngine(config, this.registry);
         this.chroma = ChromanumberEngine.getInstance();
         this.maintenance = new DBMaintenance();
@@ -298,7 +299,7 @@ export class OrchestrateEngine {
         this.volumeSovereignty = VolumeSovereigntyLimb.getInstance();
         this.interactionGateway = new InteractionGateway();
         this.entityLimb = EntityLimb.getInstance();
-        
+
         // Wire Gameplay Heartland
         this.gameplay.injectSwitchboard(this.switchboard);
         this.gameplay.injectEntityLimb(this.entityLimb);
@@ -319,7 +320,7 @@ export class OrchestrateEngine {
         this.memoryConsolidation = new MemoryConsolidationEngine(this.client, this.vectorDB, StateManager.getInstance());
         this.soundtrack = new SoundtrackLimb(this.config, this.router.getHexagram());
         this.chromaLimb = new ChromaLimb(this.config); // Phase 108
-        this.rsmvExtractor = new RSMVExtractor();
+        this.rsmvExtractor = new rsmvExtractor();
 
         // Phase 105: YouTube Substrate Activation
         if (config.youtube?.clientId && config.youtube?.clientSecret && config.youtube?.apiKey) {
@@ -334,11 +335,11 @@ export class OrchestrateEngine {
         }
 
         // Phase 7: Anatomical Binding (Tool Reality Layer)
-        const rsmvCachePath = getRSMVCachePath();
+        const rsmvCachePath = getrsmvCachePath();
         const taxonomiesDir = resolveSovereignPath('memory/pedagogy');
         const extractionDir = resolveSovereignPath('extractions');
 
-        this.rsmvController = RSMVController.getInstance();
+        this.RSMVController = RSMVController.getInstance();
         this.cacheLearning = new CacheLearningLimb(rsmvCachePath, this.cacheForensics, extractionDir);
         this.questSynthesis = new QuestSynthesisLimb(this.client, this.cacheForensics, this.pedagogy);
         this.logicBrain = LogicBrainLimb.getInstance();
@@ -377,7 +378,7 @@ export class OrchestrateEngine {
         this.workforce = new WorkforceManifest(config);
         this.dispatcher = new AIDispatcher(this.client, this.workforce);
         this.domainLocker = new DomainLocker();
-        
+
         // Phase 259: Instantiate Simulation Harness (Heartbeat Logic)
         const worldGrounding = WorldGroundingLimb.getInstance();
         this.harness = new SimulationHarness(worldGrounding, this.router.getHexagram(), this.dispatcher, this.entityLimb, this.switchboard);
@@ -389,6 +390,10 @@ export class OrchestrateEngine {
         this.globeState.connect().catch(err => {
             logger.warn({ err }, 'Failed to connect to live Globe substrate, but continuing in local-only mode.');
         });
+
+        // Phase 113: Bootstrap Gameplay Filesystem Projection
+        const publicDir = join(getGodHeadRoot() ?? process.cwd(), 'public');
+        GameplayProjectionLimb.bootstrap(publicDir);
 
         // Sovereign AI Hive Mind: Wire Rolodex state sharing
         const rolodex = this.client.getRolodex();
@@ -461,6 +466,19 @@ export class OrchestrateEngine {
     }
 
     /**
+     * Execute a registered tool by name with the given arguments.
+     * This is the governed entry point for CLIRouter — tools registered
+     * in the registry are already subject to DomainLocker constraints.
+     */
+    public async executeTool(toolName: string, args: Record<string, unknown> = {}): Promise<Result<EngineOutput>> {
+        const tool = this.registry.getTool(toolName);
+        if (!tool) {
+            return { ok: false, error: { message: `Tool not found: ${toolName}`, code: 'TOOL_NOT_FOUND' } } as any;
+        }
+        return tool.execute(args);
+    }
+
+    /**
      * Phase 259: Explicitly awaken the Sovereign Substrate.
      * This awaits all critical neural links (MCP, DB, etc.) before execution begins.
      */
@@ -479,7 +497,7 @@ export class OrchestrateEngine {
 
             // Phase 300: Genomic Instincts (I Ching Routing)
             const currentHexagram = this.router.getHexagram().getInterpretation();
-            if (currentHexagram.id === 27) { 
+            if (currentHexagram.id === 27) {
                 logger.info('Hexagram 27 (Nourishment) Active: Instinctively initializing DBRowOracleLimb for Genome Ingestion.');
                 await DBRowOracleLimb.getInstance().initialize();
             }
@@ -497,6 +515,7 @@ export class OrchestrateEngine {
                 const isAuthoritative = await this.cacheForensics.isAuthoritative?.() || false;
                 if (isAuthoritative) {
                     logger.info('🔱 SOVEREIGN_TRUTH_ONLINE: Forensic Bridge has anchored to 11GB Authoritative Substrate.');
+                    (globalThis as any).SOVEREIGN_SUBSTRATE = 'NXT_LIVE_CACHE';
                     this.nodeTester.broadcastPulse?.('SOVEREIGN_TRUTH_ONLINE', { substrate: 'NXT_LIVE_CACHE' });
                 }
             } else {
@@ -517,7 +536,7 @@ export class OrchestrateEngine {
 
             // Phase 111: Gameplay Sovereignty (Heartbeat)
             await this.gameplay.initialize();
-            
+
             // Phase 500: Substrate-Switchboard Integration
             if (this.switchboard.injectSubstrates) {
                 this.switchboard.injectSubstrates({
@@ -538,7 +557,7 @@ export class OrchestrateEngine {
             // Phase 112: Heartbeat Ignition (Substrate Logic Loop)
             if (!options.diagnosticOnly) {
                 CNSGodheadPulseVolley.getInstance().startLoop();
-                
+
                 // Await external neural links (MCP)
                 await this.mcpEngine.initialize();
 
@@ -692,7 +711,7 @@ export class OrchestrateEngine {
 
         if (!this.nodeTester.hasRegistry()) {
             this.nodeTester.registerLimbs({
-                RSMVController: this.rsmvController,
+                RSMVController: this.RSMVController,
                 CNSGodheadPulseVolley: this.pulseVolley,
                 WorldGroundingLimb: this.grounding,
                 SpatialVisionEngine: this.visionEngine,
@@ -732,14 +751,14 @@ export class OrchestrateEngine {
         this.pulseVolley.setRouter(this.router);
         this.pulseVolley.setRenderer(this.renderer);
         this.pulseVolley.setNodeTester(this.nodeTester);
-        
+
         // Idempotent registration of key singletons to prevent DEGRADED statuses in this.nodeTester
         this.nodeTester.registerLimbs({
             OrchestrateEngine: this,
             SimulationHarness: this.harness,
             ChromaLimb: this.chromaLimb,
             SwitchboardLimb: this.switchboard,
-            rsmvController: this.rsmvController,
+            RSMVController: this.RSMVController,
             CacheForensicsLimb: this.cacheForensics,
             TernaryRouter: this.router,
             CognitiveEngine: this.cognitive,
@@ -751,8 +770,7 @@ export class OrchestrateEngine {
             MCPEngine: this.mcpEngine,
             ChromanumberEngine: this.chroma,
             RSCLimb: this.rscLimb,
-            RSMVExtractor: this.rsmvExtractor,
-            RSMVController: this.rsmvController,
+            rsmvExtractor: this.rsmvExtractor,
             CacheLearningLimb: this.cacheLearning,
             YouTubeLimb: this.ytLimb,
             GutenbergLimb: this.gutenberg,
@@ -774,6 +792,7 @@ export class OrchestrateEngine {
             OmegaLimb: this.omega,
             RelicLimb: this.relic,
             GlobeStateLimb: this.globeState,
+            GameplayProjectionLimb: GameplayProjectionLimb.getInstance(),
             VSCodeEngine: this.vscode,
             VisionEngine: this.vision,
             SpatialVisionEngine: this.visionEngine,
@@ -796,10 +815,10 @@ export class OrchestrateEngine {
         this.nodeTester.registerLimbs({ SimulationHarness: this.harness });
         this.nodeTester.registerLimbs({ ChromaLimb: this.chromaLimb });
         this.nodeTester.registerLimbs({ SwitchboardLimb: this.switchboard });
-        this.nodeTester.registerLimbs({ rsmvController: this.rsmvController });
+        this.nodeTester.registerLimbs({ RSMVController: this.RSMVController });
         this.nodeTester.registerLimbs({ CacheForensicsLimb: this.cacheForensics });
         this.nodeTester.registerLimbs({ GhostSplatEngine: GhostSplatEngine.getInstance() });
-        
+
         // Massive Registry Injection to prevent DEGRADED statuses
         this.nodeTester.registerLimbs({ HexagramManager: undefined });
         this.nodeTester.registerLimbs({ HexagramManager: undefined });
@@ -818,8 +837,8 @@ export class OrchestrateEngine {
         this.nodeTester.registerLimbs({ ChromanumberEngine: this.chroma });
         this.nodeTester.registerLimbs({ MultiModelExecutor: undefined });
         this.nodeTester.registerLimbs({ RSCLimb: this.rscLimb });
-        this.nodeTester.registerLimbs({ RSMVExtractor: this.rsmvExtractor });
-        this.nodeTester.registerLimbs({ RSMVController: this.rsmvController });
+        this.nodeTester.registerLimbs({ rsmvExtractor: this.rsmvExtractor });
+        this.nodeTester.registerLimbs({ RSMVController: this.RSMVController });
         this.nodeTester.registerLimbs({ CacheForensicsLimb: this.cacheForensics });
         this.nodeTester.registerLimbs({ CacheLearningLimb: this.cacheLearning });
         this.nodeTester.registerLimbs({ YouTubeLimb: this.ytLimb });
@@ -896,7 +915,202 @@ export class OrchestrateEngine {
         this.pulseMonitor.setNodeTester(this.nodeTester);
         this.nodeTester = this.nodeTester;
 
-        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â OBSERVE DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+        // CLI ROUTER COMMANDS
+        this.registry.register({
+            name: 'gameplay_sovereignty_volition',
+            description: 'Apply volition state overrides (adrenaline, stance, tactical, leader) to the GameplaySovereigntyLimb.',
+            humanDescription: 'Update the combat or tactical state of the player avatar.',
+            jargonDescription: 'Mutates the internal avatar state of the GameplaySovereigntyLimb and marks it dirty for global propagation.',
+            idealYaoState: YaoState.YoungYang,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: { adren: 'number?', stance: 'string?', tactical: 'string?', leader: 'string?', archetype: 'string?' },
+            execute: async (args) => {
+                const limb = this.gameplay;
+                if (!limb) throw new Error("GameplaySovereigntyLimb not mounted");
+                
+                const opts = args as { adren?: number; stance?: string; tactical?: string; leader?: string; archetype?: string };
+                if (opts.adren !== undefined) (limb.avatar as any).adrenaline = opts.adren;
+                if (opts.stance !== undefined) (limb.avatar as any).combatStance = opts.stance;
+                if (opts.tactical !== undefined) limb.avatar.metadata.tacticalState = opts.tactical;
+                if (opts.archetype !== undefined) limb.avatar.metadata.combatArchetype = opts.archetype;
+                if (opts.leader !== undefined) {
+                    limb.avatar.metadata.leaderId = opts.leader === 'none' ? null : opts.leader;
+                    if (limb.playerAgent && typeof limb.playerAgent.setLeader === 'function') {
+                        limb.playerAgent.setLeader(opts.leader === 'none' ? null : opts.leader);
+                    }
+                }
+                
+                limb.markDirty();
+                limb.saveSovereignState();
+                return { ok: true, value: { output: `Volition mutations applied successfully.` } };
+            }
+        });
+
+        this.registry.register({
+            name: 'cache_forensics_lookup',
+            description: 'Execute a cross-reference lookup or audit against the Major 3 cache.',
+            humanDescription: 'Look up an item, NPC, or interface in the game cache.',
+            jargonDescription: 'Delegates lookup calls (crossReferenceItem, crossReferenceNpc) to the CacheForensicsLimb.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: { method: 'string', target: 'any' },
+            execute: async (args) => {
+                const limb = this.cacheForensics;
+                if (!limb) throw new Error("CacheForensicsLimb not mounted");
+                const opts = args as { method: string, target: any };
+                if (typeof (limb as any)[opts.method] === 'function') {
+                    const res = await (limb as any)[opts.method](opts.target);
+                    return res.ok ? { ok: true, value: { output: `Cache Forensics successful.`, data: res.value } } : res;
+                }
+                return { ok: false, error: new Error(`Method ${opts.method} not found on CacheForensicsLimb`) };
+            }
+        });
+
+        this.registry.register({
+            name: 'spatial_sovereignty_init',
+            description: 'Initialize the Spatial and Mechanical Sovereignty Limbs.',
+            humanDescription: 'Boot up the spatial logic and physics engine.',
+            jargonDescription: 'Triggers the initialize() method on Spatial and Mechanical sovereignty limbs.',
+            idealYaoState: YaoState.OldYang,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: { loadGrounding: 'any?', loadLogic: 'string?' },
+            execute: async (args) => {
+                await this.spatialSovereignty.initialize();
+                await this.mechanicalSovereignty.initialize();
+                
+                const opts = args as { loadGrounding?: {x: number, z: number}, loadLogic?: string };
+                if (opts.loadGrounding) {
+                    await this.spatialSovereignty.loadUnifiedGrounding(opts.loadGrounding.x, opts.loadGrounding.z);
+                }
+                if (opts.loadLogic) {
+                    await this.mechanicalSovereignty.loadLogic(opts.loadLogic);
+                }
+
+                return { ok: true, value: { output: `Spatial and Mechanical Limbs initialized.` } };
+            }
+        });
+
+        this.registry.register({
+            name: 'entity_limb_memory',
+            description: 'Inject stimulus memory into an EntityLimb and recalculate vibe mutations.',
+            humanDescription: 'Give a memory to an entity and update its personality/vibe.',
+            jargonDescription: 'Calls addMemory and updateVibeFromMemory on EntityLimb.',
+            idealYaoState: YaoState.YoungYang,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: { id: 'string', memory: 'any' },
+            execute: async (args) => {
+                const limb = this.entityLimb;
+                if (!limb) throw new Error("EntityLimb not mounted");
+                const opts = args as { id: string, memory: any };
+                const res = await limb.addMemory(opts.id, opts.memory);
+                if (res.ok) {
+                    const vibeRes = await limb.updateVibeFromMemory(opts.id, opts.memory);
+                    return { ok: true, value: { output: `Memory injected. Vibe mutation status: ${vibeRes.ok ? 'SUCCESS' : 'FAILED'}`, data: vibeRes } };
+                }
+                return res;
+            }
+        });
+
+        this.registry.register({
+            name: 'entity_limb_action',
+            description: 'Trigger the Behavioral Decision Engine to produce an action bias.',
+            humanDescription: 'Decide and execute an action for an entity.',
+            jargonDescription: 'Calls decideAction and executeAction on EntityLimb.',
+            idealYaoState: YaoState.OldYang,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: { id: 'string' },
+            execute: async (args) => {
+                const limb = this.entityLimb;
+                if (!limb) throw new Error("EntityLimb not mounted");
+                const opts = args as { id: string };
+                const decisionRes = await limb.decideAction(opts.id);
+                if (decisionRes.ok) {
+                    await limb.executeAction(opts.id, decisionRes.value.action);
+                    return { ok: true, value: { output: `Action decided and executed.`, data: decisionRes.value } };
+                }
+                return decisionRes;
+            }
+        });
+
+        this.registry.register({
+            name: 'entity_limb_identity',
+            description: 'Update the identity attributes of a player entity.',
+            humanDescription: 'Update a player\'s name, model, or stats.',
+            jargonDescription: 'Calls updatePlayerIdentity on EntityLimb.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: { id: 'string', update: 'any' },
+            execute: async (args) => {
+                const limb = this.entityLimb;
+                if (!limb) throw new Error("EntityLimb not mounted");
+                const opts = args as { id: string, update: any };
+                await limb.updatePlayerIdentity(opts.id, opts.update);
+                return { ok: true, value: { output: `Player identity updated.` } };
+            }
+        });
+
+        this.registry.register({
+            name: 'hud_forensics_scan',
+            description: 'Decompile or search an interface via HUDForensicsLimb.',
+            humanDescription: 'Scan a game interface to see how it works.',
+            jargonDescription: 'Proxies getInterface or searchInterfaces to HUDForensicsLimb.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: { method: 'string', target: 'any?' },
+            execute: async (args) => {
+                const { HUDForensicsLimb } = await import('../limbs/spatial/HUDForensicsLimb.js');
+                const limb = new HUDForensicsLimb();
+                const opts = args as { method: 'getInterface' | 'searchInterfaces' | 'scanAtlas' | 'extractAllInterfaces' | 'healthCheck', target?: any };
+                
+                if (opts.method === 'healthCheck') {
+                    return { ok: true, value: { output: 'health checked', data: limb.healthCheck() } };
+                }
+
+                if (opts.target !== undefined) {
+                    const res = await (limb as any)[opts.method](opts.target);
+                    // if res is already a Result, return it, otherwise wrap it
+                    if (res && res.ok !== undefined) {
+                         return res.ok ? { ok: true, value: { output: `HUD Forensic scan complete.`, data: res.value } } : res;
+                    } else {
+                         return { ok: true, value: { output: `HUD Forensic scan complete.`, data: res } };
+                    }
+                } else {
+                    const res = await (limb as any)[opts.method]();
+                    return { ok: true, value: { output: `HUD Forensic scan complete.`, data: res } };
+                }
+            }
+        });
+
+        this.registry.register({
+            name: 'hud_forensics_batch',
+            description: 'Execute a batch of HUDForensics requests under a single domain lock.',
+            humanDescription: 'Scan multiple game interfaces at once.',
+            jargonDescription: 'Batch executes HUDForensics scans to optimize DomainLocker and Hexagram overhead.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: { requests: 'array' },
+            execute: async (args) => {
+                const { HUDForensicsLimb } = await import('../limbs/spatial/HUDForensicsLimb.js');
+                const limb = new HUDForensicsLimb();
+                const opts = args as { requests: Array<{method: 'getInterface' | 'searchInterfaces', target: any}> };
+                const results: any[] = [];
+                for (const req of opts.requests) {
+                    const res = await (limb as any)[req.method](req.target);
+                    results.push(res);
+                }
+                return { ok: true, value: { output: `Executed ${opts.requests.length} HUD forensic scans.`, data: results } };
+            }
+        });
+
+        // ─── HEX 20 (Guan) / HEX 23 (Po) / HEX 27 (Yi) ─── OBSERVE DOMAIN ───
         this.registry.register({
             name: 'consult_shadow',
             description: 'Consults external architectural maps and codebase fragments from the global code_tracker substrate.',
@@ -1060,11 +1274,11 @@ export class OrchestrateEngine {
                 const x = args.x as number;
                 const y = args.y as number;
                 const plane = (args.plane as number) || 0;
-                
+
                 // POG2 Autonomous Audit: Use auditTile for machine-consumable spatial data
                 const audit = this.spatialSovereignty.auditTile(plane, x, y);
                 const mask = this.spatialSovereignty.getLegacyMask(plane, x, y);
-                
+
                 let terrain = "walkable";
                 if (audit.collisionType === 'unmapped') terrain = "unmapped";
                 else if (audit.collisionType === 'directional') {
@@ -1778,20 +1992,20 @@ export class OrchestrateEngine {
 
         this.registry.register({
             name: 'rsmv_extract',
-            description: 'Extract biological constraints and kinetic profiles from RSMV model data.',
+            description: 'Extract biological constraints and kinetic profiles from rsmv model data.',
             humanDescription: 'Parse a RuneScape model file to understand its anatomy and movement capabilities.',
-            jargonDescription: 'Leverages the RSMVExtractor substrate to derive SpeciesAnatomy and KineticProfile from target 3D model JSON definitions.',
+            jargonDescription: 'Leverages the rsmvExtractor substrate to derive SpeciesAnatomy and KineticProfile from target 3D model JSON definitions.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
             category: 'sensory',
             parameters: { modelData: 'object' },
             execute: async (args) => {
                 const { modelData } = args as { modelData: any };
-                const anatomy = RSMVExtractor.extractAnatomy(modelData);
-                const kinetic = RSMVExtractor.getKineticProfile(modelData);
+                const anatomy = rsmvExtractor.extractAnatomy(modelData);
+                const kinetic = rsmvExtractor.getKineticProfile(modelData);
 
                 // Developmental Memory: Ingest into VectorDB
-                const packet = RSMVExtractor.toKnowledgePacket(
+                const packet = rsmvExtractor.toKnowledgePacket(
                     { id: modelData.name, name: modelData.name, species: anatomy.species },
                     anatomy,
                     kinetic
@@ -1892,7 +2106,7 @@ export class OrchestrateEngine {
             parameters: { entityId: 'number', type: 'string' },
             execute: async (args) => {
                 const { entityId, type } = args as { entityId: number; type: string };
-                const res = await this.cacheLearning.extract(getRSMVCachePath(), entityId, type as any);
+                const res = await this.cacheLearning.extract(getrsmvCachePath(), entityId, type as any);
                 if (!res.ok) return res;
                 return ok({
                     output: `Successfully extracted ${type} ${entityId} (${res.value.raw.length} bytes).`,
@@ -1903,16 +2117,16 @@ export class OrchestrateEngine {
 
         this.registry.register({
             name: 'rsmv_view',
-            description: 'Open a 3D model in the RSMV inspector for visual verification.',
+            description: 'Open a 3D model in the rsmv inspector for visual verification.',
             humanDescription: 'Open a specific model in the 3D viewer to take a look at it.',
-            jargonDescription: 'Spawns an RSMV instructor process to render a specific model substrate for visual verification.',
+            jargonDescription: 'Spawns an rsmv instructor process to render a specific model substrate for visual verification.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.VISION,
             category: 'sensory',
             parameters: { modelId: 'string', colors: 'object?', materials: 'object?' },
             execute: async (args) => {
                 const { modelId, colors, materials } = args as { modelId: string; colors?: any; materials?: any };
-                const res = await this.rsmvController.viewModel(modelId, { replaceColors: colors, replaceMaterials: materials });
+                const res = await this.RSMVController.viewModel(modelId, { replaceColors: colors, replaceMaterials: materials });
                 if (!res.ok) return res as any;
                 return ok({ output: res.value.details || `Model ${modelId} opened in inspector.`, data: res.value });
             }
@@ -1929,7 +2143,7 @@ export class OrchestrateEngine {
             parameters: { targetPath: 'string', intent: 'string?', threshold: 'number?' },
             execute: async (args) => {
                 const { targetPath, intent = 'ui_analysis', threshold = 8 } = args as { targetPath: string; intent?: string; threshold?: number };
-                
+
                 const prompt = `
 VISHUAL AUDIT PROTOCOL:
 Analyze the target visual substrate at: ${targetPath}
@@ -1982,7 +2196,7 @@ OUTPUT FORMAT:
             parameters: { modelId: 'string', outputPath: 'string', colors: 'object?', materials: 'object?' },
             execute: async (args) => {
                 const { modelId, outputPath, colors, materials } = args as { modelId: string; outputPath: string; colors?: any; materials?: any };
-                const res = await this.rsmvController.exportGltf(modelId, outputPath, { replaceColors: colors, replaceMaterials: materials });
+                const res = await this.RSMVController.exportGltf(modelId, outputPath, { replaceColors: colors, replaceMaterials: materials });
                 if (!res.ok) return res as any;
                 return ok({ output: res.value.details || `Exported model ${modelId} to ${outputPath}.`, data: res.value });
             }
@@ -2805,18 +3019,18 @@ OUTPUT FORMAT:
 
         this.registry.register({
             name: 'extract_rsmv',
-            description: 'Extract biological and kinetic metadata from RSMV model JSON.',
+            description: 'Extract biological and kinetic metadata from rsmv model JSON.',
             humanDescription: 'Convert 3D model data into AI-readable anatomy and movement information.',
-            jargonDescription: 'Static extraction of SpeciesAnatomy and kinetic profiles from RSMV model substrates via RSMVExtractor.',
+            jargonDescription: 'Static extraction of SpeciesAnatomy and kinetic profiles from rsmv model substrates via rsmvExtractor.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.OBSERVE,
             category: 'core',
             parameters: { json: 'object' },
             execute: async (args): Promise<Result<EngineOutput>> => {
-                const res = RSMVExtractor.extractAnatomy((args as any).json);
-                const kinetic = RSMVExtractor.getKineticProfile((args as any).json);
+                const res = rsmvExtractor.extractAnatomy((args as any).json);
+                const kinetic = rsmvExtractor.getKineticProfile((args as any).json);
                 return ok({
-                    output: `RSMV Extraction Complete: Species ${res.commonName}, Kinetic Profile ${kinetic.toUpperCase()}.`,
+                    output: `rsmv Extraction Complete: Species ${res.commonName}, Kinetic Profile ${kinetic.toUpperCase()}.`,
                     data: { res, kinetic }
                 });
             }
@@ -3268,6 +3482,48 @@ Mapping tool selection over to Y...
         // For OldYang, we enforce following adversarial audit later in executePlan.
     }
 
+    /**
+     * executePlayAction
+     * Bridges POG2 CLI-driven play functionality through HexagramDefinitions,
+     * enforcing strategy rules and behavioral ceilings before delegating to GameplaySovereigntyLimb.
+     */
+    public async executePlayAction(action: string): Promise<Result<string>> {
+        await this.initialize();
+        
+        const contract = this.router.getHexagram().getContract();
+        const interpretation = this.router.getHexagram().getInterpretation();
+        const actionLower = action.toLowerCase();
+        
+        this.renderer.info(`[OrchestrateEngine] Intercepting play action: "${action}" under Hexagram ${interpretation.name}`);
+
+        // Phase-aware gating via contract
+        if (contract.behavioralBias.metabolicCeiling <= 50) {
+            this.renderer.warn(`⚠️ [Metabolic Restraint] Warning: Metabolic ceiling is throttled at ${contract.behavioralBias.metabolicCeiling}%. Action may degrade.`);
+        }
+
+        if (actionLower.includes('emergency') && !contract.gates.allowActiveRecovery) {
+            return { ok: false, error: new Error(`[Hexagram Blocked] Emergency action blocked under active contract (${interpretation.name}).`) };
+        }
+        
+        if (actionLower.includes('destroy') && !contract.gates.allowDestructiveCommands) {
+            return { ok: false, error: new Error(`[Hexagram Blocked] Destructive command blocked under active contract (${interpretation.name}).`) };
+        }
+
+        // Apply HexagramDefinitions strategy logic
+        // Using arbitrary matching for "overwhelmed" or "cautious" from interpretation.emotion 
+        // as numbers or enums based on how EmotionalState is defined
+        if (interpretation.emotion === 'AGITATED' as any || interpretation.emotion === 'MELANCHOLY' as any) { 
+            if (actionLower.includes('attack') || actionLower.includes('rush')) {
+                this.renderer.warn(`⚠️ [Cognitive Block] Aggressive action "${action}" throttled by current emotional state: ${interpretation.emotion}`);
+            }
+        }
+
+        // Delegate to GameplaySovereigntyLimb
+        this.gameplay.engagePlayerHarness();
+        const actionRes = await this.gameplay.pushAction(action);
+        return { ok: true, value: actionRes };
+    }
+
     async run(task: string): Promise<Result<EngineOutput>> {
         await this.initialize();
         // Phase 15: Lock domain for this task
@@ -3542,16 +3798,16 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
         const toolDomain = tool.domain;
 
         if (toolDomain === SovereignDomain.FORGE && plan.tool.includes('pedagogy') && !permissions.allowPedagogy) {
-             this.renderer.error(`[ISA Violation] Pedagogy blocked by current metabolic state.`);
-             return { ok: false, error: new Error(`Cognitive ISA Violation: Pedagogy is forbidden.`) };
+            this.renderer.error(`[ISA Violation] Pedagogy blocked by current metabolic state.`);
+            return { ok: false, error: new Error(`Cognitive ISA Violation: Pedagogy is forbidden.`) };
         }
         if (plan.tool.includes('consolidate') && !permissions.allowMemoryConsolidation) {
-             this.renderer.error(`[ISA Violation] Consolidation blocked by current metabolic state.`);
-             return { ok: false, error: new Error(`Cognitive ISA Violation: Memory Consolidation is forbidden.`) };
+            this.renderer.error(`[ISA Violation] Consolidation blocked by current metabolic state.`);
+            return { ok: false, error: new Error(`Cognitive ISA Violation: Memory Consolidation is forbidden.`) };
         }
         if (toolDomain === SovereignDomain.RESEARCH && (plan.tool.includes('gutenberg') || plan.tool.includes('library')) && !permissions.allowSubstrateIngestion) {
-             this.renderer.error(`[ISA Violation] Substrate ingestion blocked by current metabolic state.`);
-             return { ok: false, error: new Error(`Cognitive ISA Violation: Substrate Ingestion is forbidden.`) };
+            this.renderer.error(`[ISA Violation] Substrate ingestion blocked by current metabolic state.`);
+            return { ok: false, error: new Error(`Cognitive ISA Violation: Substrate Ingestion is forbidden.`) };
         }
 
         // Phase 260: Just-in-Time (JIT) Limb Activation

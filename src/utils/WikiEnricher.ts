@@ -1,5 +1,7 @@
 import { createLogger } from './logger.js';
 import type { Result } from '../core/models.js';
+import { join } from 'path';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
 
 const logger = createLogger('WikiEnricher');
 
@@ -11,6 +13,15 @@ export interface WikiData {
     url: string;
     imageUrl?: string;
     variables?: Record<string, string>;
+}
+
+export interface WikiRotation {
+    section: string;
+    label: string;
+    abilities: {
+        name: string;
+        predicate?: string;
+    }[];
 }
 
 /**
@@ -246,5 +257,154 @@ export class WikiEnricher {
             logger.error({ title, error: (e as Error).message }, err);
             throw new Error(err);
         }
+    }
+
+    /**
+     * fetchRotations(bossName) - Extracts PvME-style rotations from a boss's strategy page.
+     */
+    public static async fetchRotations(bossName: string): Promise<WikiRotation[]> {
+        const title = bossName.includes('/') ? bossName : `${bossName}/Strategies`;
+        logger.info({ title }, 'Fetching rotations from wiki');
+
+        const params = new URLSearchParams({
+            action: 'parse',
+            format: 'json',
+            page: title,
+            prop: 'wikitext',
+            origin: '*'
+        });
+
+        try {
+            const response = await fetch(`${this.API_URL}?${params.toString()}`);
+            const data = await response.json() as any;
+            const wikitext = data.parse?.wikitext?.['*'] || '';
+
+            const rotations: WikiRotation[] = [];
+            
+            // Regex to find {{Ability rotation|...}} or {{ability rotation|...}}
+            // Handles multiple lines and nested templates (basic)
+            const templateRegex = /\{\{[Aa]bility\s+rotation\s*\|([^}]+)\}\}/g;
+            let match;
+
+            // Simple context tracking: look for preceding headers or table headers
+            const lines = wikitext.split('\n');
+            let currentSection = 'General';
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                // Update section on headers
+                if (line.startsWith('==')) {
+                    currentSection = line.replace(/=/g, '').trim();
+                }
+
+                while ((match = templateRegex.exec(line)) !== null) {
+                    const content = match[1];
+                    const abilities = content.split('|')
+                        .map(a => a.trim())
+                        .filter(a => a && !a.includes('=')); // Filter out named params like 'sep'
+
+                    // Try to find a label (e.g. if inside a table)
+                    let label = 'Rotation';
+                    if (i > 0 && lines[i-1].startsWith('!')) {
+                        label = lines[i-1].replace('!', '').trim();
+                    }
+
+                    rotations.push({
+                        section: currentSection,
+                        label,
+                        abilities: abilities.map(a => this.parseAbilityEntry(a))
+                    });
+                }
+            }
+
+            return rotations;
+        } catch (e) {
+            logger.error({ bossName, error: (e as Error).message }, 'Failed to fetch rotations');
+            return [];
+        }
+    }
+
+    /**
+     * fetchBestiaryData(bossName) - Fetches stats from the Wiki's Bestiary/Infobox.
+     */
+    public static async fetchBestiaryData(bossName: string): Promise<Record<string, string>> {
+        // Reuse Infobox parsing logic
+        return this.fetchInfoboxData(bossName);
+    }
+
+    /**
+     * sanitizeAbilityName(name) - Cleans wiki-specific markup from ability names.
+     */
+    public static sanitizeAbilityName(name: string): string {
+        // 1. Prioritize {{Ability link|...}}
+        const linkMatch = name.match(/\{\{Ability link\|([^}]+)\}\}/i);
+        if (linkMatch) return linkMatch[1].split('|')[0].trim();
+
+        // 2. Prioritize [[...]]
+        const wikiMatch = name.match(/\[\[([^\]|]+)\|?([^\]]*)\]\]/);
+        if (wikiMatch) return wikiMatch[1].trim();
+
+        // 3. Fallback: Clean string
+        return name
+            .replace(/^@/, '')                           // Remove @ prefix
+            .replace(/\[\[File:[^\]]+\]\]/g, '')          // Remove file links
+            .replace(/&nbsp;/g, ' ')
+            .split('|')[0]                                // Take first part of split
+            .trim();
+    }
+
+    /**
+     * parseAbilityEntry(entry) - Splits an entry into name and predicate.
+     */
+    public static parseAbilityEntry(entry: string): { name: string, predicate?: string } {
+        let predicate: string | undefined;
+
+        // Extract (if ...) patterns as predicates
+        const predMatch = entry.match(/\((if [^)]+)\)/i);
+        let rawName = entry;
+        if (predMatch) {
+            predicate = predMatch[1].trim();
+            rawName = entry.replace(predMatch[0], '').trim();
+        }
+
+        return {
+            name: this.sanitizeAbilityName(rawName),
+            predicate
+        };
+    }
+
+    /**
+     * downloadAsset(name, outDir) - Downloads an icon/image for a given asset.
+     */
+    public static async downloadAsset(name: string, outDir: string): Promise<string | null> {
+        const sanitized = this.sanitizeAbilityName(name);
+        if (!sanitized) return null;
+
+        const filename = `${sanitized.replace(/\s+/g, '_')}.png`;
+        const localPath = join(outDir, filename.toLowerCase().replace(/_/g, '-'));
+
+        // Skip if already exists
+        if (existsSync(localPath)) return localPath;
+
+        const imageUrl = await this.fetchImageUrl(sanitized);
+        if (!imageUrl) {
+            // Try with (ability) suffix
+            const abilityUrl = await this.fetchImageUrl(`${sanitized} (ability)`);
+            if (!abilityUrl) return null;
+            return this.saveUrl(abilityUrl, localPath);
+        }
+
+        return this.saveUrl(imageUrl, localPath);
+    }
+
+    private static async saveUrl(url: string, dest: string): Promise<string> {
+        const res = await fetch(url);
+        const buffer = Buffer.from(await res.arrayBuffer());
+        if (!existsSync(join(dest, '..'))) {
+            mkdirSync(join(dest, '..'), { recursive: true });
+        }
+        writeFileSync(dest, buffer);
+        return dest;
     }
 }

@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-import { getSovereignRoot, getRSMVCachePath, getCachePedagogyPath, getRSMVSubstratePath } from '../../utils/SovereignPathResolver.js';
+import { getSovereignRoot, getrsmvCachePath, getCachePedagogyPath, getrsmvSubstratePath, getrsmvLiveCachePath, getrsmvBetaCachePath } from '../../utils/SovereignPathResolver.js';
 import { rsmvBridge } from '../../utils/RSMVBridge.js'; // Assuming rsmvBridge has a .getEnum(id: number) method
 import { WorldGroundingLimb } from '../world_grounding/WorldGroundingLimb.js';
 import * as fs from 'fs';
@@ -107,12 +107,15 @@ interface EquipmentBySlotData {
  */
 export class CacheForensicsLimb {
     private static instance: CacheForensicsLimb | undefined;
-    private readonly cachePath: string = getRSMVCachePath();
     private readonly rootDir: string = getCachePedagogyPath(); // D:\sovereign\cache_pedagogy\json_dumps
+    private readonly liveCachePath: string = getrsmvLiveCachePath();
+    private readonly betaCachePath: string | null = getrsmvBetaCachePath();
 
     // Volatility tracking
-    private lastCacheStat: number = 0;
-    private readonly mainCacheFile: string;
+    private lastLiveCacheStat: number = 0;
+    private lastBetaCacheStat: number = 0;
+    private readonly liveMainFile: string;
+    private readonly betaMainFile: string | null = null;
 
     // Cached JSON files
     private equipmentBySlot: EquipmentBySlotData | null = null;
@@ -163,20 +166,12 @@ export class CacheForensicsLimb {
             throw new Error('Singleton violation: use CacheForensicsLimb.getInstance()');
         }
 
-        // Track the main cache file for volatility checks (Dynamically find Major 255 or the largest bundle)
-        const legacyPath = path.join(this.cachePath, 'main_file_cache.dat2');
-        const rootIndexPath = path.join(this.cachePath, 'js5-index.jcache');
+        // 1. Resolve Live Main File
+        this.liveMainFile = this.resolveMainCacheFile(this.liveCachePath);
 
-        if (fs.existsSync(rootIndexPath)) {
-            this.mainCacheFile = rootIndexPath;
-        } else if (fs.existsSync(legacyPath)) {
-            this.mainCacheFile = legacyPath;
-        } else {
-            // Heuristic Fallback: Find any high-major jcache bundle (likely NXT God Bundle)
-            const files = fs.readdirSync(this.cachePath).filter(f => f.endsWith('.jcache'));
-            const bundles = files.map(f => ({ name: f, major: parseInt(f.match(/\d+/)?.[0] || '0', 10) }))
-                               .sort((a, b) => b.major - a.major);
-            this.mainCacheFile = bundles.length > 0 ? path.join(this.cachePath, bundles[0].name) : 'OFFLINE';
+        // 2. Resolve Beta Main File
+        if (this.betaCachePath) {
+            this.betaMainFile = this.resolveMainCacheFile(this.betaCachePath);
         }
 
         // Initialize grounding resolver
@@ -184,6 +179,19 @@ export class CacheForensicsLimb {
 
         // Lazy load basic catalogs
         this.loadCatalogData();
+    }
+
+    private resolveMainCacheFile(cachePath: string): string {
+        const legacyPath = path.join(cachePath, 'main_file_cache.dat2');
+        const rootIndexPath = path.join(cachePath, 'js5-index.jcache');
+
+        if (fs.existsSync(rootIndexPath)) return rootIndexPath;
+        if (fs.existsSync(legacyPath)) return legacyPath;
+
+        const files = fs.readdirSync(cachePath).filter(f => f.endsWith('.jcache'));
+        const bundles = files.map(f => ({ name: f, major: parseInt(f.match(/\d+/)?.[0] || '0', 10) }))
+            .sort((a, b) => b.major - a.major);
+        return bundles.length > 0 ? path.join(cachePath, bundles[0].name) : 'OFFLINE';
     }
 
     /**
@@ -226,7 +234,7 @@ export class CacheForensicsLimb {
             // Statuses like 'ONLINE (Authoritative)' or 'ONLINE' against the live path confirm authority.
             return health.ok && health.value.online;
         } catch (error) {
-            logger.error({ error }, 'Failed to check RSMVBridge authority.');
+            logger.error({ error }, 'Failed to check rsmvBridge authority.');
             return false;
         }
     }
@@ -255,27 +263,80 @@ export class CacheForensicsLimb {
     }
 
     /**
-     * Checks the physical mtime of the cache to detect Jagex updates.
+     * Checks the physical mtime of both live and beta caches.
      * @returns A Promise resolving to a Result containing the VolatilityStatus or an Error.
      */
     public async checkCacheVolatility(): Promise<Result<VolatilityStatus, Error>> {
         try {
-            if (!fs.existsSync(this.mainCacheFile)) {
-                return err(new Error(`Cache file not found: ${this.mainCacheFile}`));
-            }
-            const stat = await fsPromise.stat(this.mainCacheFile);
-            const currentMTime = stat.mtimeMs;
+            const liveStat = await this.getStat(this.liveMainFile);
+            const liveChanged = this.lastLiveCacheStat > 0 && liveStat.mtimeMs > this.lastLiveCacheStat;
+            this.lastLiveCacheStat = liveStat.mtimeMs;
 
-            const hasChanged = this.lastCacheStat > 0 && currentMTime > this.lastCacheStat;
-            this.lastCacheStat = currentMTime;
+            let betaChanged = false;
+            let lastBetaMod = new Date(0);
+            if (this.betaMainFile && this.betaMainFile !== 'OFFLINE') {
+                const betaStat = await this.getStat(this.betaMainFile);
+                betaChanged = this.lastBetaCacheStat > 0 && betaStat.mtimeMs > this.lastBetaCacheStat;
+                this.lastBetaCacheStat = betaStat.mtimeMs;
+                lastBetaMod = betaStat.mtime;
+            }
+
+            if (liveChanged || betaChanged) {
+                logger.info({ liveChanged, betaChanged }, 'Cache update detected.');
+                if (betaChanged) {
+                    await this.monitorSkillRegistry();
+                }
+            }
 
             return ok({
-                lastModified: stat.mtime,
-                hasChanged
+                lastModified: liveStat.mtime,
+                hasChanged: liveChanged || betaChanged
             });
         } catch (error) {
-            logger.error({ error }, `Cache volatility probe failed at ${this.mainCacheFile}`);
+            logger.error({ error }, `Cache volatility probe failed`);
             return err(error as Error);
+        }
+    }
+
+    private async getStat(filePath: string): Promise<fs.Stats> {
+        if (!fs.existsSync(filePath)) throw new Error(`File not found: ${filePath}`);
+        return await fsPromise.stat(filePath);
+    }
+
+    /**
+     * monitorSkillRegistry - Automated sentinel for the 30th skill.
+     * Checks Enum 1518 (Skills) and Interface 1314 (Skills Menu) for expansion.
+     */
+    public async monitorSkillRegistry(): Promise<void> {
+        logger.info('Running skill registry forensic sentinel...');
+        try {
+            // 1. Check Enum 1518 (Skill IDs)
+            const skillEnumRes = await rsmvBridge.getEnum(1518);
+            if (skillEnumRes.ok && skillEnumRes.value?.raw?.values) {
+                const skillCount = Object.keys(skillEnumRes.value.raw.values).length;
+                if (skillCount > 29) {
+                    logger.warn({ skillCount }, '!!! 30TH SKILL DETECTED IN ENUM 1518 !!!');
+                }
+            }
+
+            // 2. Check Interface 1314 (Skills Interface)
+            const skillUiRes = await rsmvBridge.getInterface(1314);
+            if (skillUiRes.ok && skillUiRes.value?.raw?.components) {
+                const componentCount = skillUiRes.value.raw.components.length;
+                // Necromancy ends at 162-163. If > 164, a new slot was likely added.
+                if (componentCount > 164) {
+                    logger.warn({ componentCount }, '!!! NEW SKILL COMPONENTS DETECTED IN INTERFACE 1314 !!!');
+                }
+            }
+
+            // 3. Check DBRows (Archive 41) for XP table growth in Table 1 (Skill XP Curves)
+            const dbRowsRes = await rsmvBridge.getDBRows(1);
+            if (dbRowsRes.ok && dbRowsRes.value) {
+                const rows = dbRowsRes.value.count;
+                logger.info({ skillXpRows: rows }, 'DBRows (Table 1: Skill XP) audit completed.');
+            }
+        } catch (e) {
+            logger.error({ error: (e as Error).message }, 'Skill registry sentinel failed.');
         }
     }
 
@@ -286,7 +347,7 @@ export class CacheForensicsLimb {
         const volatility = await this.checkCacheVolatility();
         const authoritative = await this.isAuthoritative();
         const online = authoritative && volatility.ok;
-        
+
         return {
             online,
             details: `Forensics: ${online ? 'ONLINE' : 'DEGRADED'} (Auth: ${authoritative}, Volatility: ${volatility.ok ? 'OK' : 'ERROR'})`
@@ -397,10 +458,10 @@ export class CacheForensicsLimb {
      */
     public queryTaxonomy(params: { layer: 'npcs' | 'items' | 'objects' | 'quests', term: string, queryType: 'exact' | 'partial' | 'regex' }): Result<any[]> {
         this.loadCatalogData(); // Ensure base catalogs are present
-        
+
         let data: any[] = [];
         switch (params.layer) {
-            case 'npcs': 
+            case 'npcs':
                 if (!this.npcs) {
                     const npcPath = path.join(this.rootDir, 'npcs.json');
                     if (fs.existsSync(npcPath)) this.npcs = JSON.parse(fs.readFileSync(npcPath, 'utf8'));

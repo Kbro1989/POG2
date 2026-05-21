@@ -39,8 +39,8 @@ export class SovereignGrounding {
     private synthesis: Record<number, { npcs: number[], objects: number[] }> = {};
 
     constructor(
-        varbits: Record<number, VarbitDefinition> = {}, 
-        mapzones: Record<number, MapZoneDefinition> = {}, 
+        varbits: Record<number, VarbitDefinition> = {},
+        mapzones: Record<number, MapZoneDefinition> = {},
         synthesis: Record<number, { npcs: number[], objects: number[] }> = {}
     ) {
         this.varbits = varbits;
@@ -70,7 +70,7 @@ export class SovereignGrounding {
     public getRegionMetadata(x: number, z: number, plane: number = 0) {
         const zone = this.findMapZone(x, z, plane);
         if (!zone) return { id: -1, name: "Unknown Territory", archetype: "Wilderness" };
-        
+
         return {
             id: zone.center,
             name: zone.name,
@@ -104,7 +104,7 @@ export class SovereignGrounding {
      */
     public static async loadDefault(): Promise<SovereignGrounding> {
         const pedagogyDir = getPedagogyPath();
-        
+
         const load = (file: string) => {
             const p = join(pedagogyDir, file);
             if (!existsSync(p)) {

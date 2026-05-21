@@ -1,0 +1,74 @@
+{
+  "2830": {
+    "semanticName": "unknown",
+    "width": 6,
+    "maxValue": 63,
+    "varid": 524476,
+    "bits": [
+      18,
+      23
+    ],
+    "scriptId": 10896,
+    "enumArg": -1,
+    "componentId": 128,
+    "contextLabels": []
+  },
+  "17062": {
+    "semanticName": "unknown",
+    "width": 6,
+    "maxValue": 63,
+    "varid": 3387,
+    "bits": [
+      19,
+      24
+    ],
+    "scriptId": 10702,
+    "enumArg": "No",
+    "componentId": 193,
+    "contextLabels": []
+  },
+  "17063": {
+    "semanticName": "unknown",
+    "width": 6,
+    "maxValue": 63,
+    "varid": 3387,
+    "bits": [
+      25,
+      30
+    ],
+    "scriptId": 10703,
+    "enumArg": 17063,
+    "componentId": 194,
+    "contextLabels": []
+  },
+  "28557": {
+    "semanticName": "gameMode",
+    "width": 3,
+    "maxValue": 7,
+    "varid": 5745,
+    "bits": [
+      9,
+      11
+    ],
+    "scriptId": 10896,
+    "enumArg": 93061178,
+    "componentId": 57,
+    "contextLabels": [
+      "Select Game Mode"
+    ]
+  },
+  "28749": {
+    "semanticName": "unknown",
+    "width": 1,
+    "maxValue": 1,
+    "varid": 5783,
+    "bits": [
+      19,
+      19
+    ],
+    "scriptId": 13914,
+    "enumArg": -1,
+    "componentId": 150,
+    "contextLabels": []
+  }
+}

@@ -11,9 +11,9 @@
 
 import 'dotenv/config';
 import { createRequire } from 'module';
-import { GameCacheLoader } from './rsmv/cache/sqlite.js';
-import { cacheMajors, cacheConfigPages } from './rsmv/constants.js';
-import { parse } from './rsmv/opdecoder.js';
+import { GameCacheLoader } from 'rsmv/cache/sqlite.js';
+import { cacheMajors, cacheConfigPages } from 'rsmv/constants.js';
+import { parse } from 'rsmv/opdecoder.js';
 const require = createRequire(import.meta.url);
 if (typeof (globalThis as any).__non_webpack_require__ === 'undefined') {
     (globalThis as any).__non_webpack_require__ = require;
@@ -61,9 +61,10 @@ import { CodeEngine } from './engines/CodeEngine.js';
 import { EmbedEngine } from './engines/EmbedEngine.js';
 import { CompletionEngine } from './engines/CompletionEngine.js';
 import { OrchestrateEngine } from './engines/OrchestrateEngine.js';
+import { CLIRouter } from './cli/CLIRouter.js';
 import { MemoryConsolidationEngine } from './engines/MemoryConsolidationEngine.js';
 import { VectorDB } from './utils/VectorDB.js';
-import { RSMVExtractor } from './utils/RSMVExtractor.js';
+import { rsmvExtractor } from './utils/RSMVExtractor.js';
 import { SovereignEye } from './utils/SovereignEye.js';
 import { SovereignConfig, loadConfig } from './config/SovereignConfig.js';
 import { Renderer } from './ui/Renderer.js';
@@ -83,7 +84,7 @@ import { OfficialApiLimb } from './limbs/spatial/OfficialApiLimb.js';
 import { SpatialMetricEngine } from './engines/SpatialMetricEngine.js';
 import { WikiEnricher } from './utils/WikiEnricher.js';
 import { MinigameForensicsLimb } from './limbs/spatial/MinigameForensicsLimb.js';
-import { getSovereignRoot, getRSMVCachePath, getCachePedagogyPath, getPipelineRootPath, getGodHeadRoot, getGutenbergPath, setProjectRoot as setSovereignRoot } from './utils/SovereignPathResolver.js';
+import { getSovereignRoot, getrsmvCachePath, getCachePedagogyPath, getPipelineRootPath, getGodHeadRoot, getGutenbergPath, setProjectRoot as setSovereignRoot } from './utils/SovereignPathResolver.js';
 import { CacheForensicsLimb } from './limbs/spatial/CacheForensicsLimb.js';
 import { SystemTaxonomyLimb } from './limbs/spatial/SystemTaxonomyLimb.js';
 import { MaterialLimb } from './limbs/spatial/MaterialLimb.js';
@@ -348,6 +349,117 @@ export async function main(): Promise<void> {
             const result = await engine.run(intent);
             handleResult(result, renderer, state);
         });
+
+    program
+        .command('play [minigame]')
+        .description('Boot the full Sovereign Organism and/or simulate a minigame module')
+        .option('--headless', 'Run without radar visualization', false)
+        .action(async (minigame: string | undefined, opts: { headless: boolean }) => {
+            const gameplay = GameplaySovereigntyLimb.getInstance();
+            renderer.info('🕸️ POG2 Sovereign Organism: Initiating boot sequence...');
+            
+            gameplay.engagePlayerHarness();
+            let module: any = null;
+            
+            if (minigame) {
+                renderer.info(`🎮 Initializing Sovereign Play Substrate: ${minigame}...`);
+                if (minigame.toLowerCase() === 'prifddinas') module = new PrifddinasInterpreter();
+                else if (minigame.toLowerCase() === 'barrows') module = new BarrowsInterpreter();
+                else if (minigame.toLowerCase() === 'pestcontrol') module = new PestControlInterpreter();
+                else {
+                    try { module = new JsonLogicInterpreter(minigame); } catch (e) { module = null; }
+                }
+                if (!module) {
+                    renderer.error(`Unknown minigame logic '${minigame}'.`);
+                    process.exit(1);
+                }
+                await gameplay.initialize();
+                await gameplay.registerModule(module);
+            } else {
+                // Full organism boot
+                const radar = SpatialRadarLimb.getInstance();
+                const globe = new GlobeStateLimb(config);
+                await globe.connect();
+
+                const switchboard = SwitchboardLimb.getInstance();
+                switchboard.initialize();
+                await switchboard.startWithGracefulPort({ run: async () => ({ ok: true }) }, 8788);
+                gameplay.injectSwitchboard(switchboard);
+
+                renderer.success('🧠 Cognitive Substrate: Synchronized (64 Hexagrams)');
+                renderer.success('👀 Predictive Vision: Online (GhostSplat)');
+
+                const cns = CNSGodheadPulseVolley.getInstance();
+                cns.setRenderer(renderer);
+                cns.startLoop();
+
+                await gameplay.initialize();
+
+                if (!opts.headless) {
+                    const renderRadar = () => {
+                        try {
+                            const view = radar.render(gameplay.globalState, gameplay.avatar);
+                            process.stdout.write('\x1Bc'); // Clear screen
+                            process.stdout.write(view + '\n');
+                        } catch (e) {}
+                        setTimeout(renderRadar, 600);
+                    };
+                    renderRadar();
+                }
+            }
+
+            // Wire up OrchestrateEngine and HexagramManager
+            const orchestrator = new OrchestrateEngine(config, router, renderer);
+            await orchestrator.initialize({ diagnosticOnly: true });
+
+            const contract = hexagram.getContract();
+            const interpretation = hexagram.getInterpretation();
+
+            if (minigame) {
+                renderer.success(`[Play Substrate] Active at [${gameplay.avatar.coord.x}, ${gameplay.avatar.coord.y}]`);
+            }
+            renderer.log(`卦 [Hexagram] Active: ${interpretation.symbol || ''} ${interpretation.name} (${interpretation.description})`);
+            renderer.log(`   Strategy Directive: ${interpretation.strategy}`);
+            renderer.log(`   Behavioral Bias: Risk Tolerance: ${contract.behavioralBias.riskTolerance}, Temp: ${contract.behavioralBias.creativeTemperature}, Ceiling: ${contract.behavioralBias.metabolicCeiling}%`);
+
+            const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+            const promptLoop = async () => {
+                const answer = await rl.question(`> `);
+                if (answer.toLowerCase() === 'exit') { gameplay.stopClock(); rl.close(); process.exit(0); }
+                if (answer.trim() !== '') {
+                    const currentContract = hexagram.getContract();
+                    const currentInterpretation = hexagram.getInterpretation();
+
+                    // If action is "/think", run a metabolic thinking reflection
+                    if (answer.trim().startsWith('/think ')) {
+                        const thinkQuery = answer.substring(7);
+                        renderer.info(`🤔 Triggering metabolic reflection cycle under Hexagram ${currentInterpretation.name}...`);
+                        const result = await orchestrator.run(`Evaluate state and think about action: ${thinkQuery}`);
+                        if (result.ok) {
+                            renderer.success(`[Reflect Output]`);
+                            console.log(result.value.data);
+                        } else {
+                            renderer.error(`Reflection failed: ${result.error?.message}`);
+                        }
+                    } else {
+                        const playResult = await orchestrator.executePlayAction(answer);
+                        if (playResult.ok) {
+                            console.log(`\n${playResult.value}`);
+                        } else {
+                            renderer.error(playResult.error?.message || 'Action failed.');
+                        }
+                    }
+                }
+                promptLoop();
+            };
+            
+            process.on('SIGINT', () => {
+                renderer.info('🛑 Sovereign Organism: Graceful shutdown initiated.');
+                process.exit(0);
+            });
+            
+            promptLoop();
+        });
     program
         .command('reimagine <cacheSubject> <gutenbergTheme>')
         .description('Synthesize a physical RS Cache asset with a Gutenberg narrative emotion into a .gltf rendering')
@@ -576,21 +688,23 @@ export async function main(): Promise<void> {
         .option('--output <file>', 'Write clean classifications to this JSON file')
         .option('--all', 'Include all results (not just HIGH/MEDIUM confidence)', false)
         .action(async (opts: { atlasDir: string; output?: string; all: boolean }) => {
-            const limb = new HUDForensicsLimb();
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const routerInstance = new CLIRouter(engine);
             renderer.info(`\u{1F52C} Running HUD Forensics Atlas Scan: ${opts.atlasDir}...`);
 
-            const results = await limb.scanAtlas(opts.atlasDir);
+            const res = await routerInstance.routeHUDForensics('scanAtlas', opts.atlasDir);
+            const results = res.ok ? res.value.data : [];
             const clean = opts.all
                 ? results
-                : results.filter(r => r.confidence !== 'FALSE_POSITIVE');
+                : results.filter((r: any) => r.confidence !== 'FALSE_POSITIVE');
 
-            const fps = results.filter(r => r.confidence === 'FALSE_POSITIVE').length;
-            const highs = clean.filter(r => r.confidence === 'HIGH').length;
-            const mediums = clean.filter(r => r.confidence === 'MEDIUM').length;
+            const fps = results.filter((r: any) => r.confidence === 'FALSE_POSITIVE').length;
+            const highs = clean.filter((r: any) => r.confidence === 'HIGH').length;
+            const mediums = clean.filter((r: any) => r.confidence === 'MEDIUM').length;
 
             renderer.success(`Atlas scan complete: ${results.length} total, ${clean.length} clean, ${fps} false positives suppressed.`);
             renderer.info(`  HIGH: ${highs}  MEDIUM: ${mediums}  FP: ${fps}`);
-            renderer.json(clean.slice(0, 10).map(r => ({
+            renderer.json(clean.slice(0, 10).map((r: any) => ({
                 id: r.interfaceId,
                 category: r.category,
                 confidence: r.confidence,
@@ -743,12 +857,14 @@ export async function main(): Promise<void> {
             renderer.info(`ðŸ“ Performing Metric Forensic on: ${target}...`);
 
             // Re-routing to authoritative CacheLearningLimb for metrics
-            const forensics = CacheForensicsLimb.getInstance();
-            const learning = new CacheLearningLimb(getRSMVCachePath(), forensics, join(getSovereignRoot(), 'library', 'spatial'));
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const routerInstance = new CLIRouter(engine);
+            const forensics = engine.cacheForensics;
+            const learning = new CacheLearningLimb(getrsmvCachePath(), forensics, join(getSovereignRoot(), 'library', 'spatial'));
 
-            const resolveRes = await forensics.crossReferenceItem(target);
-            if (resolveRes.ok && resolveRes.value.rawModelIds.length > 0) {
-                const modelId = resolveRes.value.rawModelIds[0];
+            const resolveRes = await routerInstance.routeCacheForensics('crossReferenceItem', target);
+            if (resolveRes.ok && resolveRes.value.data && resolveRes.value.data.rawModelIds.length > 0) {
+                const modelId = resolveRes.value.data.rawModelIds[0];
                 const modelRes = await learning.learnSpatialModel('item', modelId);
                 if (modelRes.ok) {
                     renderer.json(modelRes.value.metrics);
@@ -769,18 +885,18 @@ export async function main(): Promise<void> {
             const y = parseInt(yStr);
             const plane = planeStr ? parseInt(planeStr) : 0;
 
-            const limb = SpatialSovereigntyLimb.getInstance();
-            const mechanical = MechanicalSovereigntyLimb.getInstance();
-
-            await limb.initialize();
-            await mechanical.initialize();
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const routerInstance = new CLIRouter(engine);
 
             // Auto-load unified grounding if nearby
             const msX = x >> 6;
             const msZ = y >> 6;
-            await limb.loadUnifiedGrounding(msX, msZ);
+            await routerInstance.routeSpatialInitialize({ loadGrounding: { x: msX, z: msZ } });
 
             renderer.info(`ðŸ” Querying Spatial Logic at [${x}, ${y}, plane ${plane}]...`);
+
+            const limb = engine.spatialSovereignty;
+            const mechanical = engine.mechanicalSovereignty;
 
             let walkable = false;
 
@@ -1044,20 +1160,17 @@ export async function main(): Promise<void> {
         .command('load <region>')
         .description('Load regional mechanical logic artifact (e.g., barrows)')
         .action(async (region: string) => {
-            const limb = MechanicalSovereigntyLimb.getInstance();
-            const initRes = await limb.initialize();
-            if (!initRes.ok) {
-                renderer.error(`Limb initialization failed: ${initRes.error.message}`);
-                return;
-            }
-
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const routerInstance = new CLIRouter(engine);
+            const limb = engine.mechanicalSovereignty;
+            
             renderer.info(`Ã°Å¸Â§Â¬ Loading Mechanical Logic for: ${region}...`);
-            const res = await limb.loadLogic(region);
+            const res = await routerInstance.routeSpatialInitialize({ loadLogic: region });
             if (res.ok) {
                 renderer.success(`Mechanical logic artifact loaded: ${region}`);
                 renderer.success(limb.healthCheck().details);
             } else {
-                renderer.error(`Failed to load mechanical logic: ${res.error.message}`);
+                renderer.error(`Failed to load mechanical logic: ${res.error?.message}`);
             }
         });
 
@@ -1152,16 +1265,19 @@ export async function main(): Promise<void> {
 
             const apiLimb = new OfficialApiLimb();
             const metricEngine = new SpatialMetricEngine();
-            const forensics = CacheForensicsLimb.getInstance();
-            const learning = new CacheLearningLimb(getRSMVCachePath(), forensics, join(getSovereignRoot(), 'library', 'spatial'));
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const routerInstance = new CLIRouter(engine);
+            const forensics = engine.cacheForensics;
+            const learning = new CacheLearningLimb(getrsmvCachePath(), forensics, join(getSovereignRoot(), 'library', 'spatial'));
 
             try {
                 let learnedObject: any = { type, source: 'Jagex Cache', timestamp: new Date().toISOString() };
 
                 if (type === 'item') {
                     // 1. Resolve & Extract
-                    const resolveRes = await forensics.crossReferenceItem(idOrName);
-                    if (!resolveRes.ok || resolveRes.value.rawModelIds.length === 0) {
+                    const routeRes = await routerInstance.routeCacheForensics('crossReferenceItem', idOrName);
+                    const resolveRes = routeRes.ok ? routeRes.value.data : null;
+                    if (!resolveRes || resolveRes.rawModelIds.length === 0) {
                         throw new Error(`Could not resolve semantic name: ${idOrName}`);
                     }
 
@@ -1306,9 +1422,9 @@ export async function main(): Promise<void> {
         });
 
     sys
-        .command('audit <target>')
+        .command('audit [target]')
         .description('Scan a file or directory for Sovereign Law violations')
-        .action(async (target: string) => {
+        .action(async (target: string = '.') => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const result = await engine.executePlan({
                 goal: `Clinical audit of: ${target}`,
@@ -1750,7 +1866,7 @@ export async function main(): Promise<void> {
             const limb = new GutenbergLimb(client, vectorDB);
             const health = await limb.healthCheck();
             const size = limb.getCacheSize();
-            
+
             if (health.online) renderer.success(health.details);
             else renderer.error(health.details);
 
@@ -1773,7 +1889,7 @@ export async function main(): Promise<void> {
 
             // Spawn one-shot RSMV process
             const { spawn } = await import('child_process');
-            const cachePath = getRSMVCachePath();
+            const cachePath = getrsmvCachePath();
             const subprocess = spawn('npx', ['tsx', 'rsmv/index.ts', '--model', modelId, '--cache', cachePath], {
                 stdio: 'inherit',
             });
@@ -1862,7 +1978,8 @@ export async function main(): Promise<void> {
         .option('--enhanced', 'Use LLM for enhanced dialogue generation', false)
         .action(async (bookId: string, options: { difficulty: string; scenes: string; enhanced: boolean }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
-            const forensics = CacheForensicsLimb.getInstance();
+            const routerInstance = new CLIRouter(engine);
+            const forensics = engine.cacheForensics;
             const pedagogy = engine.getPedagogy();
             const questForge = new QuestForgeLimb(client, forensics, pedagogy);
 
@@ -1875,7 +1992,7 @@ export async function main(): Promise<void> {
 
             // Load existing storyboard scenes from the pipeline folder
             const pipelinesDir = path.join(getSovereignRoot(), 'pipelines');
-            let storyboardPath = null;
+            let storyboardPath: string | null = null;
 
             // Search for the book ID in the pipelines folder
             const searchPipelines = (dir: string) => {
@@ -2028,7 +2145,8 @@ export async function main(): Promise<void> {
             .option('-c, --content <text>', 'Specific event pattern', 'Manual interaction')
             .option('-w, --weight <float>', 'Experience intensity', '1.0')
             .action(async (id: string, opts: { type: any; content: any; weight: string; }) => {
-                const limb = EntityLimb.getInstance();
+                const engine = new OrchestrateEngine(config, router, renderer);
+                const routerInstance = new CLIRouter(engine);
                 const memory = {
                     type: opts.type,
                     content: opts.content,
@@ -2037,13 +2155,13 @@ export async function main(): Promise<void> {
                 };
 
                 renderer.info(`Injecting ${opts.type} stimulus into ${id}...`);
-                const res = await limb.addMemory(id, memory);
+                const res = await routerInstance.routeEntityMemory(id, memory);
                 if (res.ok) {
-                    const vibeRes = await limb.updateVibeFromMemory(id, memory);
-                    if (vibeRes.ok) {
+                    const vibeRes = res.value.data;
+                    if (vibeRes && vibeRes.ok) {
                         renderer.success(`Stimulus anchored. Vibe Snapshot: ${JSON.stringify(vibeRes.value)}`);
                     } else {
-                        renderer.success(`Memory anchored, but vibe mutation failed: ${vibeRes.error?.message}`);
+                        renderer.success(`Memory anchored, but vibe mutation failed: ${vibeRes?.error?.message}`);
                     }
                 } else {
                     renderer.error(`Injection failed: ${res.error?.message}`);
@@ -2054,12 +2172,13 @@ export async function main(): Promise<void> {
             .command('decide <id>')
             .description('Trigger the Behavioral Decision Engine to produce a player/npc action bias')
             .action(async (id: string) => {
-                const limb = EntityLimb.getInstance();
+                const engine = new OrchestrateEngine(config, router, renderer);
+                const routerInstance = new CLIRouter(engine);
                 renderer.info(`Querying Behavioral Engine for ${id}...`);
 
-                const decisionRes = await limb.decideAction(id);
-                if (decisionRes.ok) {
-                    const { action, yao, reasoning } = decisionRes.value;
+                const decisionRes = await routerInstance.routeEntityAction(id);
+                if (decisionRes.ok && decisionRes.value.data) {
+                    const { action, yao, reasoning } = decisionRes.value.data;
                     const yaoSymbol = yao === YaoState.OldYang ? 'ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â²' : (yao === YaoState.OldYin ? 'ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â¹' : (yao === YaoState.YoungYang ? 'ÃƒÂ¢Ã¢â‚¬Â¢ ' : 'ÃƒÂ¢Ã¢â‚¬Â¢Ã¢â‚¬Â¹'));
 
                     renderer.log(`\n\x1b[38;5;154m[DECISION]\x1b[0m \x1b[1m${action.toUpperCase()}\x1b[0m`);
@@ -2068,7 +2187,7 @@ export async function main(): Promise<void> {
 
                     // Close the loop
                     renderer.info(`Executing and reinforcing pattern...`);
-                    await limb.executeAction(id, action);
+                    // Action already executed via tool
                     renderer.success('Behavioral loop closed.');
                 } else {
                     renderer.error(`Decision engine failed: ${decisionRes.error?.message}`);
@@ -2079,7 +2198,8 @@ export async function main(): Promise<void> {
             .command('pull <name>')
             .description('Fetch character model from Jagex avatar service and render via RSMV')
             .action(async (name: string) => {
-                const limb = EntityLimb.getInstance();
+                const engine = new OrchestrateEngine(config, router, renderer);
+                const routerInstance = new CLIRouter(engine);
                 const rsmv = RSMVController.getInstance();
                 const id = 'pog2:player';
 
@@ -2089,7 +2209,7 @@ export async function main(): Promise<void> {
 
                 if (res.ok) {
                     renderer.success(`RSMV pull triggered for ${name}. Model will be rendered in the background.`);
-                    await limb.updatePlayerIdentity(id, { name, modelPath: 'model.glb' });
+                    await routerInstance.routeEntityIdentity(id, { name, modelPath: 'model.glb' });
                     renderer.success(`Identity bound to ${name} in substrate.`);
                 } else {
                     renderer.error(`Pull failed: ${res.error?.message}`);
@@ -2101,7 +2221,8 @@ export async function main(): Promise<void> {
             .description('Fetch real-time HiScore data for a player')
             .action(async (name: string) => {
                 const hiscore = new HiScoreLimb();
-                const limb = EntityLimb.getInstance();
+                const engine = new OrchestrateEngine(config, router, renderer);
+                const routerInstance = new CLIRouter(engine);
                 const id = 'pog2:player';
 
                 renderer.info(`Fetching HiScores for ${name}...`);
@@ -2109,7 +2230,7 @@ export async function main(): Promise<void> {
 
                 if (res.ok) {
                     renderer.json(res.value);
-                    await limb.updatePlayerIdentity(id, { name, stats: res.value });
+                    await routerInstance.routeEntityIdentity(id, { name, stats: res.value });
                     renderer.success(`Stats synced to substrate for ${id}.`);
                 } else {
                     renderer.error(`HiScore fetch failed: ${res.error?.message}`);
@@ -2137,6 +2258,182 @@ export async function main(): Promise<void> {
             });
     });
 
+    player
+        .command('volition [id]')
+        .description('Manage combat styles, current adrenaline levels, and autonomic behaviors')
+        .option('-a, --adren <number>', 'Set player adrenaline level (0-100)', parseFloat)
+        .option('-s, --stance <style>', 'Set combat stance/style (melee | ranged | magic | necromancy)')
+        .option('-t, --tactical <state>', 'Set tactical state override (idle | evading)')
+        .option('-p, --archetype <archetype>', 'Set combat archetype (standard | custom)')
+        .option('-l, --leader <leaderId>', 'Set leader ID proxy')
+        .action(async (idArg: string | undefined, opts: { adren?: number; stance?: string; tactical?: string; archetype?: string; leader?: string }) => {
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const routerInstance = new CLIRouter(engine);
+            
+            const res = await routerInstance.routeGameplayVolition({
+                adren: opts.adren,
+                stance: opts.stance,
+                tactical: opts.tactical,
+                leader: opts.leader,
+                archetype: opts.archetype
+            });
+
+            const { GameplaySovereigntyLimb } = await import('./limbs/spatial/GameplaySovereigntyLimb.js');
+            const gameplay = GameplaySovereigntyLimb.getInstance();
+            const avatar = gameplay.avatar as any;
+
+            if (res.ok) {
+                renderer.success('Sovereign Volition mutated successfully.');
+            } else {
+                renderer.error(`Volition mutation failed: ${res.error?.message}`);
+            }
+
+            // Print the current state of volition
+            renderer.log('\n\x1b[38;5;154m[SOVEREIGN COGNITIVE VOLITION]\x1b[0m');
+            renderer.log(`\x1b[38;5;244mName/Username:\x1b[0m ${avatar.name} (${avatar.username})`);
+            renderer.log(`\x1b[38;5;244mAdrenaline:\x1b[0m ${((avatar.adrenaline || 0) / 100).toFixed(2)}% (${avatar.adrenaline}/10000)`);
+            renderer.log(`\x1b[38;5;244mCombat Stance:\x1b[0m ${(avatar.visualState?.combatStance || 'MELEE').toUpperCase()}`);
+            renderer.log(`\x1b[38;5;244mTactical State:\x1b[0m ${(avatar.metadata?.tacticalState || 'IDLE').toUpperCase()}`);
+            renderer.log(`\x1b[38;5;244mCombat Archetype:\x1b[0m ${(avatar.metadata?.combatArchetype || 'STANDARD').toUpperCase()}`);
+            renderer.log(`\x1b[38;5;244mLeader ID:\x1b[0m ${avatar.metadata?.leaderId || 'NONE'}`);
+        });
+
+    player
+        .command('combat <action> [id]')
+        .description('Trigger or queue a combat ability using canonical libraries')
+        .option('-a, --ability <abilityId>', 'Ability to trigger')
+        .option('-t, --ticks <stunTicks>', 'Ticks to stun the player for', parseInt)
+        .action(async (action: string, idArg: string | undefined, opts: { ability?: string; ticks?: number }) => {
+            const { GameplaySovereigntyLimb } = await import('./limbs/spatial/GameplaySovereigntyLimb.js');
+            const gameplay = GameplaySovereigntyLimb.getInstance();
+            const avatar = gameplay.avatar as any;
+            const playerAgent = gameplay.playerAgent;
+
+            const { SovereignAvatarVolition } = await import('./limbs/pedagogy/SovereignAvatarActionBarVolition.js');
+            const { CombatRotationEngine } = await import('./engines/gameplay/CombatRotationEngine.js');
+            const { AbilityDiscoveryLimb } = await import('./limbs/spatial/AbilityDiscoveryLimb.js');
+            const { GhostSplatEngine } = await import('./substrates/GhostSplatEngine.js');
+
+            const volition = new SovereignAvatarVolition({
+                agent: playerAgent,
+                adrenalineSM: avatar.combatEngine,
+                rotationEngine: CombatRotationEngine.getInstance(),
+                abilityLimb: AbilityDiscoveryLimb.getInstance(),
+                ghostSplat: GhostSplatEngine.getInstance()
+            });
+
+            if (action.toLowerCase() === 'trigger') {
+                if (!opts.ability) {
+                    renderer.error('Trigger action requires --ability <abilityId>');
+                    return;
+                }
+                const success = avatar.executeAbility(opts.ability.toUpperCase());
+                if (success) {
+                    renderer.success(`Ability trigger intent successfully queued: [${opts.ability.toUpperCase()}]`);
+                    if (avatar.intent) {
+                        renderer.json(avatar.intent);
+                    }
+                } else {
+                    renderer.error(`Failed to trigger ability: avatar is busy for ${avatar.lockTicks} more ticks.`);
+                }
+            } else if (action.toLowerCase() === 'stun') {
+                if (opts.ticks === undefined) {
+                    renderer.error('Stun action requires --ticks <stunTicks>');
+                    return;
+                }
+                avatar.lock(opts.ticks);
+                renderer.success(`Applied stun lock to avatar for ${opts.ticks} ticks.`);
+            } else if (action.toLowerCase() === 'decide') {
+                const ghostSplat = GhostSplatEngine.getInstance();
+                const field = ghostSplat.project(gameplay.globalState, 2, playerAgent);
+                if (field) {
+                    const rotation = playerAgent.evaluateCombatRotation(field, gameplay.tickCount);
+                    if (rotation) {
+                        renderer.success('Cognitive Agent computed rotation decision:');
+                        renderer.json(rotation);
+                    } else {
+                        renderer.info('Cognitive Agent rotation evaluation returned no active combat intent.');
+                    }
+                } else {
+                    renderer.error('Predictive GhostSplat field unavailable.');
+                }
+            } else if (action.toLowerCase() === 'rotation') {
+                const limb = AbilityDiscoveryLimb.getInstance();
+                const style = avatar.visualState?.combatStance || 'melee';
+                const list = limb.discoverFromAbilityBook(style as any);
+                
+                renderer.log(`\n\x1b[38;5;154m[OPTIMAL COMBAT ROTATION - ${style.toUpperCase()}]\x1b[0m`);
+                if (list.length === 0) {
+                    renderer.info('No abilities discovered for this combat style yet.');
+                } else {
+                    renderer.log('Slot | Ability ID | Name | Adrenaline Required | Cooldown');
+                    renderer.log('------------------------------------------------------------');
+                    list.forEach((ab, idx) => {
+                        renderer.log(` ${idx.toString().padEnd(3)} | ${ab.id.padEnd(10)} | ${ab.name.padEnd(20)} | ${(ab.adrenalineCost / 100).toFixed(0)}% | ${ab.cooldownTicks} ticks`);
+                    });
+                }
+            } else {
+                renderer.error(`Unknown combat action: ${action}`);
+            }
+        });
+
+    player
+        .command('bar <action> [id]')
+        .description('Load, query, or trigger slots on the action bar')
+        .option('-s, --slot <index>', 'Action bar slot index (0-13)', parseInt)
+        .option('-b, --ability <abilityId>', 'Ability ID to bind')
+        .action(async (action: string, idArg: string | undefined, opts: { slot?: number; ability?: string }) => {
+            const { GameplaySovereigntyLimb } = await import('./limbs/spatial/GameplaySovereigntyLimb.js');
+            const gameplay = GameplaySovereigntyLimb.getInstance();
+            const avatar = gameplay.avatar as any;
+
+            if (action.toLowerCase() === 'show') {
+                renderer.log(`\n\x1b[38;5;154m[ACTION BAR CONFIGURATION - INTERFACE 1841]\x1b[0m`);
+                renderer.log('Slot | Bound Ability | Cooldown Status');
+                renderer.log('--------------------------------------');
+                const slots = avatar.actionBarSlots || [];
+                slots.forEach((val: any, idx: number) => {
+                    const cooldown = avatar.cooldowns?.[val] || 0;
+                    const status = val ? (cooldown > gameplay.tickCount ? `ON COOLDOWN (${cooldown - gameplay.tickCount} ticks)` : 'READY') : 'EMPTY';
+                    renderer.log(` ${idx.toString().padEnd(3)} | ${(val || 'NONE').padEnd(13)} | ${status}`);
+                });
+            } else if (action.toLowerCase() === 'bind') {
+                if (opts.slot === undefined || opts.slot < 0 || opts.slot > 13) {
+                    renderer.error('Bind action requires --slot <index> (0-13)');
+                    return;
+                }
+                if (!opts.ability) {
+                    renderer.error('Bind action requires --ability <abilityId>');
+                    return;
+                }
+                if (!avatar.actionBarSlots) {
+                    avatar.actionBarSlots = Array(14).fill(null);
+                }
+                avatar.actionBarSlots[opts.slot] = opts.ability.toUpperCase();
+                gameplay.markDirty();
+                gameplay.saveSovereignState();
+                renderer.success(`Slot ${opts.slot} successfully bound to ability: [${opts.ability.toUpperCase()}]`);
+            } else if (action.toLowerCase() === 'clear') {
+                if (!avatar.actionBarSlots) {
+                    avatar.actionBarSlots = Array(14).fill(null);
+                }
+                if (opts.slot === undefined) {
+                    avatar.actionBarSlots.fill(null);
+                    renderer.success('Cleared all slots on the action bar.');
+                } else if (opts.slot >= 0 && opts.slot <= 13) {
+                    avatar.actionBarSlots[opts.slot] = null;
+                    renderer.success(`Slot ${opts.slot} cleared.`);
+                } else {
+                    renderer.error('Invalid slot index (0-13)');
+                    return;
+                }
+                gameplay.markDirty();
+                gameplay.saveSovereignState();
+            } else {
+                renderer.error(`Unknown bar action: ${action}`);
+            }
+        });
+
     const ped = program.command('pedagogy').description('Cognitive Curation & Sovereign Principle Archiving');
 
     ped
@@ -2150,7 +2447,7 @@ export async function main(): Promise<void> {
             if (options.analyzeAll) {
                 renderer.info('Initiating total synthesis of cache-related studies for gameplay logic...');
 
-                const results = [];
+                const results: any[] = [];
                 results.push(await limb.analyzeDbTables());
                 results.push(await limb.analyzeDbRows());
                 results.push(await limb.analyzeVarbits());
@@ -2362,52 +2659,7 @@ export async function main(): Promise<void> {
         });
 
 
-    program
-        .command('play')
-        .description('Boot the full Sovereign Organism and begin autonomous interaction')
-        .option('--headless', 'Run without radar visualization', false)
-        .action(async (opts: { headless: boolean }) => {
-            renderer.info('🕸️ POG2 Sovereign Organism: Initiating boot sequence...');
 
-            const gameplay = GameplaySovereigntyLimb.getInstance();
-            const radar = SpatialRadarLimb.getInstance();
-            const globe = new GlobeStateLimb(config);
-            await globe.connect();
-
-            const switchboard = SwitchboardLimb.getInstance();
-            switchboard.initialize();
-            await switchboard.startWithGracefulPort({ run: async () => ({ ok: true }) }, 8788);
-            gameplay.injectSwitchboard(switchboard);
-
-            renderer.success('🧠 Cognitive Substrate: Synchronized (64 Hexagrams)');
-            renderer.success('👀 Predictive Vision: Online (GhostSplat)');
-
-            // Boot the full CNS Godhead deterministic heartbeat
-            const cns = CNSGodheadPulseVolley.getInstance();
-            cns.setRenderer(renderer);
-            cns.startLoop();
-
-            // Persistent radar render loop (visual only, non-blocking)
-            if (!opts.headless) {
-                const renderRadar = () => {
-                    try {
-                        const view = radar.render(gameplay.globalState, gameplay.avatar);
-                        process.stdout.write('\x1Bc'); // Clear screen (ANSI escape)
-                        process.stdout.write(view + '\n');
-                    } catch (e) {
-                        // Silently skip render failures
-                    }
-                    setTimeout(renderRadar, 600);
-                };
-                renderRadar();
-            }
-
-            // Keep process alive indefinitely
-            process.on('SIGINT', () => {
-                renderer.info('🛑 Sovereign Organism: Graceful shutdown initiated.');
-                process.exit(0);
-            });
-        });
 
     program
         .command('heal <path>')
@@ -3147,7 +3399,7 @@ export async function main(): Promise<void> {
         .command('status')
         .description('Probe the health and readiness of the RSMV sensory node')
         .action(async () => {
-            const extractor = new RSMVExtractor();
+            const extractor = new rsmvExtractor();
             const probe = extractor.healthCheck();
             if (probe.online) renderer.success(`RSMV Substrate: ${probe.details}`);
             else renderer.error(`RSMV Substrate OFFLINE: ${probe.details}`);
@@ -3254,14 +3506,28 @@ export async function main(): Promise<void> {
 
     await program.parseAsync(process.argv);
 
-    // For single-shot commands, automatically exit unless we are supposed to enter REPL
+    // Three-tier post-parse post-execution router
     const commandName = program.args[0];
-    if (commandName && ['player', 'npc', 'status', 'health', 'personality', 'read', 'gutenberg', 'cooldown', 'config', 'memory', 'consult-shadow', 'consult-memetics', 'consult-syntropy', 'init', 'system', 'vs', 'rsmv', 'atlas', 'learn'].includes(commandName)) {
-        // Clinical exit: allow more time for pino to flush and background MCP links to settle
-        setTimeout(() => process.exit(0), 500);
-    } else if (commandName) {
-        renderer.info('\nTask sequence complete. Transitioning to Sovereign REPL...');
-        await startRepl(renderer, config, router, client, state);
+    if (commandName) {
+        const isDaemon = 
+            commandName === 'play' || 
+            commandName === 'serve' ||
+            (commandName === 'atlas' && program.args.includes('grounding')) ||
+            (commandName === 'atlas' && program.args.includes('play'));
+
+        if (isDaemon) {
+            return;
+        }
+
+        const isOneShot = ['player', 'npc', 'status', 'health', 'personality', 'read', 'gutenberg', 'cooldown', 'config', 'memory', 'consult-shadow', 'consult-memetics', 'consult-syntropy', 'init', 'system', 'vs', 'rsmv', 'atlas', 'learn'].includes(commandName);
+
+        if (!isOneShot) {
+            renderer.info('\nTask sequence complete. Transitioning to Sovereign REPL...');
+            await startRepl(renderer, config, router, client, state);
+        } else {
+            // Clean exit after parseAsync: 100ms flush buffer
+            setTimeout(() => process.exit(0), 100);
+        }
     }
 }
 
@@ -3274,6 +3540,12 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
         input: process.stdin,
         output: process.stdout
     });
+
+    if (!rl || (rl as any).closed || typeof rl.question !== 'function') {
+        renderer.info('[CLI] REPL interface is closed or unavailable — bypassing interactive prompt.');
+        return;
+    }
+
     renderer.setReadline(rl);
 
     const engine = new OrchestrateEngine(config, router, renderer);
@@ -3366,13 +3638,34 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
                 case '/syntropy':
                     await engine.run('harmonize external metadata paradigms');
                     break;
-                case '/vs':
-                    renderer.info(`Opening our workspace in VS Code...`);
-                    import('child_process').then(cp => {
-                        cp.exec(`code "${resolve(targetPath)}"`, (err) => {
-                            if (err) renderer.error(`Failed to launch VS Code: ${err.message}`);
-                        });
-                    });
+                case '/bridge':
+                    renderer.info('Ã°Å¸Â§Â  Sovereign Bridge Interface: Choose a component to introspect, reconfigure, or trigger reflection:');
+                    renderer.info('1. [System] Trigger full CNS Health Pulse');
+                    renderer.info('2. [Memory] Initiate Consolidation Substrate');
+                    renderer.info('3. [Orchestrator] Audit Limb Adjacency');
+                    renderer.info('4. [Substrate] Inspect Model Providers');
+                    renderer.info('5. [Interactive] Open Bridge Settings (settings.local.json)');
+                    const bridgeChoice = await rl.question('Enter choice [1-5]: ');
+                    switch (bridgeChoice) {
+                        case '1': await engine.run('system health check'); break;
+                        case '2': await consolidationEngine.consolidate(); renderer.success('Memory substrate consolidated.'); break;
+                        case '3': await engine.run('audit workspace'); break;
+                        case '4': {
+                            const rolodexRef = router.getRolodex();
+                            renderer.output(rolodexRef?.getFormattedSummary() ?? 'Rolodex empty.');
+                            break;
+                        }
+                        case '5': {
+                            const settingsPath = resolve('.claude/settings.local.json');
+                            if (existsSync(settingsPath)) {
+                                import('child_process').then(cp => cp.exec(`code "${settingsPath}"`));
+                            } else {
+                                renderer.warn('Settings file not found in workspace.');
+                            }
+                            break;
+                        }
+                        default: renderer.warn('Invalid bridge selection.');
+                    }
                     break;
                 case '/pull': {
                     const modelToPull = args[0];
@@ -3427,7 +3720,7 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
                         await rolodexRef2.refreshAll();
                         const statuses = rolodexRef2.getAllProviderStatuses();
                         const lines: string[] = ['Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â PROVIDER IDENTITY VERIFICATION Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â', ''];
-                        for (const s of statuses) {
+                        for (const s of Object.values(statuses)) {
                             const icon = s.authenticated ? '\x1b[38;5;154mÃ¢Å“â€œ\x1b[0m' : '\x1b[38;5;196mÃ¢Å“â€”\x1b[0m';
                             lines.push(`${icon} ${s.provider.toUpperCase()}`);
                             if (s.account) lines.push(`  Account: ${s.account}`);
@@ -3539,4 +3832,3 @@ main().catch(err => {
     }
     process.exit(1);
 });
-

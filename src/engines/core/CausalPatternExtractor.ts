@@ -20,7 +20,7 @@ export class CausalPatternExtractor {
         totalTracesAnalyzed: 0
     };
 
-    private constructor() {}
+    private constructor() { }
 
     public static getInstance(): CausalPatternExtractor {
         if (!this.instance) {
@@ -36,7 +36,7 @@ export class CausalPatternExtractor {
         // ISA Governance Check (Phase 230: Shadow Learning Paradigm)
         const contract = HexagramManager.getInstance().getContract();
         const permissions = contract.permissions;
-        
+
         // 0. Epistemic Boundary Enforcement
         // Interpretation MUST derive from CAUSAL truth.
         if (event.truthClass !== TruthClass.CAUSAL) {
@@ -63,7 +63,7 @@ export class CausalPatternExtractor {
         // 1. Generate Archetype Fingerprint
         const signals = event.signals || [];
         const resolutionIndex = event.resolutionPointIndex;
-        
+
         if (resolutionIndex === undefined) return null;
 
         const resolutionSignal = signals[resolutionIndex];
@@ -71,7 +71,7 @@ export class CausalPatternExtractor {
 
         // Archetype = Outcome + Primary Signal Code
         const archetype = `${event.outcome}_${resolutionSignal.code}`;
-        
+
         // 2. Cluster or Create Pattern
         let pattern = this.memory.activePatterns.get(archetype);
         if (!pattern) {
@@ -86,7 +86,7 @@ export class CausalPatternExtractor {
             lastOccurredTick: event.tick
         };
         this.memory.activePatterns.set(archetype, updatedPattern);
-        
+
         logger.debug({ archetype, frequency: updatedPattern.frequency }, 'Causal pattern reinforced.');
         return updatedPattern;
     }
@@ -96,7 +96,7 @@ export class CausalPatternExtractor {
      */
     private initializePattern(archetype: string, signal: CausalEvidence): CausalPattern {
         const id = `pattern-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-        
+
         // Mapping Machine Logic to Human Heuristics
         let label = "Unknown Interaction";
         let heuristic = "Monitor signal sequence for unexpected resolution.";
@@ -112,7 +112,7 @@ export class CausalPatternExtractor {
                 break;
             case 'EXTERNAL_REJECTION':
                 label = "Substrate Truth Disagreement";
-                heuristic = "Check RSMVBridge stability. Reality engine disagreed with CNS prediction.";
+                heuristic = "Check rsmvBridge stability. Reality engine disagreed with CNS prediction.";
                 break;
         }
 

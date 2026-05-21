@@ -6,12 +6,12 @@ let parse: any = null;
 
 import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-import { getRSMVCachePath, getCachePedagogyPath, getRSMVSubstratePath } from '../../utils/SovereignPathResolver.js';
+import { getrsmvCachePath, getCachePedagogyPath, getrsmvSubstratePath } from '../../utils/SovereignPathResolver.js';
 import * as fs from 'fs';
 
-const RSMV = getRSMVSubstratePath();
-try { ({ GameCacheLoader } = require(path.join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch {}
-try { ({ parse } = require(path.join(RSMV, 'src', 'opdecoder.js'))); } catch {}
+const rsmv = getrsmvSubstratePath();
+try { ({ GameCacheLoader } = require(path.join(rsmv, 'src', 'cache', 'sqlite.js'))); } catch { }
+try { ({ parse } = require(path.join(rsmv, 'src', 'opdecoder.js'))); } catch { }
 
 const logger = createLogger('MaterialLimb');
 
@@ -21,10 +21,10 @@ const logger = createLogger('MaterialLimb');
  * and visual components into the Sovereign Atlas. 
  */
 export class MaterialLimb {
-    private readonly cachePath = getRSMVCachePath();
+    private readonly cachePath = getrsmvCachePath();
     private readonly outDir = getCachePedagogyPath();
     private cache: any | null = null;
-    
+
     constructor() {
         try {
             if (GameCacheLoader) {

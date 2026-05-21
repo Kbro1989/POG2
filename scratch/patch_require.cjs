@@ -3,20 +3,20 @@ const path = require('path');
 function walk(dir) {
     let results = [];
     const list = fs.readdirSync(dir);
-    list.forEach(function(file) {
+    list.forEach(function (file) {
         file = dir + '/' + file;
         const stat = fs.statSync(file);
-        if (stat && stat.isDirectory()) { 
+        if (stat && stat.isDirectory()) {
             results = results.concat(walk(file));
-        } else { 
-            if(file.endsWith('.ts') || file.endsWith('.tsx')) results.push(file);
+        } else {
+            if (file.endsWith('.ts') || file.endsWith('.tsx')) results.push(file);
         }
     });
     return results;
 }
 const files = walk('D:/POG2/src/rsmv');
 let changedCount = 0;
-for(const f of files) {
+for (const f of files) {
     let code = fs.readFileSync(f, 'utf8');
     // Check for require( that isn't already handled
     if (code.includes('require(') && !code.includes('createRequire')) {

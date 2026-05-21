@@ -13,7 +13,7 @@ async function run() {
 
     try {
         const indices = await source.getCacheIndex(cacheMajors.config);
-        
+
         // 1. DBTables (Config Page 40)
         console.log("\n📡 Extracting DBTables...");
         const tableArch = await source.getFileArchive(indices[cacheConfigPages.dbtables]!);
@@ -21,7 +21,7 @@ async function run() {
         for (const f of tableArch) {
             try {
                 tables.push({ id: f.fileid, ...parse.dbtables.read(f.buffer, source) });
-            } catch(e) {}
+            } catch (e) { }
         }
         fs.writeFileSync(path.join(OUT_DIR, "dbtables.json"), JSON.stringify(tables, null, 2));
         console.log(`✅ Extracted ${tables.length} DBTables`);
@@ -33,7 +33,7 @@ async function run() {
         for (const f of rowArch) {
             try {
                 rows.push({ id: f.fileid, ...parse.dbrows.read(f.buffer, source) });
-            } catch(e) {}
+            } catch (e) { }
         }
         fs.writeFileSync(path.join(OUT_DIR, "dbrows.json"), JSON.stringify(rows, null, 2));
         console.log(`✅ Extracted ${rows.length} DBRows`);
@@ -43,21 +43,21 @@ async function run() {
         const questCandidates = rows.filter(r => {
             const strval = JSON.stringify(r).toLowerCase();
             // Finding rows that have "quest complete", "quest point", or typical quest journal jargon
-            return strval.includes("quest point") || strval.includes("quest complete") || 
-                   (strval.includes("recipe for disaster") && strval.includes("cook's assistant"));
+            return strval.includes("quest point") || strval.includes("quest complete") ||
+                (strval.includes("recipe for disaster") && strval.includes("cook's assistant"));
         });
-        
+
         if (questCandidates.length > 0) {
             fs.writeFileSync(path.join(OUT_DIR, "quest_candidates.json"), JSON.stringify(questCandidates, null, 2));
             console.log(`🎯 Identified ${questCandidates.length} potential Quest/Journal rows!`);
         } else {
             console.log(`⚠️ No immediate quest strings found in dbrows. We will check enums instead.`);
         }
-        
-    } catch(e) {
+
+    } catch (e) {
         console.error(e);
     }
-    
+
     source.close();
 }
 

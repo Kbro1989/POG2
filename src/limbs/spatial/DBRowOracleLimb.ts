@@ -73,7 +73,7 @@ export class DBRowOracleLimb {
 
     public async initialize(): Promise<void> {
         logger.info('Waking Genomic Oracle...');
-        
+
         const dbrowPath = 'D:/sovereign/atlas/system/dbrows.json';
         if (!existsSync(dbrowPath)) {
             logger.error({ path: dbrowPath }, 'Genome Substrate Missing: dbrows.json');
@@ -146,10 +146,10 @@ export class DBRowOracleLimb {
             if (row.table === 39 && row.unk01) {
                 const penIdCol = row.unk01.columndata.find(c => c.id === 1); // Pen Index
                 const varbitCol = row.unk01.columndata.find(c => c.id === 8); // Status Varbit
-                
+
                 if (penIdCol && varbitCol) {
                     injectors.push({
-                        objectId: 123456, // TODO: Resolve exact Object ID from RSMVCacheDB
+                        objectId: 123456, // TODO: Resolve exact Object ID from rsmvCacheDB
                         trigger: 'click',
                         validation: {
                             varbitChecks: [{ id: Number(varbitCol.columns[0].value[0]), value: 1 }]

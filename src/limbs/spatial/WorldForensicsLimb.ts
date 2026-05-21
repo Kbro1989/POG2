@@ -1,6 +1,6 @@
 import { Result, ok, err, DirectionalCollision } from '../../core/models.js';
 import { JagexCacheReader } from '../../utils/JagexCacheReader.js';
-import { getRSMVCachePath } from '../../utils/SovereignPathResolver.js';
+import { getrsmvCachePath } from '../../utils/SovereignPathResolver.js';
 import { createLogger } from '../../utils/logger.js';
 import { ByteReader } from '../../utils/ByteReader.js';
 import { getBlockedDirections } from '../../utils/DirectionalRegistry.js';
@@ -55,7 +55,7 @@ export class WorldForensicsLimb {
     private terrainCache: Map<string, WorldObservation[]> = new Map();
 
     private constructor() {
-        this.cachePath = getRSMVCachePath();
+        this.cachePath = getrsmvCachePath();
     }
 
     public static getInstance(): WorldForensicsLimb {
@@ -95,15 +95,15 @@ export class WorldForensicsLimb {
         if (this.terrainCache.has(cacheKey)) {
             return ok(this.terrainCache.get(cacheKey)!);
         }
-        
+
         const observations: WorldObservation[] = [];
-        const grid: number[][][] = Array.from({ length: 4 }, () => 
+        const grid: number[][][] = Array.from({ length: 4 }, () =>
             Array.from({ length: 66 }, () => new Array(66).fill(0))
         );
 
         // --- PHASE 43.8: JSON-FIRST SOVEREIGNTY ---
-        const jsonPath = getRSMVCachePath().replace(/\\/g, '/').replace('cache_pedagogy/rsmv', `atlas/spatial/world_extract/ms_${mapsquareX}_${mapsquareZ}.json`);
-        // We do not have resolveSovereignPath imported in WorldForensicsLimb, so we derive it from getRSMVCachePath or we can import it.
+        const jsonPath = getrsmvCachePath().replace(/\\/g, '/').replace('cache_pedagogy/rsmv', `atlas/spatial/world_extract/ms_${mapsquareX}_${mapsquareZ}.json`);
+        // We do not have resolveSovereignPath imported in WorldForensicsLimb, so we derive it from getrsmvCachePath or we can import it.
         // Wait, let's just import resolveSovereignPath or use a safe derivation.
         try {
             if (fs.existsSync(jsonPath)) {
@@ -128,7 +128,7 @@ export class WorldForensicsLimb {
                             const worldX = parts.length === 3 ? parts[1] : parts[0];
                             const worldZ = parts.length === 3 ? parts[2] : parts[1];
                             const tp = parts.length === 3 ? parts[0] : 0;
-                            
+
                             // Map to Padded Coordinate [0..65]
                             const tx = worldX - (mapsquareX << 6) + 1;
                             const tz = worldZ - (mapsquareZ << 6) + 1;
@@ -162,7 +162,7 @@ export class WorldForensicsLimb {
             console.log(`[WorldForensicsLimb] JSON Truth error for [${mapsquareX},${mapsquareZ}]:`, e);
         }
 
-        // --- CACHE FALLBACK: RSMVBridge Collision Probing ---
+        // --- CACHE FALLBACK: rsmvBridge Collision Probing ---
         const bridgeRes = await rsmvBridge.getCollision(mapsquareX << 6, mapsquareZ << 6, plane);
         if (bridgeRes.ok) {
             const { data } = bridgeRes.value;
@@ -175,7 +175,7 @@ export class WorldForensicsLimb {
                 // We want bits 0..1 for blocking.
                 const centerVal = col3 % 3;
                 grid[plane][tx + 1][tz + 1] = (centerVal === 1 || centerVal === 2) ? 1 : 0;
-                
+
                 observations.push({
                     x: (mapsquareX << 6) + tx,
                     z: (mapsquareZ << 6) + tz,
@@ -188,7 +188,7 @@ export class WorldForensicsLimb {
             return ok(observations);
         }
 
-        return err(new Error(`Mapsquare terrain data missing for [${mapsquareX}, ${mapsquareZ}] and RSMVBridge failed.`));
+        return err(new Error(`Mapsquare terrain data missing for [${mapsquareX}, ${mapsquareZ}] and rsmvBridge failed.`));
     }
 
     /**
@@ -208,7 +208,7 @@ export class WorldForensicsLimb {
         if (!this.cache) return err(new Error('Limb not initialized'));
         const cacheKey = `${mapsquareX}_${mapsquareZ}`;
         const fileId = (mapsquareX << 8) | mapsquareZ;
-        
+
         if (this.locationsCache.has(cacheKey)) {
             return ok(this.locationsCache.get(cacheKey)!.filter(l => l.plane === plane));
         }
@@ -235,7 +235,7 @@ export class WorldForensicsLimb {
                 const type = attributes >> 2;
                 const rotation = attributes & 0x3;
                 const hasExtra = attributes & 0x80;
-                
+
                 const curPlane = (locationData >> 12) & 0x3;
                 const localX = (locationData >> 6) & 0x3F;
                 const localZ = locationData & 0x3F;
@@ -277,7 +277,7 @@ export class WorldForensicsLimb {
         if (!res.ok) return [];
 
         const matches = res.value.filter(l => l.worldX === x && l.worldZ === z);
-        const results = [];
+        const results: Array<{ id: number; name: string; type: number }> = [];
         for (const m of matches) {
             const def = await this.getObjectDefinition(m.id);
             results.push({ id: m.id, name: def.name, type: m.type });
@@ -292,7 +292,7 @@ export class WorldForensicsLimb {
         if (this.objectDefs.has(id)) {
             return this.objectDefs.get(id)!;
         }
-        
+
         const bridgeRes = await rsmvBridge.getObject(id);
         if (bridgeRes.ok) {
             const b = bridgeRes.value;
@@ -324,7 +324,7 @@ export class WorldForensicsLimb {
     public async buildDirectionalMask(x: number, z: number, plane: number): Promise<Result<DirectionalCollision>> {
         const mx = x >> 6;
         const mz = z >> 6;
-        
+
         const observationsRes = await this.senseLocalArea(x, z, plane);
         if (!observationsRes.ok) return err(observationsRes.error || new Error('Unknown error'));
 

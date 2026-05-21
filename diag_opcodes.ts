@@ -4,15 +4,15 @@
 import { createRequire } from 'module';
 import * as path from 'path';
 const require = createRequire(import.meta.url);
-import { getRSMVSubstratePath, getRSMVCachePath } from './src/utils/SovereignPathResolver.js';
+import { getrsmvSubstratePath, getrsmvCachePath } from './src/utils/SovereignPathResolver.js';
 
-const RSMV = getRSMVSubstratePath();
+const rsmv = getrsmvSubstratePath();
 let GameCacheLoader: any = null;
 let parse: any = null;
-try { ({ GameCacheLoader } = require(path.join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch(e) { console.error('GameCacheLoader failed:', e); process.exit(1); }
-try { ({ parse } = require(path.join(RSMV, 'src', 'opdecoder.js'))); } catch(e) { console.error('parse failed:', e); process.exit(1); }
+try { ({ GameCacheLoader } = require(path.join(rsmv, 'src', 'cache', 'sqlite.js'))); } catch (e) { console.error('GameCacheLoader failed:', e); process.exit(1); }
+try { ({ parse } = require(path.join(rsmv, 'src', 'opdecoder.js'))); } catch (e) { console.error('parse failed:', e); process.exit(1); }
 
-const cachePath = getRSMVCachePath();
+const cachePath = getrsmvCachePath();
 const cache = new GameCacheLoader(cachePath);
 cache.buildnr = 940;
 
@@ -45,11 +45,11 @@ for (let id = TARGET_RANGE[0]; id <= TARGET_RANGE[1]; id++) {
             try {
                 parse.interfaces.parser.read(state);
                 components++;
-            } catch(e: any) {
+            } catch (e: any) {
                 parseError = e.message;
                 // Capture the failing opcode byte
                 const failByte = rawBuffer[state.scan];
-                const failByteHex = `0x${failByte?.toString(16).padStart(2,'0') ?? 'EOF'}`;
+                const failByteHex = `0x${failByte?.toString(16).padStart(2, '0') ?? 'EOF'}`;
                 parseError = `${e.message} [fail_byte: ${failByteHex} at scan:${state.scan}/${rawBuffer.byteLength}]`;
                 break;
             }
@@ -65,27 +65,27 @@ for (let id = TARGET_RANGE[0]; id <= TARGET_RANGE[1]; id++) {
             errorMessages[key].push(id);
 
             if (components === 0) {
-                console.log(`ID ${id} | firstByte:0x${firstByte.toString(16).padStart(2,'0')} | len:${rawBuffer.byteLength} | ZERO_COMPONENTS | ${parseError.slice(0,80)}`);
+                console.log(`ID ${id} | firstByte:0x${firstByte.toString(16).padStart(2, '0')} | len:${rawBuffer.byteLength} | ZERO_COMPONENTS | ${parseError.slice(0, 80)}`);
             } else {
-                console.log(`ID ${id} | firstByte:0x${firstByte.toString(16).padStart(2,'0')} | len:${rawBuffer.byteLength} | parsed:${components} | ${parseError.slice(0,80)}`);
+                console.log(`ID ${id} | firstByte:0x${firstByte.toString(16).padStart(2, '0')} | len:${rawBuffer.byteLength} | parsed:${components} | ${parseError.slice(0, 80)}`);
             }
         } else {
-            console.log(`ID ${id} | firstByte:0x${firstByte.toString(16).padStart(2,'0')} | len:${rawBuffer.byteLength} | OK (${components} components)`);
+            console.log(`ID ${id} | firstByte:0x${firstByte.toString(16).padStart(2, '0')} | len:${rawBuffer.byteLength} | OK (${components} components)`);
         }
-    } catch(e: any) {
+    } catch (e: any) {
         // getFile itself failed — likely empty slot
         // console.log(`ID ${id} | SLOT_EMPTY`);
     }
 }
 
 console.log('\n=== FIRST BYTE CLUSTERS ===');
-const sorted = Object.entries(firstByteMap).sort((a,b) => b[1].length - a[1].length);
+const sorted = Object.entries(firstByteMap).sort((a, b) => b[1].length - a[1].length);
 for (const [byte, ids] of sorted) {
-    console.log(`  0x${parseInt(byte).toString(16).padStart(2,'0')} → ${ids.length} interfaces: [${ids.slice(0,10).join(', ')}${ids.length > 10 ? '...' : ''}]`);
+    console.log(`  0x${parseInt(byte).toString(16).padStart(2, '0')} → ${ids.length} interfaces: [${ids.slice(0, 10).join(', ')}${ids.length > 10 ? '...' : ''}]`);
 }
 
 console.log('\n=== ERROR MESSAGE CLUSTERS ===');
-for (const [msg, ids] of Object.entries(errorMessages).sort((a,b) => b[1].length - a[1].length)) {
+for (const [msg, ids] of Object.entries(errorMessages).sort((a, b) => b[1].length - a[1].length)) {
     console.log(`  "${msg}" → ${ids.length} IDs`);
 }
 

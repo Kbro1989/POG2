@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>POG2 - Sovereign Unified Combat Substrate</title>
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #05070a;
+        color: #e0e6ed;
+        font-family: 'Inter', sans-serif;
+      }
+
+      #renderCanvas {
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+        outline: none;
+      }
+
+      .ui-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 40px;
+        box-sizing: border-box;
+      }
+
+      .ui-overlay > * {
+        pointer-events: auto;
+      }
+
+      /* Reuse existing styles from style.css */
+    </style>
+    <link rel="stylesheet" href="/src/style.css">
+  </head>
+  <body>
+    <canvas id="renderCanvas"></canvas>
+
+    <div class="ui-overlay">
+      <div class="top-row" style="display: flex; justify-content: space-between; width: 100%;">
+        <div class="status-panel" style="position: static;">
+          <div class="status-item">
+            <div class="indicator" id="engine-status"></div>
+            <span>Combat Engine: <strong>ACTIVE</strong></span>
+          </div>
+          <div class="status-item">
+            <div class="indicator" style="background: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue);"></div>
+            <span>Archetype: <strong id="archetype-name">AGGRESSIVE</strong></span>
+          </div>
+        </div>
+
+        <div class="volition-log" id="log" style="position: static;">
+          <!-- Logs injected here -->
+        </div>
+      </div>
+
+      <div class="middle-row" style="display: flex; justify-content: center; width: 100%; margin-top: 20px;">
+        <div id="causality-panel" class="causality-panel">
+          <!-- Causal nodes injected here -->
+        </div>
+      </div>
+
+      <div class="bottom-row" style="display: flex; justify-content: center; width: 100%;">
+        <div id="app" style="position: static;">
+          <div class="hud-container">
+            <div class="adrenaline-track">
+              <div class="adrenaline-fill" id="adrenaline-fill"></div>
+            </div>
+            <div class="action-bar" id="action-bar">
+              <!-- Slots injected here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -22,14 +22,14 @@ async function downloadIcons() {
     for (const icon of RIBBON_ICONS) {
         const outPath = path.join(OUT_DIR, `${icon.name}.png`);
         console.log(`Downloading ${icon.name}.png from ${icon.url} ...`);
-        
+
         try {
             const response = await fetch(icon.url, {
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) POG-Sovereign-Agent/1.0'
                 }
             });
-            
+
             if (response.ok) {
                 const buffer = await response.arrayBuffer();
                 fs.writeFileSync(outPath, Buffer.from(buffer));

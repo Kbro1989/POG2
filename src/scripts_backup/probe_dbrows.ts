@@ -13,7 +13,7 @@ async function probe() {
 
     try {
         console.log(`🔍 Querying Cache Index for Major ${cacheMajors.config} (config)...`);
-        
+
         // Use the correct Major/Minor index from CacheConstants.ts
         const dbrowsMinor = cacheConfigPages.dbrows; // 41
 
@@ -21,7 +21,7 @@ async function probe() {
         const archInfo = await source.getArchiveById(cacheMajors.config, dbrowsMinor);
 
         console.log(`✅ Successfully retrieved DBRow Archive. Subfile count: ${archInfo.length}`);
-        
+
         // 1. Identify Row 2353 (Sextant Grounding Anchor)
         const sextantFile = archInfo.find(f => f.fileid === 2353);
         if (sextantFile) {

@@ -109,11 +109,11 @@ export const NEUROLOGICAL_MAP = [
         biologicalRole: { organ: 'Tactile Nerve', input: 'RSC game data', output: 'Parsed game structures', constraints: 'Game-specific limb' }
     },
     {
-        path: 'src/utils/RSMVExtractor.ts', role: 'Anatomical Vision & Structural Pedagogy', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 10,
-        biologicalRole: { organ: 'Spatial Retain', input: 'RSMV Model JSON / Pedagogy Profile', output: 'SpeciesAnatomy + KineticProfile', constraints: 'Substrate for developmental memory' }
+        path: 'src/utils/rsmvExtractor.ts', role: 'Anatomical Vision & Structural Pedagogy', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Spatial Retain', input: 'rsmv Model JSON / Pedagogy Profile', output: 'SpeciesAnatomy + KineticProfile', constraints: 'Substrate for developmental memory' }
     },
     {
-        path: 'src/vision/RSMVController.ts', role: 'Active 3D Actuator & Pedagogy Ingestor', category: NeuralCategory.PNS, docDomain: 'VISION', metabolicBaseCost: 20,
+        path: 'src/vision/rsmvController.ts', role: 'Active 3D Actuator & Pedagogy Ingestor', category: NeuralCategory.PNS, docDomain: 'VISION', metabolicBaseCost: 20,
         biologicalRole: { organ: 'Visual Cortex (Motor)', input: 'ModelModifications / WikiData', output: 'ActuationResult (GLTF/Inspector/PedagogyProfile)', constraints: 'Drives physical model modification and structural learning' }
     },
     {
@@ -287,8 +287,8 @@ export const NEUROLOGICAL_MAP = [
         biologicalRole: { organ: 'Auditory Nerve', input: 'Audio buffer/stream', output: 'Transcription/Sentiment', constraints: 'Diagnostic focus' }
     },
     {
-        path: 'src/scripts/verify_rsmv_capabilities.ts', role: 'Spatial Capability Probe (RSMV)', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 10,
-        biologicalRole: { organ: 'Spatial Proprioception', input: 'Tool registry', output: 'RSMV functionality verification', constraints: 'Diagnostic focus' }
+        path: 'src/scripts/verify_rsmv_capabilities.ts', role: 'Spatial Capability Probe (rsmv)', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Spatial Proprioception', input: 'Tool registry', output: 'rsmv functionality verification', constraints: 'Diagnostic focus' }
     },
     {
         path: 'src/limbs/spatial/WikiReconciliationLimb.ts', role: 'Fact Verification (Wiki)', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 15,

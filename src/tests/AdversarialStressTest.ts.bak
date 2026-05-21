@@ -1,0 +1,52 @@
+import { SimulationHarness } from '../engines/gameplay/SimulationHarness.js';
+import { GlobalOffsetRegistry } from '../utils/GlobalOffsetRegistry.js';
+import { createLogger } from '../utils/logger.js';
+import { CanonicalClock } from '../utils/CanonicalClock.js';
+
+const logger = createLogger('AdversarialStressTest');
+
+/**
+ * AdversarialStressTest - The "Night Owl" Chaos Monkey.
+ * Orchestrates failures to validate the resilience of the Volumetric Substrate.
+ */
+export async function runStressTest(durationTicks: number = 100) {
+    const harness = SimulationHarness.getInstance();
+    const registry = GlobalOffsetRegistry.getInstance();
+    
+    logger.info('[STRESS] Initiating Adversarial Chaos Protocol.');
+
+    // Phase 1: Mild Turbulence (Packet Loss)
+    logger.info('[STRESS] Phase 1: Injecting 10% Packet Loss Jitter...');
+    harness.setStressMode(false, 0.1); 
+    await sleep(20 * 600); // Wait 20 ticks
+
+    // Phase 2: Euclidean Distortion (Coordinate Jitter)
+    logger.info('[STRESS] Phase 2: Injecting Coordinate Jitter (Testing Re-Anchoring)...');
+    harness.setStressMode(true, 0.1);
+    await sleep(20 * 600);
+
+    // Phase 3: The "World Hop" (Grounding Purge)
+    logger.info('[STRESS] Phase 3: CRITICAL FAILURE - Purging Global Offset Registry...');
+    registry.reset();
+    harness.setStressMode(true, 0.2); // Increase pressure
+    
+    // Monitor for re-calibration
+    for (let i = 0; i < 60; i++) {
+        const offset = registry.getCurrentOffset();
+        logger.info({ 
+            tick: i, 
+            dx: offset.dx.toFixed(3), 
+            dy: offset.dy.toFixed(3),
+            reanchored: (Math.abs(offset.dx) > 0 || Math.abs(offset.dy) > 0)
+        }, '[STRESS] Monitoring Recovery...');
+        await sleep(600);
+    }
+
+    // Restore Stability
+    logger.info('[STRESS] Restoring stability. Ceasing adversarial injection.');
+    harness.setStressMode(false, 0);
+}
+
+function sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}

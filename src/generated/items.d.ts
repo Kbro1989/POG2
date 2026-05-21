@@ -4,7 +4,7 @@
 
 export type items = {
 	nullopt?: true | null
-	baseModel?: (number|number) | null
+	baseModel?: (number | number) | null
 	name?: string | null
 	buff_effect?: string | null
 	model_zoom?: number | null
@@ -21,15 +21,15 @@ export type items = {
 	members?: true | null
 	multiStackSize?: number | null
 	maleModels_0?: {
-		id: (number|number),
-		type: (0|number),
+		id: (number | number),
+		type: (0 | number),
 	} | null
-	maleModels_1?: (number|number) | null
+	maleModels_1?: (number | number) | null
 	femaleModels_0?: {
-		id: (number|number),
-		type: (0|number),
+		id: (number | number),
+		type: (0 | number),
 	} | null
-	femaleModels_1?: (number|number) | null
+	femaleModels_1?: (number | number) | null
 	unknown_1B?: number | null
 	ground_actions_0?: string | null
 	ground_actions_1?: string | null
@@ -58,12 +58,12 @@ export type items = {
 	retextureDstIndices?: number | null
 	tradeable?: true | null
 	buy_limit?: number | null
-	maleModels_2?: (number|number) | null
-	femaleModels_2?: (number|number) | null
-	maleHeads_0?: (number|number) | null
-	femaleHeads_0?: (number|number) | null
-	maleHeads_1?: (number|number) | null
-	femaleHeads_1?: (number|number) | null
+	maleModels_2?: (number | number) | null
+	femaleModels_2?: (number | number) | null
+	maleHeads_0?: (number | number) | null
+	femaleHeads_0?: (number | number) | null
+	maleHeads_1?: (number | number) | null
+	femaleHeads_1?: (number | number) | null
 	category?: number | null
 	rotation_2?: number | null
 	dummyItem?: number | null

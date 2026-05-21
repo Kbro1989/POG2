@@ -7,7 +7,7 @@ const CACHE_DIR = "C:\\ProgramData\\Jagex\\RuneScape";
 async function run() {
     const source = new GameCacheLoader(CACHE_DIR);
     const index = await source.getCacheIndex(41); // DBRow Data Major
-    
+
     console.log(`🔍 Probing Major 41 (${index.length} archives)...`);
 
     for (const group of index) {
@@ -20,7 +20,7 @@ async function run() {
                     console.log(`✅ FOUND Table 39 in Archive 41:${group.minor}, File:${file.fileid}`);
                     // return; // Find one and stop
                 }
-            } catch {}
+            } catch { }
         }
         if (group.minor % 100 === 0) console.log(`  Scanned ${group.minor}...`);
     }

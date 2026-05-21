@@ -4,14 +4,14 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 import { join } from 'path';
-import { getRSMVSubstratePath } from '../utils/SovereignPathResolver.js';
+import { getrsmvSubstratePath } from '../utils/SovereignPathResolver.js';
 let parseOb3Model: any = null;
 let buildAttributeBuffer: any = null;
 let GameCacheLoader: any = null;
-const RSMV = getRSMVSubstratePath();
-try { ({ parseOb3Model } = require(join(RSMV, 'src', '3d', 'rt7model.js'))); } catch {}
-try { ({ buildAttributeBuffer } = require(join(RSMV, 'src', '3d', 'gltfutil.js'))); } catch {}
-try { ({ GameCacheLoader } = require(join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch {}
+const rsmv = getrsmvSubstratePath();
+try { ({ parseOb3Model } = require(join(rsmv, 'src', '3d', 'rt7model.js'))); } catch { }
+try { ({ buildAttributeBuffer } = require(join(rsmv, 'src', '3d', 'gltfutil.js'))); } catch { }
+try { ({ GameCacheLoader } = require(join(rsmv, 'src', 'cache', 'sqlite.js'))); } catch { }
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 // @ts-ignore - Importing from sibling project substrate
 
@@ -37,7 +37,7 @@ async function executeInjection() {
     console.log('ðŸ“ Phase 6: Sovereign Geometry Injection\n');
 
     if (!GameCacheLoader || !parseOb3Model || !buildAttributeBuffer) {
-        console.error('âŒ RSMV headless substrate not available. Ensure rsmv modules are built.');
+        console.error('âŒ rsmv headless substrate not available. Ensure rsmv modules are built.');
         return;
     }
 

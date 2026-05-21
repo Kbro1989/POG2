@@ -79,7 +79,7 @@ async function main() {
                         if (file.includes(searchBuffers[i])) {
                             const offset = file.indexOf(searchBuffers[i]);
                             const context = file.slice(Math.max(0, offset - 40), Math.min(file.length, offset + 80)).toString('utf8').replace(/[\r\n\t]/g, ' ');
-                            
+
                             findings[category].push({
                                 major,
                                 archive: index.minor,

@@ -2,7 +2,7 @@
  * AvatarCompositionEngine.ts
  * 
  * Bridges the SovereignAvatarEntity to the RSMV cache-grounded avatar pipeline.
- * Uses the real 16-slot avatar encoding from rsmv/3d/avatar.ts, identity kit
+ * Uses the real 16-slot avatar encoding from RSMV/3d/avatar.ts, identity kit
  * definitions, and Jagex's HSL color replacement system.
  * 
  * This engine does NOT fabricate schemas — it consumes the cache substrate directly
@@ -18,10 +18,14 @@
 
 import { Result } from '../core/models.js';
 import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
-import { slotNames, slotToKitMale, slotToKitFemale, avatarToModel, writeAvatar, avatarStringToBytes, bytesToAvatarString } from '../rsmv/3d/avatar.js';
-import type { EquipSlot } from '../rsmv/3d/avatar.js';
-import type { SimpleModelDef } from '../rsmv/3d/modelnodes.js';
-import type { EngineCache } from '../rsmv/3d/modeltothree.js';
+import { slotNames, slotToKitMale, slotToKitFemale, avatarToModel, writeAvatar, avatarStringToBytes, bytesToAvatarString } from 'rsmv/3d/avatar.js';
+import type { EquipSlot } from 'rsmv/3d/avatar.js';
+export type SimpleModelDef = {
+    modelid: number;
+    mods: any;
+    injectedModelData?: any;
+}[];
+export type EngineCache = any;
 import type { avataroverrides } from '../generated/avataroverrides.js';
 
 // ═══════════════════════════════════════════════════════
@@ -55,7 +59,7 @@ export class AvatarCompositionEngine {
 
     /**
      * Bind to a live EngineCache instance. Required before any composition calls.
-     * This is the real RSMV cache substrate, not a mock.
+     * This is the real rsmv cache substrate, not a mock.
      */
     public bindCache(cache: EngineCache): void {
         this.engineCache = cache;
@@ -63,7 +67,7 @@ export class AvatarCompositionEngine {
 
     /**
      * Compose a full avatar model from a raw avatar buffer (from cache or network).
-     * Delegates entirely to the RSMV avatarToModel parser which handles:
+     * Delegates entirely to the rsmv avatarToModel parser which handles:
      *   - 16-slot equipment/kit tree search
      *   - Identity kit body part resolution
      *   - HSL color replacement (skin, hair, clothes, boots)

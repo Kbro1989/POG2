@@ -21,7 +21,7 @@ walk(targetDir, (file) => {
         // Matches: function* name(...) {
         // Replaces with: function* name(...): Generator<any, any, any> {
         content = content.replace(/function\*\s+(\w+)\s*\(([^)]*)\)\s*(?!:)/g, 'function* $1($2): Generator<any, any, any> ');
-        
+
         // Matches: name = function*\s*\(([^)]*)\)\s*(?!:)/
         content = content.replace(/=\s*function\*\s*\(([^)]*)\)\s*(?!:)/g, '= function*($1): Generator<any, any, any> ');
 

@@ -34,15 +34,15 @@ for (const relPath of files) {
         console.log(`SKIP: ${relPath} not found`);
         continue;
     }
-    
+
     let content = fs.readFileSync(fullPath, "utf8");
     let count = 0;
-    
+
     const newContent = content.replace(FOR_LOOP_REGEX, (match, keyword, varName, loopType) => {
         count++;
         return `for (${keyword} ${varName} ${loopType}`;
     });
-    
+
     if (count > 0) {
         fs.writeFileSync(fullPath, newContent, "utf8");
         console.log(`FIXED ${count} for-${count > 0 ? 'in/of' : ''} annotations in ${relPath}`);
@@ -53,7 +53,7 @@ for (const relPath of files) {
         const lines = content.split('\n');
         for (let i = 0; i < lines.length; i++) {
             if (lines[i].match(/for\s*\(.*:\s*any\s+(of|in)\b/)) {
-                console.log(`  Line ${i+1}: ${lines[i].trim()}`);
+                console.log(`  Line ${i + 1}: ${lines[i].trim()}`);
             }
         }
     }

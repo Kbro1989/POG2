@@ -1,6 +1,6 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { existsSync, mkdirSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, promises as fsPromises } from 'fs';
 import { join, resolve } from 'path';
 import { EventEmitter } from 'events';
 import { fetch as undiciFetch } from 'undici';
@@ -148,6 +148,10 @@ export class SovereignEye extends EventEmitter {
                 timestamp
             };
 
+            if (screenshotResult.ok) {
+                await this.cleanupOldCaptures();
+            }
+
             this.emit('capture', result);
 
             return {
@@ -185,6 +189,10 @@ export class SovereignEye extends EventEmitter {
                 metadata: { filePath: absPath, hasScreenshot: screenshotResult.ok },
                 timestamp
             };
+
+            if (screenshotResult.ok) {
+                await this.cleanupOldCaptures();
+            }
 
             this.emit('capture', result);
 
@@ -259,6 +267,7 @@ $bitmap.Dispose()
                 timestamp
             };
 
+            await this.cleanupOldCaptures();
             this.emit('capture', result);
 
             return {
@@ -321,6 +330,34 @@ $bitmap.Dispose()
         }
 
         return { ok: false, error: new Error('No headless browser available.') };
+    }
+
+    private async cleanupOldCaptures(maxFiles: number = 50): Promise<void> {
+        try {
+            const entries = await fsPromises.readdir(this.captureDir);
+            const imageFiles = entries.filter(name => /\.(png|jpg|jpeg|webp|gif)$/i.test(name));
+
+            if (imageFiles.length <= maxFiles) {
+                return;
+            }
+
+            const imageStats = await Promise.all(imageFiles.map(async (name) => {
+                const fullPath = join(this.captureDir, name);
+                const stat = await fsPromises.stat(fullPath);
+                return { name, path: fullPath, mtimeMs: stat.mtimeMs };
+            }));
+
+            imageStats.sort((a, b) => a.mtimeMs - b.mtimeMs);
+            const deleteCount = imageStats.length - maxFiles;
+
+            for (let i = 0; i < deleteCount; i += 1) {
+                await fsPromises.unlink(imageStats[i].path);
+            }
+
+            logger.info({ deleted: deleteCount, keep: maxFiles }, 'SovereignEye pruned old capture artifacts');
+        } catch (err) {
+            logger.warn({ err }, 'Failed to prune old SovereignEye capture artifacts');
+        }
     }
 
     getCaptureDir(): string {

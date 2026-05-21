@@ -25,7 +25,7 @@ async function run() {
                 const enumData = parse.enums.read(enumBuf, source);
                 console.log(`   Enum ${prop.intvalue} has ${enumData.intArrayValue2?.values.length} coordinates.`);
             }
-        } catch (e) {}
+        } catch (e) { }
     }
 
     // 2. Check for Player Rank Enums
@@ -38,7 +38,7 @@ async function run() {
             if (rankKeywords.some(k => str.includes(k))) {
                 console.log(`🎯 Hit in Enum ${id}: "${str.substring(0, 50)}..."`);
             }
-        } catch (e) {}
+        } catch (e) { }
     }
 
     source.close();

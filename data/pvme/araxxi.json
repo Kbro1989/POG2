@@ -1,0 +1,201 @@
+{
+  "boss": "Araxxi",
+  "lastUpdated": "2026-05-16T11:43:13.905Z",
+  "bestiary": {
+    "def": "no",
+    "page1": "Araxxi/Strategies",
+    "name": "Araxyte spider egg (unchecked)",
+    "image": "Pete.png",
+    "release": "[[28 July]] [[2014]]",
+    "update": "Araxxor, Twitch Integration and Lobby Update",
+    "members": "Yes",
+    "options": "Attack",
+    "race": "araxyte",
+    "examine": "Believe it or not, she's still hungry.",
+    "level": "3000",
+    "lifepoints": "100000",
+    "aggressive": "Yes",
+    "poisonous": "Yes",
+    "max_melee": "1653",
+    "max_ranged": "1653",
+    "max_magic": "1653",
+    "max_necromancy": "0",
+    "max_spec": "10700",
+    "style": "magic, ranged, melee",
+    "primarystyle": "magic",
+    "speed": "4",
+    "attack": "99",
+    "ranged": "99",
+    "magic": "99",
+    "necromancy": "1",
+    "acc_melee": "2458",
+    "acc_ranged": "2458",
+    "acc_magic": "2458",
+    "acc_necromancy": "0",
+    "armour": "1924",
+    "defence": "80",
+    "weakness": "Nothing",
+    "susceptibility": "NopeNopeNope",
+    "aff_weakness": "60",
+    "aff_melee": "60",
+    "aff_ranged": "60",
+    "aff_magic": "60",
+    "immune_to_poison": "Yes",
+    "immune_to_deflect": "Yes",
+    "immune_to_stun": "Yes",
+    "immune_to_drain": "Yes",
+    "dropversion": "Solo,Duo",
+    "id": "19464",
+    "loc": "[[Araxyte Hive]]",
+    "lvls": "3000",
+    "mem": "yes",
+    "boss": "{{chatl",
+    "pic": "Mallory chathead",
+    "access": "[[Webbed entrance]] ({{Maplink",
+    "mapID": "669",
+    "x": "4487",
+    "y": "6265",
+    "text": "Araxyte Hive",
+    "mtype": "pin",
+    "cost_coins": "200000",
+    "cost_reduced": "150000",
+    "grave": "Inside the Araxyte Hive graveyard",
+    "timer": "2",
+    "notes": "[[Mod Sponge]] joined the stream at 03:25:00 and discussed how a programmer made an error in the RuneScript, due to how the language handles decimals, meaning the intended 102% (x1.02%) drop rate improvement (+0.02) actually resulted in 200% (x2.00%). The video is currently unarchived.",
+    "kills": "93549",
+    "author": "The RS Guy",
+    "url": "1190317743",
+    "forum": "Existing Game Content",
+    "title": "TESTING OUT THE BRAND NEW T95 SWORD",
+    "postdate": "6 October 2017",
+    "archiveurl": "http://archive.is/ycOt4",
+    "archivedate": "28 February 2020",
+    "quantity": "1",
+    "rarity": "Very Rare",
+    "altrarity": "10/500",
+    "altraritydash": "yes",
+    "raritynotes": "{{DropNote",
+    "gemw": "no",
+    "alch": "no",
+    "altvalue": "{{CVP",
+    "namenotes": "{{NamedRef",
+    "group": "d",
+    "quote": "[link to a spreadsheet]",
+    "date": "30 October 2021",
+    "version": "Duo",
+    "citations": "{{NamedRef",
+    "type": "update",
+    "site": "Twitch",
+    "accessdate": "21 November 2017",
+    "timestamp": "04:08:48",
+    "lost": "yes"
+  },
+  "rotations": [
+    {
+      "section": "Special attacks",
+      "label": "Rotation",
+      "abilities": [
+        "Regular spider",
+        "Regular spider",
+        "[[File:Mirrorback spider.png",
+        "40px",
+        "40px",
+        "Regular spider",
+        "Regular spider"
+      ]
+    },
+    {
+      "section": "Special attacks",
+      "label": "Rotation",
+      "abilities": [
+        "Regular spider",
+        "[[File:Mirrorback spider.png",
+        "40px",
+        "40px",
+        "Regular spider",
+        "Regular spider",
+        "Regular spider"
+      ]
+    },
+    {
+      "section": "Special attacks",
+      "label": "Rotation",
+      "abilities": [
+        "[[File:Mirrorback spider.png",
+        "40px",
+        "40px",
+        "Regular spider",
+        "Regular spider",
+        "Regular spider",
+        "Regular spider"
+      ]
+    },
+    {
+      "section": "Special attacks",
+      "label": "Rotation",
+      "abilities": [
+        "Regular spider",
+        "Regular spider",
+        "Regular spider",
+        "Regular spider",
+        "Regular spider"
+      ]
+    },
+    {
+      "section": "Special attacks",
+      "label": "Rotation",
+      "abilities": [
+        "Regular spider",
+        "Regular spider",
+        "Regular spider",
+        "Regular spider",
+        "5 Regular spiders + 1 of [[File:Mirrorback spider.png",
+        "40px",
+        "40px"
+      ]
+    },
+    {
+      "section": "Special attacks",
+      "label": "Rotation",
+      "abilities": [
+        "Regular spider",
+        "Regular spider",
+        "Regular spider",
+        "Regular spider",
+        "4 Regular spiders + 2 of [[File:Mirrorback spider.png",
+        "40px",
+        "40px"
+      ]
+    },
+    {
+      "section": "Special attacks",
+      "label": "Rotation",
+      "abilities": [
+        "Regular spider",
+        "Regular spider",
+        "Regular spider",
+        "[[File:Mirrorback spider.png",
+        "40px",
+        "40px",
+        "5 Regular spiders + 1 of [[File:Mirrorback spider.png",
+        "40px",
+        "40px"
+      ]
+    },
+    {
+      "section": "Special attacks",
+      "label": "Rotation",
+      "abilities": [
+        "Regular spider",
+        "Regular spider",
+        "[[File:Mirrorback spider.png",
+        "40px",
+        "40px",
+        "Regular spider",
+        "5 Regular spiders + 1 of [[File:Mirrorback spider.png",
+        "40px",
+        "40px"
+      ]
+    }
+  ]
+}

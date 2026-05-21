@@ -11,12 +11,12 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
 
-// Resolve paths to RSMV substrate
+// Resolve paths to rsmv substrate
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const RSMV_ROOT = 'D:\\sovereign\\cache_pedagogy\\rsmv_inspector';
+const rsmv_ROOT = 'D:\\sovereign\\cache_pedagogy\\rsmv_inspector';
 
 // Use tsx or ts-node to run this, pointing to the source files
-// We need to polyfill some globals that RSMV expects
+// We need to polyfill some globals that rsmv expects
 (global as any).atob = (str: string) => Buffer.from(str, 'base64').toString('binary');
 (global as any).btoa = (str: string) => Buffer.from(str, 'binary').toString('base64');
 
@@ -27,7 +27,7 @@ async function runDiscovery(regionId: number) {
     // In a real execution, we would import these. For this draft, I'm outlining
     // the precise forensic query logic.
     const cachePath = "C:\\ProgramData\\Jagex\\RuneScape";
-    
+
     // Discovery Target: Prifddinas (8755)
     // Coordinates: (regionId >> 8, regionId & 0xFF) => (34, 51)
     const rx = (regionId >> 8) & 0xFF;
@@ -44,7 +44,7 @@ async function runDiscovery(regionId: number) {
      * We look for the 'maybe_blocks_movement' flag (Opcode 0x1B).
      */
     console.log(`[QUERY] Scanning Index 2 (Configs) for Navigation Opcodes...`);
-    
+
     // Mocking the loop that would run over cache archives
     const sampleObjects = [
         { id: 92415, name: "Crystal Fence", opcodes: [0x1B, 0x1C], blocks: true },
@@ -57,7 +57,7 @@ async function runDiscovery(regionId: number) {
      * We look for 'type 0-3' (Walls) and 'rotation' (0-3).
      */
     console.log(`[QUERY] Scanning Index 5 (Maps) for Placement Usages...`);
-    
+
     sampleObjects.forEach(obj => {
         discoveryReport.findings.push({
             id: obj.id,
@@ -71,9 +71,9 @@ async function runDiscovery(regionId: number) {
     // Save unmodified findings
     const outPath = path.resolve(__dirname, '../atlas/spatial/raw_discovery_8755.json');
     if (!fs.existsSync(path.dirname(outPath))) fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    
+
     fs.writeFileSync(outPath, JSON.stringify(discoveryReport, null, 2));
-    
+
     console.log(`\n[SUCCESS] Discovery complete.`);
     console.log(`[ARTIFACT] Findings saved to: atlas/spatial/raw_discovery_8755.json`);
 }

@@ -8,6 +8,7 @@ import { HexagramManager } from '../../routing/HexagramManager.js';
 import { AIDispatcher } from '../../api/ai/Dispatcher.js';
 import { WikiEnricher } from '../../utils/WikiEnricher.js';
 import { EntityLimb } from '../../limbs/technical/EntityLimb.js';
+import { HexagramNetworkBridge } from '../../limbs/technical/HexagramNetworkBridge.js';
 import { createLogger } from '../../utils/logger.js';
 import { NecromancyAbility, NecromancyGFX } from './NecromancyInterfaces.js';
 import { SwitchboardLimb } from '../../monitor/SwitchboardLimb.js';
@@ -19,6 +20,7 @@ import { NpcAgent, NpcAgentConfig } from './NpcAgent.js';
 import { InteractionGateway } from '../../limbs/logical/InteractionGateway.js';
 import { GameplaySovereigntyLimb } from '../../limbs/spatial/GameplaySovereigntyLimb.js';
 import { DBRowOracleLimb } from '../../limbs/spatial/DBRowOracleLimb.js';
+import { GameplayProjectionLimb } from '../../limbs/spatial/GameplayProjectionLimb.js';
 import { WorldStateLimb } from '../../limbs/logical/WorldStateLimb.js';
 import { AdminCommandProcessor } from '../../limbs/logical/world/AdminCommandProcessor.js';
 import { CombatRotationEngine } from './CombatRotationEngine.js';
@@ -26,8 +28,9 @@ import { AbilityBook, AbilityDefinition } from './AbilityBook.js';
 import { ItemBook } from './ItemBook.js';
 import { LuckTierRegistry } from './LuckTierRegistry.js';
 import { LootResolutionEngine } from './LootResolutionEngine.js';
-import { EpistemicTransitionKernel } from '../core/EpistemicTransitionKernel.js';
+import { EpistemicTransitionKernel, PredictionRegistry } from '../core/EpistemicTransitionKernel.js';
 import { CanonicalClock } from '../../utils/CanonicalClock.js';
+import { stateProvider } from '../../utils/StateProvider.js';
 
 export interface TickEvent {
     readonly id: string;
@@ -58,11 +61,11 @@ export class ServerLogicMapper {
         try {
             const systemRoot = getAtlasSystemPath();
             const fallbackPath = join(systemRoot, 'cache_logic_mapping.json');
-            
+
             const spatialRoot = getAtlasSpatialPath();
             const spatialPath = join(spatialRoot, 'npc_extract', 'cache_logic_mapping.json');
             const effectivePath = fs.existsSync(spatialPath) ? spatialPath : fallbackPath;
-            
+
             if (fs.existsSync(effectivePath)) {
                 const data = fs.readFileSync(effectivePath, 'utf8');
                 const findings = JSON.parse(data);
@@ -85,7 +88,7 @@ export class ServerLogicMapper {
         // 1. Enforce Cache Authority (Reflexive Veto)
         const cacheMatch = this.systemMapping.find(m => m.major === 18 && m.context.includes(npcId.toString()));
         const isDummy = cacheMatch?.keyword === 'dummy';
-        
+
         if (isDummy) {
             const res = `[SERVER_LOGIC] Entity ${npcId} is a CACHE_DUMMY. Internalizing reflexive silence.`;
             this.behaviorCache.set(npcId, res);
@@ -118,6 +121,26 @@ export class ServerLogicMapper {
  * The central CNS node for the deterministic Dual-Tick pulse.
  */
 export class SimulationHarness {
+    private static instance: SimulationHarness | null = null;
+    private avatar: SovereignAvatar | null = null;
+
+    public static bootstrap(
+        grounding: WorldGroundingLimb,
+        hexagram: HexagramManager,
+        dispatcher: AIDispatcher,
+        entityLimb: EntityLimb,
+        switchboard: SwitchboardLimb
+    ): SimulationHarness {
+        if (!this.instance) {
+            this.instance = new SimulationHarness(grounding, hexagram, dispatcher, entityLimb, switchboard);
+        }
+        return this.instance;
+    }
+
+    public setAvatar(avatar: SovereignAvatar): void {
+        this.avatar = avatar;
+    }
+
     private grounding: WorldGroundingLimb;
     private hexagram: HexagramManager;
     private dispatcher: AIDispatcher;
@@ -126,7 +149,8 @@ export class SimulationHarness {
     private switchboard: SwitchboardLimb;
     private interactionGateway: InteractionGateway;
     private dbRowOracle: DBRowOracleLimb;
-    
+    public networkBridge: any; // HexagramNetworkBridge
+
     private lastDeepSync: number = 0;
     private isSyncing: boolean = false;
 
@@ -156,6 +180,9 @@ export class SimulationHarness {
         this.interactionGateway = new InteractionGateway();
         this.dbRowOracle = DBRowOracleLimb.getInstance();
         this.dbRowOracle.initialize();
+        this.networkBridge = new HexagramNetworkBridge();
+        // Automatically connect the bridge in the background
+        this.networkBridge.connect().catch((e: Error) => logger.error(e, 'Background bridge connect failed'));
 
         // Bootstrap the pathfinder against the singleton spatial authority
         const spatial = SpatialSovereigntyLimb.getInstance();
@@ -197,6 +224,9 @@ export class SimulationHarness {
         const yao = this.hexagram.getYaoState();
         const bias = this.calculateMetabolicBias(yao);
 
+        // Tick-synchronize the StateProvider for L2 cache invalidation diagnostics
+        stateProvider.onTickBoundary(tickCount);
+
         // 0. Process Authoritative Switchboard Commands (Tick-Synchronized)
         const commands = this.switchboard.getAdminQueue();
         if (commands.length > 0) {
@@ -230,7 +260,7 @@ export class SimulationHarness {
 
         // 0.5 Asynchronous Loot Syntheses
         const readyDrops = LootResolutionEngine.getInstance().popReadyDrops();
-        
+
         if (!state.groundItems) {
             state.groundItems = new Map();
         }
@@ -245,7 +275,7 @@ export class SimulationHarness {
                 // GE value: pulled from item if resolved by WikiEquipmentEnricher, else 0.
                 // Used by LootBeamRegistry.resolveLootBeamTier() for authentic tier logic.
                 const geValue: number = (item as any).geValue ?? 0;
-                
+
                 cellItems.push({
                     id: parseInt(dropId.split('_')[1] || "0", 10),
                     itemName: item.itemName,
@@ -304,17 +334,17 @@ export class SimulationHarness {
             // Either they arrived, or they were already there.
             const interaction = avatar.pendingInteraction;
             avatar.pendingInteraction = null; // Clear it to prevent looping
-            
+
             const activeModule = GameplaySovereigntyLimb.getInstance().activeModule || this.serverLogic /* universal fallback? */;
-            
+
             const results = await this.interactionGateway.evaluateInteraction(
-                avatar, 
-                interaction.action, 
-                interaction.targetId, 
-                state, 
+                avatar,
+                interaction.action,
+                interaction.targetId,
+                state,
                 activeModule
             );
-            
+
             for (const log of results) {
                 logger.info({ action: interaction.action, targetId: interaction.targetId }, log);
             }
@@ -343,7 +373,7 @@ export class SimulationHarness {
                     if (data.spatial && data.spatial.x >= minX && data.spatial.x <= maxX && data.spatial.y >= minZ && data.spatial.y <= maxZ) {
                         const npcId = data.npcId || parseInt(id.split('_')[1], 10);
                         // Use the unique entity ID as the key to prevent collisions and support pruning
-                        const entityKey = id; 
+                        const entityKey = id;
                         if (!state.npcMap.has(entityKey as any)) {
                             state.npcMap.set(entityKey as any, {
                                 id: npcId,
@@ -365,23 +395,50 @@ export class SimulationHarness {
                     }
                 }
             }
-            
+
             // Phase 116: Prune distant entities to prevent OOM
             this.pruneEntities(state, avatar);
         }
 
+        // Verify spatial predictions
+        for (const [npcId, npc] of state.npcMap) {
+            PredictionRegistry.getInstance().verifySpatialPrediction(
+                `npc_${npc.id}`,
+                npc.coord,
+                tickCount
+            );
+        }
+
         // 3. Map Server-Only Logic to the Current Tick
-        for (const [npcId] of state.npcMap) {
+        for (const [entityKey, npc] of state.npcMap) {
+            const safeName = npc.name ? npc.name.replace(/\s+/g, '_') : 'Unknown';
+            const limbId = `npc_${npc.id}_${safeName}`;
+
             // Persistent Registration (Ensures we only register once per session)
             this.entityLimb.registerEntity({
-                id: `npc_${npcId}`,
+                id: limbId,
                 type: 'npc',
-                name: `NPC ${npcId}`,
-                isDummy: this.serverLogic.isDummy(npcId)
-            }).catch(() => {});
+                name: npc.name,
+                isDummy: this.serverLogic.isDummy(npc.id as any)
+            }).then(() => {
+                // Enrich via Wiki Pedagogy if it's a named NPC
+                if (npc.name && !npc.name.includes('undefined') && npc.name !== `NPC ${npc.id}`) {
+                    import('../../utils/WikiEnricher.js').then(({ WikiEnricher }) => {
+                        WikiEnricher.enrichNpc(npc.name).then(wikiRes => {
+                            if (wikiRes.ok) {
+                                this.entityLimb.addMemory(limbId, {
+                                    type: 'pedagogy',
+                                    content: { source: 'wiki', tag: wikiRes.value.role, intent: wikiRes.value.intent },
+                                    weight: 1.0
+                                }).catch(() => {});
+                            }
+                        }).catch(() => {});
+                    });
+                }
+            }).catch(() => { });
 
-            this.serverLogic.resolveNpcBehavior(npcId, tickCount).catch(err => {
-                logger.error({ err, npcId }, 'Logic resolution failure — defaulting to visceral reflex.');
+            this.serverLogic.resolveNpcBehavior(npc.id as any, tickCount).catch(err => {
+                logger.error({ err, npcId: npc.id }, 'Logic resolution failure — defaulting to visceral reflex.');
             });
         }
 
@@ -444,7 +501,7 @@ export class SimulationHarness {
             this.syncGodhead(state, avatar).catch(err => {
                 logger.error({ err }, 'Strategic Deep Path sync stalled — retaining last known reality.');
             });
-        this.lastDeepSync = tickCount;
+            this.lastDeepSync = tickCount;
         }
     }
 
@@ -455,7 +512,7 @@ export class SimulationHarness {
     private pruneEntities(state: GameState, avatar: SovereignAvatar): void {
         const PRUNE_RADIUS = 100; // 100 tiles
         const PRUNE_RADIUS_SQ = PRUNE_RADIUS * PRUNE_RADIUS;
-        
+
         let npcPruneCount = 0;
         let itemPruneCount = 0;
 
@@ -541,7 +598,7 @@ export class SimulationHarness {
                     // FOUR-BUCKET AUTHORITATIVE CHECK (Ground, Equipped, Inventory, Bank)
                     // Portable stations typically require a specific item (e.g. Logs/Fish)
                     const substrate = this.checkItemSubstrate(avatar, state, 995, 1); // 995 = Coins (Stackable Placeholder)
-                    
+
                     if (substrate && this.calcProductionSuccessful(1, 99, 99)) {
                         events.push({
                             id: `obj_${objId}`,
@@ -571,6 +628,17 @@ export class SimulationHarness {
 
         // 3. Reflexive Combat Processing
         this.processAbilityIntents(tick, state, avatar, events);
+
+        // 4. Tick State Machines (Adrenaline, Cooldowns)
+        const av = avatar as any;
+        if (av.combatEngine && typeof av.combatEngine.tick === 'function') {
+            av.combatEngine.tick();
+        }
+        for (const [_, npc] of state.npcMap) {
+            if ((npc as any).combatEngine && typeof (npc as any).combatEngine.tick === 'function') {
+                (npc as any).combatEngine.tick();
+            }
+        }
     }
 
     /**
@@ -579,23 +647,23 @@ export class SimulationHarness {
      */
     private processAbilityIntents(tickCount: number, state: GameState, avatar: SovereignAvatar, events: TickEvent[]): void {
         const combatants: any[] = [
-            avatar, 
+            avatar,
             ...Array.from(state.npcMap.values()).map(agent => (agent as any).getNpc ? (agent as any).getNpc() : agent)
         ];
         const engine = CombatRotationEngine.getInstance();
         const book = AbilityBook.getInstance();
         const itemBook = ItemBook.getInstance();
 
-        const chebyshev = (c1: {x:number, y:number}, c2: {x:number, y:number}) => Math.max(Math.abs(c1.x - c2.x), Math.abs(c1.y - c2.y));
+        const chebyshev = (c1: { x: number, y: number }, c2: { x: number, y: number }) => Math.max(Math.abs(c1.x - c2.x), Math.abs(c1.y - c2.y));
         const normalizeAngle = (angle: number) => {
             while (angle <= -Math.PI) angle += 2 * Math.PI;
             while (angle > Math.PI) angle -= 2 * Math.PI;
             return angle;
         };
-        
+
         for (const entity of combatants) {
             if (!entity.intent) continue;
-            
+
             const intent = entity.intent;
             if (intent.action === 'execute_ability' || intent.action === 'attack') {
                 // Determine target
@@ -613,7 +681,7 @@ export class SimulationHarness {
                 if (target) {
                     let weaponTier = 1;
                     let combatLevel = 10; // Default for NPCs without skill data
-                    
+
                     if (entity.id === avatar.id || entity.username === 'Sovereign') {
                         const wId = (avatar.equipment as any)?.['weapon']?.id;
                         weaponTier = Math.max(1, Math.floor(itemBook.getWeaponScalar(wId) / 100));
@@ -639,12 +707,37 @@ export class SimulationHarness {
                                 animaCharged: !!(entity as any).animaCharged,
                                 shadowImbued: ((entity as any).shadowImbuedTicksRemaining || 0) > 0
                             });
-                            
+
                             // ── Adrenaline Economy (March 2026) ──
-                            if (ability.adrenalineCost > 0) {
-                                entity.adrenaline = Math.max(0, (entity.adrenaline || 0) - ability.adrenalineCost);
-                            } else if (ability.adrenalineGain > 0) {
-                                entity.adrenaline = Math.min(10000, (entity.adrenaline || 0) + ability.adrenalineGain);
+                            const entAny = entity as any;
+                            if (entAny.combatEngine && typeof entAny.combatEngine.useAbility === 'function') {
+                                // Try to map the ability ID to a slot
+                                const slotIdx = (entAny.actionBarSlots || []).indexOf(ability.id);
+                                if (slotIdx !== -1) {
+                                    // Use state machine (handles adrenaline and cooldown)
+                                    entAny.combatEngine.useAbility(slotIdx);
+                                    
+                                    // Request animation and GFX models from cache via the bridge (Simulated)
+                                    if (this.networkBridge) {
+                                        // ability.animId might not exist but this requests dummy files to test the bridge flow
+                                        this.networkBridge.requestCacheFile(2, (ability as any).animId || 0).catch(console.error);
+                                    }
+
+                                    damage = entAny.combatEngine.slots?.[slotIdx]?.ability?.damage 
+                                        ? engine.calculateDamage(ability, combatLevel, weaponTier, {
+                                            bloodlustStacks: entAny.bloodlustStacks || 0,
+                                            animaCharged: !!entAny.animaCharged,
+                                            shadowImbued: (entAny.shadowImbuedTicksRemaining || 0) > 0
+                                        }) 
+                                        : damage;
+                                }
+                            } else {
+                                // Inline fallback for NPCs
+                                if (ability.adrenalineCost > 0) {
+                                    entAny.adrenaline = Math.max(0, (entAny.adrenaline || 0) - ability.adrenalineCost);
+                                } else if (ability.adrenalineGain > 0) {
+                                    entAny.adrenaline = Math.min(10000, (entAny.adrenaline || 0) + ability.adrenalineGain);
+                                }
                             }
                         }
                     } else if (intent.action === 'attack') {
@@ -653,14 +746,14 @@ export class SimulationHarness {
                         // Auto-attacks generate 2% adrenaline (200)
                         entity.adrenaline = Math.min(10000, (entity.adrenaline || 0) + 200);
                     }
-                    
+
                     const applyDamage = (t: any, d: number, modifier: number = 1.0) => {
                         const finalDamage = Math.floor(d * modifier);
                         if (finalDamage <= 0) return;
 
                         t.combatStats = t.combatStats || { maxHp: 1000, currentHp: 1000 };
                         t.combatStats.currentHp -= finalDamage;
-                        
+
                         const isDead = t.combatStats.currentHp <= 0;
 
                         events.push({
@@ -670,10 +763,10 @@ export class SimulationHarness {
                             timestamp: CanonicalClock.getInstance().simulatedNow(),
                             truthClass: TruthClass.EXECUTION
                         });
-                        
-                        logger.info({ 
-                            attacker: entity.id || 'player_sovereign', 
-                            target: t.id || 'player', 
+
+                        logger.info({
+                            attacker: entity.id || 'player_sovereign',
+                            target: t.id || 'player',
                             damage: finalDamage,
                             ability: intent.abilityId || 'Basic Attack'
                         }, '[COMBAT EXECUTION] Hit splat generation.');
@@ -681,7 +774,7 @@ export class SimulationHarness {
                         if (isDead) {
                             if (t.id && (String(t.id).startsWith('npc_') || typeof t.id === 'number')) {
                                 const rawNpcId = typeof t.id === 'string' ? parseInt(t.id.split('_')[1], 10) : t.id;
-                                
+
                                 const equippedNames: string[] = [];
                                 if (avatar.equipment) {
                                     for (const slotKey in avatar.equipment) {
@@ -695,7 +788,7 @@ export class SimulationHarness {
                                     }
                                 }
                                 const luckSnapshot = LuckTierRegistry.getInstance().resolveEffectiveTier(equippedNames);
-                                
+
                                 LootResolutionEngine.getInstance().queueDeath({
                                     npcId: rawNpcId,
                                     coord: { x: t.x || t.coord?.x, y: t.y || t.coord?.y, plane: t.plane || t.coord?.plane || 0 },
@@ -717,7 +810,7 @@ export class SimulationHarness {
                         // AoE Branches
                         if (ability?.flags) {
                             const attackerCoord = entity.coord || { x: entity.x, y: entity.y, plane: entity.plane };
-                            
+
                             // PBAOE
                             if (ability.flags.includes('pbaoe') && ability.aoeRadius) {
                                 const aoeRadius = ability.aoeRadius;
@@ -736,7 +829,7 @@ export class SimulationHarness {
                                 const dx = target.coord?.x !== undefined ? target.coord.x - attackerCoord.x : target.x - attackerCoord.x;
                                 const dy = target.coord?.y !== undefined ? target.coord.y - attackerCoord.y : target.y - attackerCoord.y;
                                 const facingAngle = Math.atan2(dy, dx);
-                                
+
                                 for (const rawNpc of state.npcMap.values()) {
                                     const npc = (rawNpc as any).getNpc ? (rawNpc as any).getNpc() : rawNpc;
                                     if (npc.id === target.id) continue;
@@ -745,7 +838,7 @@ export class SimulationHarness {
                                     const ndy = npcCoord.y - attackerCoord.y;
                                     const npcAngle = Math.atan2(ndy, ndx);
                                     const angleDiff = Math.abs(normalizeAngle(npcAngle - facingAngle));
-                                    
+
                                     if (angleDiff <= ability.coneHalfAngle && chebyshev(attackerCoord, npcCoord) <= ability.range) {
                                         applyDamage(npc, damage, 0.6);
                                     }
@@ -760,7 +853,7 @@ export class SimulationHarness {
                                     const npc = (rawNpc as any).getNpc ? (rawNpc as any).getNpc() : rawNpc;
                                     if (npc.id === target.id) continue;
                                     if (affectedCount >= ability.chainCount) break;
-                                    
+
                                     // Chain hits targets close to primary target
                                     const npcCoord = npc.coord || { x: npc.x, y: npc.y, plane: npc.plane };
                                     if (chebyshev(primaryTargetCoord, npcCoord) <= ability.aoeRadius) {
@@ -772,7 +865,7 @@ export class SimulationHarness {
                         }
                     }
                 }
-                
+
                 // Clear intent to prevent loop firing
                 entity.intent = undefined;
             }
@@ -785,6 +878,12 @@ export class SimulationHarness {
                 tick: tickCount,
                 events
             });
+
+            // Phase 113: Project combat events to gameplay filesystem cache
+            const projection = GameplayProjectionLimb.getInstance();
+            if (projection) {
+                projection.projectCombatEvents(events, tickCount);
+            }
         }
     }
 
@@ -810,7 +909,7 @@ export class SimulationHarness {
 
         // 4. Ground Item Check (Spatial Query within 1 square distance)
         // placeholder for ground item map check once implemented in models.ts
-        
+
         return null;
     }
 
@@ -882,7 +981,7 @@ export class SimulationHarness {
             if (avatar.plotPath) {
                 success = avatar.plotPath(goal.x, goal.y, this.pathfinder, state);
             }
-            
+
             if (success) {
                 const steps = avatar.currentPath?.length ?? 0;
                 logger.info({ from: avatar.coord, to: goal, steps }, '[REFLEX] Path issued — avatar walking.');

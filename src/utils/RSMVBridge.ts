@@ -38,19 +38,19 @@ async function callBridge<T>(operation: string, ...args: string[]): Promise<Resu
     return new Promise((resolve) => {
         const cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
         const childArgs = ['tsx', BRIDGE_SCRIPT, operation, ...args];
-        
-        const child = spawn(cmd, childArgs, { 
+
+        const child = spawn(cmd, childArgs, {
             shell: process.platform === 'win32',
-            stdio: ['ignore', 'pipe', 'pipe'] 
+            stdio: ['ignore', 'pipe', 'pipe']
         });
 
         let stdout = '';
         let stderr = '';
 
-        child.stdout.on('data', (data) => { 
+        child.stdout.on('data', (data) => {
             const chunk = data.toString();
             stdout += chunk;
-            
+
             // Phase 9: Real-time Substrate Visibility
             // If the chunk doesn't look like part of a JSON blob, it might be a log from the sub-tool
             if (!chunk.trim().startsWith('{') && !chunk.trim().startsWith('[')) {
@@ -61,7 +61,7 @@ async function callBridge<T>(operation: string, ...args: string[]): Promise<Resu
             }
         });
 
-        child.stderr.on('data', (data) => { 
+        child.stderr.on('data', (data) => {
             const chunk = data.toString();
             stderr += chunk;
             const lines = chunk.split('\n').filter((l: string) => l.trim());
@@ -79,7 +79,7 @@ async function callBridge<T>(operation: string, ...args: string[]): Promise<Resu
         child.on('close', (code) => {
             clearTimeout(timer);
             _lastLatencyMs = Date.now() - start;
-            
+
             if (code !== 0) {
                 const msg = stderr.trim() || `Exit code ${code}`;
                 logger.error({ operation, args, msg }, 'RSMVBridge subprocess failed');
@@ -186,6 +186,16 @@ export interface BridgeHealthResult {
     cacheVersion?: number;
 }
 
+export interface BridgeVarbitResult {
+    id: number;
+    varid: number;       // Parent Varp ID
+    bitcount: number;    // Total bits consumed
+    lsb?: number;        // Least significant bit position (alias: bits[0])
+    msb?: number;        // Most significant bit position (alias: bits[1])
+    bits?: [number, number]; // [lsb, msb] pair from rsmv parser
+    [key: string]: any;  // Additional parser fields
+}
+
 // â”€â”€ RSMVBridge Singleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export class RSMVBridge {
@@ -253,20 +263,33 @@ export class RSMVBridge {
         return await callBridge<any>('dbtables');
     }
 
-    public async getDBRows(): Promise<Result<any>> {
-        return await callBridge<any>('dbrows');
+    public async getDBRows(tableId?: number): Promise<Result<any>> {
+        const params = tableId !== undefined ? [tableId.toString()] : [];
+        return await callBridge<any>('dbrows', ...params);
     }
 
     public async getVarps(): Promise<Result<any>> {
         return await callBridge<any>('varplayer');
     }
 
+    public async getVarbit(id: number): Promise<Result<BridgeVarbitResult>> {
+        return await callBridge<BridgeVarbitResult>('varbit', String(id));
+    }
+
     public async getVarbits(): Promise<Result<any>> {
         return await callBridge<any>('varbits');
     }
 
+    public async getEnum(id: number): Promise<Result<any>> {
+        return await callBridge<any>('enum', String(id));
+    }
+
     public async getCollision(x: number, z: number, plane: number, xsize = 64, zsize = 64): Promise<Result<BridgeCollisionResult>> {
         return await callBridge<BridgeCollisionResult>('collision', String(x), String(z), String(plane), String(xsize), String(zsize));
+    }
+
+    public async getMapsquareTiles(chunkX: number, chunkZ: number): Promise<Result<{ chunkX: number, chunkZ: number, tiles: { x: number, z: number, plane: number, collision: number, height: number | null }[] }>> {
+        return await callBridge<any>('mapsquare_tiles', String(chunkX), String(chunkZ));
     }
 }
 

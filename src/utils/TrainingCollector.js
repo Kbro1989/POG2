@@ -162,7 +162,14 @@ export class TrainingCollector {
         });
         // Broadcast high-level routing evolution to the swarm
         if (this.globeStateLimb && this.shouldBroadcast('routing_event')) {
-            this.globeStateLimb.pushNodeState('routing_event', full).catch((err) => {
+            const complexityScores = { low: 0.2, medium: 0.5, high: 0.8, extreme: 1.0 };
+            const score = complexityScores[record.classifiedComplexity?.toLowerCase()] ?? 0.5;
+            this.globeStateLimb.pushNodeState('routing_event', {
+                ...full,
+                score,
+                status: 'active',
+                lastActivity: `Route: ${record.chosenModel} (${record.classifiedComplexity || 'low'})`
+            }).catch((err) => {
                 logger.debug({ err: err.message }, 'Globe broadcast failed for routing_event');
             });
         }
@@ -209,7 +216,16 @@ export class TrainingCollector {
         });
         // Broadcast deep thinking chains to the swarm
         if (this.globeStateLimb && this.shouldBroadcast('thinking_event')) {
-            this.globeStateLimb.pushNodeState('thinking_event', full).catch((err) => {
+            const score = nexus.curiosity !== undefined ? nexus.curiosity : 0.95;
+            const lastActivity = nexus.reflection 
+                ? (nexus.reflection.length > 35 ? nexus.reflection.substring(0, 35) + '...' : nexus.reflection)
+                : 'Nominal cogitation';
+            this.globeStateLimb.pushNodeState('thinking_event', {
+                ...full,
+                score,
+                status: 'active',
+                lastActivity
+            }).catch((err) => {
                 logger.debug({ err: err.message }, 'Globe broadcast failed for thinking_event');
             });
         }
@@ -228,7 +244,15 @@ export class TrainingCollector {
         logger.debug({ model: audit.selectedModel, directive: audit.directive }, 'FPRAG decision assigned to EventBus');
         // Broadcast ethical/directive validations to the swarm
         if (this.globeStateLimb && this.shouldBroadcast('fprag_event')) {
-            this.globeStateLimb.pushNodeState('fprag_event', full).catch((err) => {
+            const lastActivity = audit.directive 
+                ? (audit.directive.length > 30 ? `Directive: ${audit.directive.substring(0, 30)}...` : `Directive: ${audit.directive}`)
+                : (audit.task.length > 30 ? `Audit: ${audit.task.substring(0, 30)}...` : `Audit: ${audit.task}`);
+            this.globeStateLimb.pushNodeState('fprag_event', {
+                ...full,
+                score: 1.0,
+                status: 'active',
+                lastActivity
+            }).catch((err) => {
                 logger.debug({ err: err.message }, 'Globe broadcast failed for fprag_event');
             });
         }

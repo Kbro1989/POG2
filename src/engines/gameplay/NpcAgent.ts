@@ -4,7 +4,7 @@ import { SpatialSovereigntyLimb } from '../../limbs/spatial/SpatialSovereigntyLi
 import { createLogger } from '../../utils/logger.js';
 import { EventBus } from '../../events/EventBus.js';
 import { CombatRotationEngine, CombatEvaluationContext, TargetContext, CombatIntent, TacticalArchetype } from './CombatRotationEngine.js';
-import { CombatStyle } from './AbilityBook.js';
+import { AbilityBook, CombatStyle } from './AbilityBook.js';
 import { CanonicalClock } from '../../utils/CanonicalClock.js';
 const logger = createLogger('NpcAgent');
 
@@ -325,6 +325,7 @@ export class NpcAgent {
                 lastCombatTick: this.npc.metadata.lastCombatTick || 0,
                 cooldowns: this.npc.cooldowns || {},
             },
+            availableAbilities: AbilityBook.getInstance().getByStyle(style),
         };
         
         const intent = engine.evaluateRotation(ctx, target);

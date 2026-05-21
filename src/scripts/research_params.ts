@@ -13,19 +13,22 @@ async function research() {
         if (page) {
             const arch = await source.getFileArchive(page);
             const params = arch.map(f => {
-                try { return { id: f.fileid, ...parse.params.read(f.buffer, source) }; } catch(e) { return null; }
+                try { return { id: f.fileid, ...parse.params.read(f.buffer, source) }; } catch (e) { return null; }
             }).filter(p => p !== null);
             fs.writeFileSync("D:\\sovereign\\atlas\\system\\params_definitions.json", JSON.stringify(params, null, 2));
             console.log(`✅ Params Extracted: ${params.length}`);
         }
-    } catch(e) { console.error("Error extracting params", e); }
+    } catch (e) { console.error("Error extracting params", e); }
 
     // 2. Sample DBRows for Quest Data
     try {
         // Just checking if dbrows has quest info
         // Not dumping all, just checking table sizes
         console.log("Checking DBRows for quests...");
-    } catch(e) {}
+    } catch (_error) {
+        // [SILENT NECROSIS LOGGER]
+        console.warn("[SILENT NECROSIS] Caught in research_params: ", _error);
+    }
 
     source.close();
 }

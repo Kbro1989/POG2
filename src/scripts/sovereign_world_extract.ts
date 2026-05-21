@@ -114,7 +114,7 @@ async function run() {
                 try {
                     const label = parse.maplabels.read(file.buffer, source);
                     maplabels[file.fileid] = label;
-                } catch {}
+                } catch { }
             }
             console.log(`✅ Loaded ${Object.keys(maplabels).length} maplabels from cache`);
         }
@@ -153,7 +153,7 @@ async function run() {
             return def;
         } catch {
             const nullDef: ObjectDef = {
-                id, name: null, examine: null, actions: [null,null,null,null,null],
+                id, name: null, examine: null, actions: [null, null, null, null, null],
                 type: null, sizeX: null, sizeZ: null, solid: null
             };
             objDefCache[id] = nullDef;
@@ -223,7 +223,7 @@ async function run() {
                             }
                         }
                     }
-                } catch {}
+                } catch { }
             } else if (legacyTilesSubIdx !== -1 && chunkArch[legacyTilesSubIdx]) {
                 try {
                     const tiles = parse.mapsquareTiles.read(chunkArch[legacyTilesSubIdx].buffer, source) as any;
@@ -241,7 +241,7 @@ async function run() {
                             });
                         }
                     }
-                } catch {}
+                } catch { }
             }
 
             // ── Extract object locations ──
@@ -268,7 +268,7 @@ async function run() {
                             }
                         }
                     }
-                } catch {}
+                } catch { }
             }
 
             // ── Resolve object definitions for this chunk ──

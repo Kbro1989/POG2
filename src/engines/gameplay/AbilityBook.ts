@@ -19,8 +19,9 @@ const logger = createLogger('AbilityBook');
 // Core Types
 // ═══════════════════════════════════════════════════════
 
-export type CombatStyle = 'melee' | 'ranged' | 'magic' | 'necromancy' | 'defense' | 'movement';
-export type AbilityType = 'basic' | 'enhanced' | 'ultimate' | 'special' | 'conjure' | 'action' | 'teleport';
+export type CombatStyle = 'melee' | 'ranged' | 'magic' | 'necromancy' | 'taming' | 'merchanting' | 'defense' | 'movement';
+export type AbilityType = 'basic' | 'enhanced' | 'ultimate' | 'special' | 'conjure' | 'companion' | 'economic' | 'action' | 'teleport';
+export type AbilityCategory = 'combat' | 'companion' | 'utility';
 
 export interface AbilityGFX {
     spotAnimId: number;
@@ -38,6 +39,7 @@ export interface AbilityDefinition {
     name: string;                  // Display name from registry
     style: CombatStyle;
     type: AbilityType;
+    category: AbilityCategory;
     adrenalineCost: number;        // 0–10000 scale. 0 for basics, 1500 for thresholds, 10000 for ults.
     adrenalineGain: number;        // 0–10000 scale. 800 for basics (8%), 0 for thresholds/ults.
     cooldownTicks: number;         // Individual ability cooldown in game ticks (600ms each).
@@ -52,6 +54,12 @@ export interface AbilityDefinition {
     coneHalfAngle?: number;        // Radians for cone attacks
     gfx: AbilityGFX[];             // Cache-grounded GFX from sovereign_ability_registry.json
     wired: boolean;                // true if GFX fully resolved from cache
+}
+
+function getAbilityCategory(style: CombatStyle): AbilityCategory {
+    if (style === 'taming') return 'companion';
+    if (style === 'merchanting' || style === 'movement') return 'utility';
+    return 'combat';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -109,19 +117,16 @@ const GCD = 3; // Global cooldown in ticks
  * Keys must match ability names from sovereign_ability_registry.json exactly.
  */
 const COMBAT_PARAMS: Record<string, CombatParams> = {
-    // ─── MELEE BASICS ───
-    'Sever':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [37.6, 188], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['debuff'] },
+    // ─── MELEE BASICS (March 2026: Slice, Sever, Smash removed) ───
     'Havoc':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
-    'Smash':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['debuff'] },
     'Dismember':      { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [37.6, 188], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
     'Fury':           { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: true, channelTicks: 3, flags: [] },
     'Punish':         { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 5, damageRange: [18.8, 94], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun-buff'] },
     'Backhand':       { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [20, 100], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
 
-    // ─── MELEE EMPOWERED (Formerly Thresholds) ───
+    // ─── MELEE ENHANCED (March 2026: Cleave, Decimate, Destroy removed; Quake removed) ───
     'Flurry':         { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: true, channelTicks: 6, flags: ['pbaoe', 'bloodlust-consumer'], aoeRadius: 1 },
     'Hurricane':      { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [42, 210], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['pbaoe', 'bloodlust-consumer'], aoeRadius: 2 },
-    'Quake':          { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [43.8, 219], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['pbaoe', 'debuff'], aoeRadius: 2 },
     'Slaughter':      { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 50, damageRange: [50, 250], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
     'Assault':        { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [53, 265], range: MELEE_RANGE, isChanneled: true, channelTicks: 8, flags: ['bloodlust-consumer'] },
 
@@ -131,42 +136,43 @@ const COMBAT_PARAMS: Record<string, CombatParams> = {
     'Berserk':        { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['buff', 'bloodlust-empower'] },
     'Pulverise':      { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
 
-    // ─── RANGED BASICS ───
+    // ─── RANGED BASICS (March 2026: Fragmentation Shot, Dazing Shot, Needle Strike removed) ───
     'Piercing Shot':  { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 5, damageRange: [18.8, 94], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun-buff'] },
     'Snipe':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [43.8, 219], range: RANGED_RANGE, isChanneled: true, channelTicks: 6, flags: [] },
-    'Fragmentation Shot': { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [37.6, 188], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
     'Ricochet':       { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [20, 100], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['aoe'] },
     'Binding Shot':   { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [20, 100], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
-    'Corruption Shot':{ adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [60, 300], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['corruption'] },
+    'Corruption Shot':{ adrenalineCost: 2000, adrenalineGain: 0, cooldownTicks: 25, damageRange: [60, 300], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['corruption'] },
     'Galeshot':       { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 12, damageRange: [31.4, 157], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['searing-winds-trigger'] },
 
-    // ─── RANGED EMPOWERED ───
+    // ─── RANGED ENHANCED (March 2026: Unload, Incendiary Shot removed) ───
     'Snap Shot':      { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [53, 265], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
     'Rapid Fire':     { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [75.2, 376], range: RANGED_RANGE, isChanneled: true, channelTicks: 8, flags: ['searing-winds-extender'] },
     'Shadow Tendrils':{ adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 75, damageRange: [100, 500], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
     'Bombardment':    { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 50, damageRange: [43.8, 219], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['pbaoe'], aoeRadius: 3 },
 
-    // ─── RANGED ULTIMATES ───
+    // ─── RANGED ULTIMATES (March 2026: Unload removed) ───
     "Death's Swiftness": { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['buff'] },
-    'Unload':         { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range: RANGED_RANGE, isChanneled: true, channelTicks: 6, flags: [] },
+    'Deadshot':       { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
     'Imbue Shadows':  { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['buff', 'shadow-imbue-trigger'] },
 
-    // ─── MAGIC BASICS ───
-    'Dragon Breath':  { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [37.6, 188], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['cone'], coneHalfAngle: Math.PI / 4, aoeRadius: 2 },
-    'Sonic Wave':     { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [31.4, 157], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['debuff', 'anima-trigger'] },
-    'Concentrated Blast':{ adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [31.4, 157], range: MAGIC_RANGE, isChanneled: true, channelTicks: 6, flags: ['debuff', 'anima-trigger'] },
+    // ─── MAGIC BASICS (March 2026: Wrack, Detonate, Shock, Horror, Deep Impact removed) ───
+    'Dragon Breath':  { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [37.6, 188], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['cone', 'combust-synergy'], coneHalfAngle: Math.PI / 4, aoeRadius: 2 },
+    'Sonic Wave':     { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [31.4, 157], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['adrenaline-discount'] },
+    'Concentrated Blast':{ adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [35, 105], range: MAGIC_RANGE, isChanneled: true, channelTicks: 5, flags: ['crit-boost'] },
     'Impact':         { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [20, 100], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
-    'Combust':        { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [37.6, 188], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
-    'Chain':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [20, 100], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['chain'], chainCount: 2, aoeRadius: 2 },
-    'Corruption Blast':{ adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [60, 300], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['corruption'] },
+    'Combust':        { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [30, 300], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
+    'Chain':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [16, 80], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['chain', 'greater-chain-baseline'], chainCount: 2, aoeRadius: 2 },
 
-    // ─── MAGIC EMPOWERED ───
-    'Asphyxiate':     { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [37.6, 188], range: MAGIC_RANGE, isChanneled: true, channelTicks: 8, flags: ['stun'] },
-    'Wild Magic':     { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [53, 265], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+    // ─── MAGIC ENHANCED (March 2026: Corruption Blast & Magma Tempest promoted to enhanced; Metamorphosis removed) ───
+    'Asphyxiate':     { adrenalineCost: 2500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [37.6, 188], range: MAGIC_RANGE, isChanneled: true, channelTicks: 8, flags: ['stun'] },
+    'Wild Magic':     { adrenalineCost: 2500, adrenalineGain: 0, cooldownTicks: 9, damageRange: [56, 280], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+    'Smoke Tendrils': { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 75, damageRange: [63, 315], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+    'Magma Tempest':  { adrenalineCost: 2000, adrenalineGain: 0, cooldownTicks: 34, damageRange: [40, 320], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['pbaoe'], aoeRadius: 2 },
+    'Corruption Blast':{ adrenalineCost: 2000, adrenalineGain: 0, cooldownTicks: 25, damageRange: [60, 300], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['corruption'] },
 
-    // ─── MAGIC ULTIMATES ───
+    // ─── MAGIC ULTIMATES (March 2026: Omnipower cost 60%) ───
     'Sunshine':       { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['buff'] },
-    'Omnipower':      { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 50, damageRange: [60, 300], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+    'Omnipower':      { adrenalineCost: 6000, adrenalineGain: 0, cooldownTicks: 50, damageRange: [92, 460], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
 
     // ─── NECROMANCY BASICS ───
     'Touch of Death': { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [40, 200], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
@@ -198,7 +204,7 @@ const COMBAT_PARAMS: Record<string, CombatParams> = {
     'Surge':          { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 34, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: [] },
     'Escape':         { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 34, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: [] },
     'Bladed Dive':    { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 34, damageRange: [24, 120], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
-    'Eat Food':       { adrenalineCost: 300, adrenalineGain: 0, cooldownTicks: 3, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['heal'] },
+    'Eat Food':       { adrenalineCost: 300, adrenalineGain: 0, cooldownTicks: 3, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['heal'] }, // March 2026: 3% drain (was 10%)
 };
 
 // ═══════════════════════════════════════════════════════
@@ -315,6 +321,7 @@ export class AbilityBook {
                     name,
                     style,
                     type,
+                    category: getAbilityCategory(style),
                     adrenalineCost: params.adrenalineCost,
                     adrenalineGain: params.adrenalineGain,
                     cooldownTicks: params.cooldownTicks,
@@ -363,6 +370,7 @@ export class AbilityBook {
                 name,
                 style,
                 type,
+                category: getAbilityCategory(style),
                 ...params,
                 gcdTicks: GCD,
                 gfx: [],

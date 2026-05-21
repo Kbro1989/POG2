@@ -16,7 +16,7 @@ walk('src/rsmv', (f) => {
     let newContent = content.replace(/([a-z0-9_]+): any =>/g, '($1: any) =>');
     // Fix async q: any => to async (q: any) =>
     newContent = newContent.replace(/async ([a-z0-9_]+): any =>/g, 'async ($1: any) =>');
-    
+
     if (newContent !== content) {
         fs.writeFileSync(f, newContent);
         console.log('Fixed:', f);

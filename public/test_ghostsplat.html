@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign Avatar - GhostSplat Volition</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #111; }
+        #renderCanvas { width: 100%; height: 100vh; touch-action: none; outline: none; }
+        #overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #ffaa00;
+            font-family: 'Courier New', Courier, monospace;
+            pointer-events: none;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border: 1px solid #ffaa00;
+            border-radius: 4px;
+        }
+        .hud-log { margin: 0; font-size: 14px; opacity: 0.8; }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <div id="overlay">
+        <h2>Sovereign Avatar Limb</h2>
+        <p>Status: Volition Engine (GhostSplat) Active</p>
+        <p>Kit ID: 31149</p>
+        <div id="combat-log" style="margin-top: 15px; border-top: 1px solid #ffaa00; padding-top: 10px;">
+            <p class="hud-log">Combat Simulator Initialized...</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
+
+        // Simple logging
+        function logAction(msg) {
+            const el = document.getElementById('combat-log');
+            el.innerHTML = `<p class="hud-log">> ${msg}</p>` + el.innerHTML;
+        }
+
+        class GhostSplatLimb {
+            constructor(scene) {
+                this.scene = scene;
+                this.splats = new Map();
+                this.splatId = 0;
+            }
+
+            emit(event) {
+                const id = `splat_${++this.splatId}`;
+                // Bounding box center Y is around 0. Let's spawn near Y = 120 (head level for this scale)
+                const spawnPos = event.position || new BABYLON.Vector3(0, 120, 0);
+                
+                logAction(`${event.type.toUpperCase()}: ${event.value || ''}`);
+
+                switch (event.type) {
+                    case 'damage':
+                        this.createDamageSplat(id, event.value, spawnPos, event.color || '#ff0000');
+                        break;
+                    case 'xp':
+                        this.createXpSplat(id, event.value, event.skillId || 0, spawnPos);
+                        break;
+                    case 'block':
+                        this.createBlockSplat(id, spawnPos);
+                        break;
+                    case 'heal':
+                        this.createHealSplat(id, event.value, spawnPos);
+                        break;
+                    case 'poison':
+                        this.createPoisonSplat(id, event.value, spawnPos);
+                        break;
+                    case 'crit':
+                        this.createCritSplat(id, event.value, spawnPos);
+                        break;
+                }
+            }
+
+            createTextPlane(id, text, color, pos, font = 'bold 64px Verdana', scale = 30) {
+                const plane = BABYLON.MeshBuilder.CreatePlane(id, { size: scale }, this.scene);
+                
+                const jitterX = (Math.random() - 0.5) * 40;
+                const jitterY = (Math.random() - 0.5) * 20;
+                plane.position = new BABYLON.Vector3(pos.x + jitterX, pos.y + jitterY, pos.z - 20);
+                plane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+                
+                const texture = new BABYLON.DynamicTexture(`tex_${id}`, { width: 256, height: 128 }, this.scene, false);
+                texture.hasAlpha = true;
+                const ctx = texture.getContext();
+                
+                // Clear background for transparent text background
+                ctx.clearRect(0, 0, 256, 128);
+                
+                ctx.font = font;
+                ctx.fillStyle = color;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#000000';
+                ctx.strokeText(text, 128, 64);
+                ctx.fillText(text, 128, 64);
+                texture.update();
+                
+                const mat = new BABYLON.StandardMaterial(`mat_${id}`, this.scene);
+                mat.diffuseTexture = texture;
+                mat.emissiveColor = BABYLON.Color3.FromHexString(color);
+                mat.disableLighting = true;
+                mat.useAlphaFromDiffuseTexture = true;
+                
+                plane.material = mat;
+                return { plane, mat };
+            }
+
+            animateSplat(id, plane, mat, dy, fadeRate, customAnim = null) {
+                const animate = () => {
+                    if (!this.splats.has(id)) return;
+                    if (customAnim) {
+                        customAnim();
+                    } else {
+                        plane.position.y += dy;
+                    }
+                    mat.alpha -= fadeRate;
+                    if (mat.alpha <= 0) {
+                        plane.dispose();
+                        this.splats.delete(id);
+                    } else {
+                        requestAnimationFrame(animate);
+                    }
+                };
+                requestAnimationFrame(animate);
+                this.splats.set(id, plane);
+            }
+
+            createDamageSplat(id, value, pos, color) {
+                const { plane, mat } = this.createTextPlane(id, value.toString(), color, pos);
+                this.animateSplat(id, plane, mat, 0.5, 0.015);
+            }
+
+            createXpSplat(id, value, skillId, pos) {
+                const colors = { 0: '#ff0000', 1: '#00ff00', 2: '#0000ff' };
+                const color = colors[skillId] || '#ffffff';
+                const { plane, mat } = this.createTextPlane(id, `+${value} XP`, color, pos, 'bold 48px Verdana', 40);
+                
+                let t = 0;
+                const startX = plane.position.x;
+                const startY = plane.position.y;
+                
+                this.animateSplat(id, plane, mat, 0, 0.01, () => {
+                    t += 0.05;
+                    plane.position.x = startX + Math.sin(t) * 15;
+                    plane.position.y = startY + t * 8;
+                });
+            }
+
+            createBlockSplat(id, pos) {
+                const { plane, mat } = this.createTextPlane(id, 'BLOCK', '#aaaaaa', pos);
+                this.animateSplat(id, plane, mat, 0.2, 0.02);
+            }
+
+            createHealSplat(id, value, pos) {
+                const { plane, mat } = this.createTextPlane(id, `+${value}`, '#00ff00', pos);
+                this.animateSplat(id, plane, mat, 0.8, 0.01);
+            }
+
+            createPoisonSplat(id, value, pos) {
+                const { plane, mat } = this.createTextPlane(id, value.toString(), '#00cc00', pos);
+                this.animateSplat(id, plane, mat, -0.3, 0.01);
+            }
+
+            createCritSplat(id, value, pos) {
+                const { plane, mat } = this.createTextPlane(id, value.toString(), '#ffaa00', pos, 'bold 84px Verdana', 50);
+                let shake = 0;
+                const startX = plane.position.x;
+                this.animateSplat(id, plane, mat, 0.6, 0.01, () => {
+                    shake += 0.5;
+                    plane.position.x = startX + Math.sin(shake) * 5;
+                    plane.position.y += 0.6;
+                });
+            }
+        }
+
+        const createScene = async function () {
+            const scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color4(0.05, 0.05, 0.05, 1);
+
+            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 200, BABYLON.Vector3.Zero(), scene);
+            camera.attachControl(canvas, true);
+            camera.wheelPrecision = 10;
+
+            const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+            light.intensity = 0.9;
+
+            const skinPacked = 12104087;
+            const r = ((skinPacked >> 16) & 0xFF) / 255;
+            const g = ((skinPacked >> 8) & 0xFF) / 255;
+            const b = (skinPacked & 0xFF) / 255;
+
+            try {
+                const res = await fetch('/models/kit_31149.json');
+                const meshData = await res.json();
+
+                const pcs = new BABYLON.PointsCloudSystem("pcs", 1, scene);
+                const positions = meshData.positions;
+                const pointCount = positions.length / 3;
+
+                pcs.addPoints(pointCount, (particle, i) => {
+                    particle.position = new BABYLON.Vector3(
+                        positions[i * 3],
+                        positions[i * 3 + 1],
+                        positions[i * 3 + 2]
+                    );
+                    particle.color = new BABYLON.Color4(r, g, b, 1);
+                });
+
+                await pcs.buildMeshAsync();
+                camera.target = pcs.mesh.getBoundingInfo().boundingBox.center;
+
+                // Start Mock Combat Engine
+                const ghost = new GhostSplatLimb(scene);
+                
+                setInterval(() => {
+                    const eventTypes = ['damage', 'xp', 'block', 'heal', 'poison', 'crit'];
+                    const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+                    
+                    const event = { type, value: Math.floor(Math.random() * 100) + 1 };
+                    if (type === 'xp') event.skillId = Math.floor(Math.random() * 3);
+                    
+                    ghost.emit(event);
+                }, 800);
+
+            } catch (err) {
+                console.error("Failed:", err);
+            }
+
+            return scene;
+        };
+
+        createScene().then(scene => {
+            engine.runRenderLoop(() => {
+                scene.render();
+            });
+        });
+
+        window.addEventListener("resize", () => {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>

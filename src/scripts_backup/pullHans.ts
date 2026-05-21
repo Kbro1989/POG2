@@ -1,6 +1,6 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-import { RSMVController } from '../vision/RSMVController.js';
+import { rsmvController } from '../vision/rsmvController.js';
 import { createLogger } from '../utils/logger.js';
 import { existsSync } from 'fs';
 import path, { join } from 'path';
@@ -29,14 +29,14 @@ async function run() {
     }
 
     const rsmvDir = join(getSovereignRoot(), 'cache_pedagogy', 'rsmv_inspector');
-    const controller = RSMVController.getInstance();
+    const controller = rsmvController.getInstance();
     const modelId = 'npc:0'; // Hans
 
     try {
         const result = await controller.viewModel(modelId);
 
         if (result.ok) {
-            logger.info('RSMV pull triggered successfully. Waiting for output...');
+            logger.info('rsmv pull triggered successfully. Waiting for output...');
 
             // Subprocess is spawn'd with inherit, so it should be fast. 
             // We wait up to 10s for the file to appear.

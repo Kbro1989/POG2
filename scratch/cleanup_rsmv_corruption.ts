@@ -21,13 +21,13 @@ walk(targetDir, (file) => {
         // Matches: param: any =>
         // Matches: (param: any) => (redundant but safe)
         content = content.replace(/(?<!\()(\w+):\s*any\s*=>/g, '($1: any) =>');
-        
+
         // 2. Fix the broken cache.(...) syntax from previous failed attempt
         // Matches: cache.(target as (any) as any)[cachename]
         // Matches: cache.(foundjag as any)[key]
         content = content.replace(/(\w+)\.\(([\w\s]+)as\s+\(any\)\s+as\s+any\)/g, '($1.$2 as any)');
         content = content.replace(/(\w+)\.\(([\w\s]+)as\s+any\)/g, '($1.$2 as any)');
-        
+
         // 3. Fix the weird oldbufferdata.(. as any).call
         content = content.replace(/oldbufferdata\.\(\.\s+as\s+any\)\.call/g, 'oldbufferdata.call');
 

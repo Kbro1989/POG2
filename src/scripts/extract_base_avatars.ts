@@ -4,9 +4,9 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 import { join } from 'path';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { getSovereignRoot, getRSMVSubstratePath, getRSMVCachePath } from '../utils/SovereignPathResolver.js';
+import { getSovereignRoot, getrsmvSubstratePath, getrsmvCachePath } from '../utils/SovereignPathResolver.js';
 
-const RSMV = getRSMVSubstratePath();
+const rsmv = getrsmvSubstratePath();
 let avatarToModel: any = null;
 let writeAvatar: any = null;
 let GameCacheLoader: any = null;
@@ -14,11 +14,11 @@ let EngineCache: any = null;
 let parseOb3Model: any = null;
 let buildAttributeBuffer: any = null;
 
-try { ({ avatarToModel, writeAvatar } = require(join(RSMV, 'src', '3d', 'avatar.js'))); } catch(e) { console.error('Failed to load avatar', e); }
-try { ({ GameCacheLoader } = require(join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch(e) { console.error('Failed to load cache', e); }
-try { ({ EngineCache } = require(join(RSMV, 'src', '3d', 'modeltothree.js'))); } catch(e) { console.error('Failed to load engine cache', e); }
-try { ({ parseOb3Model } = require(join(RSMV, 'src', '3d', 'rt7model.js'))); } catch(e) { console.error('Failed to load rt7model', e); }
-try { ({ buildAttributeBuffer } = require(join(RSMV, 'src', '3d', 'gltfutil.js'))); } catch(e) { console.error('Failed to load gltfutil', e); }
+try { ({ avatarToModel, writeAvatar } = require(join(rsmv, 'src', '3d', 'avatar.js'))); } catch (e) { console.error('Failed to load avatar', e); }
+try { ({ GameCacheLoader } = require(join(rsmv, 'src', 'cache', 'sqlite.js'))); } catch (e) { console.error('Failed to load cache', e); }
+try { ({ EngineCache } = require(join(rsmv, 'src', '3d', 'modeltothree.js'))); } catch (e) { console.error('Failed to load engine cache', e); }
+try { ({ parseOb3Model } = require(join(rsmv, 'src', '3d', 'rt7model.js'))); } catch (e) { console.error('Failed to load rt7model', e); }
+try { ({ buildAttributeBuffer } = require(join(rsmv, 'src', '3d', 'gltfutil.js'))); } catch (e) { console.error('Failed to load gltfutil', e); }
 
 const OUTPUT_DIR = join(process.cwd(), 'to-do-list-kv-template-123', 'public', 'avatars', 'base');
 
@@ -28,8 +28,8 @@ async function extractBaseAvatar(gender: 'male' | 'female', engineCache: any, ca
     let playerkitarch = await engineCache.getArchiveById(2, 3);
     let playerkit = Object.fromEntries(playerkitarch.map((q: any) => [q.fileid, parse.identitykit.read(q.buffer, engineCache.rawsource)]));
 
-    const maleKits = [0, 10, 18, 26, 33, 36, 42]; 
-    const femaleKits = [45, 56, 61, 68, 70, 79]; 
+    const maleKits = [0, 10, 18, 26, 33, 36, 42];
+    const femaleKits = [45, 56, 61, 68, 70, 79];
 
     const kitsToUse = gender === 'male' ? maleKits : femaleKits;
     const modelIds: number[] = [];
@@ -50,7 +50,7 @@ async function extractBaseAvatar(gender: 'male' | 'female', engineCache: any, ca
 
 async function exportModelsToGLB(modelIds: number[], name: string, cache: any) {
     console.log(`🛠️ Baking ${modelIds.length} geometries into ${name}.glb...`);
-    
+
     if (!existsSync(OUTPUT_DIR)) {
         mkdirSync(OUTPUT_DIR, { recursive: true });
     }
@@ -75,10 +75,10 @@ async function exportModelsToGLB(modelIds: number[], name: string, cache: any) {
 
     for (let i = 0; i < modelIds.length; i++) {
         const modelId = modelIds[i];
-        
+
         let rawBuffer: Buffer | null = null;
         try { rawBuffer = await cache.getFile(47, modelId); } catch (e) {
-            try { rawBuffer = await cache.getFile(52, modelId); } catch (e) {}
+            try { rawBuffer = await cache.getFile(52, modelId); } catch (e) { }
         }
 
         if (!rawBuffer) {
@@ -168,13 +168,13 @@ async function exportModelsToGLB(modelIds: number[], name: string, cache: any) {
 }
 
 let parse: any = null;
-try { ({ parse } = require(join(RSMV, 'src', 'opdecoder.js'))); } catch(e) { console.error('Failed to load parse', e); }
+try { ({ parse } = require(join(rsmv, 'src', 'opdecoder.js'))); } catch (e) { console.error('Failed to load parse', e); }
 
 async function run() {
-    const CACHE_DIR = getRSMVCachePath();
+    const CACHE_DIR = getrsmvCachePath();
     const cache = new GameCacheLoader(CACHE_DIR);
     cache.buildnr = 940;
-    
+
     // We instantiate the model cache with the db
     const engineCache = await EngineCache.create(cache);
 

@@ -27,7 +27,7 @@ async function run() {
             const item = parse.item.read(buf, source);
             // Include ID
             items.push({ id, ...item });
-        } catch (e) {}
+        } catch (e) { }
         if (id % 10000 === 0 && id > 0) console.log(`   Read ${id} items...`);
     }
     fs.writeFileSync(path.join(OUT_DIR_ITEMS, "item_definitions.json"), JSON.stringify(items, null, 2));
@@ -42,7 +42,7 @@ async function run() {
             const obj = parse.object.read(buf, source);
             // Keep it somewhat lightweight if too large, but let's dump all for now
             objects.push({ id, ...obj });
-        } catch (e) {}
+        } catch (e) { }
         if (id % 25000 === 0 && id > 0) console.log(`   Read ${id} objects...`);
     }
     fs.writeFileSync(path.join(OUT_DIR_OBJECTS, "object_definitions.json"), JSON.stringify(objects, null, 2));
@@ -56,7 +56,7 @@ async function run() {
             const buf = await source.getFileById(cacheMajors.achievements, id);
             const ach = parse.achievement.read(buf, source);
             achievements.push({ id, ...ach });
-        } catch (e) {}
+        } catch (e) { }
     }
     fs.writeFileSync(path.join(OUT_DIR_SYSTEM, "achievements.json"), JSON.stringify(achievements, null, 2));
     console.log(`✅ Extracted ${achievements.length} Achievements -> ${OUT_DIR_SYSTEM}\\achievements.json`);
@@ -69,7 +69,7 @@ async function run() {
             const buf = await source.getFileById(cacheMajors.structs, id);
             const strct = parse.structs.read(buf, source);
             structs.push({ id, ...strct });
-        } catch (e) {}
+        } catch (e) { }
         if (id % 5000 === 0 && id > 0) console.log(`   Read ${id} structs...`);
     }
     fs.writeFileSync(path.join(OUT_DIR_SYSTEM, "struct_definitions.json"), JSON.stringify(structs, null, 2));
@@ -87,10 +87,10 @@ async function run() {
                 try {
                     const idkit = parse.identitykit.read(file.buffer, source);
                     identityKits.push({ id: file.fileid, ...idkit });
-                } catch(e) {}
+                } catch (e) { }
             }
         }
-    } catch(e) {}
+    } catch (e) { }
     fs.writeFileSync(path.join(OUT_DIR_SYSTEM, "identitykit_definitions.json"), JSON.stringify(identityKits, null, 2));
     console.log(`✅ Extracted ${identityKits.length} IdentityKits -> ${OUT_DIR_SYSTEM}\\identitykit_definitions.json`);
 

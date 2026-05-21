@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'fs';
 import { GameplayModule } from './MinigameInterfaces.js';
 import { GameState, SovereignAvatar } from '../../core/models.js';
 import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
+import { stateProvider } from '../../utils/StateProvider.js';
 
 export class PestControlInterpreter implements GameplayModule {
     public readonly name = 'Pest Control';
@@ -25,12 +26,17 @@ export class PestControlInterpreter implements GameplayModule {
             console.log(`[PEST_CONTROL] Logic map loaded. Shield varbits synced.`);
         }
 
-        // Initialize Varbits based on JSON logic
-        state.varbits.set(1230, 1); // Purple active
-        state.varbits.set(1231, 1); // Blue active
-        state.varbits.set(1232, 1); // Yellow active
-        state.varbits.set(1233, 1); // Red active
-        state.varbits.set(1234, 0); // Knight passive
+        // Pre-resolve varbit definitions from the live cache before first tick
+        // These are the portal shield state varbits + knight status
+        const PORTAL_VARBITS = [1230, 1231, 1232, 1233, 1234];
+        await stateProvider.preResolveVarbits(PORTAL_VARBITS);
+
+        // Initialize portal states via authoritative StateProvider
+        await stateProvider.setVarbit(1230, 1, state); // Purple active
+        await stateProvider.setVarbit(1231, 1, state); // Blue active
+        await stateProvider.setVarbit(1232, 1, state); // Yellow active
+        await stateProvider.setVarbit(1233, 1, state); // Red active
+        await stateProvider.setVarbit(1234, 0, state); // Knight passive
     }
 
     public async onTick(tickCount: number, state: GameState, avatar: SovereignAvatar): Promise<string | null> {
@@ -94,7 +100,7 @@ export class PestControlInterpreter implements GameplayModule {
             if (this.shields[portal] <= 0) {
                 // Update varbit
                 const varbitMap: any = { purple: 1230, blue: 1231, yellow: 1232, red: 1233 };
-                state.varbits.set(varbitMap[portal], 0);
+                await stateProvider.setVarbit(varbitMap[portal], 0, state);
                 return `[PEST_CONTROL] You shattered the ${portal} portal!`;
             }
 

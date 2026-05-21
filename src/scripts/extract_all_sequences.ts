@@ -1,4 +1,4 @@
-import { GameCacheLoader } from "../rsmv/cache/sqlite.js";
+import { GameCacheLoader } from "rsmv/cache/sqlite";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -9,12 +9,12 @@ const SPOT_OUTPUT = "D:\\sovereign\\atlas\\spatial\\system_taxonomy\\spotanims.j
 async function run() {
     console.log("🚀 Sovereign Global Animation Forensic — Sequential & Graphic Truth");
     const source = new GameCacheLoader(CACHE_DIR);
-    
+
     // 1. Extract All Sequences (Major 2 / Minor 12)
     console.log("🎬 Extracting NPC Sequences (Major 2 / Minor 12)...");
     const seqIndex = await source.getCacheIndex(2);
     const sequences: Record<number, any> = {};
-    
+
     const seqArchive = await source.getArchiveById(2, 12);
     for (const file of seqArchive) {
         const buf = file.buffer;
@@ -31,9 +31,9 @@ async function run() {
     for (const file of spotArchive) {
         const buf = file.buffer;
         // Search for Model ID (Opcode 1) and Sequence ID (Opcode 2)
-        let modelId = null;
-        let seqId = null;
-        
+        let modelId: number | null = null;
+        let seqId: number | null = null;
+
         if (buf[0] === 1) modelId = buf.readUInt16BE(1);
         if (buf[3] === 2) seqId = buf.readUInt16BE(4);
 

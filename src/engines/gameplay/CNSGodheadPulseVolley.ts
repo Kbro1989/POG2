@@ -12,6 +12,7 @@ import { SpatialVisionEngine } from '../SpatialVisionEngine.js';
 import { WorldGroundingLimb } from '../../limbs/world_grounding/WorldGroundingLimb.js';
 import { GameplaySovereigntyLimb } from '../../limbs/spatial/GameplaySovereigntyLimb.js';
 import { GlobeStateLimb } from '../../limbs/spatial/GlobeStateLimb.js';
+import { GameplayProjectionLimb } from '../../limbs/spatial/GameplayProjectionLimb.js';
 import { GameplayModule } from './MinigameInterfaces.js';
 import { TransientObserver } from '../../vision/TransientObserver.js';
 import { ChromanumberEngine } from '../ChromanumberEngine.js';
@@ -75,13 +76,13 @@ export class CNSGodheadPulseVolley {
     private static instance: CNSGodheadPulseVolley | undefined;
     private readonly TICK_INTERVAL = 300; // 300ms Player Reflex Pulse
     private readonly BUDGET_MS = 150; // max budget for simulation
-    
+
     private pendingCommands: Map<string, PendingCommand> = new Map();
     private waitDecisionMaker: WaitDecisionMaker;
     private lastAuditScore: number = 1.0; // Perceptual grounding persistence
     private lastTickStart: number = 0;
     private readonly GAME_TICK_INTERVAL = 600; // 600ms World Pulse
-    
+
     // Dependencies resolved lazily via resolve() to avoid boot-order violations.
     private switchboard?: SwitchboardLimb;
     private grounding?: WorldGroundingLimb;
@@ -98,7 +99,7 @@ export class CNSGodheadPulseVolley {
     private readonly ledger = CNSCausalityLedger.getInstance();
     private pulseStartTime: number = 0;
     private readonly PULSE_DEADLINE_MS = 300;
-    
+
     private currentTickQueues: Record<QueueTier, DeferredOp[]> = {
         CRITICAL: [],
         NORMAL: [],
@@ -135,7 +136,7 @@ export class CNSGodheadPulseVolley {
         if (!this.rsmv) this.rsmv = RSMVController.getInstance();
         if (!this.forensics) this.forensics = CacheForensicsLimb.getInstance();
         if (!this.ghostSplat) this.ghostSplat = GhostSplatEngine.getInstance();
-        if (!this.globe) this.globe = (this.gameplay as any)?.globe; // Usually initialized in NeurologicalMap
+        if (!this.globe) this.globe = GlobeStateLimb.getInstance() || (this.gameplay as any)?.globe; // Usually initialized in NeurologicalMap
         if (!this.observer) this.observer = TransientObserver.getInstance();
     }
 
@@ -218,7 +219,7 @@ export class CNSGodheadPulseVolley {
 
         // Phase 112: Immediate bootstrap tick
         this.tick();
-        
+
         // POG2 Thinking Sub-loop (Async User-behind-Player)
         this.startPog2ThinkingLoop();
     }
@@ -286,7 +287,7 @@ export class CNSGodheadPulseVolley {
             // [0-50ms] GhostSplat projection
             const ghostSplat = GhostSplatEngine.getInstance();
             const field = ghostSplat.project(this.gameplay?.globalState as any, 2, this.gameplay?.playerAgent);
-            
+
             if (!field) {
                 logger.warn('GhostSplat projection failed — executing fallback');
                 await this.pulse(pendingAdminCommands);
@@ -358,7 +359,7 @@ export class CNSGodheadPulseVolley {
             if (decision.state === 'COMMIT') {
                 await this.executeAction(tickId, pendingAdminCommands, prediction, transitionalVector);
                 this.scheduleObservation(tickId, currentYao, prediction, 300);
-            } 
+            }
             // ── PREPARE (deferred commit at 300ms) ──
             else if (decision.state === 'PREPARE') {
                 const cmd: PendingCommand = {
@@ -407,10 +408,10 @@ export class CNSGodheadPulseVolley {
             logger.error({ err }, '[CNS GODHEAD] Pulse failure â€” potential world desync.');
         } finally {
             const duration = performance.now() - start;
-            
+
             // Self-Correcting Scheduling (Drift Compensation)
             const nextDelay = Math.max(0, this.TICK_INTERVAL - duration);
-            
+
             if (duration > this.BUDGET_MS) {
                 logger.warn({ duration, limit: this.TICK_INTERVAL }, 'CNS Tick Overflow â€” authoritative simulation drift detected.');
             }
@@ -429,7 +430,7 @@ export class CNSGodheadPulseVolley {
 
         const kernel = EpistemicTransitionKernel.getInstance();
         const currentDiagnostics = kernel.getDiagnostics();
-        
+
         if (currentDiagnostics.phaseGateMultiplier < 0.3) {
             logger.warn({ tickId }, 'Phase gate too low — cancelling deferred commit');
             cmd.state = 'CANCELLED';
@@ -448,7 +449,7 @@ export class CNSGodheadPulseVolley {
 
         const kernel = EpistemicTransitionKernel.getInstance();
         const currentYao = this.getHexYaoState();
-        
+
         const freshPrediction = kernel.predictTransition(currentYao, `action-${tickId}`);
 
         if (freshPrediction.confidence > 0.3) {
@@ -459,7 +460,7 @@ export class CNSGodheadPulseVolley {
             logger.warn({ tickId }, 'Wait deadline — forced cancel');
             cmd.state = 'CANCELLED';
         }
-        
+
         this.pendingCommands.delete(tickId);
     }
 
@@ -473,7 +474,7 @@ export class CNSGodheadPulseVolley {
                     const first = cmd.action[0];
                     actionName = first.type || (first.metadata?.abilityName) || 'ADMIN_CMD';
                 }
-                
+
                 return {
                     id: cmd.id,
                     actionType: actionName,
@@ -535,7 +536,7 @@ export class CNSGodheadPulseVolley {
                         anatomyFacts: {},
                         expectedPalette: obsRes.value.expectedPalette
                     });
-                    
+
                     // Update authoritative grounding score
                     if (auditRes.ok) {
                         this.lastAuditScore = auditRes.value.confidence || 0.95;
@@ -548,7 +549,7 @@ export class CNSGodheadPulseVolley {
 
             // Fetch latest error metrics from registry
             const error = 0.1; // placeholder for derived error
-            
+
             // Feed error back to GhostSplat
             this.feedbackToGhostSplat(tickId, error);
 
@@ -567,7 +568,7 @@ export class CNSGodheadPulseVolley {
     ): Promise<void> {
         const kernel = EpistemicTransitionKernel.getInstance();
         const gate = kernel.getPhaseGateMultiplier();
-        
+
         logger.info({
             tickId,
             actionCount: commands.length,
@@ -613,7 +614,7 @@ export class CNSGodheadPulseVolley {
             // Fallback: infer from substrate state
             return this.substrateState === SubstrateState.ONLINE ? YaoState.YoungYang
                 : this.substrateState === SubstrateState.OFFLINE ? YaoState.OldYin
-                : YaoState.YoungYin;
+                    : YaoState.YoungYin;
         }
     }
 
@@ -683,7 +684,7 @@ export class CNSGodheadPulseVolley {
             if (finalized) {
                 const trace = this.ledger.compileLearningTrace(finalized);
                 SwitchboardLimb.getInstance().broadcastLearningTrace(trace);
-                
+
                 // Phase 200: Wisdom Ingestion (Lossy Abstraction: CAUSAL -> INTERPRETATION)
                 kernel.deriveInterpretation(finalized, (ev) => {
                     return CausalPatternExtractor.getInstance().ingestTrace(ev)!;
@@ -767,7 +768,7 @@ export class CNSGodheadPulseVolley {
         } else {
             logger.debug('[CNS] Skipping VISUAL_ONLY queue: Substrate DEGRADED.');
         }
-        
+
         // Clear all current queues
         this.currentTickQueues = { CRITICAL: [], NORMAL: [], VISUAL_ONLY: [] };
 
@@ -779,17 +780,12 @@ export class CNSGodheadPulseVolley {
 
         if (this.gameplay?.globalState) {
             const playerAgent = (this.gameplay as any).playerAgent;
-            // Enqueue visual side-effects to the VISUAL_ONLY tier
-            this.enqueueNow(async () => {
-                // We project ghost splats on player ticks too for smooth client visuals
-                const field = this.ghostSplat!.project(this.gameplay!.globalState!, 3, playerAgent);
-                if (field) {
-                    this.switchboard!.broadcastGhostSplat(field);
-                }
 
-                // Phase 112: Sovereign Live Bridge - Sync Avatar State to Globe
-                if (this.gameplay!.avatar && this.globe) {
+            // Authoritative player state → NORMAL tier (survives DEGRADED substrate)
+            if (this.gameplay!.avatar && this.globe) {
+                this.enqueueNow(async () => {
                     const avatar = this.gameplay!.avatar as SovereignAvatarEntity;
+                    const activeModuleName = this.gameplay!.activeModule?.name || 'UNKNOWN_NODE';
                     this.globe!.pushNodeState('player_sovereign', {
                         coord: avatar.coord,
                         equipment: avatar.equipment,
@@ -798,15 +794,52 @@ export class CNSGodheadPulseVolley {
                         hp: avatar.currentHp,
                         maxHp: avatar.maxHp,
                         intent: avatar.intent,
-                        lockTicks: avatar.lockTicks
+                        lockTicks: avatar.lockTicks,
+                        mapNode: activeModuleName,
+                        searchActive: avatar.metadata?.searchActive || false,
+                        activeSearchQuery: avatar.metadata?.activeSearchQuery || '',
+                        activeSearchComponent: avatar.metadata?.activeSearchComponent || ''
                     });
+
+                    // Mirror POG2 Entities into the Globe 3D Engine
+                    if (this.gameplay!.globalState!.npcMap) {
+                        const entityBatch: any[] = [];
+                        for (const [key, npc] of this.gameplay!.globalState!.npcMap) {
+                            entityBatch.push({
+                                entityId: npc.id || key,
+                                name: npc.name || 'NPC',
+                                x: npc.coord?.x ?? npc.x,
+                                y: npc.coord?.y ?? npc.y
+                            });
+                        }
+                        if (entityBatch.length > 0) {
+                            this.globe!.pushBatchPerception(entityBatch);
+                        }
+                    }
+                }, "NORMAL");
+            }
+
+            // Enqueue visual side-effects to the VISUAL_ONLY tier
+            this.enqueueNow(async () => {
+                // We project ghost splats on player ticks too for smooth client visuals
+                const field = this.ghostSplat!.project(this.gameplay!.globalState!, 3, playerAgent);
+                if (field) {
+                    this.switchboard!.broadcastGhostSplat(field);
+                }
+
+                // Phase 113: Gameplay Filesystem Projection
+                const projection = GameplayProjectionLimb.getInstance();
+                if (projection && this.gameplay!.avatar) {
+                    const activeModuleName = this.gameplay!.activeModule?.name || 'none';
+                    projection.projectState(this.gameplay!.avatar, this.gameplay!.globalState!, activeModuleName);
+                    projection.projectEntities(this.gameplay!.globalState!);
                 }
             }, "VISUAL_ONLY");
         }
 
         // 7. BROADCAST Phase (Layer 4)
         for (const delta of pulseDeltas) {
-            this.switchboard?.broadcastWorldDelta(delta).catch(err => 
+            this.switchboard?.broadcastWorldDelta(delta).catch(err =>
                 logger.error({ err: err.message }, '[CNS] World delta broadcast failed')
             );
         }
@@ -833,7 +866,7 @@ export class CNSGodheadPulseVolley {
         const timestamp = CanonicalClock.getInstance().simulatedNow();
         const originalTimestamp = (cmd as any).timestamp || cmd.metadata?.timestamp; // preserved for audit trail
         const inputs = cmd.metadata || {};
-        
+
         // Resolve coordinate if present
         let coord;
         if (cmd.type === 'teleport' || cmd.type === 'spawn') {
@@ -975,13 +1008,13 @@ export class CNSGodheadPulseVolley {
                 if (event.coord) {
                     // DEFERRED to NEXT TICK to prevent re-entrancy corruption
                     this.enqueueNextTick(async () => {
-                        await this.grounding!.applyWorldTransform(tx, { x: event.coord!.x, y: event.coord!.y, z: event.coord!.z }).catch(err => 
+                        await this.grounding!.applyWorldTransform(tx, { x: event.coord!.x, y: event.coord!.y, z: event.coord!.z }).catch(err =>
                             logger.error({ err: err.message }, `[CNS] Deferred transform failed`)
                         );
                     }, "CRITICAL");
-                    
+
                     logger.debug({ coords: event.coord }, '[VOLLEY] SPATIAL_SHIFT enqueued for NEXT_TICK.');
-                    
+
                     // Collect World Delta
                     deltas.push({
                         tick: event.tick,
@@ -1082,7 +1115,7 @@ export class CNSGodheadPulseVolley {
     private async buildRoutingSnapshot(substrateHealth: SubstrateState): Promise<RoutingSnapshot> {
         const cloudSignal = SubstrateResolver.getCloudSignal();
         // const substrateState = await SubstrateResolver.resolve(); // REMOVED: redundant call
-        
+
         const modelHealthMap: Record<string, boolean> = {};
         if (this.nodeTester) {
             const rolodex = this.nodeTester.getRouter()?.getRolodex();

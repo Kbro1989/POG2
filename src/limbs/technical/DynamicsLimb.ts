@@ -4,11 +4,11 @@ const require = createRequire(import.meta.url);
 let GameCacheLoader: any = null;
 let parse: any = null;
 let cacheMajors: any = null;
-import { getRSMVSubstratePath } from '../../utils/SovereignPathResolver.js';
-const RSMV = getRSMVSubstratePath();
-try { ({ GameCacheLoader } = require(path.join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch {}
-try { ({ parse } = require(path.join(RSMV, 'src', 'opdecoder.js'))); } catch {}
-try { ({ cacheMajors } = require(path.join(RSMV, 'src', 'constants.js'))); } catch {}
+import { getrsmvSubstratePath } from '../../utils/SovereignPathResolver.js';
+const rsmv = getrsmvSubstratePath();
+try { ({ GameCacheLoader } = require(path.join(rsmv, 'src', 'cache', 'sqlite.js'))); } catch { }
+try { ({ parse } = require(path.join(rsmv, 'src', 'opdecoder.js'))); } catch { }
+try { ({ cacheMajors } = require(path.join(rsmv, 'src', 'constants.js'))); } catch { }
 import { Result, ok, err } from '../../core/models.js';
 import type { PedagogyProfile } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
@@ -53,7 +53,7 @@ export class DynamicsLimb {
         }
 
         try {
-            if (!this.loader || !parse || !cacheMajors) return err(new Error('DynamicsLimb: RSMV substrates not available.'));
+            if (!this.loader || !parse || !cacheMajors) return err(new Error('DynamicsLimb: rsmv substrates not available.'));
             const buffer = await this.loader.getFile(cacheMajors.spotanims, spotAnimId);
             if (!buffer) return err(new Error(`SpotAnim ${spotAnimId} not found in cache.`));
 

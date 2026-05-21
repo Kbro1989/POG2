@@ -41,14 +41,26 @@ export class SyntropyEngine {
     private readonly vscodeDir: string;
 
     constructor(private readonly config: SovereignConfig) {
-        // Phase 107.5: Use SovereignRoot (Auto-detected tier for D-drive sovereignty)
-        const root = getSovereignRoot();
-        this.claudeDir = join(root, 'guest', '.claude');
-        this.geminiExtensionsDir = join(root, 'guest', '.gemini', 'extensions');
-        this.vscodeDir = join(root, 'guest', '.vscode');
+        // Phase 107.5: High-fidelity path resolution cascade
+        // Route to the authoritative user profile / sovereign root if it exists, falling back to guest quarantine sandbox
+        const root = getSovereignRoot(); // typically D:\D-sovereign- or D:\sovereign
+        
+        // Resolve .claude path
+        const primaryClaude = join(root, '.claude');
+        const fallbackClaude = join(root, 'guest', '.claude');
+        this.claudeDir = existsSync(primaryClaude) ? primaryClaude : fallbackClaude;
 
-        // Fallback checks and directory creation handled by resolver normally, 
-        // but we ensure these specific guest paths exist.
+        // Resolve .gemini path
+        const primaryGemini = join(root, '.gemini', 'extensions');
+        const fallbackGemini = join(root, 'guest', '.gemini', 'extensions');
+        this.geminiExtensionsDir = existsSync(primaryGemini) ? primaryGemini : fallbackGemini;
+
+        // Resolve .vscode path
+        const primaryVscode = join(root, '.vscode');
+        const fallbackVscode = join(root, 'guest', '.vscode');
+        this.vscodeDir = existsSync(primaryVscode) ? primaryVscode : fallbackVscode;
+
+        // Ensure directories exist
         if (!existsSync(this.claudeDir)) mkdirSync(this.claudeDir, { recursive: true });
         if (!existsSync(this.geminiExtensionsDir)) mkdirSync(this.geminiExtensionsDir, { recursive: true });
         if (!existsSync(this.vscodeDir)) mkdirSync(this.vscodeDir, { recursive: true });

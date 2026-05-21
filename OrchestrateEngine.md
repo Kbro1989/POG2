@@ -56,7 +56,7 @@ import { RSCLimb } from '../limbs/spatial/RSCLimb.js';
 import { GlobeStateLimb } from '../limbs/spatial/GlobeStateLimb.js';
 import { MemoryConsolidationEngine } from './MemoryConsolidationEngine.js';
 import { StateManager } from '../state/StateManager.js';
-import { RSMVExtractor } from '../utils/RSMVExtractor.js';
+import { rsmvExtractor } from '../utils/rsmvExtractor.js';
 import { CacheLearningLimb } from '../limbs/spatial/CacheLearningLimb.js';
 import { GhostSplatEngine } from '../substrates/GhostSplatEngine.js';
 import { CacheForensicsLimb } from '../limbs/spatial/CacheForensicsLimb.js';
@@ -66,7 +66,7 @@ import { MaterialLimb } from '../limbs/spatial/MaterialLimb.js';
 import { SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
 import { DBRowOracleLimb } from '../limbs/spatial/DBRowOracleLimb.js';
 import { SovereignKnowledgeDB } from '../utils/SovereignKnowledgeDB.js';
-import { RSMVCacheDB } from '../utils/RSMVCacheDB.js';
+import { rsmvCacheDB } from '../utils/rsmvCacheDB.js';
 import { MechanicalSovereigntyLimb } from '../limbs/technical/MechanicalSovereigntyLimb.js';
 import { GameplaySovereigntyLimb } from '../limbs/spatial/GameplaySovereigntyLimb.js';
 import { VolumeSovereigntyLimb } from '../limbs/spatial/VolumeSovereigntyLimb.js';
@@ -75,7 +75,7 @@ import { SimulationHarness } from './gameplay/SimulationHarness.js';
 import { WorldGroundingLimb } from '../limbs/world_grounding/WorldGroundingLimb.js';
 import { CNSGodheadPulseVolley } from './gameplay/CNSGodheadPulseVolley.js';
 
-import { RSMVController } from '../vision/RSMVController.js';
+import { rsmvController } from '../vision/rsmvController.js';
 import { StructuralAnalyzer } from '../vision/StructuralAnalyzer.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { ModelViewerLimb } from '../limbs/spatial/ModelViewerLimb.js';
@@ -91,7 +91,7 @@ import { ASTWatcher } from './ASTWatcher.js';
 import { ChromaLimb } from '../limbs/spatial/ChromaLimb.js';
 import { VideoAssemblerLimb } from '../limbs/creative/VideoAssemblerLimb.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
-import { getSovereignRoot, getGodHeadRoot, getLearningDbPath, getPipelineRootPath, getRSMVCachePath, resolveSovereignPath } from '../utils/SovereignPathResolver.js';
+import { getSovereignRoot, getGodHeadRoot, getLearningDbPath, getPipelineRootPath, getrsmvCachePath, resolveSovereignPath } from '../utils/SovereignPathResolver.js';
 import { IntentVerifier } from './IntentVerifier.js';
 import { type Result, type EngineOutput, YaoState, isOk, ok, err, type ThinkingNexus, type ContextCard, type Todo, type TodoStatus, CircuitState, YAO_PRODUCTION_PREREQUISITES, type Plan, type OraclePlan, type ArchitectureManifest, SovereignDomain, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, type ActuationResult, CognitivePolarity, InterpretationContract } from '../core/models.js';
 import { AIDispatcher } from '../api/ai/Dispatcher.js';
@@ -123,10 +123,10 @@ import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger('OrchestrateEngine');
 
-
 /**
- * OrchestrateEngine ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Kimi's domain.
- * Phase 15: Now enforces domain isolation, workforce authority, and scoped tool access.
+
+* OrchestrateEngine ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Kimi's domain.
+* Phase 15: Now enforces domain isolation, workforce authority, and scoped tool access.
  */
 export class OrchestrateEngine {
     private initialized: boolean = false;
@@ -204,8 +204,8 @@ export class OrchestrateEngine {
     private readonly ytLimb?: YouTubeLimb;
     private readonly quotaTracker: QuotaTracker;
     private readonly chromaLimb: ChromaLimb; // Phase 108 - Metaphysical color signature
-    private readonly rsmvExtractor: RSMVExtractor;
-    private readonly rsmvController: RSMVController;
+    private readonly rsmvExtractor: rsmvExtractor;
+    private readonly rsmvController: rsmvController;
     private readonly cacheForensics: CacheForensicsLimb;
     private readonly cacheLearning: CacheLearningLimb;
     private readonly todoCloud: TodoCloudLimb;
@@ -224,11 +224,11 @@ export class OrchestrateEngine {
         this.shell = new ShellEngine(renderer, router);
         this.vscode = new VSCodeEngine(renderer, router);
         this.registry = new ToolRegistry();
-        
+
         // Connect Database Organs
         DBRowOracleLimb.getInstance();
         SovereignKnowledgeDB.getInstance();
-        RSMVCacheDB.getInstance();
+        rsmvCacheDB.getInstance();
 
         this.cacheForensics = CacheForensicsLimb.getInstance();
         this.spatialSovereignty = SpatialSovereigntyLimb.getInstance();
@@ -248,7 +248,7 @@ export class OrchestrateEngine {
         this.todoEngine.setCloudLimb(this.todoCloud);
 
         this.pulseVolley = CNSGodheadPulseVolley.getInstance();
-        this.rsmvController = RSMVController.getInstance();
+        this.rsmvController = rsmvController.getInstance();
         this.mcpEngine = new MCPEngine(config, this.registry);
         this.chroma = ChromanumberEngine.getInstance();
         this.maintenance = new DBMaintenance();
@@ -319,7 +319,7 @@ export class OrchestrateEngine {
         this.memoryConsolidation = new MemoryConsolidationEngine(this.client, this.vectorDB, StateManager.getInstance());
         this.soundtrack = new SoundtrackLimb(this.config, this.router.getHexagram());
         this.chromaLimb = new ChromaLimb(this.config); // Phase 108
-        this.rsmvExtractor = new RSMVExtractor();
+        this.rsmvExtractor = new rsmvExtractor();
 
         // Phase 105: YouTube Substrate Activation
         if (config.youtube?.clientId && config.youtube?.clientSecret && config.youtube?.apiKey) {
@@ -334,11 +334,11 @@ export class OrchestrateEngine {
         }
 
         // Phase 7: Anatomical Binding (Tool Reality Layer)
-        const rsmvCachePath = getRSMVCachePath();
+        const rsmvCachePath = getrsmvCachePath();
         const taxonomiesDir = resolveSovereignPath('memory/pedagogy');
         const extractionDir = resolveSovereignPath('extractions');
 
-        this.rsmvController = RSMVController.getInstance();
+        this.rsmvController = rsmvController.getInstance();
         this.cacheLearning = new CacheLearningLimb(rsmvCachePath, this.cacheForensics, extractionDir);
         this.questSynthesis = new QuestSynthesisLimb(this.client, this.cacheForensics, this.pedagogy);
         this.logicBrain = LogicBrainLimb.getInstance();
@@ -461,8 +461,8 @@ export class OrchestrateEngine {
     }
 
     /**
-     * Phase 259: Explicitly awaken the Sovereign Substrate.
-     * This awaits all critical neural links (MCP, DB, etc.) before execution begins.
+  * Phase 259: Explicitly awaken the Sovereign Substrate.
+  * This awaits all critical neural links (MCP, DB, etc.) before execution begins.
      */
     public async initialize(options: { diagnosticOnly?: boolean } = {}): Promise<void> {
         if (this.initialized) return;
@@ -609,8 +609,8 @@ export class OrchestrateEngine {
     }
 
     /**
-     * Phase 5: Cognitive Immunology 
-     * Passes incoming global Hive Mind events through the local biological Hexagram filter.
+  * Phase 5: Cognitive Immunology
+  * Passes incoming global Hive Mind events through the local biological Hexagram filter.
      */
     private assimilateHiveEvent(type: 'rolodex' | 'error_fix' | 'fprag', payload: any, rolodex?: any): void {
         const hex = this.router.getHexagram();
@@ -692,7 +692,7 @@ export class OrchestrateEngine {
 
         if (!this.nodeTester.hasRegistry()) {
             this.nodeTester.registerLimbs({
-                RSMVController: this.rsmvController,
+                rsmvController: this.rsmvController,
                 CNSGodheadPulseVolley: this.pulseVolley,
                 WorldGroundingLimb: this.grounding,
                 SpatialVisionEngine: this.visionEngine,
@@ -751,8 +751,8 @@ export class OrchestrateEngine {
             MCPEngine: this.mcpEngine,
             ChromanumberEngine: this.chroma,
             RSCLimb: this.rscLimb,
-            RSMVExtractor: this.rsmvExtractor,
-            RSMVController: this.rsmvController,
+            rsmvExtractor: this.rsmvExtractor,
+            rsmvController: this.rsmvController,
             CacheLearningLimb: this.cacheLearning,
             YouTubeLimb: this.ytLimb,
             GutenbergLimb: this.gutenberg,
@@ -818,8 +818,8 @@ export class OrchestrateEngine {
         this.nodeTester.registerLimbs({ ChromanumberEngine: this.chroma });
         this.nodeTester.registerLimbs({ MultiModelExecutor: undefined });
         this.nodeTester.registerLimbs({ RSCLimb: this.rscLimb });
-        this.nodeTester.registerLimbs({ RSMVExtractor: this.rsmvExtractor });
-        this.nodeTester.registerLimbs({ RSMVController: this.rsmvController });
+        this.nodeTester.registerLimbs({ rsmvExtractor: this.rsmvExtractor });
+        this.nodeTester.registerLimbs({ rsmvController: this.rsmvController });
         this.nodeTester.registerLimbs({ CacheForensicsLimb: this.cacheForensics });
         this.nodeTester.registerLimbs({ CacheLearningLimb: this.cacheLearning });
         this.nodeTester.registerLimbs({ YouTubeLimb: this.ytLimb });
@@ -1778,20 +1778,20 @@ export class OrchestrateEngine {
 
         this.registry.register({
             name: 'rsmv_extract',
-            description: 'Extract biological constraints and kinetic profiles from RSMV model data.',
+            description: 'Extract biological constraints and kinetic profiles from rsmv model data.',
             humanDescription: 'Parse a RuneScape model file to understand its anatomy and movement capabilities.',
-            jargonDescription: 'Leverages the RSMVExtractor substrate to derive SpeciesAnatomy and KineticProfile from target 3D model JSON definitions.',
+            jargonDescription: 'Leverages the rsmvExtractor substrate to derive SpeciesAnatomy and KineticProfile from target 3D model JSON definitions.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
             category: 'sensory',
             parameters: { modelData: 'object' },
             execute: async (args) => {
                 const { modelData } = args as { modelData: any };
-                const anatomy = RSMVExtractor.extractAnatomy(modelData);
-                const kinetic = RSMVExtractor.getKineticProfile(modelData);
+                const anatomy = rsmvExtractor.extractAnatomy(modelData);
+                const kinetic = rsmvExtractor.getKineticProfile(modelData);
 
                 // Developmental Memory: Ingest into VectorDB
-                const packet = RSMVExtractor.toKnowledgePacket(
+                const packet = rsmvExtractor.toKnowledgePacket(
                     { id: modelData.name, name: modelData.name, species: anatomy.species },
                     anatomy,
                     kinetic
@@ -1892,7 +1892,7 @@ export class OrchestrateEngine {
             parameters: { entityId: 'number', type: 'string' },
             execute: async (args) => {
                 const { entityId, type } = args as { entityId: number; type: string };
-                const res = await this.cacheLearning.extract(getRSMVCachePath(), entityId, type as any);
+                const res = await this.cacheLearning.extract(getrsmvCachePath(), entityId, type as any);
                 if (!res.ok) return res;
                 return ok({
                     output: `Successfully extracted ${type} ${entityId} (${res.value.raw.length} bytes).`,
@@ -1903,9 +1903,9 @@ export class OrchestrateEngine {
 
         this.registry.register({
             name: 'rsmv_view',
-            description: 'Open a 3D model in the RSMV inspector for visual verification.',
+            description: 'Open a 3D model in the rsmv inspector for visual verification.',
             humanDescription: 'Open a specific model in the 3D viewer to take a look at it.',
-            jargonDescription: 'Spawns an RSMV instructor process to render a specific model substrate for visual verification.',
+            jargonDescription: 'Spawns an rsmv instructor process to render a specific model substrate for visual verification.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.VISION,
             category: 'sensory',
@@ -1931,19 +1931,22 @@ export class OrchestrateEngine {
                 const { targetPath, intent = 'ui_analysis', threshold = 8 } = args as { targetPath: string; intent?: string; threshold?: number };
                 
                 const prompt = `
+
 VISHUAL AUDIT PROTOCOL:
 Analyze the target visual substrate at: ${targetPath}
 Intent: ${intent}
 
 TASKS:
+
 1. TECHNICAL FIDELITY: Inspect for artifacts, clipping, or rendering errors.
 2. STYLISTIC ALIGNMENT: Does this match Sovereign aesthetics (premium, dark mode, rich gradients)?
 3. SCORING: Provide a numerical score from 0 to 10.
 
 OUTPUT FORMAT:
-- Score: [Number]/10
-- Analysis: [Concise technical feedback]
-- Verdict: [PASS/FAIL] (${threshold}/10 threshold)
+
+* Score: [Number]/10
+* Analysis: [Concise technical feedback]
+* Verdict: [PASS/FAIL] (${threshold}/10 threshold)
 `.trim();
 
                 const res = await this.visionEngine.observe({
@@ -2805,18 +2808,18 @@ OUTPUT FORMAT:
 
         this.registry.register({
             name: 'extract_rsmv',
-            description: 'Extract biological and kinetic metadata from RSMV model JSON.',
+            description: 'Extract biological and kinetic metadata from rsmv model JSON.',
             humanDescription: 'Convert 3D model data into AI-readable anatomy and movement information.',
-            jargonDescription: 'Static extraction of SpeciesAnatomy and kinetic profiles from RSMV model substrates via RSMVExtractor.',
+            jargonDescription: 'Static extraction of SpeciesAnatomy and kinetic profiles from rsmv model substrates via rsmvExtractor.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.OBSERVE,
             category: 'core',
             parameters: { json: 'object' },
             execute: async (args): Promise<Result<EngineOutput>> => {
-                const res = RSMVExtractor.extractAnatomy((args as any).json);
-                const kinetic = RSMVExtractor.getKineticProfile((args as any).json);
+                const res = rsmvExtractor.extractAnatomy((args as any).json);
+                const kinetic = rsmvExtractor.getKineticProfile((args as any).json);
                 return ok({
-                    output: `RSMV Extraction Complete: Species ${res.commonName}, Kinetic Profile ${kinetic.toUpperCase()}.`,
+                    output: `rsmv Extraction Complete: Species ${res.commonName}, Kinetic Profile ${kinetic.toUpperCase()}.`,
                     data: { res, kinetic }
                 });
             }
@@ -3105,10 +3108,12 @@ OUTPUT FORMAT:
         const hexInterpretation = this.router.getHexagram().getInterpretation();
 
         const orchestratorPrompt = `
+
 You are Kimi(Brain).
                     CAPABILITIES:
 ${capabilities}
-- {"id": "converse", "role": "Virtual conversational tool", "domains": ["SOCIAL"], "description": "Converse with the user naturally. Use this for greetings, answering general questions, or asking for clarification before executing code/diagnostics. Do NOT use diagnostics just to say hello."}
+
+* {"id": "converse", "role": "Virtual conversational tool", "domains": ["SOCIAL"], "description": "Converse with the user naturally. Use this for greetings, answering general questions, or asking for clarification before executing code/diagnostics. Do NOT use diagnostics just to say hello."}
 
 ${memoryInjection ? `\n[SOVEREIGN MEMORY]\nPast lessons and contextual knowledge related to this task:\n${memoryInjection}\n` : ''}
 ${proprioceptiveInjection}
@@ -3691,7 +3696,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
 
     private async runAdversarialRefinement(plan: Plan, initialOutput: EngineOutput): Promise<Result<EngineOutput>> {
         const adversarialPrompt = `
-You are the AdversarialOrchestrator. 
+You are the AdversarialOrchestrator.
 Your goal is to find flaws, clinical violations (mocks, placeholders, weak typing), or logic gaps in the following implementation.
 
 TASK: "${plan.reasoning}"

@@ -130,9 +130,9 @@ async function main() {
     const npcs = loadJson(NPCS_PATH, 'npcs.json');
     let varbits: any[] = [];
     let kinematics: any[] = [];
-    
-    try { varbits = loadJson(VARBITS_PATH, 'varbits.json'); } catch {}
-    try { kinematics = loadJson(KINEMATICS_PATH, 'kinematics.json'); } catch {}
+
+    try { varbits = loadJson(VARBITS_PATH, 'varbits.json'); } catch { }
+    try { kinematics = loadJson(KINEMATICS_PATH, 'kinematics.json'); } catch { }
 
     console.log(`\n  Objects loaded: ${objects.length}`);
     console.log(`  NPCs loaded:    ${npcs.length}`);
@@ -145,8 +145,8 @@ async function main() {
     console.log(`  Transport object hits: ${transportObjects.length}`);
 
     // Specifically isolate mine cart objects
-    const mineCartObjects = transportObjects.filter(h => 
-        h.name.toLowerCase().includes('cart') || 
+    const mineCartObjects = transportObjects.filter(h =>
+        h.name.toLowerCase().includes('cart') ||
         h.name.toLowerCase().includes('track') ||
         h.name.toLowerCase().includes('rail')
     );

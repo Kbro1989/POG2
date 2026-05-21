@@ -1,6 +1,6 @@
 import { type Result, type EngineOutput, ok, YaoState } from '../core/models.js';
 import { SovereignEye } from '../utils/SovereignEye.js';
-import { existsSync, writeFileSync, readFileSync } from 'fs';
+import { existsSync, writeFileSync, readFileSync, promises as fsPromises } from 'fs';
 import { join } from 'path';
 import { createLogger } from '../utils/logger.js';
 import { ChromaCore, PerceptionValidation, type ColorSample } from '../utils/ChromaCore.js';
@@ -213,7 +213,42 @@ export class ChromanumberEngine {
         logger.info({ prompt }, 'ðŸ —ï¸   Generating visual substrate via Stable Diffusion substrate');
         // This traditionally calls the /generate endpoint of a running stable-diffusion-webui or similar
         const outputPath = join(process.cwd(), 'audit_output', `substrate_${Date.now()}.png`);
+        
+        // Auto-cleanup audit_output folder
+        await this.cleanupAuditOutput();
+        
         return ok({ path: outputPath });
+    }
+
+    private async cleanupAuditOutput(maxFiles: number = 50): Promise<void> {
+        try {
+            const auditDir = join(process.cwd(), 'audit_output');
+            if (!existsSync(auditDir)) return;
+
+            const entries = await fsPromises.readdir(auditDir);
+            const imageFiles = entries.filter(name => /\.(png|jpg|jpeg|webp|gif)$/i.test(name));
+
+            if (imageFiles.length <= maxFiles) {
+                return;
+            }
+
+            const imageStats = await Promise.all(imageFiles.map(async (name) => {
+                const fullPath = join(auditDir, name);
+                const stat = await fsPromises.stat(fullPath);
+                return { name, path: fullPath, mtimeMs: stat.mtimeMs };
+            }));
+
+            imageStats.sort((a, b) => a.mtimeMs - b.mtimeMs);
+            const deleteCount = imageStats.length - maxFiles;
+
+            for (let i = 0; i < deleteCount; i += 1) {
+                await fsPromises.unlink(imageStats[i].path);
+            }
+
+            logger.info({ deleted: deleteCount, location: 'audit_output', keep: maxFiles }, 'Chromatic engine pruned old audit artifacts');
+        } catch (err) {
+            logger.warn({ err }, 'Failed to prune audit_output artifacts');
+        }
     }
 
     /**

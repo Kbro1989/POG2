@@ -1,3 +1,4 @@
+// Import necessary types and utilities
 import { type Result, type EngineOutput, type YaoState } from './core/models.js';
 import { SovereignDomain, DOMAIN_ADJACENCY } from './types/SovereignDomain.js';
 import { createLogger } from "./utils/logger.js";

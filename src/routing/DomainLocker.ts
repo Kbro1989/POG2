@@ -1,3 +1,4 @@
+// src/routing/DomainLocker.ts
 import { SovereignDomain, classifyDomain, TOOL_DOMAIN_MAP } from '../types/SovereignDomain.js';
 import { createLogger } from "../utils/logger.js";
 

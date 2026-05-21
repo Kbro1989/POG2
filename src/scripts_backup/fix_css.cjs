@@ -6,14 +6,14 @@ let css = fs.readFileSync('tmp_rsmv_inspect/src/assets/index.css', 'utf8');
 const marker = '/* =========================================\r\n   RS3 HUD & GLASSMORPHISM THEME\r\n   ========================================= */';
 let startIdx = css.indexOf(marker);
 if (startIdx === -1) {
-    startIdx = css.indexOf('/* =========================================\n   RS3 HUD & GLASSMORPHISM THEME\n   ========================================= */');
+	startIdx = css.indexOf('/* =========================================\n   RS3 HUD & GLASSMORPHISM THEME\n   ========================================= */');
 }
 
 if (startIdx !== -1) {
-    const cleanCss = css.substring(0, startIdx);
-    
-    // Add the correct HUD CSS
-    const rs3hud = `
+	const cleanCss = css.substring(0, startIdx);
+
+	// Add the correct HUD CSS
+	const rs3hud = `
 /* =========================================
    RS3 HUD & GLASSMORPHISM THEME
    ========================================= */
@@ -291,9 +291,9 @@ if (startIdx !== -1) {
 	background: rgba(30, 40, 50, 0.9);
 }
 `;
-    
-    fs.writeFileSync('tmp_rsmv_inspect/src/assets/index.css', cleanCss + rs3hud);
-    console.log("CSS Repaired successfully.");
+
+	fs.writeFileSync('tmp_rsmv_inspect/src/assets/index.css', cleanCss + rs3hud);
+	console.log("CSS Repaired successfully.");
 } else {
-    console.log("Marker not found, unable to repair CSS automatically.");
+	console.log("Marker not found, unable to repair CSS automatically.");
 }

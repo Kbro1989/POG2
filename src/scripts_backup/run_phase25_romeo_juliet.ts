@@ -39,7 +39,7 @@ async function main() {
     const bioIntel = new BioIntelligenceLimb();
 
 
-    const rsmvCachePath = process.env['POG_RSMV_CACHE_DIR'] || join(process.env.ProgramData || 'C:\\\\ProgramData', 'jagex', 'runescape');
+    const rsmvCachePath = process.env['POG_rsmv_CACHE_DIR'] || join(process.env.ProgramData || 'C:\\\\ProgramData', 'jagex', 'runescape');
     const taxonomiesDir = join('D:\\', 'sovereign', 'memory', 'pedagogy');
 
     const kinematics = new KinematicsLimb(router as any, vectorDB as any, client as any);

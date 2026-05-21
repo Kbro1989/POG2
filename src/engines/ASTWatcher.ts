@@ -1,4 +1,4 @@
-﻿import { EventEmitter } from 'events';
+import { EventEmitter } from 'events';
 import * as chokidar from 'chokidar';
 import { readFileSync, existsSync } from 'fs';
 import { createHash } from 'crypto';
@@ -32,10 +32,9 @@ export class ASTWatcher extends EventEmitter {
     initialize(): void {
         try {
             this.watcher = chokidar.watch(this.projectRoot, {
-                ignored: [
-                    ...SovereignIgnoreManager.getIgnorePatterns().map(p => `**/${p}/**`),
-                    '**/.git/**'
-                ],
+                ignored: (path: string) => {
+                    return SovereignIgnoreManager.isIgnored(this.projectRoot, path);
+                },
                 persistent: true,
                 ignoreInitial: false
             });

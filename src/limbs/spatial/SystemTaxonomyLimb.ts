@@ -1,6 +1,6 @@
 import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-import { getRSMVCachePath, getCachePedagogyPath } from '../../utils/SovereignPathResolver.js';
+import { getrsmvCachePath, getCachePedagogyPath } from '../../utils/SovereignPathResolver.js';
 import { rsmvBridge } from '../../utils/RSMVBridge.js';
 import * as fs from 'fs';
 
@@ -16,7 +16,7 @@ const logger = createLogger('SystemTaxonomyLimb');
  */
 export class SystemTaxonomyLimb {
     private readonly outDir = getCachePedagogyPath();
-    
+
     constructor() {
         logger.info('SystemTaxonomyLimb initialized (Bridge-mediated).');
     }
@@ -88,8 +88,8 @@ export class SystemTaxonomyLimb {
 
     public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' } {
         const isOnline = rsmvBridge.isOnline;
-        return { 
-            online: isOnline, 
+        return {
+            online: isOnline,
             details: `Systax: ${isOnline ? 'NOMINAL' : 'OFFLINE'} (Bridge)`,
             status: isOnline ? 'ONLINE' : 'OFFLINE'
         };

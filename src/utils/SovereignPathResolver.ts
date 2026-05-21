@@ -38,13 +38,13 @@ function getEffectiveSovereignLair(): string {
     if (process.platform === 'win32') {
         const primaryD = 'D:\\D-sovereign-';
         const fallbackD = 'D:\\sovereign';
-        
+
         if (existsSync(primaryD)) return primaryD;
         if (existsSync(fallbackD)) return fallbackD;
 
         // If neither exists, attempt to create the primary one
-        try { 
-            mkdirSync(primaryD, { recursive: true }); 
+        try {
+            mkdirSync(primaryD, { recursive: true });
             return primaryD;
         } catch { /* Fallback to home */ }
     }
@@ -138,10 +138,10 @@ export function getSovereignRoot(tier?: PathTier): string {
     // Tier +1: Sovereign Root (Flexible based on getEffectiveSovereignLair)
     if (resolvedTier === PathTier.Sovereign) {
         const lair = getEffectiveSovereignLair();
-        
+
         // Phase 14: Eagerly bootstrap the entire 12-directory sovereign substrate
         bootstrapSovereignSubstrate(lair);
-        
+
         return lair;
     }
 
@@ -211,12 +211,16 @@ function bootstrapSovereignSubstrate(root: string): void {
 }
 
 /**
- * Returns the absolute path to the RSMV Inspector substrate.
+ * Returns the absolute path to the rsmv Inspector substrate.
  * Authoritative: D:\sovereign\cache_pedagogy\rsmv_inspector
  */
-export function getRSMVSubstratePath(): string {
-    const envPath = process.env['POG_RSMV_SUBSTRATE_PATH'];
+export function getrsmvSubstratePath(): string {
+    const envPath = process.env['POG_rsmv_SUBSTRATE_PATH'];
     if (envPath && existsSync(envPath)) return envPath;
+
+    // Decoupled side-by-side D: drive location (Phase 45 decoupled architecture)
+    const sideBySidePath = 'D:\\rsmv_inspector';
+    if (existsSync(sideBySidePath)) return sideBySidePath;
 
     // Sovereign substrate location (authoritative D: drive inspector)
     const sovereignPath = join('D:\\sovereign', 'cache_pedagogy', 'rsmv_inspector');
@@ -228,7 +232,7 @@ export function getRSMVSubstratePath(): string {
 
 /**
  * Resolves the path to the transient/tmp repository clones (like Kbro1989/rsmv)
- * This is distinct from the active runtime substrate (RSMV Inspector).
+ * This is distinct from the active runtime substrate (rsmv Inspector).
  */
 export function getTransientClonePath(repoPath: string): string {
     if (_projectRoot) {
@@ -264,18 +268,38 @@ export function getStaticResourcesPath(): string {
 /**
  * Returns the formal structural path to the local Jagex/RuneScape cache.
  * Governs the vision bridge's access to underlying model data.
+ * Priority: Beta if available, otherwise Live.
  */
-export function getRSMVCachePath(): string {
-    if (process.env['POG_RSMV_CACHE_DIR']) return process.env['POG_RSMV_CACHE_DIR'];
+export function getrsmvCachePath(): string {
+    if (process.env['POG_rsmv_CACHE_DIR']) return process.env['POG_rsmv_CACHE_DIR'];
     
+    // Auto-detect: Beta takes precedence for forensic monitoring
+    const beta = getrsmvBetaCachePath();
+    if (beta && existsSync(beta)) return beta;
+
+    return getrsmvLiveCachePath();
+}
+
+/**
+ * Returns the authoritative path to the Live RS3 cache.
+ */
+export function getrsmvLiveCachePath(): string {
     if (process.platform === 'win32') {
         const rs3Path = 'C:\\ProgramData\\Jagex\\RuneScape';
         if (existsSync(rs3Path)) return rs3Path;
-        const jagexRoot = 'C:\\ProgramData\\Jagex';
-        if (existsSync(jagexRoot)) return jagexRoot;
     }
-    
     return join(homedir(), 'Jagex', 'RuneScape');
+}
+
+/**
+ * Returns the path to the RS3 Beta cache if it exists.
+ */
+export function getrsmvBetaCachePath(): string | null {
+    if (process.platform === 'win32') {
+        const rs3BetaPath = 'C:\\ProgramData\\Jagex\\RuneScape-BETA';
+        if (existsSync(rs3BetaPath)) return rs3BetaPath;
+    }
+    return null;
 }
 
 
@@ -301,7 +325,7 @@ export function getOllamaModelsPath(): string {
             join(dirname(root), 'ollama-models'),
             join(root, 'ollama-models')
         ];
-        
+
         for (const p of pathsToTry) {
             if (existsSync(p)) return p;
         }
@@ -400,14 +424,14 @@ export function getSatelliteDbPaths(): string[] {
     const dir = hasHighPerformanceSubstrate() ? join(getSovereignRoot(), 'learning') : getSovereignRoot();
     const candidates = ['learning.db', 'vibe-learning.db', 'embeddings.db'];
     const validPaths: string[] = [];
-    
+
     for (const name of candidates) {
         const p = join(dir, name);
         if (existsSync(p)) {
             validPaths.push(p);
         }
     }
-    
+
     return validPaths;
 }
 
@@ -566,7 +590,10 @@ export function resolveSpatialAnchor(x: number, z: number): string {
 export function getAtlasSpatialPath(): string {
     // Phase 44: Respect POG_USE_LOCAL flag for spatial logic resolution
     if (process.env['POG_USE_LOCAL'] === 'true' && _projectRoot) {
-        const localPath = join(_projectRoot, 'atlas', 'spatial');
+        // Shield against raw root drive pollution (e.g. D:\ or D:/)
+        const isRootDrive = _projectRoot === 'D:\\' || _projectRoot === 'd:\\' || _projectRoot === 'D:/' || _projectRoot === 'd:/';
+        const rootPath = isRootDrive ? 'D:\\D-sovereign-' : _projectRoot;
+        const localPath = join(rootPath, 'atlas', 'spatial');
         if (existsSync(localPath)) return localPath;
     }
 
@@ -587,7 +614,7 @@ export function resolveLogicFragment(anchor: string): string | null {
     // 1. Check D drive spatial first (Authoritative C3 extraction)
     const spatialRoot = getAtlasSpatialPath();
     const spatialJsonPath = join(spatialRoot, `${anchor}_logic.json`);
-    
+
     if (existsSync(spatialJsonPath)) {
         return spatialJsonPath;
     }

@@ -5,12 +5,12 @@ const CACHE_DIR = "C:\\ProgramData\\Jagex\\RuneScape";
 async function run() {
     console.log("🚀 Sovereign RS3 Archive Probe — Locating Visual Substrates");
     const source = new GameCacheLoader(CACHE_DIR);
-    
+
     // Major 20: Sequences?
     // Major 21: SpotAnims?
     // Major 13: Skeletons?
     // Major 14: Meshes?
-    
+
     const majors = [2, 12, 13, 20, 21];
     for (const m of majors) {
         try {

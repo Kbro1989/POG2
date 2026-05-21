@@ -52,9 +52,14 @@ export class InteractionGateway {
         // 1. Resolve Target
         const isItem = targetId.startsWith('item_');
         const isObject = targetId.startsWith('obj_');
+        const isUI = targetId.startsWith('ui_') || targetId.includes(':');
         
         let target: any = null;
         let numericId = 0;
+
+        if (isUI && (action.toUpperCase() === 'SEARCH' || action.toUpperCase() === 'TYPESTRING')) {
+            return this.evaluateSearchIntent(source, targetId, action, state);
+        }
 
         if (isItem) {
             // Expected format: item_<x>_<y>_<id>
@@ -246,6 +251,67 @@ export class InteractionGateway {
 
         // 9. FINAL STATE TRANSITION
         source.interactionState = 'COOLDOWN';
+        return events;
+    }
+
+    public handleDialogueScript(scriptId: number, avatar: SovereignAvatar): string[] {
+        if (scriptId === 10905) {
+            avatar.metadata = avatar.metadata || {};
+            avatar.metadata.surveyCompleted = true;
+            return ['[Dialogue] You have completed the Sovereign Beta survey. Thank you!'];
+        }
+        return [];
+    }
+
+    public async handleMasterInteraction(payload: any, state: GameState, avatar: SovereignAvatar): Promise<void> {
+        logger.info({ payload }, '[InteractionGateway] Authoritative Master Interaction script intercepted.');
+        if (payload && payload.action && payload.targetId) {
+            await this.evaluateInteraction(avatar, payload.action, payload.targetId, state, null);
+        }
+    }
+
+    /**
+     * evaluateSearchIntent - Handles 'TypeString' and 'Search' pulses targeted at specific UI components.
+     * Maps intent-to-search to the precise UI component IDs bound to varbit 28556.
+     */
+    private evaluateSearchIntent(source: SovereignAvatar | NPC, targetComponentId: string, action: string, state: GameState): string[] {
+        const events: string[] = [];
+        
+        // Strip ui_ prefix if present
+        const componentId = targetComponentId.replace('ui_', '');
+
+        // Interfaces known for Search:
+        // 703 (Grand Exchange)
+        // 1420 (Bank / General Search)
+        const interfaceId = componentId.split(':')[0];
+        if (interfaceId !== '703' && interfaceId !== '1420' && interfaceId !== '11' && interfaceId !== '91' && interfaceId !== '658' && interfaceId !== '1851') {
+             // 11, 91, 658, 1851 are from script_28556_resolution.json
+             return [`[InteractionGateway] Rejecting search. Component ${componentId} is not bound to a known search context.`];
+        }
+
+        // Search Varbit is 28556 (Global Search State Flag)
+        const searchVarbitId = 28556;
+        const varbitLimb = VarbitSovereigntyLimb.getInstance();
+        
+        // 1 = Active Search, 0 = Inactive
+        varbitLimb.setVarbit(searchVarbitId, 1, state);
+        
+        // Attach the query to the avatar's metadata for the UI substrate to read.
+        // We use the 'action' or a specific query property if we want, but since action might be SEARCH,
+        // we'll assume the intent stores the actual query string.
+        let query = action;
+        if (source.intent && (source.intent as any).query) {
+            query = (source.intent as any).query;
+        }
+
+        source.metadata = source.metadata || {};
+        source.metadata.activeSearchQuery = query;
+        source.metadata.activeSearchComponent = componentId;
+        source.metadata.searchActive = true;
+        
+        source.interactionState = 'COOLDOWN';
+        events.push(`[InteractionGateway] 🔍 Search Intent Processed -> Component: ${componentId} | Query: '${query}'. Varbit 28556 activated.`);
+        
         return events;
     }
 }

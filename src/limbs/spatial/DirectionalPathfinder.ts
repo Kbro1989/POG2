@@ -304,5 +304,10 @@ export class DirectionalPathfinder {
         }
         return path;
     }
+
+    public handleMinimapClick(start: Coord, end: Coord, state: GameState): Coord[] {
+        logger.info({ start, end }, '[DirectionalPathfinder] Minimap click handler invoked.');
+        return this.findPath(start, end, state);
+    }
 }
 

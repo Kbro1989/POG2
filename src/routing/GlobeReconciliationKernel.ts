@@ -54,7 +54,7 @@ export class GlobeReconciliationKernel {
         const belief = await this.getBeliefAt(x, y, z);
         
         // 1. Identify layers
-        const layers = [];
+        const layers: Array<{ source: string; value: string; confidence: number }> = [];
         
         // Layer: Static Cache (via ms_x_y)
         if (belief) {

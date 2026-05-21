@@ -9,11 +9,11 @@ import type { CausalEvidence, CausalTrace, LearningTrace, EventOutcome, SignalSo
 const logger = createLogger('CNSCausalityLedger');
 
 export interface ValidationResult {
-  readonly outcome: EventOutcome;
-  readonly outputs?: any;
-  readonly warnings?: readonly string[];
-  readonly signals: readonly CausalEvidence[];
-  readonly metadata?: Record<string, any>;
+    readonly outcome: EventOutcome;
+    readonly outputs?: any;
+    readonly warnings?: readonly string[];
+    readonly signals: readonly CausalEvidence[];
+    readonly metadata?: Record<string, any>;
 }
 
 /**
@@ -58,10 +58,10 @@ export class CNSCausalityLedger {
      */
     public record(event: TickEvent): void {
         const validation = this.validateCausality(event);
-        
+
         // Signal Accumulation
         const signals = [...(event.signals || []), ...validation.signals];
-        
+
         // Signal Reduction (Pure Resolution)
         const { outcome, resolutionIndex } = this.reduceSignals(signals, event.outcome);
 
@@ -81,7 +81,7 @@ export class CNSCausalityLedger {
         EpistemicValidator.getInstance().enforceProvenance(finalizedEvent, TruthClass.CAUSAL);
 
         this.currentTickEvents.push(finalizedEvent);
-        
+
         // Log warnings if any
         if (validation.warnings) {
             validation.warnings.forEach(w => logger.warn({ eventId: event.id }, w));
@@ -137,9 +137,9 @@ export class CNSCausalityLedger {
     public compileLearningTrace(event: TickEvent): LearningTrace {
         const signals = event.signals || [];
         const resolutionSignal = event.resolutionPointIndex !== undefined ? signals[event.resolutionPointIndex] : null;
-        
+
         const causalChain = signals.map((s, idx) => `[${idx}] ${s.source} - ${s.code}: ${s.description}`);
-        
+
         let summary = `Event ${event.action} resolved to ${event.outcome}.`;
         if (resolutionSignal) {
             summary += ` Finalized at signal [${event.resolutionPointIndex}] (${resolutionSignal.code}).`;
@@ -161,7 +161,7 @@ export class CNSCausalityLedger {
         const registry = RegistryB.getInstance();
         const warnings: string[] = [];
         const signals: CausalEvidence[] = [];
-        
+
         let outputs: any = {};
 
         // 1. Resolve Spatial Anchor
@@ -257,7 +257,7 @@ export class CNSCausalityLedger {
      */
     public commitTick(): void {
         this.history.set(this.currentTick, [...this.currentTickEvents]);
-        
+
         // Log final resolution for the tick
         this.logTick(this.currentTick, this.currentTickEvents);
 
@@ -281,13 +281,13 @@ export class CNSCausalityLedger {
     /**
      * sealEvent - Cryptographic signature of event integrity.
      * Enforces deterministic serialization to ensure hash stability.
-     * Anchored to Substrate Version (RSMV) and signed via HMAC.
+     * Anchored to Substrate Version (rsmv) and signed via HMAC.
      * 
      * TIER PROMOTION: EXECUTION -> CAUSAL
      */
     private sealEvent(event: TickEvent): TickEvent {
         const validator = EpistemicValidator.getInstance();
-        
+
         // 1. Transition Enforcement
         const targetClass = TruthClass.CAUSAL;
         const isValid = validator.validateTransition(event.truthClass, targetClass);
@@ -298,10 +298,10 @@ export class CNSCausalityLedger {
 
         // 3. Deterministic Payload Construction
         const payload = JSON.stringify(event, Object.keys(event).sort());
-        
+
         // 4. Authority Signing
         const secret = process.env.SOVEREIGN_ROOT_SECRET || 'TEMPORARY_FALLBACK_KEY';
-        
+
         const hash = createHash('sha256')
             .update(payload)
             .update(this.lastEventHash || 'GENESIS')
@@ -316,7 +316,7 @@ export class CNSCausalityLedger {
             ...event,
             truthClass: finalClass,
             hash,
-            parentHash: this.lastEventHash,
+            parentHash: this.lastEventHash || 'GENESIS',
             signature,
             substrateAnchor: anchor
         };

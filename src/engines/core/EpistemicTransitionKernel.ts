@@ -1,11 +1,11 @@
-import { TruthClass, LearningMode, ChaosPhase, YaoState } from '../../core/models.js';
+import { TruthClass, LearningMode, ChaosPhase, YaoState, Coord } from '../../core/models.js';
 import { EventEmitter } from 'events';
-import type { 
-    TickEvent, 
-    CausalEvent, 
-    ExecutionEvent, 
-    Interpretation, 
-    PolicyDecision, 
+import type {
+    TickEvent,
+    CausalEvent,
+    ExecutionEvent,
+    Interpretation,
+    PolicyDecision,
     GovernanceResult,
     CausalPattern,
     InvariantRule,
@@ -18,6 +18,7 @@ import type {
 import { createLogger } from '../../utils/logger.js';
 import { EpistemicValidator } from './EpistemicValidator.js';
 import { rsmvBridge } from '../../utils/RSMVBridge.js';
+import { PedagogyDistiller, type InstructionPair } from '../../limbs/pedagogy/PedagogyDistiller.js';
 import { createHash } from 'crypto';
 import { ClockAuthorityRegistry, ClockDomain } from '../../utils/ClockAuthorityRegistry.js';
 
@@ -30,11 +31,22 @@ const HYSTERESIS_THRESHOLD = 0.15;
 /** Minimum causal confidence to treat a transition as a real event vs noise. */
 const CAUSAL_CONFIDENCE_FLOOR = 0.4;
 
+export interface SpatialPredictionRecord {
+    tick: number;
+    entityId: string;
+    predictedCoord: Coord;
+    actualCoord?: Coord;
+    error?: number;
+    confidence: number;
+    context?: string;
+}
+
 export class PredictionRegistry {
     private static instance: PredictionRegistry;
     private records: PredictionRecord[] = [];
+    private spatialPredictions: Map<string, SpatialPredictionRecord[]> = new Map();
 
-    private constructor() {}
+    private constructor() { }
 
     public static getInstance(): PredictionRegistry {
         if (!PredictionRegistry.instance) {
@@ -51,14 +63,62 @@ export class PredictionRegistry {
     public getLimbAccuracy(limbName: string, windowSize: number = 10): number {
         const recent = this.records.filter(r => r.limbErrors && r.limbErrors.has(limbName)).slice(-windowSize);
         if (recent.length === 0) return 1.0; // Assume 100% accuracy if no history
-        
+
         let totalError = 0;
         recent.forEach(r => totalError += r.limbErrors!.get(limbName) || 0);
-        
+
         const avgError = totalError / recent.length;
         // Map error [0..1] to accuracy [1..0]
         const accuracy = Math.max(0.1, 1.0 - avgError);
         return accuracy;
+    }
+
+    public logSpatialPrediction(record: SpatialPredictionRecord): void {
+        const history = this.spatialPredictions.get(record.entityId) || [];
+        history.push(record);
+        // Keep history size reasonable
+        if (history.length > 100) history.shift();
+        this.spatialPredictions.set(record.entityId, history);
+    }
+
+    public verifySpatialPrediction(entityId: string, actualCoord: Coord, tick: number): void {
+        const history = this.spatialPredictions.get(entityId);
+        if (!history) return;
+
+        const prediction = history.find(p => p.tick === tick);
+        if (!prediction) return;
+
+        prediction.actualCoord = actualCoord;
+        prediction.error = Math.sqrt(
+            Math.pow(actualCoord.x - prediction.predictedCoord.x, 2) +
+            Math.pow(actualCoord.y - prediction.predictedCoord.y, 2)
+        );
+
+        // If error > threshold, distill to pedagogy
+        if (prediction.error > 2) { // More than 2 tiles off
+            this.distillPredictionError(prediction);
+        }
+    }
+
+    private distillPredictionError(record: SpatialPredictionRecord): void {
+        logger.warn({ record }, 'Spatial prediction error exceeded threshold! Flagged for pedagogy.');
+        
+        const context = record.context ? JSON.parse(record.context) : {};
+        
+        const pair: InstructionPair = {
+            instruction: `Predict NPC position given path queue and aggro state`,
+            input: `Entity: ${record.entityId} (${context.name || 'Unknown'}, radius ${context.radius || 1}) at tick ${record.tick - (context.tickDepth || 2)}, predicted to be at (${record.predictedCoord.x}, ${record.predictedCoord.y}), but was actually at (${record.actualCoord?.x}, ${record.actualCoord?.y}). Context: ${record.context || '{}'}`,
+            output: `Correction: Move to (${record.actualCoord?.x}, ${record.actualCoord?.y}) instead of (${record.predictedCoord.x}, ${record.predictedCoord.y}). Error magnitude: ${record.error?.toFixed(2)}`,
+            source: "PredictionRegistry:SpatialError",
+            confidence: 0.9,
+            timestamp: Date.now()
+        };
+
+        try {
+            PedagogyDistiller.getInstance().addInstructionPair(pair);
+        } catch (e) {
+            logger.error({ err: e }, 'Failed to add spatial error to pedagogy corpus.');
+        }
     }
 }
 
@@ -66,7 +126,7 @@ export class PredictionRegistry {
  * EpistemicTransitionKernel - The Sovereign Truth Controller.
  * 
  * Transition Lattice with Recursive Proof Generation:
- * EXECUTION -> CAUSAL          [Proof: RSMV Cache Alignment]
+ * EXECUTION -> CAUSAL          [Proof: rsmv Cache Alignment]
  * CAUSAL -> INTERPRETATION    [Proof: Cognitive Derivation]
  * INTERPRETATION -> INVARIANT [Proof: Structural Proof]
  */
@@ -110,7 +170,7 @@ export class EpistemicTransitionKernel extends EventEmitter {
         EpistemicValidator.getInstance().validateTransition(event.truthClass, TruthClass.CAUSAL);
 
         const substratePath = "C:\\ProgramData\\Jagex\\RuneScape\\js5-16.jcache";
-        
+
         // 2. Physical Sealing
         const sealed = sealFunction(event);
 
@@ -181,11 +241,11 @@ export class EpistemicTransitionKernel extends EventEmitter {
             timestamp: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'EpistemicKernel')
         });
 
-         return {
-             ...rule,
-             truthClass: TruthClass.INVARIANT,
-             __brand: 'INVARIANT'
-         };
+        return {
+            ...rule,
+            truthClass: TruthClass.INVARIANT,
+            __brand: 'INVARIANT'
+        };
     }
 
     public emitExecutionEvent(event: TickEvent): ExecutionEvent {
@@ -205,17 +265,17 @@ export class EpistemicTransitionKernel extends EventEmitter {
 
     private emitProof(proof: EpistemicProof): void {
         this.proofLog.push(proof);
-        
+
         // Sliding window: Maintain only the last 1000 proofs to manage memory during long simulations
         if (this.proofLog.length > 1000) {
             this.proofLog.shift();
         }
 
-        logger.info({ 
-            rule: proof.rule, 
-            artifact: proof.artifactId, 
+        logger.info({
+            rule: proof.rule,
+            artifact: proof.artifactId,
             parent: proof.parentArtifactId,
-            target: proof.targetLayer 
+            target: proof.targetLayer
         }, '⚖️ EPISTEMIC PROOF GENERATED: Transition justified.');
     }
 
@@ -288,7 +348,7 @@ export class EpistemicTransitionKernel extends EventEmitter {
             // Generate prediction error record
             const errorMagnitude = (predictedPhase === actualPhase && this.lastPrediction.expectedVolatility === this.volatilityEMA) ? 0.0 : 1.0;
             const limbErrors = new Map<string, number>();
-            
+
             if (errorMagnitude > 0) {
                 // Penalize limbs that contributed to moving lines if the prediction was wrong
                 for (const line of movingLines) {
@@ -447,12 +507,12 @@ export class EpistemicTransitionKernel extends EventEmitter {
      */
     public getPhaseGateMultiplier(): number {
         switch (this.currentPhase) {
-            case ChaosPhase.STABLE:     return 1.0;
+            case ChaosPhase.STABLE: return 1.0;
             case ChaosPhase.RECOVERING: return 0.7;
-            case ChaosPhase.EXPLORING:  return 0.4;
+            case ChaosPhase.EXPLORING: return 0.4;
             case ChaosPhase.FALSE_STABILITY: return 0.5; // Cautious throttling
-            case ChaosPhase.DEGRADING:  return 0.1;
-            default:                    return 0.5;
+            case ChaosPhase.DEGRADING: return 0.1;
+            default: return 0.5;
         }
     }
 
@@ -462,12 +522,12 @@ export class EpistemicTransitionKernel extends EventEmitter {
      */
     public recordAction(actionType: string, confidence: number): void {
         this.emit('actionCommitted', { actionType, confidence, timestamp: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'EpistemicKernel') });
-        
+
         // Intentional action slightly increases volatility (system is moving/changing)
         // but stabilizes the trend if confidence is high.
         const intentImpact = 0.05 * (1 - confidence);
         this.volatilityEMA = Math.min(1.0, this.volatilityEMA + intentImpact);
-        
+
         logger.debug({ actionType, confidence }, 'Epistemic Kernel: Action reported');
     }
 

@@ -10,7 +10,7 @@ async function run() {
     console.log(`🚀 Sovereign Inverted Script Search — Final 10/10 Truth for ID ${TARGET_ID}`);
     const source = new GameCacheLoader(CACHE_DIR);
     const index = await source.getCacheIndex(12);
-    
+
     console.log(`Scanning ${index.length} archives...`);
     const results: number[] = [];
 

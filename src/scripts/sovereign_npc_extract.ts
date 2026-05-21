@@ -100,7 +100,10 @@ async function run() {
                         morphVarp,
                     };
                     npcCount++;
-                } catch {}
+                } catch (_error) {
+                    // [SILENT NECROSIS LOGGER]
+                    console.warn("[SILENT NECROSIS] Caught in sovereign_npc_extract: ", _error);
+                }
             }
         }
     } catch (e) {
@@ -132,42 +135,49 @@ async function run() {
             for (const file of arch) {
                 try {
                     const row = parse.dbrows.read(file.buffer, source) as any;
-                    const tableId = row.table ?? -1;
-                    const colGroups = row.unk01?.columndata;
+                    const tableId = row.tableId ?? -1;
+                    const colGroups = row.group1?.columndata || row.group2?.columndata || row.group3?.columndata;
 
                     if (!colGroups) continue;
 
                     let npcId: number | null = null;
-                    let coord: number | null = null;
-                    let hasName = false;
+                    const rowCoords: number[] = [];
 
-                    for (const group of colGroups) {
-                        for (const col of group.columns) {
-                            // type 32 = npc/obj reference, type 33 = coord, type 36 = string
-                            if (col.type === 32 && col.value?.[0] !== undefined) {
-                                npcId = Number(col.value[0]);
+                    for (const entry of colGroups) {
+                        for (const col of entry.columns) {
+                            const values = Array.isArray(col.value) ? col.value : [col.value];
+                            for (const val of values) {
+                                if (val === undefined || val === null) continue;
+                                if ((col.type === 32 || col.type === 0 || col.type === 1) && npcId === null) {
+                                    npcId = Number(val);
+                                }
+                                if (col.type === 33 || col.type === 22 || col.type === 9) {
+                                    rowCoords.push(Number(val));
+                                }
                             }
-                            if ((col.type === 33 || col.type === 22) && col.value?.[0] !== undefined) {
-                                coord = Number(col.value[0]);
-                            }
-                            if (col.type === 36) hasName = true;
                         }
                     }
 
-                    if (npcId !== null && coord !== null) {
-                        const unpacked = unpackCoord(coord);
-                        spawns.push({
-                            npcId,
-                            coord,
-                            worldX: unpacked.x,
-                            worldZ: unpacked.z,
-                            plane: unpacked.plane,
-                            tableId,
-                            rowId: file.fileid,
-                        });
-                        spawnCount++;
+                    if (rowCoords.length > 0) {
+                        const finalNpcId = npcId ?? file.fileid;
+                        for (const coord of rowCoords) {
+                            const unpacked = unpackCoord(coord);
+                            spawns.push({
+                                npcId: finalNpcId,
+                                coord,
+                                worldX: unpacked.x,
+                                worldZ: unpacked.z,
+                                plane: unpacked.plane,
+                                tableId,
+                                rowId: file.fileid,
+                            });
+                            spawnCount++;
+                        }
                     }
-                } catch {}
+                } catch (_error) {
+                    // [SILENT NECROSIS LOGGER]
+                    console.warn("[SILENT NECROSIS] Caught in sovereign_npc_extract: ", _error);
+                }
             }
 
             console.log(`✅ Found ${spawnCount} NPC spawn entries with coordinates`);
@@ -185,10 +195,31 @@ async function run() {
         npcCombatLevel: npcDefs[s.npcId]?.combatLevel ?? null,
     }));
 
-    // Write spawns
+    // Write spawns (flat)
     const spawnsPath = path.join(OUTPUT_ROOT, "npc_spawns.json");
     fs.writeFileSync(spawnsPath, JSON.stringify(enrichedSpawns, null, 2));
     console.log(`📝 Wrote ${spawnsPath} (${enrichedSpawns.length} entries)`);
+
+    // ── 3. Create Partitioned V3 Dataset for Synthesis ──
+    console.log("\n── Phase 3: Partitioning for Synthesis ──");
+    const partitioned: Record<string, any[]> = {};
+    for (const s of enrichedSpawns) {
+        const msX = Math.floor(s.worldX! / 64);
+        const msZ = Math.floor(s.worldZ! / 64);
+        const msId = `ms_${msX}_${msZ}`;
+
+        if (!partitioned[msId]) partitioned[msId] = [];
+        partitioned[msId].push({
+            id: s.npcId,
+            x: s.worldX,
+            z: s.worldZ,
+            plane: s.plane
+        });
+    }
+
+    const v3Path = path.join(OUTPUT_ROOT, "npcs_total_v3.json");
+    fs.writeFileSync(v3Path, JSON.stringify(partitioned, null, 2));
+    console.log(`📝 Wrote ${v3Path} (${Object.keys(partitioned).length} mapsquares)`);
 
     // ── Summary stats ──
     const tableDistribution: Record<number, number> = {};

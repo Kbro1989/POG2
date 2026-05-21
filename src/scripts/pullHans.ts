@@ -36,7 +36,7 @@ async function run() {
         const result = await controller.viewModel(modelId);
 
         if (result.ok) {
-            logger.info('RSMV pull triggered successfully. Waiting for output...');
+            logger.info('rsmv pull triggered successfully. Waiting for output...');
 
             // Subprocess is spawn'd with inherit, so it should be fast. 
             // We wait up to 10s for the file to appear.

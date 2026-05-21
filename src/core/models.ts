@@ -27,7 +27,7 @@ export enum LogicalSignature {
 }
 export enum SubstrateState {
     ONLINE = 'ONLINE',          // Full actuation and vision OK
-    DEGRADED = 'DEGRADED',      // Vision OK, but actuation (RSMV write) blocked
+    DEGRADED = 'DEGRADED',      // Vision OK, but actuation (rsmv write) blocked
     DEGRADED_IO = 'DEGRADED_IO', // I/O latency exceeding pulse budget
     OFFLINE = 'OFFLINE'         // Full substrate reachability failure (abort tick)
 }
@@ -109,10 +109,10 @@ export interface DirectionalCollision {
     south: boolean;
     east: boolean;
     west: boolean;
-    
+
     // NPC-specific constraints (directions that only block NPCs, not players)
     npc_only_blocks?: Direction[];
-    
+
     // Explicit blocked flags for API clarity (Derived: !north)
     northBlocked?: boolean;
     southBlocked?: boolean;
@@ -141,11 +141,16 @@ export interface CombatantState {
     animaCharged?: boolean;             // New: Magic empower buff
     searingWindsTicksRemaining?: number; // New: Ranged buff duration
     shadowImbuedTicksRemaining?: number; // New: Ranged adrenaline buff duration
+    
+    // Necromancy Specifics
+    conjureActive?: { skeleton: boolean, zombie: boolean, ghost: boolean, phantom: boolean };
+    ritualState?: { soulsCaptured: number, corruptionLevel: number };
     stunCharges?: Record<string, number>; // New: Charge-based stun tracking (abilityId -> count)
     hp?: number;                        // Current HP for survival heuristics
     maxHp?: number;                     // Max HP for survival heuristics
     lastCombatTick: number; // Track for rhythm enforcement (e.g. 4-tick)
     cooldowns: Record<string, number>; // abilityId -> tickAvailable
+    messages?: string[];                // Chat buffer for forensic triggers
 }
 
 export interface SovereignIntent {
@@ -182,7 +187,7 @@ export interface NPC extends CombatantState {
         attackLevel?: number;
         defenceLevel?: number;
     };
-    
+
     brain?: {
         think: (tick: number, state: GameState, avatar: any) => void;
     };
@@ -259,6 +264,7 @@ export enum SkillId {
     INVENTION = 27,
     ARCHAEOLOGY = 28,
     NECROMANCY = 29,
+    TAMING = 30, // Speculative: 30th Skill Reservation
     QUEST_POINT = 31
 }
 
@@ -305,7 +311,7 @@ export interface SovereignAvatar extends NPC {
     respawn(): void;
     setEquipmentSlot(slot: EquipmentSlot, item: Item | null): void;
     pendingInteraction: { action: string; targetId: string } | null;
-    
+
     // Adrenaline / Combat logic
     adrenalinePercent: string;
     addAdrenaline(amount: number): void;
@@ -315,10 +321,10 @@ export interface SovereignAvatar extends NPC {
     applyDamage(amount: number): void;
     heal(amount: number): void;
     plotPath?(
-        targetX: number, 
-        targetY: number, 
-        pathfinder: any, 
-        context: any, 
+        targetX: number,
+        targetY: number,
+        pathfinder: any,
+        context: any,
         collisionMatrix?: Map<string, any>
     ): boolean;
     firstEmptySlot(): number | null;
@@ -382,10 +388,10 @@ export interface GraveMarker {
 export type EventSource = "ADMIN" | "SYSTEM" | "AI" | "WORLD_SCRIPT";
 
 export type EventOutcome =
-  | "SUCCESS"
-  | "REJECTED_COLLISION"
-  | "REJECTED_AUTHORITY"
-  | "DEFERRED";
+    | "SUCCESS"
+    | "REJECTED_COLLISION"
+    | "REJECTED_AUTHORITY"
+    | "DEFERRED";
 
 export type SignalSource = "SPATIAL" | "POLICY" | "DOMAIN" | "INFRASTRUCTURE" | "EXTERNAL";
 
@@ -537,17 +543,17 @@ export interface LearningEvent {
     tick: number;
     timestamp: number;
     fidelity: LearningFidelity;
-    
+
     // Raw Truth (Causal Trace)
     trace?: CausalTrace;
-    
+
     // Deterministic Resolution (The finalized event)
     resolution: any; // TickEvent (functionally typed to avoid circularity in models)
-    
+
     // Abstracted Intelligence (Optional)
     patterns?: CausalPattern[];
     invariants?: InvariantRule[];
-    
+
     // Higher-Order Lessons
     lesson?: string;
     tags?: string[];
@@ -587,10 +593,11 @@ export interface GameState {
     varps: Map<number, number>;
     varcs: Map<number, number | string>;
     varbits: Map<number, number>; // Cache for resolved varbit values
-    players: Map<string, SovereignAvatar>; 
+    players: Map<string, SovereignAvatar>;
     tick?: number;              // Alias for tickNumber (used by NpcAgent)
     tickNumber?: number;
     lastTickTime?: number;
+    messages?: string[];
 }
 
 
@@ -624,34 +631,34 @@ export interface MechanicalRule {
  * Server-side injector registry entry
  */
 export interface ServerSideInjector {
-  // Cache identification
-  itemId?: number;        // Major 19, archive X
-  objectId?: number;      // Major 0, archive X  
-  npcId?: number;         // Major 1, archive X
-  
-  // Trigger conditions
-  trigger: 'click' | 'use' | 'examine' | 'tick' | 'proximity';
-  provenance?: string | {
-    source: string;
-    recordId: string;
-    timestamp: number;
-    path: string;
-  };
-  
-  // Server-side validation gates
-  validation: {
-    questStage?: number;
-    skillLevel?: number;
-    varbitChecks?: Array<{id: number, value: number}>;
-    inventoryChecks?: Array<{itemId: number, count: number}>;
-  };
-  
-  // Handler dispatch
-  handler: string;        // 'BarrowsInterpreter', 'ClueScrollInterpreter', etc.
-  method: string;         // 'onClick', 'onUse', etc.
-  
-  // Authority
-  authorityTier: 'CACHE' | 'SYNTHESIZED' | 'WIKI';
+    // Cache identification
+    itemId?: number;        // Major 19, archive X
+    objectId?: number;      // Major 0, archive X  
+    npcId?: number;         // Major 1, archive X
+
+    // Trigger conditions
+    trigger: 'click' | 'use' | 'examine' | 'tick' | 'proximity';
+    provenance?: string | {
+        source: string;
+        recordId: string;
+        timestamp: number;
+        path: string;
+    };
+
+    // Server-side validation gates
+    validation: {
+        questStage?: number;
+        skillLevel?: number;
+        varbitChecks?: Array<{ id: number, value: number }>;
+        inventoryChecks?: Array<{ itemId: number, count: number }>;
+    };
+
+    // Handler dispatch
+    handler: string;        // 'BarrowsInterpreter', 'ClueScrollInterpreter', etc.
+    method: string;         // 'onClick', 'onUse', etc.
+
+    // Authority
+    authorityTier: 'CACHE' | 'SYNTHESIZED' | 'WIKI';
 }
 
 
@@ -973,7 +980,7 @@ export interface Provenance {
     path?: string;
     url?: string;
     timestamp: number;
-    agentId?: string; 
+    agentId?: string;
     ancestry?: Provenance[];
 
 }
@@ -1246,11 +1253,11 @@ export type AIServiceType =
 export type AITaskType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'HEALTH' | 'GEO' | 'EMBEDDING' | 'VISION';
 
 export type TaskClass =
-  | "COMPLETION"
-  | "AGENTIC_REASONING"
-  | "VISION"
-  | "RETRIEVAL"
-  | "CREATIVE_EXPANSION";
+    | "COMPLETION"
+    | "AGENTIC_REASONING"
+    | "VISION"
+    | "RETRIEVAL"
+    | "CREATIVE_EXPANSION";
 
 export interface AICapability {
     id: string;
