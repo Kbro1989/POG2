@@ -518,7 +518,17 @@ Respond in JSON ONLY:
 
     getInterpretation(): HexagramDefinition {
         const binaryId = this.calculateHexagramId(this.lines, false);
-        return HEXAGRAM_REGISTRY[binaryId] || { ...DEFAULT_HEXAGRAM, binary: binaryId };
+        const def = HEXAGRAM_REGISTRY[binaryId];
+        if (!def) {
+            return {
+                ...DEFAULT_HEXAGRAM,
+                binary: binaryId,
+                name: `Unmapped Substrate (${binaryId})`,
+                strategy: `GENERIC_STABILIZATION: No specific archetype for ${binaryId}. Operating on baseline safety protocols.`,
+                emotion: EmotionalState.Zen
+            };
+        }
+        return def;
     }
 
     public getEmotionalState(): EmotionalState {

@@ -508,14 +508,14 @@ export class TernaryRouter {
 
         // 1. Specialized Substrate Routing
         if (complexity === 'Chromanumber') {
-            decision = { model: this.config.imageGenModel, complexity: 'Chromanumber', tier: 'Reactive', reasoning: 'Stage 2 (Local) - Chromanumber substrate: Visual metabolic mapping', yaoState: YaoState.YoungYin, fallbackUsed: false, timestamp: routeStartTime };
+            decision = { model: this.config.imageGenModel, complexity: 'Chromanumber', tier: 'Reactive', reasoning: `Stage 2 (Local) - Chromanumber substrate: Visual metabolic mapping. Directive: [${directive}]`, yaoState: YaoState.YoungYin, fallbackUsed: false, timestamp: routeStartTime };
         } else if (complexity === 'SovereignEye') {
-            decision = { model: this.config.visionModel, complexity: 'SovereignEye', tier: 'Executive', reasoning: 'Stage 3 (Structural) - SovereignEye substrate: Sensory proprioception', yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
+            decision = { model: this.config.visionModel, complexity: 'SovereignEye', tier: 'Executive', reasoning: `Stage 3 (Structural) - SovereignEye substrate: Sensory proprioception. Directive: [${directive}]`, yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
         } else if (complexity === 'Vision') {
             const model = this.findWorkingModel(this.config.visionModel, ['moondream', 'llava'], 'vision');
-            decision = { model, complexity: 'Vision', tier: 'Executive', reasoning: 'Stage 3 (Structural) - Visual task routed via Sensory limb', yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
+            decision = { model, complexity: 'Vision', tier: 'Executive', reasoning: `Stage 3 (Structural) - Visual task routed via Sensory limb. Directive: [${directive}]`, yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
         } else if (complexity === 'Voice') {
-            decision = { model: this.config.voiceModel, complexity: 'Voice', tier: 'Reactive', reasoning: 'Stage 2 (Local) - Audio task routed via Motor limb', yaoState: YaoState.YoungYin, fallbackUsed: false, timestamp: routeStartTime };
+            decision = { model: this.config.voiceModel, complexity: 'Voice', tier: 'Reactive', reasoning: `Stage 2 (Local) - Audio task routed via Motor limb. Directive: [${directive}]`, yaoState: YaoState.YoungYin, fallbackUsed: false, timestamp: routeStartTime };
         }
 
         // 2. Orchestration Routing (Kimi)
@@ -566,8 +566,8 @@ export class TernaryRouter {
 
             if (complexity === 'Yang') {
                 const model = this.findWorkingModel(
-                    this.config.deepPathModel, // Phase 78: Deep Path (Sovereignty)
-                    [this.config.masterLocalModel, 'deepseek-coder:33b', 'deepseek-r1:8b', this.config.localFallbackModel],
+                    this.config.deepPathModel,
+                    [this.config.masterLocalModel, 'deepseek-coder:33b-instruct-q4_K_M', 'deepseek-r1:8b', this.config.localFallbackModel],
                     finalTaskType
                 );
                 decision = {
@@ -591,7 +591,7 @@ export class TernaryRouter {
                     timestamp: routeStartTime
                 };
             } else {
-                const model = this.findWorkingModel(this.config.fastPathModel, ['moondream:1.8b', 'deepseek-r1:8b', this.config.reactiveAgentModel], finalTaskType);
+                const model = this.findWorkingModel(this.config.fastPathModel, ['moondream:latest', 'deepseek-r1:8b', this.config.reactiveAgentModel], finalTaskType);
                 decision = {
                     model,
                     complexity: 'Yin',

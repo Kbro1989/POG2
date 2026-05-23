@@ -1,6 +1,6 @@
 {
-  "timestamp": 1779355264160,
-  "tick": 679,
+  "timestamp": 1779487394145,
+  "tick": 26,
   "avatar": {
     "coord": {
       "x": 3222,
@@ -9,19 +9,9 @@
     },
     "hp": 1000,
     "maxHp": 1000,
-    "adrenaline": 0,
+    "adrenaline": 1000,
     "bloodlustStacks": 0,
-    "intent": {
-      "action": "seek_quest",
-      "targetId": "quest_cooks_assistant",
-      "tickStarted": 0,
-      "contextHash": "objective_seeking",
-      "coord": {
-        "x": 3206,
-        "y": 3214,
-        "plane": 0
-      }
-    },
+    "intent": null,
     "lockTicks": 0
   },
   "activeModule": "none",

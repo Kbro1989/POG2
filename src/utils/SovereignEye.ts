@@ -64,23 +64,51 @@ export class SovereignEye extends EventEmitter {
 
     /**
      * Universal capture entry point.
+     * @param options.autoCleanup If true (default), deletes the image file after processing is complete.
      */
-    async capture(source: CaptureSource, viewport: ViewportConfig = DEFAULT_VIEWPORT): Promise<Result<CaptureResult>> {
+    async capture(source: CaptureSource, viewport: ViewportConfig = DEFAULT_VIEWPORT, options: { autoCleanup?: boolean } = { autoCleanup: true }): Promise<Result<CaptureResult>> {
         logger.info({ sourceType: source.type, target: source.target }, 'Sovereign Eye capturing');
 
+        let result: Result<CaptureResult>;
         switch (source.type) {
             case 'url':
-                return this.captureUrl(source.target, viewport);
+                result = await this.captureUrl(source.target, viewport);
+                break;
             case 'html':
-                return this.captureHtmlFile(source.target, viewport);
+                result = await this.captureHtmlFile(source.target, viewport);
+                break;
             case 'rsc':
-                return this.captureRSC();
+                result = await this.captureRSC();
+                break;
             case 'window':
-                return this.captureWindow(source.target);
+                result = await this.captureWindow(source.target);
+                break;
             case 'file':
-                return this.captureFile(source.target);
+                result = await this.captureFile(source.target);
+                break;
             default:
                 return { ok: false, error: new Error(`Unknown capture source type`) };
+        }
+
+        if (result.ok && options.autoCleanup && result.value.imagePath) {
+            await this.cleanup(result.value.imagePath);
+            return { ok: true, value: { ...result.value, imagePath: null } };
+        }
+
+        return result;
+    }
+
+    /**
+     * Cleanup a specific capture artifact.
+     */
+    async cleanup(filePath: string): Promise<void> {
+        try {
+            if (existsSync(filePath)) {
+                await fsPromises.unlink(filePath);
+                logger.info({ filePath }, 'SovereignEye artifact purged.');
+            }
+        } catch (err) {
+            logger.error({ err, filePath }, 'Failed to purge SovereignEye artifact.');
         }
     }
 
@@ -351,7 +379,9 @@ $bitmap.Dispose()
             const deleteCount = imageStats.length - maxFiles;
 
             for (let i = 0; i < deleteCount; i += 1) {
-                await fsPromises.unlink(imageStats[i].path);
+                const filePath = imageStats[i].path;
+                if (/pipelines|icons/i.test(filePath)) continue;
+                await fsPromises.unlink(filePath);
             }
 
             logger.info({ deleted: deleteCount, keep: maxFiles }, 'SovereignEye pruned old capture artifacts');

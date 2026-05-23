@@ -20,12 +20,12 @@ const _registry = new Map<string, OllamaCapability>();
 function loadFromEnv(): void {
     const defs: Array<[string, OllamaCapability['domain'], string[]]> = [
         ['THINK', 'reasoning', ['deepseek-r1:8b']],
-        ['CODE_HEAVY', 'code', ['qwen2.5-coder:14b-instruct-q5_K_M', 'deepseek-r1:8b']],
+        ['CODE_HEAVY', 'code', ['deepseek-coder:33b-instruct-q4_K_M', 'qwen2.5-coder:14b-instruct-q5_K_M', 'deepseek-r1:8b']],
         ['CODE_MID', 'code', ['yi-coder:9b-chat-q5_K_M', 'qwen2.5-coder:7b-instruct-q4_K_M']],
         ['CODE_FAST', 'code', ['qwen2.5-coder:7b-instruct-q4_K_M', 'qwen2.5-coder:1.5b-instruct-q4_K_M']],
         ['FAST', 'reflex', ['qwen2.5-coder:1.5b-instruct-q4_K_M']],
-        ['VISION', 'vision', ['llava:latest']],
-        ['EMBED', 'embedding', ['nomic-embed-text:latest', 'qwen3-embedding:latest']],
+        ['VISION', 'vision', ['moondream:latest', 'llava:latest']],
+        ['EMBED', 'embedding', ['qwen3-embedding:latest', 'nomic-embed-text:latest']],
     ];
 
     for (const [suffix, domain, fallbacks] of defs) {

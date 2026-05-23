@@ -5,9 +5,13 @@
       "Bash(node dist/cli.js config set:*)",
       "Bash(node:*)",
       "Bash(cat:*)",
-      "Bash(start cmd:*)"
+      "Bash(start cmd:*)",
+      "Bash(pog2 *)",
+      "PowerShell(npm run *)",
+      "Bash(npx tsc *)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "outputStyle": "Explanatory"
 }

@@ -453,10 +453,8 @@ export async function main(): Promise<void> {
                 promptLoop();
             };
             
-            process.on('SIGINT', () => {
-                renderer.info('🛑 Sovereign Organism: Graceful shutdown initiated.');
-                process.exit(0);
-            });
+            // SIGINT handler removed to avoid conflict with main REPL shutdown flow
+
             
             promptLoop();
         });
@@ -3548,48 +3546,33 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
 
     renderer.setReadline(rl);
 
+    const startupPrompt = `\x1b[38;5;51mKimi [ready]\x1b[0m > `;
+    renderer.info('Startup interaction window opened. Enter a command to begin, or press Enter to continue to the REPL.');
+    let intent: string | undefined = initialPrompt;
+    try {
+        if (!intent) {
+            const startupInput = await rl.question(startupPrompt);
+            if (startupInput.trim().length > 0) {
+                intent = startupInput;
+            }
+        }
+    } catch (err) {
+        renderer.warn('Startup interaction window closed unexpectedly. Proceeding to the REPL.');
+    }
+
     const engine = new OrchestrateEngine(config, router, renderer);
     await engine.initialize();
-    const { VectorDB } = await import('./utils/VectorDB.js');
-    const { MemoryConsolidationEngine } = await import('./engines/MemoryConsolidationEngine.js');
-    const vectorDB = new VectorDB({ client });
-    const consolidationEngine = new MemoryConsolidationEngine(client, vectorDB, state);
-
-    vectorDB.initialize();
 
     const promptString = `\x1b[38;5;51mKimi\x1b[0m > `;
 
     const gracefulShutdown = async () => {
-        renderer.info('\nI will consolidate our memories before leaving...');
-        try {
-            await consolidationEngine.consolidate();
-        } catch (err) {
-            renderer.warn('Memory Consolidation hit a snag: ' + (err as Error).message);
-        }
-
-        renderer.info('Compressing database substrate...');
-        try {
-            const maintenance = new DBMaintenance();
-            await maintenance.compress(); // Triggers DELETE old + VACUUM
-        } catch (err) {
-            renderer.warn('DB Maintenance failed: ' + (err as Error).message);
-        }
-
-        renderer.info('Closing all DB substrates...');
-        try {
-            const { SovereignDBLifecycle } = await import('./utils/SovereignDBLifecycle.js');
-            await SovereignDBLifecycle.getInstance().shutdown();
-        } catch (err) {
-            renderer.warn('DB Lifecycle shutdown error: ' + (err as Error).message);
-        }
-
-        renderer.info('Powering down now. I hope to see you again soon!');
+        await engine.shutdown(renderer);
         rl.close();
         process.exit(0);
     };
 
     // Handle Ctrl+C (SIGINT) gracefully to ensure memory consolidation runs 
-    rl.on('SIGINT', () => {
+    process.on('SIGINT', () => {
         gracefulShutdown();
     });
 
@@ -3648,7 +3631,7 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
                     const bridgeChoice = await rl.question('Enter choice [1-5]: ');
                     switch (bridgeChoice) {
                         case '1': await engine.run('system health check'); break;
-                        case '2': await consolidationEngine.consolidate(); renderer.success('Memory substrate consolidated.'); break;
+                        case '2': await engine.consolidate(); renderer.success('Memory substrate consolidated.'); break;
                         case '3': await engine.run('audit workspace'); break;
                         case '4': {
                             const rolodexRef = router.getRolodex();

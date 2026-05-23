@@ -23,7 +23,7 @@ export class MemoryConsolidationEngine {
      * consolidate - Synthesizes raw session memories into profound generative rules.
      * Can be focused on specific Sovereign Law repairs if violations are detected.
      */
-    public async consolidate(sessionLog?: any, options?: { focus: string; violations: any[] }): Promise<Result<void>> {
+    public async consolidate(sessionLog?: any, options?: { focus?: string; violations?: any[] }): Promise<Result<void>> {
         const sessionId = this.state.getSessionId();
         if (!sessionId) return { ok: false, error: new Error('No active Session ID.') };
 

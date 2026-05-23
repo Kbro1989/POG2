@@ -226,32 +226,31 @@ export class CanonicalClock {
      *   pulse() -> phase 1 -> T2 PLAYER PHASE (combat/ability advances)
      *   pulse() -> phase 0 -> next T1 GAME TICK...
      */
-    public pulse(): TickCoordinate {
-        if (this.playerPhase === 0) {
-            this.playerPhase = 1;
-            this.realTickStart = performance.now();
-        } else {
-            this.playerPhase = 0;
+    /**
+     * pulse() — Advance the clock across the three-ring lattice.
+     *
+     * Sequence:
+     *   Tier 1 (600ms): World truth, ledger commits.
+     *   Tier 2 (300ms): Player combat, agility, reflex.
+     *   Tier 3 (T-Optional): Sovereign cognitive expansion/planning.
+     */
+    public pulse(tier: TickTier = TickTier.GAME): TickCoordinate {
+        if (tier === TickTier.GAME) {
+            // T1 Boundary: Commit world logic
             this.gameTick++;
             this.realTickStart = performance.now();
-
-            // Expire old cognitive windows
-            for (const [id, window] of this.activeCognitiveWindows) {
-                if (this.isCognitiveWindowExpired(window)) {
-                    window.cancelled = true;
-                    window.cancelReason = 'EXPIRED';
-                    this.activeCognitiveWindows.delete(id);
-                }
-            }
-
-            // Notify T1 subscribers
+            
+            // Notify T1 game listeners
             for (const listener of this.tickListeners) {
-                try {
-                    listener(this.gameTick, 0, this.simulatedNow());
-                } catch (err) {
-                    logger.error({ err }, 'Tick listener error');
-                }
+                try { listener(this.gameTick, this.playerPhase, this.simulatedNow()); }
+                catch (err) { logger.error({ err }, 'T1 Listener error'); }
             }
+        } else if (tier === TickTier.PLAYER) {
+            // T2 Boundary: Player Phase pulse
+            this.playerPhase = (this.playerPhase + 1) % 2;
+        } else if (tier === TickTier.COGNITIVE) {
+            // T3 Boundary: Optional Cognitive Tick (does not advance simulation truth)
+            this.cognitiveCycle++;
         }
 
         return this.getCoordinate();
@@ -264,6 +263,11 @@ export class CanonicalClock {
         this.playerPhase = 0;
         this.gameTick++;
         return this.getCoordinate();
+    }
+
+    public isTickingPermitted(): boolean {
+        // Blocks ticking if any critical cognitive window is active
+        return this.activeCognitiveWindows.size === 0;
     }
 
     /**

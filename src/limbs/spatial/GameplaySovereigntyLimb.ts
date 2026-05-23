@@ -339,9 +339,13 @@ export class GameplaySovereigntyLimb {
     }
 
     /**
-     * Executes a single mechanical tick manually.
+     * Executes a single mechanical tick manually, gated by the CanonicalClock only if simulation is running.
      */
     public async forceTick(): Promise<string | null> {
+        if (this.isRunning && !require('../../utils/CanonicalClock.js').clock.isTickingPermitted()) {
+            logger.warn('[Sovereign] forceTick() blocked by active cognitive window.');
+            return '[Engine] Simulation locked: Cognitive window active.';
+        }
         return await this.processTick();
     }
 
@@ -377,111 +381,72 @@ export class GameplaySovereigntyLimb {
     }
 
     /**
-     * processTick - Authoritative State Advancement.
-     * Called by CNSGodheadPulseVolley every 600ms.
+     * processTick - Authoritative State Advancement, structured by temporal lattice.
      */
     public async processTick(isGameTick: boolean = true): Promise<string | null> {
         this.tickCount++;
         this.globalState.tickNumber = this.tickCount;
 
-        // 0. Vitality Check (Player Death Transition)
+        // Vitality Check
         if (this.avatar.isDead && this.avatar.metadata?.deathEvent) {
              this.handlePlayerDeath();
         }
 
-        // --- GAME TICK ONLY (600ms) ---
-        if (isGameTick) {
-            // 0.5 Cognitive Loop (NPC Brains Think Second)
-            for (const npc of this.globalState.npcMap.values()) {
-                if (npc.brain) {
-                    npc.brain.think(this.tickCount, this.globalState, this.avatar);
-                }
-            }
-
-            // 0.55 Follower Logic: Assign leader if not already set (Phase 46)
-            if (!this.avatar.metadata?.leaderId && this.playerAgent) {
-                for (const [id, player] of this.globalState.players) {
-                    if (player.username !== (this.avatar as any).username) {
-                        if (!this.avatar.metadata) this.avatar.metadata = {};
-                        this.avatar.metadata.leaderId = id;
-                        this.playerAgent.setLeader(id);
-                        logger.info({ leader: id }, 'Sovereign promoted to Follower â€” establishing cooperative link.');
-                        break;
-                    }
-                }
-            }
-        }
-
-        // --- PLAYER TICK (300ms) ---
-        if (this.playerAgent) {
-            // Advance Cognitive Agent (Cooldowns / Adrenaline) - passing deltaMs
-            this.playerAgent.advanceTick(300);
-        }
-
-        // 0.75 Cognitive Intelligence (Phase 45: Solo Gameplay Integration)
+        // --- T3: Optional Cognitive Layer (Always evaluate) ---
         if (this.playerAgent) {
             const ghostSplat = (require('../../substrates/GhostSplatEngine.js')).GhostSplatEngine.getInstance();
             const field = ghostSplat.getLatestField();
             if (field) {
-                // Apply Strategic Archetype from Hexagram thinking layer
                 const hex = HexagramManager.getInstance().getInterpretation();
                 const strategy = hex.strategy || '';
                 
-                if (strategy.includes('EXPANSION') || strategy.includes('ACCELERATION')) {
-                    this.avatar.metadata.combatArchetype = 'aggressive';
-                } else if (strategy.includes('STABILIZATION') || strategy.includes('CAUTION')) {
-                    this.avatar.metadata.combatArchetype = 'methodical';
-                } else if (strategy.includes('RETREAT') || strategy.includes('PAUSE')) {
-                    this.avatar.metadata.combatArchetype = 'cowardly';
-                }
+                if (strategy.includes('EXPANSION') || strategy.includes('ACCELERATION')) this.avatar.metadata.combatArchetype = 'aggressive';
+                else if (strategy.includes('STABILIZATION') || strategy.includes('CAUTION')) this.avatar.metadata.combatArchetype = 'methodical';
+                else if (strategy.includes('RETREAT') || strategy.includes('PAUSE')) this.avatar.metadata.combatArchetype = 'cowardly';
 
-                // 2. Tactical Evaluation (Evasion / Cooperation)
                 this.playerAgent.evaluateTacticalPosition(field);
-
-                // 3. Combat Rotation (Intent Generation)
                 if (this.avatar.metadata?.tacticalState !== 'evading' && !this.avatar.isBusy()) {
                     const rotation = this.playerAgent.evaluateCombatRotation(field, this.tickCount);
-                    if (rotation) {
-                        this.avatar.intent = rotation;
-                    }
+                    if (rotation) this.avatar.intent = rotation;
                 }
             }
         }
 
-        // 1. Process Combat Intent (Prioritized before movement)
-        this.processCombatTick();
+        // --- T2: Player Reflex Pulse (300ms) ---
+        if (this.playerAgent) {
+            this.playerAgent.advanceTick(300);
+        }
 
-        // 2. Process Avatar (Movement / Pathing)
+        // --- T1: Game Truth Boundary (600ms) ---
+        if (isGameTick) {
+            // T1 Metabolic Pulse (Sync every 6s)
+            if (this.tickCount % 10 === 0 && this.playerAgent) {
+                HexagramManager.getInstance().updateState({ buildPass: true, userActive: true, noRecentErrors: true, substrateHealthy: !this.avatar.isDead, authorityLocal: true, auditSync: true });
+            }
+            
+            // NPC World Pulse
+            for (const npc of this.globalState.npcMap.values()) {
+                if (npc.brain) npc.brain.think(this.tickCount, this.globalState, this.avatar);
+                if (npc.interactionState === 'MOVING' && npc.target && typeof npc.target !== 'number') {
+                    npc.x += Math.sign(npc.target.x - npc.x);
+                    npc.y += Math.sign(npc.target.y - npc.y);
+                }
+            }
+            
+            // Deterministic Harness Sync
+            if (this.harness) await this.harness.processTick(this.tickCount, this.globalState, this.avatar);
+
+            // Persistence
+            if (this.stateDirty && this.tickCount % 10 === 0) this.saveSovereignState();
+        }
+
+        // Finalize Mechanics (T1/T2 shared)
+        this.processCombatTick();
         this.avatar.processTick();
 
-        // --- GAME TICK ONLY (600ms) ---
-        if (isGameTick) {
-            // 2.5 Process NPC Movement (Authoritative translation)
-            for (const npc of this.globalState.npcMap.values()) {
-                if (npc.interactionState === 'MOVING' && npc.target && typeof npc.target !== 'number') {
-                    // If it's a coord target, move one step towards it
-                    const dx = Math.sign(npc.target.x - npc.x);
-                    const dy = Math.sign(npc.target.y - npc.y);
-                    npc.x += dx;
-                    npc.y += dy;
-                }
-            }
-
-            // 3. Delegate to Simulation Harness (Deterministic Logic)
-            if (this.harness) {
-                await this.harness.processTick(this.tickCount, this.globalState, this.avatar);
-            }
-
-            // 3. Autosave every 10 ticks (6 seconds) — only write if state changed
-            if (this.stateDirty && this.tickCount % 10 === 0) {
-                this.saveSovereignState();
-            }
-        }
-
+        // Finalize Sync
         let moduleResult: string | null = null;
-        if (this.activeModule) {
-            moduleResult = await this.activeModule.onTick(this.tickCount, this.globalState, this.avatar);
-        }
+        if (this.activeModule) moduleResult = await this.activeModule.onTick(this.tickCount, this.globalState, this.avatar);
 
         if (this.switchboard) {
             this.switchboard.syncGameState({
@@ -498,7 +463,6 @@ export class GameplaySovereigntyLimb {
                     quests: this.avatar.quests,
                     isBusy: this.avatar.isBusy()
                 },
-
                 activeModule: this.activeModule?.name || 'idle'
             });
         }

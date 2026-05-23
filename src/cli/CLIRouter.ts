@@ -3,6 +3,12 @@ import { OrchestrateEngine } from '../engines/OrchestrateEngine.js';
 export class CLIRouter {
     constructor(private engine: OrchestrateEngine) {}
 
+    // Direct bridges to autonomous capabilities
+    async routeGCloud(command: string) { return this.engine.gcloud(command); }
+    async routeWranglerDeploy(scriptName: string) { return this.engine.wranglerDeploy(scriptName); }
+    async routeOllamaRun(model: string, prompt: string) { return this.engine.ollamaRun(model, prompt); }
+    async routeServiceStatus() { return this.engine.serviceStatus(); }
+
     async routeGameplayVolition(opts: { adren?: number; stance?: string; tactical?: string; leader?: string; archetype?: string }) {
         return this.engine.executeTool('gameplay_sovereignty_volition', opts);
     }

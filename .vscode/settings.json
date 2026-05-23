@@ -1,8 +1,23 @@
 {
     "files.exclude": {
-        "resources/cloudflare-templates": true
+        "resources/cloudflare-templates": true,
+        "dist": true,
+        "node_modules": true,
+        "all_files_audit.txt": true,
+        "rolodex.json": true,
+        "vibe-learning.db": true,
+        "**/.wrangler": true
     },
     "search.exclude": {
-        "resources/cloudflare-templates": true
-    }
+        "resources/cloudflare-templates": true,
+        "dist": true,
+        "node_modules": true,
+        "**/allfiles.md": true,
+        "**/.wrangler": true
+    },
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "editor.formatOnSave": true,
+    "eslint.validate": ["typescript"],
+    "explorer.compactFolders": false,
+    "typescript.enablePromptUseWorkspaceTsdk": true
 }

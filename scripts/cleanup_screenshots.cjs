@@ -8,7 +8,7 @@ const TARGET_DIR = 'D:\\D-sovereign-\\session_dashboards';
 const LOG_FILE = path.join(TARGET_DIR, 'cleanup.log');
 
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.bmp']);
-const EXCLUDED_PATTERNS = [/pipelines/i, /gutenberg/i, /book/i];
+const EXCLUDED_PATTERNS = [/pipelines/i, /gutenberg/i, /book/i, /icons/i];
 
 function ensureDirectoryExists(dirPath) {
     if (!fs.existsSync(dirPath)) {

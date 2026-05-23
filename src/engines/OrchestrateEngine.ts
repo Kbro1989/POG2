@@ -55,7 +55,9 @@ import { RelicLimb } from '../limbs/metaphysical/RelicLimb.js';
 import { RSCLimb } from '../limbs/spatial/RSCLimb.js';
 import { GlobeStateLimb } from '../limbs/spatial/GlobeStateLimb.js';
 import { GameplayProjectionLimb } from '../limbs/spatial/GameplayProjectionLimb.js';
+import { SovereignDefinitionEngine } from './SovereignDefinitionEngine.js';
 import { MemoryConsolidationEngine } from './MemoryConsolidationEngine.js';
+
 import { StateManager } from '../state/StateManager.js';
 import { rsmvExtractor } from '../utils/RSMVExtractor.js';
 import { CacheLearningLimb } from '../limbs/spatial/CacheLearningLimb.js';
@@ -84,6 +86,7 @@ import { ContextBuilder } from './ContextBuilder.js';
 import { ToolRegistry } from '../ToolRegistry.js';
 import { Renderer } from '../ui/Renderer.js';
 import { DBMaintenance } from '../utils/DBMaintenance.js';
+import { SovereignDBLifecycle } from '../utils/SovereignDBLifecycle.js';
 import { extractJson } from '../utils/JsonExtractor.js';
 import { SOVEREIGN_SYSTEM_PROMPT, DOMAIN_PROMPTS } from '../prompts/SystemPrompts.js';
 import { ValidationSystem } from './ValidationSystem.js';
@@ -201,7 +204,9 @@ export class OrchestrateEngine {
     private readonly rscLimb: RSCLimb;
     private readonly globeState: GlobeStateLimb;
     private readonly memoryConsolidation: MemoryConsolidationEngine;
+    private readonly definitionEngine: SovereignDefinitionEngine;
     private readonly cfServices: CloudflareServices;
+
     private readonly ytLimb?: YouTubeLimb;
     private readonly quotaTracker: QuotaTracker;
     private readonly chromaLimb: ChromaLimb; // Phase 108 - Metaphysical color signature
@@ -318,6 +323,7 @@ export class OrchestrateEngine {
         this.rscLimb.setRouter(router);
         this.globeState = new GlobeStateLimb(config);
         this.memoryConsolidation = new MemoryConsolidationEngine(this.client, this.vectorDB, StateManager.getInstance());
+        this.definitionEngine = new SovereignDefinitionEngine(this.client);
         this.soundtrack = new SoundtrackLimb(this.config, this.router.getHexagram());
         this.chromaLimb = new ChromaLimb(this.config); // Phase 108
         this.rsmvExtractor = new rsmvExtractor();
@@ -464,6 +470,12 @@ export class OrchestrateEngine {
 
         this.initializeTools();
     }
+
+    // Independent tool invocation bridges
+    public async gcloud(command: string): Promise<Result<EngineOutput>> { return this.executeTool('gcloud_exec', { command }); }
+    public async wranglerDeploy(scriptName: string): Promise<Result<EngineOutput>> { return this.executeTool('wrangler_deploy', { scriptName }); }
+    public async ollamaRun(model: string, prompt: string): Promise<Result<EngineOutput>> { return this.executeTool('ollama_run', { model, prompt }); }
+    public async serviceStatus(): Promise<Result<EngineOutput>> { return this.executeTool('service_status', {}); }
 
     /**
      * Execute a registered tool by name with the given arguments.
@@ -652,6 +664,63 @@ export class OrchestrateEngine {
             // Node is heavily Yang (Projective, assertive). It resists external instruction unless it's a critical error fix.
             logger.warn('Cognitive Immunology: FPRAG directive rejected. Sovereign node refuses protocol override based on global gates.');
             hex.pinPulse(YaoState.OldYang, `Rejected foreign FPRAG directive. Asserting current unified architecture.`);
+            return;
+        }
+
+        // Reverse ternary validation for all hive events (Cognitive Immunology)
+        const validateAgainstLocal = (type: string, payload: any): boolean => {
+            if (type === 'rolodex') {
+                const localRolodex = this.client.getRolodex();
+                if (!localRolodex) return true;
+                
+                // Future: will this model be needed for upcoming tasks?
+                const pendingTasks = this.todoEngine.getTodos().filter(t => t.status !== 'completed' && t.status !== 'cancelled');
+
+                // Verify incoming reputation scores for critical models
+                for (const [key, remoteModel] of Object.entries(payload.models || {})) {
+                    const localModel = localRolodex.state.models[key];
+                    const incomingRep = (remoteModel as any).reputation ?? 1.0;
+                    
+                    // Past & Present checking: If remote reputation degrades a highly trusted local model (>0.8) by more than 0.3, reject
+                    if (localModel) {
+                        if (localModel.reputation > 0.8 && localModel.reputation - incomingRep > 0.3) {
+                            logger.warn({ model: key, localRep: localModel.reputation, incomingRep }, 'Cognitive Immunology: Rejected degraded hive reputation score (Past/Present Check).');
+                            return false;
+                        }
+                    }
+
+                    // Future Gate: Determine if this model capability will be required soon
+                    const modelKeyLower = key.toLowerCase();
+                    const modelNeeded = pendingTasks.some(t => {
+                        const taskLower = t.task.toLowerCase();
+                        return taskLower.includes(modelKeyLower) || 
+                               (modelKeyLower.includes('code') && taskLower.includes('code')) ||
+                               (modelKeyLower.includes('vision') && taskLower.includes('vision')) ||
+                               (modelKeyLower.includes('sensory') && taskLower.includes('screen')) ||
+                               (modelKeyLower.includes('agent') && taskLower.includes('agent'));
+                    });
+
+                    const futureValue = modelNeeded ? incomingRep * 1.2 : incomingRep * 0.8;
+                    // Reject if the model is critically needed, but the incoming reputation is unviable / negative
+                    if (modelNeeded && futureValue <= 0.2) {
+                        logger.warn({ model: key, incomingRep, futureValue }, 'Cognitive Immunology: Rejected incoming reputation - model is critically needed in future but reputation is dangerously low.');
+                        return false;
+                    }
+                }
+                return true;
+            }
+            if (type === 'error_fix') {
+                return contract.gates.allowStructuralRepair;
+            }
+            if (type === 'fprag') {
+                return contract.gates.allowForeignDirectives;
+            }
+            return false;
+        };
+
+        // Apply before any assimilation
+        if (!validateAgainstLocal(type, payload)) {
+            hex.pinPulse(YaoState.OldMixed, `Rejected hive ${type}: failed reverse ternary validation.`);
             return;
         }
 
@@ -917,7 +986,27 @@ export class OrchestrateEngine {
 
         // CLI ROUTER COMMANDS
         this.registry.register({
+            name: 'memory_consolidate',
+            description: 'Synthesize raw session memories into profound generative rules.',
+            humanDescription: 'Compress current session memories into long-term architectural lessons.',
+            jargonDescription: 'Invokes the MemoryConsolidationEngine to group redundant nodes and synthesize overarching generative rules in the VectorDB.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'core',
+            parameters: {
+                focus: { type: 'string', description: 'Optional focus for consolidation (e.g. SOVEREIGN_LAW_REPAIR)' },
+                violations: { type: 'array', description: 'List of clinical violations to address' }
+            },
+            execute: async (args) => {
+                const opts = args as { focus?: string, violations?: any[] };
+                const result = await this.consolidate(undefined, opts);
+                return result.ok ? ok({ output: `Memory substrate consolidated successfully.` }) : result;
+            }
+        });
+
+        this.registry.register({
             name: 'gameplay_sovereignty_volition',
+
             description: 'Apply volition state overrides (adrenaline, stance, tactical, leader) to the GameplaySovereigntyLimb.',
             humanDescription: 'Update the combat or tactical state of the player avatar.',
             jargonDescription: 'Mutates the internal avatar state of the GameplaySovereigntyLimb and marks it dirty for global propagation.',
@@ -1795,14 +1884,98 @@ export class OrchestrateEngine {
 
         this.registry.register({
             name: 'git_ssh_exec',
-            description: 'Execute a Git command using the existing SSH environment.',
-            humanDescription: 'Run a Git command (push, pull, commit) using your saved keys.',
-            jargonDescription: 'Performs Git operations within the local repository substrate, leveraging the existing SSH agent and key environment.',
+            description: 'Execute a Git shell command.',
+            humanDescription: 'Run a Git command (push, pull, commit, etc.).',
+            jargonDescription: 'Performs Git operations within the local substrate.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.SYSTEM,
             category: 'mcp',
             parameters: { command: 'string' },
-            execute: (args) => shell.execute({ command: `git ${args.command}`, cwd: process.cwd() })
+            execute: (args) => lib.git(args as { command: string })
+        });
+
+        this.registry.register({
+            name: 'wrangler_deploy',
+            description: 'Deploy a Cloudflare worker.',
+            humanDescription: 'Publish your Cloudflare Worker.',
+            jargonDescription: 'Dispatches a wrangler deploy task.',
+            idealYaoState: YaoState.YoungYang,
+            domain: SovereignDomain.SYSTEM,
+            category: 'mcp',
+            parameters: { scriptName: 'string' },
+            execute: (args) => lib.wranglerDeploy(args as { scriptName: string })
+        });
+
+        this.registry.register({
+            name: 'wrangler_kv_list',
+            description: 'List Cloudflare KV namespaces.',
+            humanDescription: 'Check KV namespaces.',
+            jargonDescription: 'Enumerates KV namespace identifiers.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'mcp',
+            parameters: {},
+            execute: () => lib.wranglerKvList()
+        });
+
+        this.registry.register({
+            name: 'wrangler_r2_list',
+            description: 'List Cloudflare R2 buckets.',
+            humanDescription: 'Check R2 buckets.',
+            jargonDescription: 'Enumerates object storage buckets.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'mcp',
+            parameters: {},
+            execute: () => lib.wranglerR2List()
+        });
+
+        this.registry.register({
+            name: 'ollama_model_list',
+            description: 'List locally installed Ollama models.',
+            humanDescription: 'Check local AI models.',
+            jargonDescription: 'Enumerates Ollama model registry.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'mcp',
+            parameters: {},
+            execute: () => lib.ollamaModelList()
+        });
+
+        this.registry.register({
+            name: 'ollama_run',
+            description: 'Run an Ollama model.',
+            humanDescription: 'Run a local AI model.',
+            jargonDescription: 'Dispatches inference generation.',
+            idealYaoState: YaoState.YoungYang,
+            domain: SovereignDomain.SYSTEM,
+            category: 'mcp',
+            parameters: { model: 'string', prompt: 'string' },
+            execute: (args) => lib.ollamaRun(args as { model: string; prompt: string })
+        });
+
+        this.registry.register({
+            name: 'mcp_client_status',
+            description: 'Check status of MCP connections.',
+            humanDescription: 'Check MCP connections.',
+            jargonDescription: 'Reports health of MCP substrates.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'mcp',
+            parameters: {},
+            execute: () => lib.mcpClientStatus()
+        });
+
+        this.registry.register({
+            name: 'service_status',
+            description: 'Report aggregate health status.',
+            humanDescription: 'Check overall system health.',
+            jargonDescription: 'Aggregates status across neurological substrates.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.SYSTEM,
+            category: 'mcp',
+            parameters: {},
+            execute: () => lib.serviceStatus()
         });
 
         this.registry.register({
@@ -3424,6 +3597,18 @@ Mapping tool selection over to Y...
 
     private async interceptSensoryTask(task: string): Promise<Plan | null> {
         const lower = task.toLowerCase();
+
+        const emotionalState = this.router.getHexagram().getInterpretation().emotion;
+        const isVolatile = emotionalState === 'AGITATED' as any || emotionalState === 'MELANCHOLY' as any;
+        const maxLength = isVolatile ? 100 : 150;
+
+        // Mini-palindrome / Fast-path safety: if task is long or contains destructive/complex directives,
+        // bypass the fast-path and fall back to the full cognitive routing pipeline for hex/definition validation.
+        if (task.length > maxLength || lower.includes('delete') || lower.includes('rm ') || lower.includes('remove') || lower.includes('destroy') || lower.includes('format')) {
+            logger.warn({ task, emotionalState }, 'Sensory Interception: Task contains potential hazards or node is volatile. Bypassing fast-path to enforce full cognitive routing.');
+            return null;
+        }
+
         if (lower.includes('screenshot') || lower.includes('look at screen')) {
             // Phase 15: Force-lock VISION domain for sensory tasks
             this.domainLocker.forceLock(SovereignDomain.VISION, 'Sensory interception');
@@ -4015,13 +4200,21 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         // Ã¢â€â‚¬Ã¢â€â‚¬ 1. Divination Gate Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         const reading = hexagram.getInterpretation();
         const sym = reading.symbol ?? '?';
-        const inauspicious = ['Ã¤Â·Â¿', 'Ã¤Â·Â¾', 'Ã¤Â·Â½', 'Ã¤Â·Â¼'].includes(sym);
+        const inauspicious = ['䷿', '䷾', '䷽', '䷼'].includes(sym);
         if (inauspicious) {
-            logger.warn({ symbol: sym, name: reading.name }, 'DIVINATION GATE: Inauspicious reading Ã¢â‚¬â€ self-modification denied.');
-            this.renderer.warn(`Ã°Å¸Å’â€˜ Inauspicious: ${sym} ${reading.name} Ã¢â‚¬â€ modification deferred.`);
-            return { ok: false, error: new Error(`Divination gate: ${reading.name} (${sym}) Ã¢â‚¬â€ inauspicious for modification`) };
+            this.renderer.warn(`🌑 Inauspicious: ${sym} ${reading.name} — Checking Ternary Bypass...`);
+            const bypass = await this.evaluateTernaryBypass(request.targetPath, request.intent);
+            if (bypass.approved) {
+                this.renderer.success(`✅ Ternary Bypass APPROVED (${bypass.score}/3 gates). Proceeding with warning.`);
+                this.renderer.warn(`[Ternary Override] Reason: ${bypass.reason}`);
+            } else {
+                logger.warn({ symbol: sym, name: reading.name }, 'DIVINATION GATE: Inauspicious reading — self-modification denied.');
+                this.renderer.warn(`🌑 Inauspicious: ${sym} ${reading.name} — modification deferred.`);
+                return { ok: false, error: new Error(`Divination gate: ${reading.name} (${sym}) — inauspicious for modification`) };
+            }
+        } else {
+            this.renderer.info(`🔮 Divination: ${sym} ${reading.name} — proceeding with ${request.operation}.`);
         }
-        this.renderer.info(`Ã°Å¸â€Â® Divination: ${sym} ${reading.name} Ã¢â‚¬â€ proceeding with ${request.operation}.`);
 
         // Ã¢â€â‚¬Ã¢â€â‚¬ 2. Generate Code via CompletionEngine Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         const completion = new CompletionEngine(this.config, this.router);
@@ -4157,6 +4350,38 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         }, 'SOVEREIGN SELF-MODIFICATION: Complete.');
 
         return { ok: true, value: { commit, hexagram: sym, linesGenerated } };
+    }
+
+    private async evaluateTernaryBypass(targetPath: string, intent: string): Promise<{ approved: boolean; score: number; reason: string }> {
+        let pastSuccessful = false;
+        try {
+            const consequences = await this.trainingCollector.getRecentConsequences(10);
+            if (consequences && consequences.length > 0) {
+                const successCount = consequences.filter((c: any) => c.success).length;
+                pastSuccessful = successCount >= (consequences.length / 2);
+            }
+        } catch (e) {}
+
+        let presentPassing = false;
+        try {
+            const shell = new ShellEngine(this.renderer);
+            const build = await shell.execute({ command: 'npx tsc --noEmit', silent: true });
+            presentPassing = build.ok;
+        } catch (e) {}
+
+        const lowerIntent = intent.toLowerCase();
+        const futureViable = lowerIntent.includes('heal') || lowerIntent.includes('fix') || lowerIntent.includes('refactor') || lowerIntent.includes('enable') || lowerIntent.includes('support');
+
+        let score = 0;
+        if (pastSuccessful) score++;
+        if (presentPassing) score++;
+        if (futureViable) score++;
+
+        return {
+            approved: score >= 2,
+            score,
+            reason: `Past=${pastSuccessful ? 'PASS' : 'FAIL'}, Present=${presentPassing ? 'PASS' : 'FAIL'}, Future=${futureViable ? 'PASS' : 'FAIL'}`
+        };
     }
 
     /**
@@ -4321,7 +4546,39 @@ Output JSON ONLY:
         }
     }
 
+    public async consolidate(sessionLog?: any, options?: { focus?: string; violations?: any[] }): Promise<Result<void>> {
+        return this.memoryConsolidation.consolidate(sessionLog, options);
+    }
+
+    public async shutdown(renderer: Renderer): Promise<void> {
+
+        renderer.info('\nI will consolidate our memories before leaving...');
+        try {
+            await this.memoryConsolidation.consolidate();
+        } catch (err) {
+            renderer.warn('Memory Consolidation hit a snag: ' + (err as Error).message);
+        }
+
+        renderer.info('Compressing database substrate...');
+        try {
+            const maintenance = new DBMaintenance();
+            await maintenance.compress();
+        } catch (err) {
+            renderer.warn('DB Maintenance failed: ' + (err as Error).message);
+        }
+
+        renderer.info('Closing all DB substrates...');
+        try {
+            await SovereignDBLifecycle.getInstance().shutdown();
+        } catch (err) {
+            renderer.warn('DB Lifecycle shutdown error: ' + (err as Error).message);
+        }
+
+        renderer.info('Powering down now. I hope to see you again soon!');
+    }
+
     public getSwitchboard(): SwitchboardLimb {
+
         return this.switchboard;
     }
 

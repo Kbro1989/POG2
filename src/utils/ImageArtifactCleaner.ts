@@ -80,7 +80,9 @@ export class ImageArtifactCleaner {
             // Delete oldest files
             for (let i = 0; i < deleteCount; i++) {
                 try {
-                    await fsPromises.unlink(stats[i].path);
+                    const filePath = stats[i].path;
+                    if (/pipelines|icons/i.test(filePath)) continue;
+                    await fsPromises.unlink(filePath);
                 } catch (err) {
                     logger.warn({ file: stats[i].name }, `Failed to delete artifact: ${(err as Error).message}`);
                 }
