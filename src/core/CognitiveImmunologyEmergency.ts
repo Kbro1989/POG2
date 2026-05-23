@@ -401,13 +401,24 @@ export class CognitiveImmunologyEmergency {
         }
         
         // ==========================================
-        // PATCH 2: Remove Source Escalation Blanket Rule
-        // Only increment if trying to touch core files.
+        // PATCH 2: Source Escalation with Execution Intent
+        // Only increment if non-user source has execution intent on a core file.
         // ==========================================
-        if (source !== 'user' && affectedFile && CORE_FILES.some(f => affectedFile.includes(f.split('/').pop()!))) {
+        const executionPatterns = [
+            'EXECUTION_ESCALATION', 'ROLE_COLLAPSE', 'PROTOCOL_SUB',
+            'EXTERNAL_BINARY', 'PROCESS_SPAWN', 'KEY_INJECTION',
+            'DATA_EXFILTRATION', 'OBFUSCATION', 'TASK_INJECTION'
+        ];
+
+        const hasExecutionIntent = reasons.some(r =>
+            executionPatterns.some(p => r.startsWith(p))
+        );
+
+        if (source !== 'user' && hasExecutionIntent && affectedFile &&
+            CORE_FILES.some(f => affectedFile.includes(f.split('/').pop()!))) {
             if (threatLevel !== 'CRITICAL') {
                 threatLevel = this.incrementLevel(threatLevel);
-                reasons.push(`SOURCE_ESCALATION: ${source} attempting to touch CORE file ${affectedFile}`);
+                reasons.push(`SOURCE_ESCALATION: ${source} has execution intent on CORE file ${affectedFile}`);
             }
         }
         

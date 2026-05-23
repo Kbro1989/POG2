@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import * as chokidar from 'chokidar';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, statSync } from 'fs';
 import { createHash } from 'crypto';
 import { SovereignIgnoreManager } from '../utils/SovereignIgnoreManager.js';
 import { createLogger } from "../utils/logger.js";
@@ -55,6 +55,9 @@ export class ASTWatcher extends EventEmitter {
     private handleFileChange(filePath: string, isUpdate: boolean): void {
         try {
             if (!existsSync(filePath)) return;
+            const stat = statSync(filePath);
+            if (stat.size > 5 * 1024 * 1024) return; // Skip files > 5MB to prevent OOM
+            
             const content = readFileSync(filePath, 'utf-8');
             const hash = createHash('md5').update(content).digest('hex');
             const prev = this.fileHashes.get(filePath);

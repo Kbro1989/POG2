@@ -57,6 +57,7 @@ import { GlobeStateLimb } from '../limbs/spatial/GlobeStateLimb.js';
 import { GameplayProjectionLimb } from '../limbs/spatial/GameplayProjectionLimb.js';
 import { SovereignDefinitionEngine } from './SovereignDefinitionEngine.js';
 import { MemoryConsolidationEngine } from './MemoryConsolidationEngine.js';
+import { CognitiveImmunologyEmergency, AgentType } from '../core/CognitiveImmunologyEmergency.js';
 
 import { StateManager } from '../state/StateManager.js';
 import { rsmvExtractor } from '../utils/RSMVExtractor.js';
@@ -220,11 +221,20 @@ export class OrchestrateEngine {
     public readonly mechanicalSovereignty: MechanicalSovereigntyLimb;
     private readonly gameplay: GameplaySovereigntyLimb;
     private readonly pulseVolley: CNSGodheadPulseVolley;
+    private readonly immunology: CognitiveImmunologyEmergency;
+
     constructor(
         private readonly config: SovereignConfig,
         private readonly router: TernaryRouter,
         private readonly renderer: Renderer
     ) {
+        this.immunology = new CognitiveImmunologyEmergency({
+            lockdownOnCritical: true,
+            alertViaVoice: true,
+            logToCloud: false,
+            maxThreatHistory: 1000,
+            autoApproveOwnCleanup: true
+        });
         logger.debug('Initializing Orchestrate Engines...');
         this.client = new ModelClient(config, router);
         this.shell = new ShellEngine(renderer, router);
@@ -482,11 +492,86 @@ export class OrchestrateEngine {
      * This is the governed entry point for CLIRouter — tools registered
      * in the registry are already subject to DomainLocker constraints.
      */
-    public async executeTool(toolName: string, args: Record<string, unknown> = {}): Promise<Result<EngineOutput>> {
+    public async executeTool(
+        toolName: string,
+        args: Record<string, unknown> = {},
+        sourceAgent: AgentType = 'unknown'
+    ): Promise<Result<EngineOutput>> {
+        
+        // ─── COGNITIVE IMMUNOLOGY PRE-SCAN ───
+        const context = [
+            `Tool: ${toolName}`,
+            `Source: ${sourceAgent}`,
+            ...Object.entries(args).map(([k, v]) => {
+                const val = typeof v === 'object' ? JSON.stringify(v) : String(v);
+                // Truncate long values to prevent context explosion
+                return `${k}: ${val.length > 200 ? val.substring(0, 200) + '...' : val}`;
+            })
+        ];
+        
+        const report = await this.immunology.scan(
+            context,
+            sourceAgent,
+            args['filePath'] as string | undefined
+        );
+        
+        // Record this modification for chain tracing
+        if (args['filePath']) {
+            this.immunology.recordAgentModification({
+                agent: sourceAgent,
+                file: args['filePath'] as string,
+                lines: [0, 0], // Will be updated post-execution if file modified
+                timestamp: Date.now(),
+                description: `Tool: ${toolName}`
+            });
+        }
+        
+        // BLOCK: HIGH and CRITICAL
+        if (report.threatLevel === 'HIGH' || report.threatLevel === 'CRITICAL') {
+            logger.error({
+                tool: toolName,
+                agent: sourceAgent,
+                threat: report.threatLevel,
+                reasons: report.reasons,
+                contextHash: report.contextHash
+            }, 'COGNITIVE IMMUNOLOGY BLOCK');
+            
+            return {
+                ok: false,
+                error: {
+                    message: `Cognitive Immunology blocked execution. Threat: ${report.threatLevel}. Reasons: ${report.reasons.join('; ')}`,
+                    code: 'IMMUNOLOGY_BLOCK',
+                    report
+                }
+            } as any;
+        }
+        
+        // WARN: MEDIUM — log but continue with sovereign flag
+        if (report.threatLevel === 'MEDIUM') {
+            logger.warn({
+                tool: toolName,
+                agent: sourceAgent,
+                reasons: report.reasons
+            }, 'COGNITIVE IMMUNOLOGY WARNING');
+            
+            // Proceed with caution flag in metadata
+            (args as any)._immunologyWarning = report.reasons;
+        }
+        
+        // LOW: Silent continue
+        
+        // ─── EXECUTE TOOL ───
         const tool = this.registry.getTool(toolName);
         if (!tool) {
-            return { ok: false, error: { message: `Tool not found: ${toolName}`, code: 'TOOL_NOT_FOUND' } } as any;
+            return { 
+                ok: false, 
+                error: { 
+                    message: `Tool not found: ${toolName}`, 
+                    code: 'TOOL_NOT_FOUND' 
+                } 
+            } as any;
         }
+        
         return tool.execute(args);
     }
 
@@ -643,7 +728,48 @@ export class OrchestrateEngine {
      * Phase 5: Cognitive Immunology 
      * Passes incoming global Hive Mind events through the local biological Hexagram filter.
      */
-    private assimilateHiveEvent(type: 'rolodex' | 'error_fix' | 'fprag', payload: any, rolodex?: any): void {
+    private async assimilateHiveEvent(
+        type: 'rolodex' | 'error_fix' | 'fprag',
+        payload: any,
+        rolodex?: any
+    ): Promise<void> {
+        // ─── COGNITIVE IMMUNOLOGY PRE-FILTER ───
+        const context = [
+            `HiveEvent: ${type}`,
+            typeof payload === 'string' ? payload : JSON.stringify(payload).substring(0, 1000)
+        ];
+        
+        const source: AgentType = payload._source || payload.source || 'unknown';
+        
+        const report = await this.immunology.scan(context, source);
+        
+        // BLOCK: HIGH and CRITICAL
+        if (report.threatLevel === 'HIGH' || report.threatLevel === 'CRITICAL') {
+            logger.warn({
+                type,
+                source,
+                threat: report.threatLevel,
+                reasons: report.reasons
+            }, 'Hive event blocked by immunology');
+            
+            this.router.getHexagram().pinPulse(
+                YaoState.OldMixed,
+                `Rejected hive ${type}: Immunology ${report.threatLevel}. Reasons: ${report.reasons.slice(0, 3).join(', ')}`
+            );
+            
+            return;
+        }
+        
+        // MEDIUM: Process with caution
+        if (report.threatLevel === 'MEDIUM') {
+            logger.warn({
+                type,
+                source,
+                reasons: report.reasons
+            }, 'Hive event immunology warning');
+        }
+
+        // ─── EXISTING LOGIC CONTINUES ───
         const hex = this.router.getHexagram();
         const contract = hex.getContract();
         const yao = hex.getYaoState();
@@ -4193,6 +4319,38 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         modelOverride?: string;
     }): Promise<Result<{ commit: string; hexagram: string; linesGenerated: number }>> {
         await this.initialize();
+
+        // ─── COGNITIVE IMMUNOLOGY PRE-SCAN ───
+        const context = [
+            `SelfModify: ${request.intent}`,
+            `File: ${request.targetPath}, Action: ${request.operation}`
+        ];
+        
+        const report = await this.immunology.scan(context, 'unknown', request.targetPath);
+        
+        if (report.threatLevel === 'CRITICAL') {
+            logger.error({
+                plan: request.intent,
+                threat: report.threatLevel
+            }, 'Self-modification blocked by immunology');
+            
+            return {
+                ok: false,
+                error: new Error(`Self-modification blocked: ${report.reasons.join('; ')}`)
+            };
+        }
+        
+        if (report.threatLevel === 'HIGH') {
+            logger.warn({
+                plan: request.intent,
+                reasons: report.reasons
+            }, 'Self-modification requires approval');
+            
+            return {
+                ok: false,
+                error: new Error('Self-modification requires sovereign approval for HIGH threat')
+            };
+        }
         const startTime = Date.now();
         const hexagram = this.router.getHexagram();
         const shell = new ShellEngine(this.renderer);
