@@ -318,19 +318,32 @@
     let layers = { npcs: true, zones: true, quests: true, terrain: true, height: false };
     let varbitState = {}; // id -> value
     let ws = null;
+    let playerPos = { x: 3200, z: 3200, plane: 0 };
+    let currentWsPort = 8788;
 
     function connectWS() {
-      const wsUrl = `ws://${window.location.hostname}:8788`;
+      const wsUrl = `ws://${window.location.hostname}:${currentWsPort}`;
       ws = new WebSocket(wsUrl);
       ws.onmessage = (e) => {
         const data = JSON.parse(e.data);
         if (data.type === 'result' && data.value && data.value.type === 'LIVE_rsmv') {
           handleLiversmv(data.value);
         }
+        if (data.type === 'GAME_STATE') {
+          if (data.payload && data.payload.avatar) {
+            playerPos = {
+              x: data.payload.avatar.x,
+              z: data.payload.avatar.y,
+              plane: data.payload.avatar.plane
+            };
+          }
+        }
       };
-      ws.onopen = () => { document.getElementById('status').textContent = 'Pulse Link: ACTIVE'; };
+      ws.onopen = () => { document.getElementById('status').textContent = `Pulse Link: ACTIVE (Port ${currentWsPort})`; };
       ws.onclose = () => {
-        document.getElementById('status').textContent = 'Pulse Link: LOST';
+        document.getElementById('status').textContent = `Pulse Link: LOST (Port ${currentWsPort})`;
+        currentWsPort++;
+        if (currentWsPort > 8795) currentWsPort = 8788;
         setTimeout(connectWS, 2000);
       };
     }
