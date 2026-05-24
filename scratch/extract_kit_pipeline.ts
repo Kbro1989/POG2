@@ -10,8 +10,12 @@ const opdecoderPath = path.join(inspectorPath, 'dist', 'opdecoder.js');
 const { GameCacheLoader } = require(sqlitePath);
 const { parse } = require(opdecoderPath);
 
-// Enum 711 subset for initial testing
-const enum711Keys = [31149, 12428, 37641]; 
+// Model IDs from CLI args, default to subset for initial testing
+const enum711Keys = process.argv.slice(2).map(Number).filter(id => !isNaN(id));
+if (enum711Keys.length === 0) {
+    console.warn('No model IDs provided via CLI. Using default subset: [31149, 12428, 37641]');
+    enum711Keys.push(31149, 12428, 37641);
+}
 const CACHE_PATH = 'C:/ProgramData/Jagex/RuneScape-BETA';
 
 async function extractModel(cache: any, modelId: number): Promise<Buffer | null> {
@@ -40,14 +44,25 @@ function buildBetaOpcoder(rsmvModel: any): any {
     const positions = rsmvModel.meshdata.positionBuffer;
     const normals = rsmvModel.meshdata.normalBuffer;
     const uvs = rsmvModel.meshdata.uvBuffer;
-    
-    // We will extract indices from `renders[i].buf` later once the packing format is fully reversed
-    // For now, we will map out the topology bounds
-    
+
+    // Diagnostic: Dump renders buffer for topology analysis if available
+    if (rsmvModel.meshdata.renders && rsmvModel.meshdata.renders.length > 0) {
+        console.log(`[Diagnostic] Model has ${rsmvModel.meshdata.renders.length} render buffers.`);
+        // Dump first render buffer for forensics
+        const firstRender = rsmvModel.meshdata.renders[0];
+        if (firstRender && firstRender.buf) {
+            console.log(`[Diagnostic] Render 0 buffer size: ${firstRender.buf.length} bytes`);
+            console.log(`[Diagnostic] Render 0 buffer hex: ${firstRender.buf.slice(0, 64).toString('hex')}...`);
+        }
+    }
+
+    // Normalize UVs from 16-bit fixed-point to [0, 1]
+    const normalizedUvs = uvs ? Array.from(uvs).map(v => v / 65536.0) : [];
+
     return {
         positions: Array.from(positions || []),
         normals: Array.from(normals || []),
-        uvs: Array.from(uvs || []),
+        uvs: normalizedUvs,
         indices: [], // To be populated by Beta Opcoder refinement
         metadata: {
             vertexCount: rsmvModel.meshdata.vertexCount || 0,
@@ -63,8 +78,8 @@ async function main() {
     console.log('Initializing Beta Opcoder Adapter...\n');
     
     const cache = new GameCacheLoader(CACHE_PATH);
-    const outDir = 'D:/sovereign/cache_pedagogy/models';
-    
+    const outDir = 'public/models';
+
     await fs.mkdir(outDir, { recursive: true });
     
     for (const modelId of enum711Keys) {
