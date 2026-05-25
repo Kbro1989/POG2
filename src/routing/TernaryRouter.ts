@@ -567,7 +567,7 @@ export class TernaryRouter {
             if (complexity === 'Yang') {
                 const model = this.findWorkingModel(
                     this.config.deepPathModel,
-                    [this.config.masterLocalModel, 'deepseek-coder:33b-instruct-q4_K_M', 'deepseek-r1:8b', this.config.localFallbackModel],
+                    [this.config.masterLocalModel, 'deepseek-r1:32b', 'deepseek-r1:8b', this.config.localFallbackModel],
                     finalTaskType
                 );
                 decision = {

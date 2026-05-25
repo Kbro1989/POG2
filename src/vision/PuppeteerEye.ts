@@ -127,6 +127,8 @@ export class PuppeteerEye extends SovereignEye {
             const screenshotPath = `${captureDir}/inspect_${timestamp}.png`;
             await page.screenshot({ path: screenshotPath });
             
+            await this.cleanupOldCaptures();
+            
             await page.close();
             this.activePages.delete(page);
             this.emitKernelSignal(0.8); // Successful DOM inspection

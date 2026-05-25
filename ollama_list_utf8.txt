@@ -7,11 +7,11 @@ moondream:1.8b                         55fc3abd3867    1.7 GB    4 weeks ago
 moondream:latest                       55fc3abd3867    1.7 GB    4 weeks ago     
 all-minilm:latest                      1b226e2802db    45 MB     4 weeks ago     
 kimi-k2.5:cloud                        6d1c3246c608    -         4 weeks ago     
-qwen2.5-coder:1.5b-instruct-q4_K_M     d7372fd82851    986 MB    4 weeks ago     
-tinyllama:latest                       2644915ede35    637 MB    4 weeks ago     
-deepseek-coder:6.7b-instruct-q4_K_M    af6da0444f84    4.1 GB    4 weeks ago     
-yi-coder:9b-chat-q5_K_M                d4b375d4e224    6.3 GB    4 weeks ago     
+gemma4:26b     d7372fd82851    986 MB    4 weeks ago     
+gemma4:26b                       2644915ede35    637 MB    4 weeks ago     
+deepseek-r1:32b    af6da0444f84    4.1 GB    4 weeks ago     
+gemma4:26b                d4b375d4e224    6.3 GB    4 weeks ago     
 qwen2.5-coder:latest                   dae161e27b0e    4.7 GB    5 weeks ago     
 deepseek-coder:latest                  3ddd2d3fc8d2    776 MB    5 weeks ago     
-deepseek-coder:33b-instruct-q4_K_M     92b0c569c0df    19 GB     2 months ago    
+deepseek-r1:32b     92b0c569c0df    19 GB     2 months ago    
 qwen2.5-coder:14b-instruct-q5_K_M      05d16c5ac1c1    10 GB     2 months ago    

@@ -22,8 +22,8 @@ const DEFAULT_CONFIG = {
     geminiEmbeddingModel: 'text-embedding-004',
     // specialized Generation Defaults (Phase 104)
     storyboardModel: 'deepseek-r1:8b',
-    vocalAnalysisModel: 'qwen2.5-coder:1.5b-instruct-q4_K_M',
-    imagePromptModel: 'deepseek-coder:6.7b-instruct-q4_K_M',
+    vocalAnalysisModel: 'gemma4:26b',
+    imagePromptModel: 'deepseek-r1:32b',
     // Back to 7b for rapid processing speeds over the 14b CPU latency.
     soulIngestionModel: 'deepseek-r1:8b',
     memoryConsolidationModel: 'deepseek-r1:8b',
@@ -72,8 +72,8 @@ const DEFAULT_CONFIG = {
     baseExplorationEpsilon: 0.15,
     laneAwareWeighting: true,
     // Phase 23 Defaults
-    correctionModel: 'deepseek-coder:6.7b-instruct-q4_K_M',
-    optimizationModel: 'yi-coder:9b-chat-q5_K_M',
+    correctionModel: 'deepseek-r1:32b',
+    optimizationModel: 'gemma4:26b',
     legacyModel: 'deepseek-coder:latest',
     prototypeModel: 'deepseek-r1:8b',
     rscModel: 'moondream:latest',

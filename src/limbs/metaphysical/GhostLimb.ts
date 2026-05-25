@@ -147,7 +147,7 @@ export class GhostLimb {
 
         // Hardcoded emergency defaults based on typical POG2 Ollama list
         switch (taskType) {
-            case 'vision': return 'llava:latest';
+            case 'vision': return 'gemma4:26b';
             case 'embedding': return 'nomic-embed-text:latest';
             default: return this.config.masterLocalModel || 'deepseek-r1:8b';
         }

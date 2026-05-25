@@ -3,6 +3,7 @@ import { join } from 'path';
 import { createLogger } from '../../utils/logger.js';
 import { CacheInvalidationListener, CacheWatcherLimb } from '../spatial/CacheWatcherLimb.js';
 import { resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
+import { CompressionEngine } from '../../utils/CompressionEngine.js';
 
 const logger = createLogger('PedagogyDistiller');
 
@@ -209,8 +210,11 @@ export class PedagogyDistiller implements CacheInvalidationListener {
         mkdirSync(parentDir, { recursive: true });
       }
 
+      const compressor = CompressionEngine.getInstance();
+
       for (const pair of pairs) {
-        const line = JSON.stringify(pair) + '\n';
+        const compressedPair = compressor.compress(pair);
+        const line = JSON.stringify(compressedPair) + '\n';
         appendFileSync(this.corpusPath, line, 'utf8');
       }
     } catch (e) {

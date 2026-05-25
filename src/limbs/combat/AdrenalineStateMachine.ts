@@ -103,11 +103,15 @@ export const DEFAULT_ACTION_BAR: (string | null)[] = [
     null, null
 ];
 
+import { CanonicalClock } from '../../utils/CanonicalClock.js';
+
+// ... (keep existing imports)
+
 export class AdrenalineStateMachine {
     private state: CombatState;
     private slots: SlotState[];
     private listeners: CombatEventHandler[] = [];
-    private tickInterval: ReturnType<typeof setInterval> | null = null;
+    private isTicking: boolean = false;
 
     constructor(style: CombatState['style'] = 'MELEE') {
         this.state = {
@@ -151,16 +155,19 @@ export class AdrenalineStateMachine {
 
     /** Start the RS3 tick clock (Internal simulation only) */
     startCombat(): void {
-        if (this.tickInterval) return;
+        if (this.isTicking) return;
         this.state.inCombat = true;
-        this.tickInterval = setInterval(() => this.tick(), RS3_TICK_MS);
+        this.isTicking = true;
+        CanonicalClock.getInstance().registerPulse({
+            domain: 'INFERENCE', // Combat logic now on 300ms reflex heartbeat
+            callback: (tick: number) => this.tick(),
+            priority: 1, // after CNS
+            name: 'AdrenalineStateMachine'
+        });
     }
 
     stopCombat(): void {
-        if (this.tickInterval) {
-            clearInterval(this.tickInterval);
-            this.tickInterval = null;
-        }
+        this.isTicking = false;
         this.state.inCombat = false;
     }
 

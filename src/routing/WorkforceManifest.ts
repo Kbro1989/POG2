@@ -310,7 +310,7 @@ AUTHORIZED TOOLS: shell_command, git_status, wrangler, web_search, fetch_url.`,
         const direct = this.workers.get(modelIdOrKey);
         if (direct) return direct;
 
-        // Partial match for Ollama model names (e.g., "yi-coder" matches "yi-coder:9b-chat-q5_K_M")
+        // Partial match for Ollama model names (e.g., "yi-coder" matches "gemma4:26b")
         for (const [key, worker] of this.workers.entries()) {
             if (key.includes(modelIdOrKey) || modelIdOrKey.includes(key)) {
                 return worker;

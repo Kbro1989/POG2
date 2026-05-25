@@ -265,6 +265,11 @@ export class CanonicalClock {
         return this.getCoordinate();
     }
 
+
+    public registerPulse(pulse: { domain: string, callback: Function, priority: number, name: string }): void {
+        this.tickListeners.push(pulse.callback as any);
+    }
+
     public isTickingPermitted(): boolean {
         // Blocks ticking if any critical cognitive window is active
         return this.activeCognitiveWindows.size === 0;

@@ -4,7 +4,7 @@
   "codingModel": "qwen2.5-coder:14b-instruct-q5_K_M",
   "orchestratorModel": "kimi-k2-thinking:cloud",
   "visionModel": "moondream:latest",
-  "voiceModel": "tinyllama:latest",
+  "voiceModel": "gemma4:26b",
   "codingHeavyModel": "qwen2.5-coder:14b-instruct-q5_K_M",
   "codingFastModel": "qwen2.5-coder:7b-instruct-q4_K_M",
   "embeddingModel": "qwen3-embedding:latest",

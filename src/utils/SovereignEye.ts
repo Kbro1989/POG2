@@ -360,7 +360,7 @@ $bitmap.Dispose()
         return { ok: false, error: new Error('No headless browser available.') };
     }
 
-    private async cleanupOldCaptures(maxFiles: number = 50): Promise<void> {
+    protected async cleanupOldCaptures(maxFiles: number = 5): Promise<void> {
         try {
             const entries = await fsPromises.readdir(this.captureDir);
             const imageFiles = entries.filter(name => /\.(png|jpg|jpeg|webp|gif)$/i.test(name));

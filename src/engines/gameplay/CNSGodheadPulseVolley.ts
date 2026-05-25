@@ -217,8 +217,13 @@ export class CNSGodheadPulseVolley {
             this.enqueueNextTick(async () => op());
         });
 
-        // Phase 112: Immediate bootstrap tick
-        this.tick();
+        // Phase 112: Register pulse with CanonicalClock
+        CanonicalClock.getInstance().registerPulse({
+            domain: 'INFERENCE',
+            callback: (tick: number) => this.tick(),
+            priority: 0, // highest
+            name: 'CNSGodheadPulseVolley'
+        });
 
         // POG2 Thinking Sub-loop (Async User-behind-Player)
         this.startPog2ThinkingLoop();
@@ -413,10 +418,8 @@ export class CNSGodheadPulseVolley {
             const nextDelay = Math.max(0, this.TICK_INTERVAL - duration);
 
             if (duration > this.BUDGET_MS) {
-                logger.warn({ duration, limit: this.TICK_INTERVAL }, 'CNS Tick Overflow â€” authoritative simulation drift detected.');
+                logger.warn({ duration, limit: this.TICK_INTERVAL }, 'CNS Tick Overflow — authoritative simulation drift detected.');
             }
-
-            setTimeout(() => this.tick(), nextDelay);
         }
     }
 

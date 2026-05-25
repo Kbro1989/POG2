@@ -6,6 +6,7 @@ import { SovereignDomain } from '../../types/SovereignDomain.js';
 import { createLogger } from "../../utils/logger.js";
 import { SubstrateResolver } from '../../engines/gameplay/SubstrateResolver.js';
 import { CNSGodheadPulseVolley } from '../../engines/gameplay/CNSGodheadPulseVolley.js';
+import { EventBus } from '../../events/EventBus.js';
 
 const logger = createLogger('AIDispatcher');
 
@@ -196,13 +197,23 @@ export class AIDispatcher {
     }
 
     private auditDecision(audit: RoutingDecisionAudit): void {
-        logger.info({ 
-            tick: audit.tick, 
-            task: audit.taskClass, 
-            model: audit.selectedModel, 
+        logger.info({
+            tick: audit.tick,
+            task: audit.taskClass,
+            model: audit.selectedModel,
             snap: audit.snapshotHash,
             tier: audit.selectedTier
         }, '🧬 Cognitive Routing Audit');
+
+        EventBus.getInstance().publish({
+            type: 'decision.routing',
+            source: 'AIDispatcher',
+            payload: {
+                ...audit,
+                timestamp: new Date().toISOString(),
+                sessionId: (globalThis as any).pog2_sessionId || 'unknown'
+            }
+        });
     }
 
     public getServiceState(type: AIServiceType): ServiceState {

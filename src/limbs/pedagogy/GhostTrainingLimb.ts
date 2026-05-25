@@ -102,7 +102,7 @@ export class GhostTrainingLimb {
       const lines = readFileSync(this.corpusPath, 'utf8').trim().split('\n').filter(Boolean);
       
       // Determine base model from environment or safe default
-      const baseModel = process.env.OLLAMA_MODEL_FAST || 'qwen2.5-coder:1.5b-instruct-q4_K_M';
+      const baseModel = process.env.OLLAMA_MODEL_FAST || 'gemma4:26b';
 
       let modelfileContent = `FROM ${baseModel}
 

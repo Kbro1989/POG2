@@ -1,6 +1,6 @@
 {
-  "timestamp": 1779487394145,
-  "tick": 26,
+  "timestamp": 1779671604490,
+  "tick": 25,
   "avatar": {
     "coord": {
       "x": 3222,
@@ -9,7 +9,7 @@
     },
     "hp": 1000,
     "maxHp": 1000,
-    "adrenaline": 1000,
+    "adrenaline": 880,
     "bloodlustStacks": 0,
     "intent": null,
     "lockTicks": 0

@@ -23,7 +23,7 @@ async function runDemo() {
         visionModel: 'moondream:latest',
         codingModel: 'deepseek-r1:8b',
         planningModel: 'deepseek-r1:8b',
-        voiceModel: 'tinyllama:latest',
+        voiceModel: 'gemma4:26b',
         masterLocalModel: 'deepseek-r1:8b',
         ollamaBaseUrl: 'http://127.0.0.1:11434',
         projectRoot: process.cwd(),

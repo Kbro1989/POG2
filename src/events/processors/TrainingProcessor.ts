@@ -2,6 +2,7 @@
 import { existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { EventBus, SovereignEvent } from '../EventBus.js';
+import { CompressionEngine } from '../../utils/CompressionEngine.js';
 import {
     getTrainingInteractionsPath,
     getTrainingDecisionsPath,

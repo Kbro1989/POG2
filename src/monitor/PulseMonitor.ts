@@ -1,3 +1,4 @@
+import { GameplaySovereigntyLimb } from '../limbs/spatial/GameplaySovereigntyLimb.js';
 import { spawn, type ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import { join, resolve } from 'path';
@@ -70,7 +71,7 @@ export class PulseMonitor extends EventEmitter {
 
         // Gameplay Override: If the player agent is active, the GameplaySovereigntyLimb
         // handles the cognitive pulse at a higher frequency (600ms).
-        const gameplay = require('../limbs/spatial/GameplaySovereigntyLimb.js').GameplaySovereigntyLimb.getInstance();
+        const gameplay = GameplaySovereigntyLimb.getInstance();
         if (gameplay.playerAgent) {
             logger.debug('PulseMonitor: Suspending system pulse; GameplaySovereigntyLimb is currently authoritative.');
             return;

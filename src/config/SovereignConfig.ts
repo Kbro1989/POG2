@@ -118,7 +118,7 @@ const DEFAULT_CONFIG: SovereignConfig = {
     codingModel: 'deepseek-r1:8b', // Upgraded to thinking model
     orchestratorModel: 'kimi-k2.6:cloud',
     visionModel: 'moondream:latest',
-    voiceModel: 'tinyllama:latest',
+    voiceModel: 'gemma4:26b',
     codingHeavyModel: 'deepseek-r1:8b',
     codingFastModel: 'deepseek-r1:8b', 
     embeddingModel: 'qwen3-embedding:latest', // Upgraded to actual embedding node
@@ -133,8 +133,8 @@ const DEFAULT_CONFIG: SovereignConfig = {
     
     // specialized Generation Defaults (Phase 104)
     storyboardModel: 'deepseek-r1:8b',
-    vocalAnalysisModel: 'qwen2.5-coder:1.5b-instruct-q4_K_M',
-    imagePromptModel: 'deepseek-coder:6.7b-instruct-q4_K_M',
+    vocalAnalysisModel: 'gemma4:26b',
+    imagePromptModel: 'deepseek-r1:32b',
     // Back to 7b for rapid processing speeds over the 14b CPU latency.
     soulIngestionModel: 'deepseek-r1:8b',
     memoryConsolidationModel: 'deepseek-r1:8b',
@@ -192,12 +192,12 @@ const DEFAULT_CONFIG: SovereignConfig = {
     laneAwareWeighting: true,
 
     // Phase 23 Defaults
-    correctionModel: 'deepseek-coder:6.7b-instruct-q4_K_M',
-    optimizationModel: 'yi-coder:9b-chat-q5_K_M',
-    legacyModel: 'deepseek-coder:latest',
+    correctionModel: 'deepseek-r1:32b',
+    optimizationModel: 'gemma4:26b',
+    legacyModel: 'deepseek-r1:8b',
     prototypeModel: 'deepseek-r1:8b',
     rscModel: 'moondream:latest',
-    bioModel: 'medgemma:latest',
+    bioModel: 'gemma4:26b',
     visionFastModel: 'moondream:latest'
 };
 

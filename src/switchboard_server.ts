@@ -8,7 +8,7 @@
 import { SwitchboardLimb } from './monitor/SwitchboardLimb.js';
 import { rsmvBridge } from './utils/RSMVBridge.js';
 
-const PORT = 8788;
+const PORT = 8789;
 
 // Minimal orchestrator stub — accepts commands and echoes acknowledgement.
 const minimalOrchestrator = {

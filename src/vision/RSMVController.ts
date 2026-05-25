@@ -2,10 +2,15 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 import { spawn } from 'child_process';
 import { promises as fs, existsSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { createLogger } from '../utils/logger.js';
 import type { Result, ActuationResult } from '../core/models.js';
 import { getrsmvCachePath, getrsmvSubstratePath } from '../utils/SovereignPathResolver.js';
+
+// Load rsmv engine dependencies dynamically
+const substrateRoot = getrsmvSubstratePath();
+const { GameCacheLoader } = require(join(substrateRoot, 'src', 'cache', 'sqlite.ts'));
+const { parseOb3Model } = require(join(substrateRoot, 'src', '3d', 'rt7model.ts'));
 
 const logger = createLogger('rsmvController');
 
@@ -17,12 +22,13 @@ export interface ModelModifications {
 }
 
 /**
- * rsmvController â€” CNS Bridge for the rsmv 3D substrate.
+ * rsmvController — CNS Bridge for the rsmv 3D substrate.
  * Manages the inspector child process and coordinates exports.
  */
 export class RSMVController {
     private static instance: RSMVController | undefined;
     private activeProcess: any = null;
+    private cacheLoader: any = null;
 
     private constructor() {
         if (RSMVController.instance) {
@@ -35,6 +41,39 @@ export class RSMVController {
             this.instance = new RSMVController();
         }
         return this.instance;
+    }
+
+    private getCacheLoader(): any {
+        if (!this.cacheLoader) {
+            this.cacheLoader = new GameCacheLoader(getrsmvCachePath());
+        }
+        return this.cacheLoader;
+    }
+
+    /**
+     * Fetch model geometry directly from cache substrate.
+     */
+    public async fetchModelGeometry(modelId: number): Promise<{ positions: number[] } | null> {
+        try {
+            const loader = this.getCacheLoader();
+            const buffer = await loader.getFileById(47, modelId);
+            if (!buffer) return null;
+
+            const modelData = parseOb3Model(buffer, loader);
+            const positions: number[] = [];
+            for (const mesh of (modelData.meshes || [])) {
+                if (mesh.attributes?.pos) {
+                    const array = mesh.attributes.pos.array;
+                    for(let i=0; i<array.length; i++) {
+                        positions.push(array[i]);
+                    }
+                }
+            }
+            return { positions };
+        } catch (err) {
+            logger.error({ err, modelId }, 'Failed to fetch model geometry from cache');
+            return null;
+        }
     }
 
     public static resetInstance(): void {

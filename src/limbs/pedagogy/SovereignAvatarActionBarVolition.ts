@@ -275,19 +275,29 @@ export class CombatTickEngine {
     for (const id of Object.keys(ABILITY_LIBRARY)) {
       this.state.cooldowns.set(id, 0);
     }
-  }
+  };
+
+// removed misaligned import
+
+// ... (existing class structure)
+
+  private isTicking: boolean = false;
 
   start(): void {
-    if (this.intervalId) return;
-    this.intervalId = setInterval(() => this.tick(), this.TICK_MS);
+    if (this.isTicking) return;
+    this.isTicking = true;
+    CanonicalClock.getInstance().registerPulse({
+      domain: 'INFERENCE', // Aligned with reflex loop
+      callback: (tick: number) => this.tick(),
+      priority: 2, // after Adrenaline/CNS
+      name: 'SovereignAvatarActionBarVolition'
+    });
   }
 
   stop(): void {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
+    this.isTicking = false;
   }
+
 
   private tick(): void {
     this.state.tick++;
