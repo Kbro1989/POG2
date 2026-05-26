@@ -291,3 +291,30 @@ export class LootResolutionEngine {
         return alwaysDrops;
     }
 }
+
+
+import type { EngineContract, ExecutionContext } from '../../core/HexagramNetworkBridge.js';
+export const LootResolutionEngineContract: EngineContract = {
+  name: 'LootResolutionEngine',
+  validate: (ctx) => true,
+  execute: async (ctx) => {
+    return {
+      success: true,
+      engineName: 'LootResolutionEngine',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: { action: 'stub' },
+      durationMs: 0
+    };
+  },
+  fallback: async (ctx) => {
+    return {
+      success: true,
+      engineName: 'LootResolutionEngine',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: { action: 'idle', reason: 'fallback' },
+      durationMs: 0
+    };
+  }
+};

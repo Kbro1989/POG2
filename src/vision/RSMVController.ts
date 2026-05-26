@@ -7,10 +7,13 @@ import { createLogger } from '../utils/logger.js';
 import type { Result, ActuationResult } from '../core/models.js';
 import { getrsmvCachePath, getrsmvSubstratePath } from '../utils/SovereignPathResolver.js';
 
-// Load rsmv engine dependencies dynamically
-const substrateRoot = getrsmvSubstratePath();
-const { GameCacheLoader } = require(join(substrateRoot, 'src', 'cache', 'sqlite.ts'));
-const { parseOb3Model } = require(join(substrateRoot, 'src', '3d', 'rt7model.ts'));
+// Load rsmv engine dependencies lazily
+async function getSubstrateModules() {
+    const substrateRoot = getrsmvSubstratePath();
+    const { GameCacheLoader } = require(join(substrateRoot, 'src', 'cache', 'sqlite.ts'));
+    const { parseOb3Model } = require(join(substrateRoot, 'src', '3d', 'rt7model.ts'));
+    return { GameCacheLoader, parseOb3Model };
+}
 
 const logger = createLogger('rsmvController');
 
@@ -29,11 +32,19 @@ export class RSMVController {
     private static instance: RSMVController | undefined;
     private activeProcess: any = null;
     private cacheLoader: any = null;
+    private substrateModules: any = null;
 
     private constructor() {
         if (RSMVController.instance) {
             throw new Error('Singleton violation: use RSMVController.getInstance()');
         }
+    }
+
+    private async getModules() {
+        if (!this.substrateModules) {
+            this.substrateModules = await getSubstrateModules();
+        }
+        return this.substrateModules;
     }
 
     public static getInstance(): RSMVController {
@@ -43,8 +54,9 @@ export class RSMVController {
         return this.instance;
     }
 
-    private getCacheLoader(): any {
+    private async getCacheLoader(): Promise<any> {
         if (!this.cacheLoader) {
+            const { GameCacheLoader } = await this.getModules();
             this.cacheLoader = new GameCacheLoader(getrsmvCachePath());
         }
         return this.cacheLoader;
@@ -55,7 +67,8 @@ export class RSMVController {
      */
     public async fetchModelGeometry(modelId: number): Promise<{ positions: number[] } | null> {
         try {
-            const loader = this.getCacheLoader();
+            const loader = await this.getCacheLoader();
+            const { parseOb3Model } = await this.getModules();
             const buffer = await loader.getFileById(47, modelId);
             if (!buffer) return null;
 

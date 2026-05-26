@@ -272,6 +272,9 @@ export class CanonicalClock {
 
     public isTickingPermitted(): boolean {
         // Blocks ticking if any critical cognitive window is active
+        if (this.activeCognitiveWindows.size > 0) {
+            logger.warn({ windowCount: this.activeCognitiveWindows.size, windowIds: Array.from(this.activeCognitiveWindows.keys()) }, 'Ticking vetoed by active cognitive windows.');
+        }
         return this.activeCognitiveWindows.size === 0;
     }
 
@@ -287,6 +290,13 @@ export class CanonicalClock {
     // ═══════════════════════════════════════════════════════════════
 
     public openCognitiveWindow(trigger: string, snapshot: any, maxDurationTicks = 5): CognitiveWindow {
+        // Hexagram-derived authorization gate
+        const hexagram = require('../routing/HexagramManager.js').HexagramManager.getInstance();
+        if (!hexagram.isCognitivePermitted(trigger)) {
+            logger.warn({ trigger }, 'Cognitive window opening rejected by Hexagram authority.');
+            throw new Error('Hexagram Veto: Cognitive window access denied.');
+        }
+
         this.cognitiveCycle++;
         const id = `cog_${this.gameTick}_${this.cognitiveCycle}`;
 
@@ -301,6 +311,11 @@ export class CanonicalClock {
         };
 
         this.activeCognitiveWindows.set(id, window);
+        
+        // Export to Sovereign window viewer
+        const ui = require('../ui/Renderer.js').Renderer.getInstance();
+        ui.exportCognitiveState(window);
+        
         return window;
     }
 

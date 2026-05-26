@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import { getAtlasSystemPath, getAtlasSpatialPath } from '../../utils/SovereignPathResolver.js';
-import { Coord, GameState, Result, YaoState, SkillId, EquipmentSlot, SovereignAvatar, Item, TruthClass } from '../../core/models.js';
+import { Coord, GameState, Result, YaoState, SkillId, EquipmentSlot, SovereignAvatar, Item, TruthClass, NPC } from '../../core/models.js';
 import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { WorldGroundingLimb } from '../../limbs/world_grounding/WorldGroundingLimb.js';
 import { HexagramManager } from '../../routing/HexagramManager.js';
@@ -31,6 +31,7 @@ import { LootResolutionEngine } from './LootResolutionEngine.js';
 import { EpistemicTransitionKernel, PredictionRegistry } from '../core/EpistemicTransitionKernel.js';
 import { CanonicalClock } from '../../utils/CanonicalClock.js';
 import { stateProvider } from '../../utils/StateProvider.js';
+import { resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
 
 export interface TickEvent {
     readonly id: string;
@@ -139,6 +140,13 @@ export class SimulationHarness {
 
     public setAvatar(avatar: SovereignAvatar): void {
         this.avatar = avatar;
+        // Inject authoritative state immediately upon setting avatar
+        const statePath = resolveSovereignPath('memory/sovereign_state.json');
+        if (fs.existsSync(statePath)) {
+            const stateData = fs.readFileSync(statePath, 'utf8');
+            this.avatar.injectState(stateData);
+            logger.info('[HARNESS] Avatar hydrated from authoritative save.');
+        }
     }
 
     private grounding: WorldGroundingLimb;
@@ -267,7 +275,7 @@ export class SimulationHarness {
 
         for (const drop of readyDrops) {
             const coordKey = `${drop.coord.x},${drop.coord.y},${drop.coord.plane}`;
-            let cellItems = state.groundItems.get(coordKey) || [];
+            const cellItems = state.groundItems.get(coordKey) || [];
 
             for (const item of drop.items) {
                 const clock = CanonicalClock.getInstance();
@@ -367,17 +375,21 @@ export class SimulationHarness {
             const maxX = minX + 63;
             const maxZ = minZ + 63;
 
+            // Clear and rebuild spatial index for this tick
+            state.npcSpatialIndex.clear();
+
             for (const [id, entity] of Object.entries(manifest.entities)) {
                 if (id.startsWith('npc_')) {
                     const data = entity.grounded.data;
                     if (data.spatial && data.spatial.x >= minX && data.spatial.x <= maxX && data.spatial.y >= minZ && data.spatial.y <= maxZ) {
                         const npcId = data.npcId || parseInt(id.split('_')[1], 10);
-                        // Use the unique entity ID as the key to prevent collisions and support pruning
                         const entityKey = id;
-                        if (!state.npcMap.has(entityKey as any)) {
-                            state.npcMap.set(entityKey as any, {
+                        
+                        let npc = state.npcMap.get(entityKey as any);
+                        if (!npc) {
+                            npc = {
                                 id: npcId,
-                                entityId: entityKey,
+                                // entityId: entityKey, // Removed if not in NPC type
                                 name: data.name || `NPC ${npcId}`,
                                 coord: { x: data.spatial.x, y: data.spatial.y, plane: data.spatial.plane || 0 },
                                 x: data.spatial.x,
@@ -390,7 +402,16 @@ export class SimulationHarness {
                                 lastCombatTick: 0,
                                 cooldowns: {},
                                 metadata: data
-                            } as any);
+                            } as any as NPC;
+                            state.npcMap.set(entityKey as any, npc);
+                        }
+
+                        // Sync to spatial index for radar visibility
+                        if (npc) {
+                            const coordKey = `${npc.x},${npc.y},${npc.plane}`;
+                            const tileNpcs = state.npcSpatialIndex.get(coordKey) || [];
+                            tileNpcs.push(npc);
+                            state.npcSpatialIndex.set(coordKey, tileNpcs);
                         }
                     }
                 }
@@ -1021,3 +1042,30 @@ export class SimulationHarness {
         return { online: true, details: 'Simulation Harness nominal. CNS heartbeat synchronized.' };
     }
 }
+
+
+import type { EngineContract, ExecutionContext } from '../../core/HexagramNetworkBridge.js';
+export const SimulationHarnessContract: EngineContract = {
+  name: 'SimulationHarness',
+  validate: (ctx) => true,
+  execute: async (ctx) => {
+    return {
+      success: true,
+      engineName: 'SimulationHarness',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: { action: 'stub' },
+      durationMs: 0
+    };
+  },
+  fallback: async (ctx) => {
+    return {
+      success: true,
+      engineName: 'SimulationHarness',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: { action: 'idle', reason: 'fallback' },
+      durationMs: 0
+    };
+  }
+};

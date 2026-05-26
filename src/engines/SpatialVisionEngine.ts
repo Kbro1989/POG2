@@ -441,9 +441,10 @@ OUTPUT FORMAT:
     /**
      * Diagnostic probe for NodeTester.
      */
-    public healthCheck(): { online: boolean; details: string } {
+    public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' } {
         return {
             online: true,
+            status: 'ONLINE',
             details: 'SpatialVisionEngine nominal; line/color decomposition substrate active.'
         };
     }

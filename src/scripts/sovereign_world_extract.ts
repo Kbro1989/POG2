@@ -104,7 +104,7 @@ async function run() {
     }
 
     // ── Load maplabels from cache ──
-    let maplabels: Record<number, any> = {};
+    const maplabels: Record<number, any> = {};
     try {
         const labelIndex = (await source.getCacheIndex(cacheMajors.config))
             .find((p: any) => p && p.minor === cacheConfigPages.maplabels);

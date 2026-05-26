@@ -25,8 +25,8 @@ const OUTPUT_DIR = join(process.cwd(), 'to-do-list-kv-template-123', 'public', '
 async function extractBaseAvatar(gender: 'male' | 'female', engineCache: any, cache: any, parse: any) {
     console.log(`\n📦 Extracting Base ${gender.toUpperCase()} Avatar...`);
 
-    let playerkitarch = await engineCache.getArchiveById(2, 3);
-    let playerkit = Object.fromEntries(playerkitarch.map((q: any) => [q.fileid, parse.identitykit.read(q.buffer, engineCache.rawsource)]));
+    const playerkitarch = await engineCache.getArchiveById(2, 3);
+    const playerkit = Object.fromEntries(playerkitarch.map((q: any) => [q.fileid, parse.identitykit.read(q.buffer, engineCache.rawsource)]));
 
     const maleKits = [0, 10, 18, 26, 33, 36, 42];
     const femaleKits = [45, 56, 61, 68, 70, 79];

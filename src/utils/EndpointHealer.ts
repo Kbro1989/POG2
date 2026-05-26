@@ -203,8 +203,13 @@ export class EndpointHealer {
     // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Gemini Diagnostics Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
     private async diagnoseGemini(diag: HealerDiagnostic): Promise<void> {
-        const envCheck = await this.runCheck('Google API Key', 'echo %GOOGLE_API_KEY%');
+        // Try GEMINI_API_KEY first, then GOOGLE_API_KEY
+        const envCheck = await this.runCheck('Gemini/Google API Key', 'echo %GEMINI_API_KEY%_%GOOGLE_API_KEY%');
         diag.checks.push(envCheck);
+        
+        // In cmd.exe, if a variable isn't set, it echoes the literal string with %.
+        const hasKey = envCheck.passed && (!envCheck.result.includes('%GEMINI_API_KEY%') || !envCheck.result.includes('%GOOGLE_API_KEY%'));
+        envCheck.passed = hasKey;
 
         const gcloudCheck = await this.runCheck('GCloud Auth', 'gcloud auth list --format=json');
         diag.checks.push(gcloudCheck);
@@ -212,8 +217,10 @@ export class EndpointHealer {
         const gitCheck = await this.runCheck('Git Config', 'git config --global --list');
         diag.checks.push(gitCheck);
 
-        if (!envCheck.passed) {
-            diag.resolution = 'Google API key not set. Set GOOGLE_API_KEY or run "gcloud auth application-default login".';
+        if (!hasKey) {
+            diag.resolution = 'Gemini/Google API key not set. Set GEMINI_API_KEY or GOOGLE_API_KEY, or run "gcloud auth application-default login".';
+        } else {
+            diag.resolved = true; // If key is present, assume provider is active
         }
     }
 

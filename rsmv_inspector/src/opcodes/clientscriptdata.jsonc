@@ -1,0 +1,9 @@
+["struct",
+["byte0",["match","buildnr",{">458":"ubyte","other":0}]],
+["switchsize",["match","buildnr",{">=495":["footer",2,"ushort"],"other":0}]],
+["switches",["footer",["ref","switchsize"],
+["array",["match","buildnr",{">=495":"ubyte","other":0}],["array","ushort",["struct",
+["value","int"],
+["jump","uint"]
+]]]]]
+]

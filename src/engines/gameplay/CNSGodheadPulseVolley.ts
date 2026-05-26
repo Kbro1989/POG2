@@ -111,6 +111,7 @@ export class CNSGodheadPulseVolley {
         VISUAL_ONLY: []
     };
     private routingSnapshot?: RoutingSnapshot;
+    private deferredTickOps: { remainingTicks: number; op: DeferredOp; label: string }[] = [];
 
     public getRoutingSnapshot(): RoutingSnapshot | undefined {
         return this.routingSnapshot;
@@ -122,6 +123,16 @@ export class CNSGodheadPulseVolley {
 
     public enqueueNextTick(op: DeferredOp, tier: QueueTier = "NORMAL"): void {
         this.nextTickQueues[tier].push(op);
+    }
+
+    /**
+     * deferAfterTicks — Clock-aligned deferral.
+     * Schedules an operation to execute after N deterministic ticks (300ms each).
+     * Unlike setTimeout, this is governed by the CanonicalClock pulse cycle,
+     * so pausing or drifting the clock pauses/drifts this too.
+     */
+    public deferAfterTicks(ticks: number, op: DeferredOp, label: string = 'deferred'): void {
+        this.deferredTickOps.push({ remainingTicks: Math.max(1, ticks), op, label });
     }
 
     /**
@@ -204,6 +215,7 @@ export class CNSGodheadPulseVolley {
      * Implements self-correcting drift logic inspired by RSC Evolution alarms.
      */
     public startLoop(): void {
+        CanonicalClock.assertBootstrapped();
         if (this.isStarted) {
             logger.warn('CNS Godhead Pulse already active. Ignition aborted.');
             return;
@@ -266,6 +278,20 @@ export class CNSGodheadPulseVolley {
             NORMAL: [],
             VISUAL_ONLY: []
         };
+
+        // Process tick-deferred operations (clock-aligned, not wall-clock)
+        const readyOps: DeferredOp[] = [];
+        this.deferredTickOps = this.deferredTickOps.filter(entry => {
+            entry.remainingTicks--;
+            if (entry.remainingTicks <= 0) {
+                readyOps.push(entry.op);
+                return false; // remove from queue
+            }
+            return true; // keep counting down
+        });
+        for (const op of readyOps) {
+            this.enqueueNow(op, 'CRITICAL');
+        }
 
         try {
             // Resolve lazy dependencies before first pulse
@@ -378,7 +404,7 @@ export class CNSGodheadPulseVolley {
                 this.pendingCommands.set(tickId, cmd);
 
                 // Schedule commit at 300ms boundary
-                setTimeout(() => this.commitPendingCommand(tickId), 300);
+                this.enqueueNextTick(() => this.commitPendingCommand(tickId), 'CRITICAL');
                 this.scheduleObservation(tickId, currentYao, prediction, 300);
             }
             // ── HARD WAIT ──
@@ -394,7 +420,8 @@ export class CNSGodheadPulseVolley {
                 this.pendingCommands.set(tickId, cmd);
 
                 this.installTriggerListeners(tickId, decision.triggerConditions);
-                setTimeout(() => this.evaluateWaitTimeout(tickId), decision.deadlineMs);
+                const deferTicks = Math.max(1, Math.ceil(decision.deadlineMs / this.TICK_INTERVAL));
+                this.deferAfterTicks(deferTicks, () => this.evaluateWaitTimeout(tickId), `wait_${tickId}`);
                 this.scheduleObservation(tickId, currentYao, prediction, 300);
             }
 
@@ -579,6 +606,16 @@ export class CNSGodheadPulseVolley {
             gate: gate.toFixed(2),
             movingLines: transitionalVector.movingLines.length
         }, '⚡ Action committed');
+
+        // Export to Sovereign renderer for observer window
+        const ui = require('../../ui/Renderer.js').Renderer.getInstance();
+        ui.exportActionOutcome({
+            tickId,
+            commands,
+            prediction,
+            vector: transitionalVector,
+            timestamp: CanonicalClock.getInstance().simulatedNow()
+        });
 
         // Phase 11: Action Pipeline Feedback
         kernel.recordAction('PULSE_COMMIT', prediction.confidence);

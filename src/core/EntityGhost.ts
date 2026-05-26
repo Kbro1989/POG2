@@ -11,6 +11,10 @@ export interface EntityGhost {
     projectedCoord: Coord;
     ticksAhead: number;
     confidence: number;            // 0.0 - 1.0
+    // ── Photometric/Splat Properties ──
+    sh_coeffs?: Float32Array;      // Spherical Harmonics for novel view synthesis
+    originType: 'rsmv' | 'web_ui'; // Differentiates dual-status source
+    
     combatState?: {
         hp: number;
         adrenaline?: number;

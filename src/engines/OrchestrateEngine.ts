@@ -326,6 +326,7 @@ export class OrchestrateEngine {
         this.neuralForge = new NeuralForgeLimb();
         this.webSensory = new WebSensoryLimb();
         this.ghost = new GhostLimb(config);
+        this.ingestionEngine.injectGhostLimb(this.ghost);
         this.quantum = new QuantumLimb();
         this.omega = new OmegaLimb();
         this.relic = new RelicLimb();
@@ -1110,23 +1111,31 @@ export class OrchestrateEngine {
         this.pulseMonitor.setNodeTester(this.nodeTester);
         this.nodeTester = this.nodeTester;
 
-        // CLI ROUTER COMMANDS
+        // SENSORY HUB: Dual-Retina Injections
         this.registry.register({
-            name: 'memory_consolidate',
-            description: 'Synthesize raw session memories into profound generative rules.',
-            humanDescription: 'Compress current session memories into long-term architectural lessons.',
-            jargonDescription: 'Invokes the MemoryConsolidationEngine to group redundant nodes and synthesize overarching generative rules in the VectorDB.',
-            idealYaoState: YaoState.YoungYin,
-            domain: SovereignDomain.SYSTEM,
-            category: 'core',
-            parameters: {
-                focus: { type: 'string', description: 'Optional focus for consolidation (e.g. SOVEREIGN_LAW_REPAIR)' },
-                violations: { type: 'array', description: 'List of clinical violations to address' }
-            },
+            name: 'sovereign_eye_capture',
+            description: 'Panoramic system-wide visual snapshot (SovereignEye).',
+            domain: SovereignDomain.VISION,
+            category: 'sensory',
+            parameters: { target: { type: 'string', description: 'Window name or file path' } },
             execute: async (args) => {
-                const opts = args as { focus?: string, violations?: any[] };
-                const result = await this.consolidate(undefined, opts);
-                return result.ok ? ok({ output: `Memory substrate consolidated successfully.` }) : result;
+                const target = args.target as string;
+                const res = await this.vision.observe({ intent: 'eye', target });
+                return res.ok ? ok({ output: `Panoramic capture successful: ${res.value.output}` }) : res;
+            }
+        });
+
+        this.registry.register({
+            name: 'puppeteer_eye_capture',
+            description: 'Foveal high-acuity UI/3D focus capture (PuppeteerEye).',
+            domain: SovereignDomain.VISION,
+            category: 'sensory',
+            parameters: { url: { type: 'string', description: 'URL to target' } },
+            execute: async (args) => {
+                const url = args.url as string;
+                // Note: VisionEngine will need a foveal intent handler updated next.
+                const res = await this.vision.observe({ intent: 'eye', target: url, modelOverride: 'puppeteer-focus' });
+                return res.ok ? ok({ output: `Foveal capture successful: ${res.value.output}` }) : res;
             }
         });
 

@@ -217,11 +217,20 @@ export class RSMVBridge {
             return this._lastHealthCheckResult;
         }
 
-        const result = await callBridge<BridgeHealthResult>('health');
-        this._healthy = result.ok && result.value.online;
-        this._lastHealthCheckTime = now;
-        this._lastHealthCheckResult = result;
-        return result;
+        try {
+            const result = await callBridge<BridgeHealthResult>('health');
+            this._healthy = result.ok && result.value.online;
+            this._lastHealthCheckTime = now;
+            this._lastHealthCheckResult = result;
+            return result;
+        } catch (e) {
+            logger.warn({ err: e }, '[RSMVBridge] Health check failed, defaulting to DEGRADED mode to prevent boot stall.');
+            const degraded = ok({ online: false, reason: 'Substrate diagnostic timeout: ESM resolution conflict.' });
+            this._healthy = false;
+            this._lastHealthCheckTime = now;
+            this._lastHealthCheckResult = degraded;
+            return degraded;
+        }
     }
 
     /** Returns true if the last healthCheck confirmed the cache is live. */

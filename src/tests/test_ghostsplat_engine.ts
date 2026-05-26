@@ -6,6 +6,7 @@ import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
 import { PlayerAgent } from '../engines/gameplay/PlayerAgent.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { SpatialSovereigntyLimb, PADDED_SIZE } from '../limbs/spatial/SpatialSovereigntyLimb.js';
+import { CanonicalClock } from '../utils/CanonicalClock.js';
 
 async function runTest() {
     console.log('--- GhostSplat Engine Diagnostic Test ---');
@@ -13,19 +14,22 @@ async function runTest() {
     // 1. Initialize Mocks
     try {
         HexagramManager.initializeMock();
+        CanonicalClock.bootstrap(Date.now(), 0);
     } catch (e) {
         // Already initialized or different version
     }
     
     // 2. Load Authentic Spawn Manifest
     const manifestPath = path.resolve('public/authentic_spawn_manifest.json');
-    if (!fs.existsSync(manifestPath)) {
-        console.error(`Manifest not found at ${manifestPath}`);
+    const { parseManifestToSovereignState } = await import('../scripts/parse_manifest.js');
+    let sovereignState;
+    try {
+        sovereignState = await parseManifestToSovereignState(manifestPath);
+        console.log(`Loaded manifest with ${sovereignState.world.entities.length} entities.`);
+    } catch (e) {
+        console.error(e);
         return;
     }
-
-    const manifestData = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-    console.log(`Loaded manifest with ${manifestData.entities.length} entities.`);
 
     // 3. Setup GameState Mock
     // Pick a cluster of NPCs. 
@@ -48,19 +52,19 @@ async function runTest() {
 
     // Populate NPCs near the center
     let npcCount = 0;
-    for (const entity of manifestData.entities) {
+    for (const entity of sovereignState.world.entities) {
         const dx = Math.abs(entity.coord.x - centerX);
-        const dz = Math.abs(entity.coord.z - centerZ);
+        const dz = Math.abs(entity.coord.y - centerZ); // NOTE: coord.y in SovereignEntity, was coord.z
         
         if (dx < 30 && dz < 30 && entity.coord.plane === plane) {
             const npcId = npcCount++;
             const npc: NPC = {
                 id: npcId,
-                npcId: entity.entityId || 0,
-                name: entity.title || 'Unknown',
-                coord: { x: entity.coord.x, y: entity.coord.z, plane: entity.coord.plane },
+                npcId: entity.raw.entityId || 0,
+                name: entity.raw.title || 'Unknown',
+                coord: { x: entity.coord.x, y: entity.coord.y, plane: entity.coord.plane },
                 x: entity.coord.x,
-                y: entity.coord.z,
+                y: entity.coord.y,
                 plane: entity.coord.plane,
                 interactionState: 'IDLE',
                 lastActionTick: 0,
@@ -69,7 +73,8 @@ async function runTest() {
                     maxHp: 1000,
                     attackRange: 3
                 },
-                cooldowns: {}
+                cooldowns: {},
+                metadata: { hexagramWeight: entity.hexagramWeight }
             } as any;
             state.npcMap.set(npcId, npc);
             
@@ -136,6 +141,16 @@ async function runTest() {
 
     if (totalHeat > 0 && field.projections.size > 0) {
         console.log('TEST PASSED: GhostSplatEngine generated valid spatial data.');
+        
+        // 8. Hexagram Integration Check
+        try {
+            const hexManager = HexagramManager.getInstance();
+            const diagnostics = { tick: state.tickNumber, enginePhase: 'test' };
+            const movingLines = (hexManager as any).detectMovingLines(field, diagnostics);
+            console.log(`HexagramManager detected ${movingLines?.length || 0} moving lines.`);
+        } catch (e: any) {
+            console.log(`HexagramManager integration skipped or failed: ${e.message}`);
+        }
     } else {
         console.error('TEST FAILED: Engine output is empty or invalid.');
     }

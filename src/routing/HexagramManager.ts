@@ -68,8 +68,14 @@ export interface SystemState {
 }
 
 export class HexagramManager extends EventEmitter {
-    pinSynthesis(arg0: string) {
-        throw new Error('Method not implemented.');
+    public pinSynthesis(content: string): void {
+        this.pushLine({
+            lineIndex: (this.lines.length % 6) + 1,
+            title: 'Sovereign Synthesis',
+            content,
+            state: YaoState.YoungMixed,
+            importance: 1
+        });
     }
     private static instance: HexagramManager | undefined;
     private static mode: 'production' | 'mock' = 'production';
@@ -264,7 +270,7 @@ export class HexagramManager extends EventEmitter {
     }
 
     private computeFutureHexagram(primary: string, movingLines: MovingLine[]): string {
-        let future = primary.split('');
+        const future = primary.split('');
         for (const line of movingLines) {
             const idx = 6 - line.position;
             future[idx] = line.toState === 'YANG' ? '1' : '0';

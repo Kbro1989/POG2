@@ -8,6 +8,7 @@ import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { PlayerAgent } from '../../engines/gameplay/PlayerAgent.js';
 import { CombatRotationEngine } from '../../engines/gameplay/CombatRotationEngine.js';
 import { AdrenalineStateMachine } from '../combat/AdrenalineStateMachine.js';
+import { CanonicalClock } from '../../utils/CanonicalClock.js';
 import { AbilityDiscoveryLimb } from '../spatial/AbilityDiscoveryLimb.js';
 import { GhostSplatEngine } from '../../substrates/GhostSplatEngine.js';
 import { TemporalHeartbeatLimb } from '../core/TemporalHeartbeatLimb.js';
@@ -275,7 +276,7 @@ export class CombatTickEngine {
     for (const id of Object.keys(ABILITY_LIBRARY)) {
       this.state.cooldowns.set(id, 0);
     }
-  };
+  }
 
 // removed misaligned import
 

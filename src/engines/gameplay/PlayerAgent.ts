@@ -117,6 +117,7 @@ export class PlayerAgent {
             projectedCoord: pathCoord,
             ticksAhead: ticks,
             confidence: source === 'path_queue' ? 1.0 : (source === 'intent' ? 0.8 : 0.5),
+            originType: 'rsmv',
             combatState: {
                 hp: this.avatar.currentHp || 0,
                 adrenaline: this.avatar.adrenaline || 0,
@@ -137,6 +138,7 @@ export class PlayerAgent {
             projectedCoord: this.avatar.coord,
             ticksAhead: 0,
             confidence: 1.0,
+            originType: 'rsmv',
             combatState: {
                 hp: this.avatar.currentHp || 0,
                 adrenaline: this.avatar.adrenaline || 0,

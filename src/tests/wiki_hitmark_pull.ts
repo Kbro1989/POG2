@@ -10,7 +10,7 @@ async function fetchWikiHitmarks() {
         const data = await response.json();
         const pages = data.query.pages;
         let content = "";
-        for (let p in pages) {
+        for (const p in pages) {
             if (pages[p].revisions) {
                 content = pages[p].revisions[0]['*'];
             }

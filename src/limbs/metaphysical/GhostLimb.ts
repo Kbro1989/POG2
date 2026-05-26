@@ -19,8 +19,17 @@ export class GhostLimb {
     private watchInterval: NodeJS.Timeout | null = null;
     private isObserving: boolean = false;
     private awarenessScore: number = 1.0;
+    private mirrorBuffer: any[] = [];
 
     constructor(private readonly config: SovereignConfig) { }
+
+    /**
+     * mirrorState - Mirrors the ingestion output buffer to the GhostLimb for state preservation.
+     */
+    public mirrorState(buffer: any[]): void {
+        this.mirrorBuffer = [...buffer];
+        logger.debug(`[GHOST_VOICE] Mirrored ${buffer.length} items to internal observer cache.`);
+    }
 
     /**
      * awaken - Activates the observer cycle.

@@ -88,13 +88,18 @@ export class NodeTester {
         this.pulse?.emit('pulse', { event, data });
     }
 
-    public async auditNeuralNodes(): Promise<NodeHealth[]> {
-        logger.info('Commencing deep clinical neurological audit...');
-        const results: NodeHealth[] = new Array(NEUROLOGICAL_MAP.length);
+    public async auditNeuralNodes(gameplayContext: boolean = false): Promise<NodeHealth[]> {
+        logger.info({ gameplayContext }, 'Commencing deep clinical neurological audit...');
+        
+        const nodesToAudit = NEUROLOGICAL_MAP.filter(node => 
+            gameplayContext || node.category !== (NeuralCategory as any).GAMEPLAY
+        );
+
+        const results: NodeHealth[] = new Array(nodesToAudit.length);
         const concurrency = 10;
         
-        for (let i = 0; i < NEUROLOGICAL_MAP.length; i += concurrency) {
-            const batch = NEUROLOGICAL_MAP.slice(i, i + concurrency);
+        for (let i = 0; i < nodesToAudit.length; i += concurrency) {
+            const batch = nodesToAudit.slice(i, i + concurrency);
             const batchPromises = batch.map(async (node, index) => {
                 const health = await this.probeNode(node);
                 results[i + index] = health;
@@ -106,7 +111,7 @@ export class NodeTester {
         const degraded = results.filter(r => r.status === 'DEGRADED');
         const offline = results.filter(r => r.status === 'OFFLINE');
 
-        logger.info({ total: NEUROLOGICAL_MAP.length, online: onlineCount, degraded: degraded.length, offline: offline.length }, 'Audit complete.');
+        logger.info({ total: nodesToAudit.length, online: onlineCount, degraded: degraded.length, offline: offline.length }, 'Audit complete.');
 
         // Phase 112: Dynamic authorisation for Ghost-Mode (DEGRADED HEARTBEAT)
         const { SubstrateResolver } = await import('../engines/gameplay/SubstrateResolver.js');

@@ -182,6 +182,7 @@ export class GhostSplatEngine {
                 projectedCoord,
                 ticksAhead: field.tickDepth,
                 confidence: source === 'path_queue' ? 1.0 : source === 'extrapolation' ? 0.8 : 0.5,
+                originType: 'rsmv',
                 source
             };
             
@@ -620,3 +621,56 @@ export class GhostSplatEngine {
         }
     }
 }
+
+
+import type { EngineContract, ExecutionContext, ContractResult } from '../core/HexagramNetworkBridge.js';
+export const GhostSplatEngineContract: EngineContract = {
+  name: 'GhostSplatEngine',
+  validate: (ctx) => (ctx.payload?.activeEntities?.npcs?.length || 0) > 0 || (ctx.payload?.activeEntities?.players?.length || 0) > 0,
+  execute: async (ctx): Promise<ContractResult> => {
+    const start = performance.now();
+    const engine = GhostSplatEngine.getInstance();
+    
+    const state: any = ctx.payload?.state || {
+        plane: 0,
+        npcMap: new Map(),
+        npcSpatialIndex: new Map(),
+        players: new Map()
+    };
+
+    if (ctx.payload?.activeEntities?.npcs) {
+        for (const npc of ctx.payload.activeEntities.npcs) {
+            state.npcMap.set(npc.id, npc);
+        }
+    }
+
+    const field = engine.project(state as any, 2, ctx.payload?.playerAgent);
+    
+    return {
+      success: true,
+      engineName: 'GhostSplatEngine',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: {
+         fieldSummary: {
+            entityHeatMax: field && field.entityHeat ? field.entityHeat.reduce((a, b) => Math.max(a, b), 0) : 0,
+            avatarHeatMax: field && field.avatarHeat ? field.avatarHeat.reduce((a, b) => Math.max(a, b), 0) : 0,
+            projectionCount: field?.projections.size || 0,
+            safespotCount: field?.safespots.length || 0
+         },
+         fullField: field 
+      },
+      durationMs: performance.now() - start
+    };
+  },
+  fallback: async (ctx): Promise<ContractResult> => {
+    return {
+      success: true,
+      engineName: 'GhostSplatEngine',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: { fallbackUsed: true },
+      durationMs: 0
+    };
+  }
+};

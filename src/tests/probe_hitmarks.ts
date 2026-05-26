@@ -21,7 +21,7 @@ async function run() {
         // Let's write a script that queries a large range of sprites and saves HTML to view them!
 
         const htmlFile = 'hitmark_sprites.html';
-        let html = `<html><head><style>body { background: #333; color: white; display: flex; flex-wrap: wrap; }</style></head><body>`;
+        const html = `<html><head><style>body { background: #333; color: white; display: flex; flex-wrap: wrap; }</style></head><body>`;
 
         // Let's query a known hitmark/sprite range, maybe using `grep` over UI dumps?
         // Since I don't know the exact sprite ID (there are 30,000+ sprites), I'll make a generic HTML renderer 

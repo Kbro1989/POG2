@@ -3397,10 +3397,19 @@ export async function main(): Promise<void> {
         .command('status')
         .description('Probe the health and readiness of the RSMV sensory node')
         .action(async () => {
-            const extractor = new rsmvExtractor();
-            const probe = extractor.healthCheck();
-            if (probe.online) renderer.success(`RSMV Substrate: ${probe.details}`);
-            else renderer.error(`RSMV Substrate OFFLINE: ${probe.details}`);
+            try {
+                const extractor = new rsmvExtractor();
+                // Await result with timeout/error protection
+                const probe = await Promise.race([
+                    Promise.resolve(extractor.healthCheck()),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Substrate probe timed out')), 2000))
+                ]).catch(err => ({ online: false, details: `Probe Error: ${err.message}` })) as { online: boolean; details: string };
+                
+                if (probe.online) renderer.success(`RSMV Substrate: ${probe.details}`);
+                else renderer.error(`RSMV Substrate: ${probe.details}`);
+            } catch (err) {
+                renderer.error(`RSMV Substrate critical failure: ${(err as Error).message}`);
+            }
         });
 
     program

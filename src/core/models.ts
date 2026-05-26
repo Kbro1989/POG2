@@ -297,7 +297,15 @@ export interface SovereignAvatar extends NPC {
     equipment: Equipment;
     skills: Record<number, Skill>; // Map SkillId to Skill
     quests: QuestState;
+    achievements: {
+        points: number;
+        completed: Record<string, boolean>;
+    };
     metadata?: any;
+
+    // Injectable State (Phase 15 Ignition)
+    injectState(stateString: string): void;
+    serializeState(): string;
 
     // Operational Limb Logic (Phase 13 NXT-grade)
     isDead: boolean;
@@ -332,7 +340,7 @@ export interface SovereignAvatar extends NPC {
     appearance?: {
         legacyAppearanceId?: number;
         bodyColors?: [number, number][];
-        gender?: 'male' | 'female';
+        gender?: 'male' | 'female' | 'classic';
         composition?: {
             baseBodyId: number;
             gender: 'male' | 'female';

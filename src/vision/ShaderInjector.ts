@@ -203,7 +203,7 @@ export class ShaderInjector {
             // Look for color constants
             const varDecls = sourceFile.getVariableDeclarations();
             let mutated = false;
-            let mutationLog: string[] = [];
+            const mutationLog: string[] = [];
 
             for (const decl of varDecls) {
                 const name = decl.getName();

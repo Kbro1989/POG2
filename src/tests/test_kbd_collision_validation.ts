@@ -59,7 +59,7 @@ async function main() {
 
     // 2. Extract KBD Kits & Composite AABB
     const kbdKits = [420, 37641];
-    let compositeAABB: BoundingBox = { 
+    const compositeAABB: BoundingBox = { 
         minX: Infinity, maxX: -Infinity, 
         minY: Infinity, maxY: -Infinity, 
         minZ: Infinity, maxZ: -Infinity 
@@ -100,7 +100,7 @@ async function main() {
     const halfDepth = Math.floor(tileFootprintY / 2);
     
     let isCollisionFree = true;
-    let collisionPoints = [];
+    const collisionPoints = [];
 
     logger.info(`[Validation] Scanning footprint [X: ${target.x - halfWidth} to ${target.x + halfWidth}] [Y: ${target.y - halfDepth} to ${target.y + halfDepth}]`);
 

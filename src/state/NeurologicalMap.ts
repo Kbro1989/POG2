@@ -7,7 +7,8 @@ export enum NeuralCategory {
     SENSORY = 'Sensory (Perception)',
     MEMORY = 'Memory (Hippocampus)',
     IMMUNE = 'Immune (Validation)',
-    METABOLIC = 'Metabolic (Connective Tissue)'
+    METABOLIC = 'Metabolic (Connective Tissue)',
+    GAMEPLAY = 'Gameplay'
 }
 
 export interface BiologicalFunction {

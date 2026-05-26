@@ -54,6 +54,18 @@ export class VectorDB {
     }
 
     /**
+     * Generate embedding for raw text using ModelClient
+     */
+    public async embedText(text: string): Promise<Result<Float32Array>> {
+        if (!this.client || typeof this.client.embed !== 'function') {
+            return { ok: false, error: new Error('Embedding capability not available.') };
+        }
+        const res = await this.client.embed(text);
+        if (!res.ok || !res.value) return { ok: false, error: res.error || new Error('Empty embedding') };
+        return ok(new Float32Array(res.value));
+    }
+
+    /**
      * Functional probe for memory substrate health.
      */
     public healthCheck(): { online: boolean; details: string } {

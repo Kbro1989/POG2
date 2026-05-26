@@ -245,7 +245,7 @@ export class SoundtrackLimb {
         // Arp / Lead (Sequenced by Hexagram)
         // We use trunc(t*BPS) % 6 to index the step. 
         // aevalsrc doesn't have arrays, so we use nested if() or multiple eq() gates.
-        let seqExpr = stepMultipliers.map((m: number, i: number) => `eq(mod(floor(t*${bps}),6),${i})*${m}`).join('+');
+        const seqExpr = stepMultipliers.map((m: number, i: number) => `eq(mod(floor(t*${bps}),6),${i})*${m}`).join('+');
         const arpExpr = `0.4*sin(2*PI*(${baseFreq})*(${seqExpr})*t)*(1-mod(t*${bps},1))`; // Plucky envelope
 
         // Noise / Texture (Chaos driven)

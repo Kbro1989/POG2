@@ -88,7 +88,7 @@ export class WikiReconciliationLimb {
     public async fetchCompleteQuestList(): Promise<Result<WikiQuest[]>> {
         try {
             logger.info('Commencing full quest list extraction from Wiki...');
-            let quests: WikiQuest[] = [];
+            const quests: WikiQuest[] = [];
             let gcmcontinue: string | undefined = undefined;
 
             // Fetch members of "Category:Quests"

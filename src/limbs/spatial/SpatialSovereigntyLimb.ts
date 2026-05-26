@@ -79,7 +79,7 @@ export class SpatialSovereigntyLimb {
     private readonly atlasDir: string;
     private loadedMatrices: Map<string, SpatialLogicArtifact> = new Map();
     private loadedMapsquares: Map<string, { flags: Uint16Array, heights: Int16Array }> = new Map();
-    private groundedNPCs: Map<string, any[]> = new Map(); // "x_z_plane" -> npc objects
+    private groundedNPCs: Map<string, any[]> = new Map(); // "x,y,plane" -> npc objects
     private gal: GeometryAnnotationLayer;
 
     private getSourceDir(): string {
@@ -143,7 +143,7 @@ export class SpatialSovereigntyLimb {
     public async loadLogic(name: string): Promise<Result<void>> {
         // NXT Live Cache dynamic check
         const sourceDir = this.getSourceDir();
-        let filename = name.endsWith('.json') ? name : `${name}_logic.json`;
+        const filename = name.endsWith('.json') ? name : `${name}_logic.json`;
         const cachePath = path.join(sourceDir, filename);
         if (fs.existsSync(cachePath)) {
             return this.performLoad(cachePath);
@@ -320,7 +320,7 @@ export class SpatialSovereigntyLimb {
             const data = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
             if (data.pedagogy?.npcs) {
                 for (const npc of data.pedagogy.npcs) {
-                    const key = `${npc.worldX}_${npc.worldZ}_${npc.plane || 0}`;
+                    const key = `${npc.worldX},${npc.worldZ},${npc.plane || 0}`;
                     if (!this.groundedNPCs.has(key)) this.groundedNPCs.set(key, []);
                     this.groundedNPCs.get(key)!.push(npc);
                 }
@@ -377,7 +377,7 @@ export class SpatialSovereigntyLimb {
 
             // --- Phase 41: Safe Hybrid Z (Option C) ---
             // deterministic overlay height sourcing
-            let baseZ = terrainHeight * 32;
+            const baseZ = terrainHeight * 32;
             let z = baseZ;
 
             let type: 'terrain' | 'water' | 'bridge' = 'terrain';
@@ -545,19 +545,27 @@ export class SpatialSovereigntyLimb {
         // 3. Check for dynamic NPCs (Followers, etc.) from live context
         const npcsOnTile = context.npcSpatialIndex.get(coordKey) || [];
         for (const npc of npcsOnTile) {
-            const sideEffect = await mechanical.getSpatialSideEffects(npc.id, context);
+            // Check if NPC is explicitly acting as an object blocker
+            if (npc.metadata?.isObject) return false;
+
+            const sideEffect = await mechanical.getSpatialSideEffects((npc.npcId ?? npc.id) as number, context);
             if (sideEffect?.blocks_movement) {
-                return false; // Blocked by dynamic entity
+                return false; // Blocked by dynamic entity rules
             }
         }
 
         // 3b. Check for GROUNDED NPCs (Sovereign Truth)
-        const groundedKey = `${x}_${y}_${plane}`;
-        const groundedHits = this.groundedNPCs.get(groundedKey);
+        // Note: Grounded NPCs from unified extracts only block if they manifest as objects or have explicit blocking rules.
+        const groundedHits = this.groundedNPCs.get(coordKey);
         if (groundedHits && groundedHits.length > 0) {
-            // In Sovereign space, grounded NPCs are authoritative blockers unless they are 'ghosts'
-            // We'll assume they block movement for now.
-            return false; 
+            for (const npc of groundedHits) {
+                if (npc.metadata?.isObject) return false;
+
+                const sideEffect = await mechanical.getSpatialSideEffects((npc.npcId ?? npc.id) as number, context);
+                if (sideEffect?.blocks_movement) {
+                    return false;
+                }
+            }
         }
 
         // 4. Check for dynamic Objects (Locked doors, etc.)

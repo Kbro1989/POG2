@@ -121,7 +121,7 @@ export class WikiEnricher {
 
             // Heuristic-based intent detection using the extract
             let role = 'Environmental Object';
-            let intent = extract.substring(0, 500); // Feed the wiki summary into intent
+            const intent = extract.substring(0, 500); // Feed the wiki summary into intent
             let race: string | undefined;
 
             const lowerExtract = extract.toLowerCase();

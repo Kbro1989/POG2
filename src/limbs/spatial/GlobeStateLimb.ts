@@ -143,7 +143,10 @@ export class GlobeStateLimb {
 
                 this.ws.on('close', () => {
                     if (pingInterval) clearInterval(pingInterval);
-                    logger.warn('Globe connection closed');
+                    logger.warn('Globe connection closed. Attempting reconnect in 5 seconds...');
+                    setTimeout(() => {
+                        if (this.enabled) this.connect();
+                    }, 5000);
                 });
 
                 this.ws.on('message', (data: string) => {

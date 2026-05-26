@@ -56,12 +56,18 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
     public equipment: Equipment;
     public skills: Record<number, Skill>;
     public quests: { points: number; completedCount: number; quests: Record<number, any> }; // QuestState
+    public achievements: { points: number; completed: Record<string, boolean> };
     
     public appearanceEra: 'pre_avatar' | 'transitional' | 'post_avatar' = 'post_avatar';
     
     public get appearance() {
+        const bt = this.visualState.morphology.bodyType;
         return {
-            gender: this.visualState.morphology.bodyType === 'refresh_female' ? 'female' as const : 'male' as const
+            gender: bt === 'refresh_female' ? 'female' as const
+                  : bt === 'classic' ? 'classic' as const
+                  : 'male' as const,
+            mode: bt === 'classic' ? 'classic' : 'beta',
+            bodyType: bt,
         };
     }
     
@@ -169,10 +175,10 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
 
     constructor(username: string = 'Sovereign') {
         this.username = username;
-        // Lumbridge Anchor: Region 49,50 (3138, 3202)
-        this.coord = { x: 3138, y: 3202, plane: 0 }; 
-        this.x = 3138;
-        this.y = 3202;
+        // Coordinates are no longer hardcoded here; they must be hydrated from sovereign_state.json
+        this.coord = { x: 0, y: 0, plane: 0 }; 
+        this.x = 0;
+        this.y = 0;
         this.plane = 0;
         
         this.state = {
@@ -208,13 +214,14 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
         };
         this.skills = {};
         this.quests = { points: 0, completedCount: 0, quests: {} };
+        this.achievements = { points: 0, completed: {} };
         
-        this.runEnergy = 10000; // 100.00%
+        this.runEnergy = 10000;
         this.lockTicks = 0;
         this.currentPath = null;
 
         // Combat Initialization
-        this.currentHp = 1000; // Default until initializeDefaultSkills runs
+        this.currentHp = 1000;
         this.adrenaline = 0;
         this.necrosisStacks = 0;
         this.residualSouls = 0;
@@ -225,7 +232,6 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
         this.lastCombatTick = 0;
         this.cooldowns = {};
         
-        // Wire up the Adrenaline State Machine
         this.combatEngine = new AdrenalineStateMachine('MELEE');
         this.combatEngine.on(event => {
             if (event.type === 'ADRENALINE_CHANGED') {
@@ -237,7 +243,46 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
         });
         
         this.initializeDefaultSkills();
-        this.currentHp = this.maxHp; // Refine to actual grounded max
+    }
+
+    /**
+     * serializeState - Encodes the complete avatar state into a compact string.
+     */
+    public serializeState(): string {
+        return JSON.stringify({
+            coord: this.coord,
+            inventory: this.inventory,
+            skills: this.skills,
+            quests: this.quests,
+            achievements: this.achievements,
+            wallet: this.wallet,
+            equipment: this.equipment,
+            bank: this.bank
+        });
+    }
+
+    /**
+     * injectState - Decodes and hydrates the avatar from a serialized state string.
+     */
+    public injectState(stateString: string): void {
+        try {
+            const data = JSON.parse(stateString);
+            if (data.coord) {
+                this.coord = data.coord;
+                this.x = data.coord.x;
+                this.y = data.coord.y;
+                this.plane = data.coord.plane;
+            }
+            if (data.inventory) this.inventory = data.inventory;
+            if (data.skills) this.skills = data.skills;
+            if (data.quests) this.quests = data.quests;
+            if (data.achievements) this.achievements = data.achievements;
+            if (data.wallet) this.wallet = data.wallet;
+            if (data.equipment) this.equipment = data.equipment;
+            if (data.bank) this.bank = data.bank;
+        } catch (e) {
+            console.error('Failed to inject state:', e);
+        }
     }
     
     public updateMorphology(state: any): void {

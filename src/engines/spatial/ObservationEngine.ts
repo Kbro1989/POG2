@@ -65,7 +65,7 @@ export class ObservationEngine {
         const minMZ = (z - radius) >> 6;
         const maxMZ = (z + radius) >> 6;
 
-        let observations: WorldObservation[] = [];
+        const observations: WorldObservation[] = [];
         for (let mx = minMX; mx <= maxMX; mx++) {
             for (let mz = minMZ; mz <= maxMZ; mz++) {
                 const senseRes = await this.limb.senseLocalArea(mx << 6, mz << 6, plane);

@@ -169,7 +169,7 @@ export class CombatRotationEngine {
     ): CombatDecisionTrace | null {
         const tickStart = performance.now();
         const evidence: CombatCausalEvidence[] = [];
-        let finalConfidence = 1.0;
+        const finalConfidence = 1.0;
         let fallbackUsed = false;
 
         const push = (sig: string, det: any, conf = 1.0) => 
@@ -770,3 +770,170 @@ export class CombatRotationEngine {
         };
     }
 }
+
+
+import type { EngineContract, ExecutionContext, ContractResult } from '../../core/HexagramNetworkBridge.js';
+export const CombatRotationEngineContract: EngineContract = {
+  name: 'CombatRotationEngine',
+
+  validate: (ctx) => {
+    // Only fire when hexagram gameplay maps to combat entities and targets exist
+    const hasCombatEntities = ctx.gameplay.entities.some(e =>
+      ['npcs', 'items'].includes(e)
+    );
+    const hasTargets = (ctx.payload?.activeEntities?.npcs || 0) > 0;
+    return hasCombatEntities && hasTargets;
+  },
+
+  execute: async (ctx): Promise<ContractResult> => {
+    const start = performance.now();
+    const engine = CombatRotationEngine.getInstance();
+    const book = AbilityBook.getInstance();
+    const ghostSplatField = ctx.payload?.ghostSplat as GhostSplatField | undefined;
+
+    // Resolve player coord from payload or default
+    const selfCoord: Coord = ctx.payload?.playerCoord ?? { x: 3200, y: 3200, plane: 0 };
+
+    // Resolve highest-threat target from GhostSplat heatmap
+    let target: TargetContext | null = null;
+    if (ghostSplatField) {
+      target = engine.resolveTargetFromHeat(
+        ghostSplatField,
+        selfCoord,
+        10, // max melee+halberd range
+        true // isPlayer
+      );
+    }
+
+    if (!target) {
+      return {
+        success: false,
+        engineName: 'CombatRotationEngine',
+        hexagramId: ctx.hexagram.id,
+        tick: ctx.tick,
+        error: 'No valid target resolved from heatmap',
+        durationMs: performance.now() - start
+      };
+    }
+
+    // Determine combat style from hexagram binary trigrams
+    const styleMap: Record<string, 'melee' | 'ranged' | 'magic'> = {
+      '100': 'melee',   // Thunder
+      '111': 'melee',   // Heaven
+      '101': 'melee',   // Fire
+      '001': 'ranged',  // Mountain
+      '011': 'ranged',  // Wind
+      '110': 'magic',   // Lake
+      '010': 'magic',   // Water
+      '000': 'magic'    // Earth
+    };
+
+    const bottom = ctx.hexagram.binary.substring(0, 3);
+    const top = ctx.hexagram.binary.substring(3, 6);
+    let combatStyle: CombatStyle = styleMap[bottom] || styleMap[top] || 'melee';
+    if (bottom === '000') {
+      // Earth is receptive/neutral, fallback to top trigram
+      combatStyle = styleMap[top] || 'magic';
+    }
+
+    // Determine archetype from hexagram emotion
+    const archetypeMap: Record<string, TacticalArchetype> = {
+      'AGITATED': 'aggressive',
+      'FRUSTRATED': 'aggressive',
+      'DECISIVE': 'aggressive',
+      'STEADY': 'methodical',
+      'QUIET': 'methodical',
+      'ZEN': 'methodical',
+      'PENSIVE': 'methodical',
+      'MELANCHOLY': 'cowardly',
+      'SURPRISED': 'cowardly',
+      'INSPIRED': 'predator',
+      'EXCITED': 'predator',
+      'CURIOUS': 'predator'
+    };
+
+    const archetype = archetypeMap[ctx.hexagram.emotion as string] || 'aggressive';
+
+    // Build CombatEvaluationContext from ExecutionContext
+    const playerState = ctx.payload?.playerState as Partial<CombatantState> | undefined;
+    const evalCtx: CombatEvaluationContext = {
+      adrenaline: playerState?.adrenaline ?? 0,
+      cooldowns: playerState?.cooldowns ?? {},
+      coord: selfCoord,
+      currentTick: ctx.tick,
+      gcdEndTick: 0,
+      channelEndTick: 0,
+      combatStyle,
+      archetype,
+      state: {
+        adrenaline: playerState?.adrenaline ?? 0,
+        hp: playerState?.hp ?? 10000,
+        maxHp: playerState?.maxHp ?? 10000,
+        bloodlustStacks: playerState?.bloodlustStacks ?? 0,
+        animaCharged: playerState?.animaCharged ?? false,
+        searingWindsTicksRemaining: playerState?.searingWindsTicksRemaining ?? 0,
+        shadowImbuedTicksRemaining: playerState?.shadowImbuedTicksRemaining ?? 0,
+        conjureActive: playerState?.conjureActive,
+        lastCombatTick: playerState?.lastCombatTick ?? 0,
+        cooldowns: playerState?.cooldowns ?? {},
+      },
+      availableAbilities: [
+        ...book.getByStyle(combatStyle),
+        ...book.getDefensiveAbilities(),
+      ],
+    };
+
+    // Execute the real rotation evaluator
+    const trace = engine.evaluateRotation(evalCtx, target);
+
+    if (!trace) {
+      return {
+        success: false,
+        engineName: 'CombatRotationEngine',
+        hexagramId: ctx.hexagram.id,
+        tick: ctx.tick,
+        error: 'No valid ability could fire this tick (GCD/channel/no target)',
+        durationMs: performance.now() - start
+      };
+    }
+
+    return {
+      success: true,
+      engineName: 'CombatRotationEngine',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: {
+        intent: trace.intent,
+        evidence: trace.evidence,
+        confidence: trace.finalConfidence,
+        fallbackUsed: trace.fallbackUsed,
+        combatStyle,
+        archetype,
+      },
+      durationMs: performance.now() - start
+    };
+  },
+
+  fallback: async (ctx): Promise<ContractResult> => {
+    // Defensive fallback: Resonance → Preparation pattern
+    return {
+      success: true,
+      engineName: 'CombatRotationEngine',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: {
+        intent: {
+          action: 'execute_ability' as const,
+          abilityId: 'resonance',
+          abilityName: 'Resonance',
+          targetId: 'self',
+          tickStarted: ctx.tick,
+          contextHash: 'fallback_defensive',
+        },
+        fallbackUsed: true,
+        reason: 'Primary rotation failed — defensive stance',
+      },
+      durationMs: 0
+    };
+  }
+};

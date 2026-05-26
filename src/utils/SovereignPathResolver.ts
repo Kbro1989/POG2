@@ -218,9 +218,9 @@ export function getrsmvSubstratePath(): string {
     const envPath = process.env['POG_rsmv_SUBSTRATE_PATH'];
     if (envPath && existsSync(envPath)) return envPath;
 
-    // Decoupled side-by-side D: drive location (Phase 45 decoupled architecture)
-    const sideBySidePath = 'D:\\rsmv_inspector';
-    if (existsSync(sideBySidePath)) return sideBySidePath;
+    // Decoupled substrate location
+    const substratePath = 'D:\\pog2\\rsmv_inspector';
+    if (existsSync(substratePath)) return substratePath;
 
     // Sovereign substrate location (authoritative D: drive inspector)
     const sovereignPath = join('D:\\sovereign', 'cache_pedagogy', 'rsmv_inspector');

@@ -8,7 +8,7 @@
  * Female hairstyle index to name mapping
  * Enum ID: 6796
  */
-export const FemaleHairStyles: Record<number, number | string> = {
+export const FemaleHairStyles: Record<number, number> = {
     0: 2140,
     1: 4291,
     2: 2142,
@@ -49,7 +49,7 @@ export const FemaleHairStyles: Record<number, number | string> = {
  * Male hairstyle index to name mapping
  * Enum ID: 16883
  */
-export const MaleHairStyles: Record<number, number | string> = {
+export const MaleHairStyles: Record<number, number> = {
     0: 54650,
     1: 54652,
     2: 54654,

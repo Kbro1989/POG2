@@ -283,7 +283,7 @@ export class InterfaceRuntimeLimb {
         // Option B: HTML overlay CSS resolution
         const rendered: RenderedComponent[] = components.map(comp => {
             let type: 'CONTAINER' | 'TEXT' | 'SPRITE' | 'MODEL' | 'FIGURE' = 'CONTAINER';
-            let content: any = {};
+            const content: any = {};
             
             if (comp.type === 4) {
                 type = 'TEXT';

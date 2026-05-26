@@ -6,7 +6,8 @@
         \"-y\",
         \"@gitkraken/gk\",
         \"mcp\"
-      ]
+      ],
+      \"helloCallback\": \"hello-gitkraken\"
     },
     \"hello-claude-Cloudflare\": {
       \"command\": \"npx\",
@@ -18,17 +19,23 @@
       \"env\": {
         \"CLOUDFLARE_ACCOUNT_ID\": \"6872653edcee9c787c1b783173793\",
         \"CLOUDFLARE_API_TOKEN\": \"BKPBdQcDbG4PQLnNo7nsZdYTdzC2CzROmWJCIYks\"
-      }
+      },
+      \"helloCallback\": \"hello-cloudflare\"
     },
-    \"hello-claude-Ollama\": {
-      \"command\": \"npx\",
-      \"args\": [
-        \"-y\",
-        \"@modelcontextprotocol/server-ollama\"
-      ],
-      \"env\": {
-        \"OLLAMA_BASE_URL\": \"http://localhost:11434\"
-      }
+    "hello-claude-github": {
+      "command": "node",
+      "args": ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/github/.mcp.json"],
+      "helloCallback": "hello-github"
+    },
+    "hello-claude-linear": {
+      "command": "node",
+      "args": ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/linear/.mcp.json"],
+      "helloCallback": "hello-linear"
+    },
+    "hello-claude-terraform": {
+      "command": "node",
+      "args": ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/terraform/.mcp.json"],
+      "helloCallback": "hello-terraform"
     }
   }
 }

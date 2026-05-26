@@ -26,6 +26,7 @@ export interface IngestionBatch {
 export class SovereignIngestionEngine {
     private static instance: SovereignIngestionEngine;
     private metabolicMonitor?: MetabolicEngine;
+    private ghostLimb?: GhostLimb;
     private vectorStore: VectorDB;
     private eventBus: EventBus;
     private logger: ClinicalLogger;
@@ -49,6 +50,10 @@ export class SovereignIngestionEngine {
 
     public injectMetabolicMonitor(monitor: MetabolicEngine) {
         this.metabolicMonitor = monitor;
+    }
+
+    public injectGhostLimb(ghost: GhostLimb) {
+        this.ghostLimb = ghost;
     }
 
     static getInstance(vectorStore: VectorDB): SovereignIngestionEngine {
@@ -92,6 +97,9 @@ export class SovereignIngestionEngine {
 
         // Phase 3: Mirror to GhostLimb (Removed due to context)
         this.logger.log('INFO', 'SovereignIngestion', 'Mirroring Output Buffer to internal cache...');
+        if (this.ghostLimb) {
+            this.ghostLimb.mirrorState(this.outputBuffer);
+        }
 
         this.isLoopActive = false;
         this.logger.log('INFO', 'SovereignIngestion', `[SOVEREIGN_INGESTION] Loop completed. processed=${this.outputBuffer.length} load=${this.currentLoad}`);
@@ -135,10 +143,13 @@ export class SovereignIngestionEngine {
             this.outputBuffer.push(digested);
             
             const docId = `cache_${batch.checksum}`;
+            const textPayload = typeof digested.payload === 'string' ? digested.payload : JSON.stringify(digested.payload);
+            const embedRes = await this.vectorStore.embedText(textPayload.substring(0, 4000));
+            
             await TrainingCollector.getInstance().recordLesson({
                 id: docId,
-                text: typeof digested.payload === 'string' ? digested.payload : JSON.stringify(digested.payload),
-                embedding: new Float32Array(0),
+                text: textPayload,
+                embedding: embedRes.ok ? embedRes.value : new Float32Array(0),
                 projectId: 'sovereign_ingestion',
                 domainNamespace: batch.source,
                 createdAt: Date.now(),
@@ -181,10 +192,13 @@ export class SovereignIngestionEngine {
     private async pushBatch(batch: IngestionBatch): Promise<void> {
         this.outputBuffer.push(batch);
         const docId = `push_${batch.checksum}`;
+        const textPayload = typeof batch.payload === 'string' ? batch.payload : JSON.stringify(batch.payload);
+        const embedRes = await this.vectorStore.embedText(textPayload.substring(0, 4000));
+        
         await TrainingCollector.getInstance().recordLesson({
             id: docId,
-            text: typeof batch.payload === 'string' ? batch.payload : JSON.stringify(batch.payload),
-            embedding: new Float32Array(0),
+            text: textPayload,
+            embedding: embedRes.ok ? embedRes.value : new Float32Array(0),
             projectId: 'sovereign_ingestion',
             domainNamespace: batch.source,
             createdAt: Date.now(),

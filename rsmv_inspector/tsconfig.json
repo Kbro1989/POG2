@@ -1,0 +1,36 @@
+{
+	"compilerOptions": {
+		"moduleResolution": "node",
+		"skipLibCheck": true,
+		"module": "ESNext",
+		"lib": [
+			"ESNext",
+			"DOM"
+		],
+		"target": "ES2020",
+		"sourceMap": false,
+		"alwaysStrict": true,
+		"jsx": "react",
+		"allowJs": false,
+		"strictNullChecks": true,
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"esModuleInterop": true,
+		"experimentalDecorators": true,
+		"resolveJsonModule": true,
+		"noImplicitThis": true,
+		"strictFunctionTypes": true,
+		"strictPropertyInitialization":true
+	},
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"generated",
+		"scratch",
+		"dist",
+		"*.ts"
+	],
+	"compileOnSave": false
+}

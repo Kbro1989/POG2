@@ -144,11 +144,12 @@ TASKS:
     /**
      * Diagnostic probe for NodeTester.
      */
-    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+    public async healthCheck(): Promise<{ online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' }> {
         const capture = await this.eye.capture({ type: 'window', target: 'POG2' });
         const online = capture.ok;
         return {
             online,
+            status: online ? 'ONLINE' : 'DEGRADED',
             details: `Vision Substrate: ${online ? 'ONLINE' : 'OFFLINE'} (SoverignEye Win32 capture: ${online ? 'SUCCESS' : 'FAILED'})`
         };
     }

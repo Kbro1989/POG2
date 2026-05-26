@@ -27,32 +27,15 @@ const __dirname = dirname(__filename);
 // â”€â”€ Substrate Discovery Logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function findrsmvSubstrate(): string {
-    // 1. Explicit Environment Override
-    if (process.env['POG_rsmv_SUBSTRATE_PATH']) {
-        return process.env['POG_rsmv_SUBSTRATE_PATH'];
-    }
+    // 1. Operational External Substrate (Verified Working)
+    const externalPath = 'D:\\pog2\\rsmv_inspector';
+    if (existsSync(externalPath)) return externalPath;
 
-    // 2. Local Workspace Sibling (Development Mode)
-    const siblingPath = resolve(__dirname, '..', '..', '..', 'rsmv_inspector');
-    if (existsSync(siblingPath)) return siblingPath;
+    // 2. Local Workspace Fallback
+    const localWorkspace = resolve(__dirname, '..', '..', 'rsmv_inspector');
+    if (existsSync(localWorkspace)) return localWorkspace;
 
-    // 3. Absolute POG2 Path (Internal Substrate)
-    const internalPath = resolve(__dirname, '..', '..', 'rsmv_inspector');
-    if (existsSync(internalPath)) return internalPath;
-
-    // 4. Sovereign Substrate Standard Location (D-sovereign- variation)
-    const sovereignPathDash = 'D:\\D-sovereign-\\cache_pedagogy\\rsmv_inspector';
-    if (existsSync(sovereignPathDash)) return sovereignPathDash;
-
-    const sovereignPath = 'D:\\sovereign\\cache_pedagogy\\rsmv_inspector';
-    if (existsSync(sovereignPath)) return sovereignPath;
-
-    // 5. User Home Directory (Global fallback)
-    const homeSubstrate = join(process.env['USERPROFILE'] || '', '.pog2', 'substrates', 'rsmv_inspector');
-    if (existsSync(homeSubstrate)) return homeSubstrate;
-
-    // Fallback to the most likely development path
-    return sovereignPathDash;
+    return externalPath;
 }
 
 const rsmv_PATH = findrsmvSubstrate();
@@ -239,7 +222,9 @@ async function main() {
                 const rt7Path = pathToFileURL(join(rsmv_PATH, subFolder, '3d', existsSync(join(rsmv_PATH, subFolder, '3d', 'rt7model.ts')) ? 'rt7model.ts' : 'rt7model.js')).href;
                 const { parseOb3Model } = await import(rt7Path);
                 modelData = parseOb3Model(buffer, cs.loader);
-            } catch { }
+            } catch (err) {
+                console.error('Failed to parse model:', err);
+            }
 
             if (modelData) {
                 let vertexCount = 0, triangleCount = 0;
@@ -504,7 +489,7 @@ async function main() {
             const nxtTilesSubIdx = sq.subindices.indexOf(cs.cacheMapFiles.square_nxt);
             const legacyTilesSubIdx = sq.subindices.indexOf(cs.cacheMapFiles.squares);
 
-            let tiles: { x: number, z: number, plane: number, collision: number, height: number | null }[] = [];
+            const tiles: { x: number, z: number, plane: number, collision: number, height: number | null }[] = [];
 
             if (nxtTilesSubIdx !== -1 && chunkArch[nxtTilesSubIdx]) {
                 const tilesNxt = cs.parse.mapsquareTilesNxt.read(chunkArch[nxtTilesSubIdx].buffer, cs.loader) as any;

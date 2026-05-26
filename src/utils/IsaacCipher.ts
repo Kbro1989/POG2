@@ -30,7 +30,7 @@ export class IsaacCipher {
         this.c++;
         this.b += this.c;
         for (let i = 0; i < 256; i++) {
-            let x = this.mem[i];
+            const x = this.mem[i];
             switch (i & 3) {
                 case 0: this.a ^= this.a << 13; break;
                 case 1: this.a ^= this.a >>> 6; break;
@@ -38,7 +38,7 @@ export class IsaacCipher {
                 case 3: this.a ^= this.a >>> 16; break;
             }
             this.a += this.mem[(i + 128) & 0xff];
-            let y = this.mem[i] = this.mem[(x >> 2) & 0xff] + this.a + this.b;
+            const y = this.mem[i] = this.mem[(x >> 2) & 0xff] + this.a + this.b;
             this.rsl[i] = this.b = this.mem[(y >> 10) & 0xff] + x;
         }
     }

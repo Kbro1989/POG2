@@ -143,7 +143,7 @@ export class EmbedEngine {
         for (const file of files) {
             try {
                 let content = readFileSync(file, 'utf8');
-                let rawContent = content;
+                const rawContent = content;
 
                 // Semantic Enrichment for Unified Mapsquares
                 if (file.endsWith('.json') && file.includes('unified_extract')) {

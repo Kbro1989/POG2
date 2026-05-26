@@ -40,6 +40,7 @@ export interface ComposedAvatarResult {
     gender: number;
     /** Base64-encoded avatar string for network sync */
     avatarString: string;
+    mode?: string;
 }
 
 /** Minimal avatar identity for GlobeState sync */
@@ -48,6 +49,7 @@ export interface AvatarIdentitySync {
     gender: number;
     isNpc: boolean;
     npcId?: number;
+    mode?: string;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -74,13 +76,14 @@ export class AvatarCompositionEngine {
      *   - Animation group resolution via struct prop 2954
      *   - NPC appearance override (0xFFFF npc buzz)
      */
-    public async composeFromBuffer(buffer: Buffer, head: boolean = false): Promise<Result<ComposedAvatarResult>> {
+    public async composeFromBuffer(buffer: Buffer, head: boolean = false, mode?: string): Promise<Result<ComposedAvatarResult>> {
         if (!this.engineCache) {
             return { ok: false, error: new Error('EngineCache not bound. Call bindCache() first.') };
         }
 
         try {
-            const result = await avatarToModel(this.engineCache, buffer, head);
+            // Pass the mode flag down to the RSMV renderer so it respects the template's era (e.g., 'classic', 'beta')
+            const result = await avatarToModel(this.engineCache, buffer, head, mode as any);
             return {
                 ok: true,
                 value: {
@@ -89,6 +92,7 @@ export class AvatarCompositionEngine {
                     avatar: result.info?.avatar ?? null,
                     gender: result.info?.gender ?? 0,
                     avatarString: bytesToAvatarString(buffer),
+                    mode
                 }
             };
         } catch (error) {
@@ -100,10 +104,10 @@ export class AvatarCompositionEngine {
      * Compose from a base64 avatar string (the format used by Jagex's avatar endpoint
      * and the GlobeState sync protocol).
      */
-    public async composeFromAvatarString(avatarStr: string, head: boolean = false): Promise<Result<ComposedAvatarResult>> {
+    public async composeFromAvatarString(avatarStr: string, head: boolean = false, mode?: string): Promise<Result<ComposedAvatarResult>> {
         try {
             const buffer = avatarStringToBytes(avatarStr);
-            return this.composeFromBuffer(buffer, head);
+            return this.composeFromBuffer(buffer, head, mode);
         } catch (error) {
             return { ok: false, error: error instanceof Error ? error : new Error(String(error)) };
         }
@@ -118,8 +122,9 @@ export class AvatarCompositionEngine {
         // If no appearance data exists, return a default identity.
         return {
             avatarString: '', // Populated when avatar has been composed from cache
-            gender: avatar.appearance?.gender === 'female' ? 1 : 0,
+            gender: avatar.appearance?.gender === 'classic' ? 2 : (avatar.appearance?.gender === 'female' ? 1 : 0),
             isNpc: false,
+            mode: avatar.appearance?.mode || 'beta', // Ensure template mode is passed through to renderer
         };
     }
 
@@ -135,7 +140,7 @@ export class AvatarCompositionEngine {
      * Get the kit-to-slot mapping for a given gender.
      * Returns the cache-accurate body part → slot index mapping.
      */
-    public getKitMapping(gender: 'male' | 'female'): Record<number, number> {
+    public getKitMapping(gender: 'male' | 'female' | 'classic'): Record<number, number> {
         return gender === 'female' ? { ...slotToKitFemale } : { ...slotToKitMale };
     }
 

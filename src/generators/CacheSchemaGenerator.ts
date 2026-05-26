@@ -49,11 +49,12 @@ export async function generateAppearanceEnums(cachePath: string): Promise<string
                     decoded.intArrayValue2?.values || 
                     [];
 
+                const valType = values.length > 0 && typeof values[0]?.[1] === 'number' ? 'number' : 'string';
                 tsContent += `/**
  * ${target.desc}
  * Enum ID: ${target.id}
  */
-export const ${target.name}: Record<number, ${target.id === 17158 ? 'number' : 'string'}> = {
+export const ${target.name}: Record<number, ${valType}> = {
 `;
 
                 for (const [key, val] of values) {

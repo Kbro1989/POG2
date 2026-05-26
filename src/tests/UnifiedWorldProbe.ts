@@ -117,7 +117,7 @@ class SovereignChainProbe {
 
     private generateSpatialGrid(nodes: SovereignNode[]) {
         const gridDim = 50;
-        let grid = Array(gridDim).fill(0).map(() => Array(gridDim).fill('.'));
+        const grid = Array(gridDim).fill(0).map(() => Array(gridDim).fill('.'));
 
         // Map God Body locations to the grid (clipping to grid center)
         nodes.forEach(node => {

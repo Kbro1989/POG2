@@ -70,8 +70,7 @@ declare module 'rsmv/3d/avatar.js' {
   export const slotNames: string[];
   export const slotToKitMale: Record<number, number>;
   export const slotToKitFemale: Record<number, number>;
-  export function avatarToModel(cache: any, buffer: Buffer, head: boolean): Promise<any>;
-  export function writeAvatar(state: any, avatar: any): void;
+  export function avatarToModel(cache: any, buffer: Buffer, head: boolean, mode?: string): Promise<any>;  export function writeAvatar(state: any, avatar: any): void;
   export function avatarStringToBytes(str: string): Buffer;
   export function bytesToAvatarString(buf: Buffer): string;
   export type EquipSlot = any;

@@ -42,7 +42,7 @@ export class RSCLimb {
 
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
         const isProcessActive = this.serverProcess !== null;
-        let details = `RSC Bridge: ${isProcessActive ? 'ACTIVE' : 'IDLE'}`;
+        const details = `RSC Bridge: ${isProcessActive ? 'ACTIVE' : 'IDLE'}`;
         
         // Physical substrate check
         const serverDir = join(process.cwd(), 'openrsc-repo', 'server');
@@ -89,6 +89,11 @@ export class RSCLimb {
         }
 
         const serverDir = join(process.cwd(), 'openrsc-repo', 'server');
+        if (!existsSync(serverDir)) {
+            logger.warn('RSC Server substrate missing (openrsc-repo). Running in DEGRADED mode without live RSC backend.');
+            return { ok: true, value: undefined }; // Gracefully degrade
+        }
+
         const antPath = 'ant'; // Simplification for porting, assuming ant in PATH or config
 
         try {

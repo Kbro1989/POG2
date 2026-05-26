@@ -543,9 +543,9 @@ export class ModelClient implements ModelExecutor {
                     const errorText = await response.text();
                     logger.error({ status: response.status, model: params.model }, 'Ollama API error');
 
-                    // Activate cooldown on 429 rate limit responses
-                    if (response.status === 429) {
-                        logger.warn({ model: params.model }, 'Ollama 429 rate limit Ã¢â‚¬â€ activating HuggingFace fallback');
+                    // Activate cooldown on 429 rate limit responses or 500 server errors
+                    if (response.status === 429 || response.status === 500) {
+                        logger.warn({ model: params.model, status: response.status }, 'Ollama substrate degraded Ã¢â‚¬â€ activating fallback');
                         this.router?.activateOllamaCooldown();
                     }
 

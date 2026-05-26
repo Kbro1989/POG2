@@ -172,7 +172,17 @@ Copy
 7. **1-way MCP** — Inbound only. No outflow control.
 8. **Cognitive immunology** — Defense-in-depth: perimeter, behavioral, structural, recovery, nuclear.
 
-## 15. Strategic Directive
+## 16. MCP Tool Registry
+
+The POG2 system supports dynamic integration of Model Context Protocol (MCP) servers. Current registrations:
+
+| Service | Command | Status | Callback |
+|---------|---------|--------|----------|
+| GitHub | Local MCP | Active | `hello-github` |
+| Linear | Local MCP | Active | `hello-linear` |
+| Terraform | Local MCP | Active | `hello-terraform` |
+
+*Registry Path: `POG2-mcp.json`*
 
 > "Develop knowledge/personality/understanding/creativity from Gutenberg books and storyboarding."
 

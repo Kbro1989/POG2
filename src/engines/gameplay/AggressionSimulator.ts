@@ -83,3 +83,114 @@ export class AggressionSimulator {
         };
     }
 }
+
+
+import type { EngineContract, ExecutionContext, ContractResult } from '../../core/HexagramNetworkBridge.js';
+export const AggressionSimulatorContract: EngineContract = {
+  name: 'AggressionSimulator',
+  validate: (ctx) => {
+    // Only fire if there are active NPCs in the context
+    return (ctx.payload?.activeEntities?.npcs || 0) > 0;
+  },
+  execute: async (ctx): Promise<ContractResult> => {
+    const start = performance.now();
+    
+    // Extract context variables (defaulting safely)
+    const npcLevel = ctx.payload?.npc?.combatLevel || 1;
+    const npcHp = ctx.payload?.npc?.hp || 1000;
+    const npcMaxHp = ctx.payload?.npc?.maxHp || 1000;
+    const npcName = (ctx.payload?.npc?.name || '').toLowerCase();
+    const ticksInArea = ctx.payload?.npc?.ticksInArea || 0;
+    const lastAttackerId = ctx.payload?.npc?.lastAttackerId;
+    
+    const playerLevel = ctx.payload?.playerState?.combatLevel || 138;
+    
+    // 1. Tolerance (10 minutes = 1000 ticks)
+    const isTolerant = ticksInArea >= 1000;
+    
+    // 2. RS3 Combat Level Check
+    // Aggressive if NPC level * 2 + 1 >= Player Level
+    let wouldAggro = (npcLevel * 2 + 1) >= playerLevel;
+    
+    // Hexagram Modulation
+    let escalationFactor = 1.0;
+    let chaosRoll = 0;
+    const bottomTrigram = ctx.hexagram.binary.substring(0, 3);
+    
+    if (bottomTrigram === '100') { // Thunder (growth/action)
+        escalationFactor = 0.6; // Faster transitions, lower enrage thresholds
+    } else if (bottomTrigram === '010') { // Water (chaos/abyssal)
+        chaosRoll = Math.random(); // Erratic behavior
+    }
+    
+    // Aggression Decision Logic
+    let decisionAction: 'wander' | 'flee' | 'attack' | 'call_help' = 'wander';
+    let newState = 'idle';
+    
+    // Tolerant Retaliation
+    if (isTolerant && lastAttackerId === 'player') {
+        wouldAggro = true; // Retaliate even if tolerant
+    }
+    
+    if (wouldAggro && !isTolerant) {
+        decisionAction = 'attack';
+        newState = 'aggressive';
+    }
+    
+    // Special Behaviors
+    const hpPercent = npcHp / Math.max(1, npcMaxHp);
+    
+    // Ripper demon enrage (<35% HP)
+    if (npcName.includes('ripper demon') && hpPercent < (0.35 * escalationFactor)) {
+        decisionAction = 'attack';
+        newState = 'enraged';
+    }
+    
+    // Feline akh call help (<50% HP)
+    if (npcName.includes('feline akh') && hpPercent < (0.5 * escalationFactor)) {
+        decisionAction = 'call_help';
+        newState = 'aggressive';
+    }
+    
+    // Chaos Modulation (Water)
+    if (chaosRoll > 0.8 && decisionAction === 'attack') {
+        decisionAction = 'wander'; // Confusion
+        newState = 'confused';
+    } else if (chaosRoll > 0.9 && decisionAction === 'wander') {
+        decisionAction = 'attack'; // Sudden aggro
+        newState = 'aggressive';
+    }
+
+    return {
+      success: true,
+      engineName: 'AggressionSimulator',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: {
+        decision: {
+          action: decisionAction,
+          newState: newState
+        },
+        mechanics: {
+          toleranceReached: isTolerant,
+          levelCheckPassed: wouldAggro,
+          escalationFactor
+        }
+      },
+      durationMs: performance.now() - start
+    };
+  },
+  fallback: async (ctx): Promise<ContractResult> => {
+    return {
+      success: true,
+      engineName: 'AggressionSimulator',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: { 
+          decision: { action: 'wander', newState: 'idle' },
+          reason: 'fallback' 
+      },
+      durationMs: 0
+    };
+  }
+};

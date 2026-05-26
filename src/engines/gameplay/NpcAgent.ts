@@ -250,7 +250,7 @@ export class NpcAgent {
             if (this.tacticalState === 'evading') {
                 // Flee to farthest safespot
                 if (field.safespots && field.safespots.length > 0) {
-                    let bestSpot = field.safespots[0];
+                    const bestSpot = field.safespots[0];
                     let maxDist = 0;
                     let furthestCoord: Coord | null = null;
                     const npcCoord = { x: this.npc.x, y: this.npc.y, plane: this.npc.plane };

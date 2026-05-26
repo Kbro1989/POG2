@@ -94,7 +94,7 @@ export class MaterialLimb {
     public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' } {
         const cacheExists = this.cache !== null;
         let status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' = 'ONLINE';
-        let details = `Material: ${cacheExists ? 'NOMINAL' : 'OFFLINE'}`;
+        const details = `Material: ${cacheExists ? 'NOMINAL' : 'OFFLINE'}`;
 
         if (!cacheExists) {
             status = 'OFFLINE';

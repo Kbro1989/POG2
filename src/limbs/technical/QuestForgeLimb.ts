@@ -340,7 +340,7 @@ export class QuestForgeLimb {
         // 2. Build quest stages from scenes with spatial grounding
         const stages: QuestStage[] = [];
         const questItems: GroundedItem[] = [];
-        let stageOffset = 0;
+        const stageOffset = 0;
 
         for (let i = 0; i < scenes.length; i += 3) {
             const batch = scenes.slice(i, i + 3);

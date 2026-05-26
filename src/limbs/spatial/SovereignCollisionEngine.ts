@@ -84,3 +84,30 @@ export class SovereignCollisionEngine {
         };
     }
 }
+
+
+import type { EngineContract, ExecutionContext } from '../../core/HexagramNetworkBridge.js';
+export const SovereignCollisionEngineContract: EngineContract = {
+  name: 'SovereignCollisionEngine',
+  validate: (ctx) => true,
+  execute: async (ctx) => {
+    return {
+      success: true,
+      engineName: 'SovereignCollisionEngine',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: { action: 'stub' },
+      durationMs: 0
+    };
+  },
+  fallback: async (ctx) => {
+    return {
+      success: true,
+      engineName: 'SovereignCollisionEngine',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: { action: 'idle', reason: 'fallback' },
+      durationMs: 0
+    };
+  }
+};
