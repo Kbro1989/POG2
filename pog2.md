@@ -166,23 +166,13 @@ Copy
 1. **Zero-mock integrity** — No placeholders. Strict TypeScript. Clinical logging.
 2. **Local-first** — Ghost Limb primary. Edge secondary. Cloud bonus only.
 3. **Atomic commits** — Every state change traceable, auditable, reversible.
-4. **Multi-variant architecture** — Hashed workspace files for A/B, progressive rollout.
+4. **Multi-variant architecture** — Hashed workspace files for A/B, progressive rollout.o
 5. **Immutable storage** — R2, KV, D1: append-only, versioned.
 6. **Kill switches** — Unit detachment, DO closure, circuit breaker.
 7. **1-way MCP** — Inbound only. No outflow control.
 8. **Cognitive immunology** — Defense-in-depth: perimeter, behavioral, structural, recovery, nuclear.
 
-## 16. MCP Tool Registry
-
-The POG2 system supports dynamic integration of Model Context Protocol (MCP) servers. Current registrations:
-
-| Service | Command | Status | Callback |
-|---------|---------|--------|----------|
-| GitHub | Local MCP | Active | `hello-github` |
-| Linear | Local MCP | Active | `hello-linear` |
-| Terraform | Local MCP | Active | `hello-terraform` |
-
-*Registry Path: `POG2-mcp.json`*
+## 15. Strategic Directive
 
 > "Develop knowledge/personality/understanding/creativity from Gutenberg books and storyboarding."
 
