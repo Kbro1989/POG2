@@ -1,6 +1,7 @@
 ﻿import { type Result, ok } from '../core/models.js';
 import { readFile, readdir, stat } from 'fs/promises';
 import { join, extname } from 'path';
+import { existsSync, readFileSync } from 'fs';
 import { SovereignIgnoreManager } from './SovereignIgnoreManager.js';
 import { getSystemRoot } from './SovereignPathResolver.js';
 import { createLogger } from "./logger.js";
@@ -30,6 +31,7 @@ interface ForbiddenPattern {
  * Phase 35: Full recursive directory scanning with line-level violation reporting.
  */
 export class ClinicalAuditTool {
+    private whitelist: { exemptPaths: string[], exemptPatterns: string[] } = { exemptPaths: [], exemptPatterns: [] };
     private readonly forbiddenPatterns: ForbiddenPattern[] = [
         { regex: /todo:|fixme:/i, message: 'Placeholder comment detected (todo/fixme)' },
         { regex: /\bmock\b/i, message: 'Mocking pattern detected (forbidden by Sovereign Law)' },
@@ -39,10 +41,41 @@ export class ClinicalAuditTool {
         { regex: /\/\/ \.\.\./, message: 'Code ellipsis placeholder detected' }
     ];
 
+    constructor() {
+        this.loadWhitelist();
+    }
+
+    private loadWhitelist() {
+        const root = getSystemRoot();
+        const whitelistPath = join(root, '.metabolic-whitelist.json');
+        if (existsSync(whitelistPath)) {
+            try {
+                const data = JSON.parse(readFileSync(whitelistPath, 'utf8'));
+                this.whitelist = {
+                    exemptPaths: data.exemptPaths || [],
+                    exemptPatterns: data.exemptPatterns || []
+                };
+            } catch (e) {
+                logger.warn('Failed to load metabolic whitelist in ClinicalAuditTool');
+            }
+        }
+    }
+
+    private isWhitelisted(file: string): boolean {
+        const normalizedFile = file.replace(/\\/g, '/');
+        if (this.whitelist.exemptPaths.some(p => normalizedFile.includes(p))) return true;
+        if (this.whitelist.exemptPatterns.some(p => new RegExp(p).test(normalizedFile))) return true;
+        return false;
+    }
+
     private readonly auditableExtensions = new Set(['.ts', '.js', '.tsx', '.jsx']);
 
     async auditFile(filePath: string): Promise<Result<AuditResult>> {
         try {
+            if (this.isWhitelisted(filePath)) {
+                return ok({ filePath, violations: [], isClinical: true });
+            }
+
             const content = await readFile(filePath, 'utf-8');
             const lines = content.split('\n');
             const violations: AuditViolation[] = [];

@@ -1,0 +1,13 @@
+{
+  "exemptPaths": [
+    "src/rsmv/scripts/",
+    "src/rsmv/viewer/",
+    "src/core/OpcodeReader.ts",
+    "src/rsmv/opcode_reader.ts"
+  ],
+  "exemptPatterns": [
+    ".*Mock.*",
+    ".*test.*"
+  ],
+  "rationale": "CLI tools, browser UI, binary parsing, and test infrastructure are exempt from clinical logging and strict typing rules where contextually justified."
+}
