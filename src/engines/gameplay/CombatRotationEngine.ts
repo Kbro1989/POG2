@@ -568,8 +568,12 @@ export class CombatRotationEngine {
             if (op === '<') return currentHpPct < val;
         }
 
-        // 3. Status Checks (Simplified)
-        if (p.includes('stunned')) return ctx.currentTick < (ctx.channelEndTick || 0); // Not quite right but placeholder
+        // 3. Status Checks
+        if (p.includes('stunned')) {
+            const isStunned = ctx.state.stunEndTick !== undefined && ctx.currentTick < ctx.state.stunEndTick;
+            const isChanneled = ctx.currentTick < (ctx.channelEndTick || 0);
+            return isStunned || isChanneled;
+        }
 
         return true; // Default to pass if unhandled
     }

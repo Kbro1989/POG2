@@ -146,6 +146,7 @@ export interface CombatantState {
     conjureActive?: { skeleton: boolean, zombie: boolean, ghost: boolean, phantom: boolean };
     ritualState?: { soulsCaptured: number, corruptionLevel: number };
     stunCharges?: Record<string, number>; // New: Charge-based stun tracking (abilityId -> count)
+    stunEndTick?: number;                 // New: Absolute tick when stun expires
     hp?: number;                        // Current HP for survival heuristics
     maxHp?: number;                     // Max HP for survival heuristics
     lastCombatTick: number; // Track for rhythm enforcement (e.g. 4-tick)

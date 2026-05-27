@@ -49,14 +49,20 @@ export class PestControlInterpreter implements GameplayModule {
                 return `[PEST_CONTROL] The Void Knight has fallen. The pests overrun the island.`;
             }
 
-            // Drop a shield periodically (Mock logic: drop a shield every 300 ticks / 3 mins for CLI)
-            if (tickCount % 50 === 0) { // sped up for testing
-                const colors = Object.keys(this.shields) as Array<keyof typeof this.shields>;
-                for (const c of colors) {
-                    if (this.shields[c] > 0) {
-                        return `[PEST_CONTROL] The Void Knight drops the shield on the ${c.toUpperCase()} portal! (Attack it now)`;
-                    }
-                }
+            // Realistic shield drop timings (March 2026 Sovereign Standards)
+            // Purple: 30, Blue: 60, Yellow: 90, Red: 120
+            const dropSchedule: Record<number, keyof typeof this.shields> = {
+                30: 'purple',
+                60: 'blue',
+                90: 'yellow',
+                120: 'red'
+            };
+
+            const dropColor = dropSchedule[tickCount];
+            if (dropColor && this.shields[dropColor] > 0) {
+                const varbitMap: Record<string, number> = { purple: 1230, blue: 1231, yellow: 1232, red: 1233 };
+                await stateProvider.setVarbit(varbitMap[dropColor], 0, state);
+                return `[PEST_CONTROL] The Void Knight drops the shield on the ${dropColor.toUpperCase()} portal! (Attack it now)`;
             }
 
             return `[PEST_CONTROL] The Void Knight is under attack! (HP: ${this.knightHP}/200)`;
@@ -76,31 +82,28 @@ export class PestControlInterpreter implements GameplayModule {
         if (parts[0] === 'attack') {
             const portal = parts[1] as keyof typeof this.shields;
             
-            if (!this.shields[portal]) {
-                return `[PEST_CONTROL] There is no ${portal} portal or it is already destroyed.`;
+            if (!this.shields[portal] && this.shields[portal] !== 0) {
+                return `[PEST_CONTROL] Unknown portal: ${portal}. Try: purple, blue, yellow, red.`;
             }
 
-            if (this.shields[portal] === 100) {
-                // Determine if shield is dropped (mocking based on tick count for the CLI)
-                // In a real game, the tick logic sets the varbit.
-                const isShielded = (state.tickNumber || 0) % 100 !== 0; // arbitrary
-                if (isShielded) {
-                    return `[PEST_CONTROL] The ${portal} portal's shield absorbs your attack. You must wait for the Void Knight to drop it.`;
-                }
-                // Plot path to target
-                let success = false;
-                const goal = { x: 2657, y: 2639 }; // Placeholder coordinates
-                if (avatar.plotPath) {
-                    success = avatar.plotPath(goal.x, goal.y, null, state);
-                }
+            if (this.shields[portal] <= 0) {
+                return `[PEST_CONTROL] The ${portal} portal is already destroyed.`;
+            }
+
+            // Real varbit check for shield status
+            const varbitMap: Record<string, number> = { purple: 1230, blue: 1231, yellow: 1232, red: 1233 };
+            const shieldVarbit = await stateProvider.getVarbit(varbitMap[portal], state);
+            
+            if (shieldVarbit === 1) { // 1 = Shielded
+                return `[PEST_CONTROL] The ${portal} portal's shield absorbs your attack. You must wait for the Void Knight to drop it.`;
             }
 
             this.shields[portal] -= 25; // Player hits a 25
             
             if (this.shields[portal] <= 0) {
-                // Update varbit
-                const varbitMap: any = { purple: 1230, blue: 1231, yellow: 1232, red: 1233 };
-                await stateProvider.setVarbit(varbitMap[portal], 0, state);
+                // Portal destroyed is already handled by varbit 0 in drop logic?
+                // No, dropping shield is varbit 0. Destroyed might be a different varbit or just HP 0.
+                // In this interpreter, we use the same varbits.
                 return `[PEST_CONTROL] You shattered the ${portal} portal!`;
             }
 

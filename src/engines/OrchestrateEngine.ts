@@ -272,6 +272,7 @@ export class OrchestrateEngine {
 
         logger.debug('Initializing Memory Substrates...');
         this.vectorDB = new VectorDB({ client: this.client });
+        this.trainingCollector = TrainingCollector.getInstance();
 
         this.discovery = new DiscoveryEngine(renderer);
 
@@ -375,6 +376,15 @@ export class OrchestrateEngine {
             this.shell,
             this.pulseMonitor,
             async (scene) => this.chroma.generateVisualManifest(scene.visualPrompts[0], 'fallback.png')
+        );
+
+        this.nodeTester = new NodeTester(
+            getGodHeadRoot() ?? process.cwd(),
+            this.router,
+            this.embedEngine,
+            this.pulseMonitor,
+            this.router.getHexagram(),
+            this.trainingCollector
         );
 
         this.pipeline = new PipelineController(
@@ -537,14 +547,11 @@ export class OrchestrateEngine {
                 contextHash: report.contextHash
             }, 'COGNITIVE IMMUNOLOGY BLOCK');
             
-            return {
-                ok: false,
-                error: {
-                    message: `Cognitive Immunology blocked execution. Threat: ${report.threatLevel}. Reasons: ${report.reasons.join('; ')}`,
-                    code: 'IMMUNOLOGY_BLOCK',
-                    report
-                }
-            } as any;
+            return err({
+                message: `Cognitive Immunology blocked execution. Threat: ${report.threatLevel}. Reasons: ${report.reasons.join('; ')}`,
+                code: 'IMMUNOLOGY_BLOCK',
+                report
+            });
         }
         
         // WARN: MEDIUM — log but continue with sovereign flag
@@ -564,13 +571,10 @@ export class OrchestrateEngine {
         // ─── EXECUTE TOOL ───
         const tool = this.registry.getTool(toolName);
         if (!tool) {
-            return { 
-                ok: false, 
-                error: { 
-                    message: `Tool not found: ${toolName}`, 
-                    code: 'TOOL_NOT_FOUND' 
-                } 
-            } as any;
+            return err({
+                message: `Tool not found: ${toolName}`,
+                code: 'TOOL_NOT_FOUND'
+            });
         }
         
         return tool.execute(args);
@@ -1349,14 +1353,14 @@ export class OrchestrateEngine {
             execute: async (args) => {
                 if (args.projectId) {
                     const insight = await this.shadow.getProjectInsight(args.projectId as string);
-                    if (!insight.ok) return insight as any;
+                    if (!insight.ok) return insight;
                     return ok({
                         output: `Shadow Insight for ${insight.value.projectName}:\n\nARCHITECTURE:\n${insight.value.architecture}\n\nCODEBASE MAP:\n${insight.value.codebaseMap}`,
                         data: { ...insight.value, skipNormalization: true, skipReflection: true }
                     });
                 }
                 const all = await this.shadow.getAllInsights();
-                if (!all.ok) return all as any;
+                if (!all.ok) return all;
                 const output = all.value.map(i => `- ${i.projectName}: ${i.architecture ? 'Arch Found' : 'No Arch'} | ${i.codebaseMap ? 'Map Found' : 'No Map'}`).join('\n');
                 return ok({
                     output: `Global Shadow Substrate Summary:\n\n${output}`,
@@ -1382,7 +1386,7 @@ export class OrchestrateEngine {
                 const limb = new HUDForensicsLimb();
                 if (args.query) {
                     const res = await limb.searchInterfaces(args.query as string);
-                    if (!res.ok) return res as any;
+                    if (!res.ok) return res;
                     return ok({
                         output: `HUD Search for "${args.query}":\n` + JSON.stringify(res.value, null, 2),
                         data: { results: res.value, skipNormalization: true }
@@ -1413,7 +1417,7 @@ export class OrchestrateEngine {
                 const query = args.query as string;
                 if (query) {
                     const res = await this.memetic.searchMemetics(query, (args.limit as number) || 10);
-                    if (!res.ok) return res as any;
+                    if (!res.ok) return res;
                     const output = res.value.map(e => `- [${e.source}] ${e.title}: ${e.url}`).join('\n');
                     return ok({
                         output: `Memetic shards for "${query}":\n\n${output}`,
@@ -1421,7 +1425,7 @@ export class OrchestrateEngine {
                     });
                 }
                 const history = await this.memetic.ingestHistory((args.limit as number) || 10);
-                if (!history.ok) return history as any;
+                if (!history.ok) return history;
                 const output = history.value.map(e => `- [${e.source}] ${e.title}: ${e.url}`).join('\n');
                 return ok({
                     output: `Latest Memetic History:\n\n${output}`,
@@ -1869,7 +1873,7 @@ export class OrchestrateEngine {
             parameters: { query: 'string' },
             execute: async (args) => {
                 const res = await this.discovery.searchWiki(args.query as string);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: res.value });
             }
         });
@@ -1885,7 +1889,7 @@ export class OrchestrateEngine {
             parameters: { url: 'string' },
             execute: async (args) => {
                 const res = await this.discovery.searchWayback(args.url as string);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: res.value });
             }
         });
@@ -1901,7 +1905,7 @@ export class OrchestrateEngine {
             parameters: { query: 'string' },
             execute: async (args) => {
                 const res = await this.discovery.search((args as unknown as WebSearchParams));
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: res.value.output });
             }
         });
@@ -2394,7 +2398,7 @@ export class OrchestrateEngine {
             parameters: {},
             execute: async () => {
                 const res = await this.cacheForensics.checkCacheVolatility();
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 const status = res.value.hasChanged ? 'Ã¢Å¡Â Ã¯Â¸Â MODIFIED' : 'Ã¢Å“â€¦ STABLE';
                 return ok({
                     output: `Cache Volatility Audit: ${status}\nLast Modified: ${res.value.lastModified.toLocaleString()}`,
@@ -2435,7 +2439,7 @@ export class OrchestrateEngine {
             execute: async (args) => {
                 const { modelId, colors, materials } = args as { modelId: string; colors?: any; materials?: any };
                 const res = await this.RSMVController.viewModel(modelId, { replaceColors: colors, replaceMaterials: materials });
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: res.value.details || `Model ${modelId} opened in inspector.`, data: res.value });
             }
         });
@@ -2475,7 +2479,7 @@ OUTPUT FORMAT:
                     includeScreenshot: !targetPath // Screenshot if no path
                 });
 
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
 
                 const responseText = res.value.output;
                 const scoreMatch = responseText.match(/Score:\s*(\d+(\.\d+)?)\/10/i);
@@ -2505,7 +2509,7 @@ OUTPUT FORMAT:
             execute: async (args) => {
                 const { modelId, outputPath, colors, materials } = args as { modelId: string; outputPath: string; colors?: any; materials?: any };
                 const res = await this.RSMVController.exportGltf(modelId, outputPath, { replaceColors: colors, replaceMaterials: materials });
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: res.value.details || `Exported model ${modelId} to ${outputPath}.`, data: res.value });
             }
         });
@@ -2526,7 +2530,7 @@ OUTPUT FORMAT:
                     term: params.term,
                     queryType: params.queryType || 'partial'
                 });
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
 
                 const output = `Taxonomy Query [${params.layer}]: ${res.value.length} matches found.\n` +
                     res.value.map((e: any) => `- [${e.id}] ${e.name}${e.combatLevel ? ` (Lvl ${e.combatLevel})` : ''}`).join('\n');
@@ -2547,7 +2551,7 @@ OUTPUT FORMAT:
             execute: async (args) => {
                 const { name } = args as { name: string };
                 const res = await this.cacheForensics.crossReferenceItem(name);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
 
                 const output = `Cross-Reference [${name}]:\n` +
                     `- Item Context: ${res.value.itemContext.name} (ID: ${res.value.itemContext.id})\n` +
@@ -2791,7 +2795,7 @@ OUTPUT FORMAT:
             parameters: { projectDir: 'string', componentName: 'string', description: 'string?' },
             execute: async (args) => {
                 const res = await this.forge.handleDigestComponent(args as Record<string, any>);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: res.value });
             }
         });
@@ -2808,7 +2812,7 @@ OUTPUT FORMAT:
             parameters: {},
             execute: async () => {
                 const res = await this.cognitive.getPersonalityCore();
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 const output = (res.value as any[]).map(a => `- ${a.name} (${a.weight} fragments): ${a.description}`).join('\n');
                 return ok({ output: `SOVEREIGN PERSONALITY PROFILE:\n${output || 'No active archetypes detected.'}` });
             }
@@ -2826,7 +2830,7 @@ OUTPUT FORMAT:
             execute: async (args) => {
                 const params = args as { bookId: number };
                 const res = await this.cognitive.getActiveWisdom(`bookId:${params.bookId}`, 10);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: `Wisdom from book ${params.bookId} absorbed into active context:\n${res.value}` });
             }
         });
@@ -2905,7 +2909,7 @@ OUTPUT FORMAT:
             parameters: { query: 'string' },
             execute: async (args) => {
                 const res = await this.gutenberg.searchCatalog(args.query as string);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 const output = res.value.map((b: import('../limbs/creative/GutenbergLimb.js').GutenbergBook) => `- [ID: ${b.id}] ${b.title} by ${(b.authors?.[0]?.name || 'Unknown Author')}`).join('\n') || 'No books found.';
                 return ok({ output, data: { results: res.value } });
             }
@@ -2928,7 +2932,7 @@ OUTPUT FORMAT:
             execute: async (args) => {
                 const p = args as { id: number, title: string, author: string, domain?: string };
                 const res = await this.gutenberg.ingestBook(p.id, p.title, p.author, p.domain || 'general');
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: `Successfully ingested "${p.title}" [ID: ${p.id}]. Substrate sync complete.`, data: res.value });
             }
         });
@@ -2944,7 +2948,7 @@ OUTPUT FORMAT:
             parameters: { bookId: 'number' },
             execute: async (args) => {
                 const res = await this.gutenberg.readBook(args.bookId as number);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: `Active reading and wisdom extraction complete for Book ${args.bookId}.` });
             }
         });
@@ -2960,7 +2964,7 @@ OUTPUT FORMAT:
             parameters: {},
             execute: async () => {
                 const res = this.gutenberg.syncLibrary();
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: res.value });
             }
         });
@@ -2976,7 +2980,7 @@ OUTPUT FORMAT:
             parameters: {},
             execute: async () => {
                 const res = await this.gutenberg.organizeLibrary();
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: res.value });
             }
         });
@@ -3001,7 +3005,7 @@ OUTPUT FORMAT:
                     feedbackLoop: (args.feedbackLoop as any) || 'Auto'
                 };
                 const res = await this.pipeline.run(request);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: res.value.output, data: { manifest: res.value.manifest } });
             }
         });
@@ -3023,7 +3027,7 @@ OUTPUT FORMAT:
                     videoAssembly: (args.videoAssembly as any) || 'Auto'
                 };
                 const res = await this.pipeline.runBatch(request);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: 'Global batch processing initiated/complete.' });
             }
         });
@@ -3051,7 +3055,7 @@ OUTPUT FORMAT:
                     outputPath,
                     characterTraits: args.personality as string
                 });
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({
                     output: `Voice generated: ${res.value.audioPath || outputPath}\nPersonality: ${res.value.personality}\nDuration: ${res.value.estimatedDurationSec}s`,
                     data: res.value
@@ -3076,7 +3080,7 @@ OUTPUT FORMAT:
                 const prompt = args.prompt as string;
                 if (!prompt) return { ok: false, error: new Error('storyboard_create requires "prompt".') };
                 const res = await this.storyboard.generateFromPrompt(prompt, Number(args.sceneCount) || 5, (args.style as string) || undefined);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 const output = res.value.map((s: StoryboardScene) =>
                     `Scene ${s.index}: ${s.description}\nVisual: ${s.visualPrompts.join(', ')}\nStyle: ${s.styleInfluence}`
                 ).join('\n---\n');
@@ -3106,7 +3110,7 @@ OUTPUT FORMAT:
                 if (!Array.isArray(assets) || assets.length === 0) return { ok: false, error: new Error('assets must be non-empty array.') };
                 const assembler = (this.pipeline as any).assembler as import('../limbs/creative/VideoAssemblerLimb.js').VideoAssemblerLimb;
                 const res = await assembler.assembleFromAssets(assets, outputPath);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({
                     output: `Video: ${res.value.videoPath}\nSize: ${(res.value.bytes / 1024 / 1024).toFixed(1)} MB`,
                     data: res.value
@@ -3125,7 +3129,7 @@ OUTPUT FORMAT:
             parameters: { intent: 'string' },
             execute: async (args) => {
                 const res = await this.metabolic.expand(args.intent as string);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 const nexus = res.value;
                 const output = [
                     `ÃƒÂ°Ã…Â¸Ã‚Â§Ã‚Â  THOUGHTS:`,
@@ -3176,7 +3180,7 @@ OUTPUT FORMAT:
                 // Real implementation: map prompt to prosody (simplistic for now)
                 const prosody = { chaos: 0.5, whimsy: 0.5, darkTone: 0.5, coherence: 0.8 };
                 const res = await this.soundtrack.generateScore(prosody, duration, outPath);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: `Soundtrack generated at ${res.value.path}`, data: res.value });
             }
         });
@@ -3192,7 +3196,7 @@ OUTPUT FORMAT:
             parameters: { prompt: 'string', modelOverride: 'string?' },
             execute: async (args) => {
                 const res = await this.chroma.generateVisualSubstrate({ prompt: args.prompt as string });
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: `Visual substrate generated at ${res.value.path}`, data: res.value });
             }
         });
@@ -3232,7 +3236,7 @@ OUTPUT FORMAT:
             parameters: { context: 'string', emotions: 'object' },
             execute: async (args): Promise<Result<EngineOutput>> => {
                 const res = await this.metaCognition.reflect((args as any).context, (args as any).emotions);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: res.value });
             }
         });
@@ -3467,7 +3471,7 @@ OUTPUT FORMAT:
             parameters: {},
             execute: async () => {
                 const res = await this.memoryConsolidation.consolidate();
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: 'Memory consolidation cycle complete.' });
             }
         });
@@ -3483,7 +3487,7 @@ OUTPUT FORMAT:
             parameters: { outcomes: 'object' },
             execute: async (args) => {
                 const res = await this.quantum.collapse((args as any).outcomes);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: `Quantum collapse finalized choice: ${JSON.stringify(res.value)}`, data: res.value });
             }
         });
@@ -3514,7 +3518,7 @@ OUTPUT FORMAT:
             parameters: { query: 'string' },
             execute: async (args) => {
                 const res = await this.relic.fetchHistoricalContext((args as any).query);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: res.value, data: res.value });
             }
         });
@@ -3545,7 +3549,7 @@ OUTPUT FORMAT:
             parameters: { knock: 'object' },
             execute: async (args) => {
                 const res = await this.rscLimb.connectWithKnock((args as any).knock);
-                if (!res.ok) return res as any;
+                if (!res.ok) return res;
                 return ok({ output: 'SovereignKnock validated. RSC substrate connected.' });
             }
         });

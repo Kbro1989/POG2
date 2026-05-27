@@ -336,8 +336,22 @@ export class AbilityDiscoveryLimb {
                     // Note: This requires active varp state, which is handled in PlayerAgent
                     logger.debug({ componentId: comp.componentId, trigger, args, slotIndex }, 'Action bar slot identified via Varp 5899');
                     
-                    // We return a placeholder discovery if we can't match a name yet
+                    // Return a placeholder discovery if we can't match a name yet
                     // This allows the agent to know a slot exists even if the ability isn't identified
+                    return {
+                        id: `unknown-slot-${slotIndex}`,
+                        name: `Action Slot ${slotIndex}`,
+                        category: 'basic',
+                        adrenalineCost: 0,
+                        adrenalineGain: 0,
+                        cooldownTicks: 3,
+                        damageRange: [0, 0],
+                        style: 'melee', // placeholder style
+                        slotIndex,
+                        spriteId: comp.spriteId,
+                        scriptId: args[0] === 10896 ? 10896 : 5899,
+                        source: 'action_bar'
+                    };
                 }
             }
         }
