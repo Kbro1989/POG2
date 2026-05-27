@@ -1,6 +1,6 @@
-import { GameCacheLoader } from "../cache/sqlite";
-import { cacheMajors } from "../constants";
-import { parse } from "../opdecoder";
+import { GameCacheLoader } from "../cache/sqlite.js";
+import { cacheMajors } from "../constants.js";
+import { parse } from "../opdecoder.js";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -30,7 +30,7 @@ async function main() {
             const file = await source.getFileById(cacheMajors.items, id);
             if (!file) continue;
 
-            const item = parse.item.read(file, source) as any;
+            const item = parse.item.read(file, source as any) as any;
             processed++;
 
             if (item.extra && item.extra.length > 0) {

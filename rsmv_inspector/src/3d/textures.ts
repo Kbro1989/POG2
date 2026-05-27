@@ -13,12 +13,21 @@ export class ParsedTexture {
 	bmpHeight = -1;
 	filesize: number;
 
-	constructor(texture: Buffer | ImageData, stripAlpha: boolean, isMaterialTexture?: boolean) {
+	constructor(texture: Buffer | ImageData | null | undefined, stripAlpha: boolean, isMaterialTexture?: boolean) {
 		this.isMaterialTexture = !!isMaterialTexture;
 		this.stripAlpha = stripAlpha;
 		this.imagefiles = [];
 		this.cachedDrawables = [];
 		this.cachedImageDatas = [];
+		if (!texture) {
+			this.filesize = 0;
+			this.type = "imagedata";
+			this.mipmaps = 1;
+			const dummyData = new Uint8ClampedArray([0, 0, 0, 0]);
+			const dummyImageData = makeImageData(dummyData, 1, 1);
+			this.cachedImageDatas = [Promise.resolve(dummyImageData)];
+			return;
+		}
 		if (texture instanceof ImageData) {
 			this.filesize = texture.data.byteLength;
 			this.type = "imagedata";

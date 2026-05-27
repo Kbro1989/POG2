@@ -101,28 +101,31 @@ export class HexagramNetworkBridge {
     };
 
     const targets = hexagram.gameplay.engineFocus;
-    const promises = targets.map(async (engineName) => {
+    const results: ContractResult[] = [];
+
+    // Run sequentially to allow GhostSplat to inject fullField into the payload for downstream contracts
+    for (const engineName of targets) {
       if (this.circuitOpen.has(engineName)) {
         console.warn(`[Bridge] Circuit open for ${engineName}, skipping`);
-        return null;
+        continue;
       }
 
       const contract = this.contracts.get(engineName);
       if (!contract) {
         console.warn(`[Bridge] No contract registered for ${engineName}`);
-        return null;
+        continue;
       }
 
       if (contract.validate && !contract.validate(executionContext)) {
-        return null;
+        continue;
       }
 
       const start = performance.now();
+      let result: ContractResult;
       try {
-        const result = await contract.execute(executionContext);
+        result = await contract.execute(executionContext);
         result.durationMs = performance.now() - start;
         this.failureCounts.set(engineName, 0);
-        return result;
       } catch (err) {
         const failCount = (this.failureCounts.get(engineName) || 0) + 1;
         this.failureCounts.set(engineName, failCount);
@@ -133,24 +136,30 @@ export class HexagramNetworkBridge {
         }
 
         if (contract.fallback) {
-          const fallbackResult = await contract.fallback(executionContext);
-          fallbackResult.durationMs = performance.now() - start;
-          fallbackResult.error = `Primary failed: ${err}, fallback executed`;
-          return fallbackResult;
+          result = await contract.fallback(executionContext);
+          result.durationMs = performance.now() - start;
+          result.error = `Primary failed: ${err}, fallback executed`;
+        } else {
+          result = {
+            success: false,
+            engineName,
+            hexagramId: hexagram.id,
+            tick: frame.tick,
+            error: String(err),
+            durationMs: performance.now() - start
+          };
         }
-
-        return {
-          success: false,
-          engineName,
-          hexagramId: hexagram.id,
-          tick: frame.tick,
-          error: String(err),
-          durationMs: performance.now() - start
-        };
       }
-    });
 
-    const results = (await Promise.all(promises)).filter((r): r is ContractResult => r !== null);
+      // Inject GhostSplat result into the context payload for downstream engines
+      if (result.engineName === 'GhostSplatEngine' && result.success && result.data?.fullField) {
+          if (!executionContext.payload) executionContext.payload = {};
+          executionContext.payload.ghostSplat = result.data.fullField;
+      }
+
+      results.push(result);
+    }
+
     this.results.push(...results);
     
     if (this.results.length > this.maxResultsHistory) {

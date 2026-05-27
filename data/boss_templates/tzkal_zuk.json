@@ -1,0 +1,207 @@
+{
+  "_meta": {
+    "schema": "boss_template_v1",
+    "id": "tzkal_zuk",
+    "name": "TzKal-Zuk",
+    "location": "The Inferno",
+    "worldCoord": { "x": 2449, "y": 5128, "plane": 0 },
+    "notes": "Wave mechanics only. Player decisions are derived from sovereign_state.json + CombatRotationEngine. Nothing here prescribes what the player should do."
+  },
+  "waves": [
+    {
+      "wave": 1,
+      "label": "Jad_360",
+      "spawns": [
+        {
+          "npcId": 9462,
+          "name": "TzTok-Jad",
+          "hp": 25000,
+          "combatLevel": 702,
+          "style": "magic",
+          "stunImmune": true,
+          "aggroRange": 20,
+          "spawnOffset": { "x": 0, "y": 0 }
+        }
+      ],
+      "mechanics": ["pray_flick_required"],
+      "completionTrigger": { "type": "all_dead" },
+      "startTick": 0
+    },
+    {
+      "wave": 2,
+      "label": "Ranger_Jads",
+      "spawns": [
+        {
+          "npcId": 9463,
+          "name": "TzTok-Jad (Ranged)",
+          "hp": 20000,
+          "combatLevel": 580,
+          "style": "ranged",
+          "stunImmune": false,
+          "aggroRange": 15,
+          "spawnOffset": { "x": -5, "y": 3 }
+        },
+        {
+          "npcId": 9463,
+          "name": "TzTok-Jad (Ranged)",
+          "hp": 20000,
+          "combatLevel": 580,
+          "style": "ranged",
+          "stunImmune": false,
+          "aggroRange": 15,
+          "spawnOffset": { "x": 5, "y": 3 }
+        }
+      ],
+      "mechanics": [],
+      "completionTrigger": { "type": "all_dead" }
+    },
+    {
+      "wave": 3,
+      "label": "Mager_Jad",
+      "spawns": [
+        {
+          "npcId": 9464,
+          "name": "Yt-MejKot",
+          "hp": 15000,
+          "combatLevel": 449,
+          "style": "magic",
+          "stunImmune": false,
+          "aggroRange": 12,
+          "spawnOffset": { "x": 0, "y": 5 }
+        }
+      ],
+      "mechanics": ["healer_mechanic"],
+      "completionTrigger": { "type": "all_dead" }
+    },
+    {
+      "wave": 4,
+      "label": "Mixed_Jads",
+      "spawns": [
+        {
+          "npcId": 9462,
+          "name": "TzTok-Jad",
+          "hp": 25000,
+          "combatLevel": 702,
+          "style": "magic",
+          "stunImmune": true,
+          "aggroRange": 20,
+          "spawnOffset": { "x": -8, "y": 0 }
+        },
+        {
+          "npcId": 9463,
+          "name": "TzTok-Jad (Ranged)",
+          "hp": 20000,
+          "combatLevel": 580,
+          "style": "ranged",
+          "stunImmune": false,
+          "aggroRange": 15,
+          "spawnOffset": { "x": 8, "y": 0 }
+        }
+      ],
+      "mechanics": ["pray_flick_required"],
+      "completionTrigger": { "type": "all_dead" }
+    },
+    {
+      "wave": 5,
+      "label": "Triple_Jads",
+      "spawns": [
+        {
+          "npcId": 9462,
+          "name": "TzTok-Jad",
+          "hp": 25000,
+          "combatLevel": 702,
+          "style": "magic",
+          "stunImmune": true,
+          "aggroRange": 20,
+          "spawnOffset": { "x": -10, "y": 0 }
+        },
+        {
+          "npcId": 9463,
+          "name": "TzTok-Jad (Ranged)",
+          "hp": 20000,
+          "combatLevel": 580,
+          "style": "ranged",
+          "stunImmune": false,
+          "aggroRange": 15,
+          "spawnOffset": { "x": 0, "y": 5 }
+        },
+        {
+          "npcId": 9464,
+          "name": "Yt-MejKot",
+          "hp": 15000,
+          "combatLevel": 449,
+          "style": "magic",
+          "stunImmune": false,
+          "aggroRange": 12,
+          "spawnOffset": { "x": 10, "y": 0 }
+        }
+      ],
+      "mechanics": ["pray_flick_required", "healer_mechanic"],
+      "completionTrigger": { "type": "all_dead" }
+    },
+    {
+      "wave": 6,
+      "label": "Pillar_Zuk_Entry",
+      "spawns": [
+        {
+          "npcId": 9451,
+          "name": "TzKal-Zuk",
+          "hp": 600000,
+          "combatLevel": 1400,
+          "style": "melee",
+          "stunImmune": true,
+          "aggroRange": 30,
+          "spawnOffset": { "x": 0, "y": 20 },
+          "phaseTransitions": [
+            { "hpThreshold": 0.75, "mechanic": "spear_wall_begins" },
+            { "hpThreshold": 0.50, "mechanic": "healer_spawn" },
+            { "hpThreshold": 0.25, "mechanic": "enrage_phase" }
+          ]
+        }
+      ],
+      "mechanics": ["pillar_phase", "spear_wall", "healer_spawn_at_50pct", "enrage_at_25pct"],
+      "completionTrigger": { "type": "boss_dead" }
+    }
+  ],
+  "mechanics": {
+    "pray_flick_required": {
+      "description": "Boss alternates between magic and ranged attacks. Survival requires reactive prayer switches.",
+      "triggerCondition": "always",
+      "playerActionRequired": "prayer_switch",
+      "windowTicks": 2
+    },
+    "healer_mechanic": {
+      "description": "Yt-MejKot will heal if not interrupted. Attack to interrupt.",
+      "triggerCondition": "npc_name_matches:Yt-MejKot",
+      "playerActionRequired": "interrupt_heal"
+    },
+    "pillar_phase": {
+      "description": "A stone pillar blocks Zuk's line of sight. Player must stand behind pillar to avoid ranged attacks.",
+      "triggerCondition": "wave_6_start",
+      "safeTileOffset": { "x": -7, "y": 0 },
+      "pillarCoord": { "x": 2442, "y": 5128, "plane": 0 }
+    },
+    "spear_wall": {
+      "description": "Zuk fires a wall of spears across the arena. Safe tile is 7 tiles from the west wall.",
+      "triggerCondition": "zuk_hp_below_75pct",
+      "safeTileOffset": { "x": 7, "y": 0 },
+      "durationTicks": 4,
+      "damage": 9000
+    },
+    "healer_spawn_at_50pct": {
+      "description": "4x Yt-HurKot spawn at 50% HP. Zuk becomes invulnerable until all healers die.",
+      "triggerCondition": "zuk_hp_below_50pct",
+      "spawns": [
+        { "npcId": 9455, "name": "Yt-HurKot", "hp": 8000, "combatLevel": 120, "style": "melee", "stunImmune": false, "aggroRange": 5, "spawnOffset": { "x": -3, "y": 0 } },
+        { "npcId": 9455, "name": "Yt-HurKot", "hp": 8000, "combatLevel": 120, "style": "melee", "stunImmune": false, "aggroRange": 5, "spawnOffset": { "x": 3, "y": 0 } },
+        { "npcId": 9455, "name": "Yt-HurKot", "hp": 8000, "combatLevel": 120, "style": "melee", "stunImmune": false, "aggroRange": 5, "spawnOffset": { "x": 0, "y": -3 } },
+        { "npcId": 9455, "name": "Yt-HurKot", "hp": 8000, "combatLevel": 120, "style": "melee", "stunImmune": false, "aggroRange": 5, "spawnOffset": { "x": 0, "y": 3 } }
+      ]
+    },
+    "enrage_at_25pct": {
+      "description": "Zuk's attacks accelerate — attack speed increases by 1 tick at 25% HP.",
+      "triggerCondition": "zuk_hp_below_25pct",
+      "attackSpeedBonusTicks": -1
+    }
+  }
+}

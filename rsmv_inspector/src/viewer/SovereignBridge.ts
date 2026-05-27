@@ -40,13 +40,43 @@ export class SovereignBridge {
         this.ws.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data);
+
                 if (msg.type === 'state_sync') {
                     this.state = msg.state;
                     this.notifyListeners(msg);
+
+                } else if (msg.type === 'GAME_STATE') {
+                    // syncGameState() on the server wraps state in payload:
+                    const gs = msg.payload ?? msg;
+                    // Normalize to the shape SovereignHUD expects from state_sync
+                    const normalized = {
+                        type: 'state_sync',
+                        tick: msg.timestamp ?? Date.now(),
+                        state: {
+                            tick: msg.timestamp ?? Date.now(),
+                            avatar: gs.avatar ?? this.state.avatar,
+                            activeModule: gs.activeModule ?? this.state.activeModule
+                        }
+                    };
+                    this.state = normalized.state;
+                    this.notifyListeners(normalized);
+
                 } else if (msg.type === 'tick_event') {
                     this.notifyTickListeners(msg);
+
+                } else if (msg.type === 'ghost_splat') {
+                    // SwitchboardLimb.broadcastGhostSplat wraps in payload:
+                    const field = msg.payload ?? msg;
+                    this.notifyTickListeners({ type: 'ghost_splat', field });
+
+                } else if (msg.type === 'kernel_diagnostics') {
+                    // SwitchboardLimb.broadcastKernelDiagnostics wraps in payload:
+                    const diag = msg.payload ?? msg;
+                    this.notifyTickListeners({ type: 'kernel_diagnostics', ...diag });
+
                 } else if (msg.type === 'SYSTEM_LOG') {
                     this.notifyLogListeners(msg.payload);
+
                 } else if (msg.type === 'log') {
                     // console.debug('[POG2 LOG]', msg.message);
                 }

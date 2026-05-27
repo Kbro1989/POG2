@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.maprenderConfigSchema = exports.scenarioStateSchema = exports.customModelDefSchema = void 0;
 exports.assertSchema = assertSchema;
 exports.parseJsonOrDefault = parseJsonOrDefault;
-const json_schema_1 = require("json-schema");
+var json_schema_1 = require("json-schema");
 function assertSchema(v, schema) {
     (0, json_schema_1.mustBeValid)((0, json_schema_1.validate)(v, schema));
 }
@@ -12,19 +12,19 @@ function parseJsonOrDefault(str, schema, defaultvalue) {
         if (typeof str != "string") {
             throw new Error("json string expected");
         }
-        let v = JSON.parse(str);
+        var v = JSON.parse(str);
         assertSchema(v, schema);
         return v;
     }
-    catch {
+    catch (_a) {
         return (typeof defaultvalue == "function" ? defaultvalue() : defaultvalue);
     }
 }
-const int = { type: "integer" };
-const number = { type: "number" };
-const string = { type: "string" };
-const boolean = { type: "boolean" };
-const mapRectSchema = {
+var int = { type: "integer" };
+var number = { type: "number" };
+var string = { type: "string" };
+var boolean = { type: "boolean" };
+var mapRectSchema = {
     properties: {
         x: int,
         z: int,
@@ -33,13 +33,13 @@ const mapRectSchema = {
     },
     required: ["x", "z", "xsize", "zsize"]
 };
-const modelModsSchema = {
+var modelModsSchema = {
     properties: {
         replaceMaterials: { type: "array", minLength: 2, maxLength: 2, items: int },
         replaceColors: { type: "array", minLength: 2, maxLength: 2, items: int }
     }
 };
-const simpleModelDefSchema = {
+var simpleModelDefSchema = {
     type: "array",
     items: {
         properties: {
@@ -60,7 +60,7 @@ exports.customModelDefSchema = {
     },
     required: ["type", "modelkey", "name", "simplemodel", "globalMods", "basecomp"]
 };
-const scenarioModelSchema = {
+var scenarioModelSchema = {
     oneOf: [
         {
             properties: {
@@ -83,7 +83,7 @@ const scenarioModelSchema = {
         exports.customModelDefSchema
     ]
 };
-const scenarioActionSchema = {
+var scenarioActionSchema = {
     oneOf: [
         {
             properties: {

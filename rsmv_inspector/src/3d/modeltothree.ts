@@ -635,6 +635,9 @@ export class ThreejsSceneCache {
 				return new ParsedTexture(img.img, stripAlpha, false);
 			} else {
 				let file = await this.engine.getFileById(cacheindex, texid);
+				if (!file) {
+					return new ParsedTexture(null, stripAlpha, true);
+				}
 				if (texmode == "oldproc") {
 					let sprite = parseSprite(file);
 					return new ParsedTexture(sprite[0].img, stripAlpha, false);

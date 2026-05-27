@@ -9,12 +9,12 @@ import { LootResolutionEngineContract } from '../engines/gameplay/LootResolution
 
 export const bridge = new HexagramNetworkBridge();
 
+bridge.register(GhostSplatEngineContract);
 bridge.register(CombatRotationEngineContract);
 bridge.register(AggressionSimulatorContract);
 bridge.register(SimulationHarnessContract);
 bridge.register(ServerLogicRegistryContract);
 bridge.register(SovereignCollisionEngineContract);
-bridge.register(GhostSplatEngineContract);
 bridge.register(LootResolutionEngineContract);
 
 // Connect to WorldDO

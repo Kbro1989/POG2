@@ -385,3 +385,528 @@ code {
 .causal-node:last-child .node-connector {
   display: none;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   POG2 — Sovereign Combat HUD Design System
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --neon-blue: #00d2ff;
+  --neon-purple: #9b59b6;
+  --neon-green: #34d399;
+  --neon-orange: #ff9d00;
+  --neon-red: #ef4444;
+  --neon-yellow: #fbbf24;
+  --neon-cyan: #00ffcc;
+  --adrenaline-orange: #ff9d00;
+
+  --hud-bg: rgba(5, 7, 10, 0.85);
+  --hud-glass: rgba(255, 255, 255, 0.03);
+  --hud-border: rgba(255, 255, 255, 0.06);
+  --hud-border-active: rgba(0, 210, 255, 0.3);
+  --hud-text-dim: #6b7280;
+  --hud-text: #d1d5db;
+  --hud-text-bright: #f3f4f6;
+  --hud-radius: 10px;
+  --hud-blur: 12px;
+  --hud-mono: 'Consolas', 'Menlo', ui-monospace, monospace;
+}
+
+/* ─── Status Panel (top-left) ─── */
+.status-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--hud-bg);
+  backdrop-filter: blur(var(--hud-blur));
+  border: 1px solid var(--hud-border);
+  border-radius: var(--hud-radius);
+  padding: 14px 18px;
+  min-width: 200px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--hud-text);
+  letter-spacing: 0.4px;
+}
+
+.status-item strong {
+  color: var(--hud-text-bright);
+  font-weight: 600;
+}
+
+.indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--neon-red);
+  box-shadow: 0 0 8px var(--neon-red);
+  flex-shrink: 0;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+/* ─── Volition Log (top-right) ─── */
+.volition-log {
+  background: var(--hud-bg);
+  backdrop-filter: blur(var(--hud-blur));
+  border: 1px solid var(--hud-border);
+  border-radius: var(--hud-radius);
+  padding: 12px 16px;
+  max-width: 380px;
+  max-height: 180px;
+  overflow-y: auto;
+  font-family: var(--hud-mono);
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--hud-text-dim);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.08) transparent;
+}
+
+.log-entry {
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+  animation: logSlideIn 0.2s ease-out;
+}
+
+.log-entry.action {
+  color: var(--neon-cyan);
+}
+
+@keyframes logSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── HUD Container (bottom bar) ─── */
+.hud-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 700px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ─── Adrenaline Bar ─── */
+.adrenaline-track {
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.adrenaline-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--adrenaline-orange), #ff4d00);
+  border-radius: 6px;
+  box-shadow: 0 0 20px rgba(255, 157, 0, 0.5);
+  transition: width 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              background 0.5s,
+              box-shadow 0.5s;
+}
+
+/* ─── Action Bar ─── */
+.action-bar {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--hud-bg);
+  backdrop-filter: blur(var(--hud-blur));
+  border: 1px solid var(--hud-border);
+  border-radius: var(--hud-radius);
+}
+
+.ability-slot {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  overflow: hidden;
+}
+
+.ability-slot img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: brightness(0.85) saturate(0.9);
+  transition: filter 0.2s;
+}
+
+.ability-slot:hover {
+  border-color: var(--neon-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 210, 255, 0.15);
+}
+
+.ability-slot:hover img {
+  filter: brightness(1.1) saturate(1.2);
+}
+
+.ability-slot.threshold {
+  border-color: rgba(255, 157, 0, 0.3);
+}
+
+.ability-slot.ultimate {
+  border-color: rgba(155, 89, 182, 0.4);
+}
+
+.slot-key {
+  position: absolute;
+  top: 1px;
+  left: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Ability fire animation */
+.ability-slot.active-fire {
+  border-color: var(--neon-blue) !important;
+  box-shadow: 0 0 20px rgba(0, 210, 255, 0.5), inset 0 0 15px rgba(0, 210, 255, 0.2);
+  animation: abilityFire 0.5s ease-out;
+}
+
+@keyframes abilityFire {
+  0% { transform: scale(1.15); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   New Observability Panels
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Engine Status Grid ─── */
+.engine-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  background: var(--hud-bg);
+  backdrop-filter: blur(var(--hud-blur));
+  border: 1px solid var(--hud-border);
+  border-radius: var(--hud-radius);
+  padding: 14px;
+  min-width: 260px;
+}
+
+.engine-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.engine-cell-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--hud-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.engine-cell-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hud-text-bright);
+  font-family: var(--hud-mono);
+}
+
+.engine-cell-value.rotation { color: var(--neon-cyan); }
+.engine-cell-value.style    { color: var(--neon-purple); }
+.engine-cell-value.phase    { color: var(--neon-yellow); }
+.engine-cell-value.target   { color: var(--neon-red); }
+
+/* ─── Hexagram State Display ─── */
+.hexagram-panel {
+  background: var(--hud-bg);
+  backdrop-filter: blur(var(--hud-blur));
+  border: 1px solid var(--hud-border);
+  border-radius: var(--hud-radius);
+  padding: 14px;
+  text-align: center;
+  min-width: 140px;
+}
+
+.hexagram-title {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--hud-text-dim);
+  margin-bottom: 8px;
+}
+
+.hexagram-glyph {
+  font-size: 36px;
+  line-height: 1;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+  transition: color 0.3s, text-shadow 0.3s;
+  margin-bottom: 4px;
+}
+
+.hexagram-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--hud-text-bright);
+  letter-spacing: 0.5px;
+}
+
+.hexagram-meaning {
+  font-size: 9px;
+  color: var(--hud-text-dim);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+/* ─── GhostSplat Mini-Map ─── */
+.ghostsplat-panel {
+  background: var(--hud-bg);
+  backdrop-filter: blur(var(--hud-blur));
+  border: 1px solid var(--hud-border);
+  border-radius: var(--hud-radius);
+  padding: 12px;
+  min-width: 180px;
+}
+
+.ghostsplat-title {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--hud-text-dim);
+  margin-bottom: 8px;
+}
+
+.ghostsplat-canvas {
+  width: 160px;
+  height: 120px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.04);
+  background: rgba(0,0,0,0.4);
+  image-rendering: pixelated;
+}
+
+.ghostsplat-legend {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  color: var(--hud-text-dim);
+  margin-top: 6px;
+}
+
+.ghostsplat-legend .safe { color: var(--neon-green); }
+.ghostsplat-legend .danger { color: var(--neon-red); }
+
+/* ─── Rotation Stream ─── */
+.rotation-panel {
+  background: var(--hud-bg);
+  backdrop-filter: blur(var(--hud-blur));
+  border: 1px solid var(--hud-border);
+  border-radius: var(--hud-radius);
+  padding: 12px 14px;
+  min-width: 220px;
+}
+
+.rotation-title {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--hud-text-dim);
+  margin-bottom: 8px;
+}
+
+.rotation-sequence {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 4px 0;
+}
+
+.rotation-step {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--hud-mono);
+  color: var(--hud-text);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: all 0.2s;
+}
+
+.rotation-step.current {
+  color: var(--neon-cyan);
+  border-color: rgba(0, 255, 204, 0.4);
+  background: rgba(0, 255, 204, 0.08);
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.15);
+}
+
+.rotation-step.next {
+  color: var(--neon-blue);
+  border-color: rgba(0, 210, 255, 0.2);
+}
+
+.rotation-step.past {
+  opacity: 0.4;
+}
+
+.rotation-arrow {
+  color: rgba(255,255,255,0.15);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+/* ─── Aggression Monitor ─── */
+.aggression-panel {
+  background: var(--hud-bg);
+  backdrop-filter: blur(var(--hud-blur));
+  border: 1px solid var(--hud-border);
+  border-radius: var(--hud-radius);
+  padding: 12px 14px;
+  min-width: 200px;
+}
+
+.aggression-title {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--hud-text-dim);
+  margin-bottom: 10px;
+}
+
+.aggression-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aggression-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aggression-bar-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--hud-text);
+  width: 50px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.aggression-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.aggression-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.aggression-bar-fill.threat  { background: linear-gradient(90deg, #ef4444, #f97316); }
+.aggression-bar-fill.leash   { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+.aggression-bar-fill.wander  { background: linear-gradient(90deg, #34d399, #10b981); }
+
+.aggression-state {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-top: 8px;
+  letter-spacing: 0.5px;
+}
+
+.aggression-state.combat   { color: var(--neon-red);    background: rgba(239, 68, 68, 0.12); }
+.aggression-state.alert    { color: var(--neon-yellow); background: rgba(251, 191, 36, 0.12); }
+.aggression-state.patrol   { color: var(--neon-green);  background: rgba(52, 211, 153, 0.12); }
+.aggression-state.idle     { color: var(--hud-text-dim); background: rgba(255,255,255,0.04); }
+
+/* ─── Target HP Bar ─── */
+.target-panel {
+  background: var(--hud-bg);
+  backdrop-filter: blur(var(--hud-blur));
+  border: 1px solid var(--hud-border);
+  border-radius: var(--hud-radius);
+  padding: 10px 14px;
+  min-width: 200px;
+}
+
+.target-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--hud-text-bright);
+  margin-bottom: 6px;
+}
+
+.target-hp-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.target-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #34d399, #10b981);
+  border-radius: 4px;
+  transition: width 0.4s;
+}
+
+.target-hp-text {
+  font-size: 9px;
+  font-family: var(--hud-mono);
+  color: var(--hud-text-dim);
+  margin-top: 3px;
+  text-align: right;
+}
+
+/* ─── Middle Row Layout ─── */
+.middle-panels {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+/* ─── Pulse animation for live indicators ─── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+.live-indicator {
+  animation: pulse 1.5s ease-in-out infinite;
+}

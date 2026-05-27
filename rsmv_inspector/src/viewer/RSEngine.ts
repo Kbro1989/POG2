@@ -3,6 +3,7 @@ import { EngineCache, ThreejsSceneCache } from "../3d/modeltothree";
 import { RSCompositeAvatar } from "./RSCompositeAvatar";
 import { SovereignBridge } from "./SovereignBridge";
 import { GameCacheLoader } from "../cache/sqlite";
+import { SovereignPersistence } from "./SovereignPersistence";
 import { stringToMapArea } from "../utils";
 
 export class RSAvatarController {
@@ -150,12 +151,34 @@ export class RSEngine {
                     this.avatar.position.x = this.avatarTileX;
                     this.avatar.position.z = this.avatarTileZ;
                 }
+
+                // Check if equipment or inventory has changed from server sync and rebuild avatar
+                if (data.avatar.inventory) {
+                    const persistentState = SovereignPersistence.loadState() || {
+                        timestamp: new Date().toISOString(),
+                        origin: { x: this.avatarTileX, z: this.avatarTileZ, plane: 0 },
+                        inventory: [],
+                        skills: {}
+                    };
+
+                    const currentEquippedHash = (persistentState.inventory || []).map(i => `${i.id}:${i.equipped}`).join(",");
+                    const newEquippedHash = (data.avatar.inventory || []).map((i: any) => `${i.id}:${i.equipped}`).join(",");
+
+                    if (currentEquippedHash !== newEquippedHash) {
+                        persistentState.inventory = data.avatar.inventory;
+                        persistentState.timestamp = new Date().toISOString();
+                        SovereignPersistence.saveState(persistentState);
+
+                        if (this.avatar.model) {
+                            this.avatar.model.rebuildComposite().catch(console.error);
+                        }
+                    }
+                }
             }
         });
 
         // Sovereign Persistence: Fallback to Legacy Save
         try {
-            const { SovereignPersistence } = await import("./SovereignPersistence");
             const legacyState = await SovereignPersistence.importLegacySave();
             if (legacyState) {
                 this.avatarTileX = legacyState.origin.x;

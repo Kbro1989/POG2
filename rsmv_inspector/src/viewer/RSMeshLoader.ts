@@ -5,6 +5,7 @@ import { ChunkMeshManifest, SynthesisEntity } from './SovereignGroundingStream';
 import { SovereignThickSubstrateParser } from './SovereignThickSubstrateParser';
 import { parseThickModelData } from '../3d/rt7model';
 import { SimpleModelDef } from '../3d/modelnodes';
+import { KitMeshLoader } from './KitMeshLoader';
 
 interface SpawnedEntity {
   entityId: number;
@@ -84,6 +85,16 @@ export class RSMeshLoader {
             rsModel.setAnimation(npcInfo.anims.default);
           }
         }
+      } else if (entity.type === 'kit') {
+        // Load kit_*.json outputs into renderable shaded meshes
+        const response = await fetch(`/models/kit_${entity.id}.json`);
+        if (!response.ok) throw new Error(`Failed to load kit model kit_${entity.id}.json`);
+        const kitData = await response.json();
+
+        const kitLoader = new KitMeshLoader(this.sceneCache);
+        const kitGroup = await kitLoader.loadKitMesh(kitData);
+        kitGroup.name = `KIT_${entity.id}`;
+        rootNode.add(kitGroup);
       } else if (entity.type === 'loc' || entity.type === 'object') {
         // ── Pipeline 2: Object / LOC ─────────────────────────────────────────
         // Use the Object Definition from the cache, NOT raw modelIds.

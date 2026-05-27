@@ -1,4 +1,21 @@
 import { exec } from 'child_process';
+
+export type AITaskType =
+    | "general"
+    | "code"
+    | "creative"
+    | "pedagogy"
+    | "combat_rotation"
+    | "spatial_analysis";
+
+export interface Pog2PedagogyRequest {
+    beastId?: number;
+    entityId?: number;
+    query: string;
+    requireVerified: boolean;
+    limbDomain: string;
+}
+
 import { promisify } from 'util';
 import { Agent, fetch as undiciFetch } from 'undici';
 import type { SovereignConfig } from '../config/SovereignConfig.js';

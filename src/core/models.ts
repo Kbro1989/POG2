@@ -1185,12 +1185,54 @@ export interface Plan {
     };
 }
 
-export interface ModelResponse {
-    readonly response: string;
-    readonly model: string;
-    readonly tokensUsed?: number;
-    readonly latency?: number;
+export interface ModelRolodexEntry {
+    id: string;
+    name: string;
+    provider: 'ollama' | 'fireworks' | 'huggingface' | 'gemini' | 'together';
+    tier: 'local' | 'cloud-standard' | 'cloud-premium' | 'ghost';
+    capabilities: string[];
+    contextLength: number;
+    adapterPath?: string;      // For Ollama ADAPTER
+    mergedPath?: string;       // For merged GGUF
+    loraId?: string;           // For Fireworks multi-LoRA
+    hexagramStates: number[];  // Which of 64 hexagrams this model serves
+    verifiedOnly: boolean;     // Enforce [VERIFIED] output
 }
+
+export const POG2_PEDAGOGY_MODELS: ModelRolodexEntry[] = [
+  {
+    id: "pog2-pedagogy-merged",
+    name: "POG2 Pedagogy Merged (Local)",
+    provider: "ollama",
+    tier: "local",
+    capabilities: ["pedagogy", "entity_lookup", "combat_analysis"],
+    contextLength: 32768,
+    mergedPath: "./pog2_pedagogy_q8.gguf",
+    hexagramStates: [1, 2, 3, 4, 5, 6],
+    verifiedOnly: true,
+  },
+  {
+    id: "pog2-pedagogy-fireworks",
+    name: "POG2 Pedagogy Fireworks (Cloud)",
+    provider: "fireworks",
+    tier: "cloud-standard",
+    capabilities: ["pedagogy", "entity_lookup", "combat_analysis", "slayer_routing"],
+    contextLength: 32768,
+    loraId: "accounts/you/pog2-pedagogy-lora",
+    hexagramStates: [1, 2, 3, 4, 5, 6],
+    verifiedOnly: true,
+  },
+  {
+    id: "pog2-pedagogy-gemini",
+    name: "POG2 Pedagogy Gemini (Gateway)",
+    provider: "gemini",
+    tier: "cloud-premium",
+    capabilities: ["pedagogy", "deep_reasoning", "quest_chains"],
+    contextLength: 128000,
+    hexagramStates: [1, 14, 50],
+    verifiedOnly: true,
+  }
+];
 
 export interface ProsodyVector {
     readonly chaos: number;

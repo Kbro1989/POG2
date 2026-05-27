@@ -3,6 +3,7 @@ import { Result, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, Ya
 import { EpistemicTransitionKernel } from '../engines/core/EpistemicTransitionKernel.js';
 import { HEXAGRAM_REGISTRY, DEFAULT_HEXAGRAM, HexagramDefinition } from '../core/HexagramDefinitions.js';
 import { ModelClient } from '../clients/ModelClient.js';
+import { POG2_PEDAGOGY_MODELS, type ModelRolodexEntry } from '../core/models.js';
 import type { GhostSplatField } from '../substrates/GhostSplatEngine.js';
 import type { EntityGhost } from '../core/EntityGhost.js';
 import type { TransitionalVector } from '../engines/core/WaitDecisionMaker.js';
@@ -683,6 +684,45 @@ Respond in JSON ONLY:
         if (yin && yang) return 'YinYang';
         if (yin) return 'Yin';
         return 'Yang';
+    }
+
+    /**
+     * selectPedagogyModel — Tiered model selection for pedagogy tasks.
+     * Routing: Local Merged (Warm) -> Cloud LoRA (Limb Specific) -> Gemini Premium (Complex) -> GhostLimb (Base)
+     */
+    public selectPedagogyModel(
+        hexagram: any, // Replace with HexagramState if available
+        requireVerified: boolean,
+        limbDomain: string,
+        modelClient: ModelClient
+    ): ModelRolodexEntry {
+        // Tier 1: Check if local merged model is warm (Ollama loaded)
+        const local = POG2_PEDAGOGY_MODELS.find(m => m.tier === "local");
+        if (local && modelClient.getRolodex()?.isModelHealthy(local.id)) {
+            // Verify if hexagram fits (simplified: always fits for local)
+            return local;
+        }
+
+        // Tier 2: Fireworks LoRA for limb-specific routing
+        const cloud = POG2_PEDAGOGY_MODELS.find(m =>
+            m.tier === "cloud-standard" &&
+            m.loraId?.includes(limbDomain)
+        );
+        if (cloud && modelClient.getRolodex()?.isModelHealthy(cloud.id)) {
+            return cloud;
+        }
+
+        // Tier 3: Gemini via Cloudflare Gateway for deep reasoning
+        const premium = POG2_PEDAGOGY_MODELS.find(m => m.tier === "cloud-premium");
+        if (premium && modelClient.getRolodex()?.isModelHealthy(premium.id)) {
+            // Use premium if high complexity ( la 5 threshold)
+            if (hexagram.complexity > 0.8) {
+                return premium;
+            }
+        }
+
+        // Tier 5: GhostLimb — return a generic high-capability base model if all else fails
+        return POG2_PEDAGOGY_MODELS[0];
     }
 
     public getContract(): InterpretationContract {

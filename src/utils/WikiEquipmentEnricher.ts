@@ -19,6 +19,10 @@
 import { createLogger } from './logger.js';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { QueryClassifier, QueryType } from './QueryClassifier.js';
+import { CacheForensicsLimb } from '../limbs/spatial/CacheForensicsLimb.js';
+import { GeApi, GePrice } from './GeApi.js';
+import { BestiaryApi, BestiaryBeastData } from './BestiaryApi.js';
 
 const logger = createLogger('WikiEquipmentEnricher');
 
@@ -50,6 +54,8 @@ export interface WikiItemMeta {
     lowAlch: number;
     /** Grand Exchange price in coins. 0 = not on GE or unknown. */
     geValue: number;
+    _geSource?: string;
+    _geTimestamp?: number;
     quest: string;
     release: string;
 }
@@ -100,17 +106,39 @@ export interface WikiPageData {
     monsterMeta: WikiMonsterMeta | null;
     dropTables: WikiDropTable[];
     rawVariables: Record<string, string>;
+    pageType?: 'npc' | 'item' | 'equipment' | 'place' | 'mechanic' | 'lore';
+    extract?: string;
+    categoryMembers?: string[];
+}
+
+export interface WikiUpdateMeta {
+    title: string;
+    date: string;
+    category: string;
+    url: string;
+    isHotfix: boolean;
+    isColdfix: boolean;
+    affectedEntities: number[];
 }
 
 // ═══════════════════════════════════════════════════════
-// WikiEquipmentEnricher — Singleton
+// Generic Enrichment Types
 // ═══════════════════════════════════════════════════════
+
+export interface WikiGenericMeta {
+    title: string;
+    pageType: 'npc' | 'item' | 'equipment' | 'place' | 'mechanic' | 'lore';
+    extract: string;
+    infoboxVars: Record<string, string>;
+    categoryMembers?: string[];
+    fetchedAt: number;
+}
 
 export class WikiEquipmentEnricher {
     private static instance: WikiEquipmentEnricher;
 
     private readonly API_BASE = 'https://runescape.wiki/api.php';
-    private readonly USER_AGENT = 'POG2-Sovereign/1.0 (Sovereign Research Node; respectful-soft-parse)';
+    private readonly USER_AGENT = 'POG2-Sovereign/1.0 (Sovereign Research Node; admin@pog2.internal; respectful-soft-parse; +https://github.com/Kbro1989/POG2)';
     private readonly RATE_LIMIT_MS = 1500;
     private readonly CACHE_DIR: string;
     private readonly CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -138,7 +166,8 @@ export class WikiEquipmentEnricher {
             join(this.CACHE_DIR, 'items'),
             join(this.CACHE_DIR, 'monsters'),
             join(this.CACHE_DIR, 'templates'),
-            join(this.CACHE_DIR, 'wikitext')
+            join(this.CACHE_DIR, 'wikitext'),
+            join(this.CACHE_DIR, 'generic')
         ];
         for (const dir of dirs) {
             if (!existsSync(dir)) {
@@ -225,6 +254,12 @@ export class WikiEquipmentEnricher {
             });
 
             if (!response.ok) {
+                if (response.status === 429) {
+                    const retryAfter = response.headers.get('Retry-After');
+                    if (retryAfter) {
+                        ApiThrottle.getInstance().reportRetryAfter('wiki', parseInt(retryAfter, 10));
+                    }
+                }
                 logger.warn({ title: pageTitle, status: response.status }, 'Wiki API non-OK response.');
                 return null;
             }
@@ -264,6 +299,17 @@ export class WikiEquipmentEnricher {
                 headers: { 'User-Agent': this.USER_AGENT },
                 signal: AbortSignal.timeout(10000)
             });
+
+            if (!response.ok) {
+                if (response.status === 429) {
+                    const retryAfter = response.headers.get('Retry-After');
+                    if (retryAfter) {
+                        ApiThrottle.getInstance().reportRetryAfter('wiki', parseInt(retryAfter, 10));
+                    }
+                }
+                logger.warn({ query, status: response.status }, 'Wiki search non-OK response.');
+                return null;
+            }
 
             const data = await response.json() as any;
             return data.query?.search?.[0]?.title || null;
@@ -687,6 +733,106 @@ export class WikiEquipmentEnricher {
         return entries;
     }
 
+    // ── Generic Enrichment Logic ─────────────────────────────
+
+    private detectPageType(wikitext: string): 'npc' | 'item' | 'equipment' | 'place' | 'mechanic' | 'lore' {
+        const lower = wikitext.toLowerCase();
+        if (lower.includes('{{infobox monster')) return 'npc';
+        if (lower.includes('{{infobox item')) return 'item';
+        if (lower.includes('{{infobox bonuses')) return 'equipment';
+        if (lower.includes('{{infobox location') || lower.includes('{{infobox area'))) return 'place';
+        if (lower.includes('{{infobox mechanic') || lower.includes('{{infobox gameplay'))) return 'mechanic';
+        return 'lore';
+    }
+
+    private async fetchCategoryMembers(pageTitle: string): Promise<string[]> {
+        await this.throttle();
+        const params = new URLSearchParams({
+            action: 'query',
+            format: 'json',
+            list: 'categorymembers',
+            cmtitle: pageTitle,
+            cmlimit: '500',
+            origin: '*'
+        });
+
+        try {
+            const response = await fetch(`${this.API_BASE}?${params.toString()}`, {
+                headers: { 'User-Agent': this.USER_AGENT },
+                signal: AbortSignal.timeout(10000)
+            });
+            const data = await response.json() as any;
+            return data.query?.categorymembers?.map((m: any) => m.title) || [];
+        } catch (err) {
+            logger.error({ pageTitle, err }, 'Failed to fetch category members.');
+            return [];
+        }
+    }
+
+    private async fetchExtract(pageTitle: string): Promise<string | null> {
+        await this.throttle();
+        const params = new URLSearchParams({
+            action: 'query',
+            format: 'json',
+            prop: 'extracts',
+            exintro: '1',
+            explaindepth: '0',
+            titles: pageTitle,
+            origin: '*'
+        });
+
+        try {
+            const response = await fetch(`${this.API_BASE}?${params.toString()}`, {
+                headers: { 'User-Agent': this.USER_AGENT },
+                signal: AbortSignal.timeout(10000)
+            });
+            const data = await response.json() as any;
+            const pages = data.query?.pages;
+            if (!pages) return null;
+            const pageId = Object.keys(pages)[0];
+            return pages[pageId]?.extract || null;
+        } catch (err) {
+            logger.error({ pageTitle, err }, 'Failed to fetch page extract.');
+            return null;
+        }
+    }
+
+    public async enrichGeneric(pageTitle: string): Promise<WikiPageData | null> {
+        const cached = this.readCache('generic', pageTitle);
+        if (cached && cached.title) {
+            logger.debug({ pageTitle }, 'Generic enrichment served from cache.');
+            return cached;
+        }
+
+        const wikitext = await this.getWikitextForName(pageTitle);
+        if (!wikitext) return null;
+
+        const pageType = this.detectPageType(wikitext);
+        let categoryMembers: string[] | undefined;
+        if (pageTitle.startsWith('Category:')) {
+            categoryMembers = await this.fetchCategoryMembers(pageTitle);
+        }
+
+        const result: WikiPageData = {
+            title: pageTitle,
+            fetchedAt: Date.now(),
+            bonuses: null,
+            itemMeta: null,
+            monsterMeta: null,
+            dropTables: [],
+            rawVariables: this.extractTemplate(wikitext, 'Infobox Item')
+                         || this.extractTemplate(wikitext, 'Infobox Monster')
+                         || this.extractTemplate(wikitext, 'Infobox Bonuses')
+                         || {},
+            pageType,
+            extract: await this.fetchExtract(pageTitle),
+            categoryMembers
+        };
+
+        this.writeCache('generic', pageTitle, result);
+        return result;
+    }
+
     // ── High-Level API ─────────────────────────────────────
 
     /**
@@ -702,6 +848,20 @@ export class WikiEquipmentEnricher {
 
         const bonuses = await this.parseEquipmentBonuses(name);
         const itemMeta = await this.parseItemMeta(name);
+
+        // 🧬 Integration: Real-time GE Price Enrichment
+        if (itemMeta) {
+            const resolution = await CacheForensicsLimb.getInstance().resolveWikiTitle(name);
+            if (resolution.primaryId) {
+                const gePrice = await GeApi.getLatestPrice(resolution.primaryId);
+                if (gePrice) {
+                    itemMeta.geValue = gePrice.price;
+                    itemMeta._geSource = gePrice.source;
+                    itemMeta._geTimestamp = gePrice.timestamp;
+                    logger.debug({ name, price: gePrice.price }, 'Real-time GE price override applied.');
+                }
+            }
+        }
 
         // Extract all raw variables from any infobox
         const wikitext = await this.getWikitextForName(name);
@@ -738,6 +898,25 @@ export class WikiEquipmentEnricher {
 
         const monsterMeta = await this.parseMonsterMeta(name);
         const dropTables = await this.parseDropTables(name);
+
+        // 🧬 Integration: Canonical Bestiary Enrichment
+        if (monsterMeta) {
+            const beastId = await BestiaryApi.resolveId(name);
+            if (beastId) {
+                const beastData = await BestiaryApi.getBeastData(beastId);
+                if (beastData) {
+                    monsterMeta.combatLevel = beastData.level;
+                    monsterMeta.lifePoints = beastData.lifepoints;
+                    monsterMeta.weakness = beastData.weakness;
+                    monsterMeta.slayerLevel = beastData.slayerlevel;
+                    monsterMeta.slayerCategory = beastData.slayercat;
+                    monsterMeta.aggressive = beastData.aggressive;
+                    monsterMeta.poisonous = beastData.poisonous;
+                    monsterMeta.members = beastData.members;
+                    logger.debug({ name, id: beastId }, 'Canonical Bestiary data applied to monster meta.');
+                }
+            }
+        }
 
         const wikitext = await this.getWikitextForName(name);
         const rawVariables = wikitext
@@ -787,6 +966,83 @@ export class WikiEquipmentEnricher {
 
         logger.info({ completed: results.size, total: names.length }, 'Batch enrichment complete.');
         return results;
+    }
+
+    /**
+     * Unified entry point for entity resolution.
+     * Uses QueryClassifier to route requests between Structural (Cache) and Semantic (Wiki) paths.
+     */
+    public async enrichEntity(query: string): Promise<any> {
+        const classified = QueryClassifier.classify(query);
+        logger.info({ query, type: classified.type }, 'Classifying entity query...');
+
+        // 1. Route Structural Queries exclusively to CacheForensicsLimb
+        if (classified.type.startsWith('structural_')) {
+            const forensics = CacheForensicsLimb.getInstance();
+            const id = classified.extractedIds[0];
+
+            if (classified.type === 'structural_enum') {
+                return { type: 'enum', data: await forensics.getEnumDetails(id), tag: '[CACHE_VERIFIED]' };
+            }
+            if (classified.type === 'structural_id') {
+                const item = await forensics.getItemDetails(id);
+                const npc = await forensics.getNpcDetails(id);
+                return { type: 'id_resolution', item, npc, tag: '[CACHE_VERIFIED]' };
+            }
+            return { type: 'structural', data: `Structural query ${classified.type} handled by CacheForensicsLimb`, tag: '[CACHE_EXCLUSIVE]' };
+        }
+
+        // 2. Route Spatial Queries
+        if (classified.type.startsWith('spatial_')) {
+            return { type: 'spatial', query: classified.raw, tag: '[SPATIAL_SENSITIVE]' };
+        }
+
+        // 3. Route Semantic/Hybrid Queries to Wiki + APIs
+        const name = classified.extractedNames[0] || query;
+
+        // Try monster first, then item, then generic
+        const monster = await this.enrichMonster(name);
+        if (monster.monsterMeta) return { ...monster, tag: '[VERIFIED]' };
+
+        const item = await this.enrichItem(name);
+        if (item.itemMeta) return { ...item, tag: '[VERIFIED]' };
+
+        return { ...await this.enrichGeneric(name), tag: '[WIKI_ONLY]' };
+    }
+
+    /**
+     * Tracks game updates for pedagogy freshness.
+     * Parses the Wiki Updates page to flag entities as [POST-UPDATE].
+     */
+    public async fetchLatestUpdates(): Promise<WikiUpdateMeta[]> {
+        logger.info('Fetching latest game updates for temporal grounding...');
+        const wikitext = await this.getWikitextForName('Updates');
+        if (!wikitext) return [];
+
+        const updates: WikiUpdateMeta[] = [];
+        // This is a simplified parser for the Updates page structure
+        const updateBlocks = wikitext.split('==');
+
+        for (const block of updateBlocks) {
+            const dateMatch = block.match(/(\d{1,2}\s\w+ \d{4})/);
+            if (!dateMatch) continue;
+
+            const date = dateMatch[1];
+            const titleMatch = block.match(/==\s*([^|]+?)\s*\|/);
+            const title = titleMatch ? titleMatch[1].trim() : 'Unknown Update';
+
+            updates.push({
+                title,
+                date,
+                category: 'General',
+                url: `https://runescape.wiki/w/Updates#${encodeURIComponent(title)}`,
+                isHotfix: block.toLowerCase().includes('hotfix'),
+                isColdfix: false,
+                affectedEntities: [] // Would require further parsing of the block text for IDs
+            });
+        }
+
+        return updates;
     }
 
     // ── Integration Helper ─────────────────────────────────

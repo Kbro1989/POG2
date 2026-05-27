@@ -12,6 +12,7 @@ import { performance } from 'perf_hooks';
 import { SwitchboardLimb } from '../monitor/SwitchboardLimb.js';
 import { SpatialMetricsRegistry } from '../limbs/spatial/SpatialMetricsRegistry.js';
 import { CanonicalClock } from '../utils/CanonicalClock.js';
+import { GhostSplatHitmarkRegistry, type HitmarkTelemetry } from './GhostSplatHitmarkRegistry.js';
 
 const logger = createLogger('GhostSplatEngine');
 
@@ -158,6 +159,15 @@ export class GhostSplatEngine {
 
     public getLatestField(): GhostSplatField | null {
         return this.latestField;
+    }
+
+    /**
+     * resolveHitmark — Maps a wiki hitmark sprite ID to a combat volition signal.
+     * This provides the feedback loop from the visual hitsplat to the
+     * predictive combat state.
+     */
+    public resolveHitmark(spriteId: string): HitmarkTelemetry | null {
+        return GhostSplatHitmarkRegistry.getInstance().resolveHitmark(spriteId);
     }
 
     public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' } {

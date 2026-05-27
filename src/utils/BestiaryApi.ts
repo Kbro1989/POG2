@@ -1,0 +1,353 @@
+/**
+ * BestiaryApi.ts
+ *
+ * Canonical Bestiary API client for RS3.
+ * Routes through Cloudflare Worker CORS proxy.
+ * Aligns with Jagex Bestiary API specification.
+ *
+ * Sovereign Substrate: Authoritative Monster Data Layer
+ * Cache Authority: D:\\sovereign\\atlas\\bestiary\\cache\\
+ */
+
+import { createLogger } from './logger.js';
+import { ApiThrottle } from './ApiThrottle.js';
+
+const logger = createLogger('BestiaryApi');
+
+// ═══════════════════════════════════════════════════════
+// Interfaces
+// ═══════════════════════════════════════════════════════
+
+export interface BestiaryBeastData {
+  id: number;
+  name: string;
+  description: string;        // Examine text
+  level: number;                // Combat level
+  lifepoints: number;
+  attack: number;
+  defence: number;
+  magic: number;
+  ranged: number;
+  xp: string;                   // Experience as string (e.g., "628.6")
+  size: number;                 // 1x1, 2x2, etc.
+  weakness: string;             // "Slashing", "Arrow", etc.
+  slayerlevel: number;          // 0 = no requirement
+  slayercat: string;            // Category name
+  areas: string[];             // Spawn locations
+  animations: { death: number; attack: number };
+  attackable: boolean;
+  aggressive: boolean;
+  poisonous: boolean;
+  members: boolean;             // BUG: Often false for members content
+  _membersOverride?: string;   // Correction reason
+}
+
+export interface BeastSearchResult {
+  value: number;                // Beast ID
+  label: string;                // Name with optional level suffix "Name (level)"
+}
+
+export interface SlayerCategory {
+  name: string;
+  id: number;
+}
+
+export interface WeaknessType {
+  name: string;
+  id: number;
+}
+
+// ═══════════════════════════════════════════════════════
+// BestiaryApi — Singleton
+// ═══════════════════════════════════════════════════════
+
+export class BestiaryApi {
+  private static readonly BASE = 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/bestiary';
+  private static readonly THROTTLE = ApiThrottle.getInstance();
+
+  // ── Core Resolution ────────────────────────────────────
+
+  /**
+   * Resolve a monster name to its canonical Bestiary ID.
+   *
+   * beastSearch.json performs OR search on each word separately.
+   * "Abyssal demon" returns Abyssal leech, Abyssal guardian, etc.
+   * We filter for exact match first, then fuzzy substring fallback.
+   */
+  static async resolveId(name: string): Promise<number | null> {
+    const results = await this.searchBeasts(name);
+    if (!results || results.length === 0) return null;
+
+    // Exact match: strip " (level)" suffix and compare
+    const exact = results.find(r => {
+      const cleanLabel = r.label.replace(/\s*\(\d+\)\s*$/, '').trim();
+      return cleanLabel.toLowerCase() === name.toLowerCase();
+    });
+
+    if (exact) {
+      logger.debug({ name, id: exact.value }, 'Exact match resolved');
+      return exact.value;
+    }
+
+    // Fuzzy fallback: name appears anywhere in label
+    const fuzzy = results.find(r =>
+      r.label.toLowerCase().includes(name.toLowerCase())
+    );
+
+    if (fuzzy) {
+      logger.info({ name, id: fuzzy.value, label: fuzzy.label }, 'Fuzzy match resolved');
+      return fuzzy.value;
+    }
+
+    logger.warn({ name, results: results.length }, 'No match found in search results');
+    return null;
+  }
+
+  /**
+   * Fetch full beast data by ID with members field correction.
+   *
+   * Known Jagex bug: members=false for members-only slayer content.
+   * Override: if members=false AND slayerlevel>0, force members=true.
+   */
+  static async getBeastData(beastId: number): Promise<BestiaryBeastData | null> {
+    await this.THROTTLE.acquire('bestiary');
+
+    const url = `${this.BASE}/beastData.json?beastid=${beastId}`;
+    logger.debug({ beastId, url }, 'Fetching beast data');
+
+    try {
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'POG2-Sovereign/1.0 (POG2 Pedagogy Engine; RS3 entity enrichment; admin@pog2.internal; +https://github.com/Kbro1989/POG2)' },
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          this.THROTTLE.reportRetryAfter('bestiary', 60); // Default 60s if not provided by server
+        }
+        logger.warn({ beastId, status: res.status }, 'Bestiary API non-OK');
+        return null;
+      }
+
+      const data = await res.json() as BestiaryBeastData;
+
+      // Members field override for known Jagex bug
+      if (data.members === false && data.slayerlevel > 0) {
+        data.members = true;
+        data._membersOverride = 'slayer_level_implied_membership';
+        logger.debug({ beastId, name: data.name }, 'Applied members override');
+      }
+
+      logger.info({ beastId, name: data.name, level: data.level }, 'Beast data fetched');
+      return data;
+
+    } catch (err) {
+      logger.error({ beastId, err }, 'Failed to fetch beast data');
+      return null;
+    }
+  }
+
+  // ── Search Endpoints ───────────────────────────────────
+
+  /**
+   * Search beasts by name term. Returns OR results — use resolveId() for exact matching.
+   */
+  static async searchBeasts(term: string): Promise<BeastSearchResult[]> {
+    await this.THROTTLE.acquire('bestiary');
+
+    const url = `${this.BASE}/beastSearch.json?term=${encodeURIComponent(term)}`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) return [];
+      return await res.json() as BeastSearchResult[];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Get all beast names starting with a specific letter.
+   * Useful for bulk indexing and cache reconciliation.
+   */
+  static async getNamesByLetter(letter: string): Promise<BeastSearchResult[]> {
+    await this.THROTTLE.acquire('bestiary');
+
+    const url = `${this.BASE}/bestiaryNames.json?letter=${encodeURIComponent(letter.toUpperCase())}`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+      if (!res.ok) return [];
+      return await res.json() as BeastSearchResult[];
+    } catch {
+      return [];
+    }
+  }
+
+  // ── Spatial Endpoints ──────────────────────────────────
+
+  /**
+   * Get all area names present in the Bestiary.
+   */
+  static async getAreaNames(): Promise<string[]> {
+    await this.THROTTLE.acquire('bestiary');
+
+    const url = `${this.BASE}/areaNames.json`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) return [];
+      return await res.json() as string[];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Get all beasts in a specific area.
+   * identifier: area name with spaces replaced by +
+   */
+  static async getBeastsByArea(area: string): Promise<BeastSearchResult[]> {
+    await this.THROTTLE.acquire('bestiary');
+
+    const identifier = area.replace(/\s+/g, '+');
+    const url = `${this.BASE}/areaBeasts.json?identifier=${identifier}`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) return [];
+      return await res.json() as BeastSearchResult[];
+    } catch {
+      return [];
+    }
+  }
+
+  // ── Slayer Endpoints ───────────────────────────────────
+
+  /**
+   * Get all Slayer category names and their IDs.
+   */
+  static async getSlayerCategories(): Promise<Record<string, number>> {
+    await this.THROTTLE.acquire('bestiary');
+
+    const url = `${this.BASE}/slayerCatNames.json`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) return {};
+      return await res.json() as Record<string, number>;
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Get all beasts in a Slayer category.
+   * WARNING: Jagex notes this listing is INCOMPLETE for some categories.
+   * Tag results with [INCOMPLETE] when used for pedagogy.
+   */
+  static async getBeastsBySlayerCategory(catId: number): Promise<BeastSearchResult[]> {
+    await this.THROTTLE.acquire('bestiary');
+
+    const url = `${this.BASE}/slayerBeasts.json?identifier=${catId}`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) return [];
+      const results = await res.json() as BeastSearchResult[];
+      logger.info({ catId, count: results.length }, 'Slayer beasts fetched [INCOMPLETE warning]');
+      return results;
+    } catch {
+      return [];
+    }
+  }
+
+  // ── Weakness Endpoints ─────────────────────────────────
+
+  /**
+   * Get all weakness types and their IDs.
+   */
+  static async getWeaknessTypes(): Promise<Record<string, number>> {
+    await this.THROTTLE.acquire('bestiary');
+
+    const url = `${this.BASE}/weaknessNames.json`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) return {};
+      return await res.json() as Record<string, number>;
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Get all beasts with a specific weakness.
+   */
+  static async getBeastsByWeakness(weakId: number): Promise<BeastSearchResult[]> {
+    await this.THROTTLE.acquire('bestiary');
+
+    const url = `${this.BASE}/weaknessBeasts.json?identifier=${weakId}`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) return [];
+      return await res.json() as BeastSearchResult[];
+    } catch {
+      return [];
+    }
+  }
+
+  // ── Level Range Endpoint ───────────────────────────────
+
+  /**
+   * Get all beasts within a combat level range (inclusive).
+   */
+  static async getBeastsByLevelRange(min: number, max: number): Promise<BeastSearchResult[]> {
+    await this.THROTTLE.acquire('bestiary');
+
+    const url = `${this.BASE}/levelGroup.json?identifier=${min}-${max}`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) return [];
+      return await res.json() as BeastSearchResult[];
+    } catch {
+      return [];
+    }
+  }
+
+  // ── High-Level API ─────────────────────────────────────
+
+  /**
+   * Full enrichment pipeline: name → ID → beast data.
+   * Returns null if name cannot be resolved or data unavailable.
+   */
+  static async enrichByName(name: string): Promise<BestiaryBeastData | null> {
+    const id = await this.resolveId(name);
+    if (!id) {
+      logger.warn({ name }, 'Could not resolve beast ID');
+      return null;
+    }
+    return this.getBeastData(id);
+  }
+
+  /**
+   * Batch enrichment with progress callback.
+   */
+  static async batchEnrich(
+    names: string[],
+    onProgress?: (current: number, total: number, name: string) => void
+  ): Promise<Map<string, BestiaryBeastData | null>> {
+    const results = new Map<string, BestiaryBeastData | null>();
+
+    logger.info({ count: names.length }, 'Beginning batch Bestiary enrichment');
+
+    for (let i = 0; i < names.length; i++) {
+      const name = names[i];
+      onProgress?.(i + 1, names.length, name);
+
+      try {
+        const data = await this.enrichByName(name);
+        results.set(name, data);
+      } catch (err) {
+        logger.warn({ name, err }, 'Batch enrichment failed');
+        results.set(name, null);
+      }
+    }
+
+    logger.info({ completed: results.size, total: names.length }, 'Batch enrichment complete');
+    return results;
+  }
+}

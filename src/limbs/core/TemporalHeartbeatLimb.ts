@@ -3,27 +3,24 @@ import { CNSGodheadPulseVolley } from '../../engines/gameplay/CNSGodheadPulseVol
 import { SwitchboardLimb } from '../../monitor/SwitchboardLimb.js';
 import { PlayerAgent } from '../../engines/gameplay/PlayerAgent.js';
 import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
+import { CanonicalClock, TickTier } from '../../utils/CanonicalClock.js';
 
 const logger = createLogger('TemporalHeartbeatLimb');
 
 /**
  * TemporalHeartbeatLimb - The Sovereign Heartbeat Motor.
  * 
- * Orchestrates the dual-rate pulse:
- *  - 600ms: Atomic World Tick (Physics, Movement, Cache Logic).
- *  - 6000ms: Cognitive Player Tick (Ollama Intents, High-level Strategy).
+ * Refactored: Now registered to the CanonicalClock substrate to ensure 
+ * deterministic synchronization across all sovereign limbs.
  */
 export class TemporalHeartbeatLimb {
     private static instance: TemporalHeartbeatLimb;
-    private worldInterval: NodeJS.Timeout | null = null;
     private worldTickCount: number = 0;
-
-    private readonly WORLD_TICK_MS = 600;
-    private readonly PLAYER_TICK_RATIO = 1; // 1:1 synchronization for pro-player reaction time
     private isCognitiveBusy = false;
 
     private constructor() {
-        logger.info('TemporalHeartbeatLimb online. 600ms Synchronous Pulse established.');
+        logger.info('TemporalHeartbeatLimb online. Anchored to CanonicalClock.');
+        this.initializeSovereignPulse();
     }
 
     public static getInstance(): TemporalHeartbeatLimb {
@@ -33,33 +30,16 @@ export class TemporalHeartbeatLimb {
         return TemporalHeartbeatLimb.instance;
     }
 
-    /**
-     * start - Initiates the dual-rate heartbeat.
-     */
-    public start(): void {
-        if (this.worldInterval) return;
-
-        logger.info('Sovereign Heartbeat started. Synchronizing world/player loops.');
-
-        this.worldInterval = setInterval(async () => {
-            await this.pulse();
-        }, this.WORLD_TICK_MS);
+    private initializeSovereignPulse(): void {
+        CanonicalClock.getInstance().registerPulse({
+            domain: 'temporal-motor',
+            name: 'TemporalHeartbeatLimb.pulse',
+            priority: 0,
+            callback: () => this.pulse()
+        });
+        logger.info('TemporalHeartbeatLimb pulse registered to CanonicalClock.');
     }
 
-    /**
-     * stop - Halts the heartbeat.
-     */
-    public stop(): void {
-        if (this.worldInterval) {
-            clearInterval(this.worldInterval);
-            this.worldInterval = null;
-            logger.info('Sovereign Heartbeat halted.');
-        }
-    }
-
-    /**
-     * pulse - Executes a single authoritative world pulse.
-     */
     public async pulse(): Promise<void> {
         this.worldTickCount++;
 
@@ -71,8 +51,7 @@ export class TemporalHeartbeatLimb {
             const pending = switchboard.drainAdminQueue();
             const state = await volley.pulse(pending);
 
-            // 2. Spatial Radar Update (Sensory Cortex)
-            // Render the world state to the CLI for grounding verification
+            // 2. Spatial Radar Update
             const renderer = volley.getRenderer();
             const avatar = volley.getAvatar();
             if (renderer && state && avatar) {
@@ -82,15 +61,14 @@ export class TemporalHeartbeatLimb {
             }
 
             // 3. Pro-Player Cognitive Tick (Sync 1:1)
-            // Skip-on-Busy Guard: Never block the heartbeat if the brain is still thinking
             if (!this.isCognitiveBusy) {
                 this.emitPlayerPulse();
             } else {
-                logger.warn({ tick: this.worldTickCount }, 'Cognitive Skip: Substrate busy. Droping tick to maintain authority.');
+                logger.warn({ tick: this.worldTickCount }, 'Cognitive Skip: Substrate busy.');
             }
 
         } catch (e: any) {
-            logger.error({ error: e.message, tick: this.worldTickCount }, 'Heartbeat pulse volley failure.');
+            logger.error({ error: e.message, tick: this.worldTickCount }, 'Heartbeat pulse failure.');
         }
     }
 
@@ -98,22 +76,17 @@ export class TemporalHeartbeatLimb {
         this.isCognitiveBusy = true;
         try {
             const playerTickNum = this.worldTickCount;
-            logger.info({ tick: playerTickNum }, 'Emitting 600ms Pro-Player Cognitive Pulse.');
-
             const volley = CNSGodheadPulseVolley.getInstance();
             const avatar = volley.getAvatar();
             if (avatar) {
                 const playerAgent = new PlayerAgent(avatar as SovereignAvatarEntity);
-                playerAgent.advanceTick(this.WORLD_TICK_MS);
+                playerAgent.advanceTick(600);
 
-                // Tactical Evaluation (Safespotting Override)
-                // Retrieve the field just broadcasted by CNSGodheadPulseVolley
                 const GhostSplatEngine = (await import('../../substrates/GhostSplatEngine.js')).GhostSplatEngine;
                 const field = GhostSplatEngine.getInstance().getLatestField();
                 if (field) {
                     await playerAgent.evaluateTacticalPosition(field);
 
-                    // Combat Evaluation (CombatRotationEngine)
                     if (avatar.metadata.tacticalState !== 'evading') {
                         const intent = playerAgent.evaluateCombatRotation(field, playerTickNum);
                         if (intent) {
@@ -122,10 +95,6 @@ export class TemporalHeartbeatLimb {
                     }
                 }
             }
-
-            // Phase 28: Trigger OllamaCognitiveLimb
-            // await OllamaCognitiveLimb.getInstance().process(playerTickNum);
-
         } finally {
             this.isCognitiveBusy = false;
         }
@@ -133,10 +102,8 @@ export class TemporalHeartbeatLimb {
 
     public getStatus() {
         return {
-            active: !!this.worldInterval,
             worldTick: this.worldTickCount,
-            playerTick: this.worldTickCount,
-            frequency: { world: '600ms', cognitive: '600ms (Authoritative)' },
+            frequency: '600ms (CanonicalClock)',
             isBusy: this.isCognitiveBusy
         };
     }

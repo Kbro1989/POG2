@@ -38,44 +38,68 @@ async function decodeModel(buf: Buffer, cache: any, modelId: number): Promise<an
     }
 }
 
+interface Submesh {
+    indices: number[];
+    materialId: number;
+    triangleCount: number;
+}
+
 function buildBetaOpcoder(rsmvModel: any): any {
-    // BETA OPCODER: Adapt the legacy opdecoder output to the new Beta model format
-    // In Beta (version 5/format 2), indices are packed in `meshdata.renders`
+    // Format 2 / Version 5: The opdecoder has already decoded triangle indices
+    // into meshdata.renders[].buf as flat arrays of vertex indices (triples).
+    // Each render group is a submesh with its own materialArgument (texture ID).
     const positions = rsmvModel.meshdata.positionBuffer;
     const normals = rsmvModel.meshdata.normalBuffer;
     const uvs = rsmvModel.meshdata.uvBuffer;
+    const renders = rsmvModel.meshdata.renders || [];
 
-    // Diagnostic: Dump renders buffer for topology analysis if available
-    if (rsmvModel.meshdata.renders && rsmvModel.meshdata.renders.length > 0) {
-        console.log(`[Diagnostic] Model has ${rsmvModel.meshdata.renders.length} render buffers.`);
-        // Dump first render buffer for forensics
-        const firstRender = rsmvModel.meshdata.renders[0];
-        if (firstRender && firstRender.buf) {
-            console.log(`[Diagnostic] Render 0 buffer size: ${firstRender.buf.length} bytes`);
-            console.log(`[Diagnostic] Render 0 buffer hex: ${firstRender.buf.slice(0, 64).toString('hex')}...`);
-        }
+    // Stitch all submesh indices and track per-submesh material groups
+    const allIndices: number[] = [];
+    const submeshes: Submesh[] = [];
+
+    for (let i = 0; i < renders.length; i++) {
+        const render = renders[i];
+        if (!render.buf || render.buf.length === 0) continue;
+        if (render.isHidden) continue; // Skip hidden render groups
+
+        const indices = Array.from(render.buf) as number[];
+        const triangleCount = indices.length / 3;
+
+        submeshes.push({
+            indices,
+            materialId: render.materialArgument || 0,
+            triangleCount
+        });
+
+        allIndices.push(...indices);
     }
 
     // Normalize UVs from 16-bit fixed-point to [0, 1]
-    const normalizedUvs = uvs ? Array.from(uvs).map(v => v / 65536.0) : [];
+    const normalizedUvs = uvs ? Array.from(uvs).map((v: number) => v / 65536.0) : [];
+
+    const totalTriangles = allIndices.length / 3;
 
     return {
         positions: Array.from(positions || []),
         normals: Array.from(normals || []),
         uvs: normalizedUvs,
-        indices: [], // To be populated by Beta Opcoder refinement
+        indices: allIndices,
+        submeshes,
         metadata: {
             vertexCount: rsmvModel.meshdata.vertexCount || 0,
-            faceCount: rsmvModel.meshdata.faceCount || 0,
+            faceCount: totalTriangles,
+            submeshCount: submeshes.length,
             betaFormat: rsmvModel.format,
-            betaVersion: rsmvModel.version
+            betaVersion: rsmvModel.version,
+            hasSkin: rsmvModel.meshdata.hasSkin || false,
+            hasBoneIds: rsmvModel.meshdata.hasBoneIds || false
         }
     };
 }
 
 async function main() {
     console.log('=== SOVEREIGN GEOMETRY EXTRACTION PIPELINE ===\n');
-    console.log('Initializing Beta Opcoder Adapter...\n');
+    console.log('Beta Opcoder: renders[].buf → triangle indices (format 2/v5)\n');
     
     const cache = new GameCacheLoader(CACHE_PATH);
     const outDir = 'public/models';
@@ -95,11 +119,15 @@ async function main() {
         const outPath = path.join(outDir, `kit_${modelId}.json`);
         
         await fs.writeFile(outPath, JSON.stringify(mesh, null, 2));
-        console.log(`Saved Babylon.js mesh template to: ${outPath} (Vertices: ${mesh.metadata.vertexCount})\n`);
+        console.log(`  → ${outPath}`);
+        console.log(`    Vertices: ${mesh.metadata.vertexCount} | Triangles: ${mesh.metadata.faceCount} | Submeshes: ${mesh.metadata.submeshCount}`);
+        for (const sub of mesh.submeshes) {
+            console.log(`      Material ${sub.materialId}: ${sub.triangleCount} tris`);
+        }
+        console.log();
     }
     
-    console.log('Pipeline complete. Geometry points are ready for the PBR renderer.');
-    console.log('NOTE: Face indices (meshdata.renders) require full Beta Opcoder format decoding.');
+    console.log('Pipeline complete. Meshes with full triangle topology ready for renderer.');
 }
 
 main().catch(console.error);

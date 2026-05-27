@@ -433,6 +433,41 @@ export class CacheForensicsLimb {
     }
 
     /**
+     * resolveWikiTitle - Maps a wiki-style name to a canonical game ID.
+     * Checks Items and NPCs catalogs.
+     *
+     * @returns Result with primaryId and confidence score.
+     */
+    public async resolveWikiTitle(name: string): Promise<{ primaryId: number | null, confidence: 'exact' | 'fuzzy' | 'ambiguous' | 'none' }> {
+        const term = name.toLowerCase();
+
+        // 1. Try exact match across items and NPCs
+        const itemExact = this.queryTaxonomy({ layer: 'items', term, queryType: 'exact' });
+        const npcExact = this.queryTaxonomy({ layer: 'npcs', term, queryType: 'exact' });
+
+        const exactItems = itemExact.ok ? itemExact.value : [];
+        const exactNpcs = npcExact.ok ? npcExact.value : [];
+
+        if (exactItems.length === 1 && exactNpcs.length === 0) return { primaryId: exactItems[0].id, confidence: 'exact' };
+        if (exactNpcs.length === 1 && exactItems.length === 0) return { primaryId: exactNpcs[0].id, confidence: 'exact' };
+        if (exactItems.length + exactNpcs.length > 1) return { primaryId: null, confidence: 'ambiguous' };
+
+        // 2. Try partial match
+        const itemPartial = this.queryTaxonomy({ layer: 'items', term, queryType: 'partial' });
+        const npcPartial = this.queryTaxonomy({ layer: 'npcs', term, queryType: 'partial' });
+
+        const partialItems = itemPartial.ok ? itemPartial.value : [];
+        const partialNpcs = npcPartial.ok ? npcPartial.value : [];
+
+        const totalMatches = partialItems.length + partialNpcs.length;
+        if (totalMatches === 0) return { primaryId: null, confidence: 'none' };
+        if (totalMatches > 1) return { primaryId: null, confidence: 'ambiguous' };
+
+        const match = partialItems[0] || partialNpcs[0];
+        return { primaryId: match.id, confidence: 'fuzzy' };
+    }
+
+    /**
      * findItemSlot - Identifies the human-readable equipment slot for a given item ID.
      */
     public findItemSlot(itemId: number): string | null {

@@ -41,7 +41,7 @@ export interface MapZoneEntry {
 
 export interface SynthesisEntity {
   id: number;
-  type: 'npc' | 'object' | 'loc';
+  type: 'npc' | 'object' | 'loc' | 'kit';
   x: number;
   y?: number;
   z?: number;
