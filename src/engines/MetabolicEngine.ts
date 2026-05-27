@@ -21,7 +21,7 @@ import { MemoryConsolidationEngine } from './MemoryConsolidationEngine.js';
 import { readFileSync, existsSync } from 'fs';
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
+import { getSovereignRoot, getGodHeadRoot } from '../utils/SovereignPathResolver.js';
 import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger('MetabolicEngine');
@@ -48,7 +48,7 @@ export class MetabolicEngine {
         private readonly search?: DiscoveryEngine,
         private readonly consolidation?: MemoryConsolidationEngine
     ) {
-        this.projectRoot = getSovereignRoot();
+        this.projectRoot = getGodHeadRoot() || process.cwd();
         this.loadWhitelist();
     }
 

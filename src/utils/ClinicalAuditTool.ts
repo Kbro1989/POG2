@@ -1,9 +1,9 @@
-﻿import { type Result, ok } from '../core/models.js';
+import { type Result, ok } from '../core/models.js';
 import { readFile, readdir, stat } from 'fs/promises';
 import { join, extname } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { SovereignIgnoreManager } from './SovereignIgnoreManager.js';
-import { getSystemRoot } from './SovereignPathResolver.js';
+import { getSystemRoot, getGodHeadRoot } from './SovereignPathResolver.js';
 import { createLogger } from "./logger.js";
 
 const logger = createLogger('ClinicalAuditTool');
@@ -26,7 +26,7 @@ interface ForbiddenPattern {
 }
 
 /**
- * ClinicalAuditTool Ã¢â‚¬â€ Sovereign Law enforcement substrate.
+ * ClinicalAuditTool — Sovereign Law enforcement substrate.
  * Scans code for mocks, placeholders, weak typing, and non-clinical logging.
  * Phase 35: Full recursive directory scanning with line-level violation reporting.
  */
@@ -46,7 +46,7 @@ export class ClinicalAuditTool {
     }
 
     private loadWhitelist() {
-        const root = getSystemRoot();
+        const root = getGodHeadRoot() || process.cwd();
         const whitelistPath = join(root, '.metabolic-whitelist.json');
         if (existsSync(whitelistPath)) {
             try {
@@ -165,15 +165,15 @@ export class ClinicalAuditTool {
         const violatedFiles = results.filter(r => !r.isClinical);
 
         if (violatedFiles.length === 0) {
-            return 'Ã¢Å“â€¦ SOVEREIGN AUDIT PASSED: All files are clinically clean.';
+            return '✅ SOVEREIGN AUDIT PASSED: All files are clinically clean.';
         }
 
         const lines: string[] = [
-            `Ã¢ÂÅ’ SOVEREIGN AUDIT: ${violatedFiles.length} file(s) with violations:\n`
+            `❌ SOVEREIGN AUDIT: ${violatedFiles.length} file(s) with violations:\n`
         ];
 
         for (const file of violatedFiles) {
-            lines.push(`  Ã°Å¸â€œâ€ž ${file.filePath}`);
+            lines.push(`  📄 ${file.filePath}`);
             for (const v of file.violations) {
                 lines.push(`     L${v.line}: ${v.pattern}`);
                 lines.push(`           ${v.content}`);

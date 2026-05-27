@@ -548,10 +548,11 @@ export class OrchestrateEngine {
             }, 'COGNITIVE IMMUNOLOGY BLOCK');
             
             return err({
+                name: 'Error',
                 message: `Cognitive Immunology blocked execution. Threat: ${report.threatLevel}. Reasons: ${report.reasons.join('; ')}`,
                 code: 'IMMUNOLOGY_BLOCK',
                 report
-            });
+            } as any);
         }
         
         // WARN: MEDIUM — log but continue with sovereign flag
@@ -572,9 +573,10 @@ export class OrchestrateEngine {
         const tool = this.registry.getTool(toolName);
         if (!tool) {
             return err({
+                name: 'Error',
                 message: `Tool not found: ${toolName}`,
                 code: 'TOOL_NOT_FOUND'
-            });
+            } as any);
         }
         
         return tool.execute(args);
