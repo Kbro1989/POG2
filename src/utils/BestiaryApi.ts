@@ -80,7 +80,7 @@ export class BestiaryApi {
 
     // Exact match: strip " (level)" suffix and compare
     const exact = results.find(r => {
-      const cleanLabel = r.label.replace(/\s*\(\d+\)\s*$/, '').trim();
+      const cleanLabel = (r.label || '').replace(/\s*\(\d+\)\s*$/, '').trim();
       return cleanLabel.toLowerCase() === name.toLowerCase();
     });
 
@@ -91,7 +91,7 @@ export class BestiaryApi {
 
     // Fuzzy fallback: name appears anywhere in label
     const fuzzy = results.find(r =>
-      r.label.toLowerCase().includes(name.toLowerCase())
+      (r.label || '').toLowerCase().includes(name.toLowerCase())
     );
 
     if (fuzzy) {

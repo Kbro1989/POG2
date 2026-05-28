@@ -315,8 +315,34 @@ export class RSEngine {
         }
     }
 
-    public setGrounding(grounding: import("../map/grounding_logic").SovereignGrounding) {
-        this.grounding = grounding;
+    public visualizePathfinding(path: {x: number, z: number}[]) {
+        if (!this.scene) return;
+        const geometry = new THREE.BufferGeometry().setFromPoints(
+            path.map(p => new THREE.Vector3(p.x * 512, 10, p.z * 512))
+        );
+        const material = new THREE.LineBasicMaterial({ color: 0xff0000 });
+        const line = new THREE.Line(geometry, material);
+        this.scene.add(line);
+    }
+
+    public visualizeCollision(zone: import("../map/grounding_logic").MapZoneDefinition) {
+        if (!this.scene) return;
+        // Simple visualization for zone bounds
+        for (const bound of zone.bounds) {
+            const geometry = new THREE.BoxGeometry(
+                (bound.src.xend - bound.src.xstart) * 512,
+                10,
+                (bound.src.zend - bound.src.zstart) * 512
+            );
+            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
+            const box = new THREE.Mesh(geometry, material);
+            box.position.set(
+                (bound.src.xstart + bound.src.xend) / 2 * 512,
+                5,
+                (bound.src.zstart + bound.src.zend) / 2 * 512
+            );
+            this.scene.add(box);
+        }
     }
 
     public walkAvatarTo(x: number, z: number) {
@@ -333,6 +359,10 @@ export class RSEngine {
             walkTo: (x: number, z: number) => {
                 console.log(`[POG2 API] Walking avatar to ${x}, ${z}`);
                 this.walkAvatarTo(x, z);
+            },
+            visualizePath: (path: {x: number, z: number}[]) => {
+                console.log(`[POG2 API] Visualizing path with ${path.length} nodes`);
+                this.visualizePathfinding(path);
             },
             interact: (id: number) => {
                 console.log(`[POG2 API] Attempting interaction with entity ${id}`);

@@ -23,6 +23,7 @@ import { QueryClassifier, QueryType } from './QueryClassifier.js';
 import { CacheForensicsLimb } from '../limbs/spatial/CacheForensicsLimb.js';
 import { GeApi, GePrice } from './GeApi.js';
 import { BestiaryApi, BestiaryBeastData } from './BestiaryApi.js';
+import { ApiThrottle } from './ApiThrottle.js';
 
 const logger = createLogger('WikiEquipmentEnricher');
 
@@ -31,66 +32,80 @@ const logger = createLogger('WikiEquipmentEnricher');
 // ═══════════════════════════════════════════════════════
 
 export interface WikiEquipmentBonuses {
-    tier: number;
-    slot: string;          // mainhand, off-hand, 2h, head, body, legs, feet, hands, back, neck, ring, ammo, pocket, shield
-    class: string;         // melee, ranged, magic, necromancy, all, hybrid
-    style: string;         // slash, stab, crush, none
-    damage: number;
-    accuracy: number;
-    armour: number;
-    lifeBonus: number;
-    prayerBonus: number;
-    attackSpeed: string;   // fastest, fast, average, slow, slowest
+    tier: number | null;
+    slot: string | null;          // mainhand, off-hand, 2h, head, body, legs, feet, hands, back, neck, ring, ammo, pocket, shield
+    class: string | null;         // melee, ranged, magic, necromancy, all, hybrid
+    style: string | null;         // slash, stab, crush, none
+    damage: number | null;
+    accuracy: number | null;
+    armour: number | null;
+    lifeBonus: number | null;
+    prayerBonus: number | null;
+    attackSpeed: string | null;   // fastest, fast, average, slow, slowest
 }
 
 export interface WikiItemMeta {
     name: string;
     examine: string;
-    tradeable: boolean;
-    stackable: boolean;
-    members: boolean;
+    tradeable: boolean | null;
+    stackable: boolean | null;
+    members: boolean | null;
     weight: number;
-    highAlch: number;
-    lowAlch: number;
-    /** Grand Exchange price in coins. 0 = not on GE or unknown. */
-    geValue: number;
-    _geSource?: string;
-    _geTimestamp?: number;
+    highAlch: number | null;
+    lowAlch: number | null;
+    geValue: number | null;
     quest: string;
     release: string;
+    _geSource?: string;
+    _geTimestamp?: number;
 }
 
 export interface WikiMonsterMeta {
     name: string;
-    combatLevel: number;
-    lifePoints: number;
-    maxHit: number;
-    weakness: string;
-    slayerLevel: number;
-    slayerCategory: string;
-    aggressive: boolean;
-    poisonous: boolean;
-    attackStyle: string;
-    members: boolean;
-    experience: number;
-    
+    combatLevel: number | null;
+    lifePoints: number | null;
+    maxHit: number | null;
+    weakness: string | null;
+    slayerLevel: number | null;
+    slayerCategory: string | null;
+    aggressive: boolean | null;
+    poisonous: boolean | null;
+    attackStyle: string | null;
+    members: boolean | null;
+    experience: number | null;
+
     // March 2026 Combat Affinities
-    defence: number;
-    armour: number;
-    affinityMelee: number;
-    affinityRanged: number;
-    affinityMagic: number;
-    affinityNecromancy: number;
+    defence: number | null;
+    armour: number | null;
+    affinityMelee: number | null;
+    affinityRanged: number | null;
+    affinityMagic: number | null;
+    affinityNecromancy: number | null;
 }
 
 export interface WikiDropEntry {
     itemName: string;
     quantity: string;       // "1", "1-3", "1 (noted)", etc.
     rarity: string;         // "Always", "Common", "Uncommon", "Rare", "Very rare", "1/128"
-    isMembers: boolean;
-    notes: string;
+    isMembers: boolean | null;
+    // SovereignSubstrate: Semantic Enrichment Layer
     /** Grand Exchange value in coins. 0 = not tradeable or unknown. Used by LootBeamRegistry. */
-    geValue: number;
+    geValue: number | null;
+    // SovereignSubstrate: Semantic Enrichment Layer
+}
+
+export interface CalculatorParam {
+    name: string;
+    type: string;
+    defaultValue: string;
+    constraints: string;
+}
+
+export interface CalculatorDefinition {
+    template: string;
+    formId: string;
+    resultId: string;
+    params: CalculatorParam[];
 }
 
 export interface WikiDropTable {
@@ -101,13 +116,15 @@ export interface WikiDropTable {
 export interface WikiPageData {
     title: string;
     fetchedAt: number;
-    bonuses: WikiEquipmentBonuses | null;
-    itemMeta: WikiItemMeta | null;
-    monsterMeta: WikiMonsterMeta | null;
+    entityType: 'npc' | 'item' | 'quest' | 'object' | 'unknown';
+    
+    bonuses?: WikiEquipmentBonuses | null;
+    itemMeta?: WikiItemMeta | null;
+    monsterMeta?: WikiMonsterMeta | null;
+    
     dropTables: WikiDropTable[];
     rawVariables: Record<string, string>;
-    pageType?: 'npc' | 'item' | 'equipment' | 'place' | 'mechanic' | 'lore';
-    extract?: string;
+    extract?: string | null;
     categoryMembers?: string[];
 }
 
@@ -323,40 +340,62 @@ export class WikiEquipmentEnricher {
      * Resolves a name to wikitext. Tries direct fetch, follows redirects, falls back to search.
      */
     private async getWikitextForName(name: string): Promise<string | null> {
-        // Try direct page first
-        let wikitext = await this.fetchWikitext(name);
+        const visited = new Set<string>();
+        let currentName = name;
 
-        // Follow #REDIRECT if the page is a redirect stub
-        if (wikitext && wikitext.trim().startsWith('#REDIRECT')) {
-            const redirectMatch = wikitext.match(/\[\[([^\]]+)\]\]/);
-            if (redirectMatch) {
-                const redirectTarget = redirectMatch[1].trim();
-                logger.info({ from: name, to: redirectTarget }, 'Following wiki redirect...');
-                wikitext = await this.fetchWikitext(redirectTarget);
+        while (true) {
+            if (visited.has(currentName.toLowerCase())) {
+                logger.warn({ name, visited: [...visited] }, 'Redirect loop detected');
+                return null;
             }
-        }
+            visited.add(currentName.toLowerCase());
 
-        if (!wikitext) {
-            // Fallback: search for the page
-            const title = await this.searchPage(name);
-            if (title && title !== name) {
-                wikitext = await this.fetchWikitext(title);
-                // Follow redirect on search result too
-                if (wikitext && wikitext.trim().startsWith('#REDIRECT')) {
-                    const redirectMatch = wikitext.match(/\[\[([^\]]+)\]\]/);
-                    if (redirectMatch) {
-                        const redirectTarget = redirectMatch[1].trim();
-                        logger.info({ from: title, to: redirectTarget }, 'Following wiki redirect (search fallback)...');
-                        wikitext = await this.fetchWikitext(redirectTarget);
-                    }
+            let wikitext = await this.fetchWikitext(currentName);
+
+            if (wikitext && wikitext.trim().startsWith('#REDIRECT')) {
+                const redirectMatch = wikitext.match(/\[\[([^\]]+)\]\]/);
+                if (redirectMatch) {
+                    const redirectTarget = redirectMatch[1].trim();
+                    logger.info({ from: currentName, to: redirectTarget }, 'Following wiki redirect...');
+                    currentName = redirectTarget;
+                    continue;
                 }
             }
-        }
 
-        return wikitext;
+            return wikitext;
+        }
     }
 
     // ── Template Parser ────────────────────────────────────
+
+    /**
+     * Parses jcConfig definitions from raw page HTML.
+     */
+    public parseJCConfig(htmlContent: string): CalculatorDefinition[] {
+        const definitions: CalculatorDefinition[] = [];
+        const configRegex = /<pre class="jcConfig">([\s\S]*?)<\/pre>/g;
+        let match;
+
+        while ((match = configRegex.exec(htmlContent)) !== null) {
+            const lines = match[1].split('\n');
+            const def: CalculatorDefinition = { template: '', formId: '', resultId: '', params: [] };
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                const [key, ...valueParts] = trimmed.split('=').map(s => s.trim());
+                const value = valueParts.join('=');
+                if (key === 'template') def.template = value;
+                else if (key === 'form') def.formId = value;
+                else if (key === 'result') def.resultId = value;
+                else if (key === 'param') {
+                    const [pName, pType, pDefault, pConstraints] = value.split('|').map(s => s.trim());
+                    def.params.push({ name: pName, type: pType, defaultValue: pDefault, constraints: pConstraints });
+                }
+            }
+            if (def.template) definitions.push(def);
+        }
+        return definitions;
+    }
 
     /**
      * Extract a single template's parameters from wikitext.
@@ -543,16 +582,16 @@ export class WikiEquipmentEnricher {
         if (!bonuses) return null;
 
         return {
-            tier: this.safeInt(bonuses['tier'] || bonuses['level'] || '0'),
-            slot: bonuses['slot'] || 'unknown',
-            class: bonuses['class'] || bonuses['type'] || 'none',
-            style: bonuses['style'] || bonuses['astyle'] || 'none',
-            damage: this.safeInt(bonuses['damage'] || bonuses['dmg'] || '0'),
-            accuracy: this.safeInt(bonuses['accuracy'] || bonuses['acc'] || '0'),
-            armour: this.safeInt(bonuses['armour'] || bonuses['armor'] || bonuses['defence'] || '0'),
-            lifeBonus: this.safeInt(bonuses['life'] || bonuses['lp'] || bonuses['lifepoints'] || '0'),
-            prayerBonus: this.safeInt(bonuses['prayer'] || '0'),
-            attackSpeed: bonuses['speed'] || bonuses['aspeed'] || 'average'
+            tier: this.safeInt(bonuses['tier'] || bonuses['level']),
+            slot: bonuses['slot'] || null,
+            class: bonuses['class'] || bonuses['type'] || null,
+            style: bonuses['style'] || bonuses['astyle'] || null,
+            damage: this.safeInt(bonuses['damage'] || bonuses['dmg']),
+            accuracy: this.safeInt(bonuses['accuracy'] || bonuses['acc']),
+            armour: this.safeInt(bonuses['armour'] || bonuses['armor'] || bonuses['defence']),
+            lifeBonus: this.safeInt(bonuses['life'] || bonuses['lp'] || bonuses['lifepoints']),
+            prayerBonus: this.safeInt(bonuses['prayer']),
+            attackSpeed: bonuses['speed'] || bonuses['aspeed'] || null
         };
     }
 
@@ -596,25 +635,25 @@ export class WikiEquipmentEnricher {
 
         return {
             name: info['name'] || npcName,
-            combatLevel: this.safeInt(info['combat'] || info['combatlevel'] || info['level'] || '0'),
-            lifePoints: this.safeInt(info['lifepoints'] || info['lp'] || info['hp'] || '0'),
-            maxHit: this.safeInt(info['max hit'] || info['maxhit'] || '0'),
-            weakness: info['weakness'] || 'None',
-            slayerLevel: this.safeInt(info['slaylvl'] || info['slayerlevel'] || '0'),
-            slayerCategory: info['slayercat'] || info['category'] || 'None',
+            combatLevel: this.safeInt(info['combat'] || info['combatlevel'] || info['level']),
+            lifePoints: this.safeInt(info['lifepoints'] || info['lp'] || info['hp']),
+            maxHit: this.safeInt(info['max hit'] || info['maxhit']),
+            weakness: info['weakness'] || null,
+            slayerLevel: this.safeInt(info['slaylvl'] || info['slayerlevel']),
+            slayerCategory: info['slayercat'] || info['category'] || null,
             aggressive: this.safeBool(info['aggressive']),
             poisonous: this.safeBool(info['poisonous'] || info['poison']),
-            attackStyle: info['attack style'] || info['attackstyle'] || info['style'] || 'Melee',
+            attackStyle: info['attack style'] || info['attackstyle'] || info['style'] || null,
             members: this.safeBool(info['members']),
-            experience: this.safeInt(info['experience'] || info['xp'] || '0'),
-            
+            experience: this.safeInt(info['experience'] || info['xp']),
+
             // March 2026 Combat Affinities
-            defence: this.safeInt(info['defence'] || '0'),
-            armour: this.safeInt(info['armour'] || '0'),
-            affinityMelee: this.safeInt(info['aff_melee'] || '55'),
-            affinityRanged: this.safeInt(info['aff_ranged'] || '55'),
-            affinityMagic: this.safeInt(info['aff_magic'] || '55'),
-            affinityNecromancy: this.safeInt(info['aff_necromancy'] || '55')
+            defence: this.safeInt(info['defence']),
+            armour: this.safeInt(info['armour']),
+            affinityMelee: this.safeInt(info['aff_melee']),
+            affinityRanged: this.safeInt(info['aff_ranged']),
+            affinityMagic: this.safeInt(info['aff_magic']),
+            affinityNecromancy: this.safeInt(info['aff_necromancy'])
         };
     }
 
@@ -740,8 +779,8 @@ export class WikiEquipmentEnricher {
         if (lower.includes('{{infobox monster')) return 'npc';
         if (lower.includes('{{infobox item')) return 'item';
         if (lower.includes('{{infobox bonuses')) return 'equipment';
-        if (lower.includes('{{infobox location') || lower.includes('{{infobox area'))) return 'place';
-        if (lower.includes('{{infobox mechanic') || lower.includes('{{infobox gameplay'))) return 'mechanic';
+        if (lower.includes("{{infobox location") || lower.includes("{{infobox area")) return 'place';
+        if (lower.includes("{{infobox mechanic") || lower.includes("{{infobox gameplay")) return 'mechanic';
         return 'lore';
     }
 
@@ -816,6 +855,7 @@ export class WikiEquipmentEnricher {
         const result: WikiPageData = {
             title: pageTitle,
             fetchedAt: Date.now(),
+            entityType: 'unknown', // Set appropriately based on detection if possible
             bonuses: null,
             itemMeta: null,
             monsterMeta: null,
@@ -824,7 +864,6 @@ export class WikiEquipmentEnricher {
                          || this.extractTemplate(wikitext, 'Infobox Monster')
                          || this.extractTemplate(wikitext, 'Infobox Bonuses')
                          || {},
-            pageType,
             extract: await this.fetchExtract(pageTitle),
             categoryMembers
         };
@@ -874,9 +913,9 @@ export class WikiEquipmentEnricher {
         const result: WikiPageData = {
             title: name,
             fetchedAt: Date.now(),
+            entityType: 'item',
             bonuses,
             itemMeta,
-            monsterMeta: null,
             dropTables: [],
             rawVariables
         };
@@ -926,8 +965,7 @@ export class WikiEquipmentEnricher {
         const result: WikiPageData = {
             title: name,
             fetchedAt: Date.now(),
-            bonuses: null,
-            itemMeta: null,
+            entityType: 'npc',
             monsterMeta,
             dropTables,
             rawVariables
@@ -982,7 +1020,7 @@ export class WikiEquipmentEnricher {
             const id = classified.extractedIds[0];
 
             if (classified.type === 'structural_enum') {
-                return { type: 'enum', data: await forensics.getEnumDetails(id), tag: '[CACHE_VERIFIED]' };
+                return { type: 'enum', data: await forensics.getItemDetails(id), tag: '[CACHE_VERIFIED]' };
             }
             if (classified.type === 'structural_id') {
                 const item = await forensics.getItemDetails(id);
@@ -1000,12 +1038,14 @@ export class WikiEquipmentEnricher {
         // 3. Route Semantic/Hybrid Queries to Wiki + APIs
         const name = classified.extractedNames[0] || query;
 
-        // Try monster first, then item, then generic
-        const monster = await this.enrichMonster(name);
-        if (monster.monsterMeta) return { ...monster, tag: '[VERIFIED]' };
+        // Specialized Collector Routing (Dynamic imports to break circular dependency)
+        const { NpcCollector } = await import('./NpcCollector.js');
+        const npcData = await NpcCollector.getInstance().collect(name);
+        if (npcData && npcData.beastData) return { ...npcData, entityType: 'npc', tag: '[VERIFIED]' };
 
-        const item = await this.enrichItem(name);
-        if (item.itemMeta) return { ...item, tag: '[VERIFIED]' };
+        const { ItemCollector } = await import('./ItemCollector.js');
+        const itemData = await ItemCollector.getInstance().collect(name);
+        if (itemData && itemData.meta) return { ...itemData, entityType: 'item', tag: '[VERIFIED]' };
 
         return { ...await this.enrichGeneric(name), tag: '[WIKI_ONLY]' };
     }
@@ -1054,8 +1094,8 @@ export class WikiEquipmentEnricher {
     public toItemBookPatch(bonuses: WikiEquipmentBonuses): Record<string, any> {
         const patch: Record<string, any> = {};
 
-        if (bonuses.tier > 0) {
-            const cls = bonuses.class.toLowerCase();
+        if (bonuses.tier !== null && bonuses.tier > 0) {
+            const cls = bonuses.class?.toLowerCase() || '';
             if (cls === 'melee' || bonuses.style === 'slash' || bonuses.style === 'stab' || bonuses.style === 'crush') {
                 patch.req_attack = bonuses.tier;
             } else if (cls === 'ranged') {
@@ -1068,11 +1108,11 @@ export class WikiEquipmentEnricher {
             patch.tier = bonuses.tier;
         }
 
-        if (bonuses.damage > 0) patch.damage = bonuses.damage;
-        if (bonuses.accuracy > 0) patch.accuracy = bonuses.accuracy;
-        if (bonuses.armour > 0) patch.armour = bonuses.armour;
-        if (bonuses.lifeBonus > 0) patch.lifeBonus = bonuses.lifeBonus;
-        if (bonuses.prayerBonus > 0) patch.prayerBonus = bonuses.prayerBonus;
+        if (bonuses.damage !== null && bonuses.damage > 0) patch.damage = bonuses.damage;
+        if (bonuses.accuracy !== null && bonuses.accuracy > 0) patch.accuracy = bonuses.accuracy;
+        if (bonuses.armour !== null && bonuses.armour > 0) patch.armour = bonuses.armour;
+        if (bonuses.lifeBonus !== null && bonuses.lifeBonus > 0) patch.lifeBonus = bonuses.lifeBonus;
+        if (bonuses.prayerBonus !== null && bonuses.prayerBonus > 0) patch.prayerBonus = bonuses.prayerBonus;
         patch.slot = bonuses.slot;
         patch.style = bonuses.style;
         patch.attackSpeed = bonuses.attackSpeed;
@@ -1082,16 +1122,20 @@ export class WikiEquipmentEnricher {
 
     // ── Utilities ──────────────────────────────────────────
 
-    private safeInt(value: string): number {
+    private safeInt(value: string | undefined): number | null {
+        if (value === undefined) return null;
         const cleaned = value.replace(/,/g, '').replace(/[^0-9.-]/g, '');
+        if (cleaned === '') return null;
         const parsed = parseInt(cleaned, 10);
-        return isNaN(parsed) ? 0 : parsed;
+        return isNaN(parsed) ? null : parsed;
     }
 
-    private safeBool(value: string | undefined): boolean {
-        if (!value) return false;
+    private safeBool(value: string | undefined): boolean | null {
+        if (!value) return null;
         const lower = value.toLowerCase().trim();
-        return lower === 'yes' || lower === 'true' || lower === '1';
+        if (lower === 'yes' || lower === 'true' || lower === '1') return true;
+        if (lower === 'no' || lower === 'false' || lower === '0') return false;
+        return null;
     }
 
     /**

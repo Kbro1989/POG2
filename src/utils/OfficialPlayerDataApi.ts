@@ -31,6 +31,7 @@ export interface PlayerProfile {
     xp: number;
     rank: number;
   }>;
+  activityStats: Record<string, HiscoreEntry>;
   activities: Array<{
     text: string;
     date: string;
@@ -83,6 +84,20 @@ export const SKILL_NAMES: Record<number, string> = {
   28: 'Necromancy'
 };
 
+export const ACTIVITY_NAMES: string[] = [
+  'Bounty Hunter', 'B.H. Rogues', 'Dominion Tower', 'The Crucible',
+  'Castle Wars games', 'B.A. Attackers', 'B.A. Defenders', 'B.A. Collectors',
+  'B.A. Healers', 'Duel Tournament', 'Mobilising Armies', 'Conquest',
+  'Fist of Guthix', 'GG: Athletics', 'GG: Resource Race',
+  'WE2: Armadyl Lifetime Contribution', 'WE2: Bandos Lifetime Contribution',
+  'WE2: Armadyl PvP kills', 'WE2: Bandos PvP kills',
+  'Heist Guard Level', 'Heist Robber Level', 'CFP: 5 game average',
+  'AF15: Cow Tipping', 'AF15: Rats killed after the miniquest',
+  'RuneScore', 'Clue Scrolls Easy', 'Clue Scrolls Medium',
+  'Clue Scrolls Hard', 'Clue Scrolls Elite', 'Clue Scrolls Master',
+  'Leagues Points'
+];
+
 // ═══════════════════════════════════════════════════════
 // OfficialPlayerDataApi — Singleton
 // ═══════════════════════════════════════════════════════
@@ -94,65 +109,67 @@ export class OfficialPlayerDataApi {
   // ── Runemetrics Profile ────────────────────────────────
 
   /**
-   * Fetch player profile from Runemetrics.
-   * Includes skills, activities, quests, combat level.
+   * Fetch comprehensive player profile data.
+   * Now synthesized from Hiscores since Runemetrics is deprecated.
    */
   static async getProfile(playerName: string): Promise<PlayerProfile | null> {
-    await this.THROTTLE.acquire('runemetrics');
+    const hiscores = await this.getHiscores(playerName);
+    if (!hiscores) return null;
 
-    const url = `${this.PROXY_BASE}/runemetrics/profile?user=${encodeURIComponent(playerName)}&activities=20`;
-    logger.debug({ playerName, url }, 'Fetching Runemetrics profile');
+    const overall = hiscores.get('Overall') || { rank: 0, level: 0, xp: 0 };
+    const skills = Array.from(hiscores.entries())
+      .filter(([name]) => name !== 'Overall')
+      .map(([name, entry]) => ({
+        id: Object.entries(SKILL_NAMES).find(([_, n]) => n === name)?.[0] as number || -1,
+        name,
+        level: entry.level,
+        xp: entry.xp,
+        rank: entry.rank
+      }));
 
-    try {
-      const res = await fetch(url, {
-        headers: {
-          'User-Agent': 'POG2-Sovereign/1.0 (POG2 Pedagogy Engine; RS3 player data; admin@pog2.internal; +https://github.com/Kbro1989/POG2)',
-          'Accept': 'application/json'
-        },
-        signal: AbortSignal.timeout(15000)
-      });
+    const skillNameSet = new Set(Object.values(SKILL_NAMES));
+    skillNameSet.add('Overall');
 
-      if (!res.ok) {
-        if (res.status === 429) this.THROTTLE.reportRetryAfter('runemetrics', 60);
-        logger.warn({ playerName, status: res.status }, 'Runemetrics non-OK');
-        return null;
-      }
+    return {
+      name: playerName,
+      rank: overall.rank.toString(),
+      totalSkill: skills.reduce((sum, s) => sum + s.level, 0),
+      totalXp: overall.xp,
+      combatLevel: this.calculateCombatLevel(hiscores),
+      skills,
+      activityStats: Array.from(hiscores.entries())
+        .filter(([name]) => !skillNameSet.has(name))
+        .reduce((acc, [name, entry]) => ({ ...acc, [name]: entry }), {}),
+      activities: [],
+      questsStarted: 0,
+      questsComplete: 0,
+      questsNotStarted: 0,
+      loggedIn: false
+    };
+  }
 
-      const data = await res.json();
+  /**
+   * Calculate RS3 combat level from hiscores data.
+   */
+  private static calculateCombatLevel(hiscores: Map<string, HiscoreEntry>): number {
+    const attack = hiscores.get('Attack')?.level || 1;
+    const strength = hiscores.get('Strength')?.level || 1;
+    const defence = hiscores.get('Defence')?.level || 1;
+    const constitution = hiscores.get('Constitution')?.level || 10;
+    const prayer = hiscores.get('Prayer')?.level || 1;
+    const ranged = hiscores.get('Ranged')?.level || 1;
+    const magic = hiscores.get('Magic')?.level || 1;
+    const necromancy = hiscores.get('Necromancy')?.level || 1;
+    const summoning = hiscores.get('Summoning')?.level || 1;
 
-      // Handle private profiles
-      if (data.error === 'PROFILE_PRIVATE') {
-        logger.warn({ playerName }, 'Runemetrics profile is private');
-        return null;
-      }
+    const base = 0.25 * (defence + constitution + prayer + summoning);
+    const melee = 0.325 * (attack + strength);
+    const range = 0.325 * (ranged * 2);
+    const mage = 0.325 * (magic * 2);
+    const necro = 0.325 * (necromancy * 2);
+    const highest = Math.max(melee, range, mage, necro);
 
-      return {
-        name: data.name || playerName,
-        rank: data.rank || '0',
-        totalSkill: data.totalskill || 0,
-        totalXp: data.totalxp || 0,
-        combatLevel: data.combatlevel || 0,
-        skills: (data.skillvalues || []).map((s: any) => ({
-          id: s.id,
-          name: SKILL_NAMES[s.id] || 'Unknown',
-          level: s.level,
-          xp: s.xp,
-          rank: s.rank
-        })),
-        activities: (data.activities || []).map((a: any) => ({
-          text: a.text || '',
-          date: a.date || ''
-        })),
-        questsStarted: data.questsstarted || 0,
-        questsComplete: data.questscomplete || 0,
-        questsNotStarted: data.questsnotstarted || 0,
-        loggedIn: data.loggedIn === 'true'
-      };
-
-    } catch (err) {
-      logger.error({ playerName, err }, 'Runemetrics fetch failed');
-      return null;
-    }
+    return Math.floor(base + highest);
   }
 
   // ── Hiscores Lite ──────────────────────────────────────
@@ -195,6 +212,13 @@ export class OfficialPlayerDataApi {
         if (skillName) {
           results.set(skillName, { rank, level, xp });
         }
+      }
+
+      // Line 30 onwards are activities
+      for (let i = 30; i < lines.length; i++) {
+        const [rank, value, xp] = lines[i].split(',').map(v => parseInt(v) || 0);
+        const activityName = ACTIVITY_NAMES[i - 30] || `Activity_${i - 30}`;
+        results.set(activityName, { rank, level: value, xp });
       }
 
       return results;

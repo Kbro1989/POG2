@@ -98,6 +98,8 @@ import { VideoAssemblerLimb } from '../limbs/creative/VideoAssemblerLimb.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import { getSovereignRoot, getGodHeadRoot, getLearningDbPath, getPipelineRootPath, getrsmvCachePath, resolveSovereignPath } from '../utils/SovereignPathResolver.js';
 import { IntentVerifier } from './IntentVerifier.js';
+import { NpcCollector } from '../utils/NpcCollector.js';
+import { ItemCollector } from '../utils/ItemCollector.js';
 import { type Result, type EngineOutput, YaoState, isOk, ok, err, type ThinkingNexus, type ContextCard, type Todo, type TodoStatus, CircuitState, YAO_PRODUCTION_PREREQUISITES, type Plan, type OraclePlan, type ArchitectureManifest, SovereignDomain, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, type ActuationResult, CognitivePolarity, InterpretationContract } from '../core/models.js';
 import { AIDispatcher } from '../api/ai/Dispatcher.js';
 import { DomainLocker, DomainViolationError } from '../routing/DomainLocker.js';
@@ -1020,6 +1022,30 @@ export class OrchestrateEngine {
         this.nodeTester.registerLimbs({ RSMVController: this.RSMVController });
         this.nodeTester.registerLimbs({ CacheForensicsLimb: this.cacheForensics });
         this.nodeTester.registerLimbs({ GhostSplatEngine: GhostSplatEngine.getInstance() });
+
+        this.registry.register({
+            name: 'collect_npc',
+            description: 'Enrich an NPC using live substrate forensics and Bestiary stats.',
+            domain: SovereignDomain.RESEARCH,
+            category: 'core',
+            parameters: { name: 'string' },
+            execute: async (args) => {
+                const res = await NpcCollector.getInstance().collect(args.name as string);
+                return ok({ output: `NPC enrichment for ${args.name} complete.`, data: res });
+            }
+        });
+
+        this.registry.register({
+            name: 'collect_item',
+            description: 'Enrich an Item using live substrate forensics and GE pricing.',
+            domain: SovereignDomain.RESEARCH,
+            category: 'core',
+            parameters: { name: 'string' },
+            execute: async (args) => {
+                const res = await ItemCollector.getInstance().collect(args.name as string);
+                return ok({ output: `Item enrichment for ${args.name} complete.`, data: res });
+            }
+        });
 
         // Massive Registry Injection to prevent DEGRADED statuses
         this.nodeTester.registerLimbs({ HexagramManager: undefined });
