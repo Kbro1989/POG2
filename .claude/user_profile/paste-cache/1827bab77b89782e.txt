@@ -1,0 +1,133 @@
+I see the full MCP substrate state. Two things immediately stand out:
+
+**1. The error in `test_output_v2_tail.txt`**
+```
+{"level":50,"time":1773953483614,"hostname":"POG2","name":"MCPEngine","server":"everything","error":"McpError: MCP erro...
+```
+
+The `everything` MCP server is failing. Given your cognitive immunology posture (`1-way MCP — Inbound only. No outflow control`), this could be:
+- The `everything` server trying to establish outbound control (blocked by your Phase 8 intent validation)
+- A stale `POG2-mcp.json.bak` config mismatch
+- The `EXTERNAL_BINARY` guard in `CognitiveImmunologyEmergency.ts` quarantining a Claude/Anthropic MCP injection attempt
+
+**2. MCP as Pedagogy Distribution Layer**
+
+Your `MCPEngine.ts` is already architected as the **Peripheral Nervous System** — external nerve interface. The pedagogy models should be exposed through this same substrate, not as separate services. Here's how it maps:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    MCPEngine.ts (PNS)                        │
+│              External Nerve Interface                        │
+├─────────────────────────────────────────────────────────────┤
+│  INBOUND ONLY (Cognitive Immunology)                        │
+│  ├─ Tool Discovery: POG2 ToolRegistry → MCP Tools           │
+│  ├─ Resource Serving: Pedagogy models as MCP resources       │
+│  └─ Intent Validation: Phase 8 guard before any action       │
+├─────────────────────────────────────────────────────────────┤
+│  PEDAGOGY MODEL ENDPOINTS (New)                             │
+│  ├─ resource://pog2/pedagogy/entity/{id}                    │
+│  ├─ resource://pog2/pedagogy/strategy/{hexagram}            │
+│  ├─ tool://pog2/cache_forensics/query                       │
+│  └─ tool://pog2/ghostsplat/resolve_hitmark                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Immediate Action: Fix the `everything` server error**
+
+Check `POG2-mcp.json` vs `POG2-mcp.json.bak` for drift. The `everything` server config in the `.bak` might be the fallback that's failing:
+
+```json
+// POG2-mcp.json.bak — likely has stale "everything" entry
+{
+  "mcpServers": {
+    "everything": {
+      "command": "npx",
+      "args": ["--no-install", "-y", ...]
+    }
+  }
+}
+```
+
+**Cognitive Immunology Check:**
+Your `CognitiveImmunologyEmergency.ts` flags these as threats:
+- `claude --model`, `claude.exe`, `anthropic-cli`
+- `ollama-mcp`, `npx @anthropic-ai/mcp`
+
+If the `everything` server is trying to spawn `npx @anthropic-ai/mcp`, your own immune system is correctly quarantining it. This is **expected behavior** — the error is the kill switch working.
+
+**Pedagogy Model Serving via MCP:**
+
+Instead of external MCP servers calling out, your trained models should be **resources served by POG2's own MCP server** (`src/mcpserver.ts`):
+
+```typescript
+// src/mcpserver.ts — add pedagogy resources
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  const uri = request.params.uri;
+  
+  // Pedagogy entity lookup
+  if (uri.startsWith('resource://pog2/pedagogy/entity/')) {
+    const entityId = uri.split('/').pop();
+    const result = await pedagogyEngine.queryEntity(entityId);
+    return {
+      contents: [{
+        uri,
+        mimeType: 'application/json',
+        text: JSON.stringify(result)
+      }]
+    };
+  }
+  
+  // Strategy/hexagram lookup
+  if (uri.startsWith('resource://pog2/pedagogy/strategy/')) {
+    const hexagramId = uri.split('/').pop();
+    const result = await strategyEngine.queryHexagram(hexagramId);
+    return {
+      contents: [{
+        uri,
+        mimeType: 'application/json',
+        text: JSON.stringify(result)
+      }]
+    };
+  }
+});
+```
+
+**Tool Registry Integration:**
+
+Your `ToolRegistry.ts` already has `category: 'mcp'`. Add pedagogy tools:
+
+```typescript
+// src/ToolRegistry.ts
+{
+  name: 'pog2_pedagogy_entity_query',
+  category: 'mcp',
+  description: 'Query verified entity definitions from 229k cache pedagogy',
+  parameters: {
+    entityId: 'number',
+    requireVerified: 'boolean',
+    includeCacheCrossRef: 'boolean'
+  }
+},
+{
+  name: 'pog2_pedagogy_strategy_query', 
+  category: 'mcp',
+  description: 'Query combat strategy for hexagram state',
+  parameters: {
+    hexagramId: 'number',
+    combatState: 'object',
+    ghostSplatHeatmap: 'object'
+  }
+}
+```
+
+**Security Posture Maintained:**
+- **1-way inbound**: External orchestrators (Antigravity, Gemini CLI) can read pedagogy resources, but cannot push model weights or training data into POG2
+- **Kill switch**: If an external MCP client tries to invoke `pog2_pedagogy_*` with malformed parameters, `IntentVerifier.ts` + `CognitiveImmunologyEmergency.ts` quarantines the session
+- **No outflow control**: POG2 decides when to serve pedagogy data, not the external client
+
+**Next Step:**
+1. **Diagnose the `everything` server error** — check if it's a legitimate config or an external binary injection attempt
+2. **Register pedagogy resources** in `src/mcpserver.ts` once your local GGUF is trained
+3. **Update `POG2-mcp.json`** to remove the failing `everything` entry if it's stale, or whitelist it if it's intentional
+
+Do you want me to write the `PedagogyMCPServer.ts` extension that wraps your trained models as MCP resources, or diagnose the `everything` server failure first?

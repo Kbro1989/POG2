@@ -1,0 +1,118 @@
+/**
+ * generate_pedagogy_corpus.ts
+ *
+ * Sovereignty Grounding Pipeline: Corpus Generation.
+ *
+ * This script leverages the Unified Enrichment Layer (WikiEquipmentEnricher)
+ * to generate a high-fidelity dataset of [VERIFIED] entities.
+ *
+ * Grounding Sources:
+ * 1. RS Wiki (Semantic/Documentation)
+ * 2. CacheForensicsLimb (Structural/Official IDs)
+ * 3. GeApi (Real-time Market Value)
+ * 4. BestiaryApi (Canonical Monster Stats)
+ * 5. OfficialPlayerDataApi (Authoritative Player Stats)
+ *
+ * Target: D:\sovereign\memory\pedagogy\corpus\verified_entities.jsonl
+ */
+
+import { WikiEquipmentEnricher } from '../utils/WikiEquipmentEnricher.js';
+import { resolveSovereignPath } from '../utils/SovereignPathResolver.js';
+import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { join } from 'path';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('CorpusGenerator');
+
+// ═══════════════════════════════════════════════════════
+// Canonical Target Entities
+// ═══════════════════════════════════════════════════════
+
+const TARGET_ENTITIES = {
+    items: [
+        'Abyssal whip',
+        'Twisted bow',
+        "Tumeken's shadow",
+        'Scythe of vitiation',
+        'Bandos boots',
+        'Slayer helmet',
+        'Dragon defender',
+        'Skeletal armor',
+        'Guthans armor',
+        'Ancient staff'
+    ],
+    monsters: [
+        'Vorkath',
+        'Zulrah',
+        'General Graardor',
+        'Bandos General',
+        'Nex',
+        'Corporeal Beast',
+        'Abyssal demon',
+        'Chaos elemental',
+        'TzKal Wes',
+        'Void Knight'
+    ],
+    players: [
+        'Zezima',
+        'Pick of Gods',
+        ' la- la'
+    ]
+};
+
+async function generate() {
+    logger.info('Starting Pedagogy Corpus Generation...');
+
+    const enricher = WikiEquipmentEnricher.getInstance();
+    const corpusPath = resolveSovereignPath('memory/pedagogy/corpus/verified_entities.jsonl');
+    const corpusDir = join(corpusPath, '..');
+
+    if (!existsSync(corpusDir)) {
+        mkdirSync(corpusDir, { recursive: true });
+    }
+
+    const corpus: any[] = [];
+
+    // 1. Enrich Items
+    logger.info('Enriching Item Targets...');
+    for (const name of TARGET_ENTITIES.items) {
+        const data = await enricher.enrichEntity(name);
+        if (data) {
+            corpus.push({ entity: name, type: 'item', data });
+            logger.debug({ name }, 'Item verified');
+        }
+    }
+
+    // 2. Enrich Monsters
+    logger.info('Enriching Monster Targets...');
+    for (const name of TARGET_ENTITIES.monsters) {
+        const data = await enricher.enrichEntity(name);
+        if (data) {
+            corpus.push({ entity: name, type: 'monster', data });
+            logger.debug({ name }, 'Monster verified');
+        }
+    }
+
+    // 3. Enrich Players
+    logger.info('Enriching Player Targets...');
+    for (const name of TARGET_ENTITIES.players) {
+        // enrichEntity currently routes to enrichMonster then enrichItem then generic.
+        // We need to add a specific player enrichment path or use enrichGeneric.
+        const data = await enricher.enrichGeneric(name);
+        if (data) {
+            corpus.push({ entity: name, type: 'player', data });
+            logger.debug({ name }, 'Player verified (generic)');
+        }
+    }
+
+    // Write to JSONL
+    const jsonl = corpus.map(entry => JSON.stringify(entry)).join('\n') + '\n';
+    writeFileSync(corpusPath, jsonl, 'utf8');
+
+    logger.info({ count: corpus.length, path: corpusPath }, 'Pedagogy Corpus generated successfully.');
+}
+
+generate().catch(err => {
+    logger.error({ err }, 'Corpus generation failed');
+    process.exit(1);
+});

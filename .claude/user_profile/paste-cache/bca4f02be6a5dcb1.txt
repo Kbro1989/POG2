@@ -1,0 +1,39 @@
+ The implementation is complete and saved. Here's the summary of what was built:
+
+**[BestiaryApi.ts](sandbox:///mnt/agents/output/BestiaryApi.ts)** — Canonical RS3 Bestiary API client with the following features:
+
+| Feature | Implementation |
+|---|---|
+| **CORS Proxy** | Routes through `https://pog2.kristain33rs.workers.dev/api/bestiary` |
+| **resolveId(name)** | Exact-match prioritization with `(level)` suffix stripping, then fuzzy fallback |
+| **getBeastData(id)** | Members field override for known Jagex bug (`slayerlevel > 0` → `members = true`) |
+| **Interface Alignment** | `description`, `level`, `slayerlevel`, `slayercat`, `xp: string`, `attackable`, `_membersOverride` |
+| **All 9 Endpoints** | beastSearch, bestiaryNames, areaNames, areaBeasts, slayerCatNames, slayerBeasts, weaknessNames, weaknessBeasts, levelGroup |
+| **ApiThrottle Integration** | Per-domain throttling with 429 Retry-After support |
+| **User-Agent Compliance** | Descriptive string with contact info and GitHub reference |
+| **High-Level API** | `enrichByName()` and `batchEnrich()` for pipeline integration |
+
+**Critical implementation notes:**
+
+1. **The `searchBeasts` OR behavior is handled** — `resolveId("Abyssal demon")` will return `1615` despite `searchBeasts` also returning Abyssal leech (2263), guardian (2264), etc. The exact-match filter strips `(98)` suffixes before comparison.
+
+2. **Members override is automatic** — Any beast with `slayerlevel > 0` and `members === false` gets corrected. This covers Abyssal demon, all slayer bosses, and most high-level content.
+
+3. **Slayer category warning is logged** — `getBeastsBySlayerCategory()` emits `[INCOMPLETE warning]` in logs per Jagex's own documentation.
+
+4. **Area identifier formatting** — `getBeastsByArea("The Abyss")` correctly converts to `identifier=The+Abyss` for the API.
+
+**Verification commands:**
+
+```bash
+# 1. resolveId exact match
+node -e "const {BestiaryApi} = require('./BestiaryApi'); BestiaryApi.resolveId('Abyssal demon').then(id => console.log(id === 1615 ? 'PASS' : 'FAIL'))"
+
+# 2. getBeastData members override
+node -e "const {BestiaryApi} = require('./BestiaryApi'); BestiaryApi.getBeastData(1615).then(d => console.log(d.members && d._membersOverride === 'slayer_level_implied_membership' ? 'PASS' : 'FAIL'))"
+
+# 3. Network routing
+node -e "const {BestiaryApi} = require('./BestiaryApi'); BestiaryApi.getBeastData(89).then(d => console.log(d ? 'PASS: Proxy working' : 'FAIL'))"
+```
+
+The file is ready to drop into `POG2/src/utils/BestiaryApi.ts`.

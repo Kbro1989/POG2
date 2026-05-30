@@ -1,0 +1,106 @@
+I see what you've uploaded — the raw HTML for the RuneScape Wiki's **Updates** page. This is useful context, but I need to flag something critical:
+
+**The "ai-scrapers-suck" endpoint at the bottom of the page:**
+
+```html
+<script>
+( () => {
+    const reportFn = p => ( fetch( "https://weirdgloop.org/ai-scrapers-suck", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        referrerPolicy: 'unsafe-url',
+        body: JSON.stringify( { ray: "a025dbb54bff7a57", time: performance.now() - initTime, ...p } ),
+    } ) );
+    const events = ["pointermove","pointerdown","pointerup","pointerover","scroll","keydown","visibilitychange"];
+    // ... tracks all user interaction and reports to weirdgloop.org
+} )();
+</script>
+```
+
+This is Weird Gloop's **bot detection / anti-scraping telemetry**. If your `WikiEnricher` or `WikiEquipmentEnricher` loads wiki pages in a browser context (headless Chrome, Puppeteer, etc.), this script will:
+1. Track every mouse movement, scroll, and keypress
+2. Report behavior patterns to `weirdgloop.org/ai-scrapers-suck`
+3. Flag non-human interaction signatures
+4. Potentially IP-block or CAPTCHA-trigger
+
+**Your `WikiEquipmentEnricher` uses the MediaWiki API (`api.php`), not HTML scraping.** This is correct — the API endpoints don't include this telemetry. But if you're ever loading wiki pages directly for parsing (e.g., `fetch('https://runescape.wiki/w/Updates')`), you're exposed.
+
+---
+
+## Implications for Your Hybrid Enrichment Plan
+
+Your plan to add `GeApi.ts`, `BestiaryApi.ts`, and `OfficialPlayerDataApi.ts` is unaffected — those hit Jagex endpoints, not the wiki. But the wiki enrichment layer needs two hardening measures:
+
+### 1. API-Only Fetching (Already Correct)
+
+Your existing code:
+```typescript
+const API_BASE = 'https://runescape.wiki/api.php';
+// Uses action=parse, action=query, etc.
+```
+
+This bypasses the HTML telemetry entirely. **Do not change this.** If you ever need HTML content (e.g., for image extraction), proxy through your Cloudflare Worker where the telemetry script can't execute.
+
+### 2. User-Agent Rotation & Respectful Headers
+
+Your current `USER_AGENT`:
+```typescript
+private readonly USER_AGENT = 'POG2-Sovereign/1.0 (Sovereign Research Node; respectful-soft-parse)';
+```
+
+This is good — it identifies as a bot and declares intent. But Weird Gloop may still rate-limit based on volume. Consider:
+
+```typescript
+// Add contact info and respect signals
+private readonly USER_AGENT = 'POG2-Sovereign/1.0 (Sovereign Research Node; admin@pog2.internal; respectful-soft-parse; +https://github.com/Kbro1989/POG2)';
+
+// Check for Retry-After headers and honor them
+private async throttle(): Promise<void> {
+    // Your existing rate limiter
+    // PLUS: check response headers for 429 Retry-After
+}
+```
+
+---
+
+## The Updates Page Content — Relevant to POG2?
+
+The page shows:
+- **Latest update:** "Daemonheim Drift - Hiscores now live!" (18 May 2026)
+- **Update categories:** Game, Website, Support, Technical, Community, Behind the Scenes, Mobile, Shop, Dev blogs, Competitions, Future updates, Solomon's Store, Treasure Hunter, Feedback, Events
+- **Hidden updates** tracked by year from 2001–2026
+
+This is a **temporal signal source** for your pedagogy model. Consider adding:
+
+```typescript
+// New enrichment type in WikiEquipmentEnricher.ts
+export interface WikiUpdateMeta {
+  title: string;
+  date: string;
+  category: string;
+  url: string;
+  isHotfix: boolean;
+  isColdfix: boolean;
+  affectedEntities: number[];  // Cache entity IDs impacted by this update
+}
+
+public async fetchLatestUpdates(): Promise<WikiUpdateMeta[]> {
+  // Parse the Updates page or use the wiki's RSS/API
+  // Cross-reference with cache revision to flag "new content since last training"
+}
+```
+
+This would let your `pog2-pedagogy` model tag entities with `[POST-UPDATE]` flags when Jagex releases patches that change stats, drop tables, or mechanics.
+
+---
+
+## Immediate Action Items
+
+| Priority | Action | File |
+|---|---|---|
+| **High** | Verify no HTML page fetching in `WikiEnricher` or `WikiEquipmentEnricher` — all requests must use `api.php` | `WikiEnricher.ts`, `WikiEquipmentEnricher.ts` |
+| **High** | Add `Retry-After` header parsing to `ApiThrottle.ts` | New file |
+| **Medium** | Add `fetchLatestUpdates()` to track patch notes for pedagogy freshness | `WikiEquipmentEnricher.ts` |
+| **Low** | Document the `ai-scrapers-suck` endpoint in your security notes | `CognitiveImmunologyEmergency.ts` or `pog2.md` |
+
+The HTML upload is a good reminder that **the wiki is actively defended against scraping**. Your API-first approach is the correct architecture. Proceed with `GeApi.ts`, `BestiaryApi.ts`, and `OfficialPlayerDataApi.ts` — those are Jagex endpoints with no anti-bot telemetry.

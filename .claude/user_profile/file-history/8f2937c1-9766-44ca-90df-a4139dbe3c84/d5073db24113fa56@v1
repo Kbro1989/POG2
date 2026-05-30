@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sovereign Collision Heatmap — God Cache</title>
+  <link rel="icon" href="data:,">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0a0f;
+      color: #c8c8d0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #e0e0e8;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .controls label {
+      font-size: 13px;
+      color: #999;
+    }
+
+    .controls input,
+    .controls select {
+      background: #16161e;
+      border: 1px solid #2a2a35;
+      color: #c8c8d0;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .controls button {
+      background: linear-gradient(135deg, #1a6b4a, #0f4a32);
+      border: 1px solid #2a8a62;
+      color: #e0ffe8;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .controls button:hover {
+      background: linear-gradient(135deg, #228a5e, #156b42);
+    }
+
+    #status {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+      min-height: 18px;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      border: 1px solid #1a1a25;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .legend-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      border: 1px solid #333;
+    }
+
+    .info-panel {
+      margin-top: 16px;
+      background: #12121a;
+      border: 1px solid #1e1e2a;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 12px;
+      max-width: 640px;
+      width: 100%;
+      line-height: 1.6;
+    }
+
+    .info-panel b {
+      color: #aab;
+    }
+
+    #tooltip {
+      position: fixed;
+      background: #1a1a28;
+      border: 1px solid #2a2a40;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      pointer-events: none;
+      display: none;
+      z-index: 100;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      line-height: 1.5;
+    }
+
+    .pedagogy-panel {
+      background: #1a1a2e;
+      border: 1px solid #3a3a5e;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      box-shadow: 0 0 15px rgba(58, 58, 94, 0.3);
+    }
+
+    .pedagogy-panel b {
+      color: #51ffff;
+      font-size: 14px;
+    }
+
+    .varbit-input {
+      width: 80px;
+      background: #000;
+      border: 1px solid #444;
+      color: #0f0;
+      font-family: monospace;
+      padding: 4px;
+    }
+
+    .layer-btn {
+      background: #2a2a3a;
+      border: 1px solid #444;
+      color: #aaa;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .layer-btn.active {
+      background: #3e3e5e;
+      border-color: #51ffff;
+      color: #fff;
+    }
+
+    /* Extracted styles */
+    .flex-spacer { flex-grow: 1; }
+    .control-input { width: 60px; }
+    .composite-mode-label { color: #00ffff; }
+    .btn-live-extract { background: linear-gradient(135deg, #6b1a1a, #4a0f0f); border-color: #8a2a2a; }
+    .file-picker { display: none; }
+    
+    .swatch-walkable { background: #0d1117; }
+    .swatch-low { background: #1a6b4a; }
+    .swatch-medium { background: #b58900; }
+    .swatch-high { background: #dc322f; }
+    .swatch-object { background: #6c71c4; }
+  </style>
+</head>
+
+<body>
+
+  <h1>Sovereign Collision Heatmap</h1>
+  <div class="subtitle">Real tile data from C:\ProgramData\Jagex\RuneScape — zero mocks</div>
+
+  <div class="pedagogy-panel">
+    <b>Sovereign Pedagogy HUD:</b>
+    <button class="layer-btn active" id="btn-npcs" onclick="toggleLayer('npcs')">NPC Spawns</button>
+    <button class="layer-btn active" id="btn-zones" onclick="toggleLayer('zones')">MapZones</button>
+    <button class="layer-btn active" id="btn-quests" onclick="toggleLayer('quests')">Quest Markers</button>
+    <button class="layer-btn active" id="btn-terrain" onclick="toggleLayer('terrain')">Terrain Underlays</button>
+    <button class="layer-btn" id="btn-height" onclick="toggleLayer('height')">Height Contours</button>
+    <div class="flex-spacer"></div>
+    <label>Varbit: <input type="number" id="varId" class="varbit-input" placeholder="ID"></label>
+    <label>Value: <input type="number" id="varVal" class="varbit-input" value="1" onchange="updateVarbit()"></label>
+    <button onclick="updateVarbit()">Apply Mask</button>
+  </div>
+
+  <div class="controls">
+    <label>Chunk X: <input type="number" id="cx" value="50" min="0" max="127" class="control-input"></label>
+    <label>Chunk Z: <input type="number" id="cz" value="50" min="0" max="200" class="control-input"></label>
+    <label>Plane: <select id="plane">
+        <option value="0" selected>0 (Surface)</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+      </select></label>
+    <label>Scale: <select id="scale">
+        <option value="1">1x</option>
+        <option value="2">2x</option>
+        <option value="4">4x</option>
+        <option value="8" selected>8x</option>
+        <option value="12">12x</option>
+        <option value="16">16x</option>
+      </select></label>
+    <label>Engine: <select id="engineMode"
+        onchange="render(currentData, parseInt(document.getElementById('plane').value), currentScale)">
+        <option value="NXT" selected>NXT (Modern)</option>
+        <option value="RS3">RS3 (Classic)</option>
+      </select></label>
+    <label class="composite-mode-label"><input type="checkbox" id="compositeMode"
+        onchange="render(currentData, parseInt(document.getElementById('plane').value), currentScale)"> Composite
+      Radar</label>
+    <button onclick="loadChunk()">Load Chunk</button>
+    <button id="btn-live" class="btn-live-extract"
+      onclick="liveExtract()">Live Extract</button>
+    <input type="file" id="filePicker" accept=".json" class="file-picker">
+    <button onclick="document.getElementById('filePicker').click()">Load File</button>
+  </div>
+
+  <div id="status">Drop a ms_X_Z.json file or click Load Chunk</div>
+
+  <div class="canvas-wrap">
+    <canvas id="heatmap" width="512" height="512"></canvas>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-swatch swatch-walkable"></div> Walkable (0)
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch swatch-low"></div> Low collision
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch swatch-medium"></div> Medium
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch swatch-high"></div> High / Blocked
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch swatch-object"></div> Object placement
+    </div>
+  </div>
+
+  <div class="info-panel" id="info">
+    <b>Zone:</b> —<br>
+    <b>World Coords:</b> —<br>
+    <b>Objects:</b> —<br>
+    <b>Collision Coverage:</b> —
+  </div>
+
+  <div id="tooltip"></div>
+
+  <script>
+    const canvas = document.getElementById('heatmap');
+    const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('tooltip');
+
+    // Protocol Shield: Detect CORS-blocked file access
+    if (window.location.protocol === 'file:') {
+      const shield = document.createElement('div');
+      shield.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,10,15,0.95); z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; text-align:center; color:#ff4d4d; border:2px solid #ff4d4d;";
+      shield.innerHTML = `
+        <h1 style="color:#ff4d4d">⚠️ PROTOCOL BLOCKAGE DETECTED</h1>
+        <p style="font-size:18px; color:#fff; margin:20px 0;">The Sovereign Engine cannot fetch logical chunks via <b>file://</b> due to browser CORS security.</p>
+        <p style="font-size:16px; color:#51ffff;">You must access the Unified Radar via the Sovereign Pulse Server:</p>
+        <a href="${window.location.origin}/heatmap.html" style="background:#51ffff; color:#000; padding:15px 30px; border-radius:5px; font-weight:bold; text-decoration:none; margin-top:20px; font-size:20px;">OPEN SOVEREIGN PULSE</a>
+        <p style="margin-top:30px; font-size:12px; color:#666;">(Alternatively, use the "Load File" button to manually ingest a mapsquare JSON)</p>
+    `;
+      document.body.appendChild(shield);
+    }
+
+    let currentData = null;
+    let currentScale = 8;
+    let currentSize = 66; // NXT default, adapted per-chunk in render()
+    let tileGrid = null; // [x][z] = { collision, height, overlay, underlay }
+    let objectGrid = null; // [x][z] = [objectDef, ...]
+    let layers = { npcs: true, zones: true, quests: true, terrain: true, height: false };
+    let varbitState = {}; // id -> value
+    let ws = null;
+
+    function connectWS() {
+      const wsUrl = `ws://${window.location.hostname}:8788`;
+      ws = new WebSocket(wsUrl);
+      ws.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        if (data.type === 'result' && data.value && data.value.type === 'LIVE_rsmv') {
+          handleLiversmv(data.value);
+        }
+      };
+      ws.onopen = () => { document.getElementById('status').textContent = 'Pulse Link: ACTIVE'; };
+      ws.onclose = () => {
+        document.getElementById('status').textContent = 'Pulse Link: LOST';
+        setTimeout(connectWS, 2000);
+      };
+    }
+    connectWS();
+
+    function liveExtract() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        alert("Switchboard Bridge not connected!");
+        return;
+      }
+      const cx = parseInt(document.getElementById('cx').value);
+      const cz = parseInt(document.getElementById('cz').value);
+      const plane = parseInt(document.getElementById('plane').value);
+
+      const worldX = cx * 64;
+      const worldZ = cz * 64;
+
+      document.getElementById('status').textContent = `Requesting Live Extraction at [${worldX}, ${worldZ}]...`;
+      ws.send(JSON.stringify({ type: 'command', intent: `GET_LIVE_rsmv ${worldX} ${worldZ} ${plane}` }));
+    }
+
+    function handleLiversmv(liveData) {
+      document.getElementById('status').textContent = `Live Data Received for [${liveData.x}, ${liveData.z}]`;
+
+      // Convert Live format to heatmap format
+      const size = liveData.xsize;
+      const tileFlags = [];
+      const entriesPerTile = 5; // [h00, h01, h10, h11, col3]
+
+      for (let i = 0; i < size * size; i++) {
+        const col3 = liveData.data[i * entriesPerTile + 4];
+        const h00 = liveData.data[i * entriesPerTile + 0];
+
+        // Map base-3 col3 to bitmask (bit 1 = blocked)
+        const centerVal = col3 % 3;
+        const collision = (centerVal === 1 || centerVal === 2) ? 2 : 0;
+
+        tileFlags.push({
+          collision: collision,
+          height: h00,
+          x: Math.floor(i / size),
+          z: i % size
+        });
+      }
+
+      const mappedData = {
+        tileFlags: tileFlags,
+        worldX: liveData.x,
+        worldZ: liveData.z,
+        chunkX: liveData.x >> 6,
+        chunkZ: liveData.z >> 6,
+        objectDefs: {},
+        objects: []
+      };
+
+      render(mappedData, 0, currentScale);
+    }
+
+    function toggleLayer(name) {
+      layers[name] = !layers[name];
+      document.getElementById(`btn-${name}`).classList.toggle('active');
+      if (currentData) render(currentData, parseInt(document.getElementById('plane').value), currentScale);
+    }
+
+    function updateVarbit() {
+      const id = document.getElementById('varId').value;
+      const val = parseInt(document.getElementById('varVal').value);
+      if (id !== "") varbitState[id] = val;
+      if (currentData) render(currentData, parseInt(document.getElementById('plane').value), currentScale);
+    }
+
+    // Collision flag → color mapping (heat/integrity)
+    function getCollisionInfo(flags, engine) {
+      if (engine === 'NXT') {
+        return {
+          blocked: !!(flags & 2),
+          water: !!(flags & 16),
+          bridge: !!(flags & 4),
+          roof: !!(flags & 8)
+        };
+      } else {
+        // RS3 Classic Settings
+        return {
+          blocked: !!(flags & 1),
+          water: false, // RS3 uses separate type field for water
+          bridge: !!(flags & 2),
+          roof: !!(flags & 4)
+        };
+      }
+    }
+
+    function collisionColor(flags, engine) {
+      const info = getCollisionInfo(flags, engine);
+      if (info.blocked) return [220, 50, 47, 255]; // Red
+      if (info.roof) return [20, 20, 30, 255];    // Dark Grey
+
+      if (flags === 0) return [13, 17, 23, 255];  // walkable
+      return [26, 107, 74, 255]; // low heat
+    }
+
+    function objectColor() {
+      return [108, 113, 196, 200]; // purple overlay
+    }
+
+    function render(data, planeIdx, scale) {
+      if (!data || !data.tileFlags) return;
+
+      currentData = data;
+      currentScale = scale;
+      const engine = document.getElementById('engineMode').value;
+
+      // ADAPTIVE GRID SIZING (RS3 64x64 vs NXT 66x66)
+      const tilesTotal = data.tileFlags.length;
+      const size = tilesTotal >= 17424 ? 66 : 64;
+      currentSize = size;
+      const tilesPerPlane = size * size;
+
+      canvas.width = size * scale;
+      canvas.height = size * scale;
+
+      tileGrid = Array.from({ length: size }, () => Array.from({ length: size }, () => null));
+      objectGrid = Array.from({ length: size }, () => Array.from({ length: size }, () => []));
+
+      const isComposite = document.getElementById('compositeMode').checked;
+      const startIdx = planeIdx * tilesPerPlane;
+
+      if (isComposite) {
+        for (let i = 0; i < tilesPerPlane; i++) {
+          const tx = Math.floor(i / size);
+          const tz = i % size;
+          let compositeCollision = 0;
+          for (let p = 0; p < 4; p++) {
+            const tile = data.tileFlags[p * tilesPerPlane + i];
+            if (tile) compositeCollision |= tile.collision;
+          }
+          tileGrid[tx][tz] = { collision: compositeCollision };
+        }
+      } else {
+        for (let i = 0; i < tilesPerPlane; i++) {
+          const tile = data.tileFlags[startIdx + i];
+          const tx = Math.floor(i / size);
+          const tz = i % size;
+          if (tx < size && tz < size) tileGrid[tx][tz] = tile;
+        }
+      }
+
+      // Object placements for this plane
+      if (data.objects) {
+        for (const obj of data.objects) {
+          const pMatch = isComposite || obj.plane === planeIdx;
+          if (pMatch && obj.x < size && obj.z < size) {
+            const def = data.objectDefs?.[obj.objectId];
+            const actions = def?.actions || [];
+            const isPortal = actions.some(a => ["Climb-down", "Climb-up", "Enter", "Open-trapdoor", "Open", "Leave"].includes(a));
+
+            // 🧬 Sovereign Physics Override (Varbit Collision Masking)
+            if (def && varbitState[obj.objectId.toString()] === 1) {
+              if (tileGrid[obj.x][obj.z]) tileGrid[obj.x][obj.z].collision = 0;
+            }
+
+            objectGrid[obj.x][obj.z].push({
+              ...obj,
+              name: def?.name || null,
+              actions: actions,
+              solid: def?.solid ?? null,
+              isHotspot: actions.includes("Build"),
+              isPortal: isPortal
+            });
+          }
+        }
+      }
+
+      // Render
+      const imgData = ctx.createImageData(canvas.width, canvas.height);
+
+      for (let x = 0; x < size; x++) {
+        for (let z = 0; z < size; z++) {
+          const tile = tileGrid[x][z];
+          let color;
+
+          if (!tile) {
+            color = [5, 5, 10, 255]; // no data
+          } else {
+            // 1. Terrain Base Pass
+            if (layers.terrain && tile.underlaycolor) {
+              // underlaycolor is often ushort HSL or packed. 
+              // Simple expansion for heatmap visual:
+              const r = (tile.underlaycolor >> 10) & 0x1F;
+              const g = (tile.underlaycolor >> 5) & 0x1F;
+              const b = tile.underlaycolor & 0x1F;
+              color = [r * 8, g * 8, b * 8, 255];
+            } else {
+              color = collisionColor(tile.collision, engine);
+            }
+
+            // 2. Height Adjustment (Shading)
+            if (layers.height && tile.height) {
+              const h = tile.height / (engine === 'NXT' ? 256 : 1); // NXT is higher res
+              const shade = Math.min(255, 120 + h);
+              color = [
+                Math.round(color[0] * (shade / 255)),
+                Math.round(color[1] * (shade / 255)),
+                Math.round(color[2] * (shade / 255)),
+                255
+              ];
+            }
+
+            // 3. TRANSPARENT WATER PASS
+            const info = getCollisionInfo(tile.collision, engine);
+            if (info.water || (engine === 'RS3' && tile.type === 3)) {
+              const hasBridge = info.bridge || objectGrid[x][z].some(o => o.isPortal);
+              if (!hasBridge) {
+                // Indigo/Cyan Tint for water
+                color = [0, 80, 200, 115]; // 45% opaque blue
+              }
+            }
+          }
+
+          // Object overlay
+          if (objectGrid[x][z].length > 0) {
+            const oc = objectColor();
+            // Blend
+            const alpha = oc[3] / 255;
+            color = [
+              Math.round(color[0] * (1 - alpha) + oc[0] * alpha),
+              Math.round(color[1] * (1 - alpha) + oc[1] * alpha),
+              Math.round(color[2] * (1 - alpha) + oc[2] * alpha),
+              255
+            ];
+          }
+
+          // Paint scaled pixels
+          for (let dx = 0; dx < scale; dx++) {
+            for (let dz = 0; dz < scale; dz++) {
+              const px = x * scale + dx;
+              // Flip Z so north is up
+              const py = (size - 1 - z) * scale + dz;
+              const idx = (py * canvas.width + px) * 4;
+              imgData.data[idx] = color[0];
+              imgData.data[idx + 1] = color[1];
+              imgData.data[idx + 2] = color[2];
+              imgData.data[idx + 3] = color[3];
+            }
+          }
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+
+      // Portal Highlight Manifestation (Cyan Glow)
+      for (let x = 0; x < size; x++) {
+        for (let z = 0; z < size; z++) {
+          const portals = objectGrid[x][z].filter(o => o.isPortal);
+          if (portals.length > 0) {
+            const py = (size - 1 - z) * scale + (scale / 2);
+            const px = x * scale + (scale / 2);
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(px, py, scale / 1.5, 0, Math.PI * 2);
+            ctx.stroke();
+            if (scale >= 12) {
+              ctx.fillStyle = "#00ffff";
+              ctx.font = "8px monospace";
+              ctx.fillText("PORTAL", px + 8, py - 4);
+            }
+          }
+        }
+      }
+
+      // Pedagogy: MapZones (Rectangles)
+      if (layers.zones && data.pedagogy?.zones) {
+        ctx.strokeStyle = 'rgba(81, 255, 255, 0.4)';
+        ctx.lineWidth = 2;
+        for (const zone of data.pedagogy.zones) {
+          if (zone.bounds) {
+            for (const b of zone.bounds) {
+              const x = b.src.xstart - data.worldX;
+              const z = b.src.zstart - data.worldZ;
+              const w = (b.src.xend - b.src.xstart) + 1;
+              const h = (b.src.zend - b.src.zstart) + 1;
+              // Flip Y/Z: world Z is north, canvas Y is down
+              const canvasY = (currentSize - 2 - (z + h)) * scale;
+              ctx.strokeRect(x * scale, canvasY, w * scale, h * scale);
+              ctx.fillStyle = 'rgba(81, 255, 255, 0.1)';
+              ctx.fillRect(x * scale, canvasY, w * scale, h * scale);
+            }
+          }
+        }
+      }
+
+      // Pedagogy: Grounded NPCs (Cyan Orbs)
+      if (layers.npcs && data.pedagogy?.npcs) {
+        const chunkX = data.chunkX || 0;
+        const chunkZ = data.chunkZ || 56;
+
+        for (const npc of data.pedagogy.npcs) {
+          // Translation: world -> local
+          const lx = npc.worldX - (chunkX * 64);
+          const lz = npc.worldZ - (chunkZ * 64);
+
+          // Calculate canvas coordinates
+          const px = lx * scale + (scale / 2);
+          const py = (currentSize - 1 - lz) * scale + (scale / 2);
+
+          // Pulse Glow
+          const time = Date.now() / 1000;
+          const pulse = Math.sin(time * 3) * 2 + 3;
+
+          const isGrounded = npc.confidence >= 0.9;
+
+          ctx.beginPath();
+          ctx.arc(px, py, pulse + 1, 0, Math.PI * 2);
+          ctx.fillStyle = isGrounded ? 'rgba(0, 255, 255, 0.4)' : 'rgba(255, 100, 0, 0.3)';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = isGrounded ? '#51ffff' : '#ff9d00';
+          ctx.fill();
+
+          // Label
+          if (scale >= 8) {
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 9px Segoe UI";
+            ctx.textAlign = "center";
+            ctx.fillText(npc.npcName, px, py - 8);
+          }
+        }
+      }
+    }
+
+    // Logical Neighbor Jump (Subterranean Traversals)
+    canvas.addEventListener('click', (e) => {
+      if (!currentData) return;
+      const rect = canvas.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+
+      const size = currentSize;
+      const scale = currentScale;
+
+      const tx = Math.floor(px / scale);
+      const tz = size - 1 - Math.floor(py / scale);
+
+      const pedagogyNpcs = currentData.pedagogy?.npcs?.filter(n => {
+        const lx = n.worldX - currentData.worldX;
+        const lz = n.worldZ - currentData.worldZ;
+        return Math.abs(lx - tx) < 1 && Math.abs(lz - tz) < 1;
+      }) || [];
+
+      if (pedagogyNpcs.length > 0) {
+        console.log("[SOVEREIGN] Grounded Entity Selected:", pedagogyNpcs[0]);
+      }
+
+      const portals = objectGrid[tx]?.[tz]?.filter(o => o.isPortal) || [];
+      if (portals.length > 0) {
+        const portal = portals[0];
+        console.log("[SOVEREIGN] Portal Activated:", portal);
+
+        // Bridge Table: Maps Game Object names to Extracted Mapsquare Truth
+        const jumps = {
+          "Trapdoor": { cx: 83, cz: 37, label: "Catacombs (B1)" },
+          "Stairs": { cx: 83, cz: 37, label: "Catacombs (B1)" },
+          "Staircase": { cx: 83, cz: 37, label: "Catacombs (B1)" },
+          "Ladder": { cx: 50, cz: 50, planeOffset: 1, label: "Surface" } // Generic
+        };
+
+        const dest = jumps[portal.name];
+        if (dest) {
+          if (confirm(`Deep World Infiltration: Traverse to ${dest.label} [${dest.cx}, ${dest.cz}]?`)) {
+            document.getElementById('cx').value = dest.cx;
+            document.getElementById('cz').value = dest.cz;
+            loadChunk();
+          }
+        } else {
+          // Default: Plane navigation
+          console.log("[SOVEREIGN] Local Traversal: Adjusting Plane.");
+        }
+      }
+    });
+
+    // Tooltip on hover
+    canvas.addEventListener('mousemove', (e) => {
+      if (!currentData || !tileGrid) return;
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const tx = Math.floor(mx / currentScale);
+      const tz = currentSize - 1 - Math.floor(my / currentScale); // flip
+
+      if (tx < 0 || tx >= currentSize || tz < 0 || tz >= currentSize) {
+        tooltip.style.display = 'none';
+        return;
+      }
+
+      const tile = tileGrid[tx]?.[tz];
+      const objs = objectGrid[tx]?.[tz] || [];
+      const worldX = (currentData.worldX || 0) + tx;
+      const worldZ = (currentData.worldZ || 0) + tz;
+
+      let html = `<b>[${worldX}, ${worldZ}]</b> local [${tx}, ${tz}]<br>`;
+      if (tile) {
+        html += `Collision: <b>${tile.collision}</b> ${tile.collision === 0 ? '✅ Walkable' : '🚫 Blocked'}<br>`;
+      }
+      if (objs.length > 0) {
+        html += `<br><b>${objs.length} object(s):</b><br>`;
+        for (const o of objs.slice(0, 4)) {
+          const name = o.name || `ID:${o.objectId}`;
+          const acts = (o.actions || []).filter(Boolean).join(', ');
+
+          if (o.isPortal) {
+            html += `• 🌀 <span style="color:#00ffff">${name}</span> [PORTAL]<br>`;
+          } else {
+            html += `• ${name}${acts ? ' [' + acts + ']' : ''}<br>`;
+          }
+        }
+      }
+
+      tooltip.innerHTML = html;
+      tooltip.style.display = 'block';
+      tooltip.style.left = (e.clientX + 14) + 'px';
+      tooltip.style.top = (e.clientY + 14) + 'px';
+    });
+
+    canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+    // File picker
+    document.getElementById('filePicker').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          const plane = parseInt(document.getElementById('plane').value);
+          const scale = parseInt(document.getElementById('scale').value);
+          document.getElementById('status').textContent = `Loaded ${file.name}`;
+          render(data, plane, scale);
+        } catch (err) {
+          document.getElementById('status').textContent = `Error: ${err.message}`;
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // Load from extracted data
+    async function loadChunk() {
+      const cx = document.getElementById('cx').value;
+      const cz = document.getElementById('cz').value;
+      const plane = parseInt(document.getElementById('plane').value);
+      const scale = parseInt(document.getElementById('scale').value);
+      const filename = `ms_${cx}_${cz}.json`;
+
+      document.getElementById('status').textContent = `Pulse Syncing chunk ${filename}...`;
+
+      try {
+        // Attempt Unified (High Fidelity) first, then fallback to World Extract, then to root (Public)
+        const targets = [`/unified/${filename}`, `/world/${filename}`, `/${filename}`];
+        let resp = null;
+
+        for (const url of targets) {
+          console.log(`%c[SOVEREIGN] Probing ${url}...`, "color: #51ffff");
+          resp = await fetch(url);
+          if (resp.ok) break;
+        }
+
+        if (!resp || !resp.ok) {
+          if (resp && resp.status === 404) {
+            console.log(`%c[SOVEREIGN] Chunk ${filename} is not currently indexed. (Void) — Attempting Live Extraction.`, "color: #ff9d00");
+            document.getElementById('status').textContent = `Chunk ${filename} is Void. Triggering LIVE...`;
+            liveExtract();
+            return;
+          }
+          throw new Error(`${filename} failed: ${resp ? resp.status : 'Network Error'}`);
+        }
+        const data = await resp.json();
+        document.getElementById('status').textContent = `Pulse Rendered: ${filename}`;
+        render(data, plane, scale);
+      } catch (err) {
+        document.getElementById('status').textContent = `Pulse Error: ${err.message}`;
+        console.error("Sovereign Link Severed:", err);
+        console.error("Failed URL target:", filename);
+      }
+    }
+
+    // Drag and drop
+    document.body.addEventListener('dragover', e => { e.preventDefault(); });
+    document.body.addEventListener('drop', e => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          const plane = parseInt(document.getElementById('plane').value);
+          const scale = parseInt(document.getElementById('scale').value);
+          document.getElementById('status').textContent = `Loaded ${file.name}`;
+          render(data, plane, scale);
+        } catch (err) {
+          document.getElementById('status').textContent = `Error: ${err.message}`;
+        }
+      };
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+
+</html>

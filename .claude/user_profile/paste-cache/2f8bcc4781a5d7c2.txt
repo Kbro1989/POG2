@@ -1,0 +1,61 @@
+**[OfficialPlayerDataApi.ts](sandbox:///mnt/agents/output/OfficialPlayerDataApi.ts)** — Complete player data client.
+
+**Worker proxy routes needed** (add to `multiplayer-globe-pog2`):
+
+```typescript
+// In src/server/index.ts
+if (url.pathname.startsWith('/api/player/')) {
+  const path = url.pathname.replace('/api/player/', '');
+  
+  if (path === 'runemetrics/profile') {
+    const user = url.searchParams.get('user');
+    const jagexUrl = `https://apps.runescape.com/runemetrics/profile/profile?user=${encodeURIComponent(user)}&activities=20`;
+    // ... proxy fetch
+  }
+  
+  if (path === 'hiscores/lite') {
+    const player = url.searchParams.get('player');
+    const jagexUrl = `https://secure.runescape.com/m=hiscore/index_lite.ws?player=${encodeURIComponent(player)}`;
+    // ... proxy fetch, return JSON for consistency
+  }
+  
+  if (path === 'runemetrics/xp-monthly') {
+    const searchName = url.searchParams.get('searchName');
+    const skillid = url.searchParams.get('skillid');
+    const jagexUrl = `https://apps.runescape.com/runemetrics/xp-monthly?searchName=${encodeURIComponent(searchName)}&skillid=${skillid}`;
+    // ... proxy fetch
+  }
+  
+  if (path === 'runemetrics/quests') {
+    const user = url.searchParams.get('user');
+    const jagexUrl = `https://apps.runescape.com/runemetrics/quests?user=${encodeURIComponent(user)}`;
+    // ... proxy fetch
+  }
+}
+```
+
+**Verification with your stats:**
+
+```typescript
+// verify_player.ts
+import { OfficialPlayerDataApi } from './src/utils/OfficialPlayerDataApi.js';
+
+async function test() {
+    const profile = await OfficialPlayerDataApi.getProfile('Pick of Gods');
+    console.log('Profile:', profile ? 'PASS' : 'FAIL');
+    console.log('Combat Level:', profile?.combatLevel);
+    console.log('Total XP:', profile?.totalXp);
+    console.log('Skills:', profile?.skills.map(s => `${s.name}: ${s.level}`).join(', '));
+    
+    const hiscores = await OfficialPlayerDataApi.getHiscores('Pick of Gods');
+    console.log('Hiscores:', hiscores ? 'PASS' : 'FAIL');
+    console.log('Attack:', hiscores?.get('Attack'));
+    
+    const quests = await OfficialPlayerDataApi.getQuests('Pick of Gods');
+    console.log('Quests:', quests ? `PASS (${quests.length} quests)` : 'FAIL');
+}
+
+test();
+```
+
+Deploy the proxy routes, then run verification. The player data layer completes the authoritative triad.

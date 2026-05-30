@@ -1,0 +1,713 @@
+{"level":30,"time":1779533786774,"hostname":"POG2","name":"OllamaCapabilityConfig","count":0,"msg":"Ollama capability registry loaded"}
+{"level":30,"time":1779533787869,"hostname":"POG2","name":"TrainingCollector","sessionId":"pog2_20260523_055627_tic2","msg":"Training collector initialized"}
+{"level":30,"time":1779533787871,"hostname":"POG2","name":"CanonicalClock","seed":42,"msg":"CanonicalClock bootstrapped. Deterministic lattice anchored."}
+{"level":30,"time":1779533787873,"hostname":"POG2","name":"ModelRolodex","models":589,"msg":"ðŸ—‚ï¸ Rolodex loaded from disk."}
+{"level":30,"time":1779533800045,"hostname":"POG2","name":"CacheWatcherLimb","majorIndex":17,"msg":"Registered new CacheInvalidationListener."}
+{"level":30,"time":1779533800020,"hostname":"POG2","name":"SovereignDBLifecycle","name":"rsmvCacheDB","totalHandlers":2,"msg":"DB handler registered."}
+{"level":30,"time":1779533800088,"hostname":"POG2","name":"SovereignDBLifecycle","name":"VectorDB","totalHandlers":3,"msg":"DB handler registered."}
+{"level":30,"time":1779533800097,"hostname":"POG2","name":"SovereignDBLifecycle","name":"VectorDB","totalHandlers":3,"msg":"DB handler registered."}
+{"level":30,"time":1779533800053,"hostname":"POG2","name":"GutenbergLimb","atlasSystem":"D:\\sovereign\\atlas\\system","pedagogyPath":"D:\\sovereign\\memory\\pedagogy","msg":"Syncing Gameplay Substrate Data..."}
+{"level":20,"time":1779533800060,"hostname":"POG2","name":"GutenbergLimb","path":"D:\\sovereign\\atlas\\system\\dbrows.json","count":0,"msg":"Gameplay data fragment indexed."}
+{"level":30,"time":1779533800060,"hostname":"POG2","name":"GutenbergLimb","msg":"Gameplay Substrate Alignment Complete."}
+{"level":30,"time":1779533800046,"hostname":"POG2","name":"GameplaySovereigntyLimb","origin":{"x":3222,"z":3217,"plane":0},"msg":"Loaded Sovereign Save State."}
+{"level":30,"time":1779533800046,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"GameplaySovereigntyLimb booted as a CNS-authoritative node."}
+{"level":30,"time":1779533800068,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"Switchboard Bridge injected into Gameplay Limb."}
+{"level":30,"time":1779533800068,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"Entity Brain injected into Gameplay Limb."}
+{"level":30,"time":1779533800082,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"Simulation Harness injected into Gameplay Limb."}
+{"level":20,"time":1779533800042,"hostname":"POG2","name":"CacheForensicsLimb","msg":"Loaded quests.json"}
+{"level":30,"time":1779533800097,"hostname":"POG2","name":"CacheForensicsLimb","msg":"Booting CacheForensicsLimb (Epistemology substrate)..."}
+{"level":30,"time":1779533800052,"hostname":"POG2","name":"PedagogyLimb","key":"quests","file":"quest_manifest.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533800052,"hostname":"POG2","name":"PedagogyLimb","key":"achievements","file":"achievement_manifest.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533800052,"hostname":"POG2","name":"PedagogyLimb","key":"necromancy","file":"necromancy_logic.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533800052,"hostname":"POG2","name":"PedagogyLimb","key":"equipment","file":"equipment_requirements.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533800052,"hostname":"POG2","name":"PedagogyLimb","key":"strategies","file":"training_strategies.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533800052,"hostname":"POG2","name":"PedagogyLimb","msg":"PedagogyLimb initialized. Linked to Forensics, Topology, Router, and Substrate."}
+{"level":30,"time":1779533800020,"hostname":"POG2","name":"rsmvCacheDB","path":"D:\\D-sovereign-\\memory\\rsmv_cache.db","msg":"rsmv Cache DB initialized"}
+{"level":30,"time":1779533800097,"hostname":"POG2","name":"HexagramNetworkBridge","msg":"JS5 handshake accepted"}
+{"level":30,"time":1779533800088,"hostname":"POG2","name":"VectorDB","satPath":"D:\\D-sovereign-\\learning\\embeddings.db","msg":"Federated Satellite DB Connected (Readonly)"}
+{"level":30,"time":1779533800096,"hostname":"POG2","name":"VectorDB","dbPath":"D:\\D-sovereign-\\learning\\sovereign-learning.db","msg":"Initializing VectorDB Substrate"}
+{"level":30,"time":1779533800097,"hostname":"POG2","name":"VectorDB","satPath":"D:\\D-sovereign-\\learning\\embeddings.db","msg":"Federated Satellite DB Connected (Readonly)"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"gameplay_sovereignty_volition","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"cache_forensics_lookup","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"spatial_sovereignty_init","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"entity_limb_memory","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"entity_limb_action","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"entity_limb_identity","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"hud_forensics_scan","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"hud_forensics_batch","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"consult_shadow","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"hud_forensics_scan","domain":"OBSERVE","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"consult_memetics","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"consult_syntropy","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"spatial_query","domain":"OBSERVE","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"mechanical_query","domain":"OBSERVE","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"check_node_health","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_open","domain":"MOTOR","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_read","domain":"OBSERVE","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_edit","domain":"MOTOR","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_goto","domain":"MOTOR","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_status","domain":"OBSERVE","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"clinical_audit","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"diagnostic_nexus","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"pin_to_hexagram","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"unpin_from_hexagram","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"consult_hexagram","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"analyze_strategy","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"search_wiki","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"search_wayback","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"search_web","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"generate_code","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"edit_code","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"smart_edit","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"shell_command","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"wrangler","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"git_status","domain":"SYSTEM","category":"filesystem","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"gcloud_exec","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"instantdb_exec","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"git_ssh_exec","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"wrangler_deploy","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"wrangler_kv_list","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"wrangler_r2_list","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"ollama_model_list","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"ollama_run","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"mcp_client_status","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"service_status","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"think","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"memory_inspect","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"memory_backup","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"memory_compress","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"memory_repair","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"soverign_eye","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"sensory_capture","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"sovereign_visualize","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"web_search","domain":"RESEARCH","category":"network","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"fetch_url","domain":"RESEARCH","category":"network","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"rsmv_extract","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"model_preview","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"link_chromatic_intent","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"cache_forensics_scan","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"cache_learn_extract","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"rsmv_view","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"visual_audit","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"rsmv_export","domain":"MOTOR","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"cache_forensics_query","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"cache_forensics_cross_ref","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"sql_forge","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"docs_forge","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"refactor_forge","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"ingest_book","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"analyze_book_style","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"list_library","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"read_book","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"search_gutenberg","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"generate_storyboard","domain":"VISION","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"scaffold_webapp","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"digest_component","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"personality","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"absorb_wisdom","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800094,"hostname":"POG2","name":"ToolRegistry","tool":"personality_set","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"personality_book","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_list","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_search","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_ingest","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_read","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_sync","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_organize","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"run_pipeline","domain":"FORGE","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"run_batch_pipeline","domain":"FORGE","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"voice_narrate","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"storyboard_create","domain":"VISION","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"video_create","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"think","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"dispatch","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"soundtrack_generate","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"image_generate","domain":"VISION","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"model_train","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"reflect","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"healer_diagnose","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"web_sense","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"forge_concept","domain":"CODE","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"validate_structure","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"env_context","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"rsc_action","domain":"SYSTEM","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"extract_rsmv","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"probe_db","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"probe_vision","domain":"VISION","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"probe_audio","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"monitor_integrity","domain":"SYSTEM","category":"filesystem","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"memory_consolidate","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"quantum_collapse","domain":"FORGE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"bio_verify","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"relic_query","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"relic_store_key","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"rsc_knock","domain":"SYSTEM","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"proprioception_sync","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533800095,"hostname":"POG2","name":"ToolRegistry","tool":"discover_capabilities","domain":"SYSTEM","category":"forge","msg":"Tool registered"}
+{"level":30,"time":1779533800071,"hostname":"POG2","name":"LogicBrainLimb","name":"equipment_requirements","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533800071,"hostname":"POG2","name":"LogicBrainLimb","name":"necromancy_logic","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533800072,"hostname":"POG2","name":"LogicBrainLimb","name":"quest_manifest","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533800072,"hostname":"POG2","name":"LogicBrainLimb","name":"skill_manifest","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533800072,"hostname":"POG2","name":"LogicBrainLimb","name":"training_strategies","msg":"Logic manifest ingested."}
+{"level":20,"time":1779533800049,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Memory Substrates..."}
+{"level":20,"time":1779533800053,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Specialized Limbs..."}
+{"level":20,"time":1779533800070,"hostname":"POG2","name":"OrchestrateEngine","msg":"YouTube Substrate activated via config."}
+{"level":20,"time":1779533800086,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Proprioception..."}
+{"level":20,"time":1779533800088,"hostname":"POG2","name":"OrchestrateEngine","msg":"VectorDB Substrate nominal."}
+{"level":20,"time":1779533800088,"hostname":"POG2","name":"OrchestrateEngine","msg":"Wiring FPRAG Context..."}
+{"level":20,"time":1779533800096,"hostname":"POG2","name":"OrchestrateEngine","msg":"Awakening Sovereign Substrate..."}
+{"level":30,"time":1779533879417,"hostname":"POG2","name":"OllamaCapabilityConfig","count":0,"msg":"Ollama capability registry loaded"}
+
+<--- Last few GCs --->
+
+[26020:0000014EFD972000]      888 ms: Scavenge (interleaved) 38.1 (56.4) -> 27.6 (57.1) MB, pooled: 0 MB, 5.22 / 0.00 ms  (average mu = 0.992, current mu = 0.992) allocation failure; 
+
+
+<--- Last few GCs --->
+
+[26020:0000014EFD972000]      888 ms: Scavenge (interleaved) 38.1 (56.4) -> 27.6 (57.1) MB, pooled: 0 MB, 5.22 / 0.00 ms  (average mu = 0.992, current mu = 0.992) allocation failure; 
+
+FATAL ERROR: MarkCompactCollector: young object promotion failed Allocation failed - JavaScript heap out of memory
+FATAL ERROR: MarkCompactCollector: young object promotion failed Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+----- Native stack trace -----
+
+ 1: 00007FF657FA403F 
+ 2: 00007FF658BEFAA7 
+ 3: 00007FF6589F04D7 
+ 4: 00007FF6589CFDEE 
+ 5: 00007FF6589C54AD 
+ 6: 00007FF6589C515C 
+ 7: 00007FF6589C4DA1 
+ 8: 00007FF6589D7088 
+ 9: 00007FF6593D040D 
+10: 00007FF6593D08B2 
+11: 00007FF6589C7DE4 
+12: 00007FF6589AF50D 
+13: 00007FF6589A9584 
+14: 00007FF6589F28DA 
+15: 00007FF6589F1F06 
+16: 00007FF658A02E52 
+17: 00007FF658A0297B 
+18: 00007FF659E8A2AD 
+19: 00007FF6589EDFA0 
+20: 00007FF658A087EA 
+21: 00007FF658A136AD 
+22: 00007FF658A29F02 
+23: 00007FF658A1CD7A 
+24: 00007FF6585C8E12 
+25: 0000014EB7E775FA 
+      1 [main] sh (41416) child_copy: cygheap read copy failed, 0x0..0x8000258A0, done 0, windows pid 41416, Win32 error 299
+      0 [main] sh 1885 dofork: child -1 - forked process 41416 died unexpectedly, retry 0, exit code 0xC0000142, errno 11
+/c/Users/krist/AppData/Roaming/npm/pog2: fork: retry: Resource temporarily unavailable
+{"level":30,"time":1779533881851,"hostname":"POG2","name":"OllamaCapabilityConfig","count":0,"msg":"Ollama capability registry loaded"}
+{"level":30,"time":1779533883033,"hostname":"POG2","name":"TrainingCollector","sessionId":"pog2_20260523_055803_ropo","msg":"Training collector initialized"}
+{"level":30,"time":1779533883034,"hostname":"POG2","name":"CanonicalClock","seed":42,"msg":"CanonicalClock bootstrapped. Deterministic lattice anchored."}
+{"level":30,"time":1779533883036,"hostname":"POG2","name":"ModelRolodex","models":589,"msg":"ðŸ—‚ï¸ Rolodex loaded from disk."}
+error: unknown command 'archaeology'
+[38;5;196m[FATAL CLI ERROR][0m CommanderError: error: unknown command 'archaeology'
+    at Command._exit (D:\pog2\node_modules\commander\lib\command.js:509:26)
+    at Command.error (D:\pog2\node_modules\commander\lib\command.js:1831:10)
+    at Command.unknownCommand (D:\pog2\node_modules\commander\lib\command.js:2053:10)
+    at Command._parseCommand (D:\pog2\node_modules\commander\lib\command.js:1525:14)
+    at Command.parseAsync (D:\pog2\node_modules\commander\lib\command.js:1092:16)
+    at main (file:///D:/pog2/dist/src/cli.js:3298:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[05:58:03.042] [41mFATAL[49m (POG2-cli): [36mFatal CLI error[39m
+    err: {
+      "type": "CommanderError",
+      "message": "error: unknown command 'archaeology'",
+      "stack":
+          CommanderError: error: unknown command 'archaeology'
+              at Command._exit (D:\pog2\node_modules\commander\lib\command.js:509:26)
+              at Command.error (D:\pog2\node_modules\commander\lib\command.js:1831:10)
+              at Command.unknownCommand (D:\pog2\node_modules\commander\lib\command.js:2053:10)
+              at Command._parseCommand (D:\pog2\node_modules\commander\lib\command.js:1525:14)
+              at Command.parseAsync (D:\pog2\node_modules\commander\lib\command.js:1092:16)
+              at main (file:///D:/pog2/dist/src/cli.js:3298:19)
+              at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      "name": "CommanderError",
+      "code": "commander.unknownCommand",
+      "exitCode": 1
+    }
+{"level":30,"time":1779533884260,"hostname":"POG2","name":"OllamaCapabilityConfig","count":0,"msg":"Ollama capability registry loaded"}
+{"level":30,"time":1779533885397,"hostname":"POG2","name":"TrainingCollector","sessionId":"pog2_20260523_055805_xhwo","msg":"Training collector initialized"}
+{"level":30,"time":1779533885398,"hostname":"POG2","name":"CanonicalClock","seed":42,"msg":"CanonicalClock bootstrapped. Deterministic lattice anchored."}
+{"level":30,"time":1779533885400,"hostname":"POG2","name":"ModelRolodex","models":589,"msg":"ðŸ—‚ï¸ Rolodex loaded from disk."}
+{"level":20,"time":1779533885406,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Orchestrate Engines..."}
+{"level":30,"time":1779533885410,"hostname":"POG2","name":"SovereignDBLifecycle","name":"SovereignKnowledgeDB","totalHandlers":1,"msg":"DB handler registered."}
+{"level":30,"time":1779533885410,"hostname":"POG2","name":"SovereignKnowledgeDB","path":"D:\\sovereign\\vibe-learning.db","msg":"SovereignKnowledgeDB initialized."}
+{"level":30,"time":1779533885411,"hostname":"POG2","name":"rsmvCacheDB","msg":"Grounded entities schema ready — coordinate-exact spatial nervous system online."}
+{"level":30,"time":1779533885412,"hostname":"POG2","name":"WorldGroundingLimb","source":"D:\\pog2\\public\\grounding_manifest.json","msg":"Grounding manifest loaded from authoritative breakthrough source."}
+{"level":20,"time":1779533885425,"hostname":"POG2","name":"CacheForensicsLimb","msg":"Loaded equipment_by_slot.json"}
+{"level":30,"time":1779533885440,"hostname":"POG2","name":"HUDForensicsLimb","path":"C:\\ProgramData\\Jagex\\RuneScape-BETA","msg":"HUDForensicsLimb connected to Jagex Cache substrate."}
+{"level":30,"time":1779533885440,"hostname":"POG2","name":"CacheWatcherLimb","count":0,"msg":"Script baselines loaded."}
+{"level":30,"time":1779533885441,"hostname":"POG2","name":"AvatarStateLimb","msg":"AvatarStateLimb bound to entity: POG2_Sovereign"}
+{"level":30,"time":1779533885441,"hostname":"POG2","name":"GameplaySovereigntyLimb","npcId":15516,"msg":"Avatar grounded in public player template."}
+{"level":30,"time":1779533885443,"hostname":"POG2","name":"ChromanumberEngine","msg":"Pedagogical Ability Registry loaded."}
+{"level":20,"time":1779533885444,"hostname":"POG2","name":"EmbedEngine","db":"D:\\D-sovereign-\\learning\\embeddings.db","msg":"EmbedEngine DB initialized"}
+{"level":30,"time":1779533885445,"hostname":"POG2","name":"VectorPedagogyLimb","msg":"VectorPedagogyLimb initialized. Writing via TrainingCollector."}
+{"level":30,"time":1779533885445,"hostname":"POG2","name":"PedagogyLimb","key":"skills","file":"skill_manifest.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533885446,"hostname":"POG2","name":"GutenbergLimb","msg":"Gutenberg Limb Enabled. Synchronizing gameplay substrate..."}
+{"level":30,"time":1779533885454,"hostname":"POG2","name":"SyntropyEngine","claude":"D:\\D-sovereign-\\guest\\.claude","gemini":"D:\\D-sovereign-\\guest\\.gemini\\extensions","vscode":"D:\\D-sovereign-\\guest\\.vscode","msg":"SyntropyEngine initialized"}
+{"level":30,"time":1779533885459,"hostname":"POG2","name":"VolumeSovereigntyLimb","zoneCount":768,"msg":"MapZone Registry synchronized."}
+SovereignVocabularyLimb: Semantic translation initialized.
+{"level":30,"time":1779533885461,"hostname":"POG2","name":"EntityLimb","dbPath":"D:\\D-sovereign-\\memory\\memory.db","msg":"Entity persistence layer initialized."}
+{"level":30,"time":1779533885461,"hostname":"POG2","name":"GlobeStateLimb","endpoint":"ws://127.0.0.1:8787/parties/globe/pog2-sovereign","msg":"Sovereign local mode active: routing GlobeStateLimb to local wrangler dev server."}
+{"level":30,"time":1779533885462,"hostname":"POG2","name":"YouTubeLimb","msg":"YouTube: Loaded saved OAuth token."}
+{"level":30,"time":1779533885463,"hostname":"POG2","name":"LogicBrainLimb","name":"achievement_manifest","msg":"Logic manifest ingested."}
+SovereignVocabularyLimb: Semantic translation initialized.
+{"level":30,"time":1779533885464,"hostname":"POG2","name":"UISubstrateLimb","msg":"UISubstrateLimb online. HUD synthesis pipeline initialized."}
+{"level":30,"time":1779533885466,"hostname":"POG2","name":"WorkforceManifest","count":18,"msg":"Workforce manifest expanded Ã¢â‚¬â€ 18 specialized workers ACTIVE"}
+SovereignVocabularyLimb: Semantic translation initialized.
+{"level":30,"time":1779533885467,"hostname":"POG2","name":"DBRowOracleLimb","msg":"Waking Genomic Oracle..."}
+{"level":30,"time":1779533885473,"hostname":"POG2","name":"HexagramNetworkBridge","host":"content.beta.runescape.com","port":43594,"variant":"BETA","msg":"Initiating JS5 handshake"}
+{"level":30,"time":1779533885473,"hostname":"POG2","name":"SimulationHarness","msg":"Simulation Harness AWAKE. Coordinating cache-authoritative world logic nodes."}
+{"level":30,"time":1779533885477,"hostname":"POG2","name":"GameplayProjectionLimb","dir":"D:\\pog2\\public\\gameplay","msg":"GameplayProjectionLimb initialized. Filesystem projection active."}
+{"level":30,"time":1779533885477,"hostname":"POG2","name":"VectorDB","dbPath":"D:\\D-sovereign-\\learning\\sovereign-learning.db","msg":"Initializing VectorDB Substrate"}
+{"level":20,"time":1779533885479,"hostname":"POG2","name":"ContextBuilder","vectorDB":true,"executor":true,"roots":0,"msg":"ContextBuilder initialized"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"memory_consolidate","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+(node:56004) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":20,"time":1779533885444,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Memory Substrates..."}
+{"level":20,"time":1779533885446,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Specialized Limbs..."}
+{"level":20,"time":1779533885462,"hostname":"POG2","name":"OrchestrateEngine","msg":"YouTube Substrate activated via config."}
+{"level":20,"time":1779533885477,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Proprioception..."}
+{"level":20,"time":1779533885479,"hostname":"POG2","name":"OrchestrateEngine","msg":"VectorDB Substrate nominal."}
+{"level":20,"time":1779533885479,"hostname":"POG2","name":"OrchestrateEngine","msg":"Wiring FPRAG Context..."}
+{"level":20,"time":1779533885486,"hostname":"POG2","name":"OrchestrateEngine","msg":"Awakening Sovereign Substrate..."}
+{"level":30,"time":1779533885411,"hostname":"POG2","name":"SovereignDBLifecycle","name":"rsmvCacheDB","totalHandlers":2,"msg":"DB handler registered."}
+{"level":30,"time":1779533885479,"hostname":"POG2","name":"SovereignDBLifecycle","name":"VectorDB","totalHandlers":3,"msg":"DB handler registered."}
+{"level":30,"time":1779533885487,"hostname":"POG2","name":"SovereignDBLifecycle","name":"VectorDB","totalHandlers":3,"msg":"DB handler registered."}
+{"level":20,"time":1779533885438,"hostname":"POG2","name":"CacheForensicsLimb","msg":"Loaded quests.json"}
+{"level":30,"time":1779533885487,"hostname":"POG2","name":"CacheForensicsLimb","msg":"Booting CacheForensicsLimb (Epistemology substrate)..."}
+{"level":30,"time":1779533885411,"hostname":"POG2","name":"rsmvCacheDB","path":"D:\\D-sovereign-\\memory\\rsmv_cache.db","msg":"rsmv Cache DB initialized"}
+{"level":30,"time":1779533885441,"hostname":"POG2","name":"CacheWatcherLimb","majorIndex":17,"msg":"Registered new CacheInvalidationListener."}
+{"level":30,"time":1779533885441,"hostname":"POG2","name":"GameplaySovereigntyLimb","origin":{"x":3222,"z":3217,"plane":0},"msg":"Loaded Sovereign Save State."}
+{"level":30,"time":1779533885441,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"GameplaySovereigntyLimb booted as a CNS-authoritative node."}
+{"level":30,"time":1779533885461,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"Switchboard Bridge injected into Gameplay Limb."}
+{"level":30,"time":1779533885461,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"Entity Brain injected into Gameplay Limb."}
+{"level":30,"time":1779533885473,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"Simulation Harness injected into Gameplay Limb."}
+{"level":30,"time":1779533885446,"hostname":"POG2","name":"PedagogyLimb","key":"quests","file":"quest_manifest.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533885446,"hostname":"POG2","name":"PedagogyLimb","key":"achievements","file":"achievement_manifest.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533885446,"hostname":"POG2","name":"PedagogyLimb","key":"necromancy","file":"necromancy_logic.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533885446,"hostname":"POG2","name":"PedagogyLimb","key":"equipment","file":"equipment_requirements.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533885446,"hostname":"POG2","name":"PedagogyLimb","key":"strategies","file":"training_strategies.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533885446,"hostname":"POG2","name":"PedagogyLimb","msg":"PedagogyLimb initialized. Linked to Forensics, Topology, Router, and Substrate."}
+{"level":30,"time":1779533885447,"hostname":"POG2","name":"GutenbergLimb","atlasSystem":"D:\\sovereign\\atlas\\system","pedagogyPath":"D:\\sovereign\\memory\\pedagogy","msg":"Syncing Gameplay Substrate Data..."}
+{"level":20,"time":1779533885453,"hostname":"POG2","name":"GutenbergLimb","path":"D:\\sovereign\\atlas\\system\\dbrows.json","count":0,"msg":"Gameplay data fragment indexed."}
+{"level":30,"time":1779533885453,"hostname":"POG2","name":"GutenbergLimb","msg":"Gameplay Substrate Alignment Complete."}
+{"level":30,"time":1779533885463,"hostname":"POG2","name":"LogicBrainLimb","name":"equipment_requirements","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533885463,"hostname":"POG2","name":"LogicBrainLimb","name":"necromancy_logic","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533885463,"hostname":"POG2","name":"LogicBrainLimb","name":"quest_manifest","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533885463,"hostname":"POG2","name":"LogicBrainLimb","name":"skill_manifest","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533885463,"hostname":"POG2","name":"LogicBrainLimb","name":"training_strategies","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533885488,"hostname":"POG2","name":"HexagramNetworkBridge","msg":"JS5 handshake accepted"}
+{"level":30,"time":1779533885479,"hostname":"POG2","name":"VectorDB","satPath":"D:\\D-sovereign-\\learning\\embeddings.db","msg":"Federated Satellite DB Connected (Readonly)"}
+{"level":30,"time":1779533885486,"hostname":"POG2","name":"VectorDB","dbPath":"D:\\D-sovereign-\\learning\\sovereign-learning.db","msg":"Initializing VectorDB Substrate"}
+{"level":30,"time":1779533885487,"hostname":"POG2","name":"VectorDB","satPath":"D:\\D-sovereign-\\learning\\embeddings.db","msg":"Federated Satellite DB Connected (Readonly)"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"gameplay_sovereignty_volition","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"cache_forensics_lookup","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"spatial_sovereignty_init","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"entity_limb_memory","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"entity_limb_action","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"entity_limb_identity","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"hud_forensics_scan","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"hud_forensics_batch","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"consult_shadow","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"hud_forensics_scan","domain":"OBSERVE","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"consult_memetics","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"consult_syntropy","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"spatial_query","domain":"OBSERVE","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"mechanical_query","domain":"OBSERVE","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"check_node_health","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_open","domain":"MOTOR","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_read","domain":"OBSERVE","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_edit","domain":"MOTOR","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_goto","domain":"MOTOR","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_status","domain":"OBSERVE","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"clinical_audit","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"diagnostic_nexus","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"pin_to_hexagram","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"unpin_from_hexagram","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"consult_hexagram","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"analyze_strategy","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"search_wiki","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"search_wayback","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"search_web","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"generate_code","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"edit_code","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"smart_edit","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"shell_command","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"wrangler","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"git_status","domain":"SYSTEM","category":"filesystem","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"gcloud_exec","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"instantdb_exec","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"git_ssh_exec","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"wrangler_deploy","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533885484,"hostname":"POG2","name":"ToolRegistry","tool":"wrangler_kv_list","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"wrangler_r2_list","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"ollama_model_list","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"ollama_run","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"mcp_client_status","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"service_status","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"think","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"memory_inspect","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"memory_backup","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"memory_compress","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"memory_repair","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"soverign_eye","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"sensory_capture","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"sovereign_visualize","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"web_search","domain":"RESEARCH","category":"network","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"fetch_url","domain":"RESEARCH","category":"network","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"rsmv_extract","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"model_preview","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"link_chromatic_intent","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"cache_forensics_scan","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"cache_learn_extract","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"rsmv_view","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"visual_audit","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"rsmv_export","domain":"MOTOR","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"cache_forensics_query","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"cache_forensics_cross_ref","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"sql_forge","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"docs_forge","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"refactor_forge","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"ingest_book","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"analyze_book_style","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"list_library","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"read_book","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"search_gutenberg","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"generate_storyboard","domain":"VISION","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"scaffold_webapp","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"digest_component","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"personality","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"absorb_wisdom","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"personality_set","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"personality_book","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_list","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_search","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_ingest","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_read","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_sync","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_organize","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"run_pipeline","domain":"FORGE","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"run_batch_pipeline","domain":"FORGE","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"voice_narrate","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"storyboard_create","domain":"VISION","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"video_create","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"think","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"dispatch","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"soundtrack_generate","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"image_generate","domain":"VISION","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"model_train","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"reflect","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"healer_diagnose","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"web_sense","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"forge_concept","domain":"CODE","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"validate_structure","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"env_context","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":50,"time":1779533885494,"hostname":"POG2","name":"GlobeStateLimb","err":{"type":"Error","message":"connect ECONNREFUSED 127.0.0.1:8787","stack":"Error: connect ECONNREFUSED 127.0.0.1:8787\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16)","errno":-4078,"code":"ECONNREFUSED","syscall":"connect","address":"127.0.0.1","port":8787},"msg":"Globe connection error"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"rsc_action","domain":"SYSTEM","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"extract_rsmv","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"probe_db","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"probe_vision","domain":"VISION","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"probe_audio","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"monitor_integrity","domain":"SYSTEM","category":"filesystem","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"memory_consolidate","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"quantum_collapse","domain":"FORGE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"bio_verify","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885485,"hostname":"POG2","name":"ToolRegistry","tool":"relic_query","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533885486,"hostname":"POG2","name":"ToolRegistry","tool":"relic_store_key","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885486,"hostname":"POG2","name":"ToolRegistry","tool":"rsc_knock","domain":"SYSTEM","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533885486,"hostname":"POG2","name":"ToolRegistry","tool":"proprioception_sync","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533885486,"hostname":"POG2","name":"ToolRegistry","tool":"discover_capabilities","domain":"SYSTEM","category":"forge","msg":"Tool registered"}
+{"level":30,"time":1779533885500,"hostname":"POG2","name":"CacheForensicsLimb","msg":"CacheForensicsLimb sequence ACTIVE."}
+(node:56004) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+{"level":40,"time":1779533885494,"hostname":"POG2","name":"GlobeStateLimb","msg":"Globe connection closed"}
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error code ENOSPC
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error syscall write
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error errno -4055
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error nospc ENOSPC: no space left on device, write
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error nospc There appears to be insufficient space on your system to finish.
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error nospc Clear up some disk space and try again.
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error A complete log of this run can be found in: C:\Users\krist\AppData\Local\npm-cache\_logs\2026-05-23T10_58_05_776Z-debug-0.log
+{"level":50,"time":1779533886320,"hostname":"POG2","name":"RSMVBridge","operation":"health","args":[],"msg":"npm error code ENOSPC\nnpm error syscall write\nnpm error errno -4055\nnpm error nospc ENOSPC: no space left on device, write\nnpm error nospc There appears to be insufficient space on your system to finish.\nnpm error nospc Clear up some disk space and try again.\nnpm error A complete log of this run can be found in: C:\\Users\\krist\\AppData\\Local\\npm-cache\\_logs\\2026-05-23T10_58_05_776Z-debug-0.log","msg":"RSMVBridge subprocess failed"}
+[INFO] { dir: 'D:\\pog2\\atlas\\spatial' } Initializing SpatialSovereigntyLimb...
+[INFO] SpatialSovereigntyLimb active in dynamic cache query mode.
+{"level":30,"time":1779533886321,"hostname":"POG2","name":"MechanicalSovereigntyLimb","dir":"D:\\D-sovereign-\\atlas\\logic","msg":"Initializing MechanicalSovereigntyLimb..."}
+{"level":30,"time":1779533886321,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"Godhead Sovereign Server Clock handed over to CNS Kernel."}
+{"level":20,"time":1779533886321,"hostname":"POG2","name":"SwitchboardLimb","msg":"Substrates injected into Switchboard Bridge."}
+{"level":30,"time":1779533886333,"hostname":"POG2","name":"OrchestrateEngine","port":8789,"url":"http://localhost:8789","msg":"Switchboard Bridge active (graceful port)"}
+{"level":30,"time":1779533886333,"hostname":"POG2","name":"CNSGodheadPulseVolley","msg":"CNS Godhead Pulse (Hardened Heartbeat) Started. Player Tick: 300ms | Game Tick: 600ms"}
+{"level":20,"time":1779533886334,"hostname":"POG2","name":"SimulationHarness","msg":"ðŸš€ [GODHEAD] Commencing Deep Path Strategic Sync (6000ms pulse)..."}
+{"level":20,"time":1779533886335,"hostname":"POG2","name":"TaskScheduler","id":"task-1-4mtlaj","provider":"ollama","priority":3,"queueSize":1,"msg":"Task scheduled"}
+{"level":50,"time":1779533886343,"hostname":"POG2","name":"MCPEngine","error":"Expected property name or '}' in JSON at position 4 (line 2 column 3)","msg":"Failed to initialize MCP servers"}
+{"level":20,"time":1779533886353,"hostname":"POG2","name":"GhostSplatEngine","threatDensity":"0.0000","avgConfidence":"1.000","computePressure":"0.178","causalConfidence":"0.947","kernelPhase":"STABLE","msg":"🔮 GhostSplat → Kernel: Spatial volatility signal emitted."}
+{"level":20,"time":1779533886360,"hostname":"POG2","name":"EpistemicTransitionKernel","currentYao":2,"targetPhase":"STABLE","confidence":"0.800","volatility":"0.000","msg":"🔮 PREDICTION: Anticipated post-action state."}
+{"level":30,"time":1779533886363,"hostname":"POG2","name":"GhostLimb","msg":"[GHOST_VOICE] Awakening the observer mind..."}
+[38;5;39m(i)[0m [38;5;208m[AUTHORIZATION][0m Worker 'Global Fallback Ã¢â‚¬â€ cloud redundancy' executing unauthorized tool 'consult_syntropy'. Bypassing via Dynamic Binding.
+{"level":40,"time":1779533886366,"hostname":"POG2","name":"SyntropyEngine","msg":"VS Code extensions.json not found at D:\\D-sovereign-\\guest\\.vscode\\extensions\\extensions.json"}
+[38;5;46mâœ”[0m Ã¢Å“â€¦ [Proprioception] Actuation Verified.
+[38;5;250mExternal Metadata Syntropy:
+
+### EXTENSION SUBSTRATES (Gemini Extensions)
+
+
+[0m
+{"level":30,"time":1779533886321,"hostname":"POG2","name":"MechanicalSovereigntyLimb","msg":"MechanicalSovereigntyLimb active with 0 regions loaded."}
+{"level":50,"time":1779533886330,"hostname":"POG2","name":"SwitchboardLimb","err":{"type":"Error","message":"listen EADDRINUSE: address already in use 0.0.0.0:8788","stack":"Error: listen EADDRINUSE: address already in use 0.0.0.0:8788\n    at Server.setupListenHandle [as _listen2] (node:net:2008:16)\n    at listenInCluster (node:net:2065:12)\n    at node:net:2274:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","code":"EADDRINUSE","errno":-4091,"syscall":"listen","address":"0.0.0.0","port":8788},"msg":"[SWITCHBOARD] HTTP Server Error"}
+{"level":40,"time":1779533886330,"hostname":"POG2","name":"SwitchboardLimb","port":8788,"msg":"Switchboard port in use, incrementing..."}
+{"level":30,"time":1779533886333,"hostname":"POG2","name":"SwitchboardLimb","msg":"[SWITCHBOARD] Bridge ONLINE on port 8789 (0.0.0.0)"}
+{"level":30,"time":1779533886333,"hostname":"POG2","name":"SwitchboardLimb","msg":"Switchboard Bridge listening on port 8789"}
+{"level":20,"time":1779533886360,"hostname":"POG2","name":"CNSGodheadPulseVolley","tickId":"3a16913f-9dc5-43c8-980b-0a2077139378","movingLines":2,"energyFlow":"STABLE","falseStability":false,"progress":"0.067","msg":"🔮 Transitional vector computed"}
+{"level":20,"time":1779533886360,"hostname":"POG2","name":"CNSGodheadPulseVolley","tickId":"3a16913f-9dc5-43c8-980b-0a2077139378","decision":"COMMIT","confidence":"0.800","deadline":600,"msg":"⏳ Wait decision rendered"}
+{"level":30,"time":1779533886360,"hostname":"POG2","name":"CNSGodheadPulseVolley","tickId":"3a16913f-9dc5-43c8-980b-0a2077139378","actionCount":0,"phase":"STABLE","gate":"1.00","movingLines":2,"msg":"⚡ Action committed"}
+{"level":20,"time":1779533886362,"hostname":"POG2","name":"OrchestrateEngine","msg":"Awakening background health and reflection substrates..."}
+{"level":30,"time":1779533886363,"hostname":"POG2","name":"OrchestrateEngine","msg":"Sovereign Substrate AWAKE."}
+{"level":50,"time":1779533886364,"hostname":"POG2","name":"OrchestrateEngine","err":{"type":"ReferenceError","message":"require is not defined","stack":"ReferenceError: require is not defined\n    at PulseMonitor.pulse (file:///D:/pog2/dist/src/monitor/PulseMonitor.js:63:26)\n    at PulseMonitor.start (file:///D:/pog2/dist/src/monitor/PulseMonitor.js:40:20)\n    at file:///D:/pog2/dist/src/engines/OrchestrateEngine.js:545:35\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async OrchestrateEngine.executePlan (file:///D:/pog2/dist/src/engines/OrchestrateEngine.js:3754:9)\n    at async Command.<anonymous> (file:///D:/pog2/dist/src/cli.js:529:24)\n    at async Command.parseAsync (D:\\pog2\\node_modules\\commander\\lib\\command.js:1092:5)\n    at async main (file:///D:/pog2/dist/src/cli.js:3298:5)"},"msg":"PulseMonitor failed to start, but substrate continues."}
+{"level":20,"time":1779533886335,"hostname":"POG2","name":"TaskScheduler","id":"task-1-4mtlaj","provider":"ollama","msg":"Task starting execution"}
+{"level":20,"time":1779533886361,"hostname":"POG2","name":"EpistemicTransitionKernel","actionType":"PULSE_COMMIT","confidence":0.8,"msg":"Epistemic Kernel: Action reported"}
+{"level":40,"time":1779533886367,"hostname":"POG2","name":"SyntropyEngine","msg":"VS Code extensions.json not found at D:\\D-sovereign-\\guest\\.vscode\\extensions\\extensions.json"}
+{"level":30,"time":1779533887541,"hostname":"POG2","name":"OllamaCapabilityConfig","count":0,"msg":"Ollama capability registry loaded"}
+{"level":30,"time":1779533888717,"hostname":"POG2","name":"TrainingCollector","sessionId":"pog2_20260523_055808_jdfv","msg":"Training collector initialized"}
+{"level":30,"time":1779533888718,"hostname":"POG2","name":"CanonicalClock","seed":42,"msg":"CanonicalClock bootstrapped. Deterministic lattice anchored."}
+{"level":30,"time":1779533888720,"hostname":"POG2","name":"ModelRolodex","models":589,"msg":"ðŸ—‚ï¸ Rolodex loaded from disk."}
+{"level":20,"time":1779533888725,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Orchestrate Engines..."}
+{"level":30,"time":1779533888728,"hostname":"POG2","name":"SovereignDBLifecycle","name":"SovereignKnowledgeDB","totalHandlers":1,"msg":"DB handler registered."}
+{"level":30,"time":1779533888728,"hostname":"POG2","name":"SovereignKnowledgeDB","path":"D:\\sovereign\\vibe-learning.db","msg":"SovereignKnowledgeDB initialized."}
+{"level":30,"time":1779533888729,"hostname":"POG2","name":"rsmvCacheDB","msg":"Grounded entities schema ready — coordinate-exact spatial nervous system online."}
+{"level":30,"time":1779533888730,"hostname":"POG2","name":"WorldGroundingLimb","source":"D:\\pog2\\public\\grounding_manifest.json","msg":"Grounding manifest loaded from authoritative breakthrough source."}
+{"level":20,"time":1779533888739,"hostname":"POG2","name":"CacheForensicsLimb","msg":"Loaded equipment_by_slot.json"}
+{"level":30,"time":1779533888752,"hostname":"POG2","name":"HUDForensicsLimb","path":"C:\\ProgramData\\Jagex\\RuneScape-BETA","msg":"HUDForensicsLimb connected to Jagex Cache substrate."}
+{"level":30,"time":1779533888753,"hostname":"POG2","name":"CacheWatcherLimb","count":0,"msg":"Script baselines loaded."}
+{"level":30,"time":1779533888753,"hostname":"POG2","name":"AvatarStateLimb","msg":"AvatarStateLimb bound to entity: POG2_Sovereign"}
+{"level":30,"time":1779533888753,"hostname":"POG2","name":"GameplaySovereigntyLimb","npcId":15516,"msg":"Avatar grounded in public player template."}
+{"level":30,"time":1779533888756,"hostname":"POG2","name":"ChromanumberEngine","msg":"Pedagogical Ability Registry loaded."}
+{"level":20,"time":1779533888756,"hostname":"POG2","name":"EmbedEngine","db":"D:\\D-sovereign-\\learning\\embeddings.db","msg":"EmbedEngine DB initialized"}
+{"level":30,"time":1779533888758,"hostname":"POG2","name":"VectorPedagogyLimb","msg":"VectorPedagogyLimb initialized. Writing via TrainingCollector."}
+{"level":30,"time":1779533888758,"hostname":"POG2","name":"PedagogyLimb","key":"skills","file":"skill_manifest.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533888760,"hostname":"POG2","name":"GutenbergLimb","msg":"Gutenberg Limb Enabled. Synchronizing gameplay substrate..."}
+{"level":30,"time":1779533888769,"hostname":"POG2","name":"SyntropyEngine","claude":"D:\\D-sovereign-\\guest\\.claude","gemini":"D:\\D-sovereign-\\guest\\.gemini\\extensions","vscode":"D:\\D-sovereign-\\guest\\.vscode","msg":"SyntropyEngine initialized"}
+{"level":30,"time":1779533888776,"hostname":"POG2","name":"VolumeSovereigntyLimb","zoneCount":768,"msg":"MapZone Registry synchronized."}
+SovereignVocabularyLimb: Semantic translation initialized.
+{"level":30,"time":1779533888778,"hostname":"POG2","name":"EntityLimb","dbPath":"D:\\D-sovereign-\\memory\\memory.db","msg":"Entity persistence layer initialized."}
+{"level":30,"time":1779533888779,"hostname":"POG2","name":"GlobeStateLimb","endpoint":"ws://127.0.0.1:8787/parties/globe/pog2-sovereign","msg":"Sovereign local mode active: routing GlobeStateLimb to local wrangler dev server."}
+{"level":30,"time":1779533888780,"hostname":"POG2","name":"YouTubeLimb","msg":"YouTube: Loaded saved OAuth token."}
+{"level":30,"time":1779533888781,"hostname":"POG2","name":"LogicBrainLimb","name":"achievement_manifest","msg":"Logic manifest ingested."}
+SovereignVocabularyLimb: Semantic translation initialized.
+{"level":30,"time":1779533888790,"hostname":"POG2","name":"UISubstrateLimb","msg":"UISubstrateLimb online. HUD synthesis pipeline initialized."}
+{"level":30,"time":1779533888792,"hostname":"POG2","name":"WorkforceManifest","count":18,"msg":"Workforce manifest expanded Ã¢â‚¬â€ 18 specialized workers ACTIVE"}
+SovereignVocabularyLimb: Semantic translation initialized.
+{"level":30,"time":1779533888793,"hostname":"POG2","name":"DBRowOracleLimb","msg":"Waking Genomic Oracle..."}
+{"level":30,"time":1779533888799,"hostname":"POG2","name":"HexagramNetworkBridge","host":"content.beta.runescape.com","port":43594,"variant":"BETA","msg":"Initiating JS5 handshake"}
+{"level":30,"time":1779533888799,"hostname":"POG2","name":"SimulationHarness","msg":"Simulation Harness AWAKE. Coordinating cache-authoritative world logic nodes."}
+{"level":30,"time":1779533888803,"hostname":"POG2","name":"GameplayProjectionLimb","dir":"D:\\pog2\\public\\gameplay","msg":"GameplayProjectionLimb initialized. Filesystem projection active."}
+{"level":30,"time":1779533888803,"hostname":"POG2","name":"VectorDB","dbPath":"D:\\D-sovereign-\\learning\\sovereign-learning.db","msg":"Initializing VectorDB Substrate"}
+{"level":20,"time":1779533888805,"hostname":"POG2","name":"ContextBuilder","vectorDB":true,"executor":true,"roots":0,"msg":"ContextBuilder initialized"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"memory_consolidate","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+(node:34012) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":20,"time":1779533888757,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Memory Substrates..."}
+{"level":20,"time":1779533888760,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Specialized Limbs..."}
+{"level":20,"time":1779533888780,"hostname":"POG2","name":"OrchestrateEngine","msg":"YouTube Substrate activated via config."}
+{"level":20,"time":1779533888803,"hostname":"POG2","name":"OrchestrateEngine","msg":"Initializing Proprioception..."}
+{"level":20,"time":1779533888805,"hostname":"POG2","name":"OrchestrateEngine","msg":"VectorDB Substrate nominal."}
+{"level":20,"time":1779533888805,"hostname":"POG2","name":"OrchestrateEngine","msg":"Wiring FPRAG Context..."}
+{"level":20,"time":1779533888812,"hostname":"POG2","name":"OrchestrateEngine","msg":"Awakening Sovereign Substrate..."}
+{"level":30,"time":1779533888729,"hostname":"POG2","name":"SovereignDBLifecycle","name":"rsmvCacheDB","totalHandlers":2,"msg":"DB handler registered."}
+{"level":30,"time":1779533888805,"hostname":"POG2","name":"SovereignDBLifecycle","name":"VectorDB","totalHandlers":3,"msg":"DB handler registered."}
+{"level":30,"time":1779533888813,"hostname":"POG2","name":"SovereignDBLifecycle","name":"VectorDB","totalHandlers":3,"msg":"DB handler registered."}
+{"level":30,"time":1779533888729,"hostname":"POG2","name":"rsmvCacheDB","path":"D:\\D-sovereign-\\memory\\rsmv_cache.db","msg":"rsmv Cache DB initialized"}
+{"level":20,"time":1779533888750,"hostname":"POG2","name":"CacheForensicsLimb","msg":"Loaded quests.json"}
+{"level":30,"time":1779533888813,"hostname":"POG2","name":"CacheForensicsLimb","msg":"Booting CacheForensicsLimb (Epistemology substrate)..."}
+{"level":30,"time":1779533888754,"hostname":"POG2","name":"GameplaySovereigntyLimb","origin":{"x":3222,"z":3217,"plane":0},"msg":"Loaded Sovereign Save State."}
+{"level":30,"time":1779533888754,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"GameplaySovereigntyLimb booted as a CNS-authoritative node."}
+{"level":30,"time":1779533888778,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"Switchboard Bridge injected into Gameplay Limb."}
+{"level":30,"time":1779533888778,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"Entity Brain injected into Gameplay Limb."}
+{"level":30,"time":1779533888799,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"Simulation Harness injected into Gameplay Limb."}
+{"level":30,"time":1779533888781,"hostname":"POG2","name":"LogicBrainLimb","name":"equipment_requirements","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533888781,"hostname":"POG2","name":"LogicBrainLimb","name":"necromancy_logic","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533888781,"hostname":"POG2","name":"LogicBrainLimb","name":"quest_manifest","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533888789,"hostname":"POG2","name":"LogicBrainLimb","name":"skill_manifest","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533888790,"hostname":"POG2","name":"LogicBrainLimb","name":"training_strategies","msg":"Logic manifest ingested."}
+{"level":30,"time":1779533888813,"hostname":"POG2","name":"HexagramNetworkBridge","msg":"JS5 handshake accepted"}
+{"level":30,"time":1779533888805,"hostname":"POG2","name":"VectorDB","satPath":"D:\\D-sovereign-\\learning\\embeddings.db","msg":"Federated Satellite DB Connected (Readonly)"}
+{"level":30,"time":1779533888812,"hostname":"POG2","name":"VectorDB","dbPath":"D:\\D-sovereign-\\learning\\sovereign-learning.db","msg":"Initializing VectorDB Substrate"}
+{"level":30,"time":1779533888812,"hostname":"POG2","name":"VectorDB","satPath":"D:\\D-sovereign-\\learning\\embeddings.db","msg":"Federated Satellite DB Connected (Readonly)"}
+{"level":30,"time":1779533888758,"hostname":"POG2","name":"PedagogyLimb","key":"quests","file":"quest_manifest.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533888759,"hostname":"POG2","name":"PedagogyLimb","key":"achievements","file":"achievement_manifest.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533888759,"hostname":"POG2","name":"PedagogyLimb","key":"necromancy","file":"necromancy_logic.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533888759,"hostname":"POG2","name":"PedagogyLimb","key":"equipment","file":"equipment_requirements.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533888759,"hostname":"POG2","name":"PedagogyLimb","key":"strategies","file":"training_strategies.json","msg":"Ingested Pedagogical Logic Layer."}
+{"level":30,"time":1779533888759,"hostname":"POG2","name":"PedagogyLimb","msg":"PedagogyLimb initialized. Linked to Forensics, Topology, Router, and Substrate."}
+{"level":30,"time":1779533888760,"hostname":"POG2","name":"GutenbergLimb","atlasSystem":"D:\\sovereign\\atlas\\system","pedagogyPath":"D:\\sovereign\\memory\\pedagogy","msg":"Syncing Gameplay Substrate Data..."}
+{"level":20,"time":1779533888768,"hostname":"POG2","name":"GutenbergLimb","path":"D:\\sovereign\\atlas\\system\\dbrows.json","count":0,"msg":"Gameplay data fragment indexed."}
+{"level":30,"time":1779533888768,"hostname":"POG2","name":"GutenbergLimb","msg":"Gameplay Substrate Alignment Complete."}
+{"level":30,"time":1779533888753,"hostname":"POG2","name":"CacheWatcherLimb","majorIndex":17,"msg":"Registered new CacheInvalidationListener."}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"gameplay_sovereignty_volition","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"cache_forensics_lookup","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"spatial_sovereignty_init","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"entity_limb_memory","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"entity_limb_action","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"entity_limb_identity","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"hud_forensics_scan","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"hud_forensics_batch","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"consult_shadow","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"hud_forensics_scan","domain":"OBSERVE","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"consult_memetics","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"consult_syntropy","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"spatial_query","domain":"OBSERVE","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"mechanical_query","domain":"OBSERVE","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"check_node_health","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_open","domain":"MOTOR","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_read","domain":"OBSERVE","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_edit","domain":"MOTOR","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_goto","domain":"MOTOR","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"vscode_status","domain":"OBSERVE","category":"vscode","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"clinical_audit","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"diagnostic_nexus","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"pin_to_hexagram","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"unpin_from_hexagram","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"consult_hexagram","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"analyze_strategy","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"search_wiki","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"search_wayback","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"search_web","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"generate_code","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"edit_code","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"smart_edit","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"shell_command","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"wrangler","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"git_status","domain":"SYSTEM","category":"filesystem","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"gcloud_exec","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"instantdb_exec","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"git_ssh_exec","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"wrangler_deploy","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"wrangler_kv_list","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"wrangler_r2_list","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"ollama_model_list","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"ollama_run","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"mcp_client_status","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"service_status","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"think","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"memory_inspect","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"memory_backup","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"memory_compress","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"memory_repair","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"soverign_eye","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"sensory_capture","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"sovereign_visualize","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"web_search","domain":"RESEARCH","category":"network","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"fetch_url","domain":"RESEARCH","category":"network","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"rsmv_extract","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"model_preview","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"link_chromatic_intent","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"cache_forensics_scan","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"cache_learn_extract","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"rsmv_view","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"visual_audit","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"rsmv_export","domain":"MOTOR","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"cache_forensics_query","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"cache_forensics_cross_ref","domain":"RESEARCH","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"sql_forge","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"docs_forge","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"refactor_forge","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533888810,"hostname":"POG2","name":"ToolRegistry","tool":"ingest_book","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"analyze_book_style","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"list_library","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"read_book","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"search_gutenberg","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"generate_storyboard","domain":"VISION","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"scaffold_webapp","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"digest_component","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"personality","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"absorb_wisdom","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"personality_set","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"personality_book","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_list","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_search","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_ingest","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_read","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_sync","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"gutenberg_organize","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"run_pipeline","domain":"FORGE","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"run_batch_pipeline","domain":"FORGE","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"voice_narrate","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"storyboard_create","domain":"VISION","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"video_create","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"think","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"dispatch","domain":"FORGE","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"soundtrack_generate","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"image_generate","domain":"VISION","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"model_train","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"reflect","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"healer_diagnose","domain":"SYSTEM","category":"mcp","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"web_sense","domain":"VISION","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"forge_concept","domain":"CODE","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"validate_structure","domain":"CODE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"env_context","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":50,"time":1779533888817,"hostname":"POG2","name":"GlobeStateLimb","err":{"type":"Error","message":"connect ECONNREFUSED 127.0.0.1:8787","stack":"Error: connect ECONNREFUSED 127.0.0.1:8787\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16)","errno":-4078,"code":"ECONNREFUSED","syscall":"connect","address":"127.0.0.1","port":8787},"msg":"Globe connection error"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"rsc_action","domain":"SYSTEM","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"extract_rsmv","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"probe_db","domain":"OBSERVE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"probe_vision","domain":"VISION","category":"forge","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"probe_audio","domain":"MOTOR","category":"creative","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"monitor_integrity","domain":"SYSTEM","category":"filesystem","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"memory_consolidate","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"quantum_collapse","domain":"FORGE","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"bio_verify","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"relic_query","domain":"RESEARCH","category":"literary","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"relic_store_key","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"rsc_knock","domain":"SYSTEM","category":"sensory","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"proprioception_sync","domain":"SYSTEM","category":"core","msg":"Tool registered"}
+{"level":20,"time":1779533888811,"hostname":"POG2","name":"ToolRegistry","tool":"discover_capabilities","domain":"SYSTEM","category":"forge","msg":"Tool registered"}
+{"level":30,"time":1779533888819,"hostname":"POG2","name":"CacheForensicsLimb","msg":"CacheForensicsLimb sequence ACTIVE."}
+(node:34012) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+{"level":40,"time":1779533888817,"hostname":"POG2","name":"GlobeStateLimb","msg":"Globe connection closed"}
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error code ENOSPC
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error syscall write
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error errno -4055
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error nospc ENOSPC: no space left on device, write
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error nospc There appears to be insufficient space on your system to finish.
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error nospc Clear up some disk space and try again.
+[38;5;208m[RSMV_BRIDGE:ERR][0m npm error A complete log of this run can be found in: C:\Users\krist\AppData\Local\npm-cache\_logs\2026-05-23T10_58_09_113Z-debug-0.log
+{"level":50,"time":1779533889660,"hostname":"POG2","name":"RSMVBridge","operation":"health","args":[],"msg":"npm error code ENOSPC\nnpm error syscall write\nnpm error errno -4055\nnpm error nospc ENOSPC: no space left on device, write\nnpm error nospc There appears to be insufficient space on your system to finish.\nnpm error nospc Clear up some disk space and try again.\nnpm error A complete log of this run can be found in: C:\\Users\\krist\\AppData\\Local\\npm-cache\\_logs\\2026-05-23T10_58_09_113Z-debug-0.log","msg":"RSMVBridge subprocess failed"}
+[INFO] { dir: 'D:\\pog2\\atlas\\spatial' } Initializing SpatialSovereigntyLimb...
+[INFO] SpatialSovereigntyLimb active in dynamic cache query mode.
+{"level":30,"time":1779533889661,"hostname":"POG2","name":"MechanicalSovereigntyLimb","dir":"D:\\D-sovereign-\\atlas\\logic","msg":"Initializing MechanicalSovereigntyLimb..."}
+{"level":30,"time":1779533889661,"hostname":"POG2","name":"GameplaySovereigntyLimb","msg":"Godhead Sovereign Server Clock handed over to CNS Kernel."}
+{"level":20,"time":1779533889661,"hostname":"POG2","name":"SwitchboardLimb","msg":"Substrates injected into Switchboard Bridge."}
+{"level":30,"time":1779533889673,"hostname":"POG2","name":"OrchestrateEngine","port":8789,"url":"http://localhost:8789","msg":"Switchboard Bridge active (graceful port)"}
+{"level":30,"time":1779533889673,"hostname":"POG2","name":"CNSGodheadPulseVolley","msg":"CNS Godhead Pulse (Hardened Heartbeat) Started. Player Tick: 300ms | Game Tick: 600ms"}
+{"level":20,"time":1779533889674,"hostname":"POG2","name":"SimulationHarness","msg":"ðŸš€ [GODHEAD] Commencing Deep Path Strategic Sync (6000ms pulse)..."}
+{"level":20,"time":1779533889675,"hostname":"POG2","name":"TaskScheduler","id":"task-1-ydp368","provider":"ollama","priority":3,"queueSize":1,"msg":"Task scheduled"}
+{"level":50,"time":1779533889684,"hostname":"POG2","name":"MCPEngine","error":"Expected property name or '}' in JSON at position 4 (line 2 column 3)","msg":"Failed to initialize MCP servers"}
+{"level":20,"time":1779533889695,"hostname":"POG2","name":"GhostSplatEngine","threatDensity":"0.0000","avgConfidence":"1.000","computePressure":"0.187","causalConfidence":"0.944","kernelPhase":"STABLE","msg":"🔮 GhostSplat → Kernel: Spatial volatility signal emitted."}
+{"level":20,"time":1779533889702,"hostname":"POG2","name":"EpistemicTransitionKernel","currentYao":2,"targetPhase":"STABLE","confidence":"0.800","volatility":"0.000","msg":"🔮 PREDICTION: Anticipated post-action state."}
+{"level":30,"time":1779533889704,"hostname":"POG2","name":"GhostLimb","msg":"[GHOST_VOICE] Awakening the observer mind..."}
+[38;5;39m(i)[0m [38;5;208m[AUTHORIZATION][0m Worker 'Global Fallback Ã¢â‚¬â€ cloud redundancy' executing unauthorized tool 'consult_memetics'. Bypassing via Dynamic Binding.
+[38;5;196mâœ˜[0m Browser History database not found.
+{"level":30,"time":1779533889661,"hostname":"POG2","name":"MechanicalSovereigntyLimb","msg":"MechanicalSovereigntyLimb active with 0 regions loaded."}
+{"level":50,"time":1779533889670,"hostname":"POG2","name":"SwitchboardLimb","err":{"type":"Error","message":"listen EADDRINUSE: address already in use 0.0.0.0:8788","stack":"Error: listen EADDRINUSE: address already in use 0.0.0.0:8788\n    at Server.setupListenHandle [as _listen2] (node:net:2008:16)\n    at listenInCluster (node:net:2065:12)\n    at node:net:2274:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","code":"EADDRINUSE","errno":-4091,"syscall":"listen","address":"0.0.0.0","port":8788},"msg":"[SWITCHBOARD] HTTP Server Error"}
+{"level":40,"time":1779533889671,"hostname":"POG2","name":"SwitchboardLimb","port":8788,"msg":"Switchboard port in use, incrementing..."}
+{"level":30,"time":1779533889673,"hostname":"POG2","name":"SwitchboardLimb","msg":"[SWITCHBOARD] Bridge ONLINE on port 8789 (0.0.0.0)"}
+{"level":30,"time":1779533889673,"hostname":"POG2","name":"SwitchboardLimb","msg":"Switchboard Bridge listening on port 8789"}
+{"level":20,"time":1779533889704,"hostname":"POG2","name":"OrchestrateEngine","msg":"Awakening background health and reflection substrates..."}
+{"level":30,"time":1779533889705,"hostname":"POG2","name":"OrchestrateEngine","msg":"Sovereign Substrate AWAKE."}
+{"level":50,"time":1779533889706,"hostname":"POG2","name":"OrchestrateEngine","err":{"type":"ReferenceError","message":"require is not defined","stack":"ReferenceError: require is not defined\n    at PulseMonitor.pulse (file:///D:/pog2/dist/src/monitor/PulseMonitor.js:63:26)\n    at PulseMonitor.start (file:///D:/pog2/dist/src/monitor/PulseMonitor.js:40:20)\n    at file:///D:/pog2/dist/src/engines/OrchestrateEngine.js:545:35\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async OrchestrateEngine.executePlan (file:///D:/pog2/dist/src/engines/OrchestrateEngine.js:3754:9)\n    at async Command.<anonymous> (file:///D:/pog2/dist/src/cli.js:509:24)\n    at async Command.parseAsync (D:\\pog2\\node_modules\\commander\\lib\\command.js:1092:5)\n    at async main (file:///D:/pog2/dist/src/cli.js:3298:5)"},"msg":"PulseMonitor failed to start, but substrate continues."}
+{"level":20,"time":1779533889702,"hostname":"POG2","name":"CNSGodheadPulseVolley","tickId":"46a59a02-a9a4-4749-bbd4-c18a70bbba13","movingLines":2,"energyFlow":"STABLE","falseStability":false,"progress":"0.067","msg":"🔮 Transitional vector computed"}
+{"level":20,"time":1779533889702,"hostname":"POG2","name":"CNSGodheadPulseVolley","tickId":"46a59a02-a9a4-4749-bbd4-c18a70bbba13","decision":"COMMIT","confidence":"0.800","deadline":600,"msg":"⏳ Wait decision rendered"}
+{"level":30,"time":1779533889702,"hostname":"POG2","name":"CNSGodheadPulseVolley","tickId":"46a59a02-a9a4-4749-bbd4-c18a70bbba13","actionCount":0,"phase":"STABLE","gate":"1.00","movingLines":2,"msg":"⚡ Action committed"}
+{"level":20,"time":1779533889675,"hostname":"POG2","name":"TaskScheduler","id":"task-1-ydp368","provider":"ollama","msg":"Task starting execution"}
+{"level":20,"time":1779533889702,"hostname":"POG2","name":"EpistemicTransitionKernel","actionType":"PULSE_COMMIT","confidence":0.8,"msg":"Epistemic Kernel: Action reported"}
+[05:58:09.709] [31mERROR[39m (POG2-cli): [36mCommand failed[39m
+    error: "Browser History database not found."
+{"level":30,"time":1779533891002,"hostname":"POG2","name":"OllamaCapabilityConfig","count":0,"msg":"Ollama capability registry loaded"}
+{"level":30,"time":1779533892125,"hostname":"POG2","name":"TrainingCollector","sessionId":"pog2_20260523_055812_6lir","msg":"Training collector initialized"}
+{"level":30,"time":1779533892126,"hostname":"POG2","name":"CanonicalClock","seed":42,"msg":"CanonicalClock bootstrapped. Deterministic lattice anchored."}
+{"level":30,"time":1779533892128,"hostname":"POG2","name":"ModelRolodex","models":589,"msg":"ðŸ—‚ï¸ Rolodex loaded from disk."}
+No modelId provided
+(node:46904) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)

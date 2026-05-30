@@ -1,0 +1,252 @@
+.env.example:9:CLOUDFLARE_IMAGE_ENDPOINT=https://chromanumber-api.YOUR_SUBDOMAIN.workers.dev/ai/generate-image
+.env.example:11:CLOUDFLARE_WORKER_URL=https://hello-ai.YOUR_SUBDOMAIN.workers.dev
+.env.example:12:POG2_GLOBE_ENDPOINT=wss://multiplayer-globe-template.YOUR_SUBDOMAIN.workers.dev/parties/globe/pog2-sovereign
+.env.example:49:YOUTUBE_REDIRECT_URI=https://chromanumber-auth.YOUR_SUBDOMAIN.workers.dev/youtube/callback
+.env.example:51:CHROMANUMBER_AUTH_WORKER=https://chromanumber-auth.YOUR_SUBDOMAIN.workers.dev
+allfiles.md:1491:   That’s exactly how biological visual cortex works at the V1/V2 level before higher cognition gets involved. It gives POG a ground-truth spatial canvas it can cross-reference against its own generated output. Huge. This is why the extra-arm problem is already on the way out — it’s not guessing, it’s measuring.
+allfiles.md:1589:Movie frame / generated image / .glb ↓ ChromaNumber (deterministic, non-AI) ├─ Edge/line extraction (V1-style) ├─ Color keying + segment mapping └─ (color / number / location) tuples → symbolic spatial canvas ↓ Hexagram evaluation (36 nodes) + emotional state + past experience prescription ↓ Self-critique / delete / regenerate / log
+package.json:54:    "canvas": "^3.2.1",
+package-lock.json:25:        "canvas": "^3.2.1",
+package-lock.json:139:        "canvas": ">=2.10.2",
+package-lock.json:149:        "canvas": {
+package-lock.json:3531:    "node_modules/canvas": {
+package-lock.json:3533:      "resolved": "https://registry.npmjs.org/canvas/-/canvas-3.2.1.tgz",
+package-lock.json:7152:      "deprecated": "Use your platform's native DOMException instead",
+rsmv_clone\src\viewer\RSEngine.ts:109:    public async initialize(canvas: HTMLCanvasElement, opts: any) {
+rsmv_clone\src\viewer\RSEngine.ts:113:        this.renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true });
+public\unified_diagnostic.html:405:    <canvas id="renderCanvas"></canvas>
+public\unified_diagnostic.html:447:            <canvas id="kernel-sparkline" width="300" height="40"></canvas>
+public\unified_diagnostic.html:514:        const actionBar = document.getElementById('action-bar');
+public\unified_diagnostic.html:515:        const logContainer = document.getElementById('log-container');
+public\unified_diagnostic.html:516:        const adrenalineFill = document.getElementById('adrenaline-fill');
+public\unified_diagnostic.html:517:        const adrenalineText = document.getElementById('adrenaline-text');
+public\unified_diagnostic.html:518:        const tickCounter = document.getElementById('tick-counter');
+public\unified_diagnostic.html:635:                    const slot = document.getElementById(`slot-index-${i}`);
+public\unified_diagnostic.html:647:                    const oldCd = slot.querySelector('.cooldown-overlay');
+public\unified_diagnostic.html:659:                    const slot = document.getElementById(`slot-${id}`);
+public\unified_diagnostic.html:670:                    const oldCd = slot.querySelector('.cooldown-overlay');
+public\unified_diagnostic.html:686:            const input = document.getElementById('target-search-input').value.trim();
+public\unified_diagnostic.html:687:            const type = document.getElementById('target-type-select').value;
+public\unified_diagnostic.html:707:                document.getElementById('target-name').textContent = data.name || data.queryName || input;
+public\unified_diagnostic.html:709:                    document.getElementById('target-hp').textContent = data.cacheData.hp ? data.cacheData.hp.toLocaleString() : 'N/A';
+public\unified_diagnostic.html:725:            const cardContainer = document.getElementById('enriched-card-container');
+public\unified_diagnostic.html:848:        const canvas = document.getElementById('renderCanvas');
+public\unified_diagnostic.html:849:        const engine = new BABYLON.Engine(canvas, true);
+public\unified_diagnostic.html:857:            camera.attachControl(canvas, true);
+public\unified_diagnostic.html:928:                    document.getElementById('ws-status').textContent = 'CONNECTED';
+public\unified_diagnostic.html:929:                    document.getElementById('ws-status').style.color = '#34d399';
+public\unified_diagnostic.html:946:                                const phaseEl = document.getElementById('phase-display');
+public\unified_diagnostic.html:953:                                document.getElementById('style-display').textContent = payload.combatStyle.charAt(0).toUpperCase() + payload.combatStyle.slice(1);
+public\unified_diagnostic.html:958:                                document.getElementById('archetype-display').textContent = payload.activeArchetype;
+public\unified_diagnostic.html:963:                                document.getElementById('rotation-display').textContent = payload.activeRotation;
+public\unified_diagnostic.html:968:                                document.getElementById('target-hp').textContent = payload.targetHp.toLocaleString();
+public\unified_diagnostic.html:973:                                document.getElementById('kernel-phase').textContent = payload.kernelPhase;
+public\unified_diagnostic.html:981:                                const canvas = document.getElementById('kernel-sparkline');
+public\unified_diagnostic.html:982:                                if (canvas && canvas.getContext) {
+public\unified_diagnostic.html:983:                                    const ctx = canvas.getContext('2d');
+public\unified_diagnostic.html:984:                                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+public\unified_diagnostic.html:986:                                    const step = canvas.width / 50;
+public\unified_diagnostic.html:992:                                        // height max is 3, canvas height is 40. pad by 5.
+public\unified_diagnostic.html:1010:                                const container = document.getElementById('causality-container');
+public\unified_diagnostic.html:1042:                                    const slot = document.getElementById(`slot-index-${i}`);
+public\unified_diagnostic.html:1052:                                    const slot = document.getElementById(`slot-${id}`);
+public\unified_diagnostic.html:1084:                    document.getElementById('ws-status').textContent = 'DISCONNECTED';
+public\unified_diagnostic.html:1085:                    document.getElementById('ws-status').style.color = '#ff4444';
+public\unified_diagnostic.html:1126:                        const slot = document.getElementById(`slot-index-${i}`);
+public\unified_diagnostic.html:1130:                        const oldCd = slot.querySelector('.cooldown-overlay');
+public\unified_diagnostic.html:1143:                        const slot = document.getElementById(`slot-${id}`);
+public\unified_diagnostic.html:1145:                        const oldCd = slot.querySelector('.cooldown-overlay');
+tsconfig.json:18:      "DOM",
+tsconfig.json:19:      "DOM.Iterable"
+OrchestrateEngine.md:87:import { SOVEREIGN_SYSTEM_PROMPT, DOMAIN_PROMPTS } from '../prompts/SystemPrompts.js';
+OrchestrateEngine.md:899:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â OBSERVE DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+OrchestrateEngine.md:1184:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â VS CODE SYNERGY DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+OrchestrateEngine.md:1336:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â HEXAGRAM / MEMORY DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+OrchestrateEngine.md:1422:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â DISCOVERY DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+OrchestrateEngine.md:1471:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â CODE DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+OrchestrateEngine.md:1521:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â SYSTEM DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+OrchestrateEngine.md:1692:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â VISION DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+OrchestrateEngine.md:1754:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â RESEARCH DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+OrchestrateEngine.md:1771:            jargonDescription: 'Fetches and parses the DOM content of a target URL substrate into a clinical markdown representation via the search engine.',
+OrchestrateEngine.md:2041:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â FORGE DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+OrchestrateEngine.md:2105:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â LITERARY DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+OrchestrateEngine.md:2208:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â CREATIVE / FORGE DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢ÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+OrchestrateEngine.md:2280:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â COGNITION / PERSONALITY DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+OrchestrateEngine.md:2361:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â GUVENBERG LITERARY DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+OrchestrateEngine.md:2465:        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â PIPELINE DOMAIN ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+web_hud\tsconfig.json:5:    "lib": ["ES2023", "DOM"],
+public\ghostsplat_view.html:53:  .canvas-container {
+public\ghostsplat_view.html:61:  canvas {
+public\ghostsplat_view.html:186:  <div class="canvas-container">
+public\ghostsplat_view.html:187:    <canvas id="view" width="528" height="528"></canvas>
+public\ghostsplat_view.html:304:  const canvas = document.getElementById('view');
+public\ghostsplat_view.html:305:  const ctx = canvas.getContext('2d');
+public\ghostsplat_view.html:306:  const tooltip = document.getElementById('tooltip');
+public\ghostsplat_view.html:330:        document.getElementById('live-indicator').textContent = 'LIVE MODE: OFF';
+public\ghostsplat_view.html:331:        document.getElementById('live-indicator').style.color = '#555';
+public\ghostsplat_view.html:344:        document.getElementById('live-indicator').textContent = 'LIVE MODE: ON';
+public\ghostsplat_view.html:345:        document.getElementById('live-indicator').style.color = '#51ffff';
+public\ghostsplat_view.html:366:            document.getElementById('live-indicator').textContent = 'LIVE MODE: RECONNECTING...';
+public\ghostsplat_view.html:367:            document.getElementById('live-indicator').style.color = '#ffa500';
+public\ghostsplat_view.html:375:    document.getElementById('depth-val').textContent = currentData.tickDepth;
+public\ghostsplat_view.html:377:    document.getElementById('heat-val').textContent = totalHeat;
+public\ghostsplat_view.html:378:    document.getElementById('npc-val').textContent = currentData.projections.length - 1;
+public\ghostsplat_view.html:379:    document.getElementById('safe-val').textContent = currentData.safespots.length;
+public\ghostsplat_view.html:380:    document.getElementById('focus-coords').textContent = 
+public\ghostsplat_view.html:385:    const phaseEl = document.getElementById('kd-phase');
+public\ghostsplat_view.html:394:    document.getElementById('kd-gate').textContent = data.phaseGateMultiplier.toFixed(2) + 'x';
+public\ghostsplat_view.html:395:    document.getElementById('kd-volatility').textContent = data.volatilityEMA.toFixed(3);
+public\ghostsplat_view.html:396:    document.getElementById('kd-stability').textContent = data.stabilityTrendEMA.toFixed(3);
+public\ghostsplat_view.html:397:    document.getElementById('kd-accuracy').textContent = (data.predictionAccuracyEMA * 100).toFixed(1) + '%';
+public\ghostsplat_view.html:398:    document.getElementById('kd-transitions').textContent = data.transitionCount;
+public\ghostsplat_view.html:401:    const primaryEl = document.getElementById('hex-primary');
+public\ghostsplat_view.html:402:    const nuclearEl = document.getElementById('hex-nuclear');
+public\ghostsplat_view.html:403:    const linesContainer = document.getElementById('moving-lines-container');
+public\ghostsplat_view.html:437:    const timeline = document.getElementById('hysteresis-timeline');
+public\ghostsplat_view.html:447:    const queueEl = document.getElementById('queue-state');
+public\ghostsplat_view.html:465:    const canvas = document.createElement('canvas');
+public\ghostsplat_view.html:466:    canvas.width = 200;
+public\ghostsplat_view.html:467:    canvas.height = 30;
+public\ghostsplat_view.html:468:    const sctx = canvas.getContext('2d');
+public\ghostsplat_view.html:474:    const step = canvas.width / 30;
+public\ghostsplat_view.html:477:        const y = canvas.height - (c * canvas.height);
+public\ghostsplat_view.html:483:    const container = document.getElementById('confidence-sparkline');
+public\ghostsplat_view.html:486:        container.appendChild(canvas);
+public\ghostsplat_view.html:496:    ctx.clearRect(0, 0, canvas.width, canvas.height);
+public\ghostsplat_view.html:594:        ctx.shadowOffsetY = -2; // Lifted slightly (negative Y in canvas = up)
+public\ghostsplat_view.html:621:      ctx.lineTo(i * SCALE, canvas.height);
+public\ghostsplat_view.html:625:      ctx.lineTo(canvas.width, i * SCALE);
+public\ghostsplat_view.html:630:  canvas.addEventListener('mousemove', (e) => {
+public\ghostsplat_view.html:632:    const rect = canvas.getBoundingClientRect();
+public\ghostsplat_view.html:672:  canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+public\test_ghostsplat.html:27:    <canvas id="renderCanvas"></canvas>
+public\test_ghostsplat.html:38:        const canvas = document.getElementById("renderCanvas");
+public\test_ghostsplat.html:39:        const engine = new BABYLON.Engine(canvas, true);
+public\test_ghostsplat.html:43:            const el = document.getElementById('combat-log');
+public\test_ghostsplat.html:192:            camera.attachControl(canvas, true);
+public\test_avatar.html:27:    <canvas id="renderCanvas"></canvas>
+public\test_avatar.html:36:        const canvas = document.getElementById("renderCanvas");
+public\test_avatar.html:37:        const engine = new BABYLON.Engine(canvas, true);
+public\test_avatar.html:45:            camera.attachControl(canvas, true);
+public\test_avatar.html:99:                document.getElementById('overlay').innerHTML += '<p style="color:red">Failed to load kit_31149.json</p>';
+public\test_actionbar.html:162:    <canvas id="renderCanvas"></canvas>
+public\test_actionbar.html:209:    // ─── DOM ───────────────────────────────────────────────────────
+public\test_actionbar.html:210:    const actionBar = document.getElementById('action-bar');
+public\test_actionbar.html:211:    const logEntries = document.getElementById('log-entries');
+public\test_actionbar.html:212:    const adrenalineFill = document.getElementById('adrenaline-fill');
+public\test_actionbar.html:213:    const adrenalineText = document.getElementById('adrenaline-text');
+public\test_actionbar.html:214:    const tickCounter = document.getElementById('tick-counter');
+public\test_actionbar.html:263:            const oldOverlay = el.querySelector('.cooldown-overlay');
+public\test_actionbar.html:416:    const canvas = document.getElementById('renderCanvas');
+public\test_actionbar.html:417:    const engine = new BABYLON.Engine(canvas, true);
+public\test_actionbar.html:425:        camera.attachControl(canvas, true);
+public\edge_radar.html:39:  .canvas-wrap {
+public\edge_radar.html:44:  canvas { display: block; image-rendering: pixelated; }
+public\edge_radar.html:114:  <button onclick="document.getElementById('filePicker').click()">Load File</button>
+public\edge_radar.html:119:<div class="canvas-wrap">
+public\edge_radar.html:120:  <canvas id="radar" width="768" height="768"></canvas>
+public\edge_radar.html:139:const canvas = document.getElementById('radar');
+public\edge_radar.html:140:const ctx = canvas.getContext('2d');
+public\edge_radar.html:141:const tooltip = document.getElementById('tooltip');
+public\edge_radar.html:157:  const btn = document.getElementById('trackBtn');
+public\edge_radar.html:175:  const currentRx = parseInt(document.getElementById('rx').value);
+public\edge_radar.html:176:  const currentRy = parseInt(document.getElementById('ry').value);
+public\edge_radar.html:179:    document.getElementById('rx').value = rx;
+public\edge_radar.html:180:    document.getElementById('ry').value = ry;
+public\edge_radar.html:194:      if (document.getElementById('showGhosts').checked || document.getElementById('showHeatmap').checked) redraw();
+public\edge_radar.html:223:  const scale = parseInt(document.getElementById('scale').value);
+public\edge_radar.html:224:  const showEdges = document.getElementById('showEdges').checked;
+public\edge_radar.html:225:  const showEntities = document.getElementById('showEntities').checked;
+public\edge_radar.html:228:  canvas.width = size * scale;
+public\edge_radar.html:229:  canvas.height = size * scale;
+public\edge_radar.html:232:  const imgData = ctx.createImageData(canvas.width, canvas.height);
+public\edge_radar.html:245:          const idx = (py * canvas.width + px) * 4;
+public\edge_radar.html:268:        const canvasX = lx * scale;
+public\edge_radar.html:269:        const canvasY = (size - 1 - ly) * scale;
+public\edge_radar.html:271:        // North edge = top of the tile cell (canvasY)
+public\edge_radar.html:275:          ctx.moveTo(canvasX, canvasY);
+public\edge_radar.html:276:          ctx.lineTo(canvasX + scale, canvasY);
+public\edge_radar.html:279:        // South edge = bottom of the tile cell (canvasY + scale)
+public\edge_radar.html:283:          ctx.moveTo(canvasX, canvasY + scale);
+public\edge_radar.html:284:          ctx.lineTo(canvasX + scale, canvasY + scale);
+public\edge_radar.html:287:        // East edge = right side (canvasX + scale)
+public\edge_radar.html:291:          ctx.moveTo(canvasX + scale, canvasY);
+public\edge_radar.html:292:          ctx.lineTo(canvasX + scale, canvasY + scale);
+public\edge_radar.html:295:        // West edge = left side (canvasX)
+public\edge_radar.html:299:          ctx.moveTo(canvasX, canvasY);
+public\edge_radar.html:300:          ctx.lineTo(canvasX, canvasY + scale);
+public\edge_radar.html:366:  if (document.getElementById('showHeatmap').checked && ghostHeatmap && ghostHeatmap.length > 0) {
+public\edge_radar.html:417:  if (document.getElementById('showGhosts').checked && Array.isArray(ghostSafespots) && ghostSafespots.length > 0) {
+public\edge_radar.html:440:  if (document.getElementById('showGhosts').checked && ghostGaussians.length > 0) {
+public\edge_radar.html:490:  document.getElementById('stats').innerHTML =
+public\edge_radar.html:520:  document.getElementById('status').textContent =
+public\edge_radar.html:527:  const rx = document.getElementById('rx').value;
+public\edge_radar.html:528:  const ry = document.getElementById('ry').value;
+public\edge_radar.html:530:  document.getElementById('status').textContent = `Loading ${filename}...`;
+public\edge_radar.html:536:      document.getElementById('status').textContent = `${filename} not found in /world/ (${resp.status})`;
+public\edge_radar.html:542:    document.getElementById('status').textContent = `Error: ${err.message}`;
+public\edge_radar.html:547:canvas.addEventListener('mousemove', (e) => {
+public\edge_radar.html:549:  const rect = canvas.getBoundingClientRect();
+public\edge_radar.html:550:  const scale = parseInt(document.getElementById('scale').value);
+public\edge_radar.html:601:canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+public\edge_radar.html:604:document.getElementById('filePicker').addEventListener('change', (e) => {
+public\edge_radar.html:612:      document.getElementById('status').textContent = `Parse error: ${err.message}`;
+public\edge_radar.html:629:      document.getElementById('status').textContent = `Parse error: ${err.message}`;
+web_hud\src\main.ts:37:    this.logElement = document.getElementById('log')!;
+web_hud\src\main.ts:38:    this.barElement = document.getElementById('action-bar')!;
+web_hud\src\main.ts:39:    this.fillElement = document.getElementById('adrenaline-fill')!;
+web_hud\src\main.ts:41:    const canvas = document.getElementById('renderCanvas') as HTMLCanvasElement;
+web_hud\src\main.ts:42:    this.engine = new BABYLON.Engine(canvas, true);
+web_hud\src\main.ts:60:    camera.attachControl(document.getElementById('renderCanvas'), true);
+web_hud\src\main.ts:113:      const indicator = document.getElementById('engine-status');
+web_hud\src\main.ts:123:        const arch = document.getElementById('archetype-name');
+web_hud\src\main.ts:139:      const indicator = document.getElementById('engine-status');
+web_hud\src\main.ts:186:    const slots = document.querySelectorAll('.ability-slot');
+web_hud\src\main.ts:188:      const img = slot.querySelector('img');
+web_hud\src\main.ts:206:    const panel = document.getElementById('causality-panel');
+src\vision\PuppeteerEye.ts:17: * Extends SovereignEye with streaming and DOM/Canvas inspection capabilities.
+src\vision\PuppeteerEye.ts:98:     * Capture state from a specific URL with deep DOM inspection.
+src\vision\PuppeteerEye.ts:117:                const interactables = Array.from(document.querySelectorAll('button, a, input, select, canvas'));
+src\vision\PuppeteerEye.ts:132:            this.emitKernelSignal(0.8); // Successful DOM inspection
+src\vision\PuppeteerEye.ts:135:            logger.error({ err, url }, 'DOM inspection failed');
+web_hud\index.html:50:    <canvas id="renderCanvas"></canvas>
+public\heatmap.html:88:    .canvas-wrap {
+public\heatmap.html:96:    canvas {
+public\heatmap.html:247:        onchange="render(currentData, parseInt(document.getElementById('plane').value), currentScale)">
+public\heatmap.html:252:        onchange="render(currentData, parseInt(document.getElementById('plane').value), currentScale)"> Composite
+public\heatmap.html:258:    <button onclick="document.getElementById('filePicker').click()">Load File</button>
+public\heatmap.html:263:  <div class="canvas-wrap">
+public\heatmap.html:264:    <canvas id="heatmap" width="512" height="512"></canvas>
+public\heatmap.html:295:    const canvas = document.getElementById('heatmap');
+public\heatmap.html:296:    const ctx = canvas.getContext('2d');
+public\heatmap.html:297:    const tooltip = document.getElementById('tooltip');
+public\heatmap.html:342:      ws.onopen = () => { document.getElementById('status').textContent = `Pulse Link: ACTIVE (Port ${currentWsPort})`; };
+public\heatmap.html:344:        document.getElementById('status').textContent = `Pulse Link: LOST (Port ${currentWsPort})`;
+public\heatmap.html:357:      const cx = parseInt(document.getElementById('cx').value);
+public\heatmap.html:358:      const cz = parseInt(document.getElementById('cz').value);
+public\heatmap.html:359:      const plane = parseInt(document.getElementById('plane').value);
+public\heatmap.html:364:      document.getElementById('status').textContent = `Requesting Live Extraction at [${worldX}, ${worldZ}]...`;
+public\heatmap.html:369:      document.getElementById('status').textContent = `Live Data Received for [${liveData.x}, ${liveData.z}]`;
+public\heatmap.html:407:      document.getElementById(`btn-${name}`).classList.toggle('active');
+public\heatmap.html:408:      if (currentData) render(currentData, parseInt(document.getElementById('plane').value), currentScale);
+public\heatmap.html:412:      const id = document.getElementById('varId').value;
+public\heatmap.html:413:      const val = parseInt(document.getElementById('varVal').value);
+public\heatmap.html:415:      if (currentData) render(currentData, parseInt(document.getElementById('plane').value), currentScale);
+public\heatmap.html:456:      const engine = document.getElementById('engineMode').value;
+public\heatmap.html:464:      canvas.width = size * scale;
+public\heatmap.html:465:      canvas.height = size * scale;
+public\heatmap.html:470:      const isComposite = document.getElementById('compositeMode').checked;
+public\heatmap.html:520:      const imgData = ctx.createImageData(canvas.width, canvas.height);
+public\heatmap.html:584:              const idx = (py * canvas.width + px) * 4;
+public\heatmap.html:628:              // Flip Y/Z: world Z is north, canvas Y is down
+public\heatmap.html:629:              const canvasY = (currentSize - 2 - (z + h)) * scale;
+public\heatmap.html:630:              ctx.strokeRect(x * scale, canvasY, w * scale, h * scale);
+public\heatmap.html:632:              ctx.fillRect(x * scale, canvasY, w * scale, h * scale);
+public\heatmap.html:648:          // Calculate canvas coordinates
+public\heatmap.html:680:    canvas.addEventListener('click', (e) => {
+public\heatmap.html:682:      const rect = canvas.getBoundingClientRect();
+public\heatmap.html:718:            document.getElementById('cx').value = dest.cx;
+public\heatmap.html:719:            document.getElementById('cz').value = dest.cz;
+public\heatmap.html:730:    canvas.addEventListener('mousemove', (e) => {
+
+[Showing results with pagination = limit: 250]

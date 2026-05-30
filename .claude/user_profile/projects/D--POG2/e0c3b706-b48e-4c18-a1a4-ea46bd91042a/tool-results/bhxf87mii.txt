@@ -1,0 +1,819 @@
+src/headless/runbrowser.ts:1:import { app, BrowserWindow, powerSaveBlocker, ipcMain } from "electron";
+src/headless/runbrowser.ts:116:	var index = new BrowserWindow({
+src/main.ts:1:import { app, BrowserWindow, dialog, ipcMain } from "electron/main";
+src/main.ts:15:	var index = new BrowserWindow({
+src/headless/runbrowser.ts:133:	app.on("render-process-gone", (e, target, data) => {
+src/main.ts:30:app.on("window-all-closed", () => {
+../src/api/ai/CapabilityRegistry.ts:51:        description: 'Universal speech transcription with Google\'s most advanced ASR model.',
+../src/api/ai/CloudflareModelRegistry.ts:49:    'cf_googlegemma_2b_it_lora': {
+../src/api/ai/CloudflareModelRegistry.ts:50:        id: 'cf_googlegemma_2b_it_lora',
+../src/api/ai/CloudflareModelRegistry.ts:51:        name: '@cf/google/gemma-2b-it-lora',
+../src/api/ai/CloudflareModelRegistry.ts:54:        modelId: '@cf/google/gemma-2b-it-lora',
+../src/api/ai/Dispatcher.ts:214:                sessionId: (globalThis as any).pog2_sessionId || 'unknown'
+../src/api/ai/IntentMap.ts:15:            keywords: ['wrangler', 'deploy', 'production', 'cloud'],
+../src/api/ai/ModelRolodex.js:322:    /** Discover Cloudflare models via wrangler CLI */
+../src/api/ai/ModelRolodex.js:332:            // Identity check via wrangler whoami (direct execution)
+../src/api/ai/ModelRolodex.js:333:            const { stdout: whoami } = await $`wrangler whoami 2>&1`;
+../src/api/ai/ModelRolodex.js:412:            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+../src/api/ai/ModelRolodex.js:708:    globeStateLimb; // Avoiding circular deep imports, typed functionally
+../src/api/ai/ModelRolodex.js:713:        this.globeStateLimb = limb;
+../src/api/ai/ModelRolodex.js:723:            if (this.globeStateLimb) {
+../src/api/ai/ModelRolodex.js:724:                this.globeStateLimb.pushNodeState('rolodex_v1', this.state).catch((err) => {
+../src/api/ai/ModelRolodex.ts:507:     * // with a 403 or TOS error, you MUST manually run `npx wrangler ai run <model-tag>` 
+../src/api/ai/ModelRolodex.ts:521:            // Identity check via wrangler whoami (direct execution)
+../src/api/ai/ModelRolodex.ts:522:            const { stdout: whoami } = await $`wrangler whoami 2>&1`;
+../src/api/ai/ModelRolodex.ts:607:            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+../src/api/ai/ModelRolodex.ts:904:    private globeStateLimb?: any; // Avoiding circular deep imports, typed functionally
+../src/api/ai/ModelRolodex.ts:910:        this.globeStateLimb = limb;
+../src/api/ai/ModelRolodex.ts:921:            if (this.globeStateLimb) {
+../src/api/ai/ModelRolodex.ts:922:                this.globeStateLimb.pushNodeState('rolodex_v1', this.state).catch((err: any) => {
+../src/api/ai/StaticModelRegistry.ts:35:        "Google": 123,
+../src/api/ai/StaticModelRegistry.ts:63:    'google_gemini_1_5_flash': {
+../src/api/ai/StaticModelRegistry.ts:64:        id: 'google_gemini_1_5_flash',
+../src/api/ai/StaticModelRegistry.ts:69:        description: 'Google Gemini 1.5 Flash - Fast, efficient, and reliable.',
+../src/api/ai/StaticModelRegistry.ts:72:    'google_gemini_1_5_pro': {
+../src/api/ai/StaticModelRegistry.ts:73:        id: 'google_gemini_1_5_pro',
+../src/api/ai/StaticModelRegistry.ts:78:        description: 'Google Gemini 1.5 Pro - High reasoning capability.',
+../src/cli/CLIRouter.ts:8:    async routeWranglerDeploy(scriptName: string) { return this.engine.wranglerDeploy(scriptName); }
+../src/cli.ts:5: * A globally-installed CLI tool with ternary logic, binary absolutes,
+../src/cli.ts:18:if (typeof (globalThis as any).__non_webpack_require__ === 'undefined') {
+../src/cli.ts:19:    (globalThis as any).__non_webpack_require__ = require;
+../src/cli.ts:265:    // Phase 38: Initialize Spatial Vision Substrate (Pre-empt singleton crash)
+../src/cli.ts:268:    // Phase 0: Initialize the Thought Processor (HexagramManager singleton)
+../src/cli.ts:344:        .description('Execute a single task managed by Kimi')
+../src/cli.ts:381:                const globe = new GlobeStateLimb(config);
+../src/cli.ts:382:                await globe.connect();
+../src/cli.ts:401:                            const view = radar.render(gameplay.globalState, gameplay.avatar);
+../src/cli.ts:463:        .description('Synthesize a physical RS Cache asset with a Gutenberg narrative emotion into a .gltf rendering')
+../src/cli.ts:524:        .description('Consult external architectural maps from the global code_tracker substrate')
+../src/cli.ts:544:        .description('Consult browser history for research kernels from the global memetic substrate')
+../src/cli.ts:1025:        .option('-k, --keywords <list>', 'Comma-separated keywords to scan for', 'mouse toy,platypus,sextant,smuggler,patrol,bob,raptor,victoria,aereck')
+../src/cli.ts:1699:        .description('Search the global catalog for new books')
+../src/cli.ts:1704:                steps: ["Querying global Gutenberg catalog"],
+../src/cli.ts:1953:                steps: ["Iterating global library for cinema generation"],
+../src/cli.ts:1961:                reasoning: 'Manual global cinema batch execution.',
+../src/cli.ts:2210:                    await routerInstance.routeEntityIdentity(id, { name, modelPath: 'model.glb' });
+../src/cli.ts:2346:                const field = ghostSplat.project(gameplay.globalState, 2, playerAgent);
+../src/cli.ts:2926:        .option('--exclude <patterns>', 'Comma-separated glob patterns to exclude')
+../src/cli.ts:3803:            projectId: 'global',
+../src/clients/ModelClient.js:39:        const hex = router?.getHexagram() || globalThis.hexagram;
+../src/clients/ModelClient.js:130:        const priority = TaskScheduler.mapPriority(enforcedParams.yaoState || globalThis.yaoState || YaoState.YoungYang);
+../src/clients/ModelClient.js:187:        if (yaoState === undefined && globalThis.yaoState !== undefined) {
+../src/clients/ModelClient.js:188:            yaoState = globalThis.yaoState;
+../src/clients/ModelClient.js:335:            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+../src/clients/ModelClient.js:369:                            const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`;
+../src/clients/ModelClient.js:963:            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:embedContent?key=${apiKey}`;
+../src/clients/ModelClient.ts:73:        const hex = router?.getHexagram() || (globalThis as any).hexagram;
+../src/clients/ModelClient.ts:178:        const priority = TaskScheduler.mapPriority(enforcedParams.yaoState || (globalThis as any).yaoState || YaoState.YoungYang);
+../src/clients/ModelClient.ts:247:        if (yaoState === undefined && (globalThis as any).yaoState !== undefined) {
+../src/clients/ModelClient.ts:248:            yaoState = (globalThis as any).yaoState;
+../src/clients/ModelClient.ts:405:            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+../src/clients/ModelClient.ts:448:                            const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`;
+../src/clients/ModelClient.ts:1133:            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:embedContent?key=${apiKey}`;
+../src/config/SovereignConfig.js:45:    projectId: 'global',
+../src/config/SovereignConfig.js:69:    globeEndpoint: 'wss://multiplayer-globe-template.kristain33rs.workers.dev/parties/globe/pog2-sovereign',
+../src/config/SovereignConfig.js:150:    globeEndpoint: 'POG2_GLOBE_ENDPOINT',
+../src/config/SovereignConfig.js:164:    // 1. Force load user-specified environments to ensure API keys exist globally
+../src/config/SovereignConfig.ts:96:    globeEnabled: boolean;     // Phase 107.1: Toggle for durable state hub
+../src/config/SovereignConfig.ts:97:    globeEndpoint?: string;    // Phase 107: Live Durable State Hub
+../src/config/SovereignConfig.ts:160:    projectId: 'global',
+../src/config/SovereignConfig.ts:186:    globeEnabled: false,
+../src/config/SovereignConfig.ts:187:    globeEndpoint: 'wss://multiplayer-globe-template.kristain33rs.workers.dev/parties/globe/pog2-sovereign',
+../src/config/SovereignConfig.ts:276:    globeEnabled: 'POG2_GLOBE_ENABLED',
+../src/config/SovereignConfig.ts:277:    globeEndpoint: 'POG2_GLOBE_ENDPOINT',
+../src/config/SovereignConfig.ts:292:    // 1. Force load user-specified environments to ensure API keys exist globally
+../src/core/CognitiveImmunologyEmergency.ts:5:// Informational Review: Google Antigravity, Kimi K2.5
+../src/core/HexagramDefinitions.js:67:        aesthetics: { visualFilter: 'glitch distortion', thermalVariance: 0.8, scale: 'Abstract', palette: ['#FF0000', '#000000', '#00FF00'], prosody: { chaos: 0.9, whimsy: 0.2, darkTone: 0.6, coherence: 0.3 } }
+../src/core/HexagramDefinitions.js:123:        aesthetics: { visualFilter: 'festive glowing', thermalVariance: 0.7, scale: 'Intimate', palette: ['#FF69B4', '#FFB6C1', '#FFFFFF'], prosody: { chaos: 0.5, whimsy: 0.9, darkTone: 0.1, coherence: 0.8 } }
+../src/core/HexagramDefinitions.js:168:    '101011': hex(37, '101011', 'The Family (Jia Ren)', 'Wind over fire: clan.', 'MODULARIZATION: Strengthen internal module boundaries. Each limb/engine must be self-contained with clear interfaces.', 'The family. Perseverance of the woman furthers. Set the family order.', EmotionalState.Steady, 'hearth glow', 0.4, 'Intimate', ['#FF8C00', '#F4A460', '#FFFFF0'], { chaos: 0.2, whimsy: 0.4, darkTone: 0.1, coherence: 0.9 }),
+../src/core/HexagramDefinitions.js:181:    '011101': hex(50, '011101', 'The Cauldron (Ding)', 'Fire over wind: alchemical vessel.', 'TRANSFORMATION: Raw inputs are being refined into valuable outputs. The pipeline is working — feed it more data.', 'The cauldron. Supreme good fortune. Success.', EmotionalState.Inspired, 'alchemical glow', 0.7, 'Grand', ['#B8860B', '#FF8C00', '#FFFFFF'], { chaos: 0.4, whimsy: 0.5, darkTone: 0.1, coherence: 0.9 }),
+../src/core/HexagramDefinitions.ts:94:        aesthetics: { visualFilter: 'glitch distortion', thermalVariance: 0.8, scale: 'Abstract', palette: ['#FF0000', '#000000', '#00FF00'], prosody: { chaos: 0.9, whimsy: 0.2, darkTone: 0.6, coherence: 0.3 } }
+../src/core/HexagramDefinitions.ts:150:        aesthetics: { visualFilter: 'festive glowing', thermalVariance: 0.7, scale: 'Intimate', palette: ['#FF69B4', '#FFB6C1', '#FFFFFF'], prosody: { chaos: 0.5, whimsy: 0.9, darkTone: 0.1, coherence: 0.8 } }
+../src/core/HexagramDefinitions.ts:196:    '101011': hex(37, '101011', 'The Family (Jia Ren)', 'Wind over fire: clan.', 'MODULARIZATION: Strengthen internal module boundaries. Each limb/engine must be self-contained with clear interfaces.', 'The family. Perseverance of the woman furthers. Set the family order.', EmotionalState.Steady, 'hearth glow', 0.4, 'Intimate', ['#FF8C00', '#F4A460', '#FFFFF0'], { chaos: 0.2, whimsy: 0.4, darkTone: 0.1, coherence: 0.9 }),
+../src/core/HexagramDefinitions.ts:209:    '011101': hex(50, '011101', 'The Cauldron (Ding)', 'Fire over wind: alchemical vessel.', 'TRANSFORMATION: Raw inputs are being refined into valuable outputs. The pipeline is working â€” feed it more data.', 'The cauldron. Supreme good fortune. Success.', EmotionalState.Inspired, 'alchemical glow', 0.7, 'Grand', ['#B8860B', '#FF8C00', '#FFFFFF'], { chaos: 0.4, whimsy: 0.5, darkTone: 0.1, coherence: 0.9 }),
+../src/core/ServiceDiscovery.ts:74:        results.push(this.withHealth(await this.checkGoogleServices()));
+../src/core/ServiceDiscovery.ts:129:    private async checkGoogleServices(): Promise<Omit<ServiceStatus, 'health'>> {
+../src/core/ServiceDiscovery.ts:130:        if (!this.isRunning) return { id: 'google_services', name: 'Google Cloud Services', status: 'INACTIVE', type: 'API', details: 'Audit stopped' };
+../src/core/ServiceDiscovery.ts:135:            return { id: 'google_services', name: 'Google Cloud Services', status: 'INACTIVE', type: 'API', details: 'No API key in .env or config' };
+../src/core/ServiceDiscovery.ts:139:            const { GoogleServices } = await import('../services/GoogleServices.js');
+../src/core/ServiceDiscovery.ts:140:            const google = new GoogleServices({ apiKey });
+../src/core/ServiceDiscovery.ts:141:            const audit = await google.auditAbilities();
+../src/core/ServiceDiscovery.ts:144:                    id: 'google_services',
+../src/core/ServiceDiscovery.ts:145:                    name: 'Google Cloud Services',
+../src/core/ServiceDiscovery.ts:151:            return { id: 'google_services', name: 'Google Cloud Services', status: 'ERROR', type: 'API', details: audit.error?.message || 'Unknown error' };
+../src/core/ServiceDiscovery.ts:153:            return { id: 'google_services', name: 'Google Cloud Services', status: 'ERROR', type: 'API', details: (e as Error).message };
+../src/core/ServiceDiscovery.ts:204:            const depKey = `@google-cloud/${id === 'healthcare' ? 'healthcare' : id === 'documentai' ? 'document-ai' : 'vision'}`;
+../src/core/ServiceDiscovery.ts:448:        const wranglerVersion = await check('wrangler', ['--version']);
+../src/core/ServiceDiscovery.ts:467:                id: 'tool_wrangler',
+../src/core/ServiceDiscovery.ts:468:                name: 'Wrangler CLI',
+../src/core/ServiceDiscovery.ts:469:                status: wranglerVersion ? 'ACTIVE' : 'INACTIVE',
+../src/core/ServiceDiscovery.ts:471:                details: wranglerVersion ? `Version: ${wranglerVersion}` : 'Wrangler not found (Try `npm i -g wrangler`)'
+../src/core/ServiceDiscovery.ts:475:                name: 'Google Cloud CLI',
+../src/core/SovereignAvatar.ts:582:     * emit - Internal helper to notify subscribers and the global callback.
+../src/durable-objects/POG2WorldDO.ts:3:// pass (where cloudflare:workers doesn't exist) and the wrangler deploy pass
+../src/durable-objects/POG2WorldDO.ts:5:// conflict with Node globals.
+../src/durable-objects/POG2WorldDO.ts:68: * singletons or sibling DO stubs and broadcasts WorldTelemetryFrames to
+../src/durable-objects/POG2WorldDO.ts:155:        // Resolved from HexagramManager via globalThis (same isolate)
+../src/durable-objects/POG2WorldDO.ts:157:        const activeHex = (globalThis as any).HEXAGRAM_MANAGER?.getActiveHexagram()
+../src/durable-objects/POG2WorldDO.ts:168:        // GhostSplatEngine exports density matrix via globalThis
+../src/durable-objects/POG2WorldDO.ts:169:        return (globalThis as any).GHOST_SPLAT?.getSnapshot() || null;
+../src/durable-objects/POG2WorldDO.ts:174:        return (globalThis as any).COLLISION_ENGINE?.getBlockedCoords() || [];
+../src/durable-objects/POG2WorldDO.ts:179:        const state = (globalThis as any).GAME_STATE;
+../src/engines/AvatarCompositionEngine.ts:13: *   8:face 9:gloves 10:boots 11:beard 12:ring 13:ammo 14:aura 15:slot15
+../src/engines/BlenderRenderer.ts:160:        const isDark = /dark|shadow|dungeon|night|cave|underground|gloomy|sinister/.test(combined);
+../src/engines/ChromanumberEngine.ts:256:     * Delegates to ChromaCore â€” single source of truth, no duplicate logic.
+../src/engines/core/CNSCausalityLedger.ts:33:            throw new Error('Singleton violation: use CNSCausalityLedger.getInstance()');
+../src/engines/core/NecromancerBrain.ts:71:        const angle = (timeOfDay / 24) * Math.PI * 2;
+../src/engines/core/NecromancerBrain.ts:72:        const x = Math.cos(angle);
+../src/engines/core/NecromancerBrain.ts:73:        const y = Math.sin(angle);
+../src/engines/core/TruthReconciler.ts:15: * TruthReconciler - The "Single Enforced Truth Lattice" of POG2.
+../src/engines/ForgeEngine.ts:83:        const filePath = path.join(this.storageDir, `${target.id}.gltf`);
+../src/engines/ForgeEngine.ts:84:        // Basic glTF structure for a generalized mesh following the pedagogy metrics
+../src/engines/ForgeEngine.ts:85:        const gltf = {
+../src/engines/ForgeEngine.ts:105:        fs.writeFileSync(filePath, JSON.stringify(gltf, null, 2));
+../src/engines/gameplay/AbilityBook.ts:54:    coneHalfAngle?: number;        // Radians for cone attacks
+../src/engines/gameplay/AbilityBook.ts:106:    coneHalfAngle?: number;
+../src/engines/gameplay/AbilityBook.ts:159:    'Dragon Breath':  { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [37.6, 188], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['cone', 'combust-synergy'], coneHalfAngle: Math.PI / 4, aoeRadius: 2 },
+../src/engines/gameplay/AbilityBook.ts:250:// AbilityBook Singleton
+../src/engines/gameplay/AbilityBook.ts:336:                    coneHalfAngle: params.coneHalfAngle,
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:97:    private globe?: GlobeStateLimb;
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:150:        if (!this.globe) this.globe = GlobeStateLimb.getInstance() || (this.gameplay as any)?.globe; // Usually initialized in NeurologicalMap
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:170:            throw new Error('Singleton violation: use CNSGodheadPulseVolley.getInstance()');
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:227:        // Phase 112: Inject deterministic execution boundary into the global EventBus
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:249:                if (this.gameplay?.globalState && this.gameplay.avatar) {
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:253:                        await harness.syncGodhead(this.gameplay.globalState, this.gameplay.avatar);
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:320:            const field = ghostSplat.project(this.gameplay?.globalState as any, 2, this.gameplay?.playerAgent);
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:821:        if (this.gameplay?.globalState) {
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:825:            if (this.gameplay!.avatar && this.globe) {
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:829:                    this.globe!.pushNodeState('player_sovereign', {
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:845:                    if (this.gameplay!.globalState!.npcMap) {
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:847:                        for (const [key, npc] of this.gameplay!.globalState!.npcMap) {
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:856:                            this.globe!.pushBatchPerception(entityBatch);
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:865:                const field = this.ghostSplat!.project(this.gameplay!.globalState!, 3, playerAgent);
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:874:                    projection.projectState(this.gameplay!.avatar, this.gameplay!.globalState!, activeModuleName);
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:875:                    projection.projectEntities(this.gameplay!.globalState!);
+../src/engines/gameplay/CNSGodheadPulseVolley.ts:899:        return this.gameplay?.globalState;
+../src/engines/gameplay/JsonLogicInterpreter.ts:45:            // Sync pedagogy markers to global state
+../src/engines/gameplay/LuckTierRegistry.ts:63:// Registry Singleton
+../src/engines/gameplay/MinigameInterfaces.ts:11:     * Initializes the module with the current global GameState and active Avatar.
+../src/engines/gameplay/NpcAgent.ts:25: * Autonomous movement controller for a single NPC entity.
+../src/engines/gameplay/SimulationHarness.ts:195:        // Bootstrap the pathfinder against the singleton spatial authority
+../src/engines/gameplay/SimulationHarness.ts:679:        const normalizeAngle = (angle: number) => {
+../src/engines/gameplay/SimulationHarness.ts:680:            while (angle <= -Math.PI) angle += 2 * Math.PI;
+../src/engines/gameplay/SimulationHarness.ts:681:            while (angle > Math.PI) angle -= 2 * Math.PI;
+../src/engines/gameplay/SimulationHarness.ts:682:            return angle;
+../src/engines/gameplay/SimulationHarness.ts:849:                            else if (ability.flags.includes('cone') && ability.coneHalfAngle) {
+../src/engines/gameplay/SimulationHarness.ts:852:                                const facingAngle = Math.atan2(dy, dx);
+../src/engines/gameplay/SimulationHarness.ts:860:                                    const npcAngle = Math.atan2(ndy, ndx);
+../src/engines/gameplay/SimulationHarness.ts:861:                                    const angleDiff = Math.abs(normalizeAngle(npcAngle - facingAngle));
+../src/engines/gameplay/SimulationHarness.ts:863:                                    if (angleDiff <= ability.coneHalfAngle && chebyshev(attackerCoord, npcCoord) <= ability.range) {
+../src/engines/MemoryConsolidationEngine.js:93:                        projectId: 'global',
+../src/engines/MemoryConsolidationEngine.js:94:                        domainNamespace: 'global',
+../src/engines/MemoryConsolidationEngine.ts:106:                        projectId: 'global',
+../src/engines/MemoryConsolidationEngine.ts:107:                        domainNamespace: 'global',
+../src/engines/MetabolicEngine.ts:32: * Expands a single intent into a 6-line directional reflection nexus.
+../src/engines/MetabolicEngine.ts:156:     * expand - Single thought -> 6x Directional Reflections (3x Young, 3x Old)
+../src/engines/MetabolicEngine.ts:215:                prompt: `Extract the single most important Wikipedia search subject/noun from this intent. Return ONLY the search term, nothing else. No conversational text.\nIntent: "${intent}"`,
+../src/engines/MetabolicEngine.ts:321:            // Identify dominant semantic emotion and cast it to the global structure
+../src/engines/MetabolicEngine.ts:343:                        content: `Metabolic Engine parsed dominant semantic emotion [${dominantEmotion}]. Friction with global state: ${data.metabolicFriction}`,
+../src/engines/MultiModelExecutor.ts:65:        const promises = tasks.map(task => this.executeSingleTask(task));
+../src/engines/MultiModelExecutor.ts:89:    private async executeSingleTask(assignment: TaskAssignment): Promise<TaskResult> {
+../src/engines/OrchestrateEngine.ts:208:    private readonly globeState: GlobeStateLimb;
+../src/engines/OrchestrateEngine.ts:264:            token: 'multiplayer-globe-pog2 build token'
+../src/engines/OrchestrateEngine.ts:338:        this.globeState = new GlobeStateLimb(config);
+../src/engines/OrchestrateEngine.ts:419:        this.globeState.connect().catch(err => {
+../src/engines/OrchestrateEngine.ts:430:            rolodex.setGlobeStateLimb(this.globeState);
+../src/engines/OrchestrateEngine.ts:431:            this.globeState.onStateUpdate('rolodex_v1', (incomingState) => {
+../src/engines/OrchestrateEngine.ts:442:        const savedQuota = this.globeState.loadQuotaState();
+../src/engines/OrchestrateEngine.ts:453:        this.trainingCollector.setGlobeStateLimb(this.globeState);
+../src/engines/OrchestrateEngine.ts:458:        this.globeState.onStateUpdate('error_fix_event', (incomingFix) => {
+../src/engines/OrchestrateEngine.ts:462:        this.globeState.onStateUpdate('fprag_event', (incomingEthical) => {
+../src/engines/OrchestrateEngine.ts:499:    public async wranglerDeploy(scriptName: string): Promise<Result<EngineOutput>> { return this.executeTool('wrangler_deploy', { scriptName }); }
+../src/engines/OrchestrateEngine.ts:613:                // GhostSplatEngine is a lazy singleton — no explicit initialization required.
+../src/engines/OrchestrateEngine.ts:624:                    (globalThis as any).SOVEREIGN_SUBSTRATE = 'NXT_LIVE_CACHE';
+../src/engines/OrchestrateEngine.ts:738:     * Passes incoming global Hive Mind events through the local biological Hexagram filter.
+../src/engines/OrchestrateEngine.ts:800:            logger.warn('Cognitive Immunology: FPRAG directive rejected. Sovereign node refuses protocol override based on global gates.');
+../src/engines/OrchestrateEngine.ts:959:        // Idempotent registration of key singletons to prevent DEGRADED statuses in this.nodeTester
+../src/engines/OrchestrateEngine.ts:998:            GlobeStateLimb: this.globeState,
+../src/engines/OrchestrateEngine.ts:1101:        this.nodeTester.registerLimbs({ GlobeStateLimb: this.globeState });
+../src/engines/OrchestrateEngine.ts:1179:            jargonDescription: 'Mutates the internal avatar state of the GameplaySovereigntyLimb and marks it dirty for global propagation.',
+../src/engines/OrchestrateEngine.ts:1349:            description: 'Execute a batch of HUDForensics requests under a single domain lock.',
+../src/engines/OrchestrateEngine.ts:1372:            description: 'Consults external architectural maps and codebase fragments from the global code_tracker substrate.',
+../src/engines/OrchestrateEngine.ts:1374:            jargonDescription: 'Queries the global code_tracker substrate for architectural metadata, relational maps, and codebase adjacency fragments.',
+../src/engines/OrchestrateEngine.ts:2005:            name: 'wrangler',
+../src/engines/OrchestrateEngine.ts:2008:            jargonDescription: 'Interfaces with the Cloudflare Wrangler CLI substrate to manage workers, KV, and D1 resources.',
+../src/engines/OrchestrateEngine.ts:2013:            execute: (args) => lib.wrangler(args as { command: string })
+../src/engines/OrchestrateEngine.ts:2030:            description: 'Execute a GCloud shell command using the globally signed-in authentication.',
+../src/engines/OrchestrateEngine.ts:2031:            humanDescription: 'Run a Google Cloud command (deployment, auth, etc.).',
+../src/engines/OrchestrateEngine.ts:2032:            jargonDescription: 'Dispatches commands to the Google Cloud CLI substrate using the existing global auth context.',
+../src/engines/OrchestrateEngine.ts:2065:            name: 'wrangler_deploy',
+../src/engines/OrchestrateEngine.ts:2068:            jargonDescription: 'Dispatches a wrangler deploy task.',
+../src/engines/OrchestrateEngine.ts:2073:            execute: (args) => lib.wranglerDeploy(args as { scriptName: string })
+../src/engines/OrchestrateEngine.ts:2077:            name: 'wrangler_kv_list',
+../src/engines/OrchestrateEngine.ts:2085:            execute: () => lib.wranglerKvList()
+../src/engines/OrchestrateEngine.ts:2089:            name: 'wrangler_r2_list',
+../src/engines/OrchestrateEngine.ts:2097:            execute: () => lib.wranglerR2List()
+../src/engines/OrchestrateEngine.ts:2151:            humanDescription: 'Take a moment to deeply analyze an idea from different angles before acting.',
+../src/engines/OrchestrateEngine.ts:2313:            jargonDescription: 'Queries the global web substrate via the WebSearchEngine to retrieve external knowledge fragments.',
+../src/engines/OrchestrateEngine.ts:2363:                        projectId: 'global',
+../src/engines/OrchestrateEngine.ts:2530:            description: 'Export a modified model to universal .gltf format.',
+../src/engines/OrchestrateEngine.ts:2531:            humanDescription: 'Save a modified 3D model as a standard .gltf file.',
+../src/engines/OrchestrateEngine.ts:2931:            description: 'Search the global Project Gutenberg catalog for new books to ingest.',
+../src/engines/OrchestrateEngine.ts:2933:            jargonDescription: 'Leverages the Gutendex API substrate to search the global Gutenberg catalog via partial string match.',
+../src/engines/OrchestrateEngine.ts:3045:            jargonDescription: 'Executes a global library crawl, dispatching independent PipelineController sessions for every discovered literary substrate.',
+../src/engines/OrchestrateEngine.ts:3509:            description: 'Reduces probabilistic execution paths into a single decision.',
+../src/engines/OrchestrateEngine.ts:3636:            // "global" or broad match retrieval
+../src/engines/OrchestrateEngine.ts:3637:            const memRes = await this.embedEngine.search({ projectId: 'global', query: task, topK: 3, threshold: 0.15 });
+../src/engines/OrchestrateEngine.ts:4286:                await this.vectorDB.autoIndexFile(awarenessPath, 'global');
+../src/engines/OrchestrateEngine.ts:4466:            { GlobeStateLimb: this.globeState }
+../src/engines/OrchestrateEngine.ts:4623:    "lesson": "A single sentence architectural or strategic insight",
+../src/engines/OrchestrateEngine.ts:4670:                        projectId: 'global',
+../src/engines/PipelineController.ts:36:    dimension?: '2D' | '3D'; // Stage 2.5 toggle
+../src/engines/PipelineController.ts:37:    generateQuest?: 'Execute' | 'Skip' | 'Auto'; // Stage 4.5 toggle
+../src/engines/PipelineController.ts:334:                            // Move image from global captures to scene subfolder immediately if it's external
+../src/engines/ShellLibrary.ts:11: * Ported/Integrated capabilities for gcloud, wrangler, node, python, etc.
+../src/engines/ShellLibrary.ts:37:            // Extract base executable name (e.g. 'wrangler', 'git')
+../src/engines/ShellLibrary.ts:123:    async wrangler(args: { command: string }): Promise<Result<EngineOutput>> {
+../src/engines/ShellLibrary.ts:124:        return this.executeWithDiagnostics(`wrangler ${args.command}`);
+../src/engines/ShellLibrary.ts:127:    async wranglerDeploy(args: { scriptName: string }): Promise<Result<EngineOutput>> {
+../src/engines/ShellLibrary.ts:128:        return this.executeWithDiagnostics(`wrangler deploy ${args.scriptName}`);
+../src/engines/ShellLibrary.ts:131:    async wranglerKvList(): Promise<Result<EngineOutput>> {
+../src/engines/ShellLibrary.ts:132:        return this.executeWithDiagnostics('wrangler kv:namespace list');
+../src/engines/ShellLibrary.ts:135:    async wranglerR2List(): Promise<Result<EngineOutput>> {
+../src/engines/ShellLibrary.ts:136:        return this.executeWithDiagnostics('wrangler r2 bucket list');
+../src/engines/ShellLibrary.ts:230:                await this.shell.execute({ command: `powershell -Command "Set-Content -Path '${targetDir}/wrangler.toml' -Value 'name = \\"${name}\\"\\nmain = \\"src/index.ts\\"\\ncompatibility_date = \\"2025-10-11\\"'"` });
+../src/engines/ShellLibrary.ts:246:            details: 'ShellLibrary active; binary wrappers (gcloud, wrangler, git) primed.'
+../src/engines/spatial/ExplorationEngine.ts:18: * 4. Enforces single-mapsquare constraints.
+../src/engines/spatial/ExplorationEngine.ts:51:     * tick - Single autonomous movement step.
+../src/engines/SpatialVisionEngine.ts:71:            throw new Error('Singleton violation: use SpatialVisionEngine.getInstance()');
+../src/engines/SpatialVisionEngine.ts:152:                // Phase 14: Dynamic port discovery via Switchboard singleton.
+../src/engines/SpatialVisionEngine.ts:155:                    8787, // Wrangler Dev / Worker
+../src/engines/SpatialVisionEngine.ts:163:                        `http://localhost:${port}/globe`
+../src/engines/SpatialVisionEngine.ts:262:     * Fix 3: no duplicate PS script; single canonical sampler.
+../src/engines/SpatialVisionEngine.ts:323:6. Note any errors/squiggles visible
+../src/engines/SyntropyEngine.ts:238:                e.identifier.id.toLowerCase().includes('googlecloud'))
+../src/engines/VisionActuationHarness.ts:61:     * Run a single perception-action cycle.
+../src/engines/VisionEngine.ts:135:1. Describe the active windows and visible content (HTML, HTTP, Localhost, Wrangler dev pages, etc.).
+../src/events/EventBus.js:9:    globalHandlers = [];
+../src/events/EventBus.js:33:        for (const handler of this.globalHandlers) {
+../src/events/EventBus.js:42:        this.globalHandlers.push(handler);
+../src/events/EventBus.ts:12:    traceId?: string;    // Binds events together across a single cognitive pipeline execution
+../src/events/EventBus.ts:30:    private globalHandlers: EventHandler[] = [];
+../src/events/EventBus.ts:74:        for (const handler of this.globalHandlers) {
+../src/events/EventBus.ts:85:        this.globalHandlers.push(handler);
+../src/generated/maplabels.d.ts:22:	toggle_1?: {
+../src/generated/maplabels.d.ts:53:	toggle_2?: {
+../src/generated/objects.d.ts:142:	singleuse_A2?: number | null
+../src/generated/objects.d.ts:149:	singleuse_A4?: number | null
+../src/generated/objects.d.ts:150:	singleuse_A5?: number | null
+../src/generated/objects.d.ts:151:	singleuse_A6?: number | null
+../src/generated/objects.d.ts:176:	singleuse_C8?: true | null
+../src/generated/objects.d.ts:185:	singleuse_CA?: number | null
+../src/limbs/creative/GutenbergLimb.ts:261:                projectId: 'global',
+../src/limbs/creative/GutenbergLimb.ts:262:                domainNamespace: 'global',
+../src/limbs/creative/GutenbergLimb.ts:489:        const existingWisdomQuery = await this.vectorDB.searchSimilar(new Float32Array(0), 1, 'global', 'literary');
+../src/limbs/creative/GutenbergLimb.ts:535:                        projectId: 'global',
+../src/limbs/creative/GutenbergLimb.ts:536:                        domainNamespace: 'global',
+../src/limbs/creative/SoundtrackLimb.ts:116:            // We use simple single quotes for the aevalsrc expression and double quotes for the filter chain
+../src/limbs/creative/SoundtrackLimb.ts:156:            elements.push('uplifting major key', 'sparkling glockenspiel', 'bright woodwinds');
+../src/limbs/creative/SoundtrackLimb.ts:193:        // Mix local prosody chaos with global Yao density
+../src/limbs/creative/SoundtrackLimb.ts:198:        const yaoState = currentYao || yaoIdx; // Use global override if set
+../src/limbs/creative/SoundtrackLimb.ts:268:        // Return as a single LAVFI source string for the -i argument
+../src/limbs/creative/StoryboardLimbV2.ts:269:                    logger.warn({ bookId: book.id }, 'No outputPath provided for storyboard. Skipping persistence to global substrate.');
+../src/limbs/creative/StoryboardLimbV2.ts:284:     * generateCollectiveStoryboard - Merges multiple literary styles into a single narrative.
+../src/limbs/creative/StoryboardLimbV2.ts:542:                    const results = this.vectorDB.searchSimilar(embedRes.value, 5, 'global', 'pedagogy');
+../src/limbs/creative/StoryboardLimbV2.ts:667:                        const animResults = this.vectorDB.searchSimilar(animEmbed.value, 5, 'global', 'kinematics');
+../src/limbs/creative/VideoAssemblerLimb.ts:47:        // OldYin: Entropic/Melancholy (Grain, desaturation, slight glitch)
+../src/limbs/creative/WebAppForgeLimb.ts:171:Combine architectural patterns for AI, D1, and KV into a single cohesive project.
+../src/limbs/creative/WebAppForgeLimb.ts:181:    "wrangler.jsonc": "string",
+../src/limbs/creative/YouTubeLimb.ts:1:﻿// @ts-ignore Ã¢â‚¬â€ googleapis types are bundled but TS can lag on resolution
+../src/limbs/creative/YouTubeLimb.ts:2:import { google, youtube_v3 } from 'googleapis';
+../src/limbs/creative/YouTubeLimb.ts:3:import { OAuth2Client } from 'google-auth-library';
+../src/limbs/creative/YouTubeLimb.ts:15:const SCOPES = ['https://www.googleapis.com/auth/youtube.upload'];
+../src/limbs/creative/YouTubeLimb.ts:52:        this.oauth2Client = new google.auth.OAuth2(
+../src/limbs/creative/YouTubeLimb.ts:60:            this.youtube = google.youtube({ version: 'v3', auth: this.oauth2Client });
+../src/limbs/creative/YouTubeLimb.ts:69:                        this.youtube = google.youtube({ version: 'v3', auth: this.oauth2Client });
+../src/limbs/creative/YouTubeLimb.ts:119:                    this.youtube = google.youtube({ version: 'v3', auth: this.oauth2Client });
+../src/limbs/creative/YouTubeLimb.ts:125:                this.youtube = google.youtube({ version: 'v3', auth: this.oauth2Client });
+../src/limbs/creative/YouTubeLimb.ts:164:                        this.youtube = google.youtube({ version: 'v3', auth: this.oauth2Client });
+../src/limbs/gameplay/PVMERotationLimb.ts:26:    private globalPhases: Map<string, string> = new Map();
+../src/limbs/gameplay/PVMERotationLimb.ts:96:            // Lazy init using global phase if available
+../src/limbs/gameplay/PVMERotationLimb.ts:97:            const phase = this.globalPhases.get(bossName.toLowerCase()) || 'default';
+../src/limbs/gameplay/PVMERotationLimb.ts:118:        const global = this.globalPhases.get(id.toLowerCase());
+../src/limbs/gameplay/PVMERotationLimb.ts:119:        if (global) return global;
+../src/limbs/gameplay/PVMERotationLimb.ts:133:     * Can be called with a boss name (global) or entityId (specific instance).
+../src/limbs/gameplay/PVMERotationLimb.ts:138:        // Update global phase for future sequences
+../src/limbs/gameplay/PVMERotationLimb.ts:140:            this.globalPhases.set(key, sectionName);
+../src/limbs/logical/ClueLogicLimb.ts:82:            return `MECHANICAL: Consuming globetrotter charges to reroll clue.`;
+../src/limbs/logical/ExtrasOracle.ts:80:        const globetrotterIds = [41913, 41914, 41915, 41916, 41917];
+../src/limbs/logical/ExtrasOracle.ts:81:        globetrotterIds.forEach(id => {
+../src/limbs/logical/InteractionGateway.ts:192:            // Authoritative Cache-driven Varbit Toggle
+../src/limbs/logical/InteractionGateway.ts:204:            events.push(`[InteractionGateway] 🧬 Genome Morph: Toggled Varbit ${rootDef.varbitId} from ${currentVal} to ${nextVal} for ${target.name}.`);
+../src/limbs/logical/world/MapPacketDecoder.ts:18:     * decodeRebuildNormal - Decodes the standard global rebuild packet.
+../src/limbs/metaphysical/GhostLimb.ts:50:     * pulse - A single observation cycle.
+../src/limbs/metaphysical/QuantumLimb.ts:15:     * collapse - Reduces a set of probabilistic outcomes into a single execution path.
+../src/limbs/pedagogy/Interface1841ActionBarMapping.ts:99:  globalCooldown: number;        // GCD remaining ticks
+../src/limbs/pedagogy/Interface1841ActionBarMapping.ts:161:      globalCooldown: 0
+../src/limbs/pedagogy/PedagogyForensicsLimb.ts:98:            ancestry: [substrateProv] // Link back to the raw global truth
+../src/limbs/pedagogy/SovereignAvatarActionBarVolition.ts:243:  globalCooldown: number;        // GCD remaining ticks
+../src/limbs/pedagogy/SovereignAvatarActionBarVolition.ts:267:      globalCooldown: 0,
+../src/limbs/pedagogy/SovereignAvatarActionBarVolition.ts:314:    if (this.state.globalCooldown > 0) this.state.globalCooldown--;
+../src/limbs/pedagogy/SovereignAvatarActionBarVolition.ts:362:    if (this.state.globalCooldown > 0) {
+../src/limbs/pedagogy/SovereignAvatarActionBarVolition.ts:363:      this.emitEvent({ type: 'BLOCKED', reason: 'GCD', abilityId, gcdRemaining: this.state.globalCooldown });
+../src/limbs/pedagogy/SovereignAvatarActionBarVolition.ts:370:    this.state.globalCooldown = 1;
+../src/limbs/pedagogy/SovereignSyncLimb.ts:14: * Watches the local corpus, uploads revisions to Cloudflare R2 via wrangler,
+../src/limbs/pedagogy/SovereignSyncLimb.ts:87:      // Execute upload via wrangler R2 put command
+../src/limbs/pedagogy/SovereignSyncLimb.ts:88:      const cmd = `wrangler r2 object put "${bucket}/pedagogy/v${version}.jsonl" --file "${this.corpusPath}"`;
+../src/limbs/pedagogy/SovereignSyncLimb.ts:89:      logger.info({ command: cmd }, 'Executing wrangler R2 object upload...');
+../src/limbs/pedagogy/SovereignSyncLimb.ts:95:        logger.warn({ err: err.message }, 'wrangler R2 upload failed. (This is normal in offline or unconfigured environments. Proceeding with sync broadcast simulation).');
+../src/limbs/pedagogy/SovereignSyncLimb.ts:99:      const globe = GlobeStateLimb.getInstance();
+../src/limbs/pedagogy/SovereignSyncLimb.ts:100:      if (globe) {
+../src/limbs/pedagogy/SovereignSyncLimb.ts:102:        const success = await globe.pushNodeState('pedagogy', {
+../src/limbs/sensory/PerceptionLimb.ts:29: * PerceptionLimb (Limb #36) â€” Single interface over all sensory substrates.
+../src/limbs/spatial/AvatarStateLimb.ts:108:  15: "Braid single",
+../src/limbs/spatial/CacheForensicsLimb.ts:133:        'arms', 'legs', 'face', 'gloves', 'boots', 'beard',
+../src/limbs/spatial/CacheForensicsLimb.ts:138:     * Returns the singleton instance of CacheForensicsLimb.
+../src/limbs/spatial/CacheForensicsLimb.ts:139:     * @returns The singleton instance.
+../src/limbs/spatial/CacheForensicsLimb.ts:149:     * Resets the singleton instance (for testing purposes only).
+../src/limbs/spatial/CacheForensicsLimb.ts:160:     * Private constructor to enforce singleton pattern.
+../src/limbs/spatial/CacheForensicsLimb.ts:166:            throw new Error('Singleton violation: use CacheForensicsLimb.getInstance()');
+../src/limbs/spatial/CacheLearningLimb.ts:190:     * translateToObj - Translates cache model to .gltf with metric verification.
+../src/limbs/spatial/CacheLearningLimb.ts:221:            const outPath = path.join(this.extractionDir, `${cleanName}_${targetId}.gltf`);
+../src/limbs/spatial/CloudflareSyncLimb.ts:41:            logger.error({ error }, 'Cloudflare Worker is offline or unreachable. Is wrangler dev running?');
+../src/limbs/spatial/CloudflareSyncLimb.ts:60:                details: `Cloudflare Worker OFFLINE at ${this.endpoint}. Is wrangler dev running?`
+../src/limbs/spatial/CloudflareSyncLimb.ts:92:        const bridgeModel = 'kbd_native_single';
+../src/limbs/spatial/CombatLimb.ts:138:            // 4. Single-shot Death Check
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:51:    public globalState: GameState = {
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:72:            throw new Error('Singleton violation: use GameplaySovereigntyLimb.getInstance()');
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:75:        this.globalState.players.set(this.avatar.username, this.avatar as any);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:218:                        this.globalState.varps.set(parseInt(id), value as number);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:223:                        this.globalState.varbits.set(parseInt(id), value as number);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:251:            varps: Object.fromEntries(this.globalState.varps),
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:252:            varbits: Object.fromEntries(this.globalState.varbits),
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:325:                await (current as any).unmount(this.globalState, this.avatar);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:330:        await module.mount(this.globalState, this.avatar);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:342:     * Executes a single mechanical tick manually, gated by the CanonicalClock only if simulation is running.
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:388:        this.globalState.tickNumber = this.tickCount;
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:428:            for (const npc of this.globalState.npcMap.values()) {
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:429:                if (npc.brain) npc.brain.think(this.tickCount, this.globalState, this.avatar);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:437:            if (this.harness) await this.harness.processTick(this.tickCount, this.globalState, this.avatar);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:449:        if (this.activeModule) moduleResult = await this.activeModule.onTick(this.tickCount, this.globalState, this.avatar);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:482:        return await this.activeModule.onAction(action, this.globalState, this.avatar);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:486:        const combatants: NPC[] = [this.avatar, ...Array.from(this.globalState.npcMap.values())];
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:507:            target = this.globalState.npcMap.get(id);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:509:            target = this.globalState.npcMap.get(targetId);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:559:        this.globalState.graves!.set(graveKey, graveMarker);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:562:        this.globalState.npcMap.set(this.tickCount + 5000, {
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:589:            const grave = this.globalState.graves!.get(graveKey);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:594:                this.globalState.graves!.delete(graveKey);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:596:                for (const [id, npc] of this.globalState.npcMap.entries()) {
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:598:                         this.globalState.npcMap.delete(id);
+../src/limbs/spatial/GameplaySovereigntyLimb.ts:608:            const items = this.globalState.groundItems!.get(key);
+../src/limbs/spatial/GeometryAnnotationLayer.ts:30:    | 'smuggler_trail'
+../src/limbs/spatial/GeometryAnnotationLayer.ts:116:     * Resolve a single tile coordinate against the annotation layer.
+../src/limbs/spatial/GlobeStateLimb.ts:20: * globally accessible, durable substrate (PartyKit/Partyserver).
+../src/limbs/spatial/GlobeStateLimb.ts:35:    private endpoint: string = 'ws://127.0.0.1:8787/party/globe';
+../src/limbs/spatial/GlobeStateLimb.ts:44:            this.enabled = config.globeEnabled ?? false;
+../src/limbs/spatial/GlobeStateLimb.ts:45:            if (config.globeEndpoint) {
+../src/limbs/spatial/GlobeStateLimb.ts:46:                this.endpoint = config.globeEndpoint;
+../src/limbs/spatial/GlobeStateLimb.ts:53:            this.endpoint = `${base}/parties/globe/pog2-sovereign`;
+../src/limbs/spatial/GlobeStateLimb.ts:59:            this.endpoint = 'ws://127.0.0.1:8787/parties/globe/pog2-sovereign';
+../src/limbs/spatial/GlobeStateLimb.ts:60:            logger.info({ endpoint: this.endpoint }, 'Sovereign local mode active: routing GlobeStateLimb to local wrangler dev server.');
+../src/limbs/spatial/GlobeStateLimb.ts:62:            this.endpoint = 'ws://127.0.0.1:8787/parties/globe/pog2-sovereign';
+../src/limbs/spatial/GlobeStateLimb.ts:76:     * Directly stream an EventBus telemetry packet to the WebGL globe
+../src/limbs/spatial/GlobeStateLimb.ts:88:                type: event.type, // Use the actual event type for the globe dispatcher
+../src/limbs/spatial/GlobeStateLimb.ts:196:     * Push a node's state to the global substrate.
+../src/limbs/spatial/GlobeStateLimb.ts:246:     * Push a batch of spatial perception entities to the global substrate.
+../src/limbs/spatial/HUDForensicsLimb.ts:440:            SPRITE_OVERLAY: 1,   // Single sprite is valid
+../src/limbs/spatial/ItemLifecycleLimb.ts:41:                gloves: EquipmentSlot.HANDS,
+../src/limbs/spatial/SovereignCollisionEngine.ts:32:    private globalCycleMs: number = 6000;
+../src/limbs/spatial/SovereignCollisionEngine.ts:81:                global_cycle: `${this.globalCycleMs}ms`,
+../src/limbs/spatial/SpatialSovereigntyLimb.ts:86:        const source = (globalThis as any).SOVEREIGN_SUBSTRATE || 'ATLAS_FALLBACK';
+../src/limbs/spatial/SpatialSovereigntyLimb.ts:108:            throw new Error('Singleton violation: use SpatialSovereigntyLimb.getInstance()');
+../src/limbs/spatial/SpatialSovereigntyLimb.ts:343:     * Maps NXT cache fragments to a single authoritative surface per plane.
+../src/limbs/spatial/SpatialSovereigntyLimb.ts:585:     * toggleDynamicDoor - Live-toggles the collision matrix for a dynamic door/gate.
+../src/limbs/spatial/SpatialSovereigntyLimb.ts:588:    public toggleDynamicDoor(x: number, y: number, plane: number, open: boolean): boolean {
+../src/limbs/spatial/SpatialSovereigntyLimb.ts:607:                // logger.info({ x, y, plane, open }, '[SPATIAL] Dynamic door toggled.');
+../src/limbs/spatial/SpatialSovereigntyLimb.ts:631:        // Note: For simplicity, we currently assume single-tile objects (Doors/Gates)
+../src/limbs/spatial/VarbitSovereigntyLimb.ts:267:     * resolveVarbitDefinitionFromCache — Async fallback that loads a single varbit
+../src/limbs/technical/EntityLimb.ts:37:            throw new Error('Singleton violation: use EntityLimb.getInstance()');
+../src/limbs/technical/KinematicsLimb.ts:128:                    projectId: 'global',
+../src/limbs/technical/MechanicalSovereigntyLimb.ts:43:            throw new Error('Singleton violation: use MechanicalSovereigntyLimb.getInstance()');
+../src/limbs/technical/PedagogyLimb.ts:248:        const totalPolyCount = topology.reduce((sum, p) => sum + p.triangleCount, 0);
+../src/limbs/technical/PedagogyLimb.ts:262:                tris: p.triangleCount,
+../src/limbs/technical/PedagogyLimb.ts:398:     * This is used for cross-modal learnings that don't map to a single NPC or Item.
+../src/limbs/technical/QuestForgeLimb.ts:350:            const angle = (stageIndex / Math.ceil(scenes.length / 3)) * 2 * Math.PI;
+../src/limbs/technical/QuestForgeLimb.ts:353:                x: Math.round(center.x + Math.cos(angle) * radius),
+../src/limbs/technical/QuestForgeLimb.ts:354:                y: Math.round(center.y + Math.sin(angle) * radius),
+../src/limbs/technical/TopologyLimb.ts:10:    triangleCount: number;
+../src/limbs/technical/TopologyLimb.ts:47:            triangleCount: m.triangleCount,
+../src/limbs/technical/VectorPedagogyLimb.ts:61:                projectId: 'global-generative-engine',
+../src/limbs/world_grounding/WorldGroundingLimb.ts:54:            throw new Error('Singleton violation: use WorldGroundingLimb.getInstance()');
+../src/limbs/world_grounding/WorldGroundingLimb.ts:370:            // Absolute fallback for global NPC truth
+../src/logic/handlers/PhotoBoothHandler.ts:43:            const modelFilename = `${entityId}_snapshot.glb`;
+../src/monitor/NodeTester.js:237:     * Probe a single NeuralNode. Resolves its physical path first, then
+../src/monitor/NodeTester.js:245:        // Fallback: check against the npm package root (handles global `npm link` installs)
+../src/monitor/NodeTester.js:366:                            const hasGlb = existsSync(join(fullPath, 'model.glb'));
+../src/monitor/PulseMonitor.ts:117:            // Resolve global substrate state
+../src/monitor/PulseMonitor.ts:118:            let globalStatus = SubstrateState.ONLINE;
+../src/monitor/PulseMonitor.ts:119:            if (offlineCount >= 10) globalStatus = SubstrateState.OFFLINE; // Only stop heartbeat if 10+ nodes are fully missing
+../src/monitor/PulseMonitor.ts:120:            else if (offlineCount > 0 || degradedCount > 0) globalStatus = SubstrateState.DEGRADED;
+../src/monitor/PulseMonitor.ts:123:            SubstrateResolver.setStatus(globalStatus);
+../src/monitor/PulseMonitor.ts:127:                globalStatus === SubstrateState.ONLINE ? YaoState.YoungYang :
+../src/monitor/PulseMonitor.ts:128:                globalStatus === SubstrateState.OFFLINE ? YaoState.OldYin : YaoState.YoungYin
+../src/monitor/PulseMonitor.ts:140:            logger.info({ online: onlineCount, offline: offlineCount, globalStatus }, 'Lightweight limb pulse complete. State broadcasted.');
+../src/monitor/SwitchboardLimb.ts:30: * Implementation: Hardened Singleton with Deterministic Queue.
+../src/monitor/SwitchboardLimb.ts:44:            throw new Error('Singleton violation: use SwitchboardLimb.getInstance()');
+../src/monitor/SwitchboardLimb.ts:145:                    const source = (globalThis as any).SOVEREIGN_SUBSTRATE || 'ATLAS_FALLBACK';
+../src/monitor/SwitchboardLimb.ts:551:     * pushAdminCommand - Single Ingress Path for deterministic logic.
+../src/motor/spatial/shaders/include/brdf_utils.glsl:4:#include "math_utils.glsl"
+../src/prompts/SystemPrompts.js:41:BLOCKED: shell_command, git_status, wrangler, soverign_eye, sensory_capture.
+../src/prompts/SystemPrompts.js:46:Authorized tools: shell_command, git_status, wrangler.
+../src/prompts/SystemPrompts.js:70:BLOCKED: shell_command, git_status, wrangler, vision tools.
+../src/prompts/SystemPrompts.ts:44:BLOCKED: shell_command, git_status, wrangler, soverign_eye, sensory_capture.
+../src/prompts/SystemPrompts.ts:50:Authorized tools: shell_command, git_status, wrangler.
+../src/prompts/SystemPrompts.ts:77:BLOCKED: shell_command, git_status, wrangler, vision tools.
+../src/routing/GlobeReconciliationKernel.ts:48:     * reconcileTile - Calculate the authoritative state of a single tile.
+../src/routing/HexagramManager.js:68:            [YaoState.YoungMixed]: 'SENSORY_SYNTHESIS: Combining all observations into a single intent.',
+../src/routing/HexagramManager.ts:339:            [YaoState.YoungMixed]: 'SENSORY_SYNTHESIS: Combining all observations into a single intent.',
+../src/routing/TernaryRouter.js:589:                    'openrouter:google/gemini-flash-1.5-8b',
+../src/routing/TernaryRouter.js:890:     * into a single YaoState representing where the organism WANTS to go.
+../src/routing/TernaryRouter.ts:686:                    'openrouter:google/gemini-flash-1.5-8b',
+../src/routing/TernaryRouter.ts:1016:     * into a single YaoState representing where the organism WANTS to go.
+../src/routing/WorkforceManifest.ts:13: * - A single responsibility (role)
+../src/routing/WorkforceManifest.ts:170:                authorizedTools: ['shell_command', 'git_status', 'wrangler', 'web_search', 'fetch_url'],
+../src/routing/WorkforceManifest.ts:172:AUTHORIZED TOOLS: shell_command, git_status, wrangler, web_search, fetch_url.`,
+../src/routing/WorkforceManifest.ts:184:                authorizedTools: ['generate_code', 'edit_code', 'shell_command', 'web_search', 'fetch_url', 'wrangler', 'git_status', 'sql_forge', 'docs_forge', 'refactor_forge'],
+../src/routing/WorkforceManifest.ts:346:        return this.getWorker(modelId)?.memoryNamespace ?? 'global';
+../src/scripts/blender_heavy_lifter.ts:11:    const inputGlb = join(process.cwd(), 'rsmv', 'model.glb');
+../src/scripts/blender_heavy_lifter.ts:20:    const outputGlb = join(outputDir, 'player_walk_babylon.glb');
+../src/scripts/blender_heavy_lifter.ts:37:    bpy.ops.import_scene.gltf(filepath=r"${inputGlb.replace(/\\/g, '/')}")
+../src/scripts/blender_heavy_lifter.ts:68:    bpy.ops.export_scene.gltf(
+../src/scripts/composite_pull_audit.ts:39:    const hexagram = new HexagramManager(null, 'global');
+../src/scripts/extract_base_avatars.ts:21:try { ({ buildAttributeBuffer } = require(join(rsmv, 'src', '3d', 'gltfutil.js'))); } catch (e) { console.error('Failed to load gltfutil', e); }
+../src/scripts/extract_base_avatars.ts:52:    console.log(`🛠️ Baking ${modelIds.length} geometries into ${name}.glb...`);
+../src/scripts/extract_base_avatars.ts:58:    const gltfPath = join(OUTPUT_DIR, `${name}.gltf`);
+../src/scripts/extract_base_avatars.ts:62:    const gltf: any = {
+../src/scripts/extract_base_avatars.ts:90:        const gltfMesh: any = { name: `part_${modelId}`, primitives: [] };
+../src/scripts/extract_base_avatars.ts:108:            const attrViewIdx = gltf.bufferViews.length;
+../src/scripts/extract_base_avatars.ts:109:            gltf.bufferViews.push({
+../src/scripts/extract_base_avatars.ts:119:            const indicesViewIdx = gltf.bufferViews.length;
+../src/scripts/extract_base_avatars.ts:120:            gltf.bufferViews.push({
+../src/scripts/extract_base_avatars.ts:129:            const primitive: any = { attributes: {}, indices: gltf.accessors.length + Object.keys(packed.attributes).length };
+../src/scripts/extract_base_avatars.ts:130:            let accessorIdx = gltf.accessors.length;
+../src/scripts/extract_base_avatars.ts:135:                gltf.accessors.push({
+../src/scripts/extract_base_avatars.ts:138:                    componentType: attr.gltype,
+../src/scripts/extract_base_avatars.ts:147:            gltf.accessors.push({
+../src/scripts/extract_base_avatars.ts:155:            gltfMesh.primitives.push(primitive);
+../src/scripts/extract_base_avatars.ts:157:        gltf.meshes.push(gltfMesh);
+../src/scripts/extract_base_avatars.ts:160:    gltf.buffers = [{ uri: `${name}.bin`, byteLength: bufferOffset }];
+../src/scripts/extract_base_avatars.ts:161:    gltf.nodes = modelIds.map((id: number, idx: number) => ({ name: `Part_${id}`, mesh: idx }));
+../src/scripts/extract_base_avatars.ts:162:    gltf.scenes[0].nodes = gltf.nodes.map((_: any, i: number) => i);
+../src/scripts/extract_base_avatars.ts:165:    writeFileSync(gltfPath, JSON.stringify(gltf, null, 2));
+../src/scripts/extract_base_avatars.ts:167:    console.log(`✅ Base avatar GLTF exported: ${gltfPath}`);
+../src/scripts/fix_css.cjs:76:.rs-minimap-world-toggle {
+../src/scripts/inject_kbd_geometry.ts:13:try { ({ buildAttributeBuffer } = require(join(rsmv, 'src', '3d', 'gltfutil.js'))); } catch { }
+../src/scripts/inject_kbd_geometry.ts:32:const OUTPUT_DIR = join(ASSET_DIR, 'gltf_export');
+../src/scripts/inject_kbd_geometry.ts:55:        const gltfPath = join(OUTPUT_DIR, 'kbd_sovereign.gltf');
+../src/scripts/inject_kbd_geometry.ts:58:        if (!existsSync(gltfPath)) {
+../src/scripts/inject_kbd_geometry.ts:63:        const gltf = JSON.parse(readFileSync(gltfPath, 'utf8'));
+../src/scripts/inject_kbd_geometry.ts:70:        gltf.accessors = [];
+../src/scripts/inject_kbd_geometry.ts:71:        gltf.bufferViews = [];
+../src/scripts/inject_kbd_geometry.ts:72:        gltf.meshes = [];
+../src/scripts/inject_kbd_geometry.ts:97:                const gltfMesh: any = { name: `part_${modelId}`, primitives: [] };
+../src/scripts/inject_kbd_geometry.ts:122:                    const attrViewIdx = gltf.bufferViews.length;
+../src/scripts/inject_kbd_geometry.ts:123:                    gltf.bufferViews.push({
+../src/scripts/inject_kbd_geometry.ts:134:                    const indicesViewIdx = gltf.bufferViews.length;
+../src/scripts/inject_kbd_geometry.ts:135:                    gltf.bufferViews.push({
+../src/scripts/inject_kbd_geometry.ts:145:                    const primitive: any = { attributes: {}, indices: gltf.accessors.length + Object.keys(packed.attributes).length };
+../src/scripts/inject_kbd_geometry.ts:147:                    let accessorIdx = gltf.accessors.length;
+../src/scripts/inject_kbd_geometry.ts:151:                        gltf.accessors.push({
+../src/scripts/inject_kbd_geometry.ts:154:                            componentType: attr.gltype,
+../src/scripts/inject_kbd_geometry.ts:164:                    gltf.accessors.push({
+../src/scripts/inject_kbd_geometry.ts:172:                    gltfMesh.primitives.push(primitive);
+../src/scripts/inject_kbd_geometry.ts:174:                gltf.meshes.push(gltfMesh);
+../src/scripts/inject_kbd_geometry.ts:181:        gltf.buffers = [{
+../src/scripts/inject_kbd_geometry.ts:187:        gltf.nodes = manifest.modelIds.map((id: number, idx: number) => ({
+../src/scripts/inject_kbd_geometry.ts:191:        gltf.scenes[0].nodes = gltf.nodes.map((_: any, i: number) => i);
+../src/scripts/inject_kbd_geometry.ts:195:        writeFileSync(gltfPath, JSON.stringify(gltf, null, 2));
+../src/scripts/inject_kbd_geometry.ts:199:        console.log(`  ðŸ’¾ GLTF: ${gltfPath}`);
+../src/scripts/intercept_beta_config.ts:41:        googleClientId: string;
+../src/scripts/intercept_beta_config.ts:130:    55: 'google_client_id',
+../src/scripts/intercept_beta_config.ts:275:                googleClientId: params[55] ?? '',
+../src/scripts/kbd_multi_arena_v1.ts:26:            const angle = (index / KBD_VARIANTS.length) * Math.PI * 2;
+../src/scripts/kbd_multi_arena_v1.ts:30:                translation: [Math.cos(angle) * radius, 0, Math.sin(angle) * radius],
+../src/scripts/kbd_multi_arena_v1.ts:31:                rotation: [0, -angle, 0, 1], // Facing center
+../src/scripts/kbd_multi_arena_v1.ts:49:    const outputPath = join(outputDir, 'kbd_multi_arena.gltf');
+../src/scripts/kbd_roar_cinema.ts:175:      const angle = (Math.random() - 0.5) * 0.5;
+../src/scripts/kbd_roar_cinema.ts:177:      const px = x + Math.sin(angle) * distance;
+../src/scripts/kbd_roar_cinema.ts:178:      const py = y + Math.cos(angle) * distance + (i * 5);
+../src/scripts/kbd_roar_cinema_v2.ts:32:const OUTPUT_DIR = join(ASSET_DIR, 'gltf_export');
+../src/scripts/kbd_roar_cinema_v2.ts:54:    const gltf = this.generateGLTFShell();
+../src/scripts/kbd_roar_cinema_v2.ts:55:    this.saveGLTF(gltf);
+../src/scripts/kbd_roar_cinema_v2.ts:130:    const gltf: GLTFAsset = {
+../src/scripts/kbd_roar_cinema_v2.ts:156:    return gltf;
+../src/scripts/kbd_roar_cinema_v2.ts:199:      return { ok: true, value: { path: join(OUTPUT_DIR, 'kbd_sovereign.gltf') } };
+../src/scripts/kbd_roar_cinema_v2.ts:205:  private saveGLTF(gltf: GLTFAsset): void {
+../src/scripts/kbd_roar_cinema_v2.ts:206:    const path = join(OUTPUT_DIR, 'kbd_sovereign.gltf');
+../src/scripts/kbd_roar_cinema_v2.ts:207:    writeFileSync(path, JSON.stringify(gltf, null, 2));
+../src/scripts/liveVisionLoop.ts:20:    // Initialize CNS singletons
+../src/scripts/liveVisionLoop.ts:22:    (globalThis as any).hexagram = hexagram;
+../src/scripts/pullHans.ts:22:    const outputs = ['model.png', 'model.glb'];
+../src/scripts/pullHans.ts:46:                if (existsSync(path.resolve('model.png')) && existsSync(path.resolve('model.glb'))) {
+../src/scripts/pullHans.ts:53:            const glbPath = path.resolve('model.glb');
+../src/scripts/pullHans.ts:56:                logger.info({ pngPath, glbPath }, 'SUCCESS: Hans NPC pulled from cache.');
+../src/scripts/SovereignTestRunner.ts:70:    'global_discovery_c2':          'discovery',
+../src/scripts/synthesize_teleport_grounding.ts:45:        region: "global",
+../src/scripts/testActuation.ts:21:    const prompt = 'Mutate the shader to add a crimson glow effect';
+../src/scripts_backup/blender_heavy_lifter.ts:11:    const inputGlb = join(process.cwd(), 'rsmv', 'model.glb');
+../src/scripts_backup/blender_heavy_lifter.ts:20:    const outputGlb = join(outputDir, 'player_walk_babylon.glb');
+../src/scripts_backup/blender_heavy_lifter.ts:37:    bpy.ops.import_scene.gltf(filepath=r"${inputGlb.replace(/\\/g, '/')}")
+../src/scripts_backup/blender_heavy_lifter.ts:68:    bpy.ops.export_scene.gltf(
+../src/scripts_backup/composite_pull_audit.ts:39:    const hexagram = new HexagramManager(null, 'global');
+../src/scripts_backup/fix_css.cjs:76:.rs-minimap-world-toggle {
+../src/scripts_backup/inject_kbd_geometry.ts:13:try { ({ buildAttributeBuffer } = require(join(rsmv, 'src', '3d', 'gltfutil.js'))); } catch { }
+../src/scripts_backup/inject_kbd_geometry.ts:32:const OUTPUT_DIR = join(ASSET_DIR, 'gltf_export');
+../src/scripts_backup/inject_kbd_geometry.ts:55:        const gltfPath = join(OUTPUT_DIR, 'kbd_sovereign.gltf');
+../src/scripts_backup/inject_kbd_geometry.ts:58:        if (!existsSync(gltfPath)) {
+../src/scripts_backup/inject_kbd_geometry.ts:63:        const gltf = JSON.parse(readFileSync(gltfPath, 'utf8'));
+../src/scripts_backup/inject_kbd_geometry.ts:70:        gltf.accessors = [];
+../src/scripts_backup/inject_kbd_geometry.ts:71:        gltf.bufferViews = [];
+../src/scripts_backup/inject_kbd_geometry.ts:72:        gltf.meshes = [];
+../src/scripts_backup/inject_kbd_geometry.ts:97:                const gltfMesh: any = { name: `part_${modelId}`, primitives: [] };
+../src/scripts_backup/inject_kbd_geometry.ts:122:                    const attrViewIdx = gltf.bufferViews.length;
+../src/scripts_backup/inject_kbd_geometry.ts:123:                    gltf.bufferViews.push({
+../src/scripts_backup/inject_kbd_geometry.ts:134:                    const indicesViewIdx = gltf.bufferViews.length;
+../src/scripts_backup/inject_kbd_geometry.ts:135:                    gltf.bufferViews.push({
+../src/scripts_backup/inject_kbd_geometry.ts:145:                    const primitive: any = { attributes: {}, indices: gltf.accessors.length + Object.keys(packed.attributes).length };
+../src/scripts_backup/inject_kbd_geometry.ts:147:                    let accessorIdx = gltf.accessors.length;
+../src/scripts_backup/inject_kbd_geometry.ts:151:                        gltf.accessors.push({
+../src/scripts_backup/inject_kbd_geometry.ts:154:                            componentType: attr.gltype,
+../src/scripts_backup/inject_kbd_geometry.ts:164:                    gltf.accessors.push({
+../src/scripts_backup/inject_kbd_geometry.ts:172:                    gltfMesh.primitives.push(primitive);
+../src/scripts_backup/inject_kbd_geometry.ts:174:                gltf.meshes.push(gltfMesh);
+../src/scripts_backup/inject_kbd_geometry.ts:181:        gltf.buffers = [{
+../src/scripts_backup/inject_kbd_geometry.ts:187:        gltf.nodes = manifest.modelIds.map((id: number, idx: number) => ({
+../src/scripts_backup/inject_kbd_geometry.ts:191:        gltf.scenes[0].nodes = gltf.nodes.map((_: any, i: number) => i);
+../src/scripts_backup/inject_kbd_geometry.ts:195:        writeFileSync(gltfPath, JSON.stringify(gltf, null, 2));
+../src/scripts_backup/inject_kbd_geometry.ts:199:        console.log(`  ðŸ’¾ GLTF: ${gltfPath}`);
+../src/scripts_backup/kbd_multi_arena_v1.ts:26:            const angle = (index / KBD_VARIANTS.length) * Math.PI * 2;
+../src/scripts_backup/kbd_multi_arena_v1.ts:30:                translation: [Math.cos(angle) * radius, 0, Math.sin(angle) * radius],
+../src/scripts_backup/kbd_multi_arena_v1.ts:31:                rotation: [0, -angle, 0, 1], // Facing center
+../src/scripts_backup/kbd_multi_arena_v1.ts:49:    const outputPath = join(outputDir, 'kbd_multi_arena.gltf');
+../src/scripts_backup/kbd_roar_cinema.ts:175:      const angle = (Math.random() - 0.5) * 0.5;
+../src/scripts_backup/kbd_roar_cinema.ts:177:      const px = x + Math.sin(angle) * distance;
+../src/scripts_backup/kbd_roar_cinema.ts:178:      const py = y + Math.cos(angle) * distance + (i * 5);
+../src/scripts_backup/kbd_roar_cinema_v2.ts:32:const OUTPUT_DIR = join(ASSET_DIR, 'gltf_export');
+../src/scripts_backup/kbd_roar_cinema_v2.ts:54:    const gltf = this.generateGLTFShell();
+../src/scripts_backup/kbd_roar_cinema_v2.ts:55:    this.saveGLTF(gltf);
+../src/scripts_backup/kbd_roar_cinema_v2.ts:130:    const gltf: GLTFAsset = {
+../src/scripts_backup/kbd_roar_cinema_v2.ts:156:    return gltf;
+../src/scripts_backup/kbd_roar_cinema_v2.ts:199:      return { ok: true, value: { path: join(OUTPUT_DIR, 'kbd_sovereign.gltf') } };
+../src/scripts_backup/kbd_roar_cinema_v2.ts:205:  private saveGLTF(gltf: GLTFAsset): void {
+../src/scripts_backup/kbd_roar_cinema_v2.ts:206:    const path = join(OUTPUT_DIR, 'kbd_sovereign.gltf');
+../src/scripts_backup/kbd_roar_cinema_v2.ts:207:    writeFileSync(path, JSON.stringify(gltf, null, 2));
+../src/scripts_backup/liveVisionLoop.ts:20:    // Initialize CNS singletons
+../src/scripts_backup/liveVisionLoop.ts:22:    (globalThis as any).hexagram = hexagram;
+../src/scripts_backup/pullHans.ts:22:    const outputs = ['model.png', 'model.glb'];
+../src/scripts_backup/pullHans.ts:46:                if (existsSync(path.resolve('model.png')) && existsSync(path.resolve('model.glb'))) {
+../src/scripts_backup/pullHans.ts:53:            const glbPath = path.resolve('model.glb');
+../src/scripts_backup/pullHans.ts:56:                logger.info({ pngPath, glbPath }, 'SUCCESS: Hans NPC pulled from cache.');
+../src/scripts_backup/SovereignTestRunner.ts:70:    'global_discovery_c2':          'discovery',
+../src/scripts_backup/synthesize_teleport_grounding.ts:45:        region: "global",
+../src/scripts_backup/testActuation.ts:21:    const prompt = 'Mutate the shader to add a crimson glow effect';
+../src/services/CloudflareServices.ts:47:     * Auto-detect Cloudflare account ID from local wrangler context if not provided
+../src/services/CloudflareServices.ts:52:            // If missing accountId or email, try to get it from wrangler
+../src/services/CloudflareServices.ts:54:                logger.info('Attempting to complete Cloudflare context via wrangler...');
+../src/services/CloudflareServices.ts:55:                const { stdout: whoami } = await $`wrangler whoami 2>&1`;
+../src/services/CloudflareServices.ts:124:                const globalResponse = await fetch('https://api.cloudflare.com/client/v4/user', {
+../src/services/CloudflareServices.ts:133:                if (globalResponse.ok) {
+../src/services/CloudflareServices.ts:134:                    const gData = await globalResponse.json() as any;
+../src/services/CloudflareServices.ts:337:            // Pattern: wrangler --global pattern (SovereignShell fallback style)
+../src/services/CloudflareServices.ts:338:            const { stderr } = await $`wrangler r2 object put ${bucket}/${key}${contentTypeFlag} --file -`;
+../src/services/CloudflareServices.ts:361:            const { stdout: output, stderr } = await $`wrangler r2 object get ${bucket}/${key}`;
+../src/services/GoogleServices.ts:3:const logger = createLogger('GoogleServices');
+../src/services/GoogleServices.ts:5:export interface GoogleServiceConfig {
+../src/services/GoogleServices.ts:11:import { ImageAnnotatorClient } from '@google-cloud/vision';
+../src/services/GoogleServices.ts:12:import { v2 } from '@google-cloud/translate';
+../src/services/GoogleServices.ts:14:import { LanguageServiceClient } from '@google-cloud/language';
+../src/services/GoogleServices.ts:18: * GoogleServices - Unified Google API Substrate
+../src/services/GoogleServices.ts:20:export class GoogleServices {
+../src/services/GoogleServices.ts:21:    protected readonly config: GoogleServiceConfig;
+../src/services/GoogleServices.ts:26:    constructor(config: GoogleServiceConfig) {
+../src/services/GoogleServices.ts:54:     * Standardized error classification for Google APIs
+../src/services/GoogleServices.ts:68:     * Analyze image using Google Vision API
+../src/services/GoogleServices.ts:90:     * Translate text using Google Translation API
+../src/services/GoogleServices.ts:105:     * Analyze entities using Google Natural Language API
+../src/services/GoogleServices.ts:125:     * Audit active Google capabilities and presently applied model routing.
+../src/services/GoogleServices.ts:130:            logger.info('Auditing Google services abilities and model routing via environment...');
+../src/services/GoogleServices.ts:169:     * Terminate all active Google SDK clients
+../src/services/GoogleServices.ts:179:            logger.info('GoogleServices cleanup complete');
+../src/services/GoogleServices.ts:181:            logger.warn({ error: (e as Error).message }, 'Error during GoogleServices cleanup');
+../src/state/NeurologicalMap.js:423:        biologicalRole: { organ: 'Motor Output', input: 'Engine results', output: 'Terminal display', constraints: 'Plain English; human-readable' }
+../src/state/NeurologicalMap.js:514:        path: 'src/services/GoogleServices.ts', role: 'External Limb Connectivity (Google)', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 10,
+../src/state/NeurologicalMap.ts:498:        biologicalRole: { organ: 'Motor Output', input: 'Engine results', output: 'Terminal display', constraints: 'Plain English; human-readable' }
+../src/state/NeurologicalMap.ts:589:        path: 'src/services/GoogleServices.ts', role: 'External Limb Connectivity (Google)', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 10,
+../src/tests/combat_grounding_demo.ts:14:    // 1. Singleton Preparation
+../src/tests/combat_grounding_demo.ts:26:    const state = gameplay.globalState;
+../src/tests/global_discovery_c2.ts:29:            "0_3550_3250": 0 // A single walkable tile deep in the neighbor region
+../src/tests/havenhythe_collision_bake.ts:189:    'dead smuggler': { type: CELL.OBJECT, blocks: false }, // Walkable over, interactable
+../src/tests/havenhythe_collision_bake.ts:225:    return 0; // Single tile
+../src/tests/havenhythe_collision_bake.ts:312:    // Special handling for "Dead Smuggler" and other quest triggers
+../src/tests/havenhythe_collision_bake.ts:313:    const smuggler = this.entities.find(e => 
+../src/tests/havenhythe_collision_bake.ts:314:      e.name?.toLowerCase().includes('dead smuggler')
+../src/tests/havenhythe_collision_bake.ts:317:    if (smuggler) {
+../src/tests/havenhythe_collision_bake.ts:318:      logger.info(`Found "Dead Smuggler" at (${smuggler.x}, ${smuggler.y}, ${smuggler.plane})`);
+../src/tests/havenhythe_collision_bake.ts:320:      // Create 3Ã—3 interactable zone around smuggler
+../src/tests/havenhythe_collision_bake.ts:324:          const x = smuggler.x + dx;
+../src/tests/havenhythe_collision_bake.ts:325:          const y = smuggler.y + dy;
+../src/tests/havenhythe_collision_bake.ts:326:          if (this.isInBounds(x, y, smuggler.plane)) {
+../src/tests/havenhythe_collision_bake.ts:328:              // Smuggler position - walkable but marked special
+../src/tests/havenhythe_collision_bake.ts:329:              this.matrix.set(x, y, smuggler.plane, 'S'); // S = Story/Narrative
+../src/tests/havenhythe_collision_bake.ts:332:              const current = this.matrix.get(x, y, smuggler.plane);
+../src/tests/havenhythe_collision_bake.ts:334:                this.matrix.set(x, y, smuggler.plane, CELL.OBJECT);
+../src/tests/necromancer_ai_demo.ts:46:    gameplay.globalState.npcMap.set(necroId, necro as any);
+../src/tests/necromancer_ai_demo.ts:60:        console.log(radar.render(gameplay.globalState, gameplay.avatar, false));
+../src/tests/pathing_archaeologist.ts:18: *   5. Smuggler / patrol NPCs (Havenhythe reference)
+../src/tests/pathing_archaeologist.ts:49:    'smuggler', 'dead smuggler',
+../src/tests/pathing_archaeologist.ts:73:        // Single object â€” wrap it
+../src/tests/pathing_archaeologist_cs2.ts:135:            // Focus on patrol/guard/smuggler types
+../src/tests/pathing_archaeologist_cs2.ts:136:            if (name.includes('patrol') || name.includes('guard') || name.includes('smuggler') ||
+../src/tests/pog_sovereign_cinema.ts:36:    // Phase 0: Initialize Hexagram singleton (Heartbeat)
+../src/tests/pog_sovereign_cinema.ts:58:        description: 'The Sovereign Avatar (POG2) manifests in the center of the neurological map, glowing with cyan energy.',
+../src/tests/pog_sovereign_cinema.ts:59:        visualPrompts: ['A cinematic 3D render of a futuristic AI avatar manifesting in a digital void, cyan glow, volumetric lighting, hyper-detailed'],
+../src/tests/pog_sovereign_cinema.ts:96:    const pipelinePath = join(process.cwd(), 'multiplayer-globe-template', 'public', 'assets', 'cinema', 'pog_sovereign');
+../src/tests/test_bootstrap.ts:14: * resetAllSingletons - Clear the slate for deterministic integration tests.
+../src/tests/test_bootstrap.ts:16:export function resetAllSingletons(): void {
+../src/tests/test_bootstrap.ts:18:        throw new Error('resetAllSingletons is forbidden in production environment');
+../src/test_vision_pipeline.ts:24:    const prompt = "A vibrant high-fidelity UI login screen for 'AI KNIGHT' with glassmorphism, gold accents, and a futuristic knight logo.";
+../src/test_vision_pipeline.ts:25:    const analysisPrompt = "Analyze the color palette and identify the HEX codes for the gold accents and glassmorphism elements.";
+../src/tools/annotate_geometry.ts:29:    'mine_cart_track', 'mine_cart_brake', 'smuggler_trail',
+../src/tools/ConfidenceStressTester.ts.bak:77:                    gameplay.globalState.npcMap.set(12, virtualHallvar as any);
+../src/tools/seed_gal.ts:80:// HAVENHYTHE â€” Unreleased (Dead Smuggler Trail)
+../src/tools/seed_gal.ts:90:    void_type: 'smuggler_trail',
+../src/tools/seed_gal.ts:92:    signal: 'Dead Smuggler trail â€” quest path marker objects blocking direct route',
+../src/tools/seed_gal.ts:104:    signal: 'Havenhythe endpoint â€” Dead Smuggler destination (unreleased region)',
+../src/tools/seed_gal.ts:159:    notes: 'exploration_barrows.ts already mapped this. Collision gates = varbit-toggled. Plane 3 = underground layer.',
+../src/types/SovereignDomain.js:16:    /** Shell commands, git, wrangler, npm, scaffold, deployment */
+../src/types/SovereignDomain.js:35: * This is the single source of truth for tool-domain membership.
+../src/types/SovereignDomain.js:44:    'wrangler': SovereignDomain.SYSTEM,
+../src/types/SovereignDomain.js:88:    { domain: SovereignDomain.SYSTEM, pattern: /\b(git|commit|push|pull|deploy|wrangler|shell|npm|install|scaffold|build|run|execute command|powershell|terminal|process|service)\b/i },
+../src/types/SovereignDomain.js:90:    { domain: SovereignDomain.RESEARCH, pattern: /\b(search|google|find online|look up|fetch url|web|browse|documentation|api reference)\b/i },
+../src/types/SovereignDomain.ts:10:    /** Shell commands, git, wrangler, npm, scaffold, deployment */
+../src/types/SovereignDomain.ts:30: * This is the single source of truth for tool-domain membership.
+../src/types/SovereignDomain.ts:40:    'wrangler': SovereignDomain.SYSTEM,
+../src/types/SovereignDomain.ts:92:    { domain: SovereignDomain.SYSTEM, pattern: /\b(git|commit|push|pull|deploy|wrangler|shell|npm|install|scaffold|build|run|serve|execute command|powershell|terminal|process|service)\b/i },
+../src/types/SovereignDomain.ts:94:    { domain: SovereignDomain.RESEARCH, pattern: /\b(search|google|find online|look up|fetch url|web|browse|documentation|api reference)\b/i },
+../src/utils/# Player spoof.txt:192:- [Wigglewoo](https://runescape.wiki/w/Wigglewoo)
+../src/utils/# Player spoof.txt:197:[Wigglewoo](https://runescape.wiki/w/Wigglewoo)
+../src/utils/# Player spoof.txt:211:- [Heidiggle](https://runescape.wiki/w/Heidiggle)
+../src/utils/# Player spoof.txt:231:[Heidiggle](https://runescape.wiki/w/Heidiggle)
+../src/utils/# Player spoof.txt:247:- [Moglewee](https://runescape.wiki/w/Moglewee)
+../src/utils/# Player spoof.txt:257:[Moglewee](https://runescape.wiki/w/Moglewee)
+../src/utils/# Player spoof.txt:280:- [Mogglewump](https://runescape.wiki/w/Mogglewump)
+../src/utils/# Player spoof.txt:324:[Mogglewump](https://runescape.wiki/w/Mogglewump)
+../src/utils/# Player spoof.txt:411:- [Biggleswade](https://runescape.wiki/w/Biggleswade) (removed)
+../src/utils/# Player spoof.txt:419:[Biggleswade](https://runescape.wiki/w/Biggleswade)
+../src/utils/# Player spoof.txt:539:- Content on this site is licensed under [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/); [additional terms apply](https://meta.weirdgloop.org/w/Licensing).
+../src/utils/# Player spoof.txt:542:[additional terms apply](https://meta.weirdgloop.org/w/Licensing)
+../src/utils/# Player spoof.txt:544:- [Privacy policy](https://weirdgloop.org/privacy)
+../src/utils/# Player spoof.txt:547:- [Terms of Use](https://weirdgloop.org/terms)
+../src/utils/# Player spoof.txt:549:- [Mobile view](https://runescape.wiki/w/Player_spoof?mobileaction=toggle_view_mobile)
+../src/utils/# Player spoof.txt:550:[Privacy policy](https://weirdgloop.org/privacy)
+../src/utils/# Player spoof.txt:553:[Terms of Use](https://weirdgloop.org/terms)
+../src/utils/# Player spoof.txt:555:[Mobile view](https://runescape.wiki/w/Player_spoof?mobileaction=toggle_view_mobile)
+../src/utils/ApiThrottle.ts:71:        this.buckets.set('weirdgloop', new TokenBucket(100, 60 * 1000));    // 100 req/min
+../src/utils/BestiaryApi.ts:61:// BestiaryApi — Singleton
+../src/utils/BestiaryApi.ts:65:  private static readonly BASE = 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/bestiary';
+../src/utils/CanonicalClock.ts:467:/** Singleton export for convenience */
+../src/utils/ChromaCore.ts:29: * ChromaCore â€” Single authoritative pixel sampler.
+../src/utils/DirectionalRegistry.ts:37:    // TYPE 10-11: Solid Objects / Large Rectangles
+../src/utils/EndpointHealer.js:10: * to diagnose the issue by inspecting global variables, CLI auth states,
+../src/utils/EndpointHealer.js:131:        const whoami = await this.runCheck('Wrangler Auth', 'wrangler whoami');
+../src/utils/EndpointHealer.js:136:            diag.resolution = 'Cloudflare auth failed. Run "wrangler login" to re-authenticate.';
+../src/utils/EndpointHealer.js:154:        const envCheck = await this.runCheck('Google API Key', 'echo %GOOGLE_API_KEY%');
+../src/utils/EndpointHealer.js:158:        const gitCheck = await this.runCheck('Git Config', 'git config --global --list');
+../src/utils/EndpointHealer.js:161:            diag.resolution = 'Google API key not set. Set GOOGLE_API_KEY or run "gcloud auth application-default login".';
+../src/utils/EndpointHealer.ts:35: * to diagnose the issue by inspecting global variables, CLI auth states,
+../src/utils/EndpointHealer.ts:60:                content: `Refused aggressive restart of ${provider}. Operating in local/dormant state based on global gates.`,
+../src/utils/EndpointHealer.ts:171:        const whoami = await this.runCheck('Wrangler Auth', 'wrangler whoami');
+../src/utils/EndpointHealer.ts:177:        const portCheck = await this.runCheck('Wrangler Dev (8787)', 'curl -s -o NUL -w "%{http_code}" http://127.0.0.1:8787');
+../src/utils/EndpointHealer.ts:181:            diag.resolution = 'Cloudflare auth failed. Run "wrangler login" to re-authenticate.';
+../src/utils/EndpointHealer.ts:183:            diag.resolution = 'Cloudflare Worker (wrangler dev) is offline. Execute "npx wrangler dev" in the worker directory.';
+../src/utils/EndpointHealer.ts:207:        const envCheck = await this.runCheck('Gemini/Google API Key', 'echo %GEMINI_API_KEY%_%GOOGLE_API_KEY%');
+../src/utils/EndpointHealer.ts:217:        const gitCheck = await this.runCheck('Git Config', 'git config --global --list');
+../src/utils/EndpointHealer.ts:221:            diag.resolution = 'Gemini/Google API key not set. Set GEMINI_API_KEY or GOOGLE_API_KEY, or run "gcloud auth application-default login".';
+../src/utils/GeApi.ts:20:const WG_BASE = 'https://api.weirdgloop.org/exchange/history/rs';
+../src/utils/GeApi.ts:21:const JAGEX_PROXY_BASE = 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/ge';
+../src/utils/GeApi.ts:28:    source: 'weirdgloop' | 'jagex';
+../src/utils/GeApi.ts:64:            await this.throttle.acquire('weirdgloop');
+../src/utils/GeApi.ts:80:                        source: 'weirdgloop'
+../src/utils/GeApi.ts:92:                            source: 'weirdgloop'
+../src/utils/GeApi.ts:174:            await this.throttle.acquire('weirdgloop');
+../src/utils/GlobalOffsetRegistry.ts:7:const OFFSET_STORAGE_PATH = path.join(process.cwd(), 'memory', 'global_offset.json');
+../src/utils/GlobalOffsetRegistry.ts:38:     * updateOffset - Sets the current global offset calculated by the ForensicReconciler.
+../src/utils/ImageArtifactCleaner.ts:50:     * Prune a single directory, deleting oldest files when count exceeds maxRetention.
+../src/utils/JsonExtractor.ts:39:            // Remove single-line comments // ... but not within URLs or quoted strings (basic)
+../src/utils/KeyVault.ts:2: * KeyVault - Secure storage and rotation for Google API keys
+../src/utils/KeyVault.ts:52:            throw new Error('Invalid Google API key format (must start with AIza)');
+../src/utils/OfficialPlayerDataApi.ts:102:// OfficialPlayerDataApi — Singleton
+../src/utils/OfficialPlayerDataApi.ts:106:  private static readonly PROXY_BASE = 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/player';
+../src/utils/QuotaTracker.js:71:     * Get quota health for a single provider.
+../src/utils/QuotaTracker.ts:121:     * Get quota health for a single provider.
+../src/utils/RSMVBridge.ts:5: * tsx subprocess. Returns strongly-typed results from the live RS3 cache.
+../src/utils/RSMVBridge.ts:156:    triangleCount: number;
+../src/utils/RSMVBridge.ts:199:// â”€â”€ RSMVBridge Singleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+../src/utils/RSMVBridge.ts:305:// Convenience singleton export
+../src/utils/rsmv_bridge.ts:230:                let vertexCount = 0, triangleCount = 0;
+../src/utils/rsmv_bridge.ts:234:                    if (mesh.indices) triangleCount += Math.floor(mesh.indices.count / 3);
+../src/utils/rsmv_bridge.ts:240:                    triangleCount,
+../src/utils/rsmv_bridge.ts:249:                console.log(JSON.stringify({ modelId: id, vertexCount: 0, triangleCount: 0, boneCount: 0, hasUVs: false, hasSkinning: false, materials: [], error: 'parse_unavailable' }));
+../src/utils/shell.js:48: * Example: await $`wrangler whoami`
+../src/utils/shell.ts:59: * Example: await $`wrangler whoami`
+../src/utils/SovereignEye.ts:19:    | { type: 'url'; target: string }           // http://localhost:3000, wrangler dev, etc.
+../src/utils/SovereignEye.ts:50: * wrangler dev environments, HTML files, OS windows, and existing images.
+../src/utils/SovereignEye.ts:116:     * Capture a URL target (localhost, wrangler dev, deployed page).
+../src/utils/SovereignEye.ts:341:            'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+../src/utils/SovereignLibrary.ts:7:      <h1 className="text-xl font-bold text-ghost-glow">{title}</h1>
+../src/utils/SovereignLibrary.ts:41:              <h3 className="text-lg font-semibold text-ghost-glow">{title}</h3>
+../src/utils/SovereignUI.ts:24:          glow: '#00ff9d',
+../src/utils/SovereignUI.ts:34:        'glow': 'glow 2s ease-in-out infinite alternate',
+../src/utils/SovereignUI.ts:37:        glow: {
+../src/utils/SovereignUI.ts:62:  .ghost-glow {
+../src/utils/SovereignUI.ts:63:    @apply text-ghost-glow drop-shadow-[0_0_8px_rgba(0,255,157,0.5)];
+../src/utils/SovereignUI.ts:66:    @apply px-4 py-2 bg-ghost-glow text-sovereign-900 font-semibold rounded 
+../src/utils/SovereignUI.ts:68:           focus:outline-none focus:ring-2 focus:ring-ghost-glow focus:ring-offset-2 
+../src/utils/SovereignUI.ts:83:        <h1 className="text-4xl font-bold ghost-glow mb-2">${projectName}</h1>
+../src/utils/SovereignUI.ts:90:          <h3 className="text-lg font-semibold text-ghost-glow mb-2 capitalize">\${f}</h3>
+../src/utils/SovereignUI.ts:98:        <div className="sovereign-card border-ghost-glow/30">
+../src/utils/SovereignUI.ts:99:          <h3 className="text-lg font-semibold text-ghost-glow mb-2">System Status</h3>
+../src/utils/SovereignUI.ts:103:              <span className="text-ghost-glow">ACTIVE</span>
+../src/utils/SovereignUI.ts:111:              <span className="text-ghost-glow">OPERATIONAL</span>
+../src/utils/StateProvider.ts:35: * StateProvider — Singleton service for authoritative game state access.
+../src/utils/StateProvider.ts:52:     * Engine-computed state (e.g. "is player in combat", local UI toggles) that
+../src/utils/StateProvider.ts:78:     * RS3 cache (e.g. combat phase flags, local minigame UI toggles).
+../src/utils/StateProvider.ts:191:     * resolveFromBridge — Fetches a single varbit definition from the NXT cache
+../src/utils/StateProvider.ts:338:// Convenience singleton export
+../src/utils/TrainingCollector.js:56:    globeStateLimb; // Avoid circular deep import, functionally typed
+../src/utils/TrainingCollector.js:85:        this.globeStateLimb = limb;
+../src/utils/TrainingCollector.js:164:        if (this.globeStateLimb && this.shouldBroadcast('routing_event')) {
+../src/utils/TrainingCollector.js:167:            this.globeStateLimb.pushNodeState('routing_event', {
+../src/utils/TrainingCollector.js:218:        if (this.globeStateLimb && this.shouldBroadcast('thinking_event')) {
+../src/utils/TrainingCollector.js:223:            this.globeStateLimb.pushNodeState('thinking_event', {
+../src/utils/TrainingCollector.js:246:        if (this.globeStateLimb && this.shouldBroadcast('fprag_event')) {
+../src/utils/TrainingCollector.js:250:            this.globeStateLimb.pushNodeState('fprag_event', {
+../src/utils/TrainingCollector.js:273:        if (this.globeStateLimb && this.shouldBroadcast('error_fix_event')) {
+../src/utils/TrainingCollector.js:274:            this.globeStateLimb.pushNodeState('error_fix_event', full).catch((err) => {
+../src/utils/TrainingCollector.ts:161:    private globeStateLimb?: any; // Avoid circular deep import, functionally typed
+../src/utils/TrainingCollector.ts:316:        this.globeStateLimb = limb;
+../src/utils/TrainingCollector.ts:327:     * Single Write Authority: Attach VectorDB for persistent memory formation.
+../src/utils/TrainingCollector.ts:408:        if (this.globeStateLimb && this.shouldBroadcast('routing_event')) {
+../src/utils/TrainingCollector.ts:411:            this.globeStateLimb.pushNodeState('routing_event', {
+../src/utils/TrainingCollector.ts:472:        if (this.globeStateLimb && this.shouldBroadcast('thinking_event')) {
+../src/utils/TrainingCollector.ts:477:            this.globeStateLimb.pushNodeState('thinking_event', {
+../src/utils/TrainingCollector.ts:504:        if (this.globeStateLimb && this.shouldBroadcast('fprag_event')) {
+../src/utils/TrainingCollector.ts:508:            this.globeStateLimb.pushNodeState('fprag_event', {
+../src/utils/TrainingCollector.ts:535:        if (this.globeStateLimb && this.shouldBroadcast('error_fix_event')) {
+../src/utils/TrainingCollector.ts:536:            this.globeStateLimb.pushNodeState('error_fix_event', full).catch((err: any) => {
+../src/utils/VectorDB.js:80:                projectId TEXT NOT NULL DEFAULT 'global',
+../src/utils/VectorDB.js:81:                domainNamespace TEXT NOT NULL DEFAULT 'global',
+../src/utils/VectorDB.js:106:            this.db.exec('ALTER TABLE lessons ADD COLUMN domainNamespace TEXT NOT NULL DEFAULT "global"');
+../src/utils/VectorDB.js:132:            this.db.prepare(query).run(lesson.id, lesson.text, embeddingBlob, lesson.sessionId || null, lesson.projectId, lesson.domainNamespace || 'global', lesson.errorType || null, lesson.createdAt, lesson.createdAt, // initial lastAccessed
+../src/utils/VectorDB.js:171:                if (domainNamespace && row.domainNamespace && row.domainNamespace !== 'global') {
+../src/utils/VectorDB.js:184:                    projectId: String(row.projectId || 'global'),
+../src/utils/VectorDB.js:185:                    domainNamespace: String(row.domainNamespace || 'global'),
+../src/utils/VectorDB.js:221:                projectId: String(r.projectId || 'global'),
+../src/utils/VectorDB.js:222:                domainNamespace: String(r.domainNamespace || 'global'),
+../src/utils/VectorDB.js:263:                projectId: String(row.projectId || 'global'),
+../src/utils/VectorDB.js:264:                domainNamespace: String(row.domainNamespace || 'global'),
+../src/utils/VectorDB.js:315:    async autoIndexFile(filePath, projectId = 'global') {
+../src/utils/VectorDB.js:346:                domainNamespace: 'global',
+../src/utils/VectorDB.js:391:                projectId: 'global',
+../src/utils/VectorDB.js:419:                projectId: 'global',
+../src/utils/VectorDB.js:447:                projectId: 'global',
+../src/utils/VectorDB.js:464:        const results = this.searchSimilar(embedRes.value, 10, 'global', 'anatomy');
+../src/utils/VectorDB.js:481:        const results = this.searchSimilar(embedRes.value, 15, 'global', 'anatomy');
+../src/utils/VectorDB.ts:136:                projectId TEXT NOT NULL DEFAULT 'global',
+../src/utils/VectorDB.ts:137:                domainNamespace TEXT NOT NULL DEFAULT 'global',
+../src/utils/VectorDB.ts:173:            this.db.exec('ALTER TABLE lessons ADD COLUMN domainNamespace TEXT NOT NULL DEFAULT "global"');
+../src/utils/VectorDB.ts:208:                lesson.domainNamespace || 'global',
+../src/utils/VectorDB.ts:265:                if (domainNamespace && row.domainNamespace && row.domainNamespace !== 'global') {
+../src/utils/VectorDB.ts:278:                    projectId: String(row.projectId || 'global'),
+../src/utils/VectorDB.ts:279:                    domainNamespace: String(row.domainNamespace || 'global'),
+../src/utils/VectorDB.ts:316:                projectId: String(r.projectId || 'global'),
+../src/utils/VectorDB.ts:317:                domainNamespace: String(r.domainNamespace || 'global'),
+../src/utils/VectorDB.ts:362:                projectId: String(row.projectId || 'global'),
+../src/utils/VectorDB.ts:363:                domainNamespace: String(row.domainNamespace || 'global'),
+../src/utils/VectorDB.ts:412:    public async autoIndexFile(filePath: string, projectId: string = 'global'): Promise<Result<void>> {
+../src/utils/VectorDB.ts:449:                domainNamespace: 'global',
+../src/utils/VectorDB.ts:498:                projectId: 'global',
+../src/utils/VectorDB.ts:530:                projectId: 'global',
+../src/utils/VectorDB.ts:562:                projectId: 'global',
+../src/utils/VectorDB.ts:581:        const results = this.searchSimilar(embedRes.value, 10, 'global', 'anatomy');
+../src/utils/VectorDB.ts:599:        const results = this.searchSimilar(embedRes.value, 15, 'global', 'anatomy');
+../src/utils/WikiEquipmentEnricher.ts:401:     * Extract a single template's parameters from wikitext.
+../src/vision/RSMVController.ts:39:            throw new Error('Singleton violation: use RSMVController.getInstance()');
+../src/vision/ShaderInjector.ts:80:        const matches = clean.match(/```(?:typescript|glsl|javascript|css)?([\s\S]*?)```/);
+../src/vision/TransientObserver.ts:118:        // 1. Live Vision Loop — reuse singleton eye, throttle captures
+../src/vision/TransientObserver.ts:126:                // Reuse singleton eye (never allocate a new one per tick)
+../src/vision/TransientObserver.ts:170:        const files = ['model.png', 'model.glb', 'pedagogy_profile.json', 'wiki_context.json'];

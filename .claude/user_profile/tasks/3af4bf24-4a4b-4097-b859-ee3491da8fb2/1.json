@@ -1,0 +1,8 @@
+{
+  "id": "1",
+  "subject": "Comprehensive Codebase Audit and CLAUDE.md Update",
+  "description": "Audit the entire D:\\POG2 codebase folder by folder, tracing dependencies from src\\cli.ts and src\\engines\\OrchestrateEngine.ts, and updating CLAUDE.md with the present state, including call flows and upstream/downstream dependencies.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

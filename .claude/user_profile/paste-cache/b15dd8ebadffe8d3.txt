@@ -1,0 +1,63 @@
+The corpus generator is working at small scale. Key issues to address:
+
+**1. Redirect loop — FIXED**
+Your `getWikitextForName()` now has `visited` Set protection. The 6-loop on "King Black Dragon" was a case-sensitivity issue (`king black dragon → King Black Dragon → King black dragon` etc.). The fix prevents infinite loops.
+
+**2. 16 entries is a test run**
+The generator is processing a hardcoded list. Your cache dumps show:
+- `items.json`: starts with Dwarf remains (ID 0), Toolkit (ID 1), Cannonball (ID 2)...
+- `npcs.json`: starts with Hans (ID 0), Man (ID 1), Man (ID 2), Man (ID 3), Woman (ID 4)...
+
+These are the **full catalogs** — items.json has ~59,984 entries, npcs.json has ~32,512 entries.
+
+**3. Scaling the generator**
+
+The script needs to read these JSON dumps and iterate all entries:
+
+```typescript
+// In generate_pedagogy_corpus.ts
+import * as fs from 'fs';
+
+const ITEMS_DUMP = 'D:/D-sovereign-/cache_pedagogy/json_dumps/items.json';
+const NPCS_DUMP = 'D:/D-sovereign-/cache_pedagogy/json_dumps/npcs.json';
+
+async function generateFullCorpus() {
+    const items = JSON.parse(fs.readFileSync(ITEMS_DUMP, 'utf8'));
+    const npcs = JSON.parse(fs.readFileSync(NPCS_DUMP, 'utf8'));
+    
+    const corpus = [];
+    
+    // Process items (batch for memory)
+    for (let i = 0; i < items.length; i += 100) {
+        const batch = items.slice(i, i + 100);
+        for (const item of batch) {
+            const enriched = await enrichItem(item.name);
+            corpus.push(enriched);
+        }
+        // Write incremental to avoid memory bloat
+        appendToCorpus(corpus.splice(0, corpus.length));
+    }
+    
+    // Process NPCs
+    for (let i = 0; i < npcs.length; i += 100) {
+        const batch = npcs.slice(i, i + 100);
+        for (const npc of batch) {
+            const enriched = await enrichMonster(npc.name);
+            corpus.push(enriched);
+        }
+        appendToCorpus(corpus.splice(0, corpus.length));
+    }
+}
+
+function appendToCorpus(entries: any[]) {
+    const lines = entries.map(e => JSON.stringify(e)).join('\n');
+    fs.appendFileSync('D:/sovereign/memory/pedagogy/corpus/verified_entities.jsonl', lines + '\n');
+}
+```
+
+**4. The "String to replace not found" error**
+Your update failed because the file content doesn't match the expected string. The file likely has different formatting or the string was already modified.
+
+**Immediate action:** Read the current file content and provide the exact text you want to replace, or append new code at the end.
+
+What's the current content of `generate_pedagogy_corpus.ts`? I can help patch it for full-scale generation.

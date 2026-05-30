@@ -1,0 +1,236 @@
+/**
+ * generate_pedagogy_corpus.ts
+ *
+ * Sovereignty Grounding Pipeline: Corpus Generation.
+ *
+ * This script scales the production of a high-fidelity dataset of [VERIFIED] entities
+ * by iterating through the full RS3 cache dumps. It implements a two-track enrichment
+ * strategy to preserve structural IDs while optimizing for API rate limits.
+ *
+ * Target: D:\sovereign\memory\pedagogy\corpus\verified_entities.jsonl
+ */
+
+import { WikiEquipmentEnricher } from '../utils/WikiEquipmentEnricher.js';
+import { resolveSovereignPath } from '../utils/SovereignPathResolver.js';
+import { writeFileSync, mkdirSync, existsSync, readFileSync, appendFileSync } from 'fs';
+import { join } from 'path';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('CorpusGenerator');
+
+// ═══════════════════════════════════════════════════════
+// Configuration
+// ═══════════════════════════════════════════════════════
+
+const CATALOG_PATHS = {
+    items: 'D:/D-sovereign-/cache_pedagogy/json_dumps/items.json',
+    npcs: 'D:/D-sovereign-/cache_pedagogy/json_dumps/npcs.json',
+    quests: 'D:/D-sovereign-/memory/pedagogy/logic/quest_manifest.json'
+};
+
+const BATCH_SIZE = 50;
+const PROGRESS_FILE_PATH = resolveSovereignPath('memory/pedagogy/corpus/.progress');
+
+interface ProgressState {
+    items: { lastIndex: number; total: number };
+    npcs: { lastIndex: number; total: number };
+    quests: { lastIndex: number; total: number };
+}
+
+// ──────────────────────────────────────────────────────
+
+function loadProgress(): ProgressState {
+    if (existsSync(PROGRESS_FILE_PATH)) {
+        try {
+            return JSON.parse(readFileSync(PROGRESS_FILE_PATH, 'utf8'));
+        } catch {
+            logger.warn('Progress file corrupted, restarting from zero.');
+        }
+    }
+    return {
+        items: { lastIndex: 0, total: 0 },
+        npcs: { lastIndex: 0, total: 0 },
+        quests: { lastIndex: 0, total: 0 }
+    };
+}
+
+function saveProgress(state: ProgressState): void {
+    writeFileSync(PROGRESS_FILE_PATH, JSON.stringify(state, null, 2), 'utf8');
+}
+
+function formatVerifiedOutput(name: string, id: number, data: any): string {
+    const tag = data?.tag || '[WIKI_ONLY]';
+    let excerpt = 'No descriptive data available.';
+
+    if (data?.itemMeta?.examine) {
+        excerpt = data.itemMeta.examine;
+    } else if (data?.monsterMeta?.combatLevel) {
+        excerpt = `Combat Level ${data.monsterMeta.combatLevel}`;
+    } else if (data?.extract) {
+        excerpt = data.extract.substring(0, 100) + '...';
+    }
+
+    return `[${tag}] Entity ${id}: ${name}. ${excerpt}`;
+}
+
+async function generate() {
+    logger.info('Starting High-Fidelity Pedagogy Corpus Generation...');
+
+    const enricher = WikiEquipmentEnricher.getInstance();
+    const corpusPath = resolveSovereignPath('memory/pedagogy/corpus/verified_entities.jsonl');
+    const corpusDir = join(corpusPath, '..');
+
+    if (!existsSync(corpusDir)) {
+        mkdirSync(corpusDir, { recursive: true });
+    }
+
+    let progress = loadProgress();
+
+    // Note: Only clear file if we are starting from index 0 across all categories
+    if (progress.items.lastIndex === 0 && progress.npcs.lastIndex === 0 && progress.quests.lastIndex === 0) {
+        writeFileSync(corpusPath, '', 'utf8');
+        logger.info('Fresh run: clearing previous corpus.');
+    }
+
+    const appendToCorpus = (entries: any[]) => {
+        if (entries.length === 0) return;
+        const lines = entries.map(entry => JSON.stringify(entry)).join('\n');
+        appendFileSync(corpusPath, lines + '\n', 'utf8');
+    };
+
+    // ── 1. Item Corpus Generation (Two-Track) ─────────────────────────
+    try {
+        logger.info('Processing Item Catalog...');
+        const rawItems = JSON.parse(readFileSync(CATALOG_PATHS.items, 'utf8'));
+        progress.items.total = rawItems.length;
+
+        const itemsData = rawItems.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            isPlaceholder: /^ITEMS?\s*\d+$/i.test(item.name) || !item.name,
+        }));
+
+        for (let i = progress.items.lastIndex; i < itemsData.length; i += BATCH_SIZE) {
+            const batch = itemsData.slice(i, i + BATCH_SIZE);
+            const results = [];
+
+            for (const item of batch) {
+                if (item.isPlaceholder) {
+                    results.push({
+                        instruction: `Describe cache entity ${item.id}`,
+                        input: JSON.stringify({ id: item.id, source: 'cache_only' }),
+                        output: `[CACHE_ONLY] Item ${item.id}. No wiki name available. Structural data only.`,
+                        tags: ['[CACHE_ONLY]'],
+                        verified: false,
+                        cacheId: item.id
+                    });
+                } else {
+                    const data = await enricher.enrichEntity(item.name);
+                    results.push({
+                        instruction: `Generate verified entity definition for ${item.name}`,
+                        input: JSON.stringify({ id: item.id, wiki: data }),
+                        output: formatVerifiedOutput(item.name, item.id, data),
+                        tags: [data?.tag || '[WIKI_ONLY]'],
+                        verified: data?.tag === '[VERIFIED]',
+                        cacheId: item.id
+                    });
+                }
+            }
+            appendToCorpus(results);
+            progress.items.lastIndex = i + batch.length;
+            saveProgress(progress);
+            logger.info({ processed: progress.items.lastIndex, total: progress.items.total }, 'Item batch complete');
+        }
+    } catch (err) {
+        logger.error({ err }, 'Item corpus generation failed');
+    }
+
+    // ── 2. Monster/NPC Corpus Generation (Two-Track) ──────────────────
+    try {
+        logger.info('Processing NPC Catalog...');
+        const rawNpcs = JSON.parse(readFileSync(CATALOG_PATHS.npcs, 'utf8'));
+        progress.npcs.total = rawNpcs.length;
+
+        const npcsData = rawNpcs.map((npc: any) => ({
+            id: npc.id,
+            name: npc.name,
+            isPlaceholder: /^NPCS?\s*\d+$/i.test(npc.name) || !npc.name,
+        }));
+
+        for (let i = progress.npcs.lastIndex; i < npcsData.length; i += BATCH_SIZE) {
+            const batch = npcsData.slice(i, i + BATCH_SIZE);
+            const results = [];
+
+            for (const npc of batch) {
+                if (npc.isPlaceholder) {
+                    results.push({
+                        instruction: `Describe cache entity ${npc.id}`,
+                        input: JSON.stringify({ id: npc.id, source: 'cache_only' }),
+                        output: `[CACHE_ONLY] NPC ${npc.id}. No wiki name available. Structural data only.`,
+                        tags: ['[CACHE_ONLY]'],
+                        verified: false,
+                        cacheId: npc.id
+                    });
+                } else {
+                    const data = await enricher.enrichEntity(npc.name);
+                    results.push({
+                        instruction: `Generate verified entity definition for ${npc.name}`,
+                        input: JSON.stringify({ id: npc.id, wiki: data }),
+                        output: formatVerifiedOutput(npc.name, npc.id, data),
+                        tags: [data?.tag || '[WIKI_ONLY]'],
+                        verified: data?.tag === '[VERIFIED]',
+                        cacheId: npc.id
+                    });
+                }
+            }
+            appendToCorpus(results);
+            progress.npcs.lastIndex = i + batch.length;
+            saveProgress(progress);
+            logger.info({ processed: progress.npcs.lastIndex, total: progress.npcs.total }, 'NPC batch complete');
+        }
+    } catch (err) {
+        logger.error({ err }, 'NPC corpus generation failed');
+    }
+
+    // ── 3. Quest Corpus Generation ──────────────────────────────────
+    try {
+        logger.info('Processing Quest Manifest...');
+        const questsData = JSON.parse(readFileSync(CATALOG_PATHS.quests, 'utf8'));
+        progress.quests.total = questsData.length;
+
+        const results = [];
+        for (let i = progress.quests.lastIndex; i < questsData.length; i++) {
+            const quest = questsData[i];
+            const data = await enricher.enrichGeneric(quest.title);
+            if (data) {
+                results.push({
+                    instruction: `Generate verified entity definition for quest: ${quest.title}`,
+                    input: JSON.stringify({ quest, wiki: data }),
+                    output: `[WIKI_ONLY] Quest: ${quest.title}. ${data.extract ? data.extract.substring(0, 100) + '...' : 'No description available.'}`,
+                    tags: ['[WIKI_ONLY]'],
+                    verified: false
+                });
+            }
+
+            // Save every 10 quests to prevent loss
+            if (i % 10 === 0) {
+                appendToCorpus(results);
+                results.length = 0;
+                progress.quests.lastIndex = i + 1;
+                saveProgress(progress);
+            }
+        }
+        appendToCorpus(results);
+        progress.quests.lastIndex = questsData.length;
+        saveProgress(progress);
+    } catch (err) {
+        logger.error({ err }, 'Quest corpus generation failed');
+    }
+
+    logger.info({ path: corpusPath }, 'Full-scale Pedagogy Corpus generated successfully.');
+}
+
+generate().catch(err => {
+    logger.error({ err }, 'Corpus generation failed');
+    process.exit(1);
+});

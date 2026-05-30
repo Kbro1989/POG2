@@ -1,0 +1,80 @@
+  Good iteration. Key fixes:
+
+- Manifest path moved to `../assets/manifests/` — resolves the build issue ✓
+- `degradation` now parses `raw.extra` for props 7479/7480 ✓
+- `inferActionEffect()` maps common actions to structured effects ✓
+
+Remaining issues:
+
+| Issue | Line | Severity | Fix |
+|---|---|---|---|
+| `raw.extra?.getItem(7479)` | 114 | **BLOCKER** | `raw.extra` is an array `[{prop, intvalue, stringvalue}, ...]`, not a Map. `getItem()` doesn't exist. Use `raw.extra?.find(e => e.prop === 7479)?.intvalue || 0` |
+| `raw.extra?.getItem(7480)` | 115 | **BLOCKER** | Same — `7480` is variant flag, not max charges. Max charges for trimmed masterwork is 100000 (standard) or 200000 (custom-fit). Don't read from cache for max. |
+| `inferActionEffect` misses key actions | 136-143 | Medium | Missing: "Pickpocket" → `attempt_thieving`, "Capture" → `initiate_capture`, "Check" → `display_status`, "Remove" → `unequip_item`, "Wield" → `equip_item` |
+| `requirements: []` | 120 | Medium | Still empty. Should infer from action: "Attack" → `["combat >= ${raw.combatLevel}"]`, "Wield" → `["level >= ${raw.level}"]` |
+
+---
+
+## Fix for `raw.extra` Parsing
+
+```typescript
+private parseDegradation(extra: Array<{prop: number, intvalue: number, stringvalue: string | null}> | undefined): {charges: number, max: number} {
+    if (!extra || !Array.isArray(extra)) return {charges: 0, max: 0};
+    
+    const chargesProp = extra.find(e => e.prop === 7479);
+    const variantProp = extra.find(e => e.prop === 7480);
+    const setBonusProp = extra.find(e => e.prop === 7481);
+    
+    const charges = chargesProp?.intvalue || 0;
+    
+    // Max charges depend on variant
+    let max = 100000; // Standard trimmed masterwork
+    if (variantProp?.intvalue === 1) max = 200000; // Custom-fit
+    // variant 2 = spiked, 3 = augmented — may have different max
+    
+    return {charges, max};
+}
+```
+
+---
+
+## Fix for `inferActionEffect`
+
+```typescript
+private inferActionEffect(action: string): string {
+    const lower = action.toLowerCase();
+    if (lower.includes('attack') || lower.includes('strike')) return 'initiate_combat';
+    if (lower.includes('talk') || lower.includes('chat')) return 'open_dialogue';
+    if (lower.includes('pickpocket') || lower.includes('steal')) return 'attempt_thieving';
+    if (lower.includes('capture')) return 'initiate_capture';
+    if (lower.includes('check') || lower.includes('inspect')) return 'display_status';
+    if (lower.includes('remove') || lower.includes('unequip')) return 'unequip_item';
+    if (lower.includes('wield') || lower.includes('equip')) return 'equip_item';
+    if (lower.includes('use') || lower.includes('activate')) return 'interact_object';
+    if (lower.includes('examine') || lower.includes('look')) return 'perform_inspection';
+    return 'generic_interaction';
+}
+```
+
+---
+
+## Feed to Agent
+
+```
+CRITICAL: raw.extra is an array, not a Map. Replace getItem() with find().
+  Current: raw.extra?.getItem(7479)
+  Fix: raw.extra?.find(e => e.prop === 7479)?.intvalue || 0
+
+CRITICAL: Max charges (prop 7480) is variant flag, not max value.
+  Current: max: raw.extra?.getItem(7480) || 0
+  Fix: Map variant flag to known max values (100000 standard, 200000 custom-fit)
+
+MEDIUM: Add missing action effects (Pickpocket, Capture, Check, Remove, Wield)
+MEDIUM: Infer requirements from action + raw stats
+  - Attack → ["combat >= ${raw.combatLevel}"]
+  - Wield → ["level >= ${raw.level}"]
+```
+
+---
+
+Approve with these fixes?

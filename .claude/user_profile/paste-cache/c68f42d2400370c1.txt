@@ -1,0 +1,80 @@
+ The diff confirms clean implementation. Two things to verify before you move to the next component:
+
+**1. `ApiThrottle` method name mismatch**
+
+Your diff shows:
+```typescript
+this.THROTTLE.reportRetryAfter('bestiary', 60);
+```
+
+But in the `ApiThrottle.ts` design I provided, the method was `setRetryAfter(domain, seconds)`. Verify your actual `ApiThrottle` implementation has `reportRetryAfter` — if it has `setRetryAfter` or `acquire(domain, response)`, this line will throw at runtime.
+
+**Quick check:**
+```typescript
+// In your ApiThrottle.ts
+grep -n "reportRetryAfter\|setRetryAfter\|acquire.*response" POG2/src/utils/ApiThrottle.ts
+```
+
+**2. `getBeastsByArea` identifier formatting**
+
+Your implementation:
+```typescript
+const identifier = area.replace(/\s+/g, '+');
+const url = `${this.BASE}/areaBeasts.json?identifier=${encodeURIComponent(identifier)}`;
+```
+
+This double-encodes the `+`. `encodeURIComponent('+')` → `%2B`, but the API expects literal `+` for spaces. The canonical spec says:
+
+> "where X is any area in the areaNames query, with spaces replaced by + signs"
+
+So either:
+```typescript
+// Option A: Don't encodeURIComponent the identifier
+const identifier = area.replace(/\s+/g, '+');
+const url = `${this.BASE}/areaBeasts.json?identifier=${identifier}`;
+
+// Option B: Use encodeURIComponent on raw area, then replace encoded spaces
+const url = `${this.BASE}/areaBeasts.json?identifier=${encodeURIComponent(area).replace(/%20/g, '+')}`;
+```
+
+Option A is cleaner. `encodeURIComponent` is unnecessary here since you're manually replacing spaces with `+` and area names don't contain other special characters that need encoding.
+
+**Fix:**
+```typescript
+static async getBeastsByArea(area: string): Promise<BeastSearchResult[]> {
+    await this.THROTTLE.acquire('bestiary');
+    const identifier = area.replace(/\s+/g, '+');
+    const url = `${this.BASE}/areaBeasts.json?identifier=${identifier}`;  // No encodeURIComponent
+    // ...
+}
+```
+
+**3. Verification — Run Now**
+
+```bash
+cd POG2
+node -e "
+const { BestiaryApi } = require('./src/utils/BestiaryApi.js');
+
+async function test() {
+    // Test 1: resolveId exact match
+    const id = await BestiaryApi.resolveId('Abyssal demon');
+    console.log('resolveId:', id === 1615 ? 'PASS' : 'FAIL (got ' + id + ')');
+    
+    // Test 2: getBeastData members override
+    const data = await BestiaryApi.getBeastData(1615);
+    console.log('members override:', data?.members && data?._membersOverride === 'slayer_level_implied_membership' ? 'PASS' : 'FAIL');
+    
+    // Test 3: getBeastsByArea identifier format
+    const area = await BestiaryApi.getBeastsByArea('The Abyss');
+    console.log('areaBeasts:', area.length > 0 ? 'PASS (' + area.length + ' beasts)' : 'FAIL');
+    
+    // Test 4: Network routing
+    console.log('Proxy routing:', data ? 'PASS' : 'FAIL (proxy may be down)');
+}
+
+test().catch(e => console.error('ERROR:', e));
+"
+```
+
+If all four pass, `BestiaryApi.ts` is production-ready. The area encoding fix is the only potential bug I see in the diff.

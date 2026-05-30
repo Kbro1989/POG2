@@ -1,0 +1,25 @@
+I see the `CLAUDE.md` mapping output — comprehensive but with some repetition (the `src/clients/`, `src/core/`, `src/engines/`, `src/limbs/` sections loop multiple times). The critical addition at the end is the **Pedagogy Resolution Chain** trace, which confirms the wiring:
+
+```
+POG2WorldDO (REQUEST_PEDAGOGY) → SovereignEntityResolver → SovereignPedagogyBridge → ModelClient → ModelRolodex → AI Provider
+                                                                  ↓
+                                                        SovereignTrainingHUD.tsx (ENTITY_DATA packet via SovereignBridge)
+```
+
+This validates your synthesis pipeline architecture. Now I have enough context to generate the clean files.
+
+---
+
+**What I need from you to proceed:**
+
+You already uploaded the **original** `SovereignEntityResolver.ts` (the one with `AUTHENTIC_ANCHORS`, `getActionFrequency`, `CONTEXT_RULES` all defined inline). I have that. I also have the existing `SovereignPedagogyBridge.ts` with its `ModelClient` dependency.
+
+**One clarifying question before I generate:**
+
+The `CLAUDE.md` mentions `SovereignBridge.ts` as the WebSocket state sync that feeds `SovereignTrainingHUD.tsx`. Is the `REQUEST_PEDAGOGY` → `ENTITY_DATA` flow already implemented in `POG2WorldDO.ts` and `SovereignBridge.ts`, or is that the **missing nerve** you identified earlier? In other words:
+
+- **Option A**: `POG2WorldDO` and `SovereignBridge` already handle the WebSocket messages, but the handler that calls `SovereignEntityResolver.resolve()` is stubbed/missing. I should generate the resolver + bridge with the assumption that the WebSocket plumbing exists and just needs the business logic wired.
+
+- **Option B**: The entire WebSocket handler chain (REQUEST_PEDAGOGY → resolve → enrich → ENTITY_DATA) needs to be built from scratch. I should generate not just the resolver and bridge, but also the `POG2WorldDO` handler stub and the `SovereignBridge` packet formatter.
+
+Which is it? This determines whether I generate 2 files or 4+.

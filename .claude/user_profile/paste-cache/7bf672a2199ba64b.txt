@@ -1,0 +1,16 @@
+ The `BestiaryApi.ts` fix is correct — both `exact` and `fuzzy` matches now handle undefined labels with `(r.label || '')`. The corpus generation should proceed past the `Sovereign platebody` / `Omni-nexus platebody` entries now.
+
+**Root cause:** Those are custom/non-canonical item names that don't exist in the Bestiary (which is for monsters, not items). The `enrichMonster()` path was being called for items incorrectly, or the corpus generator is routing items through monster enrichment.
+
+**Verify the fix works:**
+
+```bash
+cd D:\POG2
+npx tsx src/scripts/generate_pedagogy_corpus.ts
+```
+
+If it still fails, check if the error moved past `Sovereign platebody` to another entity. The `|| ''` guard should prevent all `toLowerCase` on undefined.
+
+**Also verify:** `WikiEquipmentEnricher.enrichEntity()` is correctly routing items vs monsters. Items should go to `enrichItem()`, monsters to `enrichMonster()`. If `Sovereign platebody` (an item) is hitting `enrichMonster()`, that's a routing bug in `enrichEntity()`.
+
+Run the corpus generator again and report the result.

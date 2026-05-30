@@ -1,0 +1,127 @@
+This is the canonical RS3 API reference. Key findings for your `GeApi.ts` and `OfficialPlayerDataApi.ts` implementation:
+
+---
+
+## Grand Exchange Database API
+
+**Base:** `https://secure.runescape.com/m=itemdb_rs/api/`
+
+| Endpoint | URL | Returns | CORS |
+|---|---|---|---|
+| **info** | `/api/info.json` | Last GE update runedate | No |
+| **category** | `/api/catalogue/category.json?category=X` | Item counts per letter | No |
+| **items** | `/api/catalogue/items.json?category=X&alpha=Y&page=Z` | First 12 items in category | No |
+| **detail** | `/api/catalogue/detail.json?item=X` | Full item details + price trends | No |
+| **graph** | `/api/graph/X.json` | 180-day price history | No |
+
+**Critical detail:** The `detail.json` response has `members` as a **string** (`"true"`/`"false"`), not boolean. Your parser must handle this:
+
+```typescript
+// detail.json response snippet
+{
+  "item": {
+    "id": 21787,
+    "name": "Steadfast boots",
+    "members": "true",  // STRING, not boolean
+    "current": { "trend": "neutral", "price": "5.2m" },
+    "day30": { "trend": "negative", "change": "-2.0%" }
+  }
+}
+```
+
+**Price format:** Prices are strings with suffixes (`"5.2m"`, `"888"`, `"1,234"`). Your parser needs a `parsePrice` utility:
+
+```typescript
+function parsePrice(priceStr: string): number {
+  const cleaned = priceStr.replace(/,/g, '').toLowerCase();
+  if (cleaned.endsWith('k')) return parseFloat(cleaned) * 1000;
+  if (cleaned.endsWith('m')) return parseFloat(cleaned) * 1000000;
+  if (cleaned.endsWith('b')) return parseFloat(cleaned) * 1000000000;
+  return parseFloat(cleaned) || 0;
+}
+```
+
+**Graph API:** Returns `{ daily: { timestamp: price }, average: { timestamp: price } }`. Timestamps are milliseconds since epoch.
+
+---
+
+## Weird Gloop Alternative (CORS-Friendly)
+
+Since Jagex endpoints block CORS, use Weird Gloop for browser contexts:
+
+| Endpoint | URL | CORS |
+|---|---|---|
+| **Latest price** | `https://api.weirdgloop.org/exchange/history/rs/latest?id={id}` | Yes |
+| **180-day history** | `https://api.weirdgloop.org/exchange/history/rs/180?id={id}` | Yes |
+
+**Recommendation:** Implement both. Use Weird Gloop as primary (CORS-friendly, cached), Jagex direct as fallback (via your Cloudflare proxy).
+
+---
+
+## Runemetrics API (Player Data)
+
+**Base:** `https://apps.runescape.com/runemetrics/`
+
+| Endpoint | URL | Status |
+|---|---|---|
+| **Profile** | `/profile/profile?user=X&activities=20` | Live |
+| **Monthly XP** | `/xp-monthly?searchName=X&skillid=Y` | Live |
+| **Quests** | `/quests?user=X` | Live |
+
+**Critical:** Runemetrics website shut down 20 March 2026, but endpoints remain live with **no announced shutdown date** and **less strict throttling** than official APIs.
+
+**Profile response includes:**
+- `name`, `rank`, `totalskill`, `totalxp`, `combatlevel`
+- `skillvalues` array with `level`, `xp`, `rank` per skill
+- `activities` array (last 20 events)
+- `loggedIn` string (`"true"`/`"false"`)
+
+**Skill ID mapping** (0-28): Attack, Defence, Strength, Constitution, Ranged, Prayer, Magic, Cooking, Woodcutting, Fletching, Fishing, Firemaking, Crafting, Smithing, Mining, Herblore, Agility, Thieving, Slayer, Farming, Runecrafting, Hunter, Construction, Summoning, Dungeoneering, Divination, Invention, Archaeology, Necromancy.
+
+---
+
+## Hiscores API
+
+**Base:** `https://secure.runescape.com/m=hiscore/`
+
+| Endpoint | URL | Format |
+|---|---|---|
+| **Lite** | `/index_lite.ws?player=X` | CSV (rank,level,xp per line) |
+| **Ironman Lite** | `/m=hiscore_ironman/index_lite.ws?player=X` | CSV |
+| **Hardcore Ironman** | `/m=hiscore_hardcore_ironman/index_lite.ws?player=X` | CSV |
+
+**CSV format:** 29 skills + activities, each line `rank,level,xp`. Skills in fixed order (see doc).
+
+---
+
+## Implementation Priority for POG2
+
+| Component | API | Proxy Needed | Priority |
+|---|---|---|---|
+| `GeApi.ts` | Weird Gloop (primary) + Jagex (fallback) | Yes for Jagex | **High** |
+| `OfficialPlayerDataApi.ts` | Runemetrics + Hiscores | Yes for Hiscores | **Medium** |
+| `BestiaryApi.ts` | Jagex Bestiary | **Done** | Complete |
+
+**GeApi.ts design:**
+
+```typescript
+// Primary: Weird Gloop (CORS-friendly, no proxy)
+// Fallback: Jagex via Cloudflare proxy
+// Tertiary: Cache stale data
+
+export class GeApi {
+  private static readonly WG_BASE = 'https://api.weirdgloop.org/exchange/history/rs';
+  private static readonly JAGEX_PROXY = 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/ge';
+  
+  static async getLatestPrice(itemId: number): Promise<GePrice | null> {
+    // Try Weird Gloop first
+    const wg = await this.fetchWeirdGloop(itemId);
+    if (wg) return wg;
+    
+    // Fallback to Jagex proxy
+    return this.fetchJagexProxy(itemId);
+  }
+}
+```
+
+Ready to implement `GeApi.ts`?

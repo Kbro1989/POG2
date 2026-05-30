@@ -1,0 +1,8 @@
+{
+  "id": "11",
+  "subject": "Update Wiki Interfaces (Backward Compatible)",
+  "description": "Update WikiItemMeta, WikiMonsterMeta, and WikiPageData to add optional official fields (officialId, geData, authoritativeStats) without breaking existing fields.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

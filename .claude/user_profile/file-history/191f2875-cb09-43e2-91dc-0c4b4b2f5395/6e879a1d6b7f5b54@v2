@@ -1,0 +1,93 @@
+import * as THREE from 'three';
+import { SovereignGroundingStream, CollisionEntry } from './SovereignGroundingStream';
+
+/**
+ * SovereignGroundingOverlay
+ *
+ * Renders the "Sovereign Truth" of the world's collision matrix.
+ * Uses InstancedMesh to efficiently render the 66x66 predictive window.
+ */
+export class SovereignGroundingOverlay {
+    private scene: THREE.Scene;
+    private walkableMesh: THREE.InstancedMesh;
+    private blockedMesh: THREE.LuminousMesh; // Using a custom LuminousMesh for high-contrast blockages
+    private dummy = new THREE.Object3D();
+
+    // Color Constants
+    private readonly COLOR_WALKABLE = new THREE.Color(0x00ff00); // Pure Green
+    private readonly COLOR_BLOCKED = new THREE.Color(0xff0000);  // Pure Red
+
+    constructor(scene: THREE.Scene, groundingStream: SovereignGroundingStream) {
+        this.scene = scene;
+        this.initMeshes();
+
+        // The overlay should be a listener to the stream
+        this.groundingStream = groundingStream;
+    }
+
+    private initMeshes() {
+        // A 1x1 tile box
+        const geometry = new THREE.BoxGeometry(512, 1, 512);
+
+        // We allocate for a full 66x66 window (4356 tiles)
+        this.walkableMesh = new THREE.InstancedMesh(
+            geometry,
+            new THREE.MeshBasicMaterial({ color: this.COLOR_WALKABLE, wireframe: true, transparent: true, opacity: 0.3 }),
+            4356
+        );
+        this.walkableMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
+        this.blockedMesh = new THREE.InstancedMesh(
+            geometry,
+            new THREE.MeshBasicMaterial({ color: this.COLOR_BLOCKED, wireframe: true, transparent: true, opacity: 0.5 }),
+            4356
+        );
+        this.blockedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
+        this.scene.add(this.walkableMesh);
+        this.scene.add(this.blockedMesh);
+    }
+
+    /**
+     * updateFromSnapshot - Decodes packed coordinates from POG2WorldDO
+     * Format: x = coord >> 14, z = coord & 0x3fff
+     */
+    public updateFromSnapshot(snapshot: { blocked: number[], walkable: number[], plane: number }) {
+        let walkableIdx = 0;
+        let blockedIdx = 0;
+
+        // Render Blocked first (bottom layer)
+        snapshot.blocked.forEach(packed => {
+            const x = packed >> 14;
+            const z = packed & 0x3fff;
+            this.setInstance(this.blockedMesh, blockedIdx++, x, z);
+        });
+
+        // Render Walkable
+        snapshot.walkable.forEach(packed => {
+            const x = packed >> 14;
+            const z = packed & 0x3fff;
+            this.setInstance(this.walkableMesh, walkableIdx++, x, z);
+        });
+
+        this.walkableMesh.instanceMatrix.needsUpdate = true;
+        this.blockedMesh.instanceMatrix.needsUpdate = true;
+
+        // Update instance counts for the renderer
+        this.walkableMesh.count = walkableIdx;
+        this.blockedMesh.count = blockedIdx;
+    }
+
+    private setInstance(mesh: THREE.InstancedMesh, index: number, x: number, z: number) {
+        // Project tile coords to world space (Tile * 512)
+        // Add small Y offset to prevent Z-fighting with terrain
+        this.dummy.position.set(x * 512, 0.1, z * 512);
+        this.dummy.updateMatrix();
+        mesh.setMatrixAt(index, this.dummy.matrix);
+    }
+
+    public setVisible(visible: boolean) {
+        this.walkableMesh.visible = visible;
+        this.blockedMesh.visible = visible;
+    }
+}

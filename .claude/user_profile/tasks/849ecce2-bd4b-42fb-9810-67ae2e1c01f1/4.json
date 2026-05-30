@@ -1,0 +1,8 @@
+{
+  "id": "4",
+  "subject": "Cognitive Immunology Hardening (Sovereign)",
+  "description": "Implementation of CognitiveImmunologyEmergency to detect and block trust-manipulation patterns and execution escalation.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

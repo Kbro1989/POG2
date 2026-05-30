@@ -1,0 +1,76 @@
+ The corpus generator is working. Results:
+
+| Metric | Value |
+|---|---|
+| Total entries | 16 |
+| [VERIFIED] | 10 (62.5%) |
+| [WIKI_ONLY] | 5 (31.25%) |
+| Untagged | 1 (6.25%) |
+
+**Entities processed:**
+- General Graardor
+- Nex
+- Corporeal Beast
+- Abyssal demon
+- Chaos elemental
+- TzKal-Zuk
+- King Black Dragon
+- Vorago (ID 14416, level 10000 — BestiaryApi confirmed)
+
+**Observations:**
+
+1. **Redirect loop on "King Black Dragon"** — The logs show 6 consecutive "Following wiki redirect..." messages for `king black dragon → King Black Dragon`. This suggests a redirect cycle or case-sensitivity issue in `getWikitextForName()`. The method follows redirects, but if the canonical page has a redirect back to itself (or case variants), it loops.
+
+**Fix:**
+```typescript
+// In WikiEquipmentEnricher.ts
+private async getWikitextForName(name: string): Promise<string | null> {
+    const visited = new Set<string>();  // Track visited pages to prevent loops
+    let currentName = name;
+    
+    while (true) {
+        if (visited.has(currentName.toLowerCase())) {
+            logger.warn({ name, visited: [...visited] }, 'Redirect loop detected');
+            return null;
+        }
+        visited.add(currentName.toLowerCase());
+        
+        let wikitext = await this.fetchWikitext(currentName);
+        
+        if (wikitext && wikitext.trim().startsWith('#REDIRECT')) {
+            const redirectMatch = wikitext.match(/\[\[([^\]]+)\]\]/);
+            if (redirectMatch) {
+                const redirectTarget = redirectMatch[1].trim();
+                logger.info({ from: currentName, to: redirectTarget }, 'Following wiki redirect...');
+                currentName = redirectTarget;
+                continue;
+            }
+        }
+        
+        return wikitext;
+    }
+}
+```
+
+2. **Untagged entry** — One entry has no tag. Likely a player entity or an entity where neither BestiaryApi nor CacheForensicsLimb returned data. Check the corpus file to identify which entity.
+
+3. **16 entries is small** — For Unsloth LoRA training, you need thousands of examples. The current generator appears to be processing a hardcoded test list, not the full 229k cache + Bestiary catalog.
+
+**Next steps:**
+
+| Priority | Action |
+|---|---|
+| **High** | Fix redirect loop in `getWikitextForName()` |
+| **High** | Scale corpus generation to full catalog (3,000+ beasts, 50,000+ items) |
+| **Medium** | Investigate untagged entry |
+| **Medium** | Add `[CACHE_VERIFIED]` and `[HISCORES_VERIFIED]` tags for structural/player data |
+
+**For scaling:** The generator should iterate:
+1. All Bestiary beasts (via `bestiaryNames.json` A-Z)
+2. All tradeable items (via cache pedagogy item catalog)
+3. All quest entries (from your 3,516 quest export)
+4. All NPCs from cache (32,512 entities)
+
+This produces ~100k training examples — sufficient for LoRA fine-tuning.
+
+Fix the redirect loop first, then scale. The 16-entry test proves the pipeline works.

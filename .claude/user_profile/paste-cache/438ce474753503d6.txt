@@ -1,0 +1,22 @@
+That simplifies the attack surface significantly. If you're going pure RSMV viewer — no external tool spawning, no Blender bridge, no native renderer subprocesses — then your threat model narrows to:
+
+**What actually executes at runtime:**
+- RSMV's Three.js WebGL renderer (browser context, not `gl` native module)
+- Electron's Chromium shell + Node integration for your UI chrome
+- File I/O for cache reading, save loading, state persistence
+
+**What drops out of scope:**
+- Native module ABI fragility (`gl`, `lzma-native`, `sharp` if not used for texture processing)
+- Blender Python injection vectors
+- Cross-process IPC attack surface
+
+**The key question for your Electron version:** Is the RSMV viewer launched from `rsmv/` with its own Electron 26, or does root's Electron 41 wrap it?
+
+If you consolidate to a single Electron instance running the pure viewer, I'd recommend:
+- **Target: Electron 41.3.0** (already at root, 8 fewer high CVEs than 26)
+- **Drop `gl` from root** if RSMV uses Three.js's browser WebGL context exclusively
+- **Audit `rsmv/` dependencies** for anything still pulling the old Electron — remove or update
+
+This would collapse your dual-Electron problem into one controlled version. The `tar`, `uuid`, and `serialize-javascript` CVEs likely remain build-time only in this model.
+
+Want me to help identify which `rsmv/` deps are actually load-bearing for a pure viewer vs. legacy tooling?

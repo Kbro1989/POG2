@@ -1,0 +1,94 @@
+ The memory space is full — I'll work without adding new entries. Here's the refined approach:
+
+**Critical constraint: IDs must be preserved for cache matching**
+
+The `ITEMS 7` entries have valid cache IDs (7, 9, etc.) that GhostSplatting needs. Don't discard them — transform them:
+
+```typescript
+// Instead of filtering OUT garbage names, keep them with a flag
+const processedItems = itemsData.map((item: any) => ({
+  id: item.id,           // KEEP for cache matching
+  name: item.name,       // May be "ITEMS 7" or "Abyssal whip"
+  isPlaceholder: /^ITEMS?\s*\d+$/i.test(item.name) || item.name === '',
+  displayName: item.name.match(/^ITEMS?\s*\d+$/i) ? `Item ${item.id}` : item.name
+}));
+```
+
+**Two-track enrichment:**
+
+```typescript
+for (const item of batch) {
+  if (item.isPlaceholder) {
+    // Track A: Cache-only, no wiki API call
+    results.push({
+      instruction: `Describe cache entity ${item.id}`,
+      input: JSON.stringify({ id: item.id, source: 'cache_only' }),
+      output: `[CACHE_ONLY] Item ${item.id}. No wiki name available. Structural data only.`,
+      tags: ['[CACHE_ONLY]'],
+      verified: false,
+      cacheId: item.id  // For GhostSplat lookup
+    });
+  } else {
+    // Track B: Full hybrid enrichment (wiki + GE + cache)
+    const data = await enricher.enrichEntity(item.name);
+    results.push({
+      instruction: `Generate verified entity definition for ${item.name}`,
+      input: JSON.stringify({ id: item.id, wiki: data }),
+      output: formatVerifiedOutput(item, data),
+      tags: [data?.tag || '[WIKI_ONLY]'],
+      verified: data?.tag === '[VERIFIED]',
+      cacheId: item.id
+    });
+  }
+}
+```
+
+**Resume mechanism:**
+
+```typescript
+const PROGRESS_FILE = resolveSovereignPath('memory/pedagogy/corpus/.progress');
+
+interface ProgressState {
+  items: { lastIndex: number; total: number };
+  npcs: { lastIndex: number; total: number };
+  quests: { lastIndex: number; total: number };
+}
+
+function loadProgress(): ProgressState {
+  if (existsSync(PROGRESS_FILE)) {
+    return JSON.parse(readFileSync(PROGRESS_FILE, 'utf8'));
+  }
+  return { items: { lastIndex: 0, total: 0 }, npcs: { lastIndex: 0, total: 0 }, quests: { lastIndex: 0, total: 0 } };
+}
+
+function saveProgress(state: ProgressState): void {
+  writeFileSync(PROGRESS_FILE, JSON.stringify(state, null, 2), 'utf8');
+}
+
+// In the batch loop
+for (let i = progress.items.lastIndex; i < itemsData.length; i += BATCH_SIZE) {
+  // ... process batch ...
+  progress.items.lastIndex = i + batch.length;
+  saveProgress(progress);
+}
+```
+
+**Memory management:**
+
+```typescript
+// Aggressive cleanup after each batch
+results.length = 0;  // Clear array without reallocating
+if (global.gc) global.gc();  // Force GC if available
+```
+
+**Updated corpus path structure:**
+
+```
+D:/sovereign/memory/pedagogy/corpus/
+  ├── verified_entities.jsonl      # Main corpus (streaming append)
+  ├── .progress                      # Resume state
+  ├── items_cache_only.jsonl         # Placeholder items (no wiki calls)
+  └── npcs_cache_only.jsonl          # Placeholder NPCs
+```
+
+This keeps IDs for rendering, skips wasteful wiki API calls on placeholders, and allows resume. Proceed with the update?

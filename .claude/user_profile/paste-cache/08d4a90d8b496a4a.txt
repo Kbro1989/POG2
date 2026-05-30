@@ -1,0 +1,132 @@
+I see the worker landscape. Two workers, neither has the Bestiary proxy route:
+
+| Worker | Domain | Bindings | Has `/api/bestiary`? |
+|---|---|---|---|
+| `pog2-todo-list` | Not exposed | KV (`TO_DO_LIST`) | No |
+| `multiplayer-globe-pog2` | `multiplayer-globe-pog2.kristain33rs.workers.dev` | Durable Object (`Globe`) | No |
+
+Your `BestiaryApi.ts` points to `pog2.kristain33rs.workers.dev` — but that subdomain doesn't exist in your dashboard. The actual domain is `multiplayer-globe-pog2.kristain33rs.workers.dev`.
+
+---
+
+## Fix: Two Options
+
+### Option A: Add Route to Existing Worker (`multiplayer-globe-pog2`)
+
+Update `src/server/index.ts` in the `multiplayer-globe-pog2` repo:
+
+```typescript
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    
+    // === NEW: Bestiary proxy routes ===
+    if (url.pathname.startsWith('/api/bestiary/')) {
+      const path = url.pathname.replace('/api/bestiary/', '');
+      const search = url.search;
+      
+      // Use secure.runescape.com directly (avoids 302 redirect)
+      const jagexUrl = `https://secure.runescape.com/m=itemdb_rs/bestiary/${path}${search}`;
+      
+      try {
+        const res = await fetch(jagexUrl, {
+          headers: { 
+            'User-Agent': 'POG2-Sovereign/1.0 (POG2 Pedagogy Engine; RS3 entity enrichment; admin@pog2.internal; +https://github.com/Kbro1989/POG2)',
+            'Accept': 'application/json'
+          },
+          redirect: 'follow'
+        });
+        
+        return new Response(res.body, {
+          status: res.status,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Cache-Control': 'max-age=3600'
+          }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 502,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+    
+    // === EXISTING: PartyKit routes ===
+    // ... your existing Globe DO routing ...
+    
+    // Health check
+    if (url.pathname === '/health') {
+      return new Response('OK', { status: 200 });
+    }
+    
+    return new Response('Not Found', { status: 404 });
+  }
+};
+```
+
+Then update `BestiaryApi.ts`:
+
+```typescript
+private static readonly BASE = 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/bestiary';
+```
+
+### Option B: Create Dedicated Worker
+
+Create a new worker `pog2-api-proxy` with just the Bestiary (and future GE) routes:
+
+```bash
+cd POG2
+npx wrangler init pog2-api-proxy --from-dash
+# Add the route code above
+npx wrangler deploy
+```
+
+Then update `BestiaryApi.ts`:
+
+```typescript
+private static readonly BASE = 'https://pog2-api-proxy.kristain33rs.workers.dev/api/bestiary';
+```
+
+---
+
+## Recommendation: Option A
+
+The `multiplayer-globe-pog2` worker already has:
+- Durable Object for stateful connections
+- Health endpoint
+- Domain configured
+
+Adding `/api/bestiary/*` is a 20-line addition. No new worker, no new domain, no new bindings.
+
+**Critical:** The `pog2-todo-list` worker is a separate app (to-do list with KV). Don't mix concerns — keep it isolated.
+
+---
+
+## Verification After Deploy
+
+```bash
+# 1. Test proxy directly
+curl "https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/bestiary/beastSearch.json?term=Abyssal+demon"
+
+# 2. Test health still works
+curl "https://multiplayer-globe-pog2.kristain33rs.workers.dev/health"
+
+# 3. Run BestiaryApi verification
+npx tsx verify_bestiary.ts
+```
+
+If Step 1 returns JSON array with Abyssal demon results, the proxy is live. If it returns 404, the deploy didn't pick up the route change.
+
+**Deploy command for `multiplayer-globe-pog2`:**
+```bash
+cd path/to/multiplayer-globe-pog2
+npm run deploy
+# or
+npx wrangler deploy
+```
+
+Which option do you want to pursue — add to existing worker or create dedicated proxy?

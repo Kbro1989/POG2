@@ -1,0 +1,8 @@
+{
+  "id": "4",
+  "subject": "Implement API Backbone Injection",
+  "description": "Create the environment injection sequence in GhostLimb to set ANTHROPIC_BASE_URL and ANTHROPIC_AUTH_TOKEN, ensuring a seamless transition to the local Ollama backbone.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

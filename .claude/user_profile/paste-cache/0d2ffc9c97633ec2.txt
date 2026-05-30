@@ -1,0 +1,81 @@
+ This is a canonical Abyssal whip wiki page — exactly the type of rich semantic data your `WikiEquipmentEnricher` extracts. Let me highlight the critical fields for your pedagogy corpus:
+
+**Canonical fields extracted by `WikiEquipmentEnricher.parseItemMeta()`:**
+- `name`: "Abyssal whip"
+- `examine`: "A weapon from the Abyss."
+- `tradeable`: true
+- `members`: true
+- `value`: 120001 (not 120,001 — your `safeInt` strips commas)
+- `highAlch`: 72000
+- `lowAlch`: 48000
+- `weight`: 0.453
+
+**Equipment bonuses from `parseEquipmentBonuses()`:**
+- `tier`: 70
+- `slot`: "mainhand"
+- `class`: "melee"
+- `style`: "slash"
+- `damage`: 672
+- `accuracy`: 1486
+- `attackSpeed`: "fast" (4 ticks = 2.4s)
+
+**GE data from `GeApi.getItemDetails(4151)`:**
+- `current.price`: ~88,509 (matches wiki "Exchange" section)
+- `trend`: varies daily
+
+**Critical for pedagogy training:**
+
+The page contains **temporal signals** (update history) that your `fetchLatestUpdates()` should capture:
+- 26 January 2005: Added to game
+- 28 July 2009: Appearance updated
+- 19 January 2010: Added dyed versions
+- 4 February 2014: Drop rate changed from 1/512 to 1/1024
+- 17 January 2022: Special attack description updated
+
+These should tag the corpus entry as `[POST-UPDATE]` if the fetch date is after any of these patches.
+
+**Drop table data** (from `parseDropTables()`):
+- Abyssal demon (elite): 1/500 (1/485 with T3 luck)
+- Abyssal demon: 1/1024 (1/993 with T3 luck)
+
+This cross-references with `BestiaryApi.getBeastData(1615)` for `[VERIFIED]` confirmation.
+
+**Disassembly data** (not currently parsed by your enricher):
+- Category: Whips
+- XP: 21.0
+- Junk chance: 23%
+- Materials: Connector/Blade/Flexible parts, Sharp/Subtle components
+
+This is a **new enrichment category** — consider adding `parseDisassembly()` to `WikiEquipmentEnricher.ts` for Invention skill training data.
+
+**Products table** (crafting recipes):
+- Abyssal vine whip = Abyssal whip + Whip vine
+- Lava whip = Abyssal whip + Wyrm spike
+- Augmented abyssal whip = Abyssal whip + Augmentor
+
+This feeds into **crafting/crafting recipe** pedagogy — useful for the Creative Core limb.
+
+**For corpus generation, this page produces:**
+
+```json
+{
+  "instruction": "Generate verified entity definition for Abyssal whip",
+  "input": {
+    "id": 4151,
+    "cache": { "revision": 221, "major": 19 },
+    "wiki": { "examine": "A weapon from the Abyss.", "tier": 70, "slot": "mainhand" },
+    "bestiary": null,
+    "ge": { "price": 88509, "trend": "neutral", "source": "weirdgloop" }
+  },
+  "output": "[VERIFIED] Item 4151: Abyssal whip. Tier 70 mainhand melee weapon. 672 damage, 1486 accuracy, slash style, 4-tick speed. Requires 70 Attack. Obtained from Abyssal demons (1/1024 drop rate, 1/993 with T3 luck). GE price: 88,509 gp. [CACHE_WIKI_MATCH] [GE_VERIFIED]",
+  "tags": ["[VERIFIED]", "[GE_VERIFIED]", "[CACHE_WIKI_MATCH]"],
+  "verified": true,
+  "cacheId": 4151
+}
+```
+
+This is a **high-quality training example** — all three authoritative sources (cache, wiki, GE) agree. The model learns to synthesize cross-referenced data into a coherent entity definition.
+
+**Action:** Your corpus generator should prioritize items with rich wiki pages + GE data + cache entries. These produce the strongest `[VERIFIED]` examples. Items with only cache data (no wiki page, no GE price) get `[CACHE_ONLY]` tags.
+
+Proceed with the refined corpus generator?

@@ -1,0 +1,192 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## 🛠 Development Commands
+
+### Root Project
+- **Build**: `npm run build` (compiles TypeScript to `dist/`)
+- **Development**: `npm run dev` (starts the CLI via `tsx`)
+- **Infrastructure**: 
+  - `npm run switchboard` (starts the switchboard server)
+  - `npm run bridge` (starts the sovereign bridge server)
+- **Diagnostics**: `npm run audit` (runs the full project audit via PowerShell)
+
+### RSMV Viewer (`/rsmv`)
+- **Dependency Restore**: `npm install`
+- **Native Module Rebuild**: `npx electron-rebuild` (Critical after Electron version bumps to fix `better-sqlite3`)
+- **Execution**: Run via the root `pog2` CLI or launch the electron viewer from `dist/electronviewer.js`.
+
+## 🧠 Sovereign Architecture
+
+### 1. The Sovereign Trinity
+The system's stability and intelligence rely on three core substrates:
+- **GhostLimb (`src/limbs/metaphysical/GhostLimb.ts`)**: The final observer and normalizer. It provides the "Sovereign Fallback" when cloud APIs fail and ensures output integrity via local Ollama (e.g., `deepseek-r1:8b`).
+- **ModelRolodex (`src/api/ai/ModelRolodex.ts`)**: The living catalog of AI capabilities. It manages model reputation, latency, and task-type mapping (text, vision, embedding) across providers (Ollama, Cloudflare, Gemini, HF).
+- **Sovereign Services (`src/services/`)**: The high-level contracts for external infrastructure (Cloudflare, Google).
+
+### 2. The Hybrid Mirror Pattern (Path C)
+The system implements a decoupled "Authentic" vs "Visual" architecture:
+- **RSCServerDO**: The authentic server instance hosting the shared world state.
+- **RSMVServerDO**: A "Mirror/Observer" Durable Object. It connects to `RSCServerDO`, translates authentic state into RS3-format telemetry, and streams `WorldTelemetryFrame` + `IdentityKitState` to the Three.js viewer.
+- **D1/R la-Sovereign**: The world state is anchored in `cf://d1-openrsc-prod`, while high-fidelity assets (GLTFs) are stored in R2.
+
+### 3. Neurological Laws
+- **The 61-Minute Law**: Local Ollama compute starvation triggers a failover to HuggingFace. A strict **61-minute cooldown** must be observed before attempting to route back to local compute.
+- **Ternary Logic**: Decision paths are classified as **Yang** (Deep/Reasoning), **YinYang** (Mid/Executive), or **Yin** (Reflex/Fast).
+- **Ghost Normalization**: All high-stakes outputs should be validated/normalized through `GhostLimb` to prevent model drift.
+
+## 📂 Sovereign Anchors (D:\ Drive)
+The project operates as a "Living Organism" with persistent physical anchors:
+- **`D:\sovereign`**: The authoritative storage root.
+- **`D:\sovereign\learning\sovereign-learning.db`**: The vector database for pedagogical memory.
+- **`D:\rsmv_inspector`**: The operational hub for 3D substrate forensics.
+
+## 📡 Networking
+- **Viewer WebSocket**: Transitioning from `ws://localhost:8789` (Local Bridge) to `wss://rsmv.kristain33rs.workers.dev/ws` (RSMVServerDO).
+- **Sovereign Bridge**: Handshakes must adhere to the protocol in `src/viewer/SovereignBridge.ts`.
+
+## 🧬 Neurological Limb Architecture (`src/limbs/`)
+The system decomposes intelligence into specialized "Limbs", each managing a specific domain of the Sovereign's perception and action.
+- **`limbs/core/`**: Base classes (e.g., `NeuralLimb.ts`) that define the limb lifecycle and signal flow.
+- **`limbs/logical/`**: State-driven reasoning, including `WorldStateLimb.ts` and block decoders for movement, appearance, and variables.
+- **`limbs/spatial/`**: Physical world interaction, containing the `SovereignSplatLimb.ts` (visual influence) and `KinematicProbeLimb.ts` (movement forensics).
+- **`limbs/technical/`**: Substrate management, featuring `SovereignEditorLimb.ts` and `PedagogyLimb.ts` for technical distillation.
+- **`limbs/creative/`**: Synthesis and generation, including `NeuralForgeLimb.ts` and `VoiceLimb.ts`.
+- **`limbs/metaphysical/`**: High-order observers like `OmegaLimb.ts` and `QuantumLimb.ts`.
+- **`limbs/pedagogy/`**: Training-specific limbs such as `GhostTrainingLimb.ts` and `SovereignSyncLimb.ts`.
+
+## 🛠 Core Substrates (`src/core/` & `src/api/`)
+The bedrock of the la-Sovereign runtime.
+- **`src/core/`**: Fundamental registries and models.
+  - **`OmniTrainingBridge.ts`**: Bridges raw data to the training pipeline.
+  - **`SovereignPathResolver.ts`**: Determines the logical route for complex a-Sovereign queries.
+  - **`HexagramDefinitions.ts`**: Defines the semantic pinning system for knowledge.
+  - **`SovereignAvatar.ts`**: The internal representational state of the user's identity.
+- **`src/api/ai/`**: The AI dispatch hub.
+  - **`ModelRolodex.ts`**: Resolves capability-to-model mappings across providers.
+  - **`Dispatcher.ts`**: Handles the actual routing and failure/fallback logic for model calls.
+  - **`CapabilityRegistry.ts`**: Defines what a model *can* do (e.g., "vision", "reasoning").
+
+## ⚙️ Cognitive Engines (`src/engines/`)
+The "Prefrontal Cortex" of the system, where raw data is transformed into intelligence.
+- **`src/engines/core/`**: The Truth Reconciler. Implements `TruthReconciler.ts` and `CausalPatternExtractor.ts` to ensure a-Sovereign consistency.
+- **`src/engines/gameplay/`**: High-fidelity simulators.
+  - **Combat**: `CombatRotationEngine.ts` and `AggressionSimulator.ts`.
+  - **Loot**: `LootResolutionEngine.ts`.
+  - **Interpreters**: `UniversalInterpreter.ts`, `BarrowsInterpreter.ts`, and `PrifddinasInterpreter.ts`.
+- **`src/engines/spatial/`**: Observation engines for world-state analysis (`ObservationEngine.ts`, `ExplorationEngine.ts`).
+- **`src/engines/` (Top Level)**: Cognitive orchestration.
+  - **Metacognition**: `CognitiveEngine.ts`, `MetaCognitionEngine.ts`, and `MemeticEngine.ts`.
+  - **Pipeline**: `PipelineController.ts` and `OrchestrateEngine.ts`.
+  - **Ingestion**: `SovereignIngestionEngine.ts`.
+
+## 🧠 Cognitive Control Plane (`src/routing/`, `src/state/`, `src/events/`)
+The system' l-Sovereign internal governance and signal processing.
+- **`src/routing/`**: The "Cerebellum". Manages task scheduling (`TaskScheduler.ts`), ternary routing (`TernaryRouter.ts`), and semantic pinning (`HexagramManager.ts`).
+- **`src/state/`**: The "Neurological Map". Tracks internal la-Sovereign state and cognitive maps (`NeurologicalMap.ts`, `StateManager.ts`).
+- **`src/events/`**: The "Nervous System". An `EventBus.ts` that orchestrates signal flow to `TrainingProcessor.ts` and `MetricsAggregator.ts`.
+
+## 🌐 Server Infrastructure (`src/durable-objects/`)
+The authoritative hosting of the world state.
+- **`POG2WorldDO.ts`**: The primary Durable Object managing the la-Sovereign world state, handling WebSocket connections for the viewer and coordinating with the resolver/bridge.
+
+## 👁️ Perception & Manifestation (`src/vision/`, `src/ui/`, `src/monitor/`)
+The interface between the Sovereign and the external world.
+- **`src/vision/`**: The "Optical Substrate". Uses `PuppeteerEye.ts` and `StructuralAnalyzer.ts` for visual grounding.
+- **`src/ui/`**: The "Manifestation Engine". Converts internal states into visual outputs via `ManifestationEngine.ts` and `HUDRegistry.ts`.
+- **`src/monitor/` la-Sovereign**: The "Clinical Observer". Monitors the system's neurological health using `PulseMonitor.ts` and `ClinicalLogger.ts`.
+
+## 🔍 Present State Audit (2026-05-29)
+
+### Audit: `src/`
+The `src/` directory serves as the la-Sovereign primary engine for extraction, synthesis, and logic bridging.
+- **`src/rsmv/scripts/`**: A comprehensive suite of forensic tools used to extract truth from the game cache (e.g., `sovereign_npc_extract.ts`, `extract_all_spawns.ts`).
+- **`src/rsmv/clientscript/`**: Implements a custom AST and interpreter for game client scripts. The VM is a stack machine with three primitive types (int, long, string) and a limit of 1000 entries per stack.
+- **`src/rsmv/opcodes/`**: Stores the extracted "Sovereign Truth" in JSONC format, including `npcs.jsonc`, `items.jsonc`, and `models.jsonc`.
+- **`src/rsmv/map/`**: Handles the spatial grounding logic. `SovereignGrounding` manages `VarbitDefinition`, `MapZoneDefinition`, and coordinate unpacking. It hydrates pedagogy datasets from `D:\sovereign\memory\pedagogy` and `D:\sovereign\cache_pedagogy\json_dumps`.
+- **`src/rsmv/logic/` la-Sovereign**: Bridges internal game states to external services (e.g., `SovereignVarbitBridge.ts`).
+- **`src/UniversalSovereignSynthesizer.ts`**: Central la-Sovereign orchestrator for distilling extracted raw data into sovereign knowledge.
+
+### Audit: `public/`
+The `public/` directory acts as the "Authoritative Anchor" for ground truth.
+- **Manifests**: `authentic_spawn_manifest.json` and `grounding_manifest.json` define the immutable coordinates and identities of world entities.
+- **Vocabulary**: la-Sovereign `interaction_vocabulary.json` maps game actions to frequencies, used for dominant context inference in the Resolver.
+- **Entity Grounding**: Folder contains specific grounded truth files for key entities (e.g., `sovereign_entity_hans.json`).
+- **Assets**: Extensive icon library for skills and actions, used for visual HUD representation.
+
+### Audit: `rsmv_inspector/`
+The `rsmv_inspector/` directory is the 3D substrate forensic hub.
+- **`src/viewer/`**: Contains the Three.js implementation of the Sovereign Training Ground, including `SovereignTrainingHUD.tsx` (floating labels) and `SovereignSplatRenderer.ts` (influence heatmaps).
+- **`opcodes/`**: A mirrored/processed version of the opcodes used for rapid client-side lookup.
+- **`opcode_reader.ts`**: The core utility for decoding raw cache data into a usable JS format.
+- **`generated/`**: Optimized JS bundles of map tiles, NPCs, and objects to prevent synchronous I/O lag in the 3D viewer.
+
+### Audit: `.agents/` & `.agent/`
+This is the agentic substrate that governs AI behavior and orchestration.
+- **`rules/pogrules.md`**: Core behavioral constraints for AI agents operating within the POG2 ecosystem.
+- **`workflows/`**: Contains high-level process definitions such as `pog2-knowledgebase.md` and `pog2-sovereign.md` for systemic updates.
+- **`TOOL_MANIFEST.md`**: The definitive registry of available tools and their intended usage.
+
+### Audit: `web_hud/`
+A secondary, web-native HUD implementation.
+- **Framework**: Vite + TypeScript.
+- **Purpose**: Provides a lightweight, browser-based alternative to the Electron viewer, utilizing the same asset pipeline for consistency.
+
+### Audit: `SovereignIngestion/`
+Operational hub for the ingestion of raw game data into the la-Sovereign substrate.
+- **Logs**: Contains neurological audits and ingestion traces (`neurological_audit.log`).
+
+### Audit: `atlas/`
+Spatial intelligence layer.
+- **`spatial/`**: Stores coordinate-specific logic and extractions (e.g., `barrows_logic.json`), providing a higher-level abstraction of the world's layout.
+
+### Audit: `cache/ la-Sovereign`
+Raw substrate dumps.
+- Stores large-scale JSON exports of game build opcodes and scripts, serving as the la-Sovereign primary source for all extraction scripts.
+
+### Audit: `data/` la-Sovereign
+Sovereign Knowledge Base.
+- **`entity_instances/`**: Definitions for NPCs and grounded objects.
+- **`pvme/`**: Detailed data for high-fidelity boss encounters (e.g., Vorago, Nex).
+- **`substrate/` la-Sovereign**: Local logic mirrors for map squares.
+
+### Audit: `scripts/`
+The tool-belt for substrate engineering.
+- Contains critical utilities for kinematics decoding, collision discovery, and AI fine-tuning (e.g., `train_unsloth.py`, `grounding_decoder.ts`).
+
+### Audit: `rsmv/`
+A standalone project directory containing the core RSMV viewer and associated la-Sovereign extraction tools.
+- **`src/`**: Mirrors much of the core extraction and 3D substrate logic found in `D:\POG2\src\rsmv`.
+- **`opcodes/`**: Dedicated storage for cache-extracted constants.
+- **`dist/ la-Sovereign**: Compiled assets and Electron entry points.
+- **`test_extract/`**: Sandbox for testing new extraction techniques.
+
+### Audit: `mediator/`
+An isolated interaction layer.
+- **`app/components/Model3DViewer.tsx`**: A focused implementation of a 3D model viewer, potentially used for isolated testing of assets.
+
+### Audit: `scratch/` la-Sovereign
+The "Neurological Sandbox". A collection of forensic scripts, binary probes, and experimental la-Sovereign logic.
+- **Forensics**: Scripts for scanning binary strings and config offsets (e.g., `search_beta_binary.ts`, `check_binary_hex.ts`).
+- **Probes**: Targeted probes for specific game IDs and script calls (e.g., `check_15627_refs.ts`).
+- **Stability**: Patching and stabilization scripts used during the substrate's evolution (`fix_opcode_reader.ts`, la-Sovereign `stabilize_gameplay_limb.cjs`).
+
+### Audit: `audit_output/`
+Sovereign Audit Residue.
+- Stores the output of large-scale forensic audits, including interaction mapping and specific NPC definitions in binary format.
+
+### Audit: `.github/`
+The "Sovereign Automaton" (CI/CD).
+- **Workflows**: Implements AI-driven triage and execution via Gemini (`gemini-plan-execute.yml`).
+- **Commands**: Custom TOML-defined triggers (e.g., `gemini-invoke.toml`) that guide the AI agent's persona, security protocols, and tool usage within GitHub Actions.
+- **Infrastructure**: Integrated with the Gemini CLI and MCP servers for seamless repository interaction.
+
+### Audit: `logs/` & `memory/`
+The "Sovereign Record".
+- **`logs/`**: Contains causal traces and neurological audits.
+- **`memory/`**: Stores physical offsets and global state constants (e.g., `global_offset.json`).
+
+### Audit: `generated/`
+The "Sovereign Type-Manifest".
+- Stores TypeScript definition files (`.d.ts`) and schemas generated from cache extraction, providing type-safety for the entire a-Sovereign substrate.

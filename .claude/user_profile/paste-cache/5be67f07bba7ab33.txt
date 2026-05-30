@@ -1,0 +1,38 @@
+ Good approach. Let me help you map the native module surface in `rsmv/` systematically.
+
+**For Step 1 — native module usage search:**
+
+```bash
+# From rsmv/, find all require/import of known native modules
+cd rsmv
+grep -rn "require.*sharp\|require.*canvas\|require.*gl\|require.*lzma\|from ['\"]sharp\|from ['\"]canvas\|from ['\"]gl\|from ['\"]lzma" src/ dist/ --include="*.js" --include="*.ts" 2>/dev/null
+
+# Also check package.json dependencies for anything with prebuilds
+cat package.json | grep -E "sharp|canvas|gl|lzma|better-sqlite3|node-gyp"
+```
+
+**For Step 2 — main process initialization:**
+
+Check `rsmv/src/` (or wherever the source for `dist/main.js` lives) for:
+- `nodeIntegration: true` or `contextIsolation: false` — these are your high-risk flags
+- `webSecurity: false` — dangerous if present
+- `allowRunningInsecureContent` — check if set
+- `sandbox: false` — if explicitly disabled
+
+Also look for any `ipcMain.on()` handlers that accept file paths or execute shell commands.
+
+**For Step 3 — root `gl` usage:**
+
+```bash
+# From root
+grep -rn "require.*gl\|from ['\"]gl" src/ --include="*.ts" --include="*.js" 2>/dev/null
+grep -rn "require.*gl\|from ['\"]gl" tools/ --include="*.ts" --include="*.js" 2>/dev/null
+```
+
+If root's `gl` only appears in build scripts or test files, it's a legacy carry-over.
+
+**One thing to flag early:** You mentioned `lzma-native` in `rsmv/`. RuneScape cache files use LZMA compression for some index entries. If `rsmv/` is doing direct cache file I/O (not through your WASM parsers), `lzma-native` might be load-bearing. But if POG2's cache pipeline already decompresses before handing data to the viewer, `lzma-native` becomes redundant.
+
+Same question for `better-sqlite3` — is the viewer querying a local SQLite cache directly, or receiving already-structured data from the Sovereign pipeline?
+
+Run those greps and let me know what surfaces. Then we can decide what stays, what gets replaced with WASM/browser equivalents, and what gets cut entirely.

@@ -1,0 +1,81 @@
+/**
+ * SovereignCacheProvider.ts
+ *
+ * Provides canonical mapping between Wiki titles and official game IDs
+ * using ground-truth data from the sovereign cache.
+ *
+ * Cache Authority: D:\sovereign\cache_pedagogy\json_dumps\
+ */
+
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { createLogger } from './logger.js';
+
+const logger = createLogger('SovereignCacheProvider');
+
+export class SovereignCacheProvider {
+    private static instance: SovereignCacheProvider;
+
+    private itemMap: Map<string, number> = new Map();
+    private npcMap: Map<string, number> = new Map();
+
+    private readonly CACHE_PATH = 'D:\\sovereign\\cache_pedagogy\\json_dumps';
+
+    private constructor() {
+        this.loadCache();
+    }
+
+    public static getInstance(): SovereignCacheProvider {
+        if (!this.instance) {
+            this.instance = new SovereignCacheProvider();
+        }
+        return this.instance;
+    }
+
+    private loadCache(): void {
+        try {
+            logger.info('Loading sovereign cache entities...');
+
+            // Load Items
+            const itemsRaw = readFileSync(join(this.CACHE_PATH, 'items.json'), 'utf8');
+            const items = JSON.parse(itemsRaw) as { id: number, name: string }[];
+            for (const item of items) {
+                this.itemMap.set(this.normalize(item.name), item.id);
+            }
+            logger.info({ count: this.itemMap.size }, 'Items cache loaded.');
+
+            // Load NPCs
+            const npcsRaw = readFileSync(join(this.CACHE_PATH, 'npcs.json'), 'utf8');
+            const npcs = JSON.parse(npcsRaw) as { id: number, name: string }[];
+            for (const npc of npcs) {
+                this.npcMap.set(this.normalize(npc.name), npc.id);
+            }
+            logger.info({ count: this.npcMap.size }, 'NPCs cache loaded.');
+
+        } catch (err) {
+            logger.error({ err }, 'Failed to load sovereign cache. Falling back to wiki-only resolution.');
+        }
+    }
+
+    private normalize(name: string): string {
+        return name.toLowerCase().trim();
+    }
+
+    /**
+     * Maps a wiki title to a canonical Item ID.
+     */
+    public getItemIdByWikiTitle(title: string): number | null {
+        const normalized = this.normalize(title);
+        const id = this.itemMap.get(normalized);
+        return id !== undefined ? id : null;
+    }
+
+    /**
+     * Maps a wiki title to a canonical NPC ID.
+     */
+    public getNpcIdByWikiTitle(title: string): number | null {
+        const normalized = this.normalize(title);
+        const id = this.npcMap.get(normalized);
+        return id !== undefined ? id : null;
+    }
+}

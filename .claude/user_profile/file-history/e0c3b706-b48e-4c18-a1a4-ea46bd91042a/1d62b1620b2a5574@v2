@@ -1,0 +1,49 @@
+import { _electron as electron } from 'playwright';
+import path from 'path';
+import fs from 'fs';
+
+async function drive(command = 'screenshot') {
+  const rsmvRoot = process.cwd();
+  const electronPath = path.resolve(rsmvRoot, 'node_modules/electron/dist/electron.exe');
+  const entryPoint = path.resolve(rsmvRoot, 'dist/main.js');
+
+  console.log(`Launching Electron from: ${electronPath}`);
+  console.log(`Entry point: ${entryPoint}`);
+
+  const electronApp = await electron.launch({
+    executablePath: electronPath,
+    args: [entryPoint],
+  });
+
+  try {
+    const window = await electronApp.firstWindow();
+    if (!window) throw new Error('Failed to find Electron window');
+
+    await window.setViewportSize({ width: 1280, height: 720 });
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    if (command === 'screenshot') {
+      const screenPath = path.resolve(rsmvRoot, 'screenshot.png');
+      await window.screenshot({ path: screenPath });
+      console.log(`Screenshot saved to: ${screenPath}`);
+    } else if (command === 'eval') {
+      const code = process.argv[3];
+      if (!code) throw new Error('No code provided for eval');
+      const result = await window.evaluate(code);
+      console.log('Eval result:', result);
+    } else {
+      console.log(`Unknown command: ${command}`);
+    }
+  } catch (e) {
+    console.error('Driver error:', e);
+    process.exit(1);
+  } finally {
+    await electronApp.close();
+  }
+}
+
+const cmd = process.argv[2] || 'screenshot';
+drive(cmd).then(() => process.exit(0)).catch(err => {
+  console.error(err);
+  process.exit(1);
+});

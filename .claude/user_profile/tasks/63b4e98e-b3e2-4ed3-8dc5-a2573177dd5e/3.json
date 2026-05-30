@@ -1,0 +1,8 @@
+{
+  "id": "3",
+  "subject": "Implement MCP Bridge Verification",
+  "description": "Add a pre-flight check in GhostLimb to verify the ollama-mcp server is active and that global tools (ollama_list, ollama_ps) are registered before launching Claude Code.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

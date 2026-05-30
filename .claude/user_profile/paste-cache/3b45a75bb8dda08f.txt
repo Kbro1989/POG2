@@ -1,0 +1,108 @@
+The `resolveWikiTitle` implementation is clean — two-stage exact→fuzzy with proper ambiguity handling. The integration chain is now complete:
+
+```
+WikiEquipmentEnricher.enrichItem("Abyssal whip")
+  → CacheForensicsLimb.resolveWikiTitle("Abyssal whip")
+    → queryTaxonomy({layer: 'items', term: 'abyssal whip', queryType: 'exact'})
+      → {primaryId: 4151, confidence: 'exact'}
+  → GeApi.getLatestPrice(4151)
+    → Weird Gloop: {price: 1234567, source: 'weirdgloop'}
+  → Result: geValue = 1234567 (live), _geSource = 'weirdgloop'
+```
+
+**Yes, proceed with `OfficialPlayerDataApi.ts`.**
+
+The reasoning is sound — completing the authoritative data triad (items, monsters, players) before corpus generation ensures the pedagogy model trains on the fullest possible ground truth.
+
+**`OfficialPlayerDataApi.ts` scope:**
+
+| Endpoint | Source | Use Case | Priority |
+|---|---|---|---|
+| **Runemetrics Profile** | `apps.runescape.com/runemetrics/profile/profile?user=X` | Player stats, skills, quests | **High** |
+| **Hiscores Lite** | `secure.runescape.com/m=hiscore/index_lite.ws?player=X` | Rank/level/XP CSV | **High** |
+| **Monthly XP** | `apps.runescape.com/runemetrics/xp-monthly?searchName=X&skillid=Y` | XP gains over 12 months | Medium |
+| **Quest Data** | `apps.runescape.com/runemetrics/quests?user=X` | Quest completion status | Medium |
+
+**Critical notes from the canonical reference:**
+
+1. **Runemetrics endpoints have no announced shutdown date** — but the website shut down 20 March 2026. Treat as stable but monitor.
+
+2. **Hiscores Lite returns CSV**, not JSON:
+   ```
+   -1,99,200000000
+   12345,80,2000000
+   ...
+   ```
+   Each line = `rank,level,xp`. 29 skill lines + activity lines.
+
+3. **Skill ID mapping** (0-28):
+   ```
+   0=Attack, 1=Defence, 2=Strength, 3=Constitution, 4=Ranged,
+   5=Prayer, 6=Magic, 7=Cooking, 8=Woodcutting, 9=Fletching,
+   10=Fishing, 11=Firemaking, 12=Crafting, 13=Smithing, 14=Mining,
+   15=Herblore, 16=Agility, 17=Thieving, 18=Slayer, 19=Farming,
+   20=Runecrafting, 21=Hunter, 22=Construction, 23=Summoning,
+   24=Dungeoneering, 25=Divination, 26=Invention, 27=Archaeology, 28=Necromancy
+   ```
+
+4. **CORS:** `apps.runescape.com` and `secure.runescape.com` both block CORS. Route through your existing Cloudflare proxy (`multiplayer-globe-pog2.kristain33rs.workers.dev/api/player/*`).
+
+**Proxy route additions needed:**
+
+```typescript
+// In multiplayer-globe-pog2 worker
+if (url.pathname.startsWith('/api/player/')) {
+  const path = url.pathname.replace('/api/player/', '');
+  
+  if (path === 'runemetrics/profile') {
+    const user = url.searchParams.get('user');
+    const jagexUrl = `https://apps.runescape.com/runemetrics/profile/profile?user=${encodeURIComponent(user)}&activities=20`;
+    // ... proxy fetch
+  }
+  
+  if (path === 'hiscores/lite') {
+    const player = url.searchParams.get('player');
+    const jagexUrl = `https://secure.runescape.com/m=hiscore/index_lite.ws?player=${encodeURIComponent(player)}`;
+    // ... proxy fetch, return as JSON for consistency
+  }
+}
+```
+
+**Implementation sketch for `OfficialPlayerDataApi.ts`:**
+
+```typescript
+export interface PlayerProfile {
+  name: string;
+  rank: string;
+  totalSkill: number;
+  totalXp: number;
+  combatLevel: number;
+  skills: Array<{ id: number; name: string; level: number; xp: number; rank: number }>;
+  activities: Array<{ text: string; date: string }>;
+  questsStarted: number;
+  questsComplete: number;
+  questsNotStarted: number;
+}
+
+export interface HiscoreEntry {
+  rank: number;
+  level: number;
+  xp: number;
+}
+
+export class OfficialPlayerDataApi {
+  private static readonly PROXY_BASE = 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/player';
+  
+  static async getProfile(playerName: string): Promise<PlayerProfile | null> {
+    // Via proxy: /api/player/runemetrics/profile?user=X
+  }
+  
+  static async getHiscores(playerName: string): Promise<Map<string, HiscoreEntry> | null> {
+    // Via proxy: /api/player/hiscores/lite?player=X
+    // Parse CSV: rank,level,xp per line
+    // Map to skill names using ID mapping
+  }
+}
+```
+
+Proceed with implementation. The player data layer is the last piece of the authoritative triad before pedagogy corpus generation.

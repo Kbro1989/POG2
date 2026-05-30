@@ -1,0 +1,62 @@
+ The build error is in `WikiEquipmentEnricher.ts` at lines 91-95. The error pattern (`SovereignSubstrate: Semantic Enrichment Layer`) suggests a comment block was corrupted — likely a JSDoc or header comment where the `*` prefix was lost, causing TypeScript to interpret the text as code.
+
+**Common cause:** Copy-paste from a formatted document where the `*` characters in a block comment weren't preserved.
+
+**Fix:**
+
+Open `src/utils/WikiEquipmentEnricher.ts` around line 91 and check the comment block. It should look like:
+
+```typescript
+/**
+ * WikiEquipmentEnricher.ts
+ *
+ * Structured parser for RS Wiki Infobox templates and drop tables.
+ * Extracts equipment bonuses, item metadata, monster stats, and complete
+ * drop tables (including sub-table resolution) with respectful rate limiting.
+ *
+ * Sovereign Substrate: Semantic Enrichment Layer
+ * Cache Authority: D:\sovereign\atlas\wiki\cache\
+ */
+```
+
+**If it looks like this (missing `*`):**
+
+```typescript
+/**
+ * WikiEquipmentEnricher.ts
+ *
+ * Structured parser for RS Wiki Infobox templates and drop tables.
+ * Extracts equipment bonuses, item metadata, monster stats, and complete
+ * drop tables (including sub-table resolution) with respectful rate limiting.
+
+ Sovereign Substrate: Semantic Enrichment Layer
+ Cache Authority: D:\sovereign\atlas\wiki\cache\
+ */
+```
+
+The lines without `*` are parsed as code. Fix by adding `*`:
+
+```typescript
+/**
+ * WikiEquipmentEnricher.ts
+ *
+ * Structured parser for RS Wiki Infobox templates and drop tables.
+ * Extracts equipment bonuses, item metadata, monster stats, and complete
+ * drop tables (including sub-table resolution) with respectful rate limiting.
+ *
+ * Sovereign Substrate: Semantic Enrichment Layer
+ * Cache Authority: D:\sovereign\atlas\wiki\cache\
+ */
+```
+
+**Or if the entire block is malformed**, replace lines 85-100 with the correct header.
+
+**Quick fix command:**
+
+```bash
+cd D:\pog2
+# Check the exact lines
+sed -n '85,100p' src/utils/WikiEquipmentEnricher.ts
+```
+
+Show me those lines and I'll give you the exact replacement.

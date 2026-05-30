@@ -1,0 +1,8 @@
+{
+  "id": "1",
+  "subject": "Upgrade GhostLimb to Sovereign Architecture",
+  "description": "Upgrade GhostLimb.ts to implement the \"Pro Move\" architecture: Sovereign Master selection, MCP server verification, and Anthropic API backbone injection.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

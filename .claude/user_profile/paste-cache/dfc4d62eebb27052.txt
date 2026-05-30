@@ -1,0 +1,49 @@
+**[GeApi.ts](sandbox:///mnt/agents/output/GeApi.ts)** — Complete dual-source GE API client.
+
+Key features implemented:
+
+| Feature | Implementation |
+|---|---|
+| **Dual-source** | Weird Gloop primary → Jagex proxy fallback |
+| **Price parser** | `parsePrice("5.2m")` → `5200000`, handles k/m/b + commas |
+| **Members string→bool** | `"true"` → `true`, `"false"` → `false` |
+| **Trend normalization** | `positive`→`rising`, `negative`→`falling`, `neutral`→`neutral` |
+| **ApiThrottle** | Separate buckets for `weirdgloop` and `jagex_ge` |
+| **History** | 180-day daily + average from both sources |
+
+**Worker proxy routes needed** (add to `multiplayer-globe-pog2` worker):
+
+```typescript
+// In src/server/index.ts, alongside /api/bestiary/*
+if (url.pathname.startsWith('/api/ge/')) {
+  const path = url.pathname.replace('/api/ge/', '');
+  const search = url.search;
+  const jagexUrl = `https://secure.runescape.com/m=itemdb_rs/api/catalogue/${path}${search}`;
+  
+  // Also handle graph endpoint: /api/ge/graph.json?item=X → /api/graph/X.json
+  if (path === 'graph.json') {
+    const itemId = url.searchParams.get('item');
+    const graphUrl = `https://secure.runescape.com/m=itemdb_rs/api/graph/${itemId}.json`;
+    // ... proxy fetch
+  }
+  
+  // ... standard proxy logic
+}
+```
+
+**Critical:** The graph endpoint has a different URL pattern (`/api/graph/{id}.json` not `/api/catalogue/graph.json`). Your proxy needs special handling for this.
+
+**Verification commands:**
+
+```bash
+# 1. Proxy health
+curl "https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/ge/detail.json?item=21787"
+
+# 2. Price parser test
+node -e "const {GeApi} = require('./GeApi'); console.log(GeApi.parsePrice('5.2m'), GeApi.parsePrice('1.1k'), GeApi.parsePrice('1,234'), GeApi.parsePrice('1.5b'))"
+
+# 3. Full flow
+npx tsx -e "import {GeApi} from './GeApi'; GeApi.getLatestPrice(21787).then(p => console.log(p))"
+```
+
+Deploy the worker proxy routes, then run verification. The GeApi is ready to integrate into `WikiEquipmentEnricher.ts` for unified item enrichment.

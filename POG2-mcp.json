@@ -1,40 +1,46 @@
 {
-  \"mcpServers\": {
-    \"hello-claude-GitKraken\": {
-      \"command\": \"npx\",
-      \"args\": [
-        \"-y\",
-        \"@gitkraken/gk\",
-        \"mcp\"
+  "mcpServers": {
+    "hello-claude-GitKraken": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@gitkraken/gk",
+        "mcp"
       ],
-      \"helloCallback\": \"hello-gitkraken\"
+      "helloCallback": "hello-gitkraken"
     },
-    \"hello-claude-Cloudflare\": {
-      \"command\": \"npx\",
-      \"args\": [
-        \"-y\",
-        \"@cloudflare/mcp-server-cloudflare\",
-        \"run\"
+    "hello-claude-Cloudflare": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@cloudflare/mcp-server-cloudflare",
+        "run"
       ],
-      \"env\": {
-        \"CLOUDFLARE_ACCOUNT_ID\": \"6872653edcee9c787c1b783173793\",
-        \"CLOUDFLARE_API_TOKEN\": \"BKPBdQcDbG4PQLnNo7nsZdYTdzC2CzROmWJCIYks\"
+      "env": {
+        "CLOUDFLARE_ACCOUNT_ID": "6872653edcee9c787c1b783173793",
+        "CLOUDFLARE_API_TOKEN": "${CLOUDFLARE_API_TOKEN}"
       },
-      \"helloCallback\": \"hello-cloudflare\"
+      "helloCallback": "hello-cloudflare"
     },
     "hello-claude-github": {
       "command": "node",
-      "args": ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/github/.mcp.json"],
+      "args": [
+        "C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/github/.mcp.json"
+      ],
       "helloCallback": "hello-github"
     },
     "hello-claude-linear": {
       "command": "node",
-      "args": ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/linear/.mcp.json"],
+      "args": [
+        "C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/linear/.mcp.json"
+      ],
       "helloCallback": "hello-linear"
     },
     "hello-claude-terraform": {
       "command": "node",
-      "args": ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/terraform/.mcp.json"],
+      "args": [
+        "C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/terraform/.mcp.json"
+      ],
       "helloCallback": "hello-terraform"
     }
   }

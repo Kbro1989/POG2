@@ -1,0 +1,55 @@
+This is the RS Wiki coordinate calculator page — useful for spatial substrate validation. Key formulas extracted:
+
+---
+
+## Coordinate Conversion Formulas
+
+**Developer → Map coordinates:**
+```
+mapX = (x1 * 64) + x2
+mapY = (y1 * 64) + y2
+```
+Where:
+- `x1, y1` = mapsquare (e.g., 50, 50 for Lumbridge)
+- `x2, y2` = local tile within mapsquare (0-63)
+- Result: absolute world coordinates
+
+**Example:**
+- Dev: `50, 50, 32, 32` (Lumbridge center)
+- Map: `(50 * 64) + 32 = 3232`, `(50 * 64) + 32 = 3232`
+
+**Cache integer format:**
+```
+packed = (z << 28) | (x << 14) | y
+```
+Or reverse:
+```
+z = packed >> 28
+x = (packed >> 14) & 0x3FFF
+y = packed & 0x3FFF
+```
+
+---
+
+## POG2 Spatial Substrate Relevance
+
+Your existing spatial system already handles this:
+- `CacheForensicsLimb` reads cache coordinates
+- `SpatialVisionEngine` renders at `(50, 50)` mapsquare
+- `SovereignCollisionEngine` validates collision at tile level
+
+**This page validates your coordinate math is correct** — no changes needed.
+
+---
+
+## Anti-Bot Telemetry (Again)
+
+The page includes the same `weirdgloop.org/ai-scrapers-suck` endpoint. Your API-only approach (no HTML scraping) avoids this entirely.
+
+---
+
+## No Action Required
+
+This is reference material, not a task. Your spatial substrate is already correct. Proceed with pedagogy corpus generation or whatever's next on your list.
+
+What's the current priority?

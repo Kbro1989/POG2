@@ -1,0 +1,68 @@
+import { ModelClient } from '../clients/ModelClient.js';
+import { Result, ok, err } from '../core/models.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('SovereignPedagogyBridge');
+
+export interface PedagogyEnrichment {
+    learningNote: string;
+    confidence: number;
+    suggestedAction: string;
+}
+
+/**
+ * SovereignPedagogyBridge
+ *
+ * Interfaces with the pedagogy model to provide "AI-driven truth"
+ * for entities that are missing from the physical manifests.
+ */
+export class SovereignPedagogyBridge {
+    private static instance: SovereignPedagogyBridge;
+
+    private constructor() {}
+
+    public static getInstance(): SovereignPedagogyBridge {
+        if (!SovereignPedagogyBridge.instance) {
+            SovereignPedagogyBridge.instance = new SovereignPedagogyBridge();
+        }
+        return SovereignPedagogyBridge.instance;
+    }
+
+    /**
+     * enrich - Uses the ModelClient to generate a pedagogical insight for an entity.
+     */
+    public async enrich(entityId: number, basicData: any, modelClient: ModelClient): Promise<Result<PedagogyEnrichment>> {
+        const prompt = `
+Sovereign Pedagogy Audit
+Entity ID: ${entityId}
+Raw Data: ${JSON.stringify(basicData)}
+
+Provide a concise pedagogical insight into this entity.
+Why does this entity exist in the context of the world's "Truth"?
+What is its primary training value?
+
+Respond in JSON ONLY:
+{
+    "learningNote": "...",
+    "confidence": 0.0-1.0,
+    "suggestedAction": "..."
+}
+`;
+
+        const res = await modelClient.call({
+            model: 'deepseek-r1:8b', // Use the GhostLimb default
+            prompt,
+            temperature: 0.3,
+            format: 'json'
+        });
+
+        if (!res.ok) return res as any;
+
+        try {
+            const parsed = JSON.parse(res.value.response);
+            return ok(parsed as PedagogyEnrichment);
+        } catch (e) {
+            return err(new Error(`Failed to parse pedagogy enrichment: ${e instanceof Error ? e.message : String(e)}`));
+        }
+    }
+}

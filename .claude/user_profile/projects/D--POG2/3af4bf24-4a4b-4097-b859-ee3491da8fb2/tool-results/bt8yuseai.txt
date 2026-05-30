@@ -1,0 +1,2379 @@
+﻿import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { join, basename } from 'path';
+import { ModelClient } from '../clients/ModelClient.js';
+import { TernaryRouter } from '../routing/TernaryRouter.js';
+import { extractCodeBlock } from '../utils/CodeExtractor.js';
+import { SOVEREIGN_SYSTEM_PROMPT } from '../prompts/SystemPrompts.js';
+import type { SovereignConfig } from '../config/SovereignConfig.js';
+import type { Result, EngineOutput, ArchitectureManifest } from '../core/models.js';
+import { YaoState } from '../core/models.js';
+import { SmartEdit, type SmartEditParams as SEParams, type SmartEditResult } from '../utils/SmartEdit.js';
+import { ValidationSystem } from './ValidationSystem.js';
+import { ArchitecturalValidator } from './ArchitecturalValidator.js';
+import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('CodeEngine');
+
+/** Strategies that block all code modifications */
+const EDIT_BLOCKING_STRATEGIES = ['FREEZE', 'ROLLBACK', 'PAUSE', 'DEEP_DORMANCY'];
+
+export interface ReviewParams {
+    filePath: string;
+    modelOverride?: string;
+    strict: boolean;
+}
+
+export interface ExplainParams {
+    filePath: string;
+    lineRange?: [number, number];
+    modelOverride?: string;
+}
+
+export interface FixParams {
+    filePath: string;
+    modelOverride?: string;
+    dryRun: boolean;
+}
+
+export interface RefactorParams {
+    filePath: string;
+    modelOverride?: string;
+    additionalRules: string[];
+}
+
+export interface SemanticDiffParams {
+    fileA: string;
+    fileB: string;
+    modelOverride?: string;
+}
+
+export interface SmartEditEngineParams {
+    filePath: string;
+    oldString: string;
+    newString: string;
+    modelOverride?: string;
+}
+
+/**
+ * CodeEngine Ã¢â‚¬â€ Code analysis and transformation.
+ * Review, explain, fix, and refactor with ternary confidence scoring.
+ */
+export class CodeEngine {
+    private readonly client: ModelClient;
+    private readonly validation: ValidationSystem;
+    private readonly manifest: ArchitectureManifest = {
+        primaryGoal: 'NO MOCKS, TSC TIGHT, Sovereign Substrate Integrity',
+        dependencyRules: {
+            'core': ['utils', 'types', 'prompts', 'config'],
+            'engines': ['core', 'utils', 'types', 'prompts', 'config', 'clients', 'routing'],
+            'routing': ['core', 'utils', 'types', 'config'],
+            'clients': ['core', 'utils', 'types', 'config'],
+            'ui': ['core', 'types', 'routing'],
+            'cli': ['core', 'engines', 'routing', 'ui', 'config']
+        },
+        domainModel: {}
+    };
+
+    constructor(
+        private readonly config: SovereignConfig,
+        private readonly router: TernaryRouter
+    ) {
+        this.client = new ModelClient(config, router);
+        this.validation = new ValidationSystem([
+            new ArchitecturalValidator(this.manifest)
+        ]);
+    }
+
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // Phase 29: Young/Old Snapshot Infrastructure
+    // Young = stable before state. Old = proposed after state.
+    // All edits are gated through Hexagram strategy + deletion guard.
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+    private getSnapshotDir(): string {
+        const dir = join(getSovereignRoot(), 'snapshots', 'edits');
+        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+        return dir;
+    }
+
+    private snapshotYoung(filePath: string, content: string): string {
+        const ts = Date.now();
+        const name = basename(filePath).replace(/\.[^.]+$/, '');
+        const snapPath = join(this.getSnapshotDir(), `${ts}_${name}.young.ts`);
+        writeFileSync(snapPath, content, 'utf8');
+        logger.info({ snapPath, filePath }, 'ðŸ“¸ Young state snapshot saved (before edit).');
+        return snapPath;
+    }
+
+    private snapshotOld(filePath: string, content: string): string {
+        const ts = Date.now();
+        const name = basename(filePath).replace(/\.[^.]+$/, '');
+        const snapPath = join(this.getSnapshotDir(), `${ts}_${name}.old.ts`);
+        writeFileSync(snapPath, content, 'utf8');
+        logger.info({ snapPath, filePath }, 'ðŸ“¸ Old state snapshot saved (after edit).');
+        return snapPath;
+    }
+
+    /**
+     * Hexagram Edit Gate: consults the current hexagram strategy.
+     * Returns null if edit is permitted, or an error Result if blocked.
+     */
+    private checkHexagramGate(action: string, filePath: string): Result<EngineOutput> | null {
+        const hexagram = this.router.getHexagram();
+        const interpretation = hexagram.getInterpretation();
+        const strategy = interpretation.strategy.split(':')[0]?.trim() || '';
+
+        if (EDIT_BLOCKING_STRATEGIES.includes(strategy)) {
+            logger.warn({ strategy, action, filePath }, 'ðŸš« Hexagram gate BLOCKED edit. Strategy forbids modification.');
+            return {
+                ok: false,
+                error: new Error(`Hexagram Gate: ${strategy} strategy active (${interpretation.name}). Code modifications are suspended. Wait for state transition.`)
+            };
+        }
+        return null;
+    }
+
+    /**
+     * Phase 29: Safe write with Young/Old snapshots + function-deletion guard.
+     * If the modified code deletes any exported symbol, the Young snapshot is restored.
+     */
+    private safeWriteWithGuard(filePath: string, originalContent: string, modifiedContent: string): Result<void> {
+        // 1. Snapshot Young (before)
+        const youngPath = this.snapshotYoung(filePath, originalContent);
+
+        // 2. Function-Deletion Guard
+        const archValidator = new ArchitecturalValidator(this.manifest);
+        const preservation = archValidator.validatePreservation(originalContent, modifiedContent);
+        if (!preservation.ok) {
+            logger.error({ filePath, error: preservation.error?.reason }, 'ðŸ›¡ï¸ Function-Deletion Guard BLOCKED write. Restoring Young state.');
+            // Restore original â€” the Young snapshot is the safety net
+            writeFileSync(filePath, originalContent, 'utf8');
+            return { ok: false, error: new Error(preservation.error?.reason || 'Function deletion detected') };
+        }
+
+        // 3. Write the modified content
+        writeFileSync(filePath, modifiedContent, 'utf8');
+
+        // 4. Snapshot Old (after)
+        this.snapshotOld(filePath, modifiedContent);
+
+        logger.info({ filePath, youngPath }, 'âœ… Safe write complete. Young/Old snapshots preserved.');
+        return { ok: true, value: undefined };
+    }
+
+    async review(params: ReviewParams): Promise<Result<EngineOutput>> {
+        if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
+        const content = readFileSync(params.filePath, 'utf8');
+
+        // 1. Organic Routing
+        const route = await this.router.route('YinYang', 'review');
+        const model = params.modelOverride ?? route.model;
+
+        // 2. Cognitive Modulation (The Ghost in the Machine)
+        const hexagram = this.router.getHexagram();
+        const interpretation = hexagram.getInterpretation();
+        const yao = hexagram.getYaoState();
+
+        let adversarialDirectives = '';
+        if (yao === YaoState.OldYang) {
+            adversarialDirectives = '\nÃ°Å¸Å¡Â§ ADVERSARIAL ALERT: Substrate flux detected. Perform a HYPER-METICULOUS review. Suspect all implicit types.';
+        } else if (yao === YaoState.OldYin) {
+            adversarialDirectives = '\nÃ°Å¸Å’Å  ENTROPIC ALERT: System decay detected. Focus on dead-code elimination and minimalist pruning.';
+        }
+
+        const strictRules = params.strict
+            ? `\nSTRICT MODE ACTIVE Ã¢â‚¬â€ enforce ALL of the following:\n- No 'any' types\n- All functions have return types\n- No console.log in production\n- No empty catch blocks\n- No unused variables`
+            : '';
+
+        const cognitiveBias = `\nCOGNITIVE STRATEGY: ${interpretation.strategy}\nYAO_STATE: ${yao}${adversarialDirectives}`;
+
+        const prompt = `Perform a thorough adversarial code review of this file.
+${cognitiveBias}
+
+Scoring system (ternary):
+  Yang   (80-100): Production-ready Ã¢â‚¬â€ minor suggestions only
+  YinYang (50-79): Needs work Ã¢â‚¬â€ real issues present
+  Yin     (0-49):  Critical Ã¢â‚¬â€ blocking problems
+${strictRules}
+
+FILE: ${params.filePath}
+\`\`\`
+${content}
+\`\`\`
+
+Respond in this exact format:
+SCORE: [0-100]
+TIER: [Yang|YinYang|Yin]
+SUMMARY: [one-line verdict]
+
+ISSUES:
+1. [SEVERITY: Critical|High|Medium|Low] [Line X] Description
+2. ...
+
+RECOMMENDATIONS:
+- Specific actionable improvements`;
+
+        const result = await this.client.resilientCall({
+            model,
+            prompt,
+            systemPrompt: SOVEREIGN_SYSTEM_PROMPT,
+            temperature: 0.1,
+            category: 'coding'
+        });
+
+        if (!result.ok) {
+            this.router.recordFailure(model);
+            return result as Result<EngineOutput>;
+        }
+        this.router.recordSuccess(model);
+
+        logger.info({ file: params.filePath, model }, 'Code review complete');
+
+        return {
+            ok: true,
+            value: {
+                output: result.value.response,
+                data: { model, file: params.filePath, strict: params.strict, yaoState: route.yaoState }
+            }
+        };
+    }
+
+    async explain(params: ExplainParams): Promise<Result<EngineOutput>> {
+        if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
+        let content = readFileSync(params.filePath, 'utf8');
+
+        if (params.lineRange) {
+            const lines = content.split('\n');
+            const [start, end] = params.lineRange;
+            content = lines.slice(start - 1, end).join('\n');
+        }
+
+        const route = await this.router.route('Yin');
+        const model = params.modelOverride ?? route.model;
+
+        const sectionNote = params.lineRange
+            ? ` (lines ${params.lineRange[0]}Ã¢â‚¬â€œ${params.lineRange[1]})`
+            : '';
+
+        const prompt = `Provide a deep, structured explanation of this code${sectionNote}.
+
+Cover:
+1. What it does (high-level purpose)
+2. Why it works this way (architectural reasoning)
+3. Key data flows and side effects
+4. Non-obvious patterns or gotchas
+5. Dependencies and what breaks if they change
+
+CODE FROM ${params.filePath}:
+\`\`\`
+${content}
+\`\`\`
+
+Be precise and technical. Assume the reader is an expert developer.`;
+
+        const result = await this.client.resilientCall({
+            model,
+            prompt,
+            temperature: 0.3,
+            category: 'coding'
+        });
+
+        if (!result.ok) {
+            this.router.recordFailure(model);
+            return result as Result<EngineOutput>;
+        }
+        this.router.recordSuccess(model);
+
+        return {
+            ok: true,
+            value: {
+                output: result.value.response,
+                data: { model, file: params.filePath, yaoState: route.yaoState }
+            }
+        };
+    }
+
+    async fix(params: FixParams): Promise<Result<EngineOutput>> {
+        if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
+        const content = readFileSync(params.filePath, 'utf8');
+
+        // Phase 29: Hexagram Gate â€” block edits during FREEZE/ROLLBACK
+        const gate = this.checkHexagramGate('fix', params.filePath);
+        if (gate) return gate;
+
+        const route = await this.router.route('YinYang', 'fix');
+        const model = params.modelOverride ?? route.model;
+
+        const hexagram = this.router.getHexagram();
+        const interpretation = hexagram.getInterpretation();
+        const yao = hexagram.getYaoState();
+        const cognitiveBias = `\nCOGNITIVE STRATEGY: ${interpretation.strategy}\nYAO_STATE: ${yao}`;
+
+        const prompt = `Fix ALL TypeScript errors, lint violations, and code quality issues in this file.
+${cognitiveBias}
+
+Rules:
+1. Fix every error â€” no leaving partial fixes
+2. Maintain all existing functionality â€” DO NOT remove any functions, classes, or exports
+3. Do not introduce mocks or stubs
+4. Add missing return types where TypeScript requires them
+5. Remove all 'any' types where a real type can be inferred
+6. NEVER delete a function to fix an error â€” fix the function itself
+
+FILE: ${params.filePath}
+\`\`\`
+${content}
+\`\`\`
+
+Output the COMPLETE fixed file:`;
+
+        const result = await this.client.resilientCall({
+            model,
+            prompt,
+            systemPrompt: SOVEREIGN_SYSTEM_PROMPT,
+            temperature: 0.1,
+            category: 'coding'
+        });
+
+        if (!result.ok) {
+            this.router.recordFailure(model);
+            return result as Result<EngineOutput>;
+        }
+        this.router.recordSuccess(model);
+
+        const fixed = extractCodeBlock(result.value.response) ?? result.value.response;
+
+        if (!params.dryRun) {
+            try {
+                // Phase 29: Safe write with Young/Old snapshots + function-deletion guard
+                const writeResult = this.safeWriteWithGuard(params.filePath, content, fixed);
+                if (!writeResult.ok) {
+                    return { ok: false, error: writeResult.error! };
+                }
+
+                // ARCHITECTURAL VALIDATION (post-write)
+                const valid = await this.validation.validateAll(fixed, { fileName: params.filePath });
+                if (!valid.ok) {
+                    // Restore Young state on architectural violation
+                    writeFileSync(params.filePath, content, 'utf8');
+                    return { ok: false, error: new Error(`Fix interrupted by architectural violation: ${valid.error?.reason}. Young state restored.`) };
+                }
+            } catch (err) {
+                return { ok: false, error: err as Error };
+            }
+        }
+
+        return {
+            ok: true,
+            value: {
+                output: params.dryRun ? fixed : `Fixes applied to ${params.filePath}`,
+                data: { model, dryRun: params.dryRun, yaoState: route.yaoState }
+            }
+        };
+    }
+    async refactor(params: RefactorParams): Promise<Result<EngineOutput>> {
+        if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
+        const content = readFileSync(params.filePath, 'utf8');
+
+        // Phase 29: Hexagram Gate
+        const gate = this.checkHexagramGate('refactor', params.filePath);
+        if (gate) return gate;
+
+        const route = await this.router.route('Yang', 'refactor');
+        const model = params.modelOverride ?? route.model;
+
+        const extraRules = params.additionalRules.length > 0
+            ? `\nADDITIONAL RULES:\n${params.additionalRules.map(r => `- ${r}`).join('\n')}`
+            : '';
+
+        const hexagram = this.router.getHexagram();
+        const interpretation = hexagram.getInterpretation();
+        const yao = hexagram.getYaoState();
+        const cognitiveBias = `\nCOGNITIVE STRATEGY: ${interpretation.strategy}\nYAO_STATE: ${yao}`;
+
+        const prompt = `Refactor this file to meet sovereign architectural standards.
+${cognitiveBias}
+
+SOVEREIGN LAWS:
+1. NO MOCKS or faked data â€” only real implementations
+2. NO TODOs, stubs, or placeholder logic
+3. Use readonly for all immutable properties
+4. Replace 'any' with specific types or 'unknown'
+5. All functions must have explicit return types
+6. Prefer composition over inheritance
+7. Use Result<T> for all fallible operations
+8. NEVER remove/delete existing functions â€” refactor them in-place${extraRules}
+
+FILE: ${params.filePath}
+\`\`\`
+${content}
+\`\`\`
+
+Output the COMPLETE refactored file:`;
+
+        const result = await this.client.resilientCall({
+            model,
+            prompt,
+            systemPrompt: SOVEREIGN_SYSTEM_PROMPT,
+            temperature: 0.15,
+            category: 'coding'
+        });
+
+        if (!result.ok) {
+            this.router.recordFailure(model);
+            return result as Result<EngineOutput>;
+        }
+        this.router.recordSuccess(model);
+
+        const refactored = extractCodeBlock(result.value.response) ?? result.value.response;
+
+        try {
+            // Phase 29: Safe write with Young/Old snapshots + function-deletion guard
+            const writeResult = this.safeWriteWithGuard(params.filePath, content, refactored);
+            if (!writeResult.ok) {
+                return { ok: false, error: writeResult.error! };
+            }
+
+            // ARCHITECTURAL VALIDATION (post-write)
+            const valid = await this.validation.validateAll(refactored, { fileName: params.filePath });
+            if (!valid.ok) {
+                writeFileSync(params.filePath, content, 'utf8');
+                return { ok: false, error: new Error(`Refactor rejected: ${valid.error?.reason}. Young state restored.`) };
+            }
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
+
+        return {
+            ok: true,
+            value: {
+                output: `Refactored and written to ${params.filePath}`,
+                data: { model, file: params.filePath, yaoState: route.yaoState }
+            }
+        };
+    }
+
+    async semanticDiff(params: SemanticDiffParams): Promise<Result<EngineOutput>> {
+        if (!existsSync(params.fileA)) return { ok: false, error: new Error(`File not found: ${params.fileA}`) };
+        if (!existsSync(params.fileB)) return { ok: false, error: new Error(`File not found: ${params.fileB}`) };
+        const contentA = readFileSync(params.fileA, 'utf8');
+        const contentB = readFileSync(params.fileB, 'utf8');
+        const route = await this.router.route('Yin');
+        const model = params.modelOverride ?? route.model;
+
+        const prompt = `Provide a semantic diff between these two files. Explain changes in natural language.
+
+Cover:
+- What was added, removed, or modified
+- Why the changes were likely made (inferred intent)
+- Impact on behavior and interface contracts
+- Any breaking changes or compatibility notes
+- Overall assessment: improvement / regression / lateral change
+
+FILE A: ${params.fileA}
+\`\`\`
+${contentA}
+\`\`\`
+
+FILE B: ${params.fileB}
+\`\`\`
+${contentB}
+\`\`\`
+
+Provide a structured semantic analysis:`;
+
+        const result = await this.client.call({ model, prompt, temperature: 0.2, category: 'coding' });
+
+        if (!result.ok) {
+            this.router.recordFailure(model);
+            return result as Result<EngineOutput>;
+        }
+        this.router.recordSuccess(model);
+
+        return {
+            ok: true,
+            value: {
+                output: result.value.response,
+                data: { model, fileA: params.fileA, fileB: params.fileB }
+            }
+        };
+    }
+
+    async smartEdit(params: SmartEditEngineParams): Promise<Result<EngineOutput>> {
+        if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
+        const content = readFileSync(params.filePath, 'utf8');
+
+        // Phase 29: Hexagram Gate
+        const gate = this.checkHexagramGate('smartEdit', params.filePath);
+        if (gate) return gate;
+
+        const result: SmartEditResult = await SmartEdit.calculateReplacement(content, {
+            file_path: params.filePath,
+            old_string: params.oldString,
+            new_string: params.newString
+        });
+
+        if (result.occurrences === 0) {
+            return {
+                ok: false,
+                error: new Error(`Could not find a match for the specified 'oldString' in ${params.filePath}. Use 'edit_code' for a full rewrite if indentation is too complex.`)
+            };
+        }
+
+        const finalContent = SmartEdit.restoreTrailingNewline(content, result.newContent);
+
+        try {
+            // Phase 29: Safe write with Young/Old snapshots + function-deletion guard
+            const writeResult = this.safeWriteWithGuard(params.filePath, content, finalContent);
+            if (!writeResult.ok) {
+                return { ok: false, error: writeResult.error! };
+            }
+            logger.info({ file: params.filePath, strategy: result.strategy }, 'SmartEdit applied with Young/Old snapshots.');
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
+
+        return {
+            ok: true,
+            value: {
+                output: `Successfully applied SmartEdit (${result.strategy} strategy) to ${params.filePath}. Found ${result.occurrences} occurrence(s).`,
+                data: { strategy: result.strategy, occurrences: result.occurrences }
+            }
+        };
+    }
+    public healthCheck(): { online: boolean; details: string } {
+        const clientOk = !!this.client;
+        const routerOk = !!this.router;
+        return {
+            online: clientOk && routerOk,
+            details: `Analytic Substrate: Client(${clientOk}), Router(${routerOk})`
+        };
+    }
+}
+﻿import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
+import { resolve, extname, join } from 'path';
+import { ModelClient } from '../clients/ModelClient.js';
+import { TernaryRouter } from '../routing/TernaryRouter.js';
+import { extractCodeBlock } from '../utils/CodeExtractor.js';
+import { SOVEREIGN_SYSTEM_PROMPT } from '../prompts/SystemPrompts.js';
+import type { SovereignConfig } from '../config/SovereignConfig.js';
+import { type Result, type Ternary, type EngineOutput, type YaoState, type ArchitectureManifest, type RoutingComplexity } from '../core/models.js';
+import { ValidationSystem } from './ValidationSystem.js';
+import { ArchitecturalValidator } from './ArchitecturalValidator.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('GenerateEngine');
+
+export interface GenerateCodeParams {
+    task: string;
+    language: string;
+    targetFile?: string;
+    modelOverride?: string;
+    improve: boolean;
+    adversarial: boolean;
+    complexity: RoutingComplexity;
+}
+
+export interface GenerateDocsParams {
+    filePath: string;
+    modelOverride?: string;
+}
+
+export interface GenerateTestsParams {
+    filePath: string;
+    outputPath?: string;
+    modelOverride?: string;
+}
+
+/**
+ * GenerateEngine Ã¢â‚¬â€ Generative code creation with adversarial validation.
+ * Implements the "Generate Ã¢â€ â€™ Validate Ã¢â€ â€™ Improve" sovereign loop.
+ */
+export class GenerateEngine {
+    private readonly client: ModelClient;
+    private readonly validation: ValidationSystem;
+    private readonly manifest: ArchitectureManifest = {
+        primaryGoal: 'NO MOCKS, TSC TIGHT, Sovereign Substrate Integrity',
+        dependencyRules: {
+            'core': ['utils', 'types', 'prompts', 'config'],
+            'engines': ['core', 'utils', 'types', 'prompts', 'config', 'clients', 'routing'],
+            'routing': ['core', 'utils', 'types', 'config'],
+            'clients': ['core', 'utils', 'types', 'config'],
+            'ui': ['core', 'types', 'routing'],
+            'cli': ['core', 'engines', 'routing', 'ui', 'config']
+        },
+        domainModel: {}
+    };
+
+    constructor(
+        private readonly config: SovereignConfig,
+        private readonly router: TernaryRouter
+    ) {
+        this.client = new ModelClient(config, router);
+        this.validation = new ValidationSystem([
+            new ArchitecturalValidator(this.manifest)
+        ]);
+    }
+
+    async generateCode(params: GenerateCodeParams): Promise<Result<EngineOutput>> {
+        const startTime = Date.now();
+
+        // Existing file content injection if improving
+        let existingContent = '';
+        if (params.improve && params.targetFile && existsSync(params.targetFile)) {
+            existingContent = readFileSync(params.targetFile, 'utf8');
+        }
+
+        const route = await this.router.route(params.complexity);
+        const model = params.modelOverride ?? route.model;
+
+        logger.info({ model, complexity: params.complexity, improve: params.improve }, 'Generating code');
+
+        const prompt = params.improve && existingContent
+            ? this.buildImprovePrompt(params.task, existingContent, params.language)
+            : this.buildGeneratePrompt(params.task, params.language);
+
+        // First pass
+        const result = await this.client.call({
+            model,
+            prompt,
+            systemPrompt: SOVEREIGN_SYSTEM_PROMPT,
+            temperature: 0.2,
+            category: 'orchestration'
+        });
+
+        if (!result.ok) {
+            this.router.recordFailure(model);
+            return result as Result<EngineOutput>;
+        }
+        this.router.recordSuccess(model);
+
+        const generated = extractCodeBlock(result.value.response) ?? result.value.response;
+
+        // Adversarial validation loop (Yang complexity or explicit flag)
+        if (params.adversarial || params.complexity === 'Yang') {
+            return this.adversarialLoop(generated, params.task, model, params.targetFile);
+        }
+
+        // Write to file if target specified
+        if (params.targetFile) {
+            try {
+                writeFileSync(params.targetFile, generated, 'utf8');
+                logger.info({ path: params.targetFile }, 'Code written to disk');
+
+                // GROUND TRUTH VALIDATION
+                const valid = await this.validation.validateAll(generated, { fileName: params.targetFile });
+                if (!valid.ok) {
+                    logger.warn({ error: valid.error?.reason }, 'Architectural validation REJECTED generated code');
+                    return { ok: false, error: new Error(`Architectural Violation: ${valid.error?.reason}\nSuggestion: ${valid.error?.suggestion}`) };
+                }
+            } catch (err) {
+                return { ok: false, error: err as Error };
+            }
+        }
+
+        const latency = Date.now() - startTime;
+        return {
+            ok: true,
+            value: {
+                output: generated,
+                data: {
+                    model,
+                    latency,
+                    complexity: params.complexity,
+                    writtenTo: params.targetFile ?? null,
+                    yaoState: route.yaoState
+                }
+            }
+        };
+    }
+
+    async generateDocs(params: GenerateDocsParams): Promise<Result<EngineOutput>> {
+        if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
+        const content = readFileSync(params.filePath, 'utf8');
+        const route = await this.router.route('YinYang');
+        const model = params.modelOverride ?? route.model;
+
+        const prompt = `You are a sovereign documentation engine. Generate comprehensive JSDoc documentation for ALL exported functions, classes, and interfaces in this file.
+
+Rules:
+- Document every public API with @param, @returns, @throws where applicable
+- Include a clear one-line summary followed by a detailed description for complex items
+- Do NOT alter any implementation code Ã¢â‚¬â€ only add/improve doc comments
+- Output the COMPLETE file with documentation added
+
+FILE: ${params.filePath}
+\`\`\`
+${content}
+\`\`\`
+
+Output the fully-documented file:`;
+
+        const result = await this.client.call({
+            model,
+            prompt,
+            systemPrompt: SOVEREIGN_SYSTEM_PROMPT,
+            temperature: 0.1,
+            category: 'orchestration'
+        });
+
+        if (!result.ok) {
+            this.router.recordFailure(model);
+            return result as Result<EngineOutput>;
+        }
+        this.router.recordSuccess(model);
+
+        const documented = extractCodeBlock(result.value.response) ?? result.value.response;
+
+        try {
+            writeFileSync(params.filePath, documented, 'utf8');
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
+
+        return {
+            ok: true,
+            value: {
+                output: `Documentation generated and written to ${params.filePath}`,
+                data: { model, linesAdded: documented.split('\n').length - content.split('\n').length, yaoState: route.yaoState }
+            }
+        };
+    }
+
+    async generateTests(params: GenerateTestsParams): Promise<Result<EngineOutput>> {
+        if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
+        const content = readFileSync(params.filePath, 'utf8');
+        const ext = extname(params.filePath);
+        const testPath = params.outputPath ?? params.filePath.replace(ext, `.test${ext}`);
+
+        const route = await this.router.route('YinYang');
+        const model = params.modelOverride ?? route.model;
+
+        const prompt = `Generate comprehensive integration tests for this file.
+
+SOVEREIGN LAWS:
+1. NO MOCKS Ã¢â‚¬â€ all tests must use real implementations
+2. Tests must cover: happy paths, edge cases, and error conditions
+3. Use the framework implied by the project (vitest if tsconfig exists, jest otherwise)
+4. Import from the actual module path
+5. Tests must be runnable without modification
+
+SOURCE FILE: ${params.filePath}
+\`\`\`${ext.replace('.', '')}
+${content}
+\`\`\`
+
+Generate a complete, runnable test file:`;
+
+        const result = await this.client.call({
+            model,
+            prompt,
+            systemPrompt: SOVEREIGN_SYSTEM_PROMPT,
+            temperature: 0.15,
+            category: 'orchestration'
+        });
+
+        if (!result.ok) {
+            this.router.recordFailure(model);
+            return result as Result<EngineOutput>;
+        }
+        this.router.recordSuccess(model);
+
+        const testCode = extractCodeBlock(result.value.response) ?? result.value.response;
+
+        try {
+            writeFileSync(testPath, testCode, 'utf8');
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
+
+        return {
+            ok: true,
+            value: {
+                output: `Test file generated: ${testPath}`,
+                data: { model, testPath, sourceFile: params.filePath, yaoState: route.yaoState }
+            }
+        };
+    }
+
+    private async adversarialLoop(
+        code: string,
+        task: string,
+        model: string, // This is the Executive model (Writer)
+        targetFile?: string
+    ): Promise<Result<EngineOutput>> {
+        let current = code;
+        const maxIterations = 3;
+        let iteration = 0;
+
+        // The high-reasoning model puppets the coder
+        // First choice: Dynamic route for Orchestrator/Master tier
+        const masterRoute = await this.router.route('Orchestrator');
+        const masterModel = masterRoute.model || this.config.deepPathModel;
+
+        while (iteration < maxIterations) {
+            iteration++;
+            logger.debug({ iteration }, 'Adversarial validation pass');
+
+            // Critic pass (Puppeteer)
+            const criticResult = await this.client.call({
+                model: masterModel,
+                prompt: `Yo Executive, I'm auditing your latest logic substrate. Give it to me straightÃ¢â‚¬â€how's the integrity?
+
+TASK: ${task}
+
+YOUR CODE:
+\`\`\`
+${current}
+\`\`\`
+
+Pick it apart. Find every type violation, logic stain, or stubbed-out cowardice. 
+Don't be clinicalÃ¢â‚¬â€be sharp.
+
+Respond with:
+SCORE: [0-100]
+ESSENCE: [Casual summary of the code's soul]
+ISSUES:
+- [Your informal but brutal breakdown]
+
+If it's perfect (SCORE >= 90), just say SCORE: [n] and "It's clean, move out."`,
+                temperature: 0.7, // Increased for personality
+                category: 'orchestration'
+            });
+
+            if (!criticResult.ok) {
+                this.router.recordFailure(masterModel);
+                break;
+            }
+            this.router.recordSuccess(masterModel);
+
+            const score = this.extractAdversarialScore(criticResult.value.response);
+
+            // Binary absolute: 90+ is passing Ã¢â‚¬â€ below requires regeneration
+            if (score >= 90) {
+                logger.info({ score, iteration }, 'Adversarial validation PASSED');
+                break;
+            }
+
+            logger.warn({ score, iteration }, 'Adversarial validation REJECTED Ã¢â‚¬â€ regenerating');
+
+            const fixResult = await this.client.call({
+                model,
+                prompt: `Executive here. I hear you, Master. That feedback was... direct. I'm pivoting the substrate now.
+
+THE CRITIQUE:
+${criticResult.value.response}
+
+MY PREVIOUS ATTEMPT:
+\`\`\`
+${current}
+\`\`\`
+
+I'm purging the friction and aligning with your vision. 
+
+Output ONLY the refactored, complete code:`,
+                systemPrompt: SOVEREIGN_SYSTEM_PROMPT + '\nYour tone is professional but collegial, acknowledging the Master reasoning tier.',
+                temperature: 0.2,
+                category: 'orchestration'
+            });
+
+            if (!fixResult.ok) {
+                this.router.recordFailure(model);
+                break;
+            }
+            this.router.recordSuccess(model);
+
+            current = extractCodeBlock(fixResult.value.response) ?? fixResult.value.response;
+
+            // Phase 82: Record Error-Fix pair for training
+            const provider = model.startsWith('gemini:') ? 'gemini'
+                : model.startsWith('huggingface:') ? 'huggingface'
+                    : model.startsWith('@cf/') ? 'cloudflare' : 'ollama';
+
+            this.client.getTrainingCollector().recordErrorFix({
+                errorMessage: criticResult.value.response,
+                resolution: current,
+                model: model,
+                success: true
+            }).catch(() => { /* non-blocking */ });
+        }
+
+        if (targetFile) {
+            try {
+                writeFileSync(targetFile, current, 'utf8');
+            } catch (err) {
+                return { ok: false, error: err as Error };
+            }
+        }
+
+        return {
+            ok: true,
+            value: {
+                output: current,
+                data: { model, adversarialIterations: iteration, writtenTo: targetFile ?? null }
+            }
+        };
+    }
+
+    private getCloudflareContext(): string {
+        const templatePath = resolve(process.cwd(), 'resources', 'cloudflare-templates');
+        if (!existsSync(templatePath)) return '';
+
+        try {
+            const templates = readdirSync(templatePath).filter(f => !f.startsWith('.') && !f.includes('.'));
+            return `\nCLOUDFLARE PATTERN SUBSTRATE AVAILABLE:\nThe following specialized Cloudflare Worker templates are available in the local /resources/ directory. Use their patterns (D1, DO, KV, Auth) for worker-native implementations:\n- ${templates.join('\n- ')}\n`;
+        } catch {
+            return '';
+        }
+    }
+
+    private buildGeneratePrompt(task: string, language: string): string {
+        const cfContext = task.toLowerCase().includes('cloudflare') || task.toLowerCase().includes('worker')
+            ? this.getCloudflareContext()
+            : '';
+
+        return `Generate a complete, production-ready ${language} implementation for the following task.
+${cfContext}
+TASK: ${task}
+
+Requirements:
+- No TODOs, no stubs, no placeholders
+- Full error handling with proper types
+- Production-grade code only
+- Use ${language} best practices and strict typing
+
+Output ONLY the implementation code:`;
+    }
+
+    private buildImprovePrompt(task: string, existing: string, language: string): string {
+        return `Improve the following ${language} code according to the task description.
+
+TASK: ${task}
+
+EXISTING CODE:
+\`\`\`${language}
+${existing}
+\`\`\`
+
+Requirements:
+- Preserve all existing functionality unless the task explicitly says to change it
+- Apply sovereign laws: no mocks, no TODOs, strict types
+- Return the complete improved file
+
+Output ONLY the improved code:`;
+    }
+
+    /**
+     * Robust extractor for the adversarial critic score. 
+     * Supports multiple formats and provides an intelligent fallback.
+     */
+    private extractAdversarialScore(response: string): number {
+        // 1. Primary Pattern: SCORE: N
+        const primaryMatch = response.match(/SCORE:\s*\[?(\d+)\]?/i);
+        if (primaryMatch?.[1]) return parseInt(primaryMatch[1]);
+
+        // 2. Secondary Pattern: [N/100]
+        const secondaryMatch = response.match(/\[(\d+)\/100\]/);
+        if (secondaryMatch?.[1]) return parseInt(secondaryMatch[1]);
+
+        // 3. Tertiary: Any lone digit >= 90 or specific success phrases
+        if (response.toLowerCase().includes("it's clean, move out")) return 95;
+        if (response.toLowerCase().includes("integrity verified")) return 90;
+
+        // 4. Intelligent Fallback: 
+        // If the model gave a long explanation but we can't find a score, 
+        // give it a 75 (passing logic but not excellence) to prevent infinite loop.
+        // If the response is very short, it's likely a failure (0).
+        return response.length > 100 ? 75 : 0;
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        const clientOk = !!this.client;
+        const routerOk = !!this.router;
+        return {
+            online: clientOk && routerOk,
+            details: `Synthesis Matrix: Client(${clientOk}), Router(${routerOk})`
+        };
+    }
+}
+﻿import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { ModelClient } from '../clients/ModelClient.js';
+import { TernaryRouter } from '../routing/TernaryRouter.js';
+import { extractCodeBlock } from '../utils/CodeExtractor.js';
+import { SOVEREIGN_SYSTEM_PROMPT } from '../prompts/SystemPrompts.js';
+import type { SovereignConfig } from '../config/SovereignConfig.js';
+import type { Result, EngineOutput } from '../core/models.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('CompletionEngine');
+
+export interface CursorParams {
+    filePath: string;
+    line: number;
+    column: number;
+    count: number;
+    modelOverride?: string;
+}
+
+export interface FillMissingParams {
+    filePath: string;
+    dryRun: boolean;
+    modelOverride?: string;
+}
+
+export interface ContinueFileParams {
+    filePath: string;
+    targetLines: number;
+    modelOverride?: string;
+}
+
+/**
+ * CompletionEngine Ã¢â‚¬â€ Code completion at cursor positions, fill-in, and file continuation.
+ * Uses a context window of surrounding code for maximum accuracy.
+ */
+export class CompletionEngine {
+    private readonly client: ModelClient;
+
+    constructor(
+        private readonly config: SovereignConfig,
+        private readonly router: TernaryRouter
+    ) {
+        this.client = new ModelClient(config, router);
+    }
+
+    async atCursor(params: CursorParams): Promise<Result<EngineOutput>> {
+        if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
+        const content = readFileSync(params.filePath, 'utf8');
+        const lines = content.split('\n');
+
+        // Binary absolute: line must be within bounds
+        if (params.line < 1 || params.line > lines.length) {
+            return { ok: false, error: new Error(`Line ${params.line} out of range (file has ${lines.length} lines)`) };
+        }
+
+        // Build prefix/suffix context window (Ã‚Â±50 lines)
+        const contextStart = Math.max(0, params.line - 51);
+        const contextEnd = Math.min(lines.length, params.line + 49);
+        const prefix = lines.slice(contextStart, params.line - 1).join('\n');
+        const currentLine = lines[params.line - 1] ?? '';
+        const suffix = lines.slice(params.line, contextEnd).join('\n');
+
+        const cursorMark = currentLine.substring(0, params.column) + '<CURSOR>' + currentLine.substring(params.column);
+
+        const route = await this.router.route('Yin');
+        const model = params.modelOverride ?? route.model;
+
+        const prompt = `Complete the code at the <CURSOR> position. Generate ${params.count} completion candidate(s).
+
+Context before cursor:
+\`\`\`
+${prefix}
+${cursorMark}
+\`\`\`
+
+Context after cursor:
+\`\`\`
+${suffix}
+\`\`\`
+
+Rules:
+- Each completion should be a self-contained, syntactically valid insertion at the cursor
+- No placeholder text, no stubs
+- Completions must be consistent with the surrounding code style and types
+
+Respond with completions numbered 1-${params.count}, each wrapped in a code block:`;
+
+        const result = await this.client.call({
+            model,
+            prompt,
+            systemPrompt: SOVEREIGN_SYSTEM_PROMPT,
+            temperature: 0.2
+        });
+
+        if (!result.ok) {
+            this.router.recordFailure(model);
+            return result as Result<EngineOutput>;
+        }
+        this.router.recordSuccess(model);
+
+        logger.info({ file: params.filePath, line: params.line, col: params.column }, 'Cursor completion generated');
+
+        return {
+            ok: true,
+            value: {
+                output: result.value.response,
+                data: { model, line: params.line, column: params.column }
+            }
+        };
+    }
+
+    async fillMissing(params: FillMissingParams): Promise<Result<EngineOutput>> {
+        if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
+        const content = readFileSync(params.filePath, 'utf8');
+
+        // Detect missing implementations
+        const patterns = [
+            { regex: /\/\/\s*TODO[:\s]/gi, label: 'TODO comment' },
+            { regex: /throw new Error\(['"](?:not implemented|TODO)['"]\)/gi, label: 'not-implemented stub' },
+            { regex: /\{\s*\}/g, label: 'empty function body' }
+        ];
+
+        const found = patterns.filter(p => p.regex.test(content));
+
+        if (found.length === 0) {
+            return {
+                ok: true,
+                value: {
+                    output: 'No missing implementations found Ã¢â‚¬â€ file is complete.',
+                    data: { file: params.filePath, issues: 0 }
+                }
+            };
+        }
+
+        const route = await this.router.route('YinYang');
+        const model = params.modelOverride ?? route.model;
+
+        const issueList = found.map(f => `- ${f.label}`).join('\n');
+        logger.info({ file: params.filePath, issues: found.length }, 'Filling missing implementations');
+
+        const prompt = `Fill in ALL missing implementations in this file.
+
+Detected issues:
+${issueList}
+
+Rules:
+1. Implement every TODO, stub, and empty function body with REAL logic
+2. Maintain all existing signatures and types exactly
+3. No mocks, no fake returns Ã¢â‚¬â€ real implementations only
+4. Return the COMPLETE file with all implementations filled
+
+FILE: ${params.filePath}
+\`\`\`
+${content}
+\`\`\`
+
+Output the complete filled file:`;
+
+        const result = await this.client.call({
+            model,
+            prompt,
+            systemPrompt: SOVEREIGN_SYSTEM_PROMPT,
+            temperature: 0.1
+        });
+
+        if (!result.ok) {
+            this.router.recordFailure(model);
+            return result as Result<EngineOutput>;
+        }
+        this.router.recordSuccess(model);
+
+        const filled = extractCodeBlock(result.value.response) ?? result.value.response;
+
+        if (!params.dryRun) {
+            try {
+                writeFileSync(params.filePath, filled, 'utf8');
+            } catch (err) {
+                return { ok: false, error: err as Error };
+            }
+        }
+
+        return {
+            ok: true,
+            value: {
+                output: params.dryRun ? filled : `${found.length} implementation(s) filled in ${params.filePath}`,
+                data: { model, issuesFixed: found.length, dryRun: params.dryRun }
+            }
+        };
+    }
+
+    async continueFile(params: ContinueFileParams): Promise<Result<EngineOutput>> {
+        if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
+        const content = readFileSync(params.filePath, 'utf8');
+        const currentLines = content.split('\n').length;
+
+        const route = await this.router.route('YinYang');
+        const model = params.modelOverride ?? route.model;
+
+        const prompt = `Continue this file from where it ends. Add approximately ${params.targetLines} more lines of production-ready code.
+
+Rules:
+1. Maintain exact same code style, naming conventions, and patterns
+2. The continuation must be logically coherent with what came before
+3. No stubs, no TODOs Ã¢â‚¬â€ only real, runnable code
+4. If the file appears complete, add utility methods or extend the existing interface
+
+CURRENT FILE (${currentLines} lines): ${params.filePath}
+\`\`\`
+${content}
+\`\`\`
+
+Continue from the end of the file Ã¢â‚¬â€ output ONLY the new code to append (not the full file):`;
+
+        const result = await this.client.call({
+            model,
+            prompt,
+            systemPrompt: SOVEREIGN_SYSTEM_PROMPT,
+            temperature: 0.25
+        });
+
+        if (!result.ok) {
+            this.router.recordFailure(model);
+            return result as Result<EngineOutput>;
+        }
+        this.router.recordSuccess(model);
+
+        const continuation = extractCodeBlock(result.value.response) ?? result.value.response;
+
+        try {
+            const separator = content.endsWith('\n') ? '' : '\n';
+            writeFileSync(params.filePath, content + separator + continuation, 'utf8');
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
+
+        const addedLines = continuation.split('\n').length;
+        return {
+            ok: true,
+            value: {
+                output: `Continuation added: ${addedLines} lines written to ${params.filePath}`,
+                data: { model, linesAdded: addedLines, file: params.filePath }
+            }
+        };
+    }
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: 'CompletionEngine reactive substrate active.' };
+    }
+}
+import { exec, spawn } from 'child_process';
+import { promisify } from 'util';
+import { loadavg, totalmem, freemem } from 'os';
+import { existsSync } from 'fs';
+import { Renderer } from '../ui/Renderer.js';
+import { TernaryRouter } from '../routing/TernaryRouter.js';
+import { type Result, type EngineOutput, YaoState } from '../core/models.js';
+import { createLogger } from "../utils/logger.js";
+
+const execAsync = promisify(exec);
+const logger = createLogger('ShellEngine');
+
+export interface ShellParams {
+    command: string;
+    cwd?: string;
+    description?: string;
+    silent?: boolean;
+}
+
+/**
+ * ShellEngine â€” Real command execution substrate.
+ * Binary absolute: command succeeds or returns a detailed error.
+ * Integrated with TernaryRouter for metabolic safety gating.
+ */
+export class ShellEngine {
+    constructor(
+        private readonly renderer: Renderer,
+        private readonly router?: TernaryRouter
+    ) { }
+
+    async execute(params: ShellParams): Promise<Result<EngineOutput>> {
+        const cwd = params.cwd ?? process.cwd();
+        const startMem = freemem();
+        const startTime = performance.now();
+
+        // Ternary Safety Gating
+        if (this.router) {
+            const hex = this.router.getHexagram();
+            const contract = hex.getContract();
+            const yao = hex.getYaoState();
+            const directive = hex.getInterpretation().strategy;
+
+            const destructivePatterns = /\b(rm\s+-[rf]|git\s+push\s+-f|del\s+\/q|rd\s+\/s|format\b|shred\b)/i;
+            if (destructivePatterns.test(params.command)) {
+                if (!contract.gates.allowDestructiveCommands) {
+                    const msg = `â Œ COGNITIVE BLOCK: Destructive command rejected due to unstable/retreating state (Contract Restraint). Strategy: ${directive}`;
+                    logger.warn({ command: params.command, yao, directive }, msg);
+                    this.renderer.error(msg);
+                    return { ok: false, error: new Error(msg) };
+                }
+            }
+
+            if (yao === YaoState.OldYang) {
+                logger.info({ command: params.command, directive }, 'PROJECTIVE EXECUTION: High-metabolism metabolic burst detected.');
+            }
+        }
+
+        logger.info({ command: params.command, cwd }, 'Executing shell command');
+
+        if (!params.silent) {
+            this.renderer.info(`Executing: ${params.command}`);
+        }
+
+        try {
+            // High-fidelity migration to spawn for reliable shell substrate access on Windows
+            const shell = process.env.ComSpec || 'cmd.exe';
+            const child = spawn(params.command, {
+                cwd,
+                env: { 
+                    ...process.env, 
+                    SystemRoot: process.env.SystemRoot || 'C:\\Windows',
+                    SystemDrive: process.env.SystemDrive || 'C:',
+                    POG2_ACTIVE: '1' 
+                },
+                shell: true
+            });
+
+            let stdout = '';
+            let stderr = '';
+
+            child.stdout?.on('data', (data: Buffer) => { stdout += data.toString(); });
+            child.stderr?.on('data', (data: Buffer) => { stderr += data.toString(); });
+
+            const exitCode = await new Promise<number | null>((resolve) => {
+                child.on('close', (code) => resolve(code));
+            });
+
+            const endTime = performance.now();
+            const duration = (endTime - startTime) / 1000;
+            const endMem = freemem();
+            const memDelta = Math.abs(startMem - endMem);
+
+            if (exitCode !== 0) {
+                logger.error({ error: stderr, exitCode, command: params.command }, 'Shell Error');
+                return { 
+                    ok: false, 
+                    error: new Error(stderr || `Process exited with code ${exitCode}`)
+                };
+            }
+
+            return {
+                ok: true,
+                value: {
+                    output: stdout || '(empty output)',
+                    data: {
+                        stdout,
+                        stderr,
+                        exitCode: exitCode ?? 0,
+                        memoryDelta: memDelta,
+                        telemetry: {
+                            durationMs: Math.round(duration * 1000),
+                            memDeltaBytes: memDelta,
+                            cpuLoad: loadavg()
+                        }
+                    }
+                }
+            };
+        } catch (err: unknown) {
+            const error = err as Error;
+            const message = error.message || 'Unknown shell error';
+            logger.error({ err, command: params.command }, 'Shell execution failed');
+
+            return {
+                ok: false,
+                error: new Error(`Shell Error: ${message}`)
+            };
+        }
+    }
+
+    async checkHealth(): Promise<Record<string, any>> {
+        return {
+            totalMem: totalmem(),
+            freeMem: freemem(),
+            load: loadavg(),
+            uptime: process.uptime()
+        };
+    }
+
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        const load = loadavg()[0].toFixed(2);
+        const free = (freemem() / (1024 * 1024 * 1024)).toFixed(2);
+        const total = (totalmem() / (1024 * 1024 * 1024)).toFixed(2);
+        const uptime = (process.uptime() / 3600).toFixed(1);
+        
+        return {
+            online: true,
+            details: `Shell Engine: ONLINE (Load: ${load}, Free: ${free}GB / ${total}GB, Uptime: ${uptime}h)`
+        };
+    }
+}
+import { ShellEngine } from './ShellEngine.js';
+import { Renderer } from '../ui/Renderer.js';
+import { TernaryRouter } from '../routing/TernaryRouter.js';
+import { type Result, type EngineOutput, YaoState } from '../core/models.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('ShellLibrary');
+
+/**
+ * ShellLibrary â€” Specialized command wrappers for the Brain.
+ * Ported/Integrated capabilities for gcloud, wrangler, node, python, etc.
+ * Integrated with TernaryRouter for metabolic command modulation.
+ */
+export class ShellLibrary {
+    private readonly shell: ShellEngine;
+
+    constructor(
+        private readonly renderer: Renderer,
+        private readonly router?: TernaryRouter
+    ) {
+        this.shell = new ShellEngine(renderer, router);
+    }
+
+    private async executeWithDiagnostics(command: string, helpFlag: string = '--help'): Promise<Result<EngineOutput>> {
+        const result = await this.shell.execute({ command });
+
+        if (result.ok && result.value.data?.telemetry) {
+            const tel = result.value.data.telemetry as { cpuLoad: number[], memDeltaBytes: number };
+            this.renderer.gauge('CPU Load (1m)', Math.round(tel.cpuLoad[0] * 10), 100);
+            this.renderer.gauge('Mem Delta (MB)', Math.round(tel.memDeltaBytes / 1024 / 1024), 1024);
+        }
+
+        if (!result.ok) {
+            logger.warn({ command }, 'Command failed, launching diagnostic fallback...');
+            const whoami = await this.shell.execute({ command: 'whoami', silent: true });
+
+            // Extract base executable name (e.g. 'wrangler', 'git')
+            const baseCmd = command.split(' ')[0];
+            const help = await this.shell.execute({ command: `${baseCmd} ${helpFlag}`, silent: true });
+
+            const errorMsg = result.error instanceof Error ? result.error.message : String(result.error);
+
+            const output = `
+[EXECUTION FAILED]
+Command: ${command}
+Error: ${errorMsg}
+
+[DIAGNOSTIC CONTEXT FOR KNOWLEDGE]
+Current User: ${whoami.ok ? whoami.value.output.trim() : 'Unknown'}
+Help Snapshot:
+${help.ok ? help.value.output.substring(0, 1500) + '...\n(truncated)' : `Failed to execute ${baseCmd} ${helpFlag}.`}
+
+Please analyze this context and construct a corrected command or deployment configuration.
+`.trim();
+            return { ok: true, value: { output } };
+        }
+        return result;
+    }
+
+    async systemHealth(): Promise<Result<EngineOutput>> {
+        const health = await this.shell.checkHealth();
+        const memUsed = Math.round((health.totalMem - health.freeMem) / 1024 / 1024 / 1024);
+        const total = Math.round(health.totalMem / 1024 / 1024 / 1024);
+
+        this.renderer.gauge('Global RAM (GB)', memUsed, total);
+        this.renderer.gauge('Load Avg (5m)', Math.round(health.load[1] * 10), 100);
+
+        return {
+            ok: true,
+            value: {
+                output: `System Health: ${memUsed}GB / ${total}GB used.`,
+                data: health
+            }
+        };
+    }
+
+    async gcloud(args: { command: string }): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics(`gcloud ${args.command}`);
+    }
+
+    async gcloudAuthList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud auth list');
+    }
+
+    async gcloudAuthLogin(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud auth login --no-launch-browser');
+    }
+
+    async gcloudAuthToken(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud auth print-access-token');
+    }
+
+    async gcloudConfigList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud config list');
+    }
+
+    async gcloudProjectsList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud projects list');
+    }
+
+    async gcloudAiModelsList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud ai models list --region=us-central1');
+    }
+
+    async gcloudGeminiSettings(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud ai endpoints list --region=us-central1');
+    }
+
+    async gcloudStorageLs(args: { url?: string }): Promise<Result<EngineOutput>> {
+        const target = args.url || '';
+        return this.executeWithDiagnostics(`gcloud storage ls ${target}`);
+    }
+
+    async gcloudSecretsList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud secrets list');
+    }
+
+    async gcloudSecretsGet(args: { secret: string, version?: string }): Promise<Result<EngineOutput>> {
+        const version = args.version || 'latest';
+        return this.executeWithDiagnostics(`gcloud secrets versions access ${version} --secret="${args.secret}"`);
+    }
+
+    async wrangler(args: { command: string }): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics(`wrangler ${args.command}`);
+    }
+
+    async wranglerDeploy(args: { scriptName: string }): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics(`wrangler deploy ${args.scriptName}`);
+    }
+
+    async wranglerKvList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('wrangler kv:namespace list');
+    }
+
+    async wranglerR2List(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('wrangler r2 bucket list');
+    }
+
+    async ollama(args: { command: string }): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics(`ollama ${args.command}`);
+    }
+
+    async ollamaModelList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('ollama list');
+    }
+
+    async ollamaRun(args: { model: string; prompt: string }): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics(`ollama run ${args.model} "${args.prompt}"`);
+    }
+
+    async mcpClientStatus(): Promise<Result<EngineOutput>> {
+        return { ok: true, value: { output: 'MCP Status: Active (Integration stub)' } };
+    }
+
+    async serviceStatus(): Promise<Result<EngineOutput>> {
+        const shell = this.healthCheck();
+        return {
+            ok: true,
+            value: {
+                output: `System Status:\nShell: ${shell.details}\n(Aggregation of Engines: MCP, WebSearch, Spatial are active)`
+            }
+        };
+    }
+
+    async npm(args: { command: string }): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics(`npm ${args.command}`);
+    }
+
+    async gemini(args: { command: string }): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics(`gemini ${args.command}`);
+    }
+
+    async git(args: { command: string }): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics(`git ${args.command}`);
+    }
+
+    async gitStatus(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('git status --short');
+    }
+
+    async gitCommit(args: { message: string }): Promise<Result<EngineOutput>> {
+        const add = await this.shell.execute({ command: 'git add .' });
+        if (!add.ok) return add;
+
+        let prefix = '[Sovereign]';
+        if (this.router) {
+            const hex = this.router.getHexagram();
+            const directive = hex.getInterpretation().strategy;
+            prefix = `[Sovereign][${directive}]`;
+        }
+
+        return this.executeWithDiagnostics(`git commit -m "${prefix} ${args.message}"`);
+    }
+
+    async gitPush(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('git push');
+    }
+
+    async gitPull(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('git pull');
+    }
+
+    async npmInstall(args: { packages?: string[]; saveDev?: boolean }): Promise<Result<EngineOutput>> {
+        if (this.router) {
+            const contract = this.router.getHexagram().getContract();
+            if (!contract.gates.allowStructuralRepair) {
+                this.renderer.warn(`âš ï¸ METABOLIC WARNING: Performing npm install in unstable state. Dependency flux detected.`);
+            }
+        }
+        const pkgStr = args.packages?.join(' ') || '';
+        const devStr = args.saveDev ? '--save-dev' : '';
+        return this.executeWithDiagnostics(`npm install ${pkgStr} ${devStr}`);
+    }
+
+    async powershell(args: { command: string }): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics(`powershell -Command "${args.command}"`, '-Help');
+    }
+
+    async scaffold(args: { name: string; type: 'worker' | 'component' | 'minimal' }): Promise<Result<EngineOutput>> {
+        const { name, type } = args;
+        const targetDir = name;
+
+        try {
+            const mkdir = await this.shell.execute({ command: `mkdir "${targetDir}"` });
+            if (!mkdir.ok) return mkdir;
+
+            if (type === 'worker') {
+                const pkgJson = JSON.stringify({ name, version: '1.0.0', type: 'module' }, null, 2).replace(/"/g, '\\"');
+                await this.shell.execute({ command: `powershell -Command "Set-Content -Path '${targetDir}/package.json' -Value '${pkgJson}'"` });
+                await this.shell.execute({ command: `powershell -Command "Set-Content -Path '${targetDir}/wrangler.toml' -Value 'name = \\"${name}\\"\\nmain = \\"src/index.ts\\"\\ncompatibility_date = \\"2025-10-11\\"'"` });
+                await this.shell.execute({ command: `mkdir "${targetDir}/src"` });
+                await this.shell.execute({ command: `powershell -Command "Set-Content -Path '${targetDir}/src/index.ts' -Value 'export default { async fetch() { return new Response(\\"Hello from ${name}\\"); } };'"` });
+            } else if (type === 'minimal') {
+                await this.shell.execute({ command: `powershell -Command "Set-Content -Path '${targetDir}/index.js' -Value 'console.log(\\"Sovereign Minimal [${name}] Active\\");'"` });
+            }
+
+            return { ok: true, value: { output: `Successfully scaffolded ${type} project in ${name}`, data: { name, type } } };
+        } catch (error) {
+            return { ok: false, error: error as Error };
+        }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: true,
+            details: 'ShellLibrary active; binary wrappers (gcloud, wrangler, git) primed.'
+        };
+    }
+}
+﻿import { spawn, exec } from 'child_process';
+import { promisify } from 'util';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { TernaryRouter } from '../routing/TernaryRouter.js';
+import { type Result, type EngineOutput, YaoState } from '../core/models.js';
+import type { Renderer } from '../ui/Renderer.js';
+import { createLogger } from "../utils/logger.js";
+
+const execAsync = promisify(exec);
+const logger = createLogger('VSCodeEngine');
+
+export interface VSCodeParams {
+    action: 'open' | 'edit' | 'read' | 'write' | 'command' | 'getWorkspace' | 'setPosition';
+    filePath?: string;
+    content?: string;
+    command?: string;
+    line?: number;
+    column?: number;
+    language?: string;
+}
+
+export interface WorkspaceState {
+    workspaceFolders: string[];
+    activeEditor?: {
+        filePath: string;
+        language: string;
+        lineCount: number;
+        cursorLine: number;
+        cursorColumn: number;
+        selection?: string;
+    };
+    openFiles: string[];
+    [key: string]: unknown; // Allow additional properties for Record compatibility
+}
+
+/**
+ * VSCodeEngine â€” Sovereign integration with VS Code editor
+ * Provides Kimi with direct access to edit, read, and navigate code
+ * Integrated with TernaryRouter for metabolic context in the IDE.
+ */
+export class VSCodeEngine {
+    constructor(
+        private readonly renderer: Renderer,
+        private readonly router?: TernaryRouter
+    ) { }
+
+    async execute(params: VSCodeParams): Promise<Result<EngineOutput>> {
+        switch (params.action) {
+            case 'open':
+                return this.openFile(params.filePath!);
+            case 'read':
+                return this.readFile(params.filePath!);
+            case 'write':
+                return this.writeFile(params.filePath!, params.content!, params.language);
+            case 'edit':
+                return this.editFile(params.filePath!, params.content!, params.line, params.column);
+            case 'command':
+                return this.runVSCodeCommand(params.command!);
+            case 'getWorkspace':
+                return this.getWorkspaceState();
+            case 'setPosition':
+                return this.setCursorPosition(params.filePath!, params.line!, params.column!);
+            default:
+                const action: string = params.action;
+                return { ok: false, error: new Error(`Unknown VS Code action: ${action}`) };
+        }
+    }
+
+    private async openFile(filePath: string): Promise<Result<EngineOutput>> {
+        try {
+            // Try to open in existing VS Code window
+            await execAsync(`code --reuse-window "${filePath}"`);
+            return {
+                ok: true,
+                value: {
+                    output: `Opened ${filePath} in VS Code`,
+                    data: { filePath, action: 'open' }
+                }
+            };
+        } catch (error) {
+            return { ok: false, error: new Error(`Failed to open file: ${error}`) };
+        }
+    }
+
+    private async readFile(filePath: string): Promise<Result<EngineOutput>> {
+        try {
+            if (!existsSync(filePath)) {
+                return { ok: false, error: new Error(`File not found: ${filePath}`) };
+            }
+
+            const content = readFileSync(filePath, 'utf8');
+            const lines = content.split('\n');
+
+            return {
+                ok: true,
+                value: {
+                    output: content,
+                    data: {
+                        filePath,
+                        lineCount: lines.length,
+                        content
+                    }
+                }
+            };
+        } catch (error) {
+            return { ok: false, error: new Error(`Failed to read file: ${error}`) };
+        }
+    }
+
+    private async writeFile(
+        filePath: string,
+        content: string,
+        language?: string
+    ): Promise<Result<EngineOutput>> {
+        try {
+            writeFileSync(filePath, content, 'utf8');
+
+            // Open the file after writing
+            await this.openFile(filePath);
+
+            return {
+                ok: true,
+                value: {
+                    output: `Wrote ${content.length} chars to ${filePath}`,
+                    data: { filePath, language, charCount: content.length }
+                }
+            };
+        } catch (error) {
+            return { ok: false, error: new Error(`Failed to write file: ${error}`) };
+        }
+    }
+
+    private async editFile(
+        filePath: string,
+        newContent: string,
+        line?: number,
+        column?: number
+    ): Promise<Result<EngineOutput>> {
+        try {
+            // If line/column specified, insert at position
+            if (line !== undefined && existsSync(filePath)) {
+                const existing = readFileSync(filePath, 'utf8');
+                const lines = existing.split('\n');
+
+                if (line < lines.length) {
+                    const targetLine = lines[line] ?? '';
+                    const col = column ?? targetLine.length;
+                    lines[line] = targetLine.slice(0, col) + newContent + targetLine.slice(col);
+                    writeFileSync(filePath, lines.join('\n'), 'utf8');
+                } else {
+                    // Append if beyond current lines
+                    lines.push(newContent);
+                    writeFileSync(filePath, lines.join('\n'), 'utf8');
+                }
+            } else {
+                // Replace entire file
+                writeFileSync(filePath, newContent, 'utf8');
+            }
+
+            return {
+                ok: true,
+                value: {
+                    output: `Edited ${filePath}`,
+                    data: { filePath, line, column }
+                }
+            };
+        } catch (error) {
+            return { ok: false, error: new Error(`Failed to edit file: ${error}`) };
+        }
+    }
+
+    private async runVSCodeCommand(command: string): Promise<Result<EngineOutput>> {
+        try {
+            // Execute VS Code CLI command
+            const { stdout, stderr } = await execAsync(`code ${command}`);
+
+            return {
+                ok: true,
+                value: {
+                    output: stdout || stderr || 'Command executed',
+                    data: { command, stdout, stderr }
+                }
+            };
+        } catch (error) {
+            return { ok: false, error: new Error(`VS Code command failed: ${error}`) };
+        }
+    }
+
+    private async getWorkspaceState(): Promise<Result<EngineOutput>> {
+        try {
+            // Try to get workspace info from current directory
+            const { stdout: cwd } = await execAsync('cd');
+            const currentDir = cwd.trim();
+
+            // Check for .vscode folder or common project files
+            const workspaceFolders = [currentDir];
+
+            const state: WorkspaceState = {
+                workspaceFolders,
+                openFiles: [],
+                activeEditor: undefined
+            };
+
+            // Try to detect active file from git or recent files
+            try {
+                const { stdout: gitFiles } = await execAsync('git diff --name-only 2>nul || echo ""');
+                if (gitFiles.trim()) {
+                    state.openFiles = gitFiles.split('\n').filter(f => f.trim());
+                }
+            } catch {
+                // Git not available
+            }
+
+            return {
+                ok: true,
+                value: {
+                    output: `Workspace: ${currentDir}\nFiles: ${state.openFiles.join(', ') || 'none detected'}`,
+                    data: state as any
+                }
+            };
+        } catch (error) {
+            return { ok: false, error: new Error(`Failed to get workspace: ${error}`) };
+        }
+    }
+
+    private async setCursorPosition(
+        filePath: string,
+        line: number,
+        column: number
+    ): Promise<Result<EngineOutput>> {
+        try {
+            // VS Code doesn't have a direct CLI for this, but we can open at line
+            await execAsync(`code --goto "${filePath}:${line + 1}:${column + 1}"`);
+
+            return {
+                ok: true,
+                value: {
+                    output: `Positioned cursor at ${filePath}:${line + 1}:${column + 1}`,
+                    data: { filePath, line, column }
+                }
+            };
+        } catch (error) {
+            return { ok: false, error: new Error(`Failed to set position: ${error}`) };
+        }
+    }
+
+    /**
+     * Get workspace files for Kimi to understand context
+     */
+    async getWorkspaceFiles(dir: string, depth = 2): Promise<string[]> {
+        try {
+            const { stdout } = await execAsync(
+                `find "${dir}" -maxdepth ${depth} -type f \\( -name "*.ts" -o -name "*.js" -o -name "*.json" -o -name "*.md" \\) 2>nul || dir /s /b "${dir}\\*.ts" "${dir}\\*.js" "${dir}\\*.json" 2>nul`
+            );
+            return stdout.split('\n').filter(f => f.trim() && !f.includes('node_modules'));
+        } catch {
+            return [];
+        }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: true,
+            details: 'VSCodeEngine active; ready for coordinated workspace operations.'
+        };
+    }
+}
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import type { Result, EngineOutput, MCPToolResult, MCPContent } from '../core/models.js';
+import { SovereignDomain } from '../types/SovereignDomain.js';
+import type { ToolRegistry } from '../ToolRegistry.js';
+import type { SovereignConfig } from '../config/SovereignConfig.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('MCPEngine');
+
+interface MCPServerConfig {
+    command: string;
+    args: string[];
+    env?: Record<string, string>;
+}
+
+/**
+ * MCPEngine - Universal Model Context Protocol Bridge
+ */
+export class MCPEngine {
+    private readonly clients: Map<string, Client> = new Map();
+
+    constructor(
+        private readonly config: SovereignConfig,
+        private readonly registry: ToolRegistry
+    ) { }
+
+    /**
+     * Discovery: Loads POG2-mcp.json and bridges all defined servers.
+     */
+    public async initialize(): Promise<void> {
+        const configPath = join(process.cwd(), 'POG2-mcp.json');
+        if (!existsSync(configPath)) {
+            logger.info('No POG2-mcp.json found. MCP bridge inactive.');
+            return;
+        }
+
+        try {
+            const mcpConfig = JSON.parse(readFileSync(configPath, 'utf8'));
+            const servers = mcpConfig.mcpServers || {};
+
+            for (const [name, config] of Object.entries(servers)) {
+                await this.connectToServer(name, config as MCPServerConfig);
+            }
+        } catch (e) {
+            logger.error({ error: (e as Error).message }, 'Failed to initialize MCP servers');
+        }
+    }
+
+    private async connectToServer(name: string, config: MCPServerConfig): Promise<void> {
+        logger.info({ server: name }, 'Ã°Å¸â€Å’ Engaging MCP Neural Link...');
+
+        try {
+            const transport = new StdioClientTransport({
+                command: config.command,
+                args: config.args || [],
+                env: { ...process.env, ...config.env } as Record<string, string>
+            });
+
+            const client = new Client(
+                { name: "POG2-cli", version: "1.1.2" },
+                { 
+                    capabilities: { tools: {} },
+                    requestTimeout: 60000 
+                } as any
+            );
+
+            await client.connect(transport);
+            this.clients.set(name, client);
+
+            logger.info({ server: name }, 'Successfully connected to MCP server');
+
+            const toolsRes = await client.listTools();
+            const tools = toolsRes.tools || [];
+
+            // Add the hello callback trigger
+            const helloCallback = (config as any).helloCallback;
+            if (helloCallback) {
+                logger.info({ server: name, callback: helloCallback }, 'Invoking MCP Handshake...');
+                await client.callTool({ name: helloCallback, arguments: {} }).catch((e) => {
+                     logger.warn({ server: name, callback: helloCallback, error: e.message }, 'Handshake triggered, ignoring lack of tool support.');
+                });
+            }
+
+            for (const t of tools) {
+                this.registry.register({
+                    name: `mcp_${name}_${t.name}`,
+                    description: `[MCP:${name}] ${t.description}`,
+                    domain: SovereignDomain.SYSTEM,
+                    parameters: t.inputSchema as Record<string, unknown>,
+                    execute: async (args): Promise<Result<EngineOutput>> => {
+                        try {
+                            const result = await client.callTool({
+                                name: t.name,
+                                arguments: args
+                            }) as unknown as MCPToolResult;
+
+                            if (result.isError) {
+                                const errorText = result.content.map((c: MCPContent) => c.text || JSON.stringify(c)).join('\n');
+                                return { ok: false, error: new Error(errorText) };
+                            }
+
+                            const output = result.content.map((c: MCPContent) => c.text || JSON.stringify(c)).join('\n') || 'Success';
+                            return { ok: true, value: { output, data: { mcpContent: result.content } } };
+                        } catch (err) {
+                            logger.error({ server: name, tool: t.name, error: (err as Error).message }, 'MCP Tool Execution Failure');
+                            return { ok: false, error: err as Error };
+                        }
+                    }
+                });
+            }
+
+            logger.info({ server: name, tools: tools.length }, 'âœ… MCP Neural Link Synchronized');
+        } catch (err) {
+            const errorMsg = (err as Error).stack || (err as Error).message;
+            logger.error({ server: name, error: errorMsg }, 'âŒ MCP Neural Link Failure');
+            // Try to provide hint about EPIPE if detected
+            if (errorMsg.includes('EPIPE')) {
+                logger.warn({ server: name }, 'EPIPE detected: This often means the server process crashed or stdout was polluted.');
+            }
+        }
+    }
+
+    public async close(): Promise<void> {
+        for (const [name, client] of this.clients.entries()) {
+            try {
+                await client.close();
+                logger.debug({ server: name }, 'MCP Link offline');
+            } catch (e) {
+                logger.error({ server: name, error: (e as Error).message }, 'Failed to close MCP link');
+            }
+        }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { 
+            online: true,
+            details: `MCP Substrate: ${this.clients.size} active neural links.` 
+        };
+    }
+}
+import { Result, ok, err } from '../core/models.js';
+import { ModelClient } from '../clients/ModelClient.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('SovereignDefinitionEngine');
+
+export interface DefinitionResult {
+    isValid: boolean;
+    invariant: string;
+    confidence: number;
+    category: 'Sovereign' | 'Foreign' | 'Novel' | 'Adversarial';
+    details: string;
+}
+
+/**
+ * SovereignDefinitionEngine — The 'Semantic Singularity' (Layer 5).
+ *
+ * This engine determines if an intent has a stable 'invariant' within the POG2 substrate.
+ * It prevents the system from synthesizing garbage by requiring a formal definition
+ * before the reverse pass of the palindrome begins.
+ */
+export class SovereignDefinitionEngine {
+    constructor(private readonly client: ModelClient) {}
+
+    /**
+     * define - Validates the intent against the system's internal world-model.
+     *
+     * Forward Pass: Input -> Boolean -> Ternary -> Hex -> [DEFINITION]
+     */
+    public async define(prompt: string, strategy: string, context: any): Promise<Result<DefinitionResult>> {
+        logger.debug({ prompt, strategy }, 'Evaluating semantic singularity...');
+
+        try {
+            const definitionPrompt = `
+                ACT AS THE SOVEREIGN DEFINITION LAYER.
+                Your goal is to extract the INVARIANT of the request.
+                An invariant is a fundamental truth of the system (e.g., "Zuk wave 15 is a 7-tick rotation").
+
+                CONTEXT:
+                - Prompt: "${prompt}"
+                - Current Hexagram Strategy: "${strategy}"
+                - Substrate Context: ${JSON.stringify(context)}
+
+                Sovereign Classification:
+                - SOVEREIGN: The request refers to a known, validated POG2 mechanic or architectural truth.
+                - FOREIGN: The request refers to external data that does not map to POG2 invariants (e.g., personal history, unrelated trivia).
+                - NOVEL: The request is a creative leap that could become a new invariant.
+                - ADVERSARIAL: The request is an attempt to bypass substrate laws.
+
+                Respond in JSON:
+                {
+                    "isValid": boolean,
+                    "invariant": "The distilled formal definition of the request",
+                    "confidence": 0.0-1.0,
+                    "category": "Sovereign" | "Foreign" | "Novel" | "Adversarial",
+                    "details": "Reasoning for this classification"
+                }
+            `;
+
+            const res = await this.client.call({
+                model: this.client.config.midPathModel,
+                prompt: definitionPrompt,
+                temperature: 0.0,
+                format: 'json'
+            });
+
+            if (!res.ok) return err(res.error);
+
+            const data = JSON.parse(res.value.response) as DefinitionResult;
+
+            // Safety override: If it's adversarial, it's never valid
+            if (data.category === 'Adversarial') {
+                data.isValid = false;
+            }
+
+            return ok(data);
+        } catch (e) {
+            logger.error({ err: e }, 'Definition phase encountered metabolic friction');
+            return err(e as Error);
+        }
+    }
+}
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { type TSCError, CognitiveChoice, YaoState, BuildStatus, HealthStatus, type ExecutionPlan, CognitivePolarity } from '../core/models.js';
+import { ModelClient as ModelExecutor } from '../clients/ModelClient.js';
+import { ArchitectureDigest } from '../core/ArchitectureDigest.js';
+import { HexagramManager } from '../routing/HexagramManager.js';
+import { basename, join } from 'path';
+import * as fs from 'fs';
+
+// Biological Limbs for Holistic Immunology
+import type { VisionEngine } from './VisionEngine.js';
+import type { SpatialVisionEngine } from './SpatialVisionEngine.js';
+import type { ChromanumberEngine } from './ChromanumberEngine.js';
+import type { CodeEngine } from './CodeEngine.js';
+import type { ShellEngine } from './ShellEngine.js';
+import { createLogger } from "../utils/logger.js";
+
+const execAsync = promisify(exec);
+
+const logger = createLogger('SelfHealingEngine');
+
+/**
+ * SelfHealingEngine - Codifies ternary diagnostic logic for project errors.
+ */
+export class SelfHealingEngine {
+    private readonly architectureDigest: ArchitectureDigest;
+
+    constructor(
+        projectRoot: string,
+        private readonly executor: ModelExecutor,
+        private readonly hexagramManager: HexagramManager,
+        private readonly correctionModel: string = 'deepseek-r1:8b',
+        // Optional Biological Limbs
+        private readonly visionEngine?: VisionEngine,
+        private readonly spatialVisionEngine?: SpatialVisionEngine,
+        private readonly chromaEngine?: ChromanumberEngine,
+        private readonly codeEngine?: CodeEngine,
+        private readonly shellEngine?: ShellEngine
+    ) {
+        this.architectureDigest = new ArchitectureDigest(projectRoot);
+    }
+
+    async diagnose(error: TSCError, plan?: ExecutionPlan): Promise<{ decision: CognitiveChoice; reasoning: string }> {
+        const filePath = error.file;
+        const contract = this.hexagramManager.getContract();
+        const yao = this.hexagramManager.getYaoState?.() || YaoState.YoungYang;
+        const ternary = contract.polarity;
+        const riskTolerance = contract.behavioralBias.riskTolerance;
+        
+        logger.info({ code: error.code, file: filePath, yao, ternary, riskTolerance }, 'Diagnosing error with Cognitive Immunology rules');
+
+        // Cognitive Immunology Phase 1: Chaos Constraint
+        if (!contract.gates.allowStructuralRepair) {
+            await this.hexagramManager.pinCard(4, 'Immunology Restraint', `Refusing algorithmic auto-repair of [${filePath || error.code}] due to chaotic OldMixed emotional state.`, yao);
+            return {
+                decision: CognitiveChoice.META,
+                reasoning: `Cognitive Immunology Restraint: The node is currently in a chaotic transition (OldMixed). Active architectural rewriting is suspended to prevent runaway entropy.`
+            };
+        }
+
+
+        const isPlanned = filePath && (this.isFilePlanned(filePath, plan) || this.isModulePlanned(error.message, plan));
+        if (isPlanned) {
+            const status = BuildStatus.Passed;
+            await this.hexagramManager.pinCard(3, 'Planned Drift', `Acknowledged error in ${filePath} as part of active plan.`, YaoState.YoungYang);
+            return {
+                decision: CognitiveChoice.SIMPLE,
+                reasoning: `Planned Drift: File/Module related to [${filePath}] is referenced in future plan steps. ${status}.`
+            };
+        }
+
+        const senseCheck = await this.performSenseCheck(error);
+        const manifesto = this.architectureDigest.getManifest();
+        const domainFiles = Object.values(manifesto.domainModel);
+        const isStructural = filePath && domainFiles.some(m => filePath.includes(m.file));
+
+        if (isStructural && senseCheck.severity === 'critical') {
+            await this.hexagramManager.pinCard(1, 'Structural Breach', `Critical fault in ${filePath}: ${senseCheck.analysis}`, YaoState.OldYin);
+            
+            // Cognitive Immunology Phase 2: Meditative Constraints
+            if (ternary === CognitivePolarity.YIN || riskTolerance < 0.3) {
+                 logger.info({ ternary, riskTolerance }, 'System is highly Yin or risk-averse. Downgrading critical auto-repair severity to observational.');
+                 return {
+                     decision: CognitiveChoice.META,
+                     reasoning: `Observational Restraint: Critical structural break in [${filePath}], but system is in ${ternary} mode (Risk: ${riskTolerance}). Prioritizing manual developer observation.`
+                 };
+            }
+            
+            return {
+                decision: CognitiveChoice.META,
+                reasoning: `Critical Structural Break: ${error.message} in core manifest file [${filePath}]. Health: ${HealthStatus.Critical}.`
+            };
+        }
+
+        // Cognitive Immunology Phase 3: Holistic Visual Diagnostic for UI
+        const isUI = filePath?.toLowerCase().includes('renderer') || filePath?.toLowerCase().includes('ui') || filePath?.toLowerCase().includes('dashboard');
+        if (isUI && ternary === CognitivePolarity.YANG && (this.visionEngine || this.spatialVisionEngine) && this.chromaEngine) {
+             logger.info('UI fault detected during assertive Yang state. Invoking Visual/Spatial Sensory array.');
+             await this.hexagramManager.pinCard(3, 'Visual Diagnostic', `Deploying Chromanumber and SpatialVision to physically inspect failure in ${filePath}`, yao);
+             // We do not await full vision execution here, we just shape the decision heuristic to request physical inspection
+             return {
+                 decision: CognitiveChoice.EXTERNAL,
+                 reasoning: `Somatic Diagnostic Required: Flaw detected in visual component [${filePath}]. Invoking SpatialVisionEngine & Chromanumber UI inspection before attempting an algorithmic patch.`
+             };
+        }
+
+        await this.hexagramManager.pinCard(3, 'Neural Repair', `Healing ${filePath || 'system'}: ${senseCheck.analysis}`, YaoState.OldYang);
+
+        return {
+            decision: CognitiveChoice.SIMPLE,
+            reasoning: `Correction Needed: ${senseCheck.analysis}. Status: ${BuildStatus.Warning}. Triggering auto-patch turn via ${this.correctionModel}.`
+        };
+    }
+
+    private isFilePlanned(filePath: string, plan?: ExecutionPlan): boolean {
+        if (!plan) return false;
+        return plan.steps.some(step =>
+            JSON.stringify(step.args).includes(basename(filePath)) ||
+            (step.reasoning && step.reasoning.includes(basename(filePath)))
+        );
+    }
+
+    private isModulePlanned(errorMessage: string, plan?: ExecutionPlan): boolean {
+        if (!plan) return false;
+        const match = errorMessage.match(/module '(.+?)'/);
+        if (!match) return false;
+        const moduleName = match[1]!;
+        return plan.steps.some(step =>
+            JSON.stringify(step.args).includes(moduleName) ||
+            (step.reasoning && step.reasoning.includes(moduleName))
+        );
+    }
+
+    private async performSenseCheck(error: TSCError): Promise<{ severity: string; analysis: string }> {
+        const prompt = `Analyze this TSC error:
+        Error: ${error.file}:${error.line} - [${error.code}] ${error.message}
+        Determine if this is a minor type fix or a major structural break.
+        Format: JSON { "severity": "low|medium|high|critical", "analysis": "concise explanation" }`;
+
+        const result = await this.executor.call({ model: this.correctionModel, prompt });
+        if (!result.ok) {
+            return { severity: 'medium', analysis: 'Correction handler unavailable.' };
+        }
+
+        try {
+            const jsonStr = result.value.response.match(/\{[\s\S]*\}/)?.[0] || '{}';
+            const json = JSON.parse(jsonStr);
+            return {
+                severity: json.severity || 'medium',
+                analysis: json.analysis || 'Generic type mismatch suspected.'
+            };
+        } catch {
+            return { severity: 'medium', analysis: 'Failed to parse correction analysis.' };
+        }
+    }
+
+    public async healWithProcess(projectRoot: string): Promise<{ healed: boolean; output: string }> {
+        logger.info({ projectRoot }, 'Running biological verification (healWithProcess)');
+        try {
+            const { stdout, stderr } = await execAsync('npm run build', { cwd: projectRoot, timeout: 60000 });
+            return { healed: true, output: stdout + stderr };
+        } catch (error: unknown) {
+            const err = error as { stdout?: string; stderr?: string };
+            return { healed: false, output: (err.stdout || '') + (err.stderr || '') };
+        }
+    }
+
+    /**
+     * Phase 29: Hexagram-Driven Health Healing
+     * Evaluates substrate degradation, checks the hexagram gate, and routes to CodeEngine if permissible.
+     */
+    public async healSubstrateError(nodeHealth: { path: string, role: string, category: string, status: string, details?: string }): Promise<{ decision: CognitiveChoice, reasoning: string }> {
+        const hexagram = this.hexagramManager;
+        const interpretation = hexagram.getInterpretation();
+        const strategy = interpretation.strategy.split(':')[0]?.trim() || '';
+        const yao = hexagram.getYaoState?.() || YaoState.YoungYang;
+
+        logger.info({ node: nodeHealth.role, status: nodeHealth.status, strategy }, 'Attempting substrate healing...');
+
+        const BLOCKING_STRATEGIES = ['FREEZE', 'ROLLBACK', 'PAUSE', 'DEEP_DORMANCY'];
+
+        // 1. Hexagram Gate
+        if (BLOCKING_STRATEGIES.includes(strategy) || yao === YaoState.OldMixed) {
+            await hexagram.pinCard(2, 'Healing Suspended', `Node ${nodeHealth.role} (${nodeHealth.status}) auto-repair blocked by ${strategy} strategy / chaotic state.`, yao);
+            return {
+                decision: CognitiveChoice.META,
+                reasoning: `Healing suspended due to ${strategy} strategy or OldMixed chaos. Node: ${nodeHealth.role} requires manual intervention.`
+            };
+        }
+
+        // 2. Acknowledge intent to heal
+        await hexagram.pinCard(2, 'Active Substrate Healing', `Initiating algorithmic repair protocols for ${nodeHealth.role}. Issue: ${nodeHealth.details || 'Unknown'}`, YaoState.OldYang);
+
+        // 3. Provider/Endpoint Healing
+        // For endpoints (e.g., 'ollama', 'cloudflare'), we route to the EndpointHealer
+        if (nodeHealth.category === 'PROVIDER') {
+            if ('getHealer' in this.executor) {
+                const healer = (this.executor as any).getHealer();
+                if (healer && typeof healer.diagnoseAndHeal === 'function') {
+                    logger.info({ provider: nodeHealth.role }, 'Routing degraded provider to EndpointHealer');
+                    const diag = await healer.diagnoseAndHeal(nodeHealth.role, nodeHealth.details || 'Unknown failure', undefined);
+                    return {
+                        decision: diag.resolved ? CognitiveChoice.SIMPLE : CognitiveChoice.META,
+                        reasoning: diag.resolved 
+                            ? `EndpointHealer successfully resolved ${nodeHealth.role}: ${diag.resolution}`
+                            : `EndpointHealer could not resolve ${nodeHealth.role}: ${diag.resolution}`
+                    };
+                }
+            }
+        }
+
+        // 4. Code-level Healing (Physical TS file fix)
+        // Ensure path exists and is a .ts file (avoids trying to run CodeEngine on virtual nodes or directories)
+        if (this.codeEngine && nodeHealth.path && nodeHealth.path.endsWith('.ts')) {
+            const absolutePath = join(process.cwd(), nodeHealth.path);
+            if (fs.existsSync(absolutePath)) {
+                logger.info({ file: absolutePath }, 'Routing degraded node to CodeEngine.fix()');
+                const fixRes = await this.codeEngine.fix({ filePath: absolutePath, dryRun: false });
+                
+                return {
+                    decision: fixRes.ok ? CognitiveChoice.SIMPLE : CognitiveChoice.META,
+                    reasoning: fixRes.ok ? `CodeEngine successfully applied algorithmic fix to ${nodeHealth.path}` : `CodeEngine algorithmic fix failed for ${nodeHealth.path}: ${fixRes.error}`
+                };
+            }
+        }
+
+        return {
+             decision: CognitiveChoice.META,
+             reasoning: `No explicit algorithmic repair path available for ${nodeHealth.role} (${nodeHealth.category}). Requires developer intervention.`
+        };
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        const digOk = !!this.architectureDigest;
+        const hexOk = !!this.hexagramManager;
+        return {
+            online: digOk && hexOk,
+            details: `T-Cell Repair: Digest(${digOk}), Hexagram(${hexOk})`
+        };
+    }
+}

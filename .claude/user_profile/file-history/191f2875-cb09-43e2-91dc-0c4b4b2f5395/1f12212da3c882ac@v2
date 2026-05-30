@@ -1,0 +1,47 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## 🛠 Development Commands
+
+### Root Project
+- **Build**: `npm run build` (compiles TypeScript to `dist/`)
+- **Development**: `npm run dev` (starts the CLI via `tsx`)
+- **Infrastructure**: 
+  - `npm run switchboard` (starts the switchboard server)
+  - `npm run bridge` (starts the sovereign bridge server)
+- **Diagnostics**: `npm run audit` (runs the full project audit via PowerShell)
+
+### RSMV Viewer (`/rsmv`)
+- **Dependency Restore**: `npm install`
+- **Native Module Rebuild**: `npx electron-rebuild` (Critical after Electron version bumps to fix `better-sqlite3`)
+- **Execution**: Run via the root `pog2` CLI or launch the electron viewer from `dist/electronviewer.js`.
+
+## 🧠 Sovereign Architecture
+
+### 1. The Sovereign Trinity
+The system's stability and intelligence rely on three core substrates:
+- **GhostLimb (`src/limbs/metaphysical/GhostLimb.ts`)**: The final observer and normalizer. It provides the "Sovereign Fallback" when cloud APIs fail and ensures output integrity via local Ollama (e.g., `deepseek-r1:8b`).
+- **ModelRolodex (`src/api/ai/ModelRolodex.ts`)**: The living catalog of AI capabilities. It manages model reputation, latency, and task-type mapping (text, vision, embedding) across providers (Ollama, Cloudflare, Gemini, HF).
+- **Sovereign Services (`src/services/`)**: The high-level contracts for external infrastructure (Cloudflare, Google).
+
+### 2. The Hybrid Mirror Pattern (Path C)
+The system implements a decoupled "Authentic" vs "Visual" architecture:
+- **RSCServerDO**: The authentic server instance hosting the shared world state.
+- **RSMVServerDO**: A "Mirror/Observer" Durable Object. It connects to `RSCServerDO`, translates authentic state into RS3-format telemetry, and streams `WorldTelemetryFrame` + `IdentityKitState` to the Three.js viewer.
+- **D1/R la-Sovereign**: The world state is anchored in `cf://d1-openrsc-prod`, while high-fidelity assets (GLTFs) are stored in R2.
+
+### 3. Neurological Laws
+- **The 61-Minute Law**: Local Ollama compute starvation triggers a failover to HuggingFace. A strict **61-minute cooldown** must be observed before attempting to route back to local compute.
+- **Ternary Logic**: Decision paths are classified as **Yang** (Deep/Reasoning), **YinYang** (Mid/Executive), or **Yin** (Reflex/Fast).
+- **Ghost Normalization**: All high-stakes outputs should be validated/normalized through `GhostLimb` to prevent model drift.
+
+## 📂 Sovereign Anchors (D:\ Drive)
+The project operates as a "Living Organism" with persistent physical anchors:
+- **`D:\sovereign`**: The authoritative storage root.
+- **`D:\sovereign\learning\sovereign-learning.db`**: The vector database for pedagogical memory.
+- **`D:\rsmv_inspector`**: The operational hub for 3D substrate forensics.
+
+## 📡 Networking
+- **Viewer WebSocket**: Transitioning from `ws://localhost:8789` (Local Bridge) to `wss://rsmv.kristain33rs.workers.dev/ws` (RSMVServerDO).
+- **Sovereign Bridge**: Handshakes must adhere to the protocol in `src/viewer/SovereignBridge.ts`.

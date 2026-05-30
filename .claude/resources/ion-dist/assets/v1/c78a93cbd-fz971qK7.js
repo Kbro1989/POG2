@@ -1,0 +1,1 @@
+import{r as e,j as r}from"./vendor-Dx0TSbrP.js";import{c as o}from"./index-2kTGNrUD.js";const d=e.memo(({children:e,className:d})=>r.jsx("div",{className:o("flex-1 flex flex-col min-h-0 overflow-hidden bg-bg-000 border border-border-300 rounded-xl p-5",d),children:e}));d.displayName="FileContentContainer";export{d as F};

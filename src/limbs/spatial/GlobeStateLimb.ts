@@ -32,7 +32,7 @@ export class GlobeStateLimb {
         nodes: {},
         lastSync: Date.now()
     };
-    private endpoint: string = 'ws://127.0.0.1:8787/party/globe';
+    private endpoint: string = process.env.POG2_GLOBE_ENDPOINT || 'wss://multiplayer-globe-pog2.kristain33rs.workers.dev/parties/globe/pog2-sovereign';
     private subscribers: Map<string, Array<(data: any) => void>> = new Map();
     private connectPromise: Promise<Result<boolean>> | null = null;
 

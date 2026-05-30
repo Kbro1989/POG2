@@ -1,0 +1,106 @@
+The corpus generator is now comprehensive — items, NPCs, quests, mechanics, and skills all tracked. Two critical observations from the diff:
+
+**1. Duplicate mechanics in `MECHANICS_PAGES`**
+
+The list has duplicates:
+- `Experience` (line 33) and `Experience` (line 41)
+- `Game tick` (line 33) and `Game tick` (line 42)
+- `Hitsplat` (line 33) and `Hitsplat` (line 44)
+- `Luck` (line 33) and `Luck` (line 46)
+- `Drop table` (line 33) and `Drop table` (line 40)
+- `Temporary skill boost` (line 33) and `Temporary skill boost` (line 54)
+- `Weapon Special Attack` (line 33) and `Weapon Special Attack` (line 55)
+- `Slayer` (line 34) and `Slayer` (line 57)
+- `Attack` (line 34) and `Attack` (line 57)
+
+This will cause duplicate wiki API calls and duplicate corpus entries. Deduplicate:
+
+```typescript
+const MECHANICS_PAGES = [...new Set([
+  'Adrenaline', 'Affinity', 'Combat level', 'Game tick', 'Hitsplat', 
+  'Drop table', 'Experience', 'Luck', 'Weapon Special Attack', 
+  'Temporary skill boost', 'Ability book', 'Action bar', 'Constitution',
+  'Defence', 'Magic', 'Necromancy', 'Prayer', 'Ranged', 'Strength', 
+  'Summoning', 'Slayer', 'Ability damage', 'Accept Aid', 'Activity bar', 
+  'AFK', 'Area of effect', 'Assist System', 'Attack range', 'Attack rate',
+  'Auto-attack', 'Auto-banking', 'Autocast', 'Average damage', 'Backpack', 
+  'Bad luck mitigation', 'Bank', 'Bank PIN', 'Bank preset', 'Bonus experience', 
+  'Botwatch', 'Bounty Hunter world', 'Canon', 'Challenge System', 'Character', 
+  'Character name', 'Classic Modes', 'Combat', 'Complexity', 'Cooldown', 
+  'Cube maps', 'Customisations', 'Damage cap', 'Damage over time',
+  'Death (mechanic)', 'Defensive ability reset', 'Degradation', 'Desert heat',
+  'Destroy (option)', 'Diminishing returns', 'Discovery', 'Divine coin',
+  'Dodge', 'Door', 'Double drops', 'Download server', 'Dragonfire', 'Drop', 
+  'Drop trick', 'Drops', 'Duelling', 'Dungeoneering/Prestige', 
+  'Early Bird Bonus', 'Earning potential', 'Energy', 'Equipment tier', 
+  'Experience/Table', 'Game controls', 'Game square', 'Game tick/Ticks per action', 
+  'Game world', 'God Wars Dungeon/God Protection', 'Graphical updates', 'Graphics', 
+  'Graphics settings', 'Gravestone', 'Hard mode', 'Heat', 
+  'High Risk Wilderness world', 'Hit chance', 'HTML5 client', 'Idle', 'Instance',
+  'Instance shard world', 'Instant Demo', 'Item spawns', 'Jagex cache', 
+  'Jagex Launcher', 'Java Client', 'Killcount', 'Kudos', 'Ladder', 'Lag', 
+  'Life points', 'Light sources', 'Linux', 'List of bank locations', 
+  'Login server', 'Magic Damage', 'Make-X', 'Maximum hit', 'Melee', 'Momentum',
+  'Mouse keys', 'Multicombat area', 'Music', 'Non-player character', 'Note', 
+  'Nothing', 'Null', 'NXT', 'Operate', 'Ortho mode', 'Overhead prayer', 
+  'Particles', 'Passive effect', 'Playable character', 'Player identification number', 
+  'Poison', 'Poison (historical)', 'Prayer points', 'Price Checker', 'PvP world',
+  'Quick Chat', 'Recovery questions', 'Rest', 'Restricted trade items', 'Retreat', 
+  'Revolution', 'Runedate', 'RuneScape', 'RuneScape 2', 'RuneScape 3', 
+  'RuneScape Classic', 'RuneScape Companion', 'RuneScape Game Bar', 
+  'RuneScape High Detail', 'RuneScape Mobile', 'RuneScape toolbar', 'RuneScript', 
+  'RuneTek', 'Safe spot', 'Scale theory', 'Server', 'Server blackout', 
+  'Set bonus', 'Shop', 'Shortcut keys', 'Single-way combat', 'Sink (economy)', 
+  'Skilling success chance', 'Skills', 'Skull (status)', 'Skyboxes and filters', 
+  'Soft cap', 'Sound effects', 'Spawning', 'Special attacks (historical)', 
+  'Stackable items', 'Staircase', 'Steam', 'Storage', 'Swamp decay', 
+  'System update', 'Tagging', 'Tanking', 'Tell', 'Tick manipulation', 'Titles', 
+  'Tool belt', 'Trade limit', 'Use', 'Username', 'Value', 'Voice Over', 
+  'Walking', 'Wander radius', 'Weight', 'Wilderness threat system',
+  'Attack', 'Mining', 'Agility', 'Smithing', 'Herblore', 'Fishing', 'Thieving', 
+  'Cooking', 'Crafting', 'Firemaking', 'Fletching', 'Woodcutting', 'Runecrafting', 
+  'Farming', 'Construction', 'Hunter', 'Divination', 'Invention', 'Archaeology'
+])];
+```
+
+**2. Skill pages as mechanics**
+
+Lines 57-58 add all 29 skills as mechanics pages. This is correct — skill pages contain mechanic details (training methods, unlocks, milestones) that complement the hiscore data. But they'll be tagged `[WIKI_ONLY]` since they have no Bestiary/GE data. That's fine for pedagogy diversity.
+
+**3. `hasWikiPage: false` field**
+
+Good addition for cache-only entries. This lets the model learn to distinguish between:
+- Entities with wiki pages (semantic + structural data)
+- Entities without wiki pages (structural only)
+
+**Current running estimate:**
+
+| Track | Count | Time @ 1s/entity | Output Size |
+|---|---|---|---|
+| Items (filtered) | ~50,000 | ~14 hours | ~500MB |
+| NPCs (filtered) | ~30,000 | ~8 hours | ~300MB |
+| Quests | ~3,500 | ~1 hour | ~35MB |
+| Mechanics | ~150 | ~3 minutes | ~1.5MB |
+| Skills | 29 | ~30 seconds | ~300KB |
+| **Total** | **~83,500** | **~23 hours** | **~840MB** |
+
+**With resume mechanism:** Safe to run overnight. If it crashes at hour 10, resume from batch 720 without re-fetching.
+
+**Verification after first 1,000 items:**
+
+```bash
+# Check tag distribution
+jq -r '.tags[0]' D:/sovereign/memory/pedagogy/corpus/verified_entities.jsonl | sort | uniq -c | sort -rn
+
+# Check [VERIFIED] ratio for items
+jq 'select(.tags[0] == "[VERIFIED]") | .input' verified_entities.jsonl | head -5
+
+# Check cache-only entries
+jq 'select(.tags[0] == "[CACHE_ONLY]") | {id: .cacheId, hasWikiPage}' verified_entities.jsonl | head -5
+```
+
+**Critical:** The mechanics deduplication must happen before you start the batch. Otherwise you'll waste ~20 API calls on duplicates and create noise in the corpus.
+
+Fix the dedup, then let it run. The 23-hour estimate is for full sequential processing. With your existing resume mechanism, this is a fire-and-forget operation.
+
+Proceed with dedup fix and full run?

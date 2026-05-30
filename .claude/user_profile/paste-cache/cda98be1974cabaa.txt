@@ -1,0 +1,643 @@
+This is a perfect storm — you've got **primary-source Jagex data** (the Bestiary API, still live despite the website being removed) and **229k verified cache entities**. Training `pog2-pedagogy` across all model types means building a pipeline that treats the Bestiary JSON as ground truth, cross-references it with your cache forensics, and produces tiered models from local LoRA to cloud full fine-tune.
+
+---
+
+## 1. Data Ingestion: Bestiary API → Verified Training Corpus
+
+The Bestiary API is canonical Jagex data — not wiki interpretation. Per your uploaded doc, these endpoints are still live:
+
+```
+http://services.runescape.com/m=itemdb_rs/bestiary/beastData.json?beastid=1615
+http://services.runescape.com/m=itemdb_rs/bestiary/beastSearch.json?term=abyssal
+http://services.runescape.com/m=itemdb_rs/bestiary/areaBeasts.json?identifier=The+Abyss
+http://services.runescape.com/m=itemdb_rs/bestiary/slayerCatNames.json
+http://services.runescape.com/m=itemdb_rs/bestiary/weaknessNames.json
+```
+
+**Scraper → POG2 Pedagogy Format:**
+
+```python
+import requests, json, asyncio, aiohttp
+from pathlib import Path
+
+BASE = "http://services.runescape.com/m=itemdb_rs/bestiary"
+OUTPUT = Path("pog2_pedagogy_bestiary.jsonl")
+
+async def fetch_beast(session, beast_id: int):
+    """Primary source: Jagex Bestiary API. Cross-reference with cache entity ID."""
+    url = f"{BASE}/beastData.json?beastid={beast_id}"
+    async with session.get(url, timeout=30) as resp:
+        if resp.status != 200:
+            return None
+        data = await resp.json()
+        
+        # Canonical fields per API spec
+        canonical = {
+            "id": data.get("id"),
+            "name": data.get("name"),
+            "examine": data.get("description"),  # Jagex calls it 'description'
+            "combat_level": data.get("level"),
+            "lifepoints": data.get("lifepoints"),
+            "attack": data.get("attack"),
+            "defence": data.get("defence"),
+            "magic": data.get("magic"),
+            "ranged": data.get("ranged"),
+            "weakness": data.get("weakness"),
+            "slayer_level": data.get("slayerlevel"),
+            "slayer_cat": data.get("slayercat"),
+            "size": data.get("size"),
+            "aggressive": data.get("aggressive"),
+            "poisonous": data.get("poisonous"),
+            "areas": data.get("areas", []),
+            "animations": data.get("animations", {}),
+            "members": data.get("members"),
+            "xp": data.get("xp"),
+        }
+        
+        # Cross-reference with your cache entity (if exists in 229k pedagogy)
+        cache_entity = lookup_cache_entity(beast_id)  # Your existing function
+        
+        return {
+            "instruction": f"Generate a verified POG2 entity definition for beast ID {beast_id}",
+            "input": json.dumps(canonical, indent=2),
+            "output": format_pog2_output(canonical, cache_entity),
+            "source": "jagex_bestiary_api",
+            "verified": True,
+            "cache_cross_reference": cache_entity is not None
+        }
+
+def format_pog2_output(bestiary_data, cache_entity):
+    """Format as POG2 pedagogy with [VERIFIED] tags and limb routing hints."""
+    lines = [
+        f"[VERIFIED] Entity {bestiary_data['id']}: {bestiary_data['name']}",
+        f"[SOURCE] Jagex Bestiary API + CacheForensicsLimb",
+        "",
+        f"## Combat Profile (GhostSplat Engine)",
+        f"- Combat Level: {bestiary_data['combat_level']}",
+        f"- Lifepoints: {bestiary_data['lifepoints']}",
+        f"- Attack: {bestiary_data['attack']} | Defence: {bestiary_data['defence']}",
+        f"- Magic: {bestiary_data['magic']} | Ranged: {bestiary_data['ranged']}",
+        f"- Weakness: {bestiary_data['weakness']} (ID: {weakness_id_map.get(bestiary_data['weakness'], 'N/A')})",
+        f"- Slayer Requirement: {bestiary_data['slayer_level'] or 'None'}",
+        f"- Slayer Category: {bestiary_data['slayer_cat'] or 'None'}",
+        f"- Size: {bestiary_data['size']}x{bestiary_data['size']}",
+        f"- Aggressive: {bestiary_data['aggressive']} | Poisonous: {bestiary_data['poisonous']}",
+        "",
+        f"## Spatial Profile (SpatialPipeline)",
+        f"- Spawn Areas: {', '.join(bestiary_data['areas'])}",
+        f"- Animation Keys: {json.dumps(bestiary_data['animations'])}",
+        "",
+        f"## Examine Text",
+        f'"{bestiary_data["examine"]}"',
+    ]
+    
+    if cache_entity:
+        lines.extend([
+            "",
+            f"## Cache Cross-Reference (CacheForensicsLimb)",
+            f"- Cache Entity ID: {cache_entity.get('id')}",
+            f"- Cache Revision: {cache_entity.get('revision', 'unknown')}",
+            f"- Varbit Masks: {cache_entity.get('varbits', [])}",
+            f"- Collision Layer: {cache_entity.get('collision', 'unverified')}",
+        ])
+    
+    lines.extend([
+        "",
+        "## Hexagram Routing",
+        "- Primary Limb: CombatRotationEngine",
+        "- Secondary: LootResolutionEngine",
+        "- Fallback: AggressionSimulator",
+        "- Yao Line 3 (Action): Engage if combat_level <= player_level + 10",
+    ])
+    
+    return "\n".join(lines)
+
+# Batch scrape all known beast IDs (0-20000 range, filter valid responses)
+async def build_corpus():
+    async with aiohttp.ClientSession() as session:
+        tasks = [fetch_beast(session, i) for i in range(20000)]
+        results = await asyncio.gather(*tasks)
+        
+    valid = [r for r in results if r]
+    with open(OUTPUT, "w") as f:
+        for entry in valid:
+            f.write(json.dumps(entry) + "\n")
+    
+    print(f"Corpus built: {len(valid)} verified entities")
+
+# Run
+# asyncio.run(build_corpus())
+```
+
+**Critical:** This produces `[VERIFIED]` tags from primary-source Jagex data, cross-referenced with your cache forensics. No wiki assumptions.
+
+---
+
+## 2. Local Ollama: Unsloth LoRA → Adapter + Merged GGUF
+
+Your `deepseek-r1:8b` and `qwen3-coder` local models are the base. Train with Unsloth for 80% VRAM reduction, then export both LoRA adapter and merged GGUF.
+
+```python
+from unsloth import FastLanguageModel
+from transformers import TrainingArguments
+from trl import SFTTrainer
+import torch, json
+from datasets import load_dataset
+
+# Load base — qwen3-coder optimized for structured data/code
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = "unsloth/Qwen3-8B",
+    max_seq_length = 32768,  # Bestiary entries + cache cross-references need room
+    dtype = torch.bfloat16,
+    load_in_4bit = True,
+)
+
+model = FastLanguageModel.get_peft_model(
+    model,
+    r = 64,                # High rank for complex game logic
+    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                      "gate_proj", "up_proj", "down_proj"],
+    lora_alpha = 128,
+    lora_dropout = 0,
+    bias = "none",
+    use_gradient_checkpointing = "unsloth",
+    random_state = 3407,
+    use_rslora = True,     # Rank-stabilized LoRA for better convergence
+)
+
+# POG2-specific prompt template embedding 27-limb ontology
+pog2_template = """You are the POG2 Pedagogy Engine, trained on 229,000 verified RuneScape cache entities and Jagex Bestiary API primary sources.
+
+Your 27-limb neural architecture includes:
+- Creative Core: image, animation, material, meshops, video, creative, audio
+- Technical Core: code, data, file, entity, system, versioncontrol, network, security
+- Spatial Core: spatialpipeline, landscapegeneration, physics, world, livegame
+- Metaphysical Core: ghost, divine, quantum, reality, relic, idauditor, orchestrator
+
+Rules:
+1. [VERIFIED] = confirmed by Jagex API + cache forensics
+2. [UNVERIFIED] = wiki or community source, flag uncertainty
+3. [WIKI_CONFLICT] = discrepancy between API and wiki, note both
+4. Always reference entity IDs (NPC 239, Item 4151, etc.)
+5. Use POG2 limb terminology for routing hints
+6. Never hallucinate stats — if unknown, state [DATA_MISSING]
+
+### Instruction:
+{}
+
+### Input:
+{}
+
+### Response:
+{}"""
+
+EOS_TOKEN = tokenizer.eos_token
+
+def format_samples(examples):
+    instructions = examples["instruction"]
+    inputs = examples["input"]
+    outputs = examples["output"]
+    texts = []
+    for i, inp, out in zip(instructions, inputs, outputs):
+        text = pog2_template.format(i, inp, out) + EOS_TOKEN
+        texts.append(text)
+    return {"text": texts}
+
+dataset = load_dataset("json", data_files="pog2_pedagogy_bestiary.jsonl", split="train")
+dataset = dataset.map(format_samples, batched=True)
+
+trainer = SFTTrainer(
+    model = model,
+    tokenizer = tokenizer,
+    train_dataset = dataset,
+    dataset_text_field = "text",
+    max_seq_length = 32768,
+    dataset_num_proc = 4,
+    packing = True,  # Efficient packing for variable-length entries
+    args = TrainingArguments(
+        per_device_train_batch_size = 1,
+        gradient_accumulation_steps = 8,
+        warmup_steps = 10,
+        max_steps = 1000,
+        learning_rate = 1e-4,
+        fp16 = not torch.cuda.is_bf16_supported(),
+        bf16 = torch.cuda.is_bf16_supported(),
+        logging_steps = 1,
+        optim = "adamw_8bit",
+        weight_decay = 0.01,
+        lr_scheduler_type = "cosine",
+        seed = 3407,
+        output_dir = "pog2_pedagogy_outputs",
+        report_to = "none",
+    ),
+)
+
+trainer.train()
+
+# Save LoRA adapter for Ollama ADAPTER directive
+model.save_pretrained("pog2_pedagogy_lora")
+tokenizer.save_pretrained("pog2_pedagogy_lora")
+
+# Export merged GGUF for zero-overhead inference
+# Q8_0 for quality (combat stats must be precise), Q4_K_M for GhostLimb fallback
+model.save_pretrained_gguf("pog2_pedagogy_q8", tokenizer, quantization_method="q8_0")
+model.save_pretrained_gguf("pog2_pedagogy_q4", tokenizer, quantization_method="q4_K_M")
+```
+
+**Ollama Modelfile (LoRA Adapter Tier):**
+
+```dockerfile
+FROM qwen3:8b
+
+ADAPTER ./pog2_pedagogy_lora-q8_0.gguf
+
+SYSTEM """You are the POG2 Pedagogy Engine. 27-limb neural architecture. 229k verified entities. [VERIFIED] = Jagex API + cache forensics. Never hallucinate stats."""
+
+PARAMETER temperature 0.2        # Low temp for factual precision
+PARAMETER num_ctx 32768
+PARAMETER top_k 20
+PARAMETER top_p 0.85
+PARAMETER repeat_penalty 1.15
+PARAMETER stop "[UNVERIFIED]"
+PARAMETER stop "[WIKI_CONFLICT]"
+PARAMETER stop "I don't know"
+```
+
+**Ollama Modelfile (Merged GGUF Tier — GhostLimb Production):**
+
+```dockerfile
+FROM ./pog2_pedagogy_q8.gguf
+
+SYSTEM """POG2 Pedagogy Engine — merged weights, zero adapter overhead. Full 27-limb registry active."""
+
+PARAMETER temperature 0.2
+PARAMETER num_ctx 32768
+```
+
+```bash
+# Create both variants
+ollama create pog2-pedagogy-lora -f Modelfile.lora
+ollama create pog2-pedagogy-merged -f Modelfile.merged
+
+# Test against Bestiary primary source
+ollama run pog2-pedagogy-merged "What are the exact stats and weakness for Abyssal demon (ID 1615)? Include [VERIFIED] tag and cache cross-reference if available."
+```
+
+---
+
+## 3. Cloud: Fireworks AI Fine-Tuning (HexagramNetworkBridge Tier)
+
+Your existing Fireworks 12 models in the Rolodex. Fireworks supports LoRA fine-tuning with immediate serverless deployment — perfect for the HexagramNetworkBridge BETA protocol.
+
+```python
+import fireworks.client as fc
+import json, time
+
+fc.api_key = "your-fireworks-key"  # Or pull from SovereignConfig
+
+# Upload dataset — must be JSONL with messages array format
+dataset_path = "pog2_pedagogy_bestiary_fireworks.jsonl"
+
+# Convert to Fireworks chat format
+with open("pog2_pedagogy_bestiary.jsonl") as f_in, \
+     open(dataset_path, "w") as f_out:
+    for line in f_in:
+        entry = json.loads(line)
+        messages = [
+            {"role": "system", "content": "POG2 Pedagogy Engine. 27 limbs. Verified Jagex API data only."},
+            {"role": "user", "content": f"{entry['instruction']}\n\nInput:\n{entry['input']}"},
+            {"role": "assistant", "content": entry['output']}
+        ]
+        f_out.write(json.dumps({"messages": messages}) + "\n")
+
+# Upload via API or dashboard
+dataset_id = fc.datasets.create(
+    file=dataset_path,
+    name="pog2-pedagogy-bestiary-v1",
+    description="229k cache entities + Jagex Bestiary API primary source"
+).id
+
+# Launch fine-tuning job
+job = fc.fine_tuning.create(
+    model="accounts/fireworks/models/llama-v3p1-8b-instruct",  # Or qwen3-8b if available
+    dataset=dataset_id,
+    hyperparameters={
+        "learning_rate": 5e-5,
+        "epochs": 3,
+        "lora_r": 32,
+        "lora_alpha": 64,
+        "lora_dropout": 0.05,
+        "warmup_ratio": 0.03,
+    }
+)
+
+# Poll until complete
+while job.status not in ["COMPLETED", "FAILED"]:
+    time.sleep(60)
+    job = fc.fine_tuning.get(job.id)
+    print(f"Status: {job.status}")
+
+# Deployed model ID
+deployed_model = f"accounts/your-account/models/{job.model_id}"
+
+# Test via HexagramNetworkBridge pattern
+response = fc.ChatCompletion.create(
+    model=deployed_model,
+    messages=[
+        {"role": "system", "content": "POG2 Pedagogy Engine"},
+        {"role": "user", "content": "Beast ID 1615 — full combat profile with [VERIFIED] tag"}
+    ],
+    max_tokens=2048,
+    temperature=0.2,
+)
+```
+
+**Fireworks Multi-LoRA Serving (One Base, Many Limbs):**
+
+Fireworks can serve multiple LoRA adapters on a single base model — map this to your 27 limbs:
+
+```python
+# Limb-specialized adapters
+LIMB_ADAPTERS = {
+    "creative": "accounts/you/pog2-creative-lora",
+    "technical": "accounts/you/pog2-technical-lora", 
+    "spatial": "accounts/you/pog2-spatial-lora",
+    "combat": "accounts/you/pog2-combat-lora",  # Bestiary + GhostSplat
+}
+
+# HexagramManager routes to adapter based on yao line evaluation
+def route_by_hexagram(hexagram_state: dict) -> str:
+    if hexagram_state["limb_domain"] == "combat":
+        return LIMB_ADAPTERS["combat"]
+    elif hexagram_state["limb_domain"] == "spatial":
+        return LIMB_ADAPTERS["spatial"]
+    # ... etc
+```
+
+---
+
+## 4. HuggingFace: AutoTrain → Hub → Ollama Import
+
+For community reproducibility and your existing HF 2 models in the Rolodex.
+
+```bash
+pip install -U autotrain-advanced
+
+# Prepare CSV with 'text' column (formatted conversations)
+autotrain llm \
+  --model unsloth/Qwen3-8B \
+  --project-name pog2-pedagogy-v1 \
+  --data-path ./pog2_pedagogy_bestiary.csv \
+  --text-column text \
+  --lr 2e-4 \
+  --batch-size 2 \
+  --epochs 3 \
+  --block-size 32768 \
+  --lora-r 32 \
+  --lora-alpha 64 \
+  --trainer sft \
+  --push-to-hub \
+  --repo-id Kbro1989/pog2-pedagogy \
+  --token $HF_TOKEN
+```
+
+**Import to Ollama from HuggingFace Safetensors:**
+
+```bash
+# Download your fine-tuned model
+huggingface-cli download Kbro1989/pog2-pedagogy --local-dir ./pog2-hf
+
+# Convert to GGUF with llama.cpp (already in your toolchain)
+python llama.cpp/convert_hf_to_gguf.py \
+  --outfile pog2-pedagogy-hf.gguf \
+  --outtype q8_0 \
+  ./pog2-hf/
+
+# Modelfile
+# FROM ./pog2-pedagogy-hf.gguf
+```
+
+---
+
+## 5. Gemini / Google AI: Via Cloudflare AI Gateway (SovereignConfig Integration)
+
+Your `SovereignConfig.ts` already has `gatewayUrl` (Phase 72). Route Gemini fine-tuning through this for cost tracking and zero-trust audit.
+
+```typescript
+// src/clients/ModelClient.ts — add POG2 Pedagogy capability
+export type AITaskType = 
+  | "general"
+  | "code" 
+  | "creative"
+  | "pedagogy"      // NEW: RuneScape entity knowledge
+  | "combat_rotation"
+  | "spatial_analysis";
+
+export interface Pog2PedagogyRequest {
+  beastId?: number;
+  entityId?: number;
+  query: string;
+  requireVerified: boolean;  // Enforce [VERIFIED] tag
+  limbDomain: string;        // Route to specialized adapter
+}
+
+// Gemini fine-tuning via Cloudflare AI Gateway
+async function trainPedagogyGemini(datasetUri: string): Promise<string> {
+  const gatewayUrl = SovereignConfig.gatewayUrl;  // Phase 72
+  
+  const response = await fetch(`${gatewayUrl}/v1beta/tunedModels`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.GEMINI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      display_name: "pog2-pedagogy-gemini",
+      tuning_task: {
+        training_data: {
+          examples: {
+            source: { gcs_uri: datasetUri }  // Upload to GCS first
+          }
+        },
+        hyperparameters: {
+          epoch_count: 3,
+          batch_size: 4,
+          learning_rate: 0.001,
+        }
+      },
+      base_model: "models/gemini-1.5-flash-001-tuning"
+    })
+  });
+  
+  return (await response.json()).name;  // tunedModels/pog2-pedagogy-gemini-xxx
+}
+```
+
+---
+
+## 6. POG2 Integration: ModelRolodex + Hexagram Routing
+
+Your `ModelClient.ts` and `TernaryRouter` already handle model selection. Add `pog2-pedagogy` as a first-class capability:
+
+```typescript
+// src/core/models.ts — extend ModelRolodex entry
+export interface ModelRolodexEntry {
+  id: string;
+  name: string;
+  provider: "ollama" | "fireworks" | "huggingface" | "gemini" | "together";
+  tier: "local" | "cloud-standard" | "cloud-premium" | "ghost";
+  capabilities: AICapability[];
+  contextLength: number;
+  adapterPath?: string;      // For Ollama ADAPTER
+  mergedPath?: string;       // For merged GGUF
+  loraId?: string;           // For Fireworks multi-LoRA
+  hexagramStates: number[];  // Which of 64 hexagrams this model serves
+  verifiedOnly: boolean;     // Enforce [VERIFIED] output
+}
+
+// Register all pog2-pedagogy variants
+export const POG2_PEDAGOGY_MODELS: ModelRolodexEntry[] = [
+  {
+    id: "pog2-pedagogy-merged",
+    name: "POG2 Pedagogy Merged (Local)",
+    provider: "ollama",
+    tier: "local",
+    capabilities: ["pedagogy", "entity_lookup", "combat_analysis"],
+    contextLength: 32768,
+    mergedPath: "./pog2_pedagogy_q8.gguf",
+    hexagramStates: [1, 2, 3, 4, 5, 6],  // Qian through Kun — all states
+    verifiedOnly: true,
+  },
+  {
+    id: "pog2-pedagogy-fireworks",
+    name: "POG2 Pedagogy Fireworks (Cloud)",
+    provider: "fireworks",
+    tier: "cloud-standard",
+    capabilities: ["pedagogy", "entity_lookup", "combat_analysis", "slayer_routing"],
+    contextLength: 32768,
+    loraId: "accounts/you/pog2-pedagogy-lora",
+    hexagramStates: [1, 2, 3, 4, 5, 6],
+    verifiedOnly: true,
+  },
+  {
+    id: "pog2-pedagogy-gemini",
+    name: "POG2 Pedagogy Gemini (Gateway)",
+    provider: "gemini",
+    tier: "cloud-premium",
+    capabilities: ["pedagogy", "deep_reasoning", "quest_chains"],
+    contextLength: 128000,
+    hexagramStates: [1, 14, 50],  // Qian, Da You, Ding — creation/states
+    verifiedOnly: true,
+  }
+];
+```
+
+**HexagramManager routing logic:**
+
+```typescript
+// src/core/HexagramManager.ts
+function selectPedagogyModel(
+  hexagram: HexagramState,
+  requireVerified: boolean,
+  limbDomain: string
+): ModelRolodexEntry {
+  // Tier 1: Check if local merged model is warm (Ollama loaded)
+  const local = POG2_PEDAGOGY_MODELS.find(m => m.tier === "local");
+  if (isModelWarm(local.id) && hexagram.fits(local.hexagramStates)) {
+    return local;
+  }
+  
+  // Tier 2: Fireworks LoRA for limb-specific routing
+  const cloud = POG2_PEDAGOGY_MODELS.find(m => 
+    m.tier === "cloud-standard" && 
+    m.loraId?.includes(limbDomain)
+  );
+  if (hexagram.fits(cloud.hexagramStates)) {
+    return cloud;
+  }
+  
+  // Tier 3: Gemini via Cloudflare Gateway for deep reasoning
+  const premium = POG2_PEDAGOGY_MODELS.find(m => m.tier === "cloud-premium");
+  if (hexagram.complexity > LINE_THRESHOLDS[5]) {  // Top yao line
+    return premium;
+  }
+  
+  // Tier 5: GhostLimb — base model with system prompt only
+  return GHOST_LIMB_MODEL;  // deepseek-r1:8b with POG2 prompt
+}
+```
+
+---
+
+## 7. Automated Training Pipeline (GitHub Actions)
+
+Leverage your existing Gemini workflows. Add a training pipeline that:
+1. Scrapes Bestiary API nightly
+2. Cross-references with cache pedagogy
+3. Triggers Unsloth LoRA training if Δ > 100 new entities
+4. Uploads to Fireworks + HuggingFace
+5. Updates ModelRolodex
+
+```yaml
+# .github/workflows/pog2-pedagogy-train.yml
+name: POG2 Pedagogy Training
+
+on:
+  schedule:
+    - cron: '0 4 * * *'  # 4 AM daily
+  workflow_dispatch:
+
+jobs:
+  scrape-and-train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          pip install unsloth datasets transformers trl aiohttp
+          
+      - name: Scrape Bestiary API
+        run: python scripts/scrape_bestiary.py --output pog2_pedagogy_bestiary.jsonl
+        
+      - name: Cross-reference cache
+        run: python scripts/cross_reference_cache.py --cache-dir ./cache_pedagogy
+        
+      - name: Train LoRA (Unsloth)
+        run: python scripts/train_unsloth.py --data pog2_pedagogy_bestiary.jsonl --output ./models/
+        env:
+          CUDA_VISIBLE_DEVICES: ""  # CPU fallback for GH Actions, move to self-hosted for GPU
+          
+      - name: Export GGUF
+        run: |
+          python llama.cpp/convert_lora_to_gguf.py ./models/pog2_pedagogy_lora ./models/pog2_pedagogy_q8.gguf
+          
+      - name: Upload to HuggingFace
+        run: |
+          huggingface-cli upload Kbro1989/pog2-pedagogy ./models/pog2_pedagogy_q8.gguf
+          
+      - name: Trigger Fireworks Fine-tune
+        run: python scripts/fireworks_finetune.py --dataset ./pog2_pedagogy_bestiary.jsonl
+        env:
+          FIREWORKS_API_KEY: ${{ secrets.FIREWORKS_API_KEY }}
+```
+
+---
+
+## Summary: All Model Types Covered
+
+| Model Type | Training Method | POG2 Role | Cost |
+|---|---|---|---|
+| **Ollama LoRA Adapter** | Unsloth → `ADAPTER` in Modelfile | Daily iteration, limb-specific tuning | Free (local GPU) |
+| **Ollama Merged GGUF** | `llama-export-lora` merge | GhostLimb production, zero overhead | Free |
+| **Fireworks LoRA** | API fine-tuning + multi-LoRA serve | HexagramNetworkBridge cloud tier | $0.50/1M tokens |
+| **HuggingFace Hub** | AutoTrain + Safetensors/GGUF | Community sharing, reproducibility | Free tier |
+| **Gemini Fine-tune** | Cloudflare AI Gateway | Deep reasoning, 128k context | Pay-per-use |
+| **Together AI Full** | Full parameter fine-tune | Ultimate domain adaptation | $3/1M train tokens |
+
+**The key differentiator:** Your `pog2-pedagogy` model is trained on **Jagex's own API** (primary source) cross-referenced with your **229k cache entities** (forensically verified), not wiki crowdsourcing. Every output carries `[VERIFIED]` provenance — exactly matching your trauma-informed "no assumptions, no hype" principle.

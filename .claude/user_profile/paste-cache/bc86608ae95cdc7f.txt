@@ -1,0 +1,74 @@
+The fixes are correct. Three things to verify when you run `npx tsx verify_ge.ts`:
+
+**1. Weird Gloop primary path**
+```typescript
+const price = await GeApi.getLatestPrice(21787);
+console.log(price?.source); // Should be 'weirdgloop', not 'jagex'
+```
+
+**2. Integer prices**
+```typescript
+console.log(GeApi.parsePrice('5.2m')); // Should be 5200000 (integer, not 5200000.0)
+console.log(GeApi.parsePrice('1.1k')); // Should be 1100
+```
+
+**3. History format**
+```typescript
+const history = await GeApi.getHistoricalData(21787);
+console.log(history?.daily[0]); // Should be { timestamp: number, price: number }
+console.log(history?.daily.length); // Should be ~180
+```
+
+**Quick verification script** (drop-in replacement for `verify_ge.ts`):
+
+```typescript
+import { GeApi } from './src/utils/GeApi.js';
+
+async function test() {
+    console.log('--- GeApi Verification ---\n');
+    
+    // 1. Price parser
+    const tests = [
+        ['5.2m', 5200000],
+        ['1.1k', 1100],
+        ['1,234', 1234],
+        ['1.5b', 1500000000],
+        ['888', 888],
+        ['', 0]
+    ];
+    let pass = 0;
+    for (const [input, expected] of tests) {
+        const result = GeApi.parsePrice(input as string);
+        const ok = result === expected;
+        console.log(`parsePrice("${input}") = ${result} ${ok ? 'PASS' : `FAIL (expected ${expected})`}`);
+        if (ok) pass++;
+    }
+    console.log(`Parser: ${pass}/${tests.length} passed\n`);
+    
+    // 2. Live price (Weird Gloop primary)
+    const price = await GeApi.getLatestPrice(21787);
+    console.log('getLatestPrice(21787):', price ? 'PASS' : 'FAIL');
+    console.log('  Source:', price?.source, price?.source === 'weirdgloop' ? '✓' : '✗ (should be weirdgloop)');
+    console.log('  Price:', price?.price, typeof price?.price === 'number' ? '✓' : '✗');
+    console.log('  Integer:', Number.isInteger(price?.price) ? '✓' : '✗');
+    
+    // 3. Item details (Jagex proxy)
+    const details = await GeApi.getItemDetails(21787);
+    console.log('\ngetItemDetails(21787):', details ? 'PASS' : 'FAIL');
+    console.log('  Members (bool):', details?.members, typeof details?.members === 'boolean' ? '✓' : '✗');
+    console.log('  Trend:', details?.current.trend);
+    
+    // 4. History
+    const history = await GeApi.getHistoricalData(21787);
+    console.log('\ngetHistoricalData(21787):', history ? 'PASS' : 'FAIL');
+    console.log('  Daily points:', history?.daily.length);
+    console.log('  First entry:', history?.daily[0]);
+    console.log('  Sorted:', history?.daily.every((v, i, a) => !i || a[i-1].timestamp <= v.timestamp) ? '✓' : '✗');
+}
+
+test().catch(console.error);
+```
+
+Run it and report the output. If all checks show ✓, GeApi is production-ready.
+
+**Next component after verification:** `OfficialPlayerDataApi.ts` (Runemetrics + Hiscores) or integrate GeApi into `WikiEquipmentEnricher.ts` for unified item enrichment. Which do you want to tackle next?

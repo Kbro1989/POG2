@@ -15,7 +15,15 @@ POG2 is a highly sophisticated "Sovereign Command Line Intelligence" system desi
   3. **TSC TIGHT:** Strict TypeScript compliance.
   4. **CLINICAL LOGGING:** All cognitive states are traceable.
 
-### Key Components
+## Cognitive Learning Infrastructure
+
+The system employs a sophisticated, persistent learning architecture that augments raw cache data.
+
+- **Learning Limbs:** Specialized executors (`CacheLearningLimb`, `TrainingProcessor`) continuously process game interactions and event data to refine system knowledge.
+- **Synthesized Data:** Many data points (like complex skill requirements or entity behavior) are not found in raw cache files; they are synthesized by observing in-game data and Wiki interactions, then stored in persistent `sovereign-learning.db` databases.
+- **Provenance Mapping:** When auditing entity or item data, prioritize checking the `learning/` and `training/` directories if the data is missing from the raw cache or Wiki enrichment.
+- **Training Pipeline:** The system tracks `decisions`, `consequences`, and `thinking` patterns in `D:\sovereign\training\` to improve agentic accuracy over time.
+
 
 - **OrchestrateEngine:** The "Brain" (Kimi-led) that maps decisions across 65+ registered tools.
 - **Limb System:** Categorized into spatial, technical, creative, metaphysical, and sensory domains.

@@ -1,0 +1,279 @@
+/**
+ * generate_pedagogy_corpus.ts
+ *
+ * Sovereignty Grounding Pipeline: Corpus Generation.
+ *
+ * This script scales the production of a high-fidelity dataset of [VERIFIED] entities
+ * by iterating through the full RS3 cache dumps. It implements a two-track enrichment
+ * strategy to preserve structural IDs while optimizing for API rate limits.
+ *
+ * Target: D:\sovereign\memory\pedagogy\corpus\verified_entities.jsonl
+ */
+
+import { WikiEquipmentEnricher } from '../utils/WikiEquipmentEnricher.js';
+import { resolveSovereignPath } from '../utils/SovereignPathResolver.js';
+import { writeFileSync, mkdirSync, existsSync, readFileSync, appendFileSync } from 'fs';
+import { join } from 'path';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('CorpusGenerator');
+
+// ═══════════════════════════════════════════════════════
+// Configuration
+// ═══════════════════════════════════════════════════════
+
+const CATALOG_PATHS = {
+    items: 'D:/D-sovereign-/cache_pedagogy/json_dumps/items.json',
+    npcs: 'D:/D-sovereign-/cache_pedagogy/json_dumps/npcs.json',
+    quests: 'D:/D-sovereign-/memory/pedagogy/logic/quest_manifest.json'
+};
+
+const MECHANICS_PAGES = [...new Set([
+    'Adrenaline', 'Affinity', 'Combat level', 'Game tick', 'Hitsplat', 'Drop table', 'Experience', 'Luck',
+    'Weapon Special Attack', 'Temporary skill boost', 'Ability book', 'Action bar', 'Constitution',
+    'Defence', 'Magic', 'Necromancy', 'Prayer', 'Ranged', 'Strength', 'Summoning', 'Slayer',
+    'Ability damage', 'Accept Aid', 'Activity bar', 'AFK', 'Area of effect', 'Assist System', 'Attack range', 'Attack rate',
+    'Auto-attack', 'Auto-banking', 'Autocast', 'Average damage', 'Backpack', 'Bad luck mitigation', 'Bank', 'Bank PIN',
+    'Bank preset', 'Bonus experience', 'Botwatch', 'Bounty Hunter world', 'Canon', 'Challenge System', 'Character', 'Character name',
+    'Classic Modes', 'Combat', 'Complexity', 'Cooldown', 'Cube maps', 'Customisations', 'Damage cap', 'Damage over time',
+    'Death (mechanic)', 'Defensive ability reset', 'Degradation', 'Desert heat', 'Destroy (option)', 'Diminishing returns', 'Discovery', 'Divine coin',
+    'Dodge', 'Door', 'Double drops', 'Download server', 'Dragonfire', 'Drop', 'Drop trick', 'Drops', 'Duelling', 'Dungeoneering/Prestige',
+    'Early Bird Bonus', 'Earning potential', 'Energy', 'Equipment tier', 'Experience/Table', 'Game controls', 'Game square',
+    'Game tick/Ticks per action', 'Game world', 'God Wars Dungeon/God Protection', 'Graphical updates', 'Graphics', 'Graphics settings', 'Gravestone',
+    'Hard mode', 'Heat', 'High Risk Wilderness world', 'Hit chance', 'HTML5 client', 'Idle', 'Instance',
+    'Instance shard world', 'Instant Demo', 'Item spawns', 'Jagex cache', 'Jagex Launcher', 'Java Client', 'Killcount', 'Kudos',
+    'Ladder', 'Lag', 'Life points', 'Light sources', 'Linux', 'List of bank locations', 'Login server',
+    'Magic Damage', 'Make-X', 'Maximum hit', 'Melee', 'Momentum', 'Mouse keys', 'Multicombat area', 'Music', 'Non-player character',
+    'Note', 'Nothing', 'Null', 'NXT', 'Operate', 'Ortho mode', 'Overhead prayer', 'Particles', 'Passive effect', 'Playable character',
+    'Player identification number', 'Poison', 'Poison (historical)', 'Prayer points', 'Price Checker', 'PvP world', 'Quick Chat',
+    'Recovery questions', 'Rest', 'Restricted trade items', 'Retreat', 'Revolution', 'Runedate', 'RuneScape', 'RuneScape 2',
+    'RuneScape 3', 'RuneScape Classic', 'RuneScape Companion', 'RuneScape Game Bar', 'RuneScape High Detail', 'RuneScape Mobile', 'RuneScape toolbar',
+    'RuneScript', 'RuneTek', 'Safe spot', 'Scale theory', 'Server', 'Server blackout', 'Set bonus', 'Shop', 'Shortcut keys',
+    'Single-way combat', 'Sink (economy)', 'Skilling success chance', 'Skills', 'Skull (status)', 'Skyboxes and filters', 'Soft cap',
+    'Sound effects', 'Spawning', 'Special attacks (historical)', 'Stackable items', 'Staircase', 'Steam', 'Storage', 'Swamp decay',
+    'System update', 'Tagging', 'Tanking', 'Tell', 'Tick manipulation', 'Titles', 'Tool belt',
+    'Trade limit', 'Use', 'Username', 'Value', 'Voice Over', 'Walking', 'Wander radius',
+    'Weight', 'Wilderness threat system',
+    'Attack', 'Mining', 'Agility', 'Smithing', 'Herblore', 'Fishing', 'Thieving', 'Cooking', 'Crafting', 'Firemaking',
+    'Fletching', 'Woodcutting', 'Runecrafting', 'Farming', 'Construction', 'Hunter', 'Divination', 'Invention', 'Archaeology'
+])];
+
+const BATCH_SIZE = 50;
+const PROGRESS_FILE_PATH = resolveSovereignPath('memory/pedagogy/corpus/.progress');
+
+
+interface ProgressState {
+    items: { lastIndex: number; total: number };
+    npcs: { lastIndex: number; total: number };
+    quests: { lastIndex: number; total: number };
+}
+
+// ──────────────────────────────────────────────────────
+
+function loadProgress(): ProgressState {
+    if (existsSync(PROGRESS_FILE_PATH)) {
+        try {
+            return JSON.parse(readFileSync(PROGRESS_FILE_PATH, 'utf8'));
+        } catch {
+            logger.warn('Progress file corrupted, restarting from zero.');
+        }
+    }
+    return {
+        items: { lastIndex: 0, total: 0 },
+        npcs: { lastIndex: 0, total: 0 },
+        quests: { lastIndex: 0, total: 0 }
+    };
+}
+
+function saveProgress(state: ProgressState): void {
+    writeFileSync(PROGRESS_FILE_PATH, JSON.stringify(state, null, 2), 'utf8');
+}
+
+function formatVerifiedOutput(name: string, id: number, data: any): string {
+    const tag = data?.tag || '[WIKI_ONLY]';
+    let excerpt = 'No descriptive data available.';
+
+    if (data?.itemMeta?.examine) {
+        excerpt = data.itemMeta.examine;
+    } else if (data?.monsterMeta?.combatLevel) {
+        excerpt = `Combat Level ${data.monsterMeta.combatLevel}`;
+    } else if (data?.extract) {
+        excerpt = data.extract.substring(0, 100) + '...';
+    }
+
+    return `[${tag}] Entity ${id}: ${name}. ${excerpt}`;
+}
+
+async function generate() {
+    logger.info('Starting High-Fidelity Pedagogy Corpus Generation...');
+
+    const enricher = WikiEquipmentEnricher.getInstance();
+    const corpusPath = resolveSovereignPath('memory/pedagogy/corpus/verified_entities.jsonl');
+    const corpusDir = join(corpusPath, '..');
+
+    if (!existsSync(corpusDir)) {
+        mkdirSync(corpusDir, { recursive: true });
+    }
+
+    let progress = loadProgress();
+
+    // Note: Only clear file if we are starting from index 0 across all categories
+    if (progress.items.lastIndex === 0 && progress.npcs.lastIndex === 0 && progress.quests.lastIndex === 0) {
+        writeFileSync(corpusPath, '', 'utf8');
+        logger.info('Fresh run: clearing previous corpus.');
+    }
+
+    const appendToCorpus = (entries: any[]) => {
+        if (entries.length === 0) return;
+        const lines = entries.map(entry => JSON.stringify(entry)).join('\n');
+        appendFileSync(corpusPath, lines + '\n', 'utf8');
+    };
+
+    // ── 1. Item Corpus Generation (Two-Track) ─────────────────────────
+    try {
+        logger.info('Processing Item Catalog...');
+        const rawItems = JSON.parse(readFileSync(CATALOG_PATHS.items, 'utf8'));
+        progress.items.total = rawItems.length;
+
+        for (let i = progress.items.lastIndex; i < rawItems.length; i += BATCH_SIZE) {
+            const batch = rawItems.slice(i, i + BATCH_SIZE);
+            const results = [];
+
+            for (const item of batch) {
+                const isPlaceholder = /^ITEMS?\s*\d+$/i.test(item.name) || !item.name;
+                if (isPlaceholder) {
+                    results.push({
+                        instruction: `Describe cache entity ${item.id}`,
+                        input: JSON.stringify(item),
+                        output: `[CACHE_ONLY] Item ${item.id}. No wiki page. Structural entity only.`,
+                        tags: ['[CACHE_ONLY]'],
+                        verified: false,
+                        cacheId: item.id,
+                        hasWikiPage: false
+                    });
+                } else {
+                    const data = await enricher.enrichEntity(item.name);
+                    results.push({
+                        instruction: `Generate verified entity definition for ${item.name}`,
+                        input: JSON.stringify(item),
+                        output: formatVerifiedOutput(item.name, item.id, data),
+                        tags: [data?.tag || '[WIKI_ONLY]'],
+                        verified: data?.tag === '[VERIFIED]',
+                        cacheId: item.id
+                    });
+                }
+            }
+            appendToCorpus(results);
+            progress.items.lastIndex = i + batch.length;
+            saveProgress(progress);
+            logger.info({ processed: progress.items.lastIndex, total: progress.items.total }, 'Item batch complete');
+        }
+    } catch (err) {
+        logger.error({ err }, 'Item corpus generation failed');
+    }
+
+    // ── 2. Monster/NPC Corpus Generation (Two-Track) ──────────────────
+    try {
+        logger.info('Processing NPC Catalog...');
+        const rawNpcs = JSON.parse(readFileSync(CATALOG_PATHS.npcs, 'utf8'));
+        progress.npcs.total = rawNpcs.length;
+
+        for (let i = progress.npcs.lastIndex; i < rawNpcs.length; i += BATCH_SIZE) {
+            const batch = rawNpcs.slice(i, i + BATCH_SIZE);
+            const results = [];
+
+            for (const npc of batch) {
+                const isPlaceholder = /^NPCS?\s*\d+$/i.test(npc.name) || !npc.name;
+                if (isPlaceholder) {
+                    results.push({
+                        instruction: `Describe cache entity ${npc.id}`,
+                        input: JSON.stringify(npc),
+                        output: `[CACHE_ONLY] NPC ${npc.id}. No wiki page. Structural entity only.`,
+                        tags: ['[CACHE_ONLY]'],
+                        verified: false,
+                        cacheId: npc.id,
+                        hasWikiPage: false
+                    });
+                } else {
+                    const data = await enricher.enrichEntity(npc.name);
+                    results.push({
+                        instruction: `Generate verified entity definition for ${npc.name}`,
+                        input: JSON.stringify(npc),
+                        output: formatVerifiedOutput(npc.name, npc.id, data),
+                        tags: [data?.tag || '[WIKI_ONLY]'],
+                        verified: data?.tag === '[VERIFIED]',
+                        cacheId: npc.id
+                    });
+                }
+            }
+            appendToCorpus(results);
+            progress.npcs.lastIndex = i + batch.length;
+            saveProgress(progress);
+            logger.info({ processed: progress.npcs.lastIndex, total: progress.npcs.total }, 'NPC batch complete');
+        }
+    } catch (err) {
+        logger.error({ err }, 'NPC corpus generation failed');
+    }
+
+    // ── 3. Quest Corpus Generation ──────────────────────────────────
+    try {
+        logger.info('Processing Quest Manifest...');
+        const questsData = JSON.parse(readFileSync(CATALOG_PATHS.quests, 'utf8'));
+        progress.quests.total = questsData.length;
+
+        const results = [];
+        for (let i = progress.quests.lastIndex; i < questsData.length; i++) {
+            const quest = questsData[i];
+            const data = await enricher.enrichGeneric(quest.title);
+            if (data) {
+                results.push({
+                    instruction: `Generate verified entity definition for quest: ${quest.title}`,
+                    input: JSON.stringify({ quest, wiki: data }),
+                    output: `[WIKI_ONLY] Quest: ${quest.title}. ${data.extract ? data.extract.substring(0, 100) + '...' : 'No description available.'}`,
+                    tags: ['[WIKI_ONLY]'],
+                    verified: false
+                });
+            }
+
+            // Save every 10 quests to prevent loss
+            if (i % 10 === 0) {
+                appendToCorpus(results);
+                results.length = 0;
+                progress.quests.lastIndex = i + 1;
+                saveProgress(progress);
+            }
+        }
+        appendToCorpus(results);
+        progress.quests.lastIndex = questsData.length;
+        saveProgress(progress);
+    } catch (err) {
+        logger.error({ err }, 'Quest corpus generation failed');
+    }
+
+    // ── 4. Mechanics Corpus Generation ─────────────────────────────────
+    try {
+        logger.info('Processing Mechanics Pages...');
+        const results = [];
+        for (const page of MECHANICS_PAGES) {
+            const data = await enricher.enrichGeneric(page);
+            if (data) {
+                results.push({
+                    instruction: `Explain the ${page} mechanic in RS3`,
+                    input: JSON.stringify({ mechanic: page, wiki: data }),
+                    output: formatVerifiedOutput(page, 0, data),
+                    tags: ['[WIKI_ONLY]', '[MECHANIC]'],
+                    verified: false
+                });
+            }
+        }
+        appendToCorpus(results);
+        logger.info({ count: results.length }, 'Mechanics corpus generated successfully.');
+    } catch (err) {
+        logger.error({ err }, 'Mechanics corpus generation failed');
+    }
+}
+
+generate().catch(err => {
+    logger.error({ err }, 'Corpus generation failed');
+    process.exit(1);
+});

@@ -1,0 +1,252 @@
+.pog2.md:14:- **[Gameplay Sovereignty]** `./src/limbs/spatial/GameplaySovereigntyLimb.ts` - Authoritative gameplay tick engine with mountable logic interpreters.
+ARCHITECTURE.md:173:| `GameplaySovereigntyLimb.ts` | 3.7KB | **600ms tick heartbeat** — the game clock |
+ARCHITECTURE.md:292:Phase 2: Spatial Simulation                (600ms tick, collision, varbits)
+CODEBASE_MAP.md:129:- [CNSGodheadPulseVolley.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/CNSGodheadPulseVolley.ts): 600ms deterministic heartbeat kernel.
+CODEBASE_MAP.md:130:- [SimulationHarness.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/SimulationHarness.ts): Central CNS node for dual-tick deterministic simulation.
+CODEBASE_MAP.md:198:- [GameplaySovereigntyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/GameplaySovereigntyLimb.ts): Authoritative gameplay tick engine.
+CODEBASE_MAP.md:271:*Biological heartbeat, clinical logging, and node testing.*
+CODEBASE_MAP.md:482:- **[PulseMonitor.ts](src/monitor/PulseMonitor.ts)**: Real-time system heartbeat and file-system awareness.
+allfiles.md:1706:   * src/monitor/ has PulseMonitor and NodeTester → heartbeat + node health (GhostLimb companion?)
+fix_core3.cjs:34:// The L233 assignment error was probably in tick() or queryTileContent.
+data\substrate\ms_50_50.logic.json:3544:      "name": "Grandfather clock",
+data\substrate\ms_50_50.logic.json:3551:      "wikiUrl": "https://runescape.wiki/w/Grandfather_clock"
+data\substrate\ms_50_50.logic.json:3556:      "name": "Grandfather clock",
+data\substrate\ms_50_50.logic.json:3563:      "wikiUrl": "https://runescape.wiki/w/Grandfather_clock"
+data\substrate\ms_50_50.logic.json:3568:      "name": "Grandfather clock",
+data\substrate\ms_50_50.logic.json:3575:      "wikiUrl": "https://runescape.wiki/w/Grandfather_clock"
+data\substrate\ms_50_50.logic.json:3580:      "name": "Grandfather clock",
+data\substrate\ms_50_50.logic.json:3587:      "wikiUrl": "https://runescape.wiki/w/Grandfather_clock"
+data\pvme\nex.json:1527:          "name": "5 tick Auto"
+data\pvme\vorago.json:81:    "class": "\"wikitable sortable sticky-header\"",
+registry_builder.cjs:204:        console.log("  [OK] " + name + " -> SpotAnim " + gfx.spotAnimId + " Model " + gfx.modelId + " Seq " + gfx.sequenceId + " (" + gfx.totalTicks + " ticks)");
+POG2_KNOWLEDGEBASE.md:211:          └── Repeats every ~18s (the organism's heartbeat)
+POG2_KNOWLEDGEBASE.md:262:Phase 2: Game Simulation                   (600ms tick, varbits, 3 interpreters)
+cache\scripts-build940-249972130.json:1:[Omitted long matching line]
+rsmv_clone\src\viewer\RSEngine.ts:77:    private readonly TICK_RATE = 50; // 50ms RS classic tick
+rsmv_clone\src\viewer\RSEngine.ts:102:        animation: { current: -1, next: -1, tick: 0 },
+rsmv_clone\src\viewer\RSEngine.ts:201:        const tick = (timestamp: number) => {
+rsmv_clone\src\viewer\RSEngine.ts:267:            requestAnimationFrame(tick);
+rsmv_clone\src\viewer\RSEngine.ts:459:    private update(tickMs: number) {
+src\bridge_server.ts:7: * In standalone mode, emits simulated tick data so the diagnostic UI
+src\bridge_server.ts:25:    let tick = 0;
+src\bridge_server.ts:32:        tick++;
+src\bridge_server.ts:34:        const archetype = archetypes[Math.floor(tick / 10) % archetypes.length];
+src\bridge_server.ts:35:        const phase = phases[Math.floor(tick / 15) % phases.length];
+src\bridge_server.ts:42:            `Tick ${tick}: auto-attack`,
+src\bridge_server.ts:47:            200000 - (tick * 100),
+src\bridge_server.ts:52:        if (tick % 3 === 0) {
+src\bridge_server.ts:57:        if (tick % 10 === 0) {
+src\bridge_server.ts:58:            console.log(`[Bridge] Tick ${tick} | Clients: check /health`);
+src\cli.ts:2305:        .option('-t, --ticks <stunTicks>', 'Ticks to stun the player for', parseInt)
+src\cli.ts:2306:        .action(async (action: string, idArg: string | undefined, opts: { ability?: string; ticks?: number }) => {
+src\cli.ts:2337:                    renderer.error(`Failed to trigger ability: avatar is busy for ${avatar.lockTicks} more ticks.`);
+src\cli.ts:2340:                if (opts.ticks === undefined) {
+src\cli.ts:2341:                    renderer.error('Stun action requires --ticks <stunTicks>');
+src\cli.ts:2344:                avatar.lock(opts.ticks);
+src\cli.ts:2345:                renderer.success(`Applied stun lock to avatar for ${opts.ticks} ticks.`);
+src\cli.ts:2350:                    const rotation = playerAgent.evaluateCombatRotation(field, gameplay.tickCount);
+src\cli.ts:2372:                        renderer.log(` ${idx.toString().padEnd(3)} | ${ab.id.padEnd(10)} | ${ab.name.padEnd(20)} | ${(ab.adrenalineCost / 100).toFixed(0)}% | ${ab.cooldownTicks} ticks`);
+src\cli.ts:2397:                    const status = val ? (cooldown > gameplay.tickCount ? `ON COOLDOWN (${cooldown - gameplay.tickCount} ticks)` : 'READY') : 'EMPTY';
+public\gameplay\state.json:3:  "tick": 679,
+public\gameplay\state.json:17:      "tickStarted": 0,
+public\unified_diagnostic.html:428:                        id="tick-counter">0</span></div>
+public\unified_diagnostic.html:504:            tick: 0,
+public\unified_diagnostic.html:518:        const tickCounter = document.getElementById('tick-counter');
+public\unified_diagnostic.html:628:            tickCounter.textContent = state.tick;
+public\unified_diagnostic.html:1105:            // Local tick clock (fallback when no WS, also drives cooldowns)
+public\unified_diagnostic.html:1107:                state.tick++;
+public\unified_diagnostic.html:1108:                tickCounter.textContent = state.tick;
+public\unified_diagnostic.html:1118:                // Cooldowns always tick locally
+public\unified_diagnostic.html:1157:                if (!state.wsConnected && state.tick % 4 === 0 && scene) {
+src\api\ai\Dispatcher.ts:103:                tick: snapshot?.tick || -1,
+src\api\ai\Dispatcher.ts:194:        const data = `${snapshot.tick}-${snapshot.cloudHealth.status}-${snapshot.substrateHealth}`;
+src\api\ai\Dispatcher.ts:195:        return `snap:${snapshot.tick}`;
+src\api\ai\Dispatcher.ts:200:            tick: audit.tick, 
+public\gameplay\entities.json:3:  "tick": 679,
+src\core\EntityGhost.ts:12:    ticksAhead: number;
+web_hud\src\style.css:282:.ticks {
+src\vision\TransientObserver.ts:126:                // Reuse singleton eye (never allocate a new one per tick)
+scripts\ground_sovereign_substrate.ts:23:    const heartbeat = TemporalHeartbeatLimb.getInstance();
+scripts\ground_sovereign_substrate.ts:36:    heartbeat.start();
+scripts\ground_sovereign_substrate.ts:38:    // Run for 7 seconds to catch exactly 1 player tick + world ticks
+scripts\ground_sovereign_substrate.ts:40:        const status = heartbeat.getStatus();
+scripts\ground_sovereign_substrate.ts:42:        heartbeat.stop();
+src\core\models.js:32:    SubstrateState["OFFLINE"] = "OFFLINE"; // Full substrate reachability failure (abort tick)
+src\core\SovereignAvatar.ts:134:        tickStarted: number;
+src\core\SovereignAvatar.ts:370:     * The actual execution, damage calculation, and adrenaline mutation occurs during the 600ms tick.
+src\core\SovereignAvatar.ts:379:            tickStarted: 0,
+src\core\SovereignAvatar.ts:515:     * Lock the avatar for X ticks (e.g., performing an animation or busy).
+src\core\SovereignAvatar.ts:517:    public lock(ticks: number) {
+src\core\SovereignAvatar.ts:518:        this.lockTicks = Math.max(this.lockTicks, ticks);
+public\unified\ms_50_50.json:3544:      "name": "Grandfather clock",
+public\unified\ms_50_50.json:3551:      "wikiUrl": "https://runescape.wiki/w/Grandfather_clock"
+public\unified\ms_50_50.json:3556:      "name": "Grandfather clock",
+public\unified\ms_50_50.json:3563:      "wikiUrl": "https://runescape.wiki/w/Grandfather_clock"
+public\unified\ms_50_50.json:3568:      "name": "Grandfather clock",
+public\unified\ms_50_50.json:3575:      "wikiUrl": "https://runescape.wiki/w/Grandfather_clock"
+public\unified\ms_50_50.json:3580:      "name": "Grandfather clock",
+public\unified\ms_50_50.json:3587:      "wikiUrl": "https://runescape.wiki/w/Grandfather_clock"
+src\core\models.ts:32:    OFFLINE = 'OFFLINE'         // Full substrate reachability failure (abort tick)
+src\core\models.ts:151:    lastCombatTick: number; // Track for rhythm enforcement (e.g. 4-tick)
+src\core\models.ts:152:    cooldowns: Record<string, number>; // abilityId -> tickAvailable
+src\core\models.ts:159:    tickStarted: number;
+src\core\models.ts:192:        think: (tick: number, state: GameState, avatar: any) => void;
+src\core\models.ts:306:    lock(ticks: number): void;
+src\core\models.ts:307:    lockTicks: number; // Residual ticks until lock expires
+src\core\models.ts:442:    readonly tick: number;
+src\core\models.ts:543:    tick: number;
+src\core\models.ts:563:    tick: number;
+src\core\models.ts:597:    tick?: number;              // Alias for tickNumber (used by NpcAgent)
+src\core\models.ts:598:    tickNumber?: number;
+src\core\models.ts:640:    trigger: 'click' | 'use' | 'examine' | 'tick' | 'proximity';
+src\core\models.ts:1448:    tick: number;
+src\core\models.ts:1459:    tick: number;
+src\core\models.ts:1522:    readonly tick: number;
+src\core\models.ts:1546:    tick: number;
+src\monitor\PulseMonitor.ts:71:        // Cognitive Immunology Restraint: Suspend heartbeat/telemetry during chaotic shifts or deep dormancy
+src\monitor\PulseMonitor.ts:110:            if (offlineCount >= 10) globalStatus = SubstrateState.OFFLINE; // Only stop heartbeat if 10+ nodes are fully missing
+src\monitor\PulseMonitor.ts:133:            logger.warn({ error: err.message }, 'Lightweight pulse failed, reverting to full telemetry next tick.');
+src\monitor\PulseMonitor.ts:372:            details: this.isRunning ? 'Biological heartbeat active.' : 'Heartbeat monitor stopped.'
+src\monitor\PulseMonitor.js:59:        // Cognitive Immunology Restraint: Suspend heartbeat/telemetry during chaotic shifts or deep dormancy
+src\monitor\PulseMonitor.js:102:            logger.warn({ error: err.message }, 'Lightweight pulse failed, reverting to full telemetry next tick.');
+src\monitor\PulseMonitor.js:307:            details: this.isRunning ? 'Biological heartbeat active.' : 'Heartbeat monitor stopped.'
+src\monitor\NodeTester.js:14: * All status reports are derived from real heartbeat signals — no hard-coded ONLINE defaults.
+src\monitor\NodeTester.js:21: *   CNS      — Specialized probes for routing/hexagram + registry heartbeat
+src\monitor\NodeTester.js:22: *   PNS      — Registry heartbeat required; OFFLINE if not registered
+src\monitor\NodeTester.js:23: *   SENSORY  — Registry heartbeat required; OFFLINE if not registered
+src\monitor\NodeTester.js:24: *   MEMORY   — EmbedEngine probe + registry heartbeat
+src\monitor\NodeTester.js:25: *   IMMUNE   — Registry heartbeat required; OFFLINE if not registered
+src\monitor\NodeTester.js:26: *   METABOLIC — Registry heartbeat; type-only substrates pass by file existence
+src\monitor\NodeTester.js:293:                    // All other CNS nodes → registry heartbeat signal
+src\engines\core\CNSCausalityLedger.ts:21: * Deterministic double-buffered ledger for tick accountability.
+src\engines\core\CNSCausalityLedger.ts:100:            tick: event.tick,
+src\engines\core\CNSCausalityLedger.ts:157:     * validateCausality - PURE Phase: Bridges the C3 Gap by grounding tick events in B-side mechanical truth.
+src\engines\core\CNSCausalityLedger.ts:236:    public getTickEvents(tick: number): readonly TickEvent[] | undefined {
+src\engines\core\CNSCausalityLedger.ts:237:        return this.history.get(tick);
+src\engines\core\CNSCausalityLedger.ts:244:    public setTileLock(key: string, lock: Omit<TileLock, 'tick'>): void {
+src\engines\core\CNSCausalityLedger.ts:247:            tick: this.currentTick
+src\engines\core\CNSCausalityLedger.ts:256:     * commitTick - Finalize the active frame and increment tick counter.
+src\engines\core\CNSCausalityLedger.ts:261:        // Log final resolution for the tick
+src\engines\core\CNSCausalityLedger.ts:269:    private logTick(tick: number, events: readonly TickEvent[]): void {
+src\engines\core\CNSCausalityLedger.ts:272:        logger.info(`\n[TICK ${tick}]`);
+src\engines\core\NecromancerBrain.ts:94:     * Predicts spatial lighting for the next N ticks.
+src\engines\core\NecromancerBrain.ts:97:    public predictLighting(buffer: NTXBuffer, tickDelta: number, timeOfDay: number = 12.0): NTXBuffer {
+src\engines\core\NecromancerBrain.ts:104:        const sun_dir = this.calculateSunVector(timeOfDay + (tickDelta / 100)); // Arbitrary time scale
+src\engines\core\WaitDecisionMaker.ts:25: * wait for the next tick boundary, or delay for further signals.
+src\engines\core\EpistemicTransitionKernel.ts:35:    tick: number;
+src\engines\core\EpistemicTransitionKernel.ts:84:    public verifySpatialPrediction(entityId: string, actualCoord: Coord, tick: number): void {
+src\engines\core\EpistemicTransitionKernel.ts:88:        const prediction = history.find(p => p.tick === tick);
+src\engines\core\EpistemicTransitionKernel.ts:110:            input: `Entity: ${record.entityId} (${context.name || 'Unknown'}, radius ${context.radius || 1}) at tick ${record.tick - (context.tickDepth || 2)}, predicted to be at (${record.predictedCoord.x}, ${record.predictedCoord.y}), but was actually at (${record.actualCoord?.x}, ${record.actualCoord?.y}). Context: ${record.context || '{}'}`,
+src\engines\core\EpistemicTransitionKernel.ts:146:    private ticksSinceLastChange = 0;
+src\engines\core\EpistemicTransitionKernel.ts:298:     * predictTransition — Called BEFORE an action/tick to declare what the
+src\engines\core\EpistemicTransitionKernel.ts:324:     * observeTransition — Called AFTER an action/tick with the actual observed
+src\engines\core\EpistemicTransitionKernel.ts:328:        this.ticksSinceLastChange++;
+src\engines\core\EpistemicTransitionKernel.ts:398:            this.ticksSinceLastChange = 0;
+src\engines\core\EpistemicTransitionKernel.ts:545:            ticksSinceLastChange: this.ticksSinceLastChange,
+src\engines\core\CausalPatternExtractor.ts:86:            lastOccurredTick: event.tick
+src\engines\core\CausalPatternExtractor.ts:150:            event.tick,
+src\engines\core\CausalPatternExtractor.ts:159:        logger.info({ tick: event.tick, eventId: event.id }, 'Cognitive Anomaly captured (Shadow Mode).');
+public\test_output\ghostsplat_test.json:2:  "tickDepth": 2,
+public\test_output\ghostsplat_test.json:13087:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13101:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13115:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13129:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13143:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13157:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13171:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13185:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13199:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13213:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13227:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13241:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13255:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13269:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13283:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13297:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13311:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13325:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13339:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13353:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13367:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13381:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13395:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13409:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13423:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13437:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13451:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13465:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13479:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13493:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13507:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13521:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13535:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13549:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13563:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13577:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13591:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13605:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13619:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13633:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13647:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13661:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13675:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13689:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13703:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13717:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13731:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13745:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13759:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13773:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13787:        "ticksAhead": 2,
+public\test_output\ghostsplat_test.json:13801:        "ticksAhead": 2,
+src\engines\core\TruthReconciler.ts:33:     * reconcileTick - Performs a cross-layer audit for a specific tick.
+src\engines\core\TruthReconciler.ts:36:    public async reconcileTick(tick: number): Promise<void> {
+src\engines\core\TruthReconciler.ts:38:        const executionTruth = ledger.getTickEvents(tick) || [];
+src\engines\core\TruthReconciler.ts:46:        logger.debug({ tick, eventCount: executionTruth.length }, 'Initiating Truth Reconciliation Pass');
+src\engines\core\TruthReconciler.ts:62:        // 4. Sealing Audit: Verify cryptographic integrity of the tick
+src\engines\core\TruthReconciler.ts:65:        // 5. Temporal Domain Audit: Ensure INFERENCE and OBSERVABILITY clocks have not drifted
+src\engines\core\TruthReconciler.ts:66:        this.auditTemporalMonotonicity(tick);
+src\engines\core\TruthReconciler.ts:73:    private auditTemporalMonotonicity(tick: number): void {
+src\engines\core\TruthReconciler.ts:80:            const err = `Temporal Invariant Violation: INFERENCE time (${infTime}) drifted behind SIMULATION time (${simTime}) at tick ${tick}`;
+src\engines\core\TruthReconciler.ts:81:            logger.fatal({ rule: 'CAUSAL_MONOTONICITY', simTime, infTime, tick }, err);
+src\engines\core\TruthReconciler.ts:88:            logger.fatal({ rule: 'OBSERVABILITY_DESYNC', simTime, obsTime, tick }, err);
+src\engines\core\TruthReconciler.ts:164:                events[0]?.tick || -1,
+src\engines\core\TruthReconciler.ts:176:            event.tick,
+src\engines\SpatialVisionEngine.ts:112:     * sampleFrame - Perceptual reconciliation after a 600ms tick.
+src\engines\PipelineController.ts:444:                            logger.warn({ index: scene.index, error: renderRes.error.message }, 'Stage 2.5: Render failed. Sticking with 2D substrate.');
+public\test_actionbar.html:173:            <div>Tick: <span id="tick-counter">0</span></div>
+public\test_actionbar.html:202:        tick: 0,
+public\test_actionbar.html:203:        cooldowns: {},        // abilityId → ticks remaining
+public\test_actionbar.html:214:    const tickCounter = document.getElementById('tick-counter');
+public\test_actionbar.html:313:                    state.tick++;
+public\test_actionbar.html:314:                    tickCounter.textContent = state.tick;
+public\test_actionbar.html:331:                state.tick++;
+public\test_actionbar.html:332:                tickCounter.textContent = state.tick;
+src\engines\spatial\ExplorationEngine.ts:51:     * tick - Single autonomous movement step.
+src\engines\spatial\ExplorationEngine.ts:53:    public async tick(gameState: GameState): Promise<boolean> {
+src\engines\spatial\ExplorationEngine.ts:102:            return true; // Try again next tick with a different target
+src\limbs\world_grounding\WorldGroundingLimb.ts:34:    private tickStaging: Map<string, any> = new Map();
+src\limbs\world_grounding\WorldGroundingLimb.ts:110:        this.tickStaging.clear();
+public\ghostsplat_view.html:375:    document.getElementById('depth-val').textContent = currentData.tickDepth;
+public\ghostsplat_view.html:434:    hysteresisDecisions.push({ state: data.decision, tickId: data.tickId });
+public\ghostsplat_view.html:444:                   title="${d.state} @ ${d.tickId}"></div>`;
+src\limbs\combat\AdrenalineStateMachine.ts:9: * Auto-attack: +8 adrenaline/tick (melee/ranged), +3 (magic)
+src\limbs\combat\AdrenalineStateMachine.ts:23:    cooldownTicks: number;    // In RS3 game ticks (600ms each)
+src\limbs\combat\AdrenalineStateMachine.ts:41:    tickCount: number;
+src\limbs\combat\AdrenalineStateMachine.ts:52:    | { type: 'TICK'; tickCount: number };
+src\limbs\combat\AdrenalineStateMachine.ts:110:    private tickInterval: ReturnType<typeof setInterval> | null = null;
+src\limbs\combat\AdrenalineStateMachine.ts:117:            tickCount: 0,
+src\limbs\combat\AdrenalineStateMachine.ts:152:    /** Start the RS3 tick clock (Internal simulation only) */
+src\limbs\combat\AdrenalineStateMachine.ts:154:        if (this.tickInterval) return;
+src\limbs\combat\AdrenalineStateMachine.ts:156:        this.tickInterval = setInterval(() => this.tick(), RS3_TICK_MS);
+src\limbs\combat\AdrenalineStateMachine.ts:160:        if (this.tickInterval) {
+src\limbs\combat\AdrenalineStateMachine.ts:161:            clearInterval(this.tickInterval);
+src\limbs\combat\AdrenalineStateMachine.ts:162:            this.tickInterval = null;
+src\limbs\combat\AdrenalineStateMachine.ts:198:    /** Expose tick publicly so SimulationHarness can drive the state machine */
+src\limbs\combat\AdrenalineStateMachine.ts:199:    public tick(): void {
+src\limbs\combat\AdrenalineStateMachine.ts:200:        this.state.tickCount++;
+src\limbs\combat\AdrenalineStateMachine.ts:213:        // Auto-attack adrenaline regen (+8 per tick in combat, melee/ranged; +3 magic)
+src\limbs\combat\AdrenalineStateMachine.ts:221:        this.emit({ type: 'TICK', tickCount: this.state.tickCount });
+src\limbs\metaphysical\GhostLimb.ts:45:        // In a real implementation, this would check a shared state or heartbeat file
+
+[Showing results with pagination = limit: 250]

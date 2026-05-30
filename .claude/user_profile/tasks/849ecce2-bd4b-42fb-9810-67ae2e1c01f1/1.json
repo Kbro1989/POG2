@@ -1,0 +1,8 @@
+{
+  "id": "1",
+  "subject": "Ghost Capability Audit (Sovereign)",
+  "description": "Audit of the Ghost's capabilities. User-led execution of process, environment, and file system checks to verify non-interference.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

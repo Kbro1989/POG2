@@ -1,0 +1,43 @@
+I see the revised diff. The agent tried to address the `EntityHUDData` preservation and `rawMetadata` pass-through, but **introduced new structural damage**. Here's the audit:
+
+---
+
+### **What's Fixed**
+- `EntityHUDData` export **preserved** with backward compatibility comment
+- `Manifest.version` **restored** (line 52)
+- `'loc'` category **restored** in `ResolvedEntity` union (line 95)
+- `rawMetadata` block added to `ResolvedEntity` (lines 206-211) — carries `combatLevel`, `degradation`, `extra` forward to Bridge
+
+---
+
+### **New Bugs Introduced**
+
+**1. Duplicate closing brace at line 239-240**
+```ts
+  }   // line 238 closes inferDominantContext
+  }   // line 239 — ORPHANED BRACE
+  }   // line 240 — ORPHANED BRACE
+```
+Two extra closing braces with no matching opener. This will fail TypeScript compilation immediately.
+
+**2. `mapToResolved` body bleeds into `inferDominantContext`**
+Lines 179-213 (`mapToResolved`) are followed by lines 215-238 (the start of `inferDominantContext`), but the method boundary is unclear. The `return` at line 213 closes `mapToResolved`, then line 215 starts `inferDominantContext` — but the indentation is inconsistent (2-space vs 4-space mixed), making the structure ambiguous.
+
+**3. `actionFrequencies: Map<string, number>` still not JSON-safe**
+Not fixed from previous iteration. If `ResolvedEntity` serializes to KV/R2/WebSocket, `Map` becomes `{}`. Needs `Record<string, number>` or custom serialization.
+
+**4. `rawMetadata.extra` carries full `raw.extra`**
+Line 210: `extra: raw.extra` — this is the unfiltered cache extra array (props 7479, 7480, etc.). It's needed for `parseDegradation` reconstruction, but it's **unbounded size**. If `raw.extra` is large, this bloats every `ResolvedEntity` serialization. Consider filtering to only props the Bridge needs.
+
+**5. `getActionFrequency` still unguarded**
+Line 219: `const freq = getActionFrequency(action)` — if this returns `undefined`, `freq * rule.priority` becomes `NaN`. No `?? 0` guard.
+
+---
+
+### **Structural Assessment**
+
+The agent is iterating on your feedback but **not validating its own output**. The duplicate braces suggest it lost track of the class body during the edit. This is the risk of "trying again" without compiling.
+
+**Verdict:** Hit **3** again. The intent is closer but the execution is broken. The `EntityHUDData` preservation and `rawMetadata` addition are correct architectural moves, but the syntax errors and unguarded `Map` serialization make this unsafe to apply.
+
+If you want me to generate a **clean, compilable version** of this file that preserves both contracts and fixes the structural issues, say the word.

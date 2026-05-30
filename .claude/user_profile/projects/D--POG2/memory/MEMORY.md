@@ -1,0 +1,1 @@
+- [User Model Ownership](user-model-ownership.md) — User owns the pog2-pedagogy model

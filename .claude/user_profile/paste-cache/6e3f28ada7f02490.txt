@@ -1,0 +1,44 @@
+ Yes — restore the dependency tree first, then rebuild. That's the correct order.
+
+**`npm install` in `rsmv/`** is low-risk. It's just restoring what's declared in `package.json` to disk. The classifier should allow this.
+
+**`npx electron-rebuild`** is higher-risk because it overwrites `.node` binaries, but it's necessary and bounded — it only touches modules inside `rsmv/node_modules/`. Given you've already aligned Electron versions and this is the mechanical step to make them work, the safety guardrail is overly cautious here.
+
+**One check before you install:**
+
+Since you bumped `rsmv/package.json` to Electron 41, verify `package.json` and `package-lock.json` are in sync. If you edited `package.json` manually without updating the lockfile, `npm install` may resolve differently than expected.
+
+```bash
+cd rsmv
+# Quick validation
+cat package.json | grep '"electron"'
+# If lockfile exists, check if electron version matches
+grep '"version"' node_modules/electron/package.json 2>/dev/null || echo "Not installed yet"
+```
+
+If `package-lock.json` still references Electron 26, `npm install` will try to restore the old version. You may need to delete `package-lock.json` and let it regenerate against the updated `package.json`.
+
+**Proposed sequence:**
+
+```bash
+cd D:\POG2\rsmv
+
+# If lockfile is stale, clear it
+rm package-lock.json  # or del package-lock.json on Windows
+
+# Restore deps
+npm install
+
+# Verify electron resolved correctly
+npx electron --version  # Should print v41.3.0
+
+# Rebuild native modules for this Electron
+npx electron-rebuild
+
+# Verify better-sqlite3 binary exists
+ls node_modules/better-sqlite3/build/Release/better_sqlite3.node
+```
+
+Run `npm install` first. If the classifier blocks `electron-rebuild` again, we'll handle it — but `npm install` should be uncontroversial.
+
+Go ahead.

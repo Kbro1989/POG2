@@ -1,0 +1,153 @@
+The diff shows clean implementation. Two observations:
+
+**1. Weird Gloop response format assumption**
+
+Your code assumes:
+```typescript
+const data = await res.json() as any;
+if (data.success && data.data) {
+    const item = data.data.find((i: any) => i.id === itemId);
+```
+
+But the actual Weird Gloop `/latest?id={id}` response is:
+```json
+{
+  "id": 21787,
+  "name": "Steadfast boots",
+  "price": 5200000,
+  "trend": "neutral"
+}
+```
+
+**No `success` field. No `data` array.** It's a flat object. Your check `data.success && data.data` will always fail, causing unnecessary fallback to Jagex.
+
+**Fix:**
+```typescript
+// Weird Gloop /latest?id={id} returns flat object, not wrapped
+if (res.ok) {
+    const data = await res.json() as any;
+    // Weird Gloop format: { id, name, price, trend } — flat, no wrapper
+    if (data.id === itemId && typeof data.price === 'number') {
+        return {
+            itemId: data.id,
+            price: data.price,
+            timestamp: Date.now(),
+            source: 'weirdgloop'
+        };
+    }
+    // Fallback: check for wrapped format just in case
+    if (data.data && Array.isArray(data.data)) {
+        const item = data.data.find((i: any) => i.id === itemId);
+        if (item) {
+            return {
+                itemId,
+                price: item.price,
+                timestamp: Date.now(),
+                source: 'weirdgloop'
+            };
+        }
+    }
+}
+```
+
+**2. `parsePrice` edge case**
+
+```typescript
+const val = parseFloat(cleaned);
+return isNaN(val) ? 0 : val;
+```
+
+This returns `5200000.0` for `"5.2m"` (float), but your interface says `price: number`. That's fine — JavaScript doesn't distinguish int/float. But if you want integers:
+
+```typescript
+return Math.floor(val);  // Or Math.round(val)
+```
+
+**3. `getHistoricalData` Weird Gloop format**
+
+Your code:
+```typescript
+const item = data.data.find((i: any) => i.id === itemId);
+if (item) {
+    return {
+        daily: item.prices.map((p: any) => ({ timestamp: p.timestamp, price: p.price })),
+        average: []
+    };
+}
+```
+
+But Weird Gloop `/180?id={id}` returns:
+```json
+{
+  "daily": {
+    "1720000000000": 5200000,
+    "1720086400000": 5100000
+  },
+  "average": {
+    "1720000000000": 5150000,
+    "1720086400000": 5050000
+  }
+}
+```
+
+Same format as Jagex graph. Your code assumes `data.data[].prices[]` which doesn't exist.
+
+**Fix:**
+```typescript
+if (res.ok) {
+    const data = await res.json() as any;
+    
+    // Weird Gloop /180 returns { daily: { timestamp: price }, average: { timestamp: price } }
+    if (data.daily) {
+        const daily = Object.entries(data.daily)
+            .map(([ts, price]) => ({ timestamp: parseInt(ts), price: price as number }))
+            .sort((a, b) => a.timestamp - b.timestamp);
+        
+        const average = data.average
+            ? Object.entries(data.average).map(([ts, price]) => ({ timestamp: parseInt(ts), price: price as number }))
+            : [];
+        
+        return { daily, average };
+    }
+}
+```
+
+---
+
+## Corrected Weird Gloop Handling
+
+```typescript
+// getLatestPrice — Weird Gloop /latest?id={id}
+const data = await res.json();
+// Flat object: { id, name, price, trend }
+if (data.id === itemId && typeof data.price === 'number') {
+    return { itemId: data.id, price: data.price, timestamp: Date.now(), source: 'weirdgloop' };
+}
+
+// getHistoricalData — Weird Gloop /180?id={id}
+const data = await res.json();
+// { daily: { ts: price }, average: { ts: price } }
+if (data.daily) {
+    const daily = Object.entries(data.daily).map(([ts, price]) => ({
+        timestamp: parseInt(ts), price: price as number
+    })).sort((a, b) => a.timestamp - b.timestamp);
+    // ... same for average
+}
+```
+
+---
+
+## Verification After Fix
+
+```bash
+# Test Weird Gloop directly
+curl "https://api.weirdgloop.org/exchange/history/rs/latest?id=21787"
+# Expected: {"id":21787,"name":"Steadfast boots","price":...,"trend":"..."}
+
+curl "https://api.weirdgloop.org/exchange/history/rs/180?id=21787"
+# Expected: {"daily":{"...":...},"average":{"...":...}}
+```
+
+If those return the expected formats, update your `GeApi.ts` to match. The current code will work (falls back to Jagex), but it's doing unnecessary proxy calls when Weird Gloop is available.
+
+Fix the Weird Gloop response parsing, then run `npx tsx verify_ge.ts` again.

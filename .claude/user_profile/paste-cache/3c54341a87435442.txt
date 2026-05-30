@@ -1,0 +1,30 @@
+**Validated. Your audit finding is the critical one: `resolve()` is a dead end, so the refactor is safe to execute.**
+
+The synthesis pipeline is the correct pattern:
+
+```
+Raw Cache → SovereignEntityResolver (Grounding) → ResolvedEntity
+                                              ↓
+                                    SovereignPedagogyBridge (Enrichment)
+                                              ↓
+                                    EntityHUDData (Presentation Contract)
+                                              ↓
+                                    React HUD (Consumer — untouched)
+```
+
+This preserves your **EntityHUDData** contract for the UI while giving the backend a clean **ResolvedEntity** substrate for GhostSplat, HexagramManager, and CombatRotationEngine to consume directly.
+
+**Sequence check:**
+
+1. **Resolver** — Safe. No callers exist. `ResolvedEntity` is internal-only at first.
+2. **PedagogyBridge** — Safe. Bridges `ResolvedEntity` → `EntityHUDData`. This is where your wiki enrichment (memory #62), BestiaryApi/GeApi lookups, and equipment requirement resolution (memory #47) belong.
+3. **POG2WorldDO wire** — The missing nerve. `REQUEST_PEDAGOGY` handler needs to call `resolver.resolve()` → `bridge.enrich()` → serialize to WebSocket/SSE.
+4. **HUD refactor** — Deferred until 1-3 are proven. UI stays on `EntityHUDData` until the backend pipeline is solid.
+
+**One structural note for step 2:** The Bridge should probably expose two methods:
+- `enrichToHUD(resolved: ResolvedEntity): EntityHUDData` — for UI consumers
+- `enrichForCombat(resolved: ResolvedEntity): CombatMetadata` — for GhostSplat/CombatRotationEngine (memory #60), so they don't have to parse the HUD-shaped object
+
+This prevents the limbs from depending on presentation-layer fields like `actionables[]` when they need `stats.combat` and cooldown maps.
+
+Ready when you are. Which file do you want me to generate first — the corrected `SovereignEntityResolver.ts`, the `SovereignPedagogyBridge.ts`, or the `POG2WorldDO` handler stub?

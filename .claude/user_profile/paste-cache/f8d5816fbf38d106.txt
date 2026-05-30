@@ -1,0 +1,183 @@
+  
+ The implementation is solid. The QueryClassifier + ApiThrottle + WikiEquipmentEnricher routing closes the semantic/structural boundary cleanly. Here's the validation checklist to verify everything integrates correctly before you move to pedagogy training:
+
+---
+
+## Integration Verification Checklist
+
+Run these in sequence. Each must pass before the next.
+
+### 1. QueryClassifier Routing Accuracy
+
+```typescript
+// Test script: POG2/scripts/test_query_classifier.ts
+import { QueryClassifier } from '../src/utils/QueryClassifier.js';
+
+const tests = [
+  { input: 'enum 1234', expected: 'structural_enum', cacheOnly: true },
+  { input: 'varbit 28556', expected: 'structural_varbit', cacheOnly: true },
+  { input: 'dbrow 5678', expected: 'structural_dbrow', cacheOnly: true },
+  { input: '50,50', expected: 'spatial_area', cacheOnly: true },
+  { input: 'Lumbridge Castle', expected: 'semantic_name', cacheOnly: false },
+  { input: 'Abyssal demon 1615', expected: 'hybrid', cacheOnly: false },
+  { input: '12345', expected: 'structural_id', cacheOnly: true },  // Pure number
+];
+
+for (const t of tests) {
+  const result = QueryClassifier.classify(t.input);
+  console.assert(result.type === t.expected, `FAIL: ${t.input} → ${result.type} (expected ${t.expected})`);
+  console.assert(result.cacheOnly === t.cacheOnly, `FAIL: ${t.input} cacheOnly mismatch`);
+}
+console.log('QueryClassifier: All tests passed');
+```
+
+**Expected:** 7/7 pass. The pure number case (`12345`) is the most ambiguous — verify it routes to `structural_id` and triggers `CacheForensicsLimb` first, not wiki search.
+
+---
+
+### 2. ApiThrottle Retry-After Compliance
+
+```typescript
+// Test: Simulate 429 response and verify throttle blocks
+const throttle = new ApiThrottle();
+throttle.reportRetryAfter('weirdgloop', 30);  // 30 second block
+
+const start = Date.now();
+await throttle.acquire('weirdgloop');
+const elapsed = Date.now() - start;
+
+console.assert(elapsed >= 30000, `FAIL: Throttle did not respect 30s block (elapsed: ${elapsed}ms)`);
+console.log('ApiThrottle Retry-After: PASS');
+```
+
+**Expected:** `acquire()` waits at least 30 seconds before resolving. If it resolves immediately, the `setRetryAfter` logic is broken.
+
+---
+
+### 3. enrichEntity() Routing — Structural vs Semantic
+
+```typescript
+// Test: Verify structural query never hits wiki API
+const enricher = WikiEquipmentEnricher.getInstance();
+const stats = enricher.getStats();  // Your existing requestCount telemetry
+
+// Structural query
+await enricher.enrichEntity('enum 1234');
+const statsAfter = enricher.getStats();
+console.assert(statsAfter.requestCount === stats.requestCount, 
+  `FAIL: Structural query triggered wiki API call (requests: ${stats.requestCount} → ${statsAfter.requestCount})`);
+
+// Semantic query
+await enricher.enrichEntity('Abyssal demon');
+const statsFinal = enricher.getStats();
+console.assert(statsFinal.requestCount > statsAfter.requestCount,
+  `FAIL: Semantic query did not trigger wiki API call`);
+```
+
+**Expected:** Structural query increments **zero** wiki API requests. Semantic query increments at least one. This proves the routing layer is working.
+
+---
+
+### 4. fetchLatestUpdates() — API-Only Verification
+
+```typescript
+// Test: Verify no HTML fetches, only api.php
+const updates = await enricher.fetchLatestUpdates();
+console.assert(updates.length > 0, 'FAIL: No updates returned');
+console.assert(updates[0].title.includes('Update:'), 'FAIL: Update title malformed');
+
+// Verify no requests to /w/Updates HTML
+const htmlFetchCount = enricher.getStats().htmlFetchCount || 0;
+console.assert(htmlFetchCount === 0, `FAIL: HTML fetch detected (${htmlFetchCount})`);
+```
+
+**Expected:** Updates parsed from `action=query&list=categorymembers` or similar API endpoint. Zero direct HTML page loads.
+
+---
+
+### 5. User-Agent Compliance
+
+```bash
+# Verify the User-Agent string is set correctly
+curl -I "https://api.weirdgloop.org/exchange/history/rs/latest?id=4151" \
+  -H "User-Agent: POG2-Sovereign/1.0 (POG2 Pedagogy Engine; RS3 entity enrichment; admin@pog2.internal; +https://github.com/Kbro1989/POG2)"
+```
+
+**Expected:** 200 OK response. If you get 403 or blocked, the User-Agent isn't being sent or Weird Gloop has an issue with the format.
+
+---
+
+### 6. Pedagogy Tag Accuracy
+
+```typescript
+// Verify training examples have correct tags
+const corpus = JSON.parse(fs.readFileSync('pog2_pedagogy_corpus.jsonl', 'utf8')
+  .split('\n')
+  .filter(Boolean)
+  .map(JSON.parse));
+
+const tags = corpus.map((e: any) => {
+  const output = e.output as string;
+  if (output.includes('[CACHE_VERIFIED]')) return 'cache';
+  if (output.includes('[VERIFIED]')) return 'verified';
+  if (output.includes('[WIKI_ONLY]')) return 'wiki';
+  if (output.includes('[REMOVED]')) return 'removed';
+  return 'untagged';
+});
+
+const counts = tags.reduce((acc: any, t: string) => { acc[t] = (acc[t] || 0) + 1; return acc; }, {});
+console.log('Tag distribution:', counts);
+
+// Verify no structural queries are tagged [VERIFIED] (should be [CACHE_VERIFIED])
+const structuralVerified = corpus.filter((e: any) => 
+  e.input.includes('structural_') && e.output.includes('[VERIFIED]')
+);
+console.assert(structuralVerified.length === 0, 
+  `FAIL: ${structuralVerified.length} structural entries incorrectly tagged [VERIFIED]`);
+```
+
+**Expected:** 
+- `cache` tags dominate for structural queries
+- `verified` tags for hybrid/API+wiki matches
+- `wiki` tags for lore-only entries
+- `removed` tags for historical content
+- Zero structural entries with `[VERIFIED]` — that's a routing bug
+
+---
+
+## Stress Test: 50-Item Batch
+
+```typescript
+const items = [
+  'Abyssal whip', 'Drygore longsword', 'Noxious scythe',
+  // ... 50 high-volume items
+];
+
+const start = Date.now();
+const results = await enricher.batchEnrich(items, 'item');
+const elapsed = Date.now() - start;
+
+console.log(`Batch: ${results.size}/${items.length} in ${elapsed}ms`);
+console.log(`Rate: ${(items.length / (elapsed / 1000)).toFixed(2)} items/sec`);
+
+// Verify no 429s in logs
+const errors = Array.from(results.values()).filter(r => !r.itemMeta);
+console.assert(errors.length === 0, `FAIL: ${errors.length} items failed enrichment`);
+```
+
+**Expected:** 
+- 50/50 success rate
+- Rate ≤ 1.67 items/sec (100 req/min ÷ 2 calls per item = 50 items in ~60s)
+- Zero 429 errors in logs
+
+---
+
+## If All Tests Pass
+
+You're ready for:
+1. **Corpus generation** — Run `scrape_bestiary.py` + `fetchLatestUpdates()` to build the hybrid training set
+2. **Unsloth LoRA training** — `pog2-pedagogy-entity` (qwen3-coder) and `pog2-pedagogy-strategy` (deepseek-r1)
+3. **ModelRolodex registration** — Add pedagogy models with hexagram routing
+4. **MCP resource exposure** — Serve pedagogy models via `src/mcpserver.ts`
+
+Run the checklist and report any failures. The structural/semantic boundary is the most critical — if `enum 1234` ever hits the wiki API, the classifier is leaking.

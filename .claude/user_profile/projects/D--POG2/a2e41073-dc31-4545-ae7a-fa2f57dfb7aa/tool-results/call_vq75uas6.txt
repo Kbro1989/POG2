@@ -1,0 +1,252 @@
+.pog2-config.json.example:6:  "visionModel": "moondream:latest",
+ARCHITECTURE.md:142:1. **The Circuit Breaker Rule**: Never allow more than 3 recursive self-healing attempts without a hard break to human confirmation.
+.agents\rules\pogrules.md:13:- **SENSORY**: External probes, monitoring, vision, and shell interaction.
+CONTRIBUTING.md:13:- **SENSORY**: External probes, monitoring, vision, and shell interaction.
+CONTRIBUTING.md:83:- `/vision`: Trigger spatial observation / eye capture.
+CODEBASE.md:58:- [test_vision_pipeline.ts](https://github.com/Kbro1989/POG2/blob/main/src/test_vision_pipeline.ts)
+CODEBASE.md:161:<summary>📂 src/vision (2 files)</summary>
+CODEBASE.md:163:- [StructuralAnalyzer.ts](https://github.com/Kbro1989/POG2/blob/main/src/vision/StructuralAnalyzer.ts)
+CODEBASE.md:164:- [TransientObserver.ts](https://github.com/Kbro1989/POG2/blob/main/src/vision/TransientObserver.ts)
+.agent\workflows\pog2-sovereign.md:13:- **SENSORY**: External probes, monitoring, vision, and shell interaction.
+CODEBASE_MAP.md:149:## 📂 Vision & Pedagogy (`src/vision/`)
+CODEBASE_MAP.md:153:- [RSMVController.ts](https://github.com/Kbro1989/POG2/blob/main/src/vision/RSMVController.ts): CNS Bridge for active 3D modification and GLTF export.
+CODEBASE_MAP.md:154:- [StructuralAnalyzer.ts](https://github.com/Kbro1989/POG2/blob/main/src/vision/StructuralAnalyzer.ts)
+CODEBASE_MAP.md:155:- [TransientObserver.ts](https://github.com/Kbro1989/POG2/blob/main/src/vision/TransientObserver.ts)
+CODEBASE_MAP.md:357:- **[RSMVController.ts](src/vision/RSMVController.ts)**: CNS Bridge for active 3D modification and GLTF export.
+package.json:44:    "@google-cloud/vision": "^4.3.2",
+package.json:126:    "vision-intelligence",
+allfiles.md:262:src\test_vision_pipeline.ts
+allfiles.md:810:ChromanumberEngine.ts        - Color/vision processing ⭐
+allfiles.md:950:vision_model.write() → vision.db ONLY
+allfiles.md:1476:[Omitted long matching line]
+allfiles.md:1481:1. Non-AI visual spatial mapper (the ChromaNumber / line-color separation system) This is the part that makes the vision system actually trustworthy. Instead of trusting an LLM/VLM to “describe what it sees” (which is just more hallucination stacked on hallucination), you built a deterministic, symbolic mapper:
+allfiles.md:1533:* Non-AI symbolic vision
+allfiles.md:1566:   * ChromaNumber as deterministic vision backbone
+allfiles.md:1659:[Omitted long matching line]
+allfiles.md:1692:     * spatial has ChromaLimb, RSCLimb, BioIntelligenceLimb — core to the vision/embodiment/reversal idea
+allfiles.md:1845:   * all-minilm, deepseek-coder (6.7b/33b), kimi-k2.5 (cloud? but local manifest), moondream (vision), qwen2.5-coder (various sizes), qwen3-coder/embedding, tinyllama, yi-coder. This is your 767 local workforce backbone — vision (moondream), coding (deepseek/qwen/yi), reasoning (kimi), embeddings (qwen3/all-minilm). Matches the offline failover you described.
+allfiles.md:2116:  "styleInfluence": "The complex style generates dense sensory imagery requiring visual interpretation of abstract psychological states—'visions of sugar-plums,' 'wondering eyes'—through sophisticated metaphorical representation and syntactic intricacy that mirrors the poem's elevated readability metrics and elaborate sentence constructions.",
+allfiles.md:2218:      "styleInfluence": "The complex style generates dense sensory imagery requiring visual interpretation of abstract psychological states—'visions of sugar-plums,' 'wondering eyes'—through sophisticated metaphorical representation and syntactic intricacy that mirrors the poem's elevated readability metrics and elaborate sentence constructions.",
+PROJECT-OVERVIEW.md:167:│  │  │  ├─ ChromaLimb.ts            🌈 ChromaNumber vision
+PROJECT-OVERVIEW.md:476:    OCCIPITAL_LOBE = "vision",          // Vision processing
+package-lock.json:15:        "@google-cloud/vision": "^4.3.2",
+package-lock.json:1014:    "node_modules/@google-cloud/vision": {
+package-lock.json:1016:      "resolved": "https://registry.npmjs.org/@google-cloud/vision/-/vision-4.3.3.tgz",
+POG2_KNOWLEDGEBASE.md:184:- `src/vision/StructuralAnalyzer.ts` — "Substrate missing"
+OrchestrateEngine.md:78:import { rsmvController } from '../vision/rsmvController.js';
+OrchestrateEngine.md:79:import { StructuralAnalyzer } from '../vision/StructuralAnalyzer.js';
+OrchestrateEngine.md:137:    private readonly visionEngine: SpatialVisionEngine;
+OrchestrateEngine.md:138:    private readonly vision: VisionEngine;
+OrchestrateEngine.md:240:        this.visionEngine = SpatialVisionEngine.getInstance(config, renderer);
+OrchestrateEngine.md:241:        this.vision = VisionEngine.getInstance(config, renderer);
+OrchestrateEngine.md:545:                // Connect renderer and vision (safe regardless of port status)
+OrchestrateEngine.md:546:                this.switchboard.connectToSubstrates(this.renderer, this.vision);
+OrchestrateEngine.md:564:                    SpatialVisionEngine: this.visionEngine,
+OrchestrateEngine.md:565:                    VisionEngine: this.vision,
+OrchestrateEngine.md:677:            this.vision,
+OrchestrateEngine.md:678:            this.visionEngine,
+OrchestrateEngine.md:698:                SpatialVisionEngine: this.visionEngine,
+OrchestrateEngine.md:699:                VisionEngine: this.vision,
+OrchestrateEngine.md:778:            VisionEngine: this.vision,
+OrchestrateEngine.md:779:            SpatialVisionEngine: this.visionEngine,
+OrchestrateEngine.md:856:        this.nodeTester.registerLimbs({ VisionEngine: this.vision });
+OrchestrateEngine.md:857:        this.nodeTester.registerLimbs({ SpatialVisionEngine: this.visionEngine });
+OrchestrateEngine.md:1696:            humanDescription: "Use the AI's vision to look at and analyze your computer screen.",
+OrchestrateEngine.md:1704:                return this.visionEngine.observe({ ...params, intent: 'eye', modelOverride: params.model });
+OrchestrateEngine.md:1743:                const visionRes = await this.visionEngine.observe({
+OrchestrateEngine.md:1750:                return visionRes;
+OrchestrateEngine.md:1851:            jargonDescription: 'Maps a Chromanumber classification to a specific 3D mesh fragment, establishing a semantic link between 2D vision and 3D spatial substrates.',
+OrchestrateEngine.md:1952:                const res = await this.visionEngine.observe({
+OrchestrateEngine.md:2854:            name: 'probe_vision',
+OrchestrateEngine.md:2855:            description: 'Validate the vision pipeline by generating and analyzing a high-affinity prompt.',
+OrchestrateEngine.md:2856:            humanDescription: 'Test the AI\'s vision system to ensure it can still "see" and analyze images.',
+OrchestrateEngine.md:2857:            jargonDescription: 'Triggers a synthetic vision-capture loop via ChromaLimb and Vision Engine to verify neurological visual integrity.',
+OrchestrateEngine.md:2864:                const res = await this.visionEngine.observe({ intent: 'chroma', target: 'INTERNAL_TEST', prompt: p });
+OrchestrateEngine.md:3148:    "interaction": "text|voice|vision|silent",
+OrchestrateEngine.md:3233:                steps: ["Capture screenshot/vision data"],
+OrchestrateEngine.md:3236:                model: this.config.visionModel,
+OrchestrateEngine.md:3239:                interaction: 'vision', // Assuming these are still relevant for the plan
+OrchestrateEngine.md:3369:                    this.renderer.info('AUTO-PROCEED: Skipping strategy confirmation.');
+OrchestrateEngine.md:4033:        // Note: Using visionEngine directly to satisfy Phase 24 requirements
+OrchestrateEngine.md:4034:        const eyeRes = await this.visionEngine.observe({
+OrchestrateEngine.md:4047:        // 2. Parse vision feedback
+OrchestrateEngine.md:4054:                details: feedback.details || 'No details provided by vision substrate.',
+tool_list.txt:109:probe_vision
+registry_manifest.txt:67:probe_vision
+src\api\ai\Dispatcher.ts:131:        if (id.includes('vision') || id.includes('eye') || payload.includes('.png')) return "VISION";
+src\api\ai\StaticModelRegistry.ts:118:    'moondream_vision': {
+src\api\ai\StaticModelRegistry.ts:119:        id: 'moondream_vision',
+src\api\ai\StaticModelRegistry.ts:124:        description: 'Local computer vision.',
+src\api\ai\ModelRolodex.js:287:                        taskType: m.name.includes('embed') ? 'embedding' : m.name.includes('llava') || m.name.includes('moondream') ? 'vision' : 'text',
+src\api\ai\ModelRolodex.js:360:                            isVision: taskName.includes('image') || taskName.includes('vision'),
+src\api\ai\ModelRolodex.js:362:                            isText: !taskName.includes('image') && !taskName.includes('embed') && !taskName.includes('audio') && !taskName.includes('vision')
+src\api\ai\ModelRolodex.js:582:                            taskType: modality.includes('vision') ? 'vision' : modality.includes('image') ? 'image' : 'text',
+src\api\ai\ModelRolodex.js:585:                            isVision: modality.includes('vision') || modality.includes('image'),
+src\api\ai\ModelRolodex.js:586:                            isText: !modality.includes('image') && !modality.includes('vision')
+src\api\ai\ModelRolodex.js:645:                            taskType: id.includes('vision') || id.includes('llava') || id.includes('moondream') ? 'vision' : 'text',
+src\api\ai\ModelRolodex.js:648:                            isVision: id.includes('vision') || id.includes('llava') || id.includes('moondream'),
+src\api\ai\ModelRolodex.js:649:                            isText: !id.includes('vision') && !id.includes('llava') && !id.includes('moondream')
+src\api\ai\ModelRolodex.ts:26:    taskType: 'text' | 'image' | 'audio' | 'embedding' | 'vision' | 'unknown';
+src\api\ai\ModelRolodex.ts:315:    getHealthyModelsByTaskType(taskType: 'text' | 'image' | 'audio' | 'embedding' | 'vision'): string[] {
+src\api\ai\ModelRolodex.ts:468:                        taskType: m.name.includes('embed') ? 'embedding' : m.name.includes('llava') || m.name.includes('moondream') ? 'vision' : m.name.includes('audio') || m.name.includes('whisper') ? 'audio' : m.name.includes('image') || m.name.includes('draw') ? 'image' : 'text',
+src\api\ai\ModelRolodex.ts:553:                            isVision: taskName.includes('image') || taskName.includes('vision'),
+src\api\ai\ModelRolodex.ts:555:                            isText: !taskName.includes('image') && !taskName.includes('embed') && !taskName.includes('audio') && !taskName.includes('vision')
+src\api\ai\ModelRolodex.ts:788:                            taskType: modality.includes('vision') ? 'vision' : modality.includes('image') ? 'image' : 'text',
+src\api\ai\ModelRolodex.ts:791:                            isVision: modality.includes('vision') || modality.includes('image'),
+src\api\ai\ModelRolodex.ts:792:                            isText: !modality.includes('image') && !modality.includes('vision')
+src\api\ai\ModelRolodex.ts:853:                            taskType: id.includes('vision') || id.includes('llava') || id.includes('moondream') ? 'vision' : 'text',
+src\api\ai\ModelRolodex.ts:856:                            isVision: id.includes('vision') || id.includes('llava') || id.includes('moondream'),
+src\api\ai\ModelRolodex.ts:857:                            isText: !id.includes('vision') && !id.includes('llava') && !id.includes('moondream')
+src\cli.ts:80:import { RSMVController } from './vision/RSMVController.js';
+src\cli.ts:246:    const required = [config.codingHeavyModel, config.codingFastModel, config.visionModel];
+src\cli.ts:345:        .option('-y, --yes', 'Execute without biological confirmation (Auto-proceed)', false)
+src\cli.ts:1356:                renderer.info(`ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ VISION EYE (Observation) : ${config.visionModel}`);
+src\cli.ts:3246:                    visionModel: config.visionModel,
+src\cli.ts:3270:            const eye = new SovereignEye('cli-vision');
+src\cli.ts:3607:                    renderer.info('Here are the shortcuts I know: /help, /status, /capabilities, /registry, /vision, /shadow, /memetics, /syntropy, /health, /clear, /pull, /vs, /exit');
+src\cli.ts:3680:                case '/vision':
+src\config\SovereignConfig.ts:18:    visionModel: string;
+src\config\SovereignConfig.ts:111:    visionFastModel: string;
+src\config\SovereignConfig.ts:120:    visionModel: 'moondream:latest',
+src\config\SovereignConfig.ts:201:    visionFastModel: 'moondream:latest'
+src\config\SovereignConfig.ts:244:    visionModel: 'POG2_VISION_MODEL',
+src\config\SovereignConfig.ts:288:    visionFastModel: 'VISION_FAST_MODEL'
+scratch\beta_routing_manifest.json:9:    "revision": 225,
+src\config\SovereignConfig.js:10:    visionModel: 'moondream:1.8b-v2-q4_K_M',
+src\config\SovereignConfig.js:81:    visionFastModel: 'moondream:1.8b'
+src\config\SovereignConfig.js:118:    visionModel: 'POG2_VISION_MODEL',
+src\config\SovereignConfig.js:161:    visionFastModel: 'VISION_FAST_MODEL'
+src\config\OllamaCapabilityConfig.ts:14:    readonly domain: 'reasoning' | 'code' | 'vision' | 'reflex' | 'embedding' | 'chat';
+src\config\OllamaCapabilityConfig.ts:27:        ['VISION', 'vision', ['moondream:latest', 'llava:latest']],
+src\core\models.js:138:    ModelAbility["Vision"] = "vision";
+src\core\WorldTransform.ts:56:    // World â†’ screen / vision grid
+src\core\HexagramDefinitions.ts:152:        description: 'Fire. Clarity and vision.',
+src\core\HexagramDefinitions.js:135:        description: 'Fire. Clarity and vision.',
+src\events\EventBus.ts:9:    type: string;        // E.g., 'interaction', 'decision', 'vision.analysis'
+src\core\HandshakeModels.ts:22:    revision: number;
+src\core\HandshakeModels.ts:30:    revision: number;
+src\core\ProtocolOpcodes.ts:3: * Authoritative mapping of network packet IDs for Revision 947.
+src\vision\TransientObserver.ts:21:    private static readonly CAPTURE_THROTTLE_MS = 5000; // Live vision loop cadence
+src\vision\TransientObserver.ts:128:                    this.eye = new (require('../utils/SovereignEye.js')).SovereignEye('live-vision-loop');
+src\engines\BlenderRenderer.ts:235:bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=3, radius=${scale}, location=(${offsetX}, 0, ${scale}))
+src\engines\BlenderRenderer.ts:285:bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=0.8, location=(${offsetX}, 0, 1.5))
+src\core\ServiceDiscovery.ts:178:            { id: 'vision', name: 'Cloud Vision', status: 'INACTIVE', type: 'EXTENSION' },
+src\core\ServiceDiscovery.ts:204:            const depKey = `@google-cloud/${id === 'healthcare' ? 'healthcare' : id === 'documentai' ? 'document-ai' : 'vision'}`;
+src\engines\GenerateEngine.ts:320:I'm purging the friction and aligning with your vision. 
+src\core\models.ts:29:    ONLINE = 'ONLINE',          // Full actuation and vision OK
+src\core\models.ts:838:    Vision = 'vision',
+src\core\models.ts:1037: * ActuationResult â€” Feedback from the motor/vision substrate after actuation.
+src\core\models.ts:1168:    readonly interaction: 'text' | 'voice' | 'vision' | 'silent';
+src\vision\ShaderInjector.ts:109:        // Walk from this file (dist/vision/ShaderInjector.js or src/vision/ShaderInjector.ts)
+src\engines\ForgeEngine.ts:127:    bmesh.ops.create_icosphere(bm, subdivisions=2, radius=1.0)
+src\vision\PuppeteerEye.ts:79:        return TaskScheduler.getInstance().schedule('vision', 2, async () => {
+src\engines\SelfHealingEngine.ts:34:        private readonly visionEngine?: VisionEngine,
+src\engines\SelfHealingEngine.ts:97:        if (isUI && ternary === CognitivePolarity.YANG && (this.visionEngine || this.spatialVisionEngine) && this.chromaEngine) {
+src\engines\SelfHealingEngine.ts:100:             // We do not await full vision execution here, we just shape the decision heuristic to request physical inspection
+src\engines\core\WaitDecisionMaker.ts:53:        // Apply Perceptual Dampening: if vision/pedagogy disagrees with state, drop confidence
+src\engines\core\WaitDecisionMaker.ts:66:                deadlineMs: 600, // max wait before forced action aligned with ~600ms vision latency
+src\engines\OrchestrateEngine.ts:82:import { RSMVController } from '../vision/RSMVController.js';
+src\engines\OrchestrateEngine.ts:83:import { StructuralAnalyzer } from '../vision/StructuralAnalyzer.js';
+src\engines\OrchestrateEngine.ts:142:    private readonly visionEngine: SpatialVisionEngine;
+src\engines\OrchestrateEngine.ts:143:    private readonly vision: VisionEngine;
+src\engines\OrchestrateEngine.ts:256:        this.visionEngine = SpatialVisionEngine.getInstance(config, renderer);
+src\engines\OrchestrateEngine.ts:257:        this.vision = VisionEngine.getInstance(config, renderer);
+src\engines\OrchestrateEngine.ts:661:                // Connect renderer and vision (safe regardless of port status)
+src\engines\OrchestrateEngine.ts:662:                this.switchboard.connectToSubstrates(this.renderer, this.vision);
+src\engines\OrchestrateEngine.ts:680:                    SpatialVisionEngine: this.visionEngine,
+src\engines\OrchestrateEngine.ts:681:                    VisionEngine: this.vision,
+src\engines\OrchestrateEngine.ts:824:                               (modelKeyLower.includes('vision') && taskLower.includes('vision')) ||
+src\engines\OrchestrateEngine.ts:891:            this.vision,
+src\engines\OrchestrateEngine.ts:892:            this.visionEngine,
+src\engines\OrchestrateEngine.ts:912:                SpatialVisionEngine: this.visionEngine,
+src\engines\OrchestrateEngine.ts:913:                VisionEngine: this.vision,
+src\engines\OrchestrateEngine.ts:992:            VisionEngine: this.vision,
+src\engines\OrchestrateEngine.ts:993:            SpatialVisionEngine: this.visionEngine,
+src\engines\OrchestrateEngine.ts:1070:        this.nodeTester.registerLimbs({ VisionEngine: this.vision });
+src\engines\OrchestrateEngine.ts:1071:        this.nodeTester.registerLimbs({ SpatialVisionEngine: this.visionEngine });
+src\engines\OrchestrateEngine.ts:2209:            humanDescription: "Use the AI's vision to look at and analyze your computer screen.",
+src\engines\OrchestrateEngine.ts:2217:                return this.visionEngine.observe({ ...params, intent: 'eye', modelOverride: params.model });
+src\engines\OrchestrateEngine.ts:2256:                const visionRes = await this.visionEngine.observe({
+src\engines\OrchestrateEngine.ts:2263:                return visionRes;
+src\engines\OrchestrateEngine.ts:2364:            jargonDescription: 'Maps a Chromanumber classification to a specific 3D mesh fragment, establishing a semantic link between 2D vision and 3D spatial substrates.',
+src\engines\OrchestrateEngine.ts:2462:                const res = await this.visionEngine.observe({
+src\engines\OrchestrateEngine.ts:3364:            name: 'probe_vision',
+src\engines\OrchestrateEngine.ts:3365:            description: 'Validate the vision pipeline by generating and analyzing a high-affinity prompt.',
+src\engines\OrchestrateEngine.ts:3366:            humanDescription: 'Test the AI\'s vision system to ensure it can still "see" and analyze images.',
+src\engines\OrchestrateEngine.ts:3367:            jargonDescription: 'Triggers a synthetic vision-capture loop via ChromaLimb and Vision Engine to verify neurological visual integrity.',
+src\engines\OrchestrateEngine.ts:3374:                const res = await this.visionEngine.observe({ intent: 'chroma', target: 'INTERNAL_TEST', prompt: p });
+src\engines\OrchestrateEngine.ts:3656:    "interaction": "text|voice|vision|silent",
+src\engines\OrchestrateEngine.ts:3753:                steps: ["Capture screenshot/vision data"],
+src\engines\OrchestrateEngine.ts:3756:                model: this.config.visionModel,
+src\engines\OrchestrateEngine.ts:3759:                interaction: 'vision', // Assuming these are still relevant for the plan
+src\engines\OrchestrateEngine.ts:3931:                    this.renderer.info('AUTO-PROCEED: Skipping strategy confirmation.');
+src\engines\OrchestrateEngine.ts:4674:        // Note: Using visionEngine directly to satisfy Phase 24 requirements
+src\engines\OrchestrateEngine.ts:4675:        const eyeRes = await this.visionEngine.observe({
+src\engines\OrchestrateEngine.ts:4688:        // 2. Parse vision feedback
+src\engines\OrchestrateEngine.ts:4695:                details: feedback.details || 'No details provided by vision substrate.',
+src\routing\WorkforceManifest.ts:99:                id: config.visionModel,
+src\routing\WorkforceManifest.ts:100:                configKey: 'visionModel',
+src\routing\WorkforceManifest.ts:104:                systemPrompt: `You are the SovereignEye vision agent.
+src\routing\WorkforceManifest.ts:108:                memoryNamespace: 'vision_specialist',
+src\routing\WorkforceManifest.ts:249:                authorizedTools: ['rsc_login', 'rsc_walk', 'rsc_chat', 'rsc_vision_verify'],
+src\routing\WorkforceManifest.ts:250:                systemPrompt: `You are the RSC Agent. Interact with the game world. Use vision to verify state.`,
+src\routing\WorkforceManifest.ts:284:                id: config.visionFastModel,
+src\routing\WorkforceManifest.ts:285:                configKey: 'visionFastModel',
+src\routing\WorkforceManifest.ts:291:                memoryNamespace: 'vision_fast',
+src\engines\VisionEngine.ts:56:        this.eye = new SovereignEye('vision-engine');
+src\engines\VisionEngine.ts:77:            return { ok: false, error: new Error(`Image not found for vision analysis: ${imagePath}`) };
+src\engines\VisionEngine.ts:85:            model: params.modelOverride ?? this.config.visionModel,
+src\engines\VisionEngine.ts:98:                    model: this.config.visionModel,
+src\routing\TernaryRouter.ts:12:type TaskType = 'text' | 'image' | 'audio' | 'embedding' | 'vision' | 'unknown';
+src\routing\TernaryRouter.ts:49:    Vision: /\.(png|jpg|jpeg|webp|gif)\b|\b(vision|see|look|image|screenshot|picture|analyze this view|what is in this|describe the scene)\b/i,
+src\routing\TernaryRouter.ts:326:        // If it clearly contains image paths or vision keywords, fast-fail to vision
+src\routing\TernaryRouter.ts:327:        const visionRegex = /\.(png|jpg|jpeg|webp|gif)\b|\b(vision|see|look|image|screenshot|picture|analyze this view)\b/i;
+src\routing\TernaryRouter.ts:328:        if (visionRegex.test(prompt)) {
+src\routing\TernaryRouter.ts:329:            return 'vision';
+src\routing\TernaryRouter.ts:339:            const classificationPrompt = `Classify this task exactly into one of these words: [simple, complex, vision, coding, embedding, orchestration]. Task: ${prompt.substring(0, 500)}`;
+src\routing\TernaryRouter.ts:367:            if (response.includes('vision')) {
+src\routing\TernaryRouter.ts:369:                return 'vision';
+src\routing\TernaryRouter.ts:460:            // If the triage determined it's vision, but the heuristic missed it, upgrade the complexity
+src\routing\TernaryRouter.ts:461:            if (dynamicTaskType === 'vision' && complexity !== 'Vision') {
+src\routing\TernaryRouter.ts:513:            decision = { model: this.config.visionModel, complexity: 'SovereignEye', tier: 'Executive', reasoning: `Stage 3 (Structural) - SovereignEye substrate: Sensory proprioception. Directive: [${directive}]`, yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
+src\routing\TernaryRouter.ts:515:            const model = this.findWorkingModel(this.config.visionModel, ['moondream', 'llava'], 'vision');
+src\routing\TernaryRouter.ts:655:    public getFailoverSequence(tier: 'Master' | 'Executive' | 'Reactive', taskType: 'text' | 'image' | 'audio' | 'embedding' | 'vision' = 'text'): string[] {
+src\routing\TernaryRouter.ts:852:        if (taskType === 'vision' && !model.isVision) return false;
+src\routing\TernaryRouter.ts:854:        if (taskType === 'image' && !model.isVision) return false; // Image tasks usually need vision or specialized flags
+src\engines\gameplay\CNSGodheadPulseVolley.ts:8:import { RSMVController } from '../../vision/RSMVController.js';
+src\engines\gameplay\CNSGodheadPulseVolley.ts:17:import { TransientObserver } from '../../vision/TransientObserver.js';
+src\engines\gameplay\CNSGodheadPulseVolley.ts:89:    private vision?: SpatialVisionEngine;
+src\engines\gameplay\CNSGodheadPulseVolley.ts:134:        if (!this.vision) this.vision = SpatialVisionEngine.getInstance();
+src\engines\gameplay\CNSGodheadPulseVolley.ts:397:            if (this.substrateState === SubstrateState.ONLINE && this.vision && this.tickCount % 10 === 0) {
+src\engines\gameplay\CNSGodheadPulseVolley.ts:398:                this.vision.verifySpatialAnchor().then(verification => {
+src\engines\VisionActuationHarness.ts:4:import { PuppeteerEye } from '../vision/PuppeteerEye.js';
+src\engines\VisionActuationHarness.ts:6:import { ShaderInjector } from '../vision/ShaderInjector.js';
+src\engines\VisionActuationHarness.ts:7:import { RSMVController } from '../vision/RSMVController.js';
+src\engines\VisionActuationHarness.ts:19: * 2. Processes vision/intent via ChromanumberEngine.
+src\routing\TernaryRouter.js:17:    Vision: /\.(png|jpg|jpeg|webp|gif)\b|\b(vision|see|look|image|screenshot|picture|analyze this view|what is in this|describe the scene)\b/i,
+src\routing\TernaryRouter.js:258:        // If it clearly contains image paths or vision keywords, fast-fail to vision
+src\routing\TernaryRouter.js:259:        const visionRegex = /\.(png|jpg|jpeg|webp|gif)\b|\b(vision|see|look|image|screenshot|picture|analyze this view)\b/i;
+src\routing\TernaryRouter.js:260:        if (visionRegex.test(prompt)) {
+src\routing\TernaryRouter.js:261:            return 'vision';
+src\routing\TernaryRouter.js:269:            const classificationPrompt = `Classify this task exactly into one of these words: [simple, complex, vision, coding, embedding, orchestration]. Task: ${prompt.substring(0, 500)}`;
+src\routing\TernaryRouter.js:294:            if (response.includes('vision')) {
+src\routing\TernaryRouter.js:296:                return 'vision';
+src\routing\TernaryRouter.js:376:            // If the triage determined it's vision, but the heuristic missed it, upgrade the complexity
+src\routing\TernaryRouter.js:377:            if (dynamicTaskType === 'vision' && complexity !== 'Vision') {
+src\routing\TernaryRouter.js:422:            decision = { model: this.config.visionModel, complexity: 'SovereignEye', tier: 'Executive', reasoning: 'Stage 3 (Structural) - SovereignEye substrate: Sensory proprioception', yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
+src\routing\TernaryRouter.js:425:            const model = this.findWorkingModel(this.config.visionModel, ['moondream', 'llava'], 'vision');
+src\routing\TernaryRouter.js:738:        if (taskType === 'vision' && !model.isVision)
+src\routing\TernaryRouter.js:743:            return false; // Image tasks usually need vision or specialized flags
+src\monitor\SwitchboardLimb.ts:723:                    type: 'vision',
+src\monitor\SwitchboardLimb.ts:729:            logger.debug('SovereignEye substrate does not support EventEmitter â€” vision mirroring skipped.');
+src\routing\TaskScheduler.ts:25:    vision: 1       // Puppeteer instances are resource-heavy
+src\engines\SpatialVisionEngine.ts:55: * SpatialVisionEngine Ã¢â‚¬â€ Enhanced vision with spatial mapping for Kimi
+src\engines\SpatialVisionEngine.ts:75:        this.eye = new SovereignEye('spatial-vision');
+src\engines\SpatialVisionEngine.ts:126:     * verifySpatialAnchor - Visual ground-truth confirmation.
+src\engines\SpatialVisionEngine.ts:178:                if (!imagePath) return { ok: false, error: lastErr || new Error('All vision dashboard ports (8788, 8787, 8081) failed to produce a capture.') };
+src\engines\SpatialVisionEngine.ts:190:                model: this.config.visionModel,
+src\engines\SpatialVisionEngine.ts:227:                'spatial_vision',
+src\engines\SpatialVisionEngine.ts:241:                        model: this.config.visionModel,
+src\engines\SpatialVisionEngine.ts:251:                    this.renderer.info(`🧹 Cleaned up temporary vision artifact: ${imagePath}`);
+
+[Showing results with pagination = limit: 250]

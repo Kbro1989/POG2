@@ -1,0 +1,8 @@
+{
+  "id": "5",
+  "subject": "Implement SovereignPedagogyBridge",
+  "description": "Implement SovereignPedagogyBridge with WikiEquipmentEnricher, BestiaryApi, and GeApi integration for semantic enrichment.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

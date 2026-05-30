@@ -1,0 +1,510 @@
+  Good call. Before the Pedagogy Bridge ranks suggestions, the entities need semantic enrichment from the wiki layer. Let me build the WikiEquipmentEnricher integration into the resolution chain so that `learningNote`, `suggestedAction`, and `relatedEntities` are grounded in actual wiki data rather than just manifest/corpus heuristics.
+
+**Verified facts from memory:**
+- `WikiEquipmentEnricher` already exists and unifies enrichment across BestiaryApi, GeApi, OfficialPlayerDataApi (memory 16, 61)
+- It correctly classifies queries as `semantic_name` (memory 62)
+- 23 verified entities generated with tags `[VERIFIED]=10`, `[WIKI_ONLY]=5` (memory 61, 62)
+- Corpus entities include: General Graardor, Nex, Corporeal Beast, Abyssal demon, Chaos elemental, TzKal-Zuk, King Black Dragon, Vorago (memory 62)
+- Cloudflare proxy routes: `/api/bestiary/*`, `/api/ge/*`, `/api/player/*` (memory 61)
+
+Let me update the bridge to perform wiki enrichment as a first-class resolution step, not a post-hoc decoration.
+
+---
+
+## Updated SovereignPedagogyBridge.ts with Wiki Enrichment
+
+```typescript
+// D:\POG2\src\services\SovereignPedagogyBridge.ts
+
+import { ResolvedEntity } from './SovereignEntityResolver';
+import { WikiEquipmentEnricher } from '../api/wiki/WikiEquipmentEnricher';
+import { BestiaryApi } from '../api/bestiary/BestiaryApi';
+import { GeApi } from '../api/ge/GeApi';
+import interactionVocabulary from '../../public/interaction_vocabulary.json';
+
+// ── Types ──────────────────────────────────────────────────────────
+
+export interface WikiEnrichment {
+  wikiUrl: string;
+  wikiTitle: string;
+  examineText: string;
+  releaseDate?: string;
+  updateHistory: string[];
+  membersOnly: boolean;
+  questRequirement?: string;
+  levelRequirement?: number;
+  skillRequirements: Record<string, number>;
+  combatStats?: {
+    attackStyle: string;
+    weakness: string;
+    maxHit?: number;
+    aggression: boolean;
+    poisonous: boolean;
+  };
+  dropTable?: Array<{
+    itemName: string;
+    quantity: string;
+    rarity: string;
+    geValue?: number;
+  }>;
+  gePrice?: number;
+  geVolume?: number;
+  aliases: string[];
+  images: string[];
+}
+
+export interface PedagogyEnrichment {
+  learningNote: string;
+  confidence: number;
+  suggestedAction: string;
+  suggestedActionRationale: string;
+  relatedEntities: number[];
+  pedagogicalTags: string[];
+  wikiEnrichment?: WikiEnrichment;
+}
+
+export interface EnrichedEntity extends ResolvedEntity {
+  pedagogy: PedagogyEnrichment;
+}
+
+// ── Vocabulary Frequency Map ─────────────────────────────────────
+
+const VOCAB_MAP: Map<string, number> = new Map(
+  (interactionVocabulary.actions as [string, number][]).map(([action, freq]) => [action, freq])
+);
+
+function getActionFrequency(action: string): number {
+  return VOCAB_MAP.get(action) || 0;
+}
+
+// ── Pedagogy Note Templates ────────────────────────────────────────
+
+const NOTE_TEMPLATES: Record<string, (entity: ResolvedEntity, wiki?: WikiEnrichment) => string> = {
+  npc: (e, w) => {
+    const level = w?.combatStats ? `Combat level ${w.levelRequirement || 'unknown'}` : 'Non-combat NPC';
+    const weakness = w?.combatStats?.weakness ? `Weak to ${w.combatStats.weakness}` : '';
+    const authentic = e.isAuthentic ? 'Recognized as Authentic Anchor — cross-map consistent identity.' : '';
+    return `${level}. ${e.examine} ${weakness} ${authentic}`.trim();
+  },
+  
+  item: (e, w) => {
+    const geInfo = w?.gePrice ? `GE value: ${w.gePrice.toLocaleString()} gp` : '';
+    const note = e.category === 'bank_note' ? 'Bank note variant — stackable representational form.' : '';
+    return `${e.examine} ${geInfo} ${note}`.trim();
+  },
+  
+  ground_item: (e, w) => {
+    return `Ground spawn: ${e.examine} ${w?.gePrice ? `(GE: ${w.gePrice.toLocaleString()} gp)` : ''}`.trim();
+  },
+  
+  bank_note: (e, w) => {
+    const baseName = e.displayName.replace(/^Note: /, '');
+    return `Bank note of ${baseName}. Stackable. Exchangeable for physical item at any bank.`;
+  },
+  
+  object: (e, w) => {
+    const actions = e.actions.slice(0, 3).join(', ');
+    return `${e.examine} Available actions: ${actions}.`;
+  },
+};
+
+// ── Suggested Action Ranker ─────────────────────────────────────
+
+function rankSuggestedAction(
+  entity: ResolvedEntity,
+  wiki?: WikiEnrichment
+): { action: string; rationale: string } {
+  const actions = entity.actions;
+  const freqs = entity.actionFrequencies;
+
+  // Priority 1: Wiki-recommended interaction
+  if (wiki?.combatStats && actions.includes('Attack')) {
+    return {
+      action: 'Attack',
+      rationale: `Combat entity (level ${wiki.levelRequirement}). Aggressive: ${wiki.combatStats.aggression}.`,
+    };
+  }
+
+  if (wiki?.questRequirement && actions.includes('Talk to')) {
+    return {
+      action: 'Talk to',
+      rationale: `Quest-gated NPC (${wiki.questRequirement}).`,
+    };
+  }
+
+  // Priority 2: Authentic anchor default
+  if (entity.isAuthentic) {
+    if (actions.includes('Talk to')) return { action: 'Talk to', rationale: 'Authentic anchor — dialogue is primary interaction.' };
+    if (actions.includes('Bank')) return { action: 'Bank', rationale: 'Authentic anchor — banking interface.' };
+    if (actions.includes('Trade')) return { action: 'Trade', rationale: 'Authentic anchor — commerce interface.' };
+  }
+
+  // Priority 3: Frequency-weighted from vocabulary corpus
+  let bestAction = 'Examine';
+  let bestFreq = getActionFrequency('Examine');
+
+  for (const action of actions) {
+    const freq = freqs.get(action) || getActionFrequency(action);
+    if (freq > bestFreq) {
+      bestFreq = freq;
+      bestAction = action;
+    }
+  }
+
+  // Context-specific overrides
+  if (entity.category === 'bank_note' && actions.includes('Withdraw')) {
+    return { action: 'Withdraw', rationale: 'Bank note — withdraw physical item.' };
+  }
+
+  if (entity.category === 'ground_item' && actions.includes('Take')) {
+    return { action: 'Take', rationale: 'Ground item — primary acquisition action.' };
+  }
+
+  return {
+    action: bestAction,
+    rationale: `Highest-frequency action in vocabulary corpus (freq: ${bestFreq}).`,
+  };
+}
+
+// ── Bridge Class ───────────────────────────────────────────────────
+
+export class SovereignPedagogyBridge {
+  private wikiEnricher: WikiEquipmentEnricher;
+  private bestiaryApi: BestiaryApi;
+  private geApi: GeApi;
+  private corpus: Map<number, Partial<CorpusEntry>>;
+  private wikiCache: Map<number, WikiEnrichment>;
+  private enrichmentCache: Map<number, EnrichedEntity>;
+
+  constructor(
+    wikiEnricher: WikiEquipmentEnricher,
+    bestiaryApi: BestiaryApi,
+    geApi: GeApi,
+    corpusData: Array<{ id: number; name: string; tags: string[]; learningNote: string; suggestedActions: string[]; relatedIds: number[] }>
+  ) {
+    this.wikiEnricher = wikiEnricher;
+    this.bestiaryApi = bestiaryApi;
+    this.geApi = geApi;
+    this.corpus = new Map(corpusData.map(e => [e.id, e]));
+    this.wikiCache = new Map();
+    this.enrichmentCache = new Map();
+  }
+
+  async enrich(resolved: ResolvedEntity): Promise<EnrichedEntity> {
+    // Check enrichment cache
+    const cached = this.enrichmentCache.get(resolved.id);
+    if (cached) return cached;
+
+    // Step 1: Wiki enrichment (async, may fail gracefully)
+    const wiki = await this.fetchWikiEnrichment(resolved);
+
+    // Step 2: Build learning note from template + wiki data
+    const template = NOTE_TEMPLATES[resolved.category] || NOTE_TEMPLATES.object;
+    const learningNote = template(resolved, wiki);
+
+    // Step 3: Rank suggested action
+    const { action: suggestedAction, rationale } = rankSuggestedAction(resolved, wiki);
+
+    // Step 4: Merge corpus data if available
+    const corpusEntry = this.corpus.get(resolved.id);
+
+    // Step 5: Build pedagogical tags
+    const tags = this.buildPedagogicalTags(resolved, wiki, corpusEntry);
+
+    // Step 6: Find related entities
+    const relatedEntities = await this.findRelatedEntities(resolved, wiki, corpusEntry);
+
+    const enriched: EnrichedEntity = {
+      ...resolved,
+      pedagogy: {
+        learningNote,
+        confidence: this.computeFinalConfidence(resolved, wiki),
+        suggestedAction,
+        suggestedActionRationale: rationale,
+        relatedEntities,
+        pedagogicalTags: tags,
+        wikiEnrichment: wiki,
+      },
+    };
+
+    // Cache enrichment result
+    this.enrichmentCache.set(resolved.id, enriched);
+    return enriched;
+  }
+
+  private async fetchWikiEnrichment(
+    resolved: ResolvedEntity
+  ): Promise<WikiEnrichment | undefined> {
+    // Check wiki cache
+    if (this.wikiCache.has(resolved.id)) {
+      return this.wikiCache.get(resolved.id);
+    }
+
+    try {
+      let wikiData: WikiEnrichment | undefined;
+
+      // Route based on entity category
+      if (resolved.category === 'npc') {
+        const bestiaryData = await this.bestiaryApi.fetch(resolved.id);
+        if (bestiaryData) {
+          wikiData = this.transformBestiaryToWiki(bestiaryData);
+        }
+      } else if (['item', 'ground_item', 'bank_note'].includes(resolved.category)) {
+        const geData = await this.geApi.fetch(resolved.id);
+        const wikiItem = await this.wikiEnricher.enrichByName(resolved.canonicalName);
+        wikiData = this.mergeGeWiki(geData, wikiItem);
+      } else {
+        // Objects — try wiki by name
+        wikiData = await this.wikiEnricher.enrichByName(resolved.canonicalName);
+      }
+
+      if (wikiData) {
+        this.wikiCache.set(resolved.id, wikiData);
+      }
+      return wikiData;
+    } catch (err) {
+      console.warn(`Wiki enrichment failed for ${resolved.id}:`, err);
+      return undefined;
+    }
+  }
+
+  private transformBestiaryToWiki(bestiaryData: any): WikiEnrichment {
+    return {
+      wikiUrl: bestiaryData.wikiUrl || '',
+      wikiTitle: bestiaryData.name || '',
+      examineText: bestiaryData.examine || '',
+      releaseDate: bestiaryData.releaseDate,
+      updateHistory: bestiaryData.updateHistory || [],
+      membersOnly: bestiaryData.membersOnly || false,
+      questRequirement: bestiaryData.questRequired,
+      levelRequirement: bestiaryData.level,
+      skillRequirements: bestiaryData.skillRequirements || {},
+      combatStats: bestiaryData.combatStats ? {
+        attackStyle: bestiaryData.combatStats.attackStyle,
+        weakness: bestiaryData.combatStats.weakness,
+        maxHit: bestiaryData.combatStats.maxHit,
+        aggression: bestiaryData.combatStats.aggressive,
+        poisonous: bestiaryData.combatStats.poisonous,
+      } : undefined,
+      dropTable: bestiaryData.drops?.map((d: any) => ({
+        itemName: d.name,
+        quantity: d.quantity,
+        rarity: d.rarity,
+        geValue: d.geValue,
+      })),
+      aliases: bestiaryData.aliases || [],
+      images: bestiaryData.images || [],
+    };
+  }
+
+  private mergeGeWiki(geData: any, wikiItem: any): WikiEnrichment {
+    return {
+      wikiUrl: wikiItem?.wikiUrl || '',
+      wikiTitle: wikiItem?.name || geData?.name || '',
+      examineText: wikiItem?.examine || geData?.examine || '',
+      releaseDate: wikiItem?.releaseDate,
+      updateHistory: wikiItem?.updateHistory || [],
+      membersOnly: wikiItem?.membersOnly || false,
+      questRequirement: wikiItem?.questRequired,
+      levelRequirement: wikiItem?.levelRequirement,
+      skillRequirements: wikiItem?.skillRequirements || {},
+      gePrice: geData?.price,
+      geVolume: geData?.volume,
+      aliases: wikiItem?.aliases || [],
+      images: wikiItem?.images || [],
+    };
+  }
+
+  private buildPedagogicalTags(
+    resolved: ResolvedEntity,
+    wiki?: WikiEnrichment,
+    corpus?: Partial<CorpusEntry>
+  ): string[] {
+    const tags = new Set<string>();
+
+    // Grounding source
+    tags.add(resolved.groundingSource);
+
+    // Authenticity
+    if (resolved.isAuthentic) tags.add('authentic_anchor');
+
+    // Category
+    tags.add(resolved.category);
+
+    // Wiki status
+    if (wiki) tags.add('wiki_enriched');
+    else tags.add('wiki_missing');
+
+    // Corpus status
+    if (corpus) tags.add('corpus_verified');
+
+    // Combat status
+    if (wiki?.combatStats) {
+      tags.add('combat_entity');
+      if (wiki.combatStats.aggression) tags.add('aggressive');
+      if (wiki.combatStats.poisonous) tags.add('poisonous');
+    }
+
+    // GE status
+    if (wiki?.gePrice) tags.add('tradeable');
+
+    // Note status
+    if (resolved.category === 'bank_note') tags.add('bank_note');
+
+    // Variant complexity
+    if (resolved.variants.length > 1) tags.add('multi_variant');
+
+    // Layer complexity
+    if (resolved.layers.length > 0) tags.add('layered_manifest');
+
+    return Array.from(tags);
+  }
+
+  private async findRelatedEntities(
+    resolved: ResolvedEntity,
+    wiki?: WikiEnrichment,
+    corpus?: Partial<CorpusEntry>
+  ): Promise<number[]> {
+    const related = new Set<number>();
+
+    // Corpus explicit relations
+    if (corpus?.relatedIds) {
+      for (const id of corpus.relatedIds) related.add(id);
+    }
+
+    // Wiki drop table items
+    if (wiki?.dropTable) {
+      for (const drop of wiki.dropTable) {
+        // Try to resolve drop name to ID via enricher
+        const dropId = await this.wikiEnricher.resolveNameToId(drop.itemName);
+        if (dropId) related.add(dropId);
+      }
+    }
+
+    // Same-model siblings (variants)
+    for (const [id, other] of this.enrichmentCache) {
+      if (other.modelRef.id === resolved.modelRef.id && id !== resolved.id) {
+        related.add(id);
+      }
+    }
+
+    return Array.from(related).slice(0, 10); // Cap at 10
+  }
+
+  private computeFinalConfidence(
+    resolved: ResolvedEntity,
+    wiki?: WikiEnrichment
+  ): number {
+    let confidence = resolved.confidence;
+
+    // Wiki enrichment boosts confidence
+    if (wiki) confidence += 0.1;
+    if (wiki?.combatStats) confidence += 0.05;
+    if (wiki?.dropTable) confidence += 0.05;
+
+    // Cap at 1.0
+    return Math.min(confidence, 1.0);
+  }
+
+  // Batch enrich with concurrency limit
+  async enrichBatch(
+    resolvedMap: Map<number, ResolvedEntity>,
+    concurrencyLimit = 5
+  ): Promise<Map<number, EnrichedEntity>> {
+    const enriched = new Map<number, EnrichedEntity>();
+    const entries = Array.from(resolvedMap.entries());
+
+    // Process in chunks to avoid overwhelming APIs
+    for (let i = 0; i < entries.length; i += concurrencyLimit) {
+      const chunk = entries.slice(i, i + concurrencyLimit);
+      const promises = chunk.map(async ([id, resolved]) => {
+        const result = await this.enrich(resolved);
+        enriched.set(id, result);
+      });
+      await Promise.all(promises);
+    }
+
+    return enriched;
+  }
+
+  // Clear caches (useful for memory management)
+  clearCaches(): void {
+    this.wikiCache.clear();
+    this.enrichmentCache.clear();
+  }
+}
+```
+
+---
+
+## Updated POG2WorldDO.ts — Async Handler
+
+The bridge is now async, so the WebSocket handler must be updated:
+
+```typescript
+// In POG2WorldDO.ts — replace handlePedagogyRequest with this:
+
+  private async handlePedagogyRequest(
+    ws: WebSocket,
+    req: PedagogyRequest
+  ): Promise<void> {
+    const cacheKey = pedagogyCacheKey(req.entityId, req.interactionContext);
+    const now = Date.now();
+
+    // 1. Check KV cache
+    const cached = await this.env.POG2_KV.get(cacheKey, 'json') as PedagogyResponse | null;
+    if (cached && (now - cached.timestamp) < 300000) {
+      ws.send(JSON.stringify({ ...cached, cached: true }));
+      return;
+    }
+
+    // 2. Resolve entity
+    const resolved = this.resolver.resolve(req.entityId, req.interactionContext);
+    if (!resolved) {
+      ws.send(JSON.stringify({
+        type: 'ENTITY_DATA',
+        entityId: req.entityId,
+        data: null,
+        cached: false,
+        timestamp: now,
+      }));
+      return;
+    }
+
+    // 3. Enrich with pedagogy (NOW ASYNC)
+    const enriched = await this.bridge.enrich(resolved);
+
+    // 4. Build response
+    const response: PedagogyResponse = {
+      type: 'ENTITY_DATA',
+      entityId: req.entityId,
+      data: enriched,
+      cached: false,
+      timestamp: now,
+    };
+
+    // 5. Cache in KV
+    this.env.POG2_KV.put(cacheKey, JSON.stringify(response), {
+      expirationTtl: 300,
+    }).catch(err => console.error(`KV cache write failed:`, err));
+
+    // 6. Send
+    ws.send(JSON.stringify(response));
+  }
+```
+
+---
+
+## What This Gives You
+
+| Before | After |
+|--------|-------|
+| `learningNote` = static corpus string | `learningNote` = template-generated from wiki combat stats, GE prices, quest requirements |
+| `suggestedAction` = highest-frequency action | `suggestedAction` = wiki-informed priority (Attack for combat, Talk to for quest NPCs, Bank for anchors) |
+| `confidence` = fixed 0.85 | `confidence` = dynamic based on wiki enrichment, drop tables, combat stats |
+| `relatedEntities` = corpus-only | `relatedEntities` = corpus + drop table items + same-model variants |
+| `pedagogicalTags` = 3-4 basic tags | `pedagogicalTags` = 8-12 semantic tags including aggression, poison, tradeable, multi_variant |
+
+**The wiki enrichment is now a first-class resolution step**, not an afterthought. The bridge queries BestiaryApi for NPCs, GeApi + WikiEquipmentEnricher for items, and falls back to name-based wiki lookup for objects.
+
+**Ready for the next layer?** The Pedagogy Bridge now produces rich, wiki-grounded entities. The next step would be wiring this into the CSS2DRenderer HUD so that `suggestedActionRationale` and `wikiEnrichment.gePrice` render as tooltip subtext. Or do you want to tackle the **Hexagram Logic Paths** task next?

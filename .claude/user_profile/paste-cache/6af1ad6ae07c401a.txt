@@ -1,0 +1,182 @@
+  I see the `SovereignPedagogyBridge.ts` edit. It's adding `emotionalWeight` and `hexagramPin` to the `PedagogyResult` interface and the prompt template. Good direction, but incomplete — the actual **computation logic** for these fields is missing.
+
+---
+
+## Audit: `SovereignPedagogyBridge.ts` (Partial)
+
+**What's There:**
+- `PedagogyResult` interface expanded with `emotionalWeight` and `hexagramPin`
+- Prompt template updated with example JSON showing the new fields
+- The model is expected to **generate** these values from its training
+
+**What's Missing:**
+
+| Issue | Severity | Fix |
+|---|---|---|
+| No **computation logic** — the model outputs raw text, but who parses `emotionalWeight` from that text? | **BLOCKER** | Add parser or structured output format (JSON mode) |
+| `hexagramPin.id: 123` — invalid, must be 1-64 | Medium | Constrain model or post-process |
+| `confidence: 0.0-1.0` — no validation | Low | Clamp to [0,1] |
+| No **fallback** if model returns malformed JSON | Medium | Try/catch + default values |
+| No **KV caching** for pedagogy results | Low | Cache expensive model calls |
+| `suggestedAction` still a string, not structured | Low | Should be `{action, target, reasoning}` |
+
+---
+
+## The Structured Output Problem
+
+The prompt asks the model to return JSON, but LLMs are unreliable at JSON. Two approaches:
+
+**A) JSON Mode** (if model supports it):
+```typescript
+const response = await this.rolodex.query({
+    model: 'pog2-pedagogy',
+    prompt,
+    responseFormat: { type: 'json_object' }, // OpenAI/compatible
+    maxTokens: 512
+});
+```
+
+**B) Regex Parser** (fallback):
+```typescript
+private parsePedagogyResponse(text: string): PedagogyResult {
+    try {
+        return JSON.parse(text);
+    } catch {
+        // Extract emotionalWeight via regex
+        const weightMatch = text.match(/emotionalWeight[:\s]*({[^}]+})/);
+        const hexMatch = text.match(/hexagramPin[:\s]*({[^}]+})/);
+        // ...fallback parsing
+    }
+}
+```
+
+**C) Function Calling** (most reliable):
+```typescript
+const response = await this.rolodex.query({
+    model: 'pog2-pedagogy',
+    prompt,
+    tools: [{
+        name: 'emit_pedagogy_result',
+        parameters: {
+            type: 'object',
+            properties: {
+                learningNote: {type: 'string'},
+                confidence: {type: 'number', minimum: 0, maximum: 1},
+                emotionalWeight: {
+                    type: 'object',
+                    additionalProperties: {type: 'number', minimum: 0, maximum: 1}
+                },
+                hexagramPin: {
+                    type: 'object',
+                    properties: {
+                        id: {type: 'integer', minimum: 1, maximum: 64},
+                        name: {type: 'string'},
+                        line: {type: 'integer', minimum: 1, maximum: 6}
+                    }
+                }
+            },
+            required: ['learningNote', 'confidence', 'emotionalWeight', 'hexagramPin']
+        }
+    }],
+    toolChoice: {type: 'function', function: {name: 'emit_pedagogy_result'}}
+});
+```
+
+---
+
+## Recommended: Function Calling + Fallback
+
+```typescript
+export class SovereignPedagogyBridge {
+    private rolodex: ModelRolodex;
+    private kv: KVNamespace;
+
+    constructor(env: { ROLodex: ModelRolodex; KV: KVNamespace }) {
+        this.rolodex = env.ROLodex;
+        this.kv = env.KV;
+    }
+
+    async enrich(entity: RawEntityData): Promise<PedagogyResult> {
+        const cacheKey = `pedagogy:${entity.name}:${entity.type}`;
+        
+        // 1. Check KV cache
+        const cached = await this.kv.get(cacheKey);
+        if (cached) return JSON.parse(cached);
+
+        // 2. Query model with function calling
+        const result = await this.queryWithStructure(entity);
+
+        // 3. Validate + clamp
+        const validated = this.validate(result);
+
+        // 4. Cache and return
+        await this.kv.put(cacheKey, JSON.stringify(validated), { expirationTtl: 3600 });
+        return validated;
+    }
+
+    private async queryWithStructure(entity: RawEntityData): Promise<PedagogyResult> {
+        const prompt = this.buildPrompt(entity);
+        
+        const response = await this.rolodex.query({
+            model: 'pog2-pedagogy',
+            prompt,
+            tools: [this.pedagogyToolSchema],
+            toolChoice: {type: 'function', function: {name: 'emit_pedagogy_result'}}
+        });
+
+        // Extract function call arguments
+        const args = response.toolCalls?.[0]?.function?.arguments;
+        if (args) return JSON.parse(args);
+
+        // Fallback: parse from text
+        return this.fallbackParse(response.text);
+    }
+
+    private validate(result: PedagogyResult): PedagogyResult {
+        return {
+            learningNote: result.learningNote || 'No pedagogical insight available.',
+            confidence: Math.max(0, Math.min(1, result.confidence || 0.5)),
+            suggestedAction: result.suggestedAction || 'Observe and record.',
+            emotionalWeight: this.normalizeWeights(result.emotionalWeight),
+            hexagramPin: {
+                id: Math.max(1, Math.min(64, result.hexagramPin?.id || 1)),
+                name: result.hexagramPin?.name || 'The Creative',
+                line: Math.max(1, Math.min(6, result.hexagramPin?.line || 1))
+            }
+        };
+    }
+
+    private normalizeWeights(weights: Record<string, number>): Record<string, number> {
+        const normalized: Record<string, number> = {};
+        for (const [k, v] of Object.entries(weights || {})) {
+            normalized[k] = Math.max(0, Math.min(1, v));
+        }
+        return normalized;
+    }
+}
+```
+
+---
+
+## Feed to Agent
+
+```
+MEDIUM: Add structured output (function calling) to SovereignPedagogyBridge.
+  - Current: Model returns raw text, regex-parsed JSON
+  - Target: Function calling with schema validation
+  - Fallback: Text parse if function call fails
+
+MEDIUM: Add validation layer for hexagramPin.id (1-64) and line (1-6).
+  - Current example shows id: 123 (invalid)
+  - Must clamp to valid ranges
+
+MEDIUM: Add KV caching (1-hour TTL) for pedagogy results.
+  - Model inference is expensive, cache aggressively
+
+LOW: Normalize emotionalWeight values to [0,1].
+LOW: Structure suggestedAction as object, not string.
+```
+
+---
+
+What's the agent doing next? Wiring the WebSocket handler in `POG2WorldDO`?

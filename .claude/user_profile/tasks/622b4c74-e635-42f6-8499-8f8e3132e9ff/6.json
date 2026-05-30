@@ -1,0 +1,8 @@
+{
+  "id": "6",
+  "subject": "Integrate Providers into WikiEquipmentEnricher",
+  "description": "Integrate all new providers into WikiEquipmentEnricher.ts, replacing the wiki-only flow with the identification -> routing flow.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

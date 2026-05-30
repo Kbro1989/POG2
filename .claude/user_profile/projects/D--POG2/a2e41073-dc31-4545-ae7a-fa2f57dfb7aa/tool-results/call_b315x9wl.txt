@@ -1,0 +1,252 @@
+src\bridge_server.ts:33:        const adrenaline = Math.min(1000, Math.floor(Math.random() * 1000));
+src\bridge_server.ts:40:            adrenaline,
+src\cli.ts:2261:        .description('Manage combat styles, current adrenaline levels, and autonomic behaviors')
+src\cli.ts:2262:        .option('-a, --adren <number>', 'Set player adrenaline level (0-100)', parseFloat)
+src\cli.ts:2292:            renderer.log(`\x1b[38;5;244mAdrenaline:\x1b[0m ${((avatar.adrenaline || 0) / 100).toFixed(2)}% (${avatar.adrenaline}/10000)`);
+src\cli.ts:2317:                adrenalineSM: avatar.combatEngine,
+src\cli.ts:2370:                        renderer.log(` ${idx.toString().padEnd(3)} | ${ab.id.padEnd(10)} | ${ab.name.padEnd(20)} | ${(ab.adrenalineCost / 100).toFixed(0)}% | ${ab.cooldownTicks} ticks`);
+src\PlayerAgent.ts:122:                console.log(`[Tick ${state.tickNumber}] Pos: [${avatar.x}, ${avatar.y}] | HP: ${avatar.currentHp}/${avatar.maxHp} | Adrenaline: ${avatar.adrenalinePercent} | AnimID: ${avatar.animationId} | Iter: ${currentIteration}/${iterations}`);
+src\monitor\SwitchboardLimb.ts:200:                                        (translated.slots[i] as any).adrenalineCost = abilityDef.adrenReq;
+src\monitor\SwitchboardLimb.ts:232:                                        (translated.slots[i] as any).adrenalineCost = abilityDef.adrenReq;
+src\logic\handlers\NecromancyHandler.ts:10:    adrenaline: number;
+src\logic\handlers\NecromancyHandler.ts:37:    public computeFingerOfDeath(state: NecromancyState): { damageScale: number, adrenalineCost: number } {
+src\logic\handlers\NecromancyHandler.ts:39:        if (!ability) return { damageScale: 1.0, adrenalineCost: 60 };
+src\logic\handlers\NecromancyHandler.ts:47:            adrenalineCost: cost
+src\logic\handlers\NecromancyHandler.ts:58:            adrenaline: Math.min(state.adrenaline + 9, 100)
+src\logic\handlers\NecromancyHandler.ts:69:            adrenaline: Math.min(state.adrenaline + 9, 100)
+src\tests\necromancer_ai_demo.ts:34:        adrenaline: 0,
+src\tests\necromancer_ai_demo.ts:61:        console.log(`\nAdrenaline: ${necro.adrenaline} | Stacks: ${necro.necrosisStacks} | State: ${necro.interactionState}`);
+src\tests\combat_stress_suite.ts:103:    (avatar.combatEngine as any).currentState.adrenaline = 0;
+src\tests\combat_stress_suite.ts:104:    avatar.adrenaline = 0;
+src\tests\combat_grounding_demo.ts:76:        if (avatar.adrenaline! > 0) {
+src\tests\combat_grounding_demo.ts:77:            console.log(`[STATE] Adrenaline: ${avatar.adrenalinePercent} | Necrosis: ${avatar.necrosisStacks}`);
+src\engines\OrchestrateEngine.ts:1136:            description: 'Apply volition state overrides (adrenaline, stance, tactical, leader) to the GameplaySovereigntyLimb.',
+src\engines\OrchestrateEngine.ts:1148:                if (opts.adren !== undefined) (limb.avatar as any).adrenaline = opts.adren;
+src\scripts_backup\synthesis_verification.ts:26:    const state = { necrosisStacks: 6, residualSouls: 0, adrenaline: 100, commandCooldowns: {} };
+src\core\SovereignAvatar.ts:143:    public adrenaline: number;
+src\core\SovereignAvatar.ts:218:        this.adrenaline = 0;
+src\core\SovereignAvatar.ts:232:                this.adrenaline = event.to;
+src\core\SovereignAvatar.ts:233:                this.emit('adrenaline_changed', { from: event.from, to: event.to });
+src\core\SovereignAvatar.ts:344:     * adrenalinePercent - Returns the current adrenaline as a formatted string (e.g. "9.00%")
+src\core\SovereignAvatar.ts:346:    public get adrenalinePercent(): string {
+src\core\SovereignAvatar.ts:347:        return ((this.adrenaline || 0) / 100).toFixed(2) + '%';
+src\core\SovereignAvatar.ts:351:     * addAdrenaline - Safely adds adrenaline with 100% (10000) clamping.
+src\core\SovereignAvatar.ts:354:        this.adrenaline = Math.min(10000, (this.adrenaline || 0) + amount);
+src\core\SovereignAvatar.ts:358:     * consumeAdrenaline - Safely subtracts adrenaline, returning true if successful.
+src\core\SovereignAvatar.ts:361:        if ((this.adrenaline || 0) >= amount) {
+src\core\SovereignAvatar.ts:362:            this.adrenaline = (this.adrenaline || 0) - amount;
+src\core\SovereignAvatar.ts:370:     * The actual execution, damage calculation, and adrenaline mutation occurs during the 600ms tick.
+src\limbs\technical\MechanicalSovereigntyLimb.ts:325:     * validateAbility - Checks adrenaline and resource costs for Necromancy abilities.
+src\limbs\technical\MechanicalSovereigntyLimb.ts:337:        const adrenaline = avatar.metadata?.combat_state?.adrenaline || 0;
+src\limbs\technical\MechanicalSovereigntyLimb.ts:338:        if (ability.adrenaline < 0 && adrenaline < Math.abs(ability.adrenaline)) {
+src\limbs\technical\MechanicalSovereigntyLimb.ts:339:            return err(new Error(`Insufficient Adrenaline: ${Math.abs(ability.adrenaline)}% required.`));
+src\utils\CombatHUDBridge.ts:11:    adrenaline: number;
+src\utils\CombatHUDBridge.ts:150:                                adrenalineCost: 0,
+src\utils\CombatHUDBridge.ts:151:                                adrenalineThreshold: 0
+src\utils\CombatHUDBridge.ts:258:    public updateState(adrenaline: number, archetype: string, lastAction?: string, activeRotation?: string, nextAbility?: string, combatStyle?: string, activePhase?: string, targetHp?: number, kernelPhase?: string, learningTrace?: any) {
+src\utils\CombatHUDBridge.ts:262:            adrenaline,
+src\scripts\synthesis_verification.ts:26:    const state = { necrosisStacks: 6, residualSouls: 0, adrenaline: 100, commandCooldowns: {} };
+src\core\models.ts:137:    adrenaline?: number; // 0 - 10000 (0.00% to 100.00%)
+src\core\models.ts:143:    shadowImbuedTicksRemaining?: number; // New: Ranged adrenaline buff duration
+src\core\models.ts:174:    adrenaline?: number;
+src\core\models.ts:175:    adrenalinePercent?: number | string; // Support for formatted strings ("9.00%")
+src\core\models.ts:316:    adrenalinePercent: string;
+src\core\EntityGhost.ts:16:        adrenaline?: number;
+src\engines\gameplay\CombatRotationEngine.ts:10: *  3. Does attacker have enough adrenaline?
+src\engines\gameplay\CombatRotationEngine.ts:44:    adrenaline: number;           // 0–10000
+src\engines\gameplay\CombatRotationEngine.ts:314:                        // Build Phase Fallback: If insufficient adrenaline, bridge with a filler basic
+src\engines\gameplay\CombatRotationEngine.ts:315:                        const currentAdrenaline = ctx.state.adrenaline || 0;
+src\engines\gameplay\CombatRotationEngine.ts:316:                        if (currentAdrenaline < (pvmeAbility.adrenalineCost || 0)) {
+src\engines\gameplay\CombatRotationEngine.ts:322:                                .sort((a, b) => (b.adrenalineGain || 0) - (a.adrenalineGain || 0))[0];
+src\engines\gameplay\CombatRotationEngine.ts:325:                                logger.info({ waitingFor: pvmeAbility.name, fillingWith: filler.name }, 'PVME: Building adrenaline. Executing filler basic.');
+src\engines\gameplay\CombatRotationEngine.ts:330:                                    adrenDelta: (pvmeAbility.adrenalineCost || 0) - currentAdrenaline,
+src\engines\gameplay\CombatRotationEngine.ts:337:                                    gained: filler.adrenalineGain,
+src\engines\gameplay\CombatRotationEngine.ts:338:                                    needed: (pvmeAbility.adrenalineCost || 0),
+src\engines\gameplay\CombatRotationEngine.ts:339:                                    remaining: (pvmeAbility.adrenalineCost || 0) - currentAdrenaline - (filler.adrenalineGain || 0),
+src\engines\gameplay\CombatRotationEngine.ts:479:     * Dumps adrenaline as fast as possible into highest-damage abilities.
+src\engines\gameplay\CombatRotationEngine.ts:551:        const adMatch = p.match(/adrenaline\s*([><=]+)\s*(\d+)/);
+src\engines\gameplay\CombatRotationEngine.ts:555:            if (op === '>') return ctx.adrenaline > val;
+src\engines\gameplay\CombatRotationEngine.ts:556:            if (op === '<') return ctx.adrenaline < val;
+src\engines\gameplay\CombatRotationEngine.ts:557:            if (op === '>=') return ctx.adrenaline >= val;
+src\engines\gameplay\CombatRotationEngine.ts:558:            if (op === '<=') return ctx.adrenaline <= val;
+src\engines\gameplay\CombatRotationEngine.ts:605:        if (ctx.adrenaline < ability.adrenalineCost) {
+src\engines\gameplay\CombatRotationEngine.ts:606:            push('GATE_ADRENALINE_FAILED', { currentAdr: ctx.adrenaline, requiredAdr: ability.adrenalineCost });
+src\engines\gameplay\CombatRotationEngine.ts:609:        push('GATE_ADRENALINE_PASSED', { currentAdr: ctx.adrenaline, requiredAdr: ability.adrenalineCost });
+src\engines\gameplay\CombatRotationEngine.ts:674:            // Ranged: Shadow Imbued makes adrenaline-spending abilities more efficient
+src\engines\gameplay\CombatRotationEngine.ts:675:            if (hasShadowImbued && ability.adrenalineCost > 0 && ctx.combatStyle === 'ranged') {
+src\engines\gameplay\CNSGodheadPulseVolley.ts:792:                        adrenaline: avatar.adrenaline,
+src\engines\gameplay\NecromancyInterfaces.ts:17:    adrenaline_gain?: number;
+src\engines\gameplay\NecromancyInterfaces.ts:18:    adrenaline_cost?: number;
+src\engines\gameplay\NpcAgent.ts:311:            adrenaline: this.npc.adrenaline || 0,
+src\engines\gameplay\NpcAgent.ts:320:                adrenaline: this.npc.adrenaline || 0,
+src\engines\gameplay\PlayerAgent.ts:122:                adrenaline: this.avatar.adrenaline || 0,
+src\engines\gameplay\PlayerAgent.ts:142:                adrenaline: this.avatar.adrenaline || 0,
+src\engines\gameplay\PlayerAgent.ts:151:     * Decays adrenaline, processes cooldowns, drains prayer.
+src\engines\gameplay\PlayerAgent.ts:158:            // Cooldowns are already managed via interaction intent, but we can manage adrenaline here
+src\engines\gameplay\PlayerAgent.ts:160:                // Decay adrenaline by 500 (5%) every tick if not in combat (simplified)
+src\engines\gameplay\PlayerAgent.ts:161:                if (this.avatar.adrenaline && this.avatar.adrenaline > 0) {
+src\engines\gameplay\PlayerAgent.ts:162:                    const decay = Math.min(500, this.avatar.adrenaline);
+src\engines\gameplay\PlayerAgent.ts:173:     * - Current adrenaline and cooldowns
+src\engines\gameplay\PlayerAgent.ts:267:            this.avatar.adrenaline || 0,
+src\engines\gameplay\PlayerAgent.ts:276:            adrenaline: this.avatar.adrenaline || 0,
+src\engines\gameplay\PlayerAgent.ts:301:            adrenaline: this.avatar.adrenaline ? this.avatar.adrenaline * 10 : 0,
+src\engines\gameplay\PlayerAgent.ts:356:            this.avatar.adrenaline || 0, 
+src\engines\gameplay\PlayerAgent.ts:430:        const adrenaline = (this.avatar.adrenaline || 0) / 100; // Convert to percentage
+src\engines\gameplay\PlayerAgent.ts:434:        const composureBroken = adrenaline < 50 || hpPercent < 50;
+src\engines\gameplay\SimulationHarness.ts:387:                                adrenaline: 0,
+src\engines\gameplay\SimulationHarness.ts:717:                                    // Use state machine (handles adrenaline and cooldown)
+src\engines\gameplay\SimulationHarness.ts:736:                                if (ability.adrenalineCost > 0) {
+src\engines\gameplay\SimulationHarness.ts:737:                                    entAny.adrenaline = Math.max(0, (entAny.adrenaline || 0) - ability.adrenalineCost);
+src\engines\gameplay\SimulationHarness.ts:738:                                } else if (ability.adrenalineGain > 0) {
+src\engines\gameplay\SimulationHarness.ts:739:                                    entAny.adrenaline = Math.min(10000, (entAny.adrenaline || 0) + ability.adrenalineGain);
+src\engines\gameplay\SimulationHarness.ts:746:                        // Auto-attacks generate 2% adrenaline (200)
+src\engines\gameplay\SimulationHarness.ts:747:                        entity.adrenaline = Math.min(10000, (entity.adrenaline || 0) + 200);
+src\engines\gameplay\AbilityBook.ts:6: * and layers wiki-sourced combat parameters (adrenaline, cooldowns, damage) on top.
+src\engines\gameplay\AbilityBook.ts:43:    adrenalineCost: number;        // 0–10000 scale. 0 for basics, 1500 for thresholds, 10000 for ults.
+src\engines\gameplay\AbilityBook.ts:44:    adrenalineGain: number;        // 0–10000 scale. 800 for basics (8%), 0 for thresholds/ults.
+src\engines\gameplay\AbilityBook.ts:96:    adrenalineCost: number;
+src\engines\gameplay\AbilityBook.ts:97:    adrenalineGain: number;
+src\engines\gameplay\AbilityBook.ts:121:    'Havoc':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:122:    'Dismember':      { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [37.6, 188], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
+src\engines\gameplay\AbilityBook.ts:123:    'Fury':           { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: true, channelTicks: 3, flags: [] },
+src\engines\gameplay\AbilityBook.ts:124:    'Punish':         { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 5, damageRange: [18.8, 94], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun-buff'] },
+src\engines\gameplay\AbilityBook.ts:125:    'Backhand':       { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [20, 100], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
+src\engines\gameplay\AbilityBook.ts:128:    'Flurry':         { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [31.4, 157], range: MELEE_RANGE, isChanneled: true, channelTicks: 6, flags: ['pbaoe', 'bloodlust-consumer'], aoeRadius: 1 },
+src\engines\gameplay\AbilityBook.ts:129:    'Hurricane':      { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [42, 210], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['pbaoe', 'bloodlust-consumer'], aoeRadius: 2 },
+src\engines\gameplay\AbilityBook.ts:130:    'Slaughter':      { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 50, damageRange: [50, 250], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
+src\engines\gameplay\AbilityBook.ts:131:    'Assault':        { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [53, 265], range: MELEE_RANGE, isChanneled: true, channelTicks: 8, flags: ['bloodlust-consumer'] },
+src\engines\gameplay\AbilityBook.ts:134:    'Overpower':      { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:135:    'Meteor Strike':  { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['aoe'] },
+src\engines\gameplay\AbilityBook.ts:136:    'Berserk':        { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['buff', 'bloodlust-empower'] },
+src\engines\gameplay\AbilityBook.ts:137:    'Pulverise':      { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:140:    'Piercing Shot':  { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 5, damageRange: [18.8, 94], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun-buff'] },
+src\engines\gameplay\AbilityBook.ts:141:    'Snipe':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [43.8, 219], range: RANGED_RANGE, isChanneled: true, channelTicks: 6, flags: [] },
+src\engines\gameplay\AbilityBook.ts:142:    'Ricochet':       { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [20, 100], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['aoe'] },
+src\engines\gameplay\AbilityBook.ts:143:    'Binding Shot':   { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [20, 100], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
+src\engines\gameplay\AbilityBook.ts:144:    'Corruption Shot':{ adrenalineCost: 2000, adrenalineGain: 0, cooldownTicks: 25, damageRange: [60, 300], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['corruption'] },
+src\engines\gameplay\AbilityBook.ts:145:    'Galeshot':       { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 12, damageRange: [31.4, 157], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['searing-winds-trigger'] },
+src\engines\gameplay\AbilityBook.ts:148:    'Snap Shot':      { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [53, 265], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:149:    'Rapid Fire':     { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [75.2, 376], range: RANGED_RANGE, isChanneled: true, channelTicks: 8, flags: ['searing-winds-extender'] },
+src\engines\gameplay\AbilityBook.ts:150:    'Shadow Tendrils':{ adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 75, damageRange: [100, 500], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:151:    'Bombardment':    { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 50, damageRange: [43.8, 219], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: ['pbaoe'], aoeRadius: 3 },
+src\engines\gameplay\AbilityBook.ts:154:    "Death's Swiftness": { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['buff'] },
+src\engines\gameplay\AbilityBook.ts:155:    'Deadshot':       { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range: RANGED_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:156:    'Imbue Shadows':  { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['buff', 'shadow-imbue-trigger'] },
+src\engines\gameplay\AbilityBook.ts:159:    'Dragon Breath':  { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [37.6, 188], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['cone', 'combust-synergy'], coneHalfAngle: Math.PI / 4, aoeRadius: 2 },
+src\engines\gameplay\AbilityBook.ts:160:    'Sonic Wave':     { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [31.4, 157], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['adrenaline-discount'] },
+src\engines\gameplay\AbilityBook.ts:161:    'Concentrated Blast':{ adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [35, 105], range: MAGIC_RANGE, isChanneled: true, channelTicks: 5, flags: ['crit-boost'] },
+src\engines\gameplay\AbilityBook.ts:162:    'Impact':         { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [20, 100], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['stun'] },
+src\engines\gameplay\AbilityBook.ts:163:    'Combust':        { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [30, 300], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['bleed'] },
+src\engines\gameplay\AbilityBook.ts:164:    'Chain':          { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 17, damageRange: [16, 80], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['chain', 'greater-chain-baseline'], chainCount: 2, aoeRadius: 2 },
+src\engines\gameplay\AbilityBook.ts:167:    'Asphyxiate':     { adrenalineCost: 2500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [37.6, 188], range: MAGIC_RANGE, isChanneled: true, channelTicks: 8, flags: ['stun'] },
+src\engines\gameplay\AbilityBook.ts:168:    'Wild Magic':     { adrenalineCost: 2500, adrenalineGain: 0, cooldownTicks: 9, damageRange: [56, 280], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:169:    'Smoke Tendrils': { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 75, damageRange: [63, 315], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:170:    'Magma Tempest':  { adrenalineCost: 2000, adrenalineGain: 0, cooldownTicks: 34, damageRange: [40, 320], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['pbaoe'], aoeRadius: 2 },
+src\engines\gameplay\AbilityBook.ts:171:    'Corruption Blast':{ adrenalineCost: 2000, adrenalineGain: 0, cooldownTicks: 25, damageRange: [60, 300], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: ['corruption'] },
+src\engines\gameplay\AbilityBook.ts:174:    'Sunshine':       { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['buff'] },
+src\engines\gameplay\AbilityBook.ts:175:    'Omnipower':      { adrenalineCost: 6000, adrenalineGain: 0, cooldownTicks: 50, damageRange: [92, 460], range: MAGIC_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:178:    'Touch of Death': { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 25, damageRange: [40, 200], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:179:    'Soul Sap':       { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 5, damageRange: [24, 120], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:180:    'Soul Strike':    { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [31.4, 157], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:181:    'Necrotic Burst': { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 9, damageRange: [37.6, 188], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: ['aoe'] },
+src\engines\gameplay\AbilityBook.ts:182:    'Command Undead': { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 25, damageRange: [0, 0], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:183:    'Conjure Undead': { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 50, damageRange: [0, 0], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: ['conjure'] },
+src\engines\gameplay\AbilityBook.ts:186:    'Finger of Death':{ adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 25, damageRange: [60, 300], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:187:    'Volley of Souls':{ adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [50, 250], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:190:    'Death Skulls':   { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range: NECRO_RANGE, isChanneled: false, channelTicks: 0, flags: ['aoe'] },
+src\engines\gameplay\AbilityBook.ts:193:    'Resonance':      { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 50, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['shield', 'heal'] },
+src\engines\gameplay\AbilityBook.ts:194:    'Devotion':       { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['shield'] },
+src\engines\gameplay\AbilityBook.ts:195:    'Debilitate':     { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 50, damageRange: [20, 100], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: ['debuff'] },
+src\engines\gameplay\AbilityBook.ts:196:    'Reflect':        { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 25, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['shield'] },
+src\engines\gameplay\AbilityBook.ts:199:    'Barricade':      { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['shield'] },
+src\engines\gameplay\AbilityBook.ts:200:    'Immortality':    { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 200, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['shield', 'heal'] },
+src\engines\gameplay\AbilityBook.ts:201:    'Rejuvenate':     { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['shield', 'heal'] },
+src\engines\gameplay\AbilityBook.ts:204:    'Surge':          { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 34, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:205:    'Escape':         { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 34, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:206:    'Bladed Dive':    { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 34, damageRange: [24, 120], range: MELEE_RANGE, isChanneled: false, channelTicks: 0, flags: [] },
+src\engines\gameplay\AbilityBook.ts:207:    'Eat Food':       { adrenalineCost: 300, adrenalineGain: 0, cooldownTicks: 3, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: ['heal'] }, // March 2026: 3% drain (was 10%)
+src\engines\gameplay\AbilityBook.ts:235:            return { adrenalineCost: 0, adrenalineGain: 900, cooldownTicks: 5, damageRange: [24, 120], range, isChanneled: false, channelTicks: 0, flags: [] };
+src\engines\gameplay\AbilityBook.ts:237:            return { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 34, damageRange: [50, 250], range, isChanneled: false, channelTicks: 0, flags: [] };
+src\engines\gameplay\AbilityBook.ts:239:            return { adrenalineCost: 10000, adrenalineGain: 0, cooldownTicks: 100, damageRange: [60, 300], range, isChanneled: false, channelTicks: 0, flags: [] };
+src\engines\gameplay\AbilityBook.ts:241:            return { adrenalineCost: 1500, adrenalineGain: 0, cooldownTicks: 50, damageRange: [50, 250], range, isChanneled: false, channelTicks: 0, flags: [] };
+src\engines\gameplay\AbilityBook.ts:243:            return { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 100, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: [] };
+src\engines\gameplay\AbilityBook.ts:245:            return { adrenalineCost: 0, adrenalineGain: 0, cooldownTicks: 5, damageRange: [0, 0], range: 0, isChanneled: false, channelTicks: 0, flags: [] };
+src\engines\gameplay\AbilityBook.ts:325:                    adrenalineCost: params.adrenalineCost,
+src\engines\gameplay\AbilityBook.ts:326:                    adrenalineGain: params.adrenalineGain,
+src\engines\gameplay\AbilityBook.ts:364:            if (params.adrenalineCost === 1500) type = 'enhanced';
+src\engines\gameplay\AbilityBook.ts:365:            if (params.adrenalineCost === 10000) type = 'ultimate';
+src\limbs\spatial\CacheMappingRegistry.ts:103:    SPECIAL_ATTACK: 301,          // 0 = Off, 1 = On (Old), RS3 uses adrenaline
+src\limbs\spatial\AbilityDiscoveryLimb.ts:33:    adrenalineCost: number;
+src\limbs\spatial\AbilityDiscoveryLimb.ts:35:    adrenalineGain: number;
+src\limbs\spatial\AbilityDiscoveryLimb.ts:200:     * Build an optimal rotation from discovered abilities and current adrenaline.
+src\limbs\spatial\AbilityDiscoveryLimb.ts:203:     *   - Basics to build adrenaline when below threshold cost
+src\limbs\spatial\AbilityDiscoveryLimb.ts:204:     *   - Thresholds when adrenaline ≥ 50% (1500 on internal scale)
+src\limbs\spatial\AbilityDiscoveryLimb.ts:205:     *   - Ultimates when adrenaline = 100% (10000)
+src\limbs\spatial\AbilityDiscoveryLimb.ts:248:                    reason: `Build adrenaline (${simAdrenaline} → ${simAdrenaline + basic.adrenalineGain})`
+src\limbs\spatial\AbilityDiscoveryLimb.ts:250:                simAdrenaline += basic.adrenalineGain;
+src\limbs\spatial\AbilityDiscoveryLimb.ts:259:                reason: `Threshold at ${simAdrenaline} adrenaline — ${best.name} (${(best.damageRange[0] + best.damageRange[1]) / 2}% avg)`
+src\limbs\spatial\AbilityDiscoveryLimb.ts:261:            simAdrenaline -= best.adrenalineCost;
+src\limbs\spatial\AbilityDiscoveryLimb.ts:271:                    reason: `Build toward ultimate (${simAdrenaline} → ${simAdrenaline + basic.adrenalineGain})`
+src\limbs\spatial\AbilityDiscoveryLimb.ts:273:                simAdrenaline += basic.adrenalineGain;
+src\limbs\spatial\AbilityDiscoveryLimb.ts:282:                reason: `Ultimate at ${simAdrenaline} adrenaline — ${best.name}`
+src\limbs\spatial\AbilityDiscoveryLimb.ts:379:            adrenalineCost: a.adrenalineCost,
+src\limbs\spatial\AbilityDiscoveryLimb.ts:380:            adrenalineGain: a.adrenalineGain,
+src\limbs\spatial\CombatLimb.ts:12:    adrenalineGained?: number;
+src\limbs\spatial\CombatLimb.ts:13:    adrenalineCost?: number;
+src\limbs\spatial\CombatLimb.ts:43:            adrenalineGained: 900, // 9.00%
+src\limbs\spatial\CombatLimb.ts:53:            adrenalineGained: 900,
+src\limbs\spatial\CombatLimb.ts:64:            adrenalineCost: 6000, // 60.00%
+src\limbs\spatial\CombatLimb.ts:91:        if (ability.adrenalineCost && (castor.adrenaline || 0) < ability.adrenalineCost) {
+src\limbs\spatial\CombatLimb.ts:108:        if (ability.adrenalineGained) {
+src\limbs\spatial\CombatLimb.ts:110:                (castor as any).addAdrenaline(ability.adrenalineGained);
+src\limbs\spatial\CombatLimb.ts:112:                castor.adrenaline = Math.min(10000, (castor.adrenaline || 0) + ability.adrenalineGained);
+src\limbs\spatial\CombatLimb.ts:115:        if (ability.adrenalineCost) {
+src\limbs\spatial\CombatLimb.ts:116:            castor.adrenaline = Math.max(0, (castor.adrenaline || 0) - ability.adrenalineCost);
+src\limbs\combat\AdrenalineStateMachine.ts:9: * Auto-attack: +8 adrenaline/tick (melee/ranged), +3 (magic)
+src\limbs\combat\AdrenalineStateMachine.ts:10: * Basic ability: +8 adrenaline
+src\limbs\combat\AdrenalineStateMachine.ts:24:    adrenalineGain: number;   // positive = gain, negative = cost
+src\limbs\combat\AdrenalineStateMachine.ts:25:    adrenalineRequired: number;
+src\limbs\combat\AdrenalineStateMachine.ts:38:    adrenaline: number;         // 0-1000 (internal precision)
+src\limbs\combat\AdrenalineStateMachine.ts:61:        adrenalineGain: 80, adrenalineRequired: 0,
+src\limbs\combat\AdrenalineStateMachine.ts:66:        adrenalineGain: 80, adrenalineRequired: 0,
+src\limbs\combat\AdrenalineStateMachine.ts:71:        adrenalineGain: 80, adrenalineRequired: 0,
+src\limbs\combat\AdrenalineStateMachine.ts:77:        adrenalineGain: -500, adrenalineRequired: 500,
+src\limbs\combat\AdrenalineStateMachine.ts:82:        adrenalineGain: -500, adrenalineRequired: 500,
+src\limbs\combat\AdrenalineStateMachine.ts:88:        adrenalineGain: -1000, adrenalineRequired: 1000,
+src\limbs\combat\AdrenalineStateMachine.ts:93:        adrenalineGain: -1000, adrenalineRequired: 1000,
+src\limbs\combat\AdrenalineStateMachine.ts:114:            adrenaline: 0,
+src\limbs\combat\AdrenalineStateMachine.ts:148:    get adrenalinePct(): number {
+src\limbs\combat\AdrenalineStateMachine.ts:149:        return this.state.adrenaline / 10;
+src\limbs\combat\AdrenalineStateMachine.ts:177:        // Gate: adrenaline
+src\limbs\combat\AdrenalineStateMachine.ts:178:        if (this.state.adrenaline < ability.adrenalineRequired) return null;
+src\limbs\combat\AdrenalineStateMachine.ts:181:        const prevAdrenaline = this.state.adrenaline;
+src\limbs\combat\AdrenalineStateMachine.ts:182:        this.state.adrenaline = Math.max(0, Math.min(1000,
+src\limbs\combat\AdrenalineStateMachine.ts:183:            this.state.adrenaline + ability.adrenalineGain
+src\limbs\combat\AdrenalineStateMachine.ts:193:        this.emit({ type: 'ADRENALINE_CHANGED', from: prevAdrenaline, to: this.state.adrenaline });
+src\limbs\combat\AdrenalineStateMachine.ts:213:        // Auto-attack adrenaline regen (+8 per tick in combat, melee/ranged; +3 magic)
+src\limbs\combat\AdrenalineStateMachine.ts:215:        const prevAdrenaline = this.state.adrenaline;
+src\limbs\combat\AdrenalineStateMachine.ts:216:        this.state.adrenaline = Math.min(1000, this.state.adrenaline + regen);
+src\limbs\combat\AdrenalineStateMachine.ts:217:        if (this.state.adrenaline !== prevAdrenaline) {
+src\limbs\combat\AdrenalineStateMachine.ts:218:            this.emit({ type: 'ADRENALINE_CHANGED', from: prevAdrenaline, to: this.state.adrenaline });
+src\limbs\logical\SandboxBridge.ts:44:                    adrenaline: avatar.adrenaline || 0,
+src\limbs\logical\StateMocks.ts:26:     * Returns a high-adrenaline state for ability rotation testing.
+src\limbs\logical\StateMocks.ts:29:        adrenaline: 10000, // 100%
+src\limbs\logical\StateMocks.ts:36:     * Returns a zero-adrenaline, non-combat state to ensure "Peaceful" animations.
+src\limbs\logical\StateMocks.ts:40:        adrenaline: 0,
+src\entities\ai\NecromancerBrain.ts:17:        this.npc.adrenaline = this.npc.adrenaline || 0;
+src\limbs\pedagogy\Interface1841ActionBarMapping.ts:81:  adrenalineCost: number;        // 0-100, or -1 for threshold abilities
+src\limbs\pedagogy\Interface1841ActionBarMapping.ts:82:  adrenalineThreshold: number;   // minimum adrenaline required
+src\limbs\pedagogy\Interface1841ActionBarMapping.ts:83:  isAvailable: boolean;            // cooldown + adrenaline + stun check
+src\limbs\pedagogy\Interface1841ActionBarMapping.ts:93:  adrenaline: number;            // 0-100
+src\limbs\pedagogy\Interface1841ActionBarMapping.ts:94:  adrenalineThreshold: any;      // Stubbed to avoid missing export error
+src\limbs\pedagogy\Interface1841ActionBarMapping.ts:155:      adrenaline: 0,
+src\limbs\pedagogy\Interface1841ActionBarMapping.ts:156:      adrenalineThreshold: null,
+src\limbs\pedagogy\Interface1841ActionBarMapping.ts:192:        adrenalineCost: 0,
+src\limbs\pedagogy\Interface1841ActionBarMapping.ts:193:        adrenalineThreshold: 0,
+src\limbs\spatial\GameplayProjectionLimb.ts:76:                adrenaline: (avatar as any).adrenaline ?? 0,
+src\limbs\spatial\GameplaySovereigntyLimb.ts:569:            adrenaline: 0,
+src\limbs\pedagogy\SovereignAvatarActionBarVolition.ts:27:  adrenReq: number;              // Minimum adrenaline to use (internal units)
+src\limbs\pedagogy\SovereignAvatarActionBarVolition.ts:240:  adrenaline: number;            // 0-1000 internal (0-100% display)
+src\limbs\pedagogy\SovereignAvatarActionBarVolition.ts:264:      adrenaline: 0,
+
+[Showing results with pagination = limit: 250]

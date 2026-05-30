@@ -1,9 +1,22 @@
 import { createLogger } from './logger.js';
 import type { Result } from '../core/models.js';
 import { join } from 'path';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { CanonicalClock } from './CanonicalClock.js';
 
 const logger = createLogger('WikiEnricher');
+const clock = CanonicalClock.getInstance();
+
+// Load authoritative interaction mapping
+const INTERACTION_MAPPING_PATH = join(process.cwd(), 'audit_output', 'interaction_mapping_full.json');
+let interactionMapping: any = null;
+if (existsSync(INTERACTION_MAPPING_PATH)) {
+    try {
+        interactionMapping = JSON.parse(readFileSync(INTERACTION_MAPPING_PATH, 'utf8'));
+    } catch (e) {
+        logger.error({ err: e }, 'Failed to load authoritative interaction mapping.');
+    }
+}
 
 export interface WikiData {
     name: string;
@@ -13,6 +26,24 @@ export interface WikiData {
     url: string;
     imageUrl?: string;
     variables?: Record<string, string>;
+    pog2_interactions?: string[];
+}
+
+// Build reverse interaction index for fast lookup
+const entityInteractionIndex: Record<string, Record<string, string[]>> = {
+    npc: {}, item: {}, object: {}
+};
+if (interactionMapping) {
+    for (const [actionId, data] of Object.entries(interactionMapping)) {
+        const { action, entities } = data as any;
+        for (const entity of entities) {
+            const idKey = entity.id.toString();
+            if (!entityInteractionIndex[entity.type][idKey]) {
+                entityInteractionIndex[entity.type][idKey] = [];
+            }
+            entityInteractionIndex[entity.type][idKey].push(action);
+        }
+    }
 }
 
 export interface WikiRotation {
@@ -31,9 +62,17 @@ export class WikiEnricher {
     private static API_URL = 'https://runescape.wiki/api.php';
 
     /**
-     * Enrich a model's semantic context by searching the wiki.
+     * Enrich a model's semantic context by first checking authoritative cache mapping,
+     * then falling back to wiki search.
      */
-    public static async enrich(name: string): Promise<Result<WikiData>> {
+    public static async enrich(name: string, entityId?: number, entityType?: string): Promise<Result<WikiData>> {
+        let pog2_interactions: string[] | undefined;
+
+        // 1. Authoritative Cache Lookup
+        if (entityId !== undefined && entityType && entityInteractionIndex[entityType]?.[entityId.toString()]) {
+            pog2_interactions = entityInteractionIndex[entityType][entityId.toString()];
+        }
+
         if (!name || name === 'unknown') {
             return {
                 ok: true,
@@ -41,7 +80,8 @@ export class WikiEnricher {
                     name: 'Unknown Asset',
                     role: 'Background Prop',
                     intent: 'Generic environment filler',
-                    url: 'https://runescape.wiki'
+                    url: 'https://runescape.wiki',
+                    pog2_interactions
                 }
             };
         }
@@ -64,18 +104,22 @@ export class WikiEnricher {
             };
 
             const fetchWithRetry = async (url: string, options: any, retries = 3): Promise<Response> => {
+                // Canonical pacing: Wait at least 3 game ticks (1800ms) to maintain simulation determinism
+                const delayTicks = 3; 
+                await new Promise(resolve => setTimeout(resolve, delayTicks * clock.getGameTickMs()));
+                
                 for (let i = 0; i < retries; i++) {
                     try {
                         const res = await fetch(url, options);
                         if (res.ok) return res;
                         if (res.status === 429) {
-                            const delay = parseInt(res.headers.get('Retry-After') || '2') * 1000;
-                            await new Promise(resolve => setTimeout(resolve, delay));
+                            const delayMs = parseInt(res.headers.get('Retry-After') || '5') * 1000;
+                            await new Promise(resolve => setTimeout(resolve, delayMs));
                             continue;
                         }
                     } catch (err) {
                         if (i === retries - 1) throw err;
-                        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+                        await new Promise(resolve => setTimeout(resolve, 2000 * (i + 1)));
                     }
                 }
                 throw new Error('Fetch failed after retries');
@@ -92,7 +136,8 @@ export class WikiEnricher {
                         name,
                         role: 'Uncategorized',
                         intent: 'Production asset without wiki mapping',
-                        url: 'https://runescape.wiki'
+                        url: 'https://runescape.wiki',
+                        pog2_interactions
                     }
                 };
             }
@@ -153,7 +198,8 @@ export class WikiEnricher {
                     intent,
                     url,
                     imageUrl,
-                    variables: await this.fetchInfoboxData(pageTitle)
+                    variables: await this.fetchInfoboxData(pageTitle),
+                    pog2_interactions
                 }
             };
         } catch (err) {

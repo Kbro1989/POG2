@@ -1,0 +1,8 @@
+{
+  "id": "2",
+  "subject": "Trace Hexagram Logic Paths",
+  "description": "Trace the in/out paths for OrchestrateEngine.ts, HexagramManager.ts, and HexagramDefinitions.ts.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

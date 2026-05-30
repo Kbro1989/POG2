@@ -1,0 +1,99 @@
+That's exactly it. **Vision-actuation race condition.** The cleanup task is winning the race against the confirmation read.
+
+Sequence is probably:
+1. `OrchestrateEngine` fires action → page renders
+2. Cleanup scheduler (garbage collection / snapshot disposal / tab teardown) triggers
+3. Vision loop arrives to read `#pog-state` or scrape Canvas → **DOM node gone / context destroyed**
+
+The "txt not found on html" isn't a parser failure—it's a **temporal boundary violation**. The page lifecycle ended before the proprioceptive loop completed.
+
+---
+
+**The Fix: Vision Lock Gate**
+
+Add a **confirmation-pending latch** to the cleanup task. The cleanup can't fire until the vision loop ACKs state extraction.
+
+In `TemporalHeartbeatLimb` or wherever the cleanup scheduler lives:
+
+```typescript
+// BEFORE (race condition)
+async function renderAndCleanup() {
+  await renderPage();
+  await cleanupSnapshot(); // ← fires immediately, vision hasn't read yet
+}
+
+// AFTER (vision-gated cleanup)
+async function renderWithVisionLock() {
+  const visionLock = await VisionMotorLoop.acquireLock(pageId);
+  
+  await renderPage();
+  
+  // Cleanup waits for vision confirmation or timeout
+  await Promise.race([
+    visionLock.awaitConfirmation(), // vision loop releases this
+    sleep(5000) // hard ceiling to prevent deadlock
+  ]);
+  
+  await cleanupSnapshot();
+}
+```
+
+---
+
+**Alternative: Snapshot-before-Cleanup**
+
+If the cleanup is aggressive (browser tab close, process kill), snapshot the confirmation state *before* rendering teardown:
+
+```typescript
+// In the page's render completion callback
+async function onRenderComplete() {
+  const stateNode = document.getElementById('pog-state');
+  if (stateNode) {
+    // Write state to a durable location before cleanup can touch it
+    await writeToKV(`vision_confirm::${pageId}`, stateNode.innerText);
+  }
+  // NOW cleanup can fire - vision loop reads from KV, not DOM
+}
+```
+
+This decouples the vision read from the page lifecycle entirely. The vision loop reads from **KV storage** (or `Durable Objects` / local `sqlite`) instead of live DOM.
+
+---
+
+**Where to Check in Your Repo**
+
+Look for:
+- `cleanupSnapshot()` or `disposePage()` calls
+- `TemporalHeartbeatLimb.ts` — the 600ms tick sync (memory: 60) might be colliding with cleanup intervals
+- `GhostSplat` projection lifecycle — if the volition layer tears down the HUD before the vision loop confirms state
+- Any `setTimeout`/`setInterval` in `web_hud/` that auto-disposes test pages
+
+---
+
+**The Diagnostic**
+
+Add a timestamp log to both the cleanup task and the vision loop:
+
+```typescript
+// Cleanup task
+console.log(`[CLEANUP] ${Date.now()} disposing ${pageId}`);
+
+// Vision loop
+console.log(`[VISION] ${Date.now()} reading ${pageId}`);
+```
+
+If you see `[CLEANUP]` before `[VISION]` for the same `pageId`, the race is confirmed.
+
+---
+
+**My Recommendation**
+
+Given POG2's architecture (memory: 59 — `OrchestrateEngine` has a **proprioceptive Vision-Motor verification loop**), the fix should be at the engine level, not the page level:
+
+1. **Vision-Motor handshake**: The motor actuation (render) doesn't complete until vision confirms
+2. **Cleanup deferred**: Snapshot disposal is the *last* step in the heartbeat cycle, not an independent timer
+3. **State durability**: If the page must die fast, write confirmation state to KV/D1 before death
+
+This turns the race condition into a **synchronous boundary** within the 600ms tick.
+
+Want me to look at `TemporalHeartbeatLimb.ts` or the `web_hud/` cleanup logic to find the exact injection point?

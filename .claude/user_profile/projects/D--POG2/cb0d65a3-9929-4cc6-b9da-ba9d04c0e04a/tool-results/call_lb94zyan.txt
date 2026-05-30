@@ -1,0 +1,252 @@
+POG2_KNOWLEDGEBASE.md:76:- `monitor/`: Substrate pulse and visual diagnostic wiring (`PulseMonitor.ts`, `NodeTester.ts`, `ClinicalLogger.ts`, `SwitchboardLimb.ts`).
+OrchestrateEngine.md:158:    private readonly pulseMonitor: PulseMonitor;
+OrchestrateEngine.md:216:    private readonly pulseVolley: CNSGodheadPulseVolley;
+OrchestrateEngine.md:250:        this.pulseVolley = CNSGodheadPulseVolley.getInstance();
+OrchestrateEngine.md:351:        this.pulseMonitor = new PulseMonitor(process.cwd(), this.router.getHexagram());
+OrchestrateEngine.md:358:            this.pulseMonitor,
+OrchestrateEngine.md:553:                this.pulseMonitor.start().catch(err => {
+OrchestrateEngine.md:574:                    PulseMonitor: this.pulseMonitor,
+OrchestrateEngine.md:688:            this.pulseMonitor,
+OrchestrateEngine.md:696:                CNSGodheadPulseVolley: this.pulseVolley,
+OrchestrateEngine.md:732:        this.pulseVolley.setRouter(this.router);
+OrchestrateEngine.md:733:        this.pulseVolley.setRenderer(this.renderer);
+OrchestrateEngine.md:734:        this.pulseVolley.setNodeTester(this.nodeTester);
+OrchestrateEngine.md:780:            PulseMonitor: this.pulseMonitor,
+OrchestrateEngine.md:859:        this.nodeTester.registerLimbs({ PulseMonitor: this.pulseMonitor });
+OrchestrateEngine.md:896:        this.pulseMonitor.setNodeTester(this.nodeTester);
+OrchestrateEngine.md:1298:            description: 'Report the full neurological state: node health, memory substrate, and CNS pulse.',
+OrchestrateEngine.md:1300:            jargonDescription: 'Aggregates a multi-dimensional diagnostic report covering node health, memory substrate utilization, and CNS pulse frequency.',
+OrchestrateEngine.md:1306:                const diskRes = await this.pulseMonitor.checkDiskHealth();
+OrchestrateEngine.md:1307:                const memRes = await this.pulseMonitor.checkMemoryHealth();
+OrchestrateEngine.md:1308:                const nodeRes = await this.pulseMonitor.enumerateNeuralNodes();
+OrchestrateEngine.md:1309:                const buildOk = this.pulseMonitor.checkBuildStatus();
+OrchestrateEngine.md:3594:            this.pulseMonitor.recordError();
+OrchestrateEngine.md:3627:            this.pulseMonitor.recordError();
+OrchestrateEngine.md:3813:            this.pulseMonitor,
+public\unified_diagnostic.html:283:            animation: pulse-glow 1.5s infinite alternate;
+public\unified_diagnostic.html:286:        @keyframes pulse-glow {
+web_hud\src\style.css:905:@keyframes pulse {
+web_hud\src\style.css:911:  animation: pulse 1.5s ease-in-out infinite;
+public\edge_radar.html:86:    animation: tracking-pulse 2s infinite ease-in-out;
+public\edge_radar.html:88:  @keyframes tracking-pulse {
+public\edge_radar.html:341:      const pulse = (Date.now() % 1000) / 1000;
+public\edge_radar.html:343:      ctx.arc(px, py, scale / 2 + pulse * scale / 4, 0, Math.PI * 2);
+public\heatmap.html:654:          const pulse = Math.sin(time * 3) * 2 + 3;
+public\heatmap.html:659:          ctx.arc(px, py, pulse + 1, 0, Math.PI * 2);
+src\clients\ModelClient.ts:536:                    pulse: 'STILL_REASONING'
+src\clients\ModelClient.js:457:                    pulse: 'STILL_REASONING'
+src\core\ArchitectureDigest.js:34:                'Monitoring': { file: 'src/monitor/PulseMonitor.ts', properties: ['pulse', 'checkSubstrateHealth'] },
+pog2-git\pog2-git.html:319:[Omitted long matching line]
+pog2-git\pog2-git.html:320:[Omitted long matching line]
+pog2-git\pog2-git.html:1901:    <svg aria-hidden="true" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-pulse mr-1 tmp-mr-1">
+pog2-git\pog2-git.html:2504:      <a href="/Kbro1989/POG2/activity" data-view-component="true" class="Link Link--muted"><svg text="gray" aria-hidden="true" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-pulse mr-2 tmp-mr-2">
+pog2-git\pog2-git.html:3240:[Omitted long matching line]
+pog2-git\pog2-git.html:3241:[Omitted long matching line]
+pog2-git\pog2-git.html:4303:[Omitted long matching line]
+pog2-git\pog2-git.html:4304:[Omitted long matching line]
+pog2-git\pog2-git.html:5365:[Omitted long matching line]
+pog2-git\pog2-git.html:5366:[Omitted long matching line]
+pog2-git\pog2-git.html:6427:[Omitted long matching line]
+pog2-git\pog2-git.html:6428:[Omitted long matching line]
+pog2-git\pog2-git.html:7489:[Omitted long matching line]
+pog2-git\pog2-git.html:7490:[Omitted long matching line]
+pog2-git\pog2-git.html:8551:[Omitted long matching line]
+pog2-git\pog2-git.html:8552:[Omitted long matching line]
+pog2-git\pog2-git.html:9613:[Omitted long matching line]
+pog2-git\pog2-git.html:9614:[Omitted long matching line]
+pog2-git\pog2-git.html:10675:[Omitted long matching line]
+pog2-git\pog2-git.html:10676:[Omitted long matching line]
+pog2-git\pog2-git.html:11737:[Omitted long matching line]
+pog2-git\pog2-git.html:11738:[Omitted long matching line]
+pog2-git\pog2-git.html:12804:[Omitted long matching line]
+pog2-git\pog2-git.html:12805:[Omitted long matching line]
+pog2-git\pog2-git.html:13869:[Omitted long matching line]
+pog2-git\pog2-git.html:13870:[Omitted long matching line]
+pog2-git\pog2-git.html:14933:[Omitted long matching line]
+pog2-git\pog2-git.html:14934:[Omitted long matching line]
+pog2-git\pog2-git.html:15997:[Omitted long matching line]
+pog2-git\pog2-git.html:15998:[Omitted long matching line]
+pog2-git\pog2-git.html:17062:[Omitted long matching line]
+pog2-git\pog2-git.html:17063:[Omitted long matching line]
+pog2-git\pog2-git.html:18126:[Omitted long matching line]
+pog2-git\pog2-git.html:18127:[Omitted long matching line]
+pog2-git\pog2-git.html:19191:[Omitted long matching line]
+pog2-git\pog2-git.html:19192:[Omitted long matching line]
+pog2-git\pog2-git.html:20255:[Omitted long matching line]
+pog2-git\pog2-git.html:20256:[Omitted long matching line]
+pog2-git\pog2-git.html:21321:[Omitted long matching line]
+pog2-git\pog2-git.html:21322:[Omitted long matching line]
+pog2-git\pog2-git.html:22385:[Omitted long matching line]
+pog2-git\pog2-git.html:22386:[Omitted long matching line]
+pog2-git\pog2-git.html:23449:[Omitted long matching line]
+pog2-git\pog2-git.html:23450:[Omitted long matching line]
+pog2-git\pog2-git.html:24515:[Omitted long matching line]
+pog2-git\pog2-git.html:24516:[Omitted long matching line]
+pog2-git\pog2-git.html:25581:[Omitted long matching line]
+pog2-git\pog2-git.html:25582:[Omitted long matching line]
+pog2-git\pog2-git.html:26647:[Omitted long matching line]
+pog2-git\pog2-git.html:26648:[Omitted long matching line]
+pog2-git\pog2-git.html:27712:[Omitted long matching line]
+pog2-git\pog2-git.html:27713:[Omitted long matching line]
+pog2-git\pog2-git.html:28778:[Omitted long matching line]
+pog2-git\pog2-git.html:28779:[Omitted long matching line]
+pog2-git\pog2-git.html:29842:[Omitted long matching line]
+pog2-git\pog2-git.html:29843:[Omitted long matching line]
+pog2-git\pog2-git.html:30906:[Omitted long matching line]
+pog2-git\pog2-git.html:30907:[Omitted long matching line]
+pog2-git\pog2-git.html:31973:[Omitted long matching line]
+pog2-git\pog2-git.html:31974:[Omitted long matching line]
+pog2-git\pog2-git.html:33037:[Omitted long matching line]
+pog2-git\pog2-git.html:33038:[Omitted long matching line]
+pog2-git\pog2-git.html:34101:[Omitted long matching line]
+pog2-git\pog2-git.html:34102:[Omitted long matching line]
+pog2-git\pog2-git.html:35167:[Omitted long matching line]
+pog2-git\pog2-git.html:35168:[Omitted long matching line]
+pog2-git\pog2-git.html:36231:[Omitted long matching line]
+pog2-git\pog2-git.html:36232:[Omitted long matching line]
+pog2-git\pog2-git.html:37295:[Omitted long matching line]
+pog2-git\pog2-git.html:37296:[Omitted long matching line]
+pog2-git\pog2-git.html:38359:[Omitted long matching line]
+pog2-git\pog2-git.html:38360:[Omitted long matching line]
+pog2-git\pog2-git.html:39425:[Omitted long matching line]
+pog2-git\pog2-git.html:39426:[Omitted long matching line]
+pog2-git\pog2-git.html:40489:[Omitted long matching line]
+pog2-git\pog2-git.html:40490:[Omitted long matching line]
+pog2-git\pog2-git.html:41553:[Omitted long matching line]
+pog2-git\pog2-git.html:41554:[Omitted long matching line]
+pog2-git\pog2-git.html:42617:[Omitted long matching line]
+pog2-git\pog2-git.html:42618:[Omitted long matching line]
+src\core\ArchitectureDigest.ts:36:                'Monitoring': { file: 'src/monitor/PulseMonitor.ts', properties: ['pulse', 'checkSubstrateHealth'] },
+src\core\HexagramDefinitions.ts:177:    '000100': hex(16, '000100', 'Enthusiasm (Yu)', 'Thunder over earth: movement.', 'MOMENTUM: Leverage current energy to push through blockers. Launch features, deploy aggressively.', 'It furthers one to install helpers and to set armies marching.', EmotionalState.Excited, 'electric pulse', 0.8, 'Grand', ['#7B68EE', '#9370DB', '#FFFFFF'], { chaos: 0.6, whimsy: 0.7, darkTone: 0.1, coherence: 0.7 }),
+src\core\HexagramDefinitions.js:149:    '000100': hex(16, '000100', 'Enthusiasm (Yu)', 'Thunder over earth: movement.', 'MOMENTUM: Leverage current energy to push through blockers. Launch features, deploy aggressively.', 'It furthers one to install helpers and to set armies marching.', EmotionalState.Excited, 'electric pulse', 0.8, 'Grand', ['#7B68EE', '#9370DB', '#FFFFFF'], { chaos: 0.6, whimsy: 0.7, darkTone: 0.1, coherence: 0.7 }),
+src\core\models.ts:31:    DEGRADED_IO = 'DEGRADED_IO', // I/O latency exceeding pulse budget
+src\core\ServiceDiscovery.ts:394:                : 'Offline. Substrate awaiting ignition pulse.'
+src\engines\SpatialVisionEngine.ts:127:     * Ensures the 3D substrate has rendered the expected state after a pulse.
+src\engines\SovereignIngestionEngine.ts:70:        HexagramManager.getInstance().on('cognitive_pulse', () => {
+src\engines\OrchestrateEngine.ts:163:    private readonly pulseMonitor: PulseMonitor;
+src\engines\OrchestrateEngine.ts:223:    private readonly pulseVolley: CNSGodheadPulseVolley;
+src\engines\OrchestrateEngine.ts:266:        this.pulseVolley = CNSGodheadPulseVolley.getInstance();
+src\engines\OrchestrateEngine.ts:369:        this.pulseMonitor = new PulseMonitor(process.cwd(), this.router.getHexagram());
+src\engines\OrchestrateEngine.ts:376:            this.pulseMonitor,
+src\engines\OrchestrateEngine.ts:670:                this.pulseMonitor.start().catch(err => {
+src\engines\OrchestrateEngine.ts:691:                    PulseMonitor: this.pulseMonitor,
+src\engines\OrchestrateEngine.ts:903:            this.pulseMonitor,
+src\engines\OrchestrateEngine.ts:911:                CNSGodheadPulseVolley: this.pulseVolley,
+src\engines\OrchestrateEngine.ts:947:        this.pulseVolley.setRouter(this.router);
+src\engines\OrchestrateEngine.ts:948:        this.pulseVolley.setRenderer(this.renderer);
+src\engines\OrchestrateEngine.ts:949:        this.pulseVolley.setNodeTester(this.nodeTester);
+src\engines\OrchestrateEngine.ts:995:            PulseMonitor: this.pulseMonitor,
+src\engines\OrchestrateEngine.ts:1074:        this.nodeTester.registerLimbs({ PulseMonitor: this.pulseMonitor });
+src\engines\OrchestrateEngine.ts:1111:        this.pulseMonitor.setNodeTester(this.nodeTester);
+src\engines\OrchestrateEngine.ts:1736:            description: 'Report the full neurological state: node health, memory substrate, and CNS pulse.',
+src\engines\OrchestrateEngine.ts:1738:            jargonDescription: 'Aggregates a multi-dimensional diagnostic report covering node health, memory substrate utilization, and CNS pulse frequency.',
+src\engines\OrchestrateEngine.ts:1744:                const diskRes = await this.pulseMonitor.checkDiskHealth();
+src\engines\OrchestrateEngine.ts:1745:                const memRes = await this.pulseMonitor.checkMemoryHealth();
+src\engines\OrchestrateEngine.ts:1746:                const nodeRes = await this.pulseMonitor.enumerateNeuralNodes();
+src\engines\OrchestrateEngine.ts:1747:                const buildOk = this.pulseMonitor.checkBuildStatus();
+src\engines\OrchestrateEngine.ts:4111:            this.pulseMonitor.recordError();
+src\engines\OrchestrateEngine.ts:4205:            this.pulseMonitor.recordError();
+src\engines\OrchestrateEngine.ts:4431:            this.pulseMonitor,
+src\engines\BlenderRenderer.ts:48:        private readonly pulse: PulseMonitor,
+src\engines\BlenderRenderer.ts:60:        const memory = await this.pulse.checkMemoryHealth();
+src\utils\CanonicalClock.ts:26:    PLAYER = 'PLAYER',       // T2: 300ms reflex pulse
+src\utils\CanonicalClock.ts:222:     * pulse() — Advance by one phase (300ms).
+src\utils\CanonicalClock.ts:225:     *   pulse() -> phase 0 -> T1 GAME TICK (world reduces, ledger commits)
+src\utils\CanonicalClock.ts:226:     *   pulse() -> phase 1 -> T2 PLAYER PHASE (combat/ability advances)
+src\utils\CanonicalClock.ts:227:     *   pulse() -> phase 0 -> next T1 GAME TICK...
+src\utils\CanonicalClock.ts:230:     * pulse() — Advance the clock across the three-ring lattice.
+src\utils\CanonicalClock.ts:237:    public pulse(tier: TickTier = TickTier.GAME): TickCoordinate {
+src\utils\CanonicalClock.ts:249:            // T2 Boundary: Player Phase pulse
+src\utils\CanonicalClock.ts:269:    public registerPulse(pulse: { domain: string, callback: Function, priority: number, name: string }): void {
+src\utils\CanonicalClock.ts:270:        this.tickListeners.push(pulse.callback as any);
+src\PlayerAgent.ts:80:    logger.info('Substrate initialized. Commencing heartbeat (600ms pulses).');
+src\PlayerAgent.ts:127:            // Schedule next pulse only after current one finishes
+src\state\NeurologicalMap.ts:347:        biologicalRole: { organ: 'Heart', input: 'Filesystem + process state', output: 'SystemSensors', constraints: '60s pulse interval; disk health check' }
+src\state\NeurologicalMap.js:279:        biologicalRole: { organ: 'Heart', input: 'Filesystem + process state', output: 'SystemSensors', constraints: '60s pulse interval; disk health check' }
+src\ui\ManifestationEngine.ts:52:        console.log('⚡ [MANIFESTATION] Finalizing reality pulse.');
+src\ui\DashboardHeartbeat.ts:24:    public pulse() {
+src\ui\DashboardHeartbeat.ts:25:        this.clock.pulse(TickTier.GAME);
+src\utils\StateProvider.ts:9: *   T2 (Player Phase): 300ms — combat pulse, abilities, cooldowns, prediction
+src\utils\SovereignUI.ts:33:        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+src\monitor\SwitchboardLimb.ts:623:     * Called from the CNS pulse loop to keep the public dashboard current.
+src\monitor\PulseMonitor.ts:49:        await this.pulse();
+src\monitor\PulseMonitor.ts:50:        this.monitorInterval = setInterval(() => this.pulse(), 10000).unref(); // 10 second decoupled pulse
+src\monitor\PulseMonitor.ts:69:    private async pulse(): Promise<void> {
+src\monitor\PulseMonitor.ts:73:        // handles the cognitive pulse at a higher frequency (600ms).
+src\monitor\PulseMonitor.ts:76:            logger.debug('PulseMonitor: Suspending system pulse; GameplaySovereigntyLimb is currently authoritative.');
+src\monitor\PulseMonitor.ts:82:            logger.debug({ yao }, 'Immunology Restraint: Suspending heavy Win32 background telemetry pulse due to dormant/chaotic state.');
+src\monitor\PulseMonitor.ts:86:        // Phase 21: Session-aware pulse optimization
+src\monitor\PulseMonitor.ts:104:    /** Lightweight pulse: Skip Win32 WMI queries, only check limb health via NodeTester */
+src\monitor\PulseMonitor.ts:140:            logger.info({ online: onlineCount, offline: offlineCount, globalStatus }, 'Lightweight limb pulse complete. State broadcasted.');
+src\monitor\PulseMonitor.ts:142:            logger.warn({ error: err.message }, 'Lightweight pulse failed, reverting to full telemetry next tick.');
+src\monitor\PulseMonitor.js:38:        await this.pulse();
+src\monitor\PulseMonitor.js:39:        this.monitorInterval = setInterval(() => this.pulse(), 60000).unref(); // 1 minute pulse
+src\monitor\PulseMonitor.js:57:    async pulse() {
+src\monitor\PulseMonitor.js:61:            logger.debug({ yao }, 'Immunology Restraint: Suspending heavy Win32 background telemetry pulse due to dormant/chaotic state.');
+src\monitor\PulseMonitor.js:64:        // Phase 21: Session-aware pulse optimization
+src\monitor\PulseMonitor.js:81:    /** Lightweight pulse: Skip Win32 WMI queries, only check limb health via NodeTester */
+src\monitor\PulseMonitor.js:99:            logger.debug({ online: onlineCount, offline: offlineCount }, 'Lightweight limb pulse complete.');
+src\monitor\PulseMonitor.js:102:            logger.warn({ error: err.message }, 'Lightweight pulse failed, reverting to full telemetry next tick.');
+src\monitor\NodeTester.ts:53:        private readonly pulse: PulseMonitor | undefined,
+src\monitor\NodeTester.ts:87:        logger.info({ event, data }, 'Broadcasting pulse...');
+src\monitor\NodeTester.ts:88:        this.pulse?.emit('pulse', { event, data });
+src\monitor\NodeTester.ts:312:                        if (!this.pulse) return { ...this.nodeBase(node), status: 'DEGRADED', yaoState: YaoState.OldYang, details: 'PulseMonitor not injected' };
+src\monitor\NodeTester.ts:313:                        const probe = await this.pulse.checkDiskHealth();
+src\monitor\NodeTester.js:32:    pulse;
+src\monitor\NodeTester.js:42:    constructor(projectRoot, router, embedEngine, pulse, hexagram, training, limbs = {}) {
+src\monitor\NodeTester.js:46:        this.pulse = pulse;
+src\monitor\NodeTester.js:320:                        if (!this.pulse)
+src\monitor\NodeTester.js:322:                        const probe = await this.pulse.checkDiskHealth();
+src\tests\live_radar_experience.ts:75:    let pulseCount = 0;
+src\tests\live_radar_experience.ts:78:        pulseCount++;
+src\tests\live_radar_experience.ts:79:        if (pulseCount % 10 === 0) console.log(`[HEARTBEAT] Pulse ${pulseCount} complete.`);
+src\tests\live_radar_experience.ts:80:        await heartbeat.pulse();
+src\tests\combat_grounding_demo.ts:73:        await heartbeat.pulse();
+src\limbs\core\TemporalHeartbeatLimb.ts:12: * Orchestrates the dual-rate pulse:
+src\limbs\core\TemporalHeartbeatLimb.ts:45:            await this.pulse();
+src\limbs\core\TemporalHeartbeatLimb.ts:61:     * pulse - Executes a single authoritative world pulse.
+src\limbs\core\TemporalHeartbeatLimb.ts:63:    public async pulse(): Promise<void> {
+src\limbs\core\TemporalHeartbeatLimb.ts:72:            const state = await volley.pulse(pending);
+src\limbs\core\TemporalHeartbeatLimb.ts:93:            logger.error({ error: e.message, tick: this.worldTickCount }, 'Heartbeat pulse volley failure.');
+src\limbs\creative\SoundtrackLimb.ts:167:            elements.push('steady rhythmic pulse', 'ticking clockwork elements');
+src\routing\TernaryRouter.ts:54:    Telemetry: /\b(telemetry|heartbeat|pulse|monitor|stream|audit|clinical|medical|stream)\b/i
+src\routing\TernaryRouter.ts:111:     * setYaoState - External pulse-driven state transformation.
+src\routing\HexagramManager.ts:378:        // Line 3: "Sovereign intent resolved into physical pulse"
+src\routing\HexagramManager.ts:484:     * Broadcasts a high-frequency GhostSplat spatial telemetry pulse.
+src\routing\HexagramManager.ts:565:        this.emit('cognitive_pulse', line);
+src\routing\TernaryRouter.js:22:    Telemetry: /\b(telemetry|heartbeat|pulse|monitor|stream|audit|clinical|medical|stream)\b/i
+src\limbs\metaphysical\GhostLimb.ts:45:            this.pulse();
+src\limbs\metaphysical\GhostLimb.ts:50:     * pulse - A single observation cycle.
+src\limbs\metaphysical\GhostLimb.ts:52:    private pulse(): void {
+src\routing\HexagramManager.js:228:        this.emit('cognitive_pulse', line);
+src\limbs\spatial\GameplayProjectionLimb.ts:16: * blocking the deterministic pulse loop.
+src\limbs\spatial\GameplayProjectionLimb.ts:168:        // Fire-and-forget: don't block the pulse
+src\engines\gameplay\SimulationHarness.ts:122: * The central CNS node for the deterministic Dual-Tick pulse.
+src\engines\gameplay\SimulationHarness.ts:604:                        metadata: { pose: 'movement_pulse', duration: 600 },
+src\engines\gameplay\SimulationHarness.ts:958:            logger.debug('ðŸš€ [GODHEAD] Commencing Deep Path Strategic Sync (6000ms pulse)...');
+src\engines\gameplay\SimulationHarness.ts:1027:                logger.warn({ from: avatar.coord, to: goal }, '[REFLEX] No path found to goal. Retrying next reflex pulse.');
+src\engines\gameplay\PlayerAgent.ts:657:        // Execute movement immediately for the pulse kernel to pick up
+src\limbs\logical\RestockLimb.ts:29:     * @param tick The current simulation pulse.
+src\limbs\logical\InteractionGateway.ts:274:     * evaluateSearchIntent - Handles 'TypeString' and 'Search' pulses targeted at specific UI components.
+src\scripts\run_phase25_romeo_juliet.ts:86:    const pulse = new PulseMonitor(process.cwd(), hexagram);
+src\scripts\run_phase25_romeo_juliet.ts:87:    const blender = new BlenderRenderer(shell, pulse, async (scene) => ok({ path: 'fallback.mp4', duration: 1, type: '2D_GHOST' as const }));
+src\engines\gameplay\CNSGodheadPulseVolley.ts:100:    private pulseStartTime: number = 0;
+src\engines\gameplay\CNSGodheadPulseVolley.ts:131:     * Unlike setTimeout, this is governed by the CanonicalClock pulse cycle,
+src\engines\gameplay\CNSGodheadPulseVolley.ts:232:        // Phase 112: Register pulse with CanonicalClock
+src\engines\gameplay\CNSGodheadPulseVolley.ts:272:        CanonicalClock.getInstance().pulse();
+src\engines\gameplay\CNSGodheadPulseVolley.ts:297:            // Resolve lazy dependencies before first pulse
+src\engines\gameplay\CNSGodheadPulseVolley.ts:324:                await this.pulse(pendingAdminCommands);
+src\engines\gameplay\CNSGodheadPulseVolley.ts:428:            // 3. Post-Actuation Verification (Spatial Vision) - Non-blocking to pulse rhythm
+src\engines\gameplay\CNSGodheadPulseVolley.ts:623:        // Execute via pulse (which contains original conflict resolution logic)
+src\engines\gameplay\CNSGodheadPulseVolley.ts:624:        await this.pulse(commands);
+src\engines\gameplay\CNSGodheadPulseVolley.ts:662:    public async pulse(commands: AdminCommand[]): Promise<GameState | undefined> {
+src\engines\gameplay\CNSGodheadPulseVolley.ts:663:        this.pulseStartTime = performance.now();
+src\engines\gameplay\CNSGodheadPulseVolley.ts:665:        // 0. Resolve Substrate Health once per pulse
+src\engines\gameplay\CNSGodheadPulseVolley.ts:673:        const pulseDeltas: WorldDelta[] = [];
+src\engines\gameplay\CNSGodheadPulseVolley.ts:751:                await this.executeEvent(tx, finalized, pulseDeltas);
+src\engines\gameplay\CNSGodheadPulseVolley.ts:881:        for (const delta of pulseDeltas) {
+src\engines\gameplay\CNSGodheadPulseVolley.ts:894:        const elapsed = performance.now() - this.pulseStartTime;
+src\scripts_backup\run_phase25_romeo_juliet.ts:86:    const pulse = new PulseMonitor(process.cwd(), hexagram);
+src\scripts_backup\run_phase25_romeo_juliet.ts:87:    const blender = new BlenderRenderer(shell, pulse, async (scene) => ok({ path: 'fallback.mp4', duration: 1, type: '2D_GHOST' as const }));
+
+[Showing results with pagination = limit: 250]

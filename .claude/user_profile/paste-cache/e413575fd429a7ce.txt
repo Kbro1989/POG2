@@ -1,0 +1,213 @@
+ I have analyzed the RSCServerDO implementation. This is the a-priori "Sovereign" template for the RSMVServerDO.
+
+  While RSCServerDO handles the authentic RSC server, the RSMVServerDO will be terms of its "Visual Substrate"—it's the bridge between the raw server logic and the Three.js viewer.
+
+  ✶ Insight ─────────────────────────────────────
+  - The Socket Bridge Pattern: RSCServerDO uses a DurableObjectWebSocket bridge to map the WebSocket interface to a Node-like EventEmitter socket. The RSMVServerDO must implement a similar bridge, but instead of just piping raw bytes, it   will transform those bytes into the WorldTelemetryFrame (the "Render Pipeline") for the viewer.
+  - Shared Memory Model: RSCServerDO initializes a single Server instance shared across all sessions. RSMVServerDO will do the same but will host a PlayerAgent runtime and a GhostSplat density matrix, acting as a "Read-Only World Mirror"
+   of the authentic state.
+  - Asset Injection: Notice how RSCServerDO imports .jag and .mem landscape files directly. RSMVServerDO will do the same but for GLTF models and Identity Kit batches, likely pulling them from R2 to keep the Worker footprint small.
+  - KV Error Logging: The use of this.env.KV.put('debug_error_...', msg) is the standard "Sovereign" way of handling asynchronous errors in the Edge. I will carry this pattern into the RSMVServerDO for diagnostic stability.
+  ─────────────────────────────────────────────────
+
+  The "RSMVServerDO" Blueprint (Derived from RSCServerDO):
+
+  1. Initialization: Instead of new Server(), it will initialize a RSMVTelemetryEngine and a SovereignWorldMirror.
+  2. The Bridge: The DurableObjectWebSocket will not just pipe data; it will act as a Telemetry Streamer, pushing the 300ms tick updates (IdentityKitState, GhostSplatSnapshot, CollisionGrid) to the browser.
+  3. State Mirroring: It will connect to the RSCServerDO as a specialized "Observer Client," translating the authentic RSC world state into the RS3-format required by the rsmv viewer.
+  4. Sovereign Assets: It will use R2 for the high-fidelity models, mirroring the way RSCServerDO uses Sovereign landscape data.
+
+  I have all the architectural components and the correct implementation patterns. I am now ready to draft the final implementation plan for the RSMVServerDO.
+
+  Shall I proceed to the final plan?
+
+✻ Churned for 56s
+
+> search websocket in D:\pog2\                                                                                                                                                                                                               
+  Searched for 1 pattern (ctrl+o to expand)
+
+● I've analyzed the WebSocket usage in the project. There is a very clear "Local vs. Edge" dichotomy.
+
+  ✶ Insight ─────────────────────────────────────
+  - Local Bridge (The Current State): The SovereignBridge.ts in the viewer is currently hardcoded to ws://localhost:8789. This is the "Development" mode, where the viewer talks directly to a local Node.js server (likely the
+  bridge_server.ts mentioned in package.json).
+  - Edge Transition (The Target State): The GEMINI.md file explicitly mentions a "diplomatic handshake protocol" for WebSocket bridge traffic. This is exactly what the RSMVServerDO will implement. It will transition the viewer from
+  localhost:8789 to wss://rsmv.kristain33rs.workers.dev/ws.
+  - CSP Constraints: The index.html CSP currently allows ws://localhost:8787 and ws://localhost:8789. To enable the RSMVServerDO, we will need to update the CSP to allow the wss://...workers.dev domain.
+  - SovereignBridge as the Interface: SovereignBridge.ts is already designed to handle a WebSocket connection. This is perfect—we don't need to rewrite the viewer's networking logic; we just need to change the endpoint and the
+  "Handshake" to match the RSCServerDO's bridge pattern.
+  ─────────────────────────────────────────────────
+
+  - SovereignBridge as the Interface: SovereignBridge.ts is already designed to handle a WebSocket connection. This is perfect—we don't need to rewrite the viewer's networking logic; we just need to change the endpoint and the
+  "Handshake" to match the RSCServerDO's bridge pattern.
+  ─────────────────────────────────────────────────
+
+  - SovereignBridge as the Interface: SovereignBridge.ts is already designed to handle a WebSocket connection. This is perfect—we don't need to rewrite the viewer's networking logic; we just need to change the endpoint and the
+  "Handshake" to match the RSCServerDO's bridge pattern.
+  ─────────────────────────────────────────────────
+
+  The Final Networking Plan:
+
+  1. Viewer Update: Update SovereignBridge.ts to accept a dynamic endpoint (switching between localhost:8789 and the RSMVServerDO WebSocket).
+  2. CSP Update: Expand the index.html content security policy to allow the Cloudflare Workers domain.
+  3. Bridge Implementation: Implement the DurableObjectWebSocket bridge in the RSMVServerDO, matching the patterns used in RSCServerDO to ensure the "Sovereign" handshake is preserved.
+
+  I now have the full map of the networking, the logic, and the infrastructure. I am ready to implement.
+
+  Shall I execute the transition to the RSMVServerDO architecture?
+
+✻ Sautéed for 59s
+
+>      {
+         "mcpServers": {
+           "hello-claude-GitKraken": {
+             "command": "npx",
+             "args": ["-y", "@gitkraken/gk", "mcp"],
+             "helloCallback": "hello-gitkraken"
+           },
+           "hello-claude-Cloudflare": {
+             "command": "npx",
+             "args": ["-y", "@cloudflare/mcp-server-cloudflare", "run"],
+             "env": {
+              "CLOUDFLARE_ACCOUNT_ID": "6872653edcee9c787c1b783173793",
+              "CLOUDFLARE_API_TOKEN": "${CLOUDFLARE_API_TOKEN}"
+           },
+            "helloCallback": "hello-cloudflare"
+          },
+          "hello-claude-github": {
+            "command": "node",
+            "args":
+        ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/github/.mcp.json"],
+            "helloCallback": "hello-github"
+          },
+           "hello-claude-linear": {
+            "command": "node",
+            "args":
+        ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/linear/.mcp.json"],
+            "helloCallback": "hello-linear"
+          },
+          "hello-claude-terraform": {
+            "command": "node",
+            "args":
+        ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/terraform/.mcp.json"],
+            "helloCallback": "hello-terraform"
+          }
+        }
+      }
+  ⎿  Interrupted · What should Claude do instead?
+
+> # =================================================================================                                                                                                                                                          # POG2 SOVEREIGN SUBSTRATE - ABSOLUTE SOURCE OF TRUTH (OPTIMIZED V2)                                                                                                                                                                         # Generated: 2026-05-05                                                                                                                                                                                                                      # =================================================================================
+
+  # --- 1. CLOUDFLARE SUBSTRATE ---
+  CLOUDFLARE_ACCOUNT_ID=6872653edcee9c791787c1b783173793
+  CLOUDFLARE_API_TOKEN=cfut_mT4uikx3TM9APD1XelLeEkszFKx5vSEiAweAnajWcbc28079
+  CLOUDFLARE_API_KEY=9edfd6891042bede27f3899e34a057b7a5683
+  CLOUDFLARE_AUTH_EMAIL=kristain33rs@gmail.com
+  CLOUDFLARE_IMAGE_ENDPOINT=http://127.0.0.1:8787/api/ai/generate-image
+  CLOUDFLARE_GATEWAY_URL=https://gateway.ai.cloudflare.com/v1/6872653edcee9c791787c1b783173793/pog2-sensory/
+  CLOUDFLARE_WORKER_URL=https://hello-ai.kristain33rs.workers.dev
+  POG2_GLOBE_ENABLED=true
+  POG2_GLOBE_ENDPOINT=wss://multiplayer-globe-pog2.kristain33rs.workers.dev/parties/globe/pog2-sovereign
+  POG2_GLOBE_ISOLATION=false
+
+  # --- 2. NEURAL SECRETS (GLOBAL) ---
+  PRIMARY_CLOUD_API_KEY=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
+  SECONDARY_CLOUD_API_KEY=AIzaSyBZUm25cLJKCbi9IdfaVJMzUR3HI5TCrk8
+  HUGGINGFACE_API_KEY=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
+  GOOGLE_API_KEY=AIzaSyBZUm25cLJKCbi9IdfaVJMzUR3HI5TCrk8
+  FIREWORKS_API_KEY=fw_3ZLi8JNUd5c6K9dVs8wtXT8u
+  OPENROUTER_API_KEY=key_56q8wCxbBaVjawry
+  GOOGLE_APPLICATION_CREDENTIALS=google-key.json
+
+  # --- 3. TIERED PATH SOVEREIGNTY (D:\ DRIVE ANCHORS) ---
+  POG_PATH_TIER=1
+  OLLAMA_MODELS_PATH=D:\ollama-models
+  POG_GUTENBERG_PATH=D:\sovereign\pog-gutenberg
+  PIPELINE_ROOT=D:\sovereign\pipelines
+  POG_ERROR_TRACKER_PATH=D:\ollama-models
+  SOVEREIGN_STORAGE_ROOT=D:\sovereign
+  SOVEREIGN_LEARNING_DB=D:\sovereign\learning\sovereign-learning.db
+  POG_rsmv_SUBSTRATE_PATH=D:\rsmv_inspector
+
+  # --- 4. GLOBAL SHELL SUBSTRATE ---
+  GCLOUD_ACTIVE_ACCOUNT=kristain33rs@gmail.com
+  WRANGLER_VERSION=4.63.0
+  GIT_USER_NAME=Kbro1989
+  GIT_USER_EMAIL=149967879+Kbro1989@users.noreply.github.com
+  SSH_KEY_PRIMARY=D:\sovereign\.ssh\id_rsa_elderscapedev
+  NODE_VERSION=v20.18.0
+  USER_PROFILE=D:\sovereign
+
+  # --- 5. CREATIVE & YOUTUBE SUBSTRATE ---
+  YOUTUBE_PROJECT_ID=pickofgods-8eb4b
+  YOUTUBE_CLIENT_ID=69738697936-j2u08l6ll3hg1am1pecb9b4860rphtar.apps.googleusercontent.com
+  YOUTUBE_CLIENT_SECRET=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
+  YOUTUBE_API_KEY=AIzaSyBZUm25cLJKCbi9IdfaVJMzUR3HI5TCrk8
+  YOUTUBE_CHANNEL_ID=UCHzY_wIuP6U-a5ehJF7WJKg
+  YOUTUBE_YOUTUBE_ID=HzY_wIuP6U-a5ehJF7WJKg
+  YOUTUBE_REDIRECT_URI=https://chromanumber-auth.kristain33rs.workers.dev/youtube/callback
+  YOUTUBE_TOKEN_PATH=D:\sovereign\youtube_token.json
+  CHROMANUMBER_AUTH_WORKER=https://chromanumber-auth.kristain33rs.workers.dev
+
+  # --- 6. POG2 COGNITIVE & ENGINE FLAGS ---
+  POG_LOG_LEVEL=debug
+  POG2_LOG_PRETTY=1
+  POG2_AUTO_PROCEED=1
+  POG_USE_LOCAL=true
+  SOVEREIGN_MODE=hybrid
+
+  # --- 7. CROSS-PROJECT ANCHORS (OPENRSC / DB) ---
+  OPENRSC_ROOT=OpenRSC
+  OPENDB_LOCAL_URL=mysql://localhost:3306/openrsc
+  OPENDB_PRODUCTION_URL=cf://d1-openrsc-prod
+
+  # --- 8. NEURAL MODEL OVERRIDES ---
+  GEMINI_FLASH_MODEL=gemini-1.5-flash
+  GEMINI_PRO_MODEL=gemini-1.5-pro
+  GEMINI_EMBEDDING_MODEL=text-embedding-004
+  OLLAMA_BASE_URL=http://127.0.0.1:11434
+
+  # --- 9. NEURAL MODEL DEFINITIONS (SOVEREIGN V3 - POST-CUTOFF) ---
+
+  # Tier 1: Agentic Sovereign (Local, replaces HF cloud routing)
+  POG2_PLANNING_MODEL=gemma4:26b
+  POG2_ORCHESTRATOR_MODEL=gemma4:26b
+  POG2_CRITIC_MODEL=deepseek-r1:8b
+  MASTER_REASONING_MODEL=deepseek-r1:8b
+  DEEP_PATH_MODEL=gemma4:26b
+
+  # Tier 2: Local High-Performance (Execution)
+  POG2_CODING_MODEL=qwen2.5-coder:7b-instruct-q4_K_M
+  POG2_CODING_HEAVY_MODEL=gemma4:26b
+  EXECUTIVE_CODER_MODEL=qwen2.5-coder:7b-instruct-q4_K_M
+  MASTER_LOCAL_MODEL=deepseek-r1:8b
+
+  # Tier 3: Fast-Response (Reflexes)
+  POG2_CODING_FAST_MODEL=qwen2.5-coder:7b-instruct-q4_K_M
+  POG2_REACTIVE_AGENT_MODEL=qwen2.5-coder:7b-instruct-q4_K_M
+  FAST_PATH_MODEL=deepseek-r1:8b
+  MID_PATH_MODEL=qwen2.5-coder:7b-instruct-q4_K_M
+
+  # Specialized Substrates
+  POG2_VISION_MODEL=llava-phi3:latest
+  VISION_FAST_MODEL=llava-phi3:latest
+  POG2_VOICE_MODEL=gemma4:26b
+  POG2_EMBEDDING_MODEL=nomic-embed-text:latest
+  LIGHT_AUDITOR_MODEL=all-minilm:latest
+  EMBEDDING_DIMENSIONS=768
+
+  # Failover Logic (Sovereign cascading)
+  HUGGINGFACE_FALLBACK_MODEL=gemma4:26b
+  LOCAL_FALLBACK_MODEL=deepseek-r1:8b
+  MASTER_FALLBACK_MODEL=deepseek-r1:8b
+
+  # --- 10. ADVANCED MODEL PARAMETERS ---
+  PROJECT_ID=global
+  WS_PORT=8788
+  CONTEXT_WINDOW=16384
+  TEMPERATURE=0.7
+  TOP_P=0.9
+  REPEAT_PENALTY=1.1
+  NUM_CTX=16384
+  STOP_SEQUENCES=["USER:"]
+  OUTPUT_FORMAT=json

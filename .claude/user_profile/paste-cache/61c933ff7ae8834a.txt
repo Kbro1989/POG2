@@ -1,0 +1,118 @@
+# =================================================================================
+# POG2 SOVEREIGN SUBSTRATE - ABSOLUTE SOURCE OF TRUTH (OPTIMIZED V2)
+# Generated: 2026-05-05
+# =================================================================================
+
+# --- 1. CLOUDFLARE SUBSTRATE ---
+CLOUDFLARE_ACCOUNT_ID=6872653edcee9c791787c1b783173793
+CLOUDFLARE_API_TOKEN=cfut_mT4uikx3TM9APD1XelLeEkszFKx5vSEiAweAnajWcbc28079
+CLOUDFLARE_API_KEY=9edfd6891042bede27f3899e34a057b7a5683
+CLOUDFLARE_AUTH_EMAIL=kristain33rs@gmail.com
+CLOUDFLARE_IMAGE_ENDPOINT=http://127.0.0.1:8787/api/ai/generate-image
+CLOUDFLARE_GATEWAY_URL=https://gateway.ai.cloudflare.com/v1/6872653edcee9c791787c1b783173793/pog2-sensory/
+CLOUDFLARE_WORKER_URL=https://hello-ai.kristain33rs.workers.dev
+POG2_GLOBE_ENABLED=true
+POG2_GLOBE_ENDPOINT=wss://multiplayer-globe-pog2.kristain33rs.workers.dev
+POG2_GLOBE_ISOLATION=false
+
+# --- 2. NEURAL SECRETS (GLOBAL) ---
+PRIMARY_CLOUD_API_KEY=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
+SECONDARY_CLOUD_API_KEY=AIzaSyBZUm25cLJKCbi9IdfaVJMzUR3HI5TCrk8
+HUGGINGFACE_API_KEY=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
+GOOGLE_API_KEY=AIzaSyBZUm25cLJKCbi9IdfaVJMzUR3HI5TCrk8
+FIREWORKS_API_KEY=fw_3ZLi8JNUd5c6K9dVs8wtXT8u
+OPENROUTER_API_KEY=key_56q8wCxbBaVjawry
+GOOGLE_APPLICATION_CREDENTIALS=google-key.json
+
+# --- 3. TIERED PATH SOVEREIGNTY (D:\ DRIVE ANCHORS) ---
+POG_PATH_TIER=1
+OLLAMA_MODELS_PATH=D:\ollama-models
+POG_GUTENBERG_PATH=D:\sovereign\pog-gutenberg
+PIPELINE_ROOT=D:\sovereign\pipelines
+POG_ERROR_TRACKER_PATH=D:\ollama-models
+SOVEREIGN_STORAGE_ROOT=D:\sovereign
+SOVEREIGN_LEARNING_DB=D:\sovereign\learning\sovereign-learning.db
+POG_rsmv_SUBSTRATE_PATH=D:\rsmv_inspector
+
+# --- 4. GLOBAL SHELL SUBSTRATE ---
+GCLOUD_ACTIVE_ACCOUNT=kristain33rs@gmail.com
+WRANGLER_VERSION=4.63.0
+GIT_USER_NAME=Kbro1989
+GIT_USER_EMAIL=149967879+Kbro1989@users.noreply.github.com
+SSH_KEY_PRIMARY=D:\sovereign\.ssh\id_rsa_elderscapedev
+NODE_VERSION=v20.18.0
+USER_PROFILE=D:\sovereign
+
+# --- 5. CREATIVE & YOUTUBE SUBSTRATE ---
+YOUTUBE_PROJECT_ID=pickofgods-8eb4b
+YOUTUBE_CLIENT_ID=69738697936-j2u08l6ll3hg1am1pecb9b4860rphtar.apps.googleusercontent.com
+YOUTUBE_CLIENT_SECRET=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
+YOUTUBE_API_KEY=AIzaSyBZUm25cLJKCbi9IdfaVJMzUR3HI5TCrk8
+YOUTUBE_CHANNEL_ID=UCHzY_wIuP6U-a5ehJF7WJKg
+YOUTUBE_YOUTUBE_ID=HzY_wIuP6U-a5ehJF7WJKg
+YOUTUBE_REDIRECT_URI=https://chromanumber-auth.kristain33rs.workers.dev/youtube/callback
+YOUTUBE_TOKEN_PATH=D:\sovereign\youtube_token.json
+CHROMANUMBER_AUTH_WORKER=https://chromanumber-auth.kristain33rs.workers.dev
+
+# --- 6. POG2 COGNITIVE & ENGINE FLAGS ---
+POG_LOG_LEVEL=debug
+POG2_LOG_PRETTY=1
+POG2_AUTO_PROCEED=1
+POG_USE_LOCAL=true
+SOVEREIGN_MODE=hybrid
+
+# --- 7. CROSS-PROJECT ANCHORS (OPENRSC / DB) ---
+OPENRSC_ROOT=OpenRSC
+OPENDB_LOCAL_URL=mysql://localhost:3306/openrsc
+OPENDB_PRODUCTION_URL=cf://d1-openrsc-prod
+
+# --- 8. NEURAL MODEL OVERRIDES ---
+GEMINI_FLASH_MODEL=gemini-1.5-flash
+GEMINI_PRO_MODEL=gemini-1.5-pro
+GEMINI_EMBEDDING_MODEL=text-embedding-004
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+
+# --- 9. NEURAL MODEL DEFINITIONS (SOVEREIGN V3 - POST-CUTOFF) ---
+
+# Tier 1: Agentic Sovereign (Local, replaces HF cloud routing)
+POG2_PLANNING_MODEL=gemma4:26b
+POG2_ORCHESTRATOR_MODEL=gemma4:26b
+POG2_CRITIC_MODEL=deepseek-r1:32b
+MASTER_REASONING_MODEL=deepseek-r1:32b
+DEEP_PATH_MODEL=gemma4:26b
+
+# Tier 2: Local High-Performance (Execution)
+POG2_CODING_MODEL=qwen2.5-coder:14b-instruct-q5_K_M
+POG2_CODING_HEAVY_MODEL=gemma4:26b
+EXECUTIVE_CODER_MODEL=qwen2.5-coder:14b-instruct-q5_K_M
+MASTER_LOCAL_MODEL=deepseek-r1:32b
+
+# Tier 3: Fast-Response (Reflexes)
+POG2_CODING_FAST_MODEL=qwen2.5-coder:7b-instruct-q4_K_M
+POG2_REACTIVE_AGENT_MODEL=qwen2.5-coder:7b-instruct-q4_K_M
+FAST_PATH_MODEL=deepseek-r1:8b
+MID_PATH_MODEL=qwen2.5-coder:7b-instruct-q4_K_M
+
+# Specialized Substrates
+POG2_VISION_MODEL=moondream:latest
+VISION_FAST_MODEL=moondream:latest
+POG2_VOICE_MODEL=tinyllama:latest
+POG2_EMBEDDING_MODEL=qwen3-embedding:latest
+LIGHT_AUDITOR_MODEL=all-minilm:latest
+EMBEDDING_DIMENSIONS=768
+
+# Failover Logic (Sovereign cascading)
+HUGGINGFACE_FALLBACK_MODEL=gemma4:26b
+LOCAL_FALLBACK_MODEL=deepseek-r1:8b
+MASTER_FALLBACK_MODEL=qwen2.5-coder:14b-instruct-q5_K_M
+
+# --- 10. ADVANCED MODEL PARAMETERS ---
+PROJECT_ID=global
+WS_PORT=8788
+CONTEXT_WINDOW=16384
+TEMPERATURE=0.7
+TOP_P=0.9
+REPEAT_PENALTY=1.1
+NUM_CTX=16384
+STOP_SEQUENCES=["USER:"]
+OUTPUT_FORMAT=json

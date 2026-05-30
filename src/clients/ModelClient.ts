@@ -27,7 +27,6 @@ import {
     type ModelCallResult,
     ok,
     type AICapability,
-    type AITaskType,
     type AIServiceType,
     YaoState
 } from '../core/models.js';
@@ -490,9 +489,11 @@ export class ModelClient implements ModelExecutor {
                     ok: true,
                     value: {
                         response: text,
-                        model: `gemini:${modelId}`,
-                        latency,
-                        tokensUsed: data.usageMetadata?.totalTokenCount
+                        tokensUsed: data.usageMetadata?.totalTokenCount,
+                        metadata: {
+                            model: `gemini:${modelId}`,
+                            latency
+                        }
                     }
                 };
             } catch (err) {

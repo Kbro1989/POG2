@@ -1,0 +1,100 @@
+ The regex fix is correct, but the test failure reveals a deeper issue. `resolveId('Abyssal demon')` returning `null` means the CORS proxy or the Bestiary API itself isn't responding. Let's diagnose step by step.
+
+**Step 1: Test the proxy directly**
+
+```bash
+curl -v "https://pog2.kristain33rs.workers.dev/api/bestiary/beastSearch.json?term=Abyssal+demon"
+```
+
+If this returns `[]` or `404`, your Cloudflare Worker proxy route isn't wired correctly. If it returns a JSON array, the issue is in `BestiaryApi.ts`.
+
+**Step 2: Check if the proxy is actually deployed**
+
+Your worker needs this route:
+
+```typescript
+// In your Cloudflare Worker (multiplayer-globe-pog2 or dedicated worker)
+if (url.pathname === '/api/bestiary/beastSearch.json') {
+  const term = url.searchParams.get('term');
+  const jagexUrl = `https://services.runescape.com/m=itemdb_rs/bestiary/beastSearch.json?term=${encodeURIComponent(term)}`;
+  
+  const res = await fetch(jagexUrl, {
+    headers: { 'User-Agent': 'POG2-Sovereign/1.0' }
+  });
+  
+  return new Response(res.body, {
+    status: res.status,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'max-age=3600'
+    }
+  });
+}
+```
+
+**Step 3: Add debug logging to `resolveId`**
+
+```typescript
+static async resolveId(name: string): Promise<number | null> {
+    const results = await this.searchBeasts(name);
+    
+    // DEBUG
+    console.log('searchBeasts raw results:', JSON.stringify(results, null, 2));
+    
+    if (!results || results.length === 0) {
+        console.log('No results for:', name);
+        return null;
+    }
+    // ... rest
+}
+```
+
+**Step 4: Check if `searchBeasts` is even hitting the proxy**
+
+Add a `console.log` in `searchBeasts`:
+
+```typescript
+static async searchBeasts(term: string): Promise<BeastSearchResult[]> {
+    await this.THROTTLE.acquire('bestiary');
+    const url = `${this.BASE}/beastSearch.json?term=${encodeURIComponent(term)}`;
+    
+    console.log('Fetching:', url);  // DEBUG
+    
+    try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+        console.log('Response status:', res.status);  // DEBUG
+        if (!res.ok) return [];
+        const data = await res.json();
+        console.log('Response data:', data);  // DEBUG
+        return data as BeastSearchResult[];
+    } catch (e) {
+        console.error('searchBeasts error:', e);  // DEBUG
+        return [];
+    }
+}
+```
+
+**Most likely causes:**
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `null` return, no console output | `searchBeasts` not called | Check `ApiThrottle.acquire('bestiary')` — wrong domain name |
+| `null` return, `404` status | Proxy route missing | Add `/api/bestiary/*` route to Cloudflare Worker |
+| `null` return, `[]` data | Jagex API changed | Verify `services.runescape.com` endpoint still live |
+| `null` return, network error | CORS or connectivity | Test `curl` directly from your machine |
+
+**Quick diagnostic script:**
+
+```bash
+# Test 1: Direct Jagex API (no proxy)
+curl "https://services.runescape.com/m=itemdb_rs/bestiary/beastSearch.json?term=Abyssal+demon"
+
+# Test 2: Your proxy
+curl "https://pog2.kristain33rs.workers.dev/api/bestiary/beastSearch.json?term=Abyssal+demon"
+
+# Test 3: Health check
+curl "https://pog2.kristain33rs.workers.dev/health"
+```
+
+Run these three and report the output. That'll tell us if the problem is Jagex, your proxy, or the client code.

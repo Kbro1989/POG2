@@ -1,0 +1,119 @@
+/**
+ * GeApi.ts
+ *
+ * High-fidelity interface for the Official RuneScape Grand Exchange Database.
+ * Provides real-time prices, market trends, and historical price graphs.
+ *
+ * Endpoint: https://secure.runescape.com/m=itemdb_rs/api/catalogue
+ */
+
+import { ApiThrottle } from './ApiThrottle.js';
+import { createLogger } from './logger.js';
+
+const logger = createLogger('GeApi');
+const GE_BASE = 'https://secure.runescape.com/m=itemdb_rs/api/catalogue';
+
+export interface GeItemDetails {
+    id: number;
+    name: string;
+    description: string;
+    current: {
+        trend: string;
+        price: string; // API returns strings like "5.2m" or "1200"
+    };
+    today: {
+        trend: string;
+        price: string;
+    };
+    day30: {
+        trend: string;
+        change: string;
+    };
+    day90: {
+        trend: string;
+        change: string;
+    };
+    day180: {
+        trend: string;
+        change: string;
+    };
+    members: string; // "true" or "false"
+}
+
+export class GeApi {
+    private static throttle = ApiThrottle.getInstance();
+
+    /**
+     * Fetch real-time item details by official game ID.
+     * @param itemId The canonical RS3 Item ID.
+     */
+    public static async getItemDetails(itemId: number): Promise<GeItemDetails | null> {
+        await this.throttle.acquire('ge');
+
+        const url = `${GE_BASE}/detail.json?item=${itemId}`;
+        try {
+            const res = await fetch(url, {
+                headers: { 'User-Agent': 'POG2-Sovereign/1.0 (Ground Truth Engine)' },
+                signal: AbortSignal.timeout(10000)
+            });
+
+            if (!res.ok) {
+                logger.warn({ itemId, status: res.status }, 'GE API non-OK response.');
+                return null;
+            }
+
+            const data = await res.json() as any;
+            if (!data || !data.item) return null;
+
+            return data.item as GeItemDetails;
+        } catch (err) {
+            logger.error({ itemId, err }, 'Failed to fetch GE item details.');
+            return null;
+        }
+    }
+
+    /**
+     * Fetch 180-day price graph for specific item.
+     * Returns a sorted array of price values.
+     */
+    public static async getPriceGraph(itemId: number): Promise<number[]> {
+        await this.throttle.acquire('ge');
+
+        const url = `${GE_BASE}/graph.json?item=${itemId}`;
+        try {
+            const res = await fetch(url, {
+                headers: { 'User-Agent': 'POG2-Sovereign/1.0' },
+                signal: AbortSignal.timeout(10000)
+            });
+
+            if (!res.ok) return [];
+
+            const data = await res.json() as { daily: Record<string, number> };
+            if (!data || !data.daily) return [];
+
+            // Convert { "1720000000000": 1234, ... } to sorted numeric array
+            return Object.entries(data.daily)
+                .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+                .map(([, price]) => price);
+        } catch (err) {
+            logger.error({ itemId, err }, 'Failed to fetch GE price graph.');
+            return [];
+        }
+    }
+
+    /**
+     * Parses GE price strings (e.g., "5.2m", "1.1k") into raw integers.
+     */
+    public static parseGePrice(priceStr: string): number {
+        if (!priceStr) return 0;
+        const clean = priceStr.toLowerCase().trim();
+        if (clean.endsWith('m')) {
+            return Math.floor(parseFloat(clean.replace('m', '')) * 1000000);
+        }
+        if (clean.endsWith('k')) {
+            return Math.floor(parseFloat(clean.replace('k', '')) * 1000);
+        }
+        const val = parseInt(clean.replace(/,/g, ''), 10);
+        return isNaN(val) ? 0 : val;
+    }
+}

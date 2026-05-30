@@ -1,0 +1,113 @@
+I see — you're attaching the **Durable Object pattern to RSMV**, not to RSC. RSMV becomes the live, server-backed viewer with DO-hosted state, while RSC remains its own separate authentic server.
+
+That reframes everything:
+
+---
+
+## RSMV as the Live DO-Backed Viewer
+
+| Before | After |
+|---|---|
+| Static Three.js renderer, cache decoder in browser | DO-hosted renderer with live state feed |
+| Identity kit batch mapped statically (1074 entries) | Live `IdentityKitState` streamed from DO |
+| Gender stretch monster from hardcoded varbit mapping | DO serves correct temporal mode config |
+| Collision pre-baked (Havenhythe, Lumbridge) | Live collision from `SovereignCollisionEngine` |
+| No hexagram overlay | `WorldTelemetryFrame` layered on render |
+| No GhostSplat visualization | Heatmap density matrix as render layer |
+| Single-player, local-only | Multi-observer, public dashboard |
+
+---
+
+## The Architecture Now
+
+```
+┌─────────────────┐                    ┌─────────────────┐
+│   RSC Client    │◄────WebSocket────►│   RSCServerDO   │
+│  (authentic)    │                    │  (640ms tick)   │
+└─────────────────┘                    └─────────────────┘
+                                              │
+                                              │ (separate concern)
+                                              ▼
+┌─────────────────┐     WebSocket/SSE      ┌─────────────────┐
+│  RSMV Viewer    │◄────────────────────►│   RSMVServerDO  │
+│  (browser)      │   WorldTelemetryFrame  │  (300ms tick)   │
+│  Three.js       │   + IdentityKitState   │  PlayerAgent    │
+│  Cache decoder  │   + CollisionGrid    │  GhostSplat     │
+│  AvatarComposer │   + Live models        │  Hexagram overlay│
+└─────────────────┘                        └─────────────────┘
+                                                  │
+                                         ┌────────┴────────┐
+                                         ▼                 ▼
+                                    ┌─────────┐      ┌──────────┐
+                                    │   KV    │      │    R2    │
+                                    │  saves  │      │  assets  │
+                                    │(player) │      │(models)  │
+                                    └─────────┘      └──────────┘
+```
+
+`RSMVServerDO` is a new DO class that:
+- Hosts `PlayerAgent` runtime (not RSC server)
+- Pulls from R2 for model assets
+- Computes GhostSplat, collision, hexagram state
+- Streams `WorldTelemetryFrame` + rendered avatar state to browser viewer
+- Optionally connects to `RSCServerDO` as a client to mirror authentic world state
+
+---
+
+## What This Means for Your Code
+
+**`RSCServerDO`** stays exactly as you pasted it — authentic RSC, no changes needed.
+
+**`POG2WorldDO`** becomes **`RSMVServerDO`** (or they coexist — `POG2WorldDO` for telemetry broadcast, `RSMVServerDO` for rendering compute).
+
+**`RSMV Viewer`** now opens a WebSocket to `wss://rsmv.kristain33rs.workers.dev/ws` and receives:
+- `IdentityKitState` updates (live avatar morphing)
+- `GhostSplatSnapshot` (heatmap overlay)
+- `CollisionSnapshot` (walkable/blocked visualization)
+- `HexagramState` (philosophical overlay)
+- `WorldTelemetryFrame` (entity counts, tick sync)
+
+---
+
+## The JSON Prompts Angle (Revisited)
+
+With RSMV as the DO-backed viewer, these become secrets:
+
+```json
+// Secret "rsmv_render_pipeline"
+{
+  "temporal_mode": "present",
+  "gender_mapping": {"varbit_28556": {"0": 0, "1": 1, "2": 2}},
+  "avatar_composer": {
+    "kit_batch_size": 1074,
+    "bodypart_slots": 14,
+    "recolor_mode": "live",
+    "fallback_model": "low_poly_base"
+  },
+  "layers": [
+    {"id": "base_world", "source": "r2_cache", "priority": 0},
+    {"id": "collision", "source": "sovereign_collision_engine", "priority": 1, "blend": "overlay"},
+    {"id": "ghostsplat", "source": "ghostsplat_engine", "priority": 2, "blend": "heatmap"},
+    {"id": "hexagram", "source": "hexagram_manager", "priority": 3, "blend": "ui_overlay"},
+    {"id": "entities", "source": "player_agent", "priority": 4, "blend": "sprite"}
+  ]
+}
+```
+
+Update render pipeline without touching `RSMVServerDO` code.
+
+---
+
+## The Key Question
+
+Is `RSMVServerDO` meant to:
+
+**A)** Host a **standalone RS3-format world** (independent of RSC), with PlayerAgent as the primary entity?
+
+**B)** Act as a **mirror/observer** of `RSCServerDO`, converting RSC state into RS3-format for visualization?
+
+**C)** Both — standalone RS3 world that can also observe RSC as a secondary feed?
+
+This determines whether `RSMVServerDO` initializes its own `PlayerAgent` from scratch (A), connects to `RSCServerDO` as a WebSocket client and translates (B), or does both with a switch (C).
+
+Which path are you building?

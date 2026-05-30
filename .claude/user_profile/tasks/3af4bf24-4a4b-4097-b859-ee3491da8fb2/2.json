@@ -1,0 +1,8 @@
+{
+  "id": "2",
+  "subject": "Audit src\\cli.ts",
+  "description": "Analyze src\\cli.ts and trace its primary calls to other modules.",
+  "status": "completed",
+  "blocks": [],
+  "blockedBy": []
+}

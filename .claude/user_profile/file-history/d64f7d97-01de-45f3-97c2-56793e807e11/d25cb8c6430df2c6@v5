@@ -1,0 +1,319 @@
+/**
+ * OfficialPlayerDataApi.ts
+ *
+ * Runemetrics + Hiscores API client for RS3 player data.
+ * Routes through Cloudflare Worker CORS proxy.
+ * Aligns with Jagex API specification.
+ *
+ * Sovereign Substrate: Player Data Layer
+ * Cache Authority: D:\\sovereign\\atlas\\player\\cache\\
+ */
+
+import { createLogger } from './logger.js';
+import { ApiThrottle } from './ApiThrottle.js';
+
+const logger = createLogger('OfficialPlayerDataApi');
+
+// ═══════════════════════════════════════════════════════
+// Interfaces
+// ═══════════════════════════════════════════════════════
+
+export interface PlayerProfile {
+  name: string;
+  rank: string;
+  totalSkill: number;
+  totalXp: number;
+  combatLevel: number;
+  skills: Array<{
+    id: number;
+    name: string;
+    level: number;
+    xp: number;
+    rank: number;
+  }>;
+  activities: Array<{
+    text: string;
+    date: string;
+  }>;
+  questsStarted: number;
+  questsComplete: number;
+  questsNotStarted: number;
+  loggedIn: boolean;
+}
+
+export interface HiscoreEntry {
+  rank: number;
+  level: number;
+  xp: number;
+}
+
+export interface MonthlyXpData {
+  skillId: number;
+  skillName: string;
+  averageXpGain: number;
+  totalGain: number;
+  totalXp: number;
+  monthlyData: Array<{
+    month: string;
+    xp: number;
+  }>;
+}
+
+export interface QuestData {
+  title: string;
+  status: 'COMPLETED' | 'STARTED' | 'NOT_STARTED';
+  difficulty: number;
+  members: boolean;
+  questPoints: number;
+  userEligible: boolean;
+}
+
+// ═══════════════════════════════════════════════════════
+// Skill ID Mapping (0-28)
+// ═══════════════════════════════════════════════════════
+
+export const SKILL_NAMES: Record<number, string> = {
+  0: 'Attack', 1: 'Defence', 2: 'Strength', 3: 'Constitution',
+  4: 'Ranged', 5: 'Prayer', 6: 'Magic', 7: 'Cooking',
+  8: 'Woodcutting', 9: 'Fletching', 10: 'Fishing', 11: 'Firemaking',
+  12: 'Crafting', 13: 'Smithing', 14: 'Mining', 15: 'Herblore',
+  16: 'Agility', 17: 'Thieving', 18: 'Slayer', 19: 'Farming',
+  20: 'Runecrafting', 21: 'Hunter', 22: 'Construction', 23: 'Summoning',
+  24: 'Dungeoneering', 25: 'Divination', 26: 'Invention', 27: 'Archaeology',
+  28: 'Necromancy'
+};
+
+// ═══════════════════════════════════════════════════════
+// OfficialPlayerDataApi — Singleton
+// ═══════════════════════════════════════════════════════
+
+export class OfficialPlayerDataApi {
+  private static readonly PROXY_BASE = 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/player';
+  private static readonly THROTTLE = ApiThrottle.getInstance();
+
+  // ── Runemetrics Profile ────────────────────────────────
+
+  /**
+   * Fetch player profile from Runemetrics.
+   * Includes skills, activities, quests, combat level.
+   */
+  static async getProfile(playerName: string): Promise<PlayerProfile | null> {
+    await this.THROTTLE.acquire('runemetrics');
+
+    const url = `${this.PROXY_BASE}/runemetrics/profile?user=${encodeURIComponent(playerName)}&activities=20`;
+    logger.debug({ playerName, url }, 'Fetching Runemetrics profile');
+
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'POG2-Sovereign/1.0 (POG2 Pedagogy Engine; RS3 player data; admin@pog2.internal; +https://github.com/Kbro1989/POG2)',
+          'Accept': 'application/json'
+        },
+        signal: AbortSignal.timeout(15000)
+      });
+
+      if (!res.ok) {
+        if (res.status === 429) this.THROTTLE.reportRetryAfter('runemetrics', 60);
+        logger.warn({ playerName, status: res.status }, 'Runemetrics non-OK');
+        return null;
+      }
+
+      const data = await res.json();
+
+      // Handle private profiles
+      if (data.error === 'PROFILE_PRIVATE') {
+        logger.warn({ playerName }, 'Runemetrics profile is private');
+        return null;
+      }
+
+      return {
+        name: data.name || playerName,
+        rank: data.rank || '0',
+        totalSkill: data.totalskill || 0,
+        totalXp: data.totalxp || 0,
+        combatLevel: data.combatlevel || 0,
+        skills: (data.skillvalues || []).map((s: any) => ({
+          id: s.id,
+          name: SKILL_NAMES[s.id] || 'Unknown',
+          level: s.level,
+          xp: s.xp,
+          rank: s.rank
+        })),
+        activities: (data.activities || []).map((a: any) => ({
+          text: a.text || '',
+          date: a.date || ''
+        })),
+        questsStarted: data.questsstarted || 0,
+        questsComplete: data.questscomplete || 0,
+        questsNotStarted: data.questsnotstarted || 0,
+        loggedIn: data.loggedIn === 'true'
+      };
+
+    } catch (err) {
+      logger.error({ playerName, err }, 'Runemetrics fetch failed');
+      return null;
+    }
+  }
+
+  // ── Hiscores Lite ──────────────────────────────────────
+
+  /**
+   * Fetch hiscores in CSV format, parsed to structured data.
+   * Returns Map<skillName, HiscoreEntry>.
+   */
+  static async getHiscores(playerName: string): Promise<Map<string, HiscoreEntry> | null> {
+    await this.THROTTLE.acquire('hiscores');
+
+    const url = `${this.PROXY_BASE}/hiscores/lite?player=${encodeURIComponent(playerName)}`;
+    logger.debug({ playerName, url }, 'Fetching Hiscores');
+
+    try {
+      const res = await fetch(url, {
+        headers: { 'Accept': 'text/plain' },
+        signal: AbortSignal.timeout(15000)
+      });
+
+      if (!res.ok) {
+        if (res.status === 429) this.THROTTLE.reportRetryAfter('hiscores', 60);
+        return null;
+      }
+
+      const csv = await res.text();
+      const lines = csv.trim().split('\n');
+      const results = new Map<string, HiscoreEntry>();
+
+      if (lines.length === 0) return null;
+
+      // Line 0 is Overall
+      const overall = lines[0].split(',').map(v => parseInt(v) || 0);
+      results.set('Overall', { rank: overall[0], level: overall[1], xp: overall[2] });
+
+      // Line 1 to 29 are the skills
+      for (let i = 1; i < Math.min(30, lines.length); i++) {
+        const [rank, level, xp] = lines[i].split(',').map(v => parseInt(v) || 0);
+        const skillName = SKILL_NAMES[i - 1];
+        if (skillName) {
+          results.set(skillName, { rank, level, xp });
+        }
+      }
+
+      return results;
+
+    } catch (err) {
+      logger.error({ playerName, err }, 'Hiscores fetch failed');
+      return null;
+    }
+  }
+
+  // ── Monthly XP ─────────────────────────────────────────
+
+  /**
+   * Fetch monthly XP gains for a specific skill.
+   */
+  static async getMonthlyXp(playerName: string, skillId: number): Promise<MonthlyXpData | null> {
+    await this.THROTTLE.acquire('runemetrics');
+
+    const url = `${this.PROXY_BASE}/runemetrics/xp-monthly?searchName=${encodeURIComponent(playerName)}&skillid=${skillId}`;
+    try {
+      const res = await fetch(url, {
+        headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!res.ok) return null;
+      const data = await res.json();
+
+      return {
+        skillId,
+        skillName: SKILL_NAMES[skillId] || 'Unknown',
+        averageXpGain: data.monthlyXpGain?.averageXpGain || 0,
+        totalGain: data.monthlyXpGain?.totalGain || 0,
+        totalXp: data.monthlyXpGain?.totalXp || 0,
+        monthlyData: (data.monthlyXpGain?.monthData || []).map((m: any) => ({
+          month: m.month || '',
+          xp: m.xp || 0
+        }))
+      };
+
+    } catch {
+      return null;
+    }
+  }
+
+  // ── Quest Data ─────────────────────────────────────────
+
+  /**
+   * Fetch quest completion status for a player.
+   */
+  static async getQuests(playerName: string): Promise<QuestData[] | null> {
+    await this.THROTTLE.acquire('runemetrics');
+
+    const url = `${this.PROXY_BASE}/runemetrics/quests?user=${encodeURIComponent(playerName)}`;
+    try {
+      const res = await fetch(url, {
+        headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!res.ok) return null;
+      const data = await res.json();
+
+      return (data.quests || []).map((q: any) => ({
+        title: q.title || '',
+        status: q.status || 'NOT_STARTED',
+        difficulty: q.difficulty || 0,
+        members: q.members || false,
+        questPoints: q.questPoints || 0,
+        userEligible: q.userEligible || false
+      }));
+
+    } catch {
+      return null;
+    }
+  }
+
+  // ── High-Level API ─────────────────────────────────────
+
+  /**
+   * Full player enrichment: profile + hiscores + quests.
+   */
+  static async enrichPlayer(playerName: string): Promise<{
+    profile: PlayerProfile | null;
+    hiscores: Map<string, HiscoreEntry> | null;
+    quests: QuestData[] | null;
+  }> {
+    logger.info({ playerName }, 'Beginning full player enrichment');
+
+    const [profile, hiscores, quests] = await Promise.all([
+      this.getProfile(playerName),
+      this.getHiscores(playerName),
+      this.getQuests(playerName)
+    ]);
+
+    return { profile, hiscores, quests };
+  }
+
+  /**
+   * Verify player can equip an item based on live stats.
+   * Used by MechanicalSovereigntyLimb.canEquip().
+   */
+  static async canEquipItem(
+    playerName: string,
+    itemId: number,
+    requirements: { skill: string; level: number }
+  ): Promise<{ canEquip: boolean; currentLevel: number; requiredLevel: number }> {
+    const hiscores = await this.getHiscores(playerName);
+    if (!hiscores) {
+      return { canEquip: false, currentLevel: 0, requiredLevel: requirements.level };
+    }
+
+    const entry = hiscores.get(requirements.skill);
+    const currentLevel = entry?.level || 1;
+
+    return {
+      canEquip: currentLevel >= requirements.level,
+      currentLevel,
+      requiredLevel: requirements.level
+    };
+  }
+}

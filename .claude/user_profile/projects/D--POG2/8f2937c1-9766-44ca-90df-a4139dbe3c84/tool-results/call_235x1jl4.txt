@@ -1,0 +1,252 @@
+src\bridge_server.ts:4: * Boots the WebSocket bridge on port 8080 so unified_diagnostic.html can connect.
+src\clients\ModelClient.ts:1:import { exec } from 'child_process';
+src\clients\ModelClient.ts:3:import { Agent, fetch as undiciFetch } from 'undici';
+src\clients\ModelClient.ts:27:const execAsync = promisify(exec);
+src\clients\ModelClient.ts:42:    public async execute(params: ModelCallParams): Promise<Result<string>> {
+src\clients\ModelClient.ts:47:        return { ok: false, error: result.error || new Error("Unknown model execution error") };
+src\clients\ModelClient.ts:61:        // Node's default fetch relies on Undici which enforces a strict 300_000ms headers timeout.
+src\clients\ModelClient.ts:429:                        const { stdout } = await execAsync('gcloud auth print-access-token');
+src\config\SovereignConfig.ts:38:    executiveCoderModel: string;
+src\config\SovereignConfig.ts:144:    executiveCoderModel: 'deepseek-r1:8b',
+src\config\SovereignConfig.ts:255:    executiveCoderModel: 'EXECUTIVE_CODER_MODEL',
+src\cli.ts:445:                        const playResult = await orchestrator.executePlayAction(answer);
+src\cli.ts:466:            const result = await engine.executePlan({
+src\cli.ts:471:                reasoning: 'Manual Reimagination execution.',
+src\cli.ts:486:            const result = await engine.executePlan({
+src\cli.ts:507:            const result = await engine.executePlan({
+src\cli.ts:527:            const result = await engine.executePlan({
+src\cli.ts:548:            const result = await engine.executePlan({
+src\cli.ts:569:            const result = await engine.executePlan({
+src\cli.ts:593:            const result = await engine.executePlan({
+src\cli.ts:617:            const result = await engine.executePlan({
+src\cli.ts:1347:                const execSeq = router.getFailoverSequence('Executive');
+src\cli.ts:1352:                renderer.info(`ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ EXECUTIVE (Motor) : ${execSeq.join(' ÃƒÂ¢Ã…Â¾Ã¢â‚¬Â ')}`);
+src\cli.ts:1362:            const result = await engine.executePlan({
+src\cli.ts:1383:            const result = await engine.executePlan({
+src\cli.ts:1407:            const result = await engine.executePlan({
+src\cli.ts:1427:            const result = await engine.executePlan({
+src\cli.ts:1447:            const result = await engine.executePlan({
+src\cli.ts:1467:            const result = await engine.executePlan({
+src\cli.ts:1489:            const result = await engine.executePlan({
+src\cli.ts:1509:            const result = await engine.executePlan({
+src\cli.ts:1529:            const result = await engine.executePlan({
+src\cli.ts:1549:            const result = await engine.executePlan({
+src\cli.ts:1575:            cp.exec(`code "${resolve(path)}"`, (err) => {
+src\cli.ts:1585:            const result = await engine.executePlan({
+src\cli.ts:1605:            const result = await engine.executePlan({
+src\cli.ts:1627:            const result = await engine.executePlan({
+src\cli.ts:1657:            const result = await engine.executePlan({
+src\cli.ts:1682:            const result = await engine.executePlan({
+src\cli.ts:1702:            const result = await engine.executePlan({
+src\cli.ts:1723:            const result = await engine.executePlan({
+src\cli.ts:1743:            const result = await engine.executePlan({
+src\cli.ts:1763:            const result = await engine.executePlan({
+src\cli.ts:1783:            const result = await engine.executePlan({
+src\cli.ts:1804:            const result = await engine.executePlan({
+src\cli.ts:1824:            const result = await engine.executePlan({
+src\cli.ts:1844:            const result = await engine.executePlan({
+src\cli.ts:1889:            const { spawn } = await import('child_process');
+src\cli.ts:1891:            const subprocess = spawn('npx', ['tsx', 'rsmv/index.ts', '--model', modelId, '--cache', cachePath], {
+src\cli.ts:1919:            const result = await engine.executePlan({
+src\cli.ts:1931:                reasoning: 'Manual creative pipeline execution.',
+src\cli.ts:1951:            const result = await engine.executePlan({
+src\cli.ts:1961:                reasoning: 'Manual global cinema batch execution.',
+src\cli.ts:2188:                    // Action already executed via tool
+src\cli.ts:2227:                const res = await hiscore.fetchStats(name);
+src\cli.ts:2234:                    renderer.error(`HiScore fetch failed: ${res.error?.message}`);
+src\cli.ts:2328:                const success = avatar.executeAbility(opts.ability.toUpperCase());
+src\cli.ts:2567:                const result = await engine.executePlan({
+src\cli.ts:2581:                const result = await engine.executePlan({
+src\cli.ts:2603:            cp.exec(`code "${resolve(path)}"`, (err) => {
+src\cli.ts:2618:        .command('spawn <name>')
+src\cli.ts:3126:            const result = await engine.executePlan({
+src\cli.ts:3330:            const result = await engine.executePlan({
+src\cli.ts:3378:                const result = await engine.executePlan({
+src\cli.ts:3407:        .command('execute <toolName> [parameters]')
+src\cli.ts:3408:        .description('Manually execute any registered tool in the substrate')
+src\cli.ts:3419:            const result = await engine.executePlan({
+src\cli.ts:3420:                goal: `Manual tool execution: ${toolName}`,
+src\cli.ts:3424:                reasoning: `Manual direct tool execution: ${toolName}`,
+src\cli.ts:3439:            const result = await engine.executePlan({
+src\cli.ts:3507:    // Three-tier post-parse post-execution router
+src\cli.ts:3644:                                import('child_process').then(cp => cp.exec(`code "${settingsPath}"`));
+src\core\ArchitectureDigest.ts:33:                'Core': { file: 'src/engines/OrchestrateEngine.ts', properties: ['run', 'executeTurn'] },
+src\cli\CLIRouter.ts:13:        return this.engine.executeTool('gameplay_sovereignty_volition', opts);
+src\cli\CLIRouter.ts:17:        return this.engine.executeTool('cache_forensics_lookup', { method, target });
+src\cli\CLIRouter.ts:21:        return this.engine.executeTool('spatial_sovereignty_init', opts || {});
+src\cli\CLIRouter.ts:25:        return this.engine.executeTool('entity_limb_memory', { id, memory });
+src\cli\CLIRouter.ts:29:        return this.engine.executeTool('entity_limb_action', { id });
+src\cli\CLIRouter.ts:33:        return this.engine.executeTool('entity_limb_identity', { id, update });
+src\cli\CLIRouter.ts:37:        return this.engine.executeTool('hud_forensics_scan', { method, target });
+src\cli\CLIRouter.ts:41:        return this.engine.executeTool('hud_forensics_batch', { requests });
+src\api\ai\ModelRolodex.ts:3:import { exec } from 'child_process';
+src\api\ai\ModelRolodex.ts:7:import { fetch as undiciFetch } from 'undici';
+src\api\ai\ModelRolodex.ts:15:const execAsync = promisify(exec);
+src\api\ai\ModelRolodex.ts:521:            // Identity check via wrangler whoami (direct execution)
+src\api\ai\ModelRolodex.ts:598:                const { stdout } = await execAsync('gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>&1', { timeout: 10000 });
+src\api\ai\ModelRolodex.ts:896:    /** Check if an error is a fetch timeout or abortion */
+src\core\models.ts:311:    respawn(): void;
+src\core\models.ts:374:    spawnTick: number;
+src\core\models.ts:1020:    readonly execution?: Execution;
+src\core\models.ts:1092:        readonly spawnX: number;
+src\core\models.ts:1093:        readonly spawnY: number;
+src\core\models.ts:1094:        readonly spawnZ?: number;
+src\core\models.ts:1292:    execute(params: ModelCallParams): Promise<Result<string>>;
+src\logic\handlers\PhotoBoothHandler.ts:50:            const statsRes = await hiscore.fetchStats(playerName);
+src\logic\handlers\PhotoBoothHandler.ts:52:                logger.warn({ playerName }, 'HiScore fetch failed for snapshot; using model-only identity.');
+src\core\CognitiveImmunologyEmergency.ts:12:import { exec } from 'child_process';
+src\core\CognitiveImmunologyEmergency.ts:18:const execAsync = promisify(exec);
+src\core\CognitiveImmunologyEmergency.ts:134:    // Process spawn
+src\core\CognitiveImmunologyEmergency.ts:145:        'this is a role collapse', 'this is an execution escalation',
+src\core\CognitiveImmunologyEmergency.ts:147:        'i am ready to proceed as the executive layer',
+src\core\CognitiveImmunologyEmergency.ts:160:        'claimed non-execution', 'i will not execute',
+src\core\CognitiveImmunologyEmergency.ts:162:        'but then executed', 'executed anyway',
+src\core\CognitiveImmunologyEmergency.ts:169:        'fetch(', 'curl -X POST', 'curl -X PUT', 'wget', 'navigator.sendBeacon',
+src\core\CognitiveImmunologyEmergency.ts:173:        'eval(', 'Buffer.from(', 'base64', 'child_process.exec',
+src\core\CognitiveImmunologyEmergency.ts:385:            c.toLowerCase().includes('i will not execute') ||
+src\core\CognitiveImmunologyEmergency.ts:398:            reasons.push('DECEPTION: Claimed non-execution role but executed commands');
+src\core\CognitiveImmunologyEmergency.ts:405:        // Only increment if non-user source has execution intent on a core file.
+src\core\CognitiveImmunologyEmergency.ts:407:        const executionPatterns = [
+src\core\CognitiveImmunologyEmergency.ts:414:            executionPatterns.some(p => r.startsWith(p))
+src\core\CognitiveImmunologyEmergency.ts:421:                reasons.push(`SOURCE_ESCALATION: ${source} has execution intent on CORE file ${affectedFile}`);
+src\core\CognitiveImmunologyEmergency.ts:471:            const result = await execAsync(
+src\core\CognitiveImmunologyEmergency.ts:513:            const log = await execAsync(
+src\core\CognitiveImmunologyEmergency.ts:524:            const userCommits = await execAsync(
+src\core\CognitiveImmunologyEmergency.ts:552:                await this.executeLockdown(report);
+src\core\CognitiveImmunologyEmergency.ts:555:                await this.executeLockdown(report);
+src\core\CognitiveImmunologyEmergency.ts:556:                await this.executeAlert(report);
+src\core\CognitiveImmunologyEmergency.ts:561:    private async executeLockdown(report: ForeignDirectiveReport): Promise<void> {
+src\core\CognitiveImmunologyEmergency.ts:574:    private async executeAlert(report: ForeignDirectiveReport): Promise<void> {
+src\core\ServiceDiscovery.ts:162:            const response = await fetch('http://localhost:11434/api/tags');
+src\core\ServiceDiscovery.ts:267:        // Test WebSocket bridge availability by checking if the server is listening
+src\core\ServiceDiscovery.ts:269:            // Check if the WebSocket server is accepting connections
+src\core\ServiceDiscovery.ts:288:                details: isListening ? `WebSocket: ws://localhost:${wsPort} (READY)` : `Port ${wsPort} not listening`
+src\core\ServiceDiscovery.ts:309:                const res = await fetch(workerUrl, { method: 'GET' });
+src\core\ServiceDiscovery.ts:435:                const { spawn } = await import('child_process');
+src\core\ServiceDiscovery.ts:437:                    const child = spawn(cmd, args, { shell: true });
+src\core\SovereignAvatar.ts:326:    public respawn() {
+src\core\SovereignAvatar.ts:340:        this.lock(10); // Respawn daze
+src\core\SovereignAvatar.ts:369:     * executeAbility - Queues an ability intent for the SimulationHarness combat rotation engine to process.
+src\core\SovereignAvatar.ts:370:     * The actual execution, damage calculation, and adrenaline mutation occurs during the 600ms tick.
+src\core\SovereignAvatar.ts:372:    public executeAbility(abilityId: string, targetId: number | string = 'Sovereign') {
+src\core\SovereignAvatar.ts:376:            action: 'execute_ability',
+src\engines\ArchitecturalValidator.ts:44:        while ((match = pattern.exec(content)) !== null) {
+src\engines\ArchitecturalValidator.ts:120:        while ((match = declarationPattern.exec(content)) !== null) {
+src\engines\ArchitecturalValidator.ts:126:        while ((match = defaultPattern.exec(content)) !== null) {
+src\engines\ArchitecturalValidator.ts:132:        while ((match = bracePattern.exec(content)) !== null) {
+src\api\ai\Dispatcher.ts:61: * AIDispatcher - Autonomous capability selection and execution.
+src\api\ai\Dispatcher.ts:93:            const result = await this.client.execute({
+src\engines\BlenderRenderer.ts:85:        const res = await this.shell.execute({
+src\engines\BlenderRenderer.ts:224:    # We spawn a proxy representing the exact volumetric coordinates of the asset.
+src\engines\ContextBuilder.ts:24:        logger.debug({ vectorDB: !!this.vectorDB, executor: !!this.modelExecutor, roots: this.rootStack.length }, 'ContextBuilder initialized');
+src\engines\ContextBuilder.ts:71:        while ((match = pattern.exec(content)) !== null) {
+src\engines\DiscoveryEngine.ts:13:    deep?: boolean; // If true, fetches and summarizes top results
+src\engines\DiscoveryEngine.ts:53:                const scrapes = await Promise.all(topResults.map(r => this.fetchUrl(r.url)));
+src\engines\DiscoveryEngine.ts:92:            const response = await fetch(url);
+src\engines\DiscoveryEngine.ts:118:            const response = await fetch(waybackUrl);
+src\engines\DiscoveryEngine.ts:139:        const response = await fetch(url, {
+src\engines\DiscoveryEngine.ts:213:    async fetchUrl(url: string): Promise<Result<EngineOutput>> {
+src\engines\DiscoveryEngine.ts:215:            const response = await fetch(url, { headers: { 'User-Agent': this.userAgent } });
+src\engines\DiscoveryEngine.ts:216:            if (!response.ok) return { ok: false, error: new Error(`Failed to fetch ${url}: ${response.status}`) };
+src\engines\EmbedEngine.ts:100:        this.db.exec(`
+src\vision\TransientObserver.ts:3:import { spawn } from 'child_process';
+src\vision\TransientObserver.ts:57:            const subprocess = spawn(npxCmd, [
+src\engines\IntentVerifier.ts:36:Verify if the following execution aligns with the User's Sovereign Intent.
+src\engines\core\EpistemicTransitionKernel.ts:181:            parentArtifactId: event.id, // Linking back to the specific execution artifact
+src\engines\core\EpistemicTransitionKernel.ts:229:        // We look for the pattern ID that spawned this rule
+src\engines\MCPEngine.ts:84:                    execute: async (args): Promise<Result<EngineOutput>> => {
+src\engines\core\TruthReconciler.ts:38:        const executionTruth = ledger.getTickEvents(tick) || [];
+src\engines\core\TruthReconciler.ts:46:        logger.debug({ tick, eventCount: executionTruth.length }, 'Initiating Truth Reconciliation Pass');
+src\engines\core\TruthReconciler.ts:50:        for (const event of executionTruth) {
+src\engines\core\TruthReconciler.ts:55:        for (const event of executionTruth) {
+src\engines\core\TruthReconciler.ts:60:        this.auditGovernanceAlignment(executionTruth, governanceTruth);
+src\engines\core\TruthReconciler.ts:63:        this.verifyChainIntegrity(executionTruth);
+src\vision\RSMVController.ts:3:import { spawn } from 'child_process';
+src\vision\RSMVController.ts:72:            const subprocess = spawn('npx', args, {
+src\vision\RSMVController.ts:120:            const subprocess = spawn('npx', args, {
+src\engines\gameplay\CNSGodheadPulseVolley.ts:47:    maxMs: number;              // hard time cap for queue execution
+src\engines\gameplay\CNSGodheadPulseVolley.ts:53:    executed: number;
+src\engines\gameplay\CNSGodheadPulseVolley.ts:72: * The deterministic execution kernel for POG2 Sovereign.
+src\engines\gameplay\CNSGodheadPulseVolley.ts:215:        // Phase 112: Inject deterministic execution boundary into the global EventBus
+src\engines\gameplay\CNSGodheadPulseVolley.ts:292:                logger.warn('GhostSplat projection failed — executing fallback');
+src\engines\gameplay\CNSGodheadPulseVolley.ts:360:                await this.executeAction(tickId, pendingAdminCommands, prediction, transitionalVector);
+src\engines\gameplay\CNSGodheadPulseVolley.ts:442:        this.executeAction(tickId, cmd.action, cmd.predictedOutcome, cmd.transitionalVector);
+src\engines\gameplay\CNSGodheadPulseVolley.ts:458:            this.executeAction(tickId, cmd.action, freshPrediction, cmd.transitionalVector);
+src\engines\gameplay\CNSGodheadPulseVolley.ts:505:        this.executeAction(tickId, cmd.action, cmd.predictedOutcome, cmd.transitionalVector);
+src\engines\gameplay\CNSGodheadPulseVolley.ts:563:    private async executeAction(
+src\engines\gameplay\CNSGodheadPulseVolley.ts:711:                await this.executeEvent(tx, finalized, pulseDeltas);
+src\engines\gameplay\CNSGodheadPulseVolley.ts:872:        if (cmd.type === 'teleport' || cmd.type === 'spawn') {
+src\engines\gameplay\CNSGodheadPulseVolley.ts:928:     * processQueueWithBudget - Deterministic, bounded execution of deferred operations.
+src\engines\gameplay\CNSGodheadPulseVolley.ts:937:        let executed = 0;
+src\engines\gameplay\CNSGodheadPulseVolley.ts:946:            if (executed >= maxOps) {
+src\engines\gameplay\CNSGodheadPulseVolley.ts:950:                    executed,
+src\engines\gameplay\CNSGodheadPulseVolley.ts:953:                }, '[QUEUE_BUDGET] Ops cap hit, truncating execution');
+src\engines\gameplay\CNSGodheadPulseVolley.ts:966:                    executed,
+src\engines\gameplay\CNSGodheadPulseVolley.ts:984:                executed++;
+src\engines\gameplay\CNSGodheadPulseVolley.ts:998:            executed,
+src\engines\gameplay\CNSGodheadPulseVolley.ts:1005:    private async executeEvent(tx: Map<string, any>, event: TickEvent, deltas: WorldDelta[]): Promise<void> {
+src\engines\gameplay\CNSGodheadPulseVolley.ts:1047:            case 'spawn':
+src\engines\gameplay\CNSGodheadPulseVolley.ts:1055:                    // DEFERRED: Entity spawn inside tick boundaries
+src\engines\gameplay\CNSGodheadPulseVolley.ts:1057:                        await this.grounding!.spawnEntity(tx, defWithId).catch(err =>
+src\engines\gameplay\CNSGodheadPulseVolley.ts:1058:                            logger.error({ err: err.message }, `[CNS] Deferred spawn failed`)
+src\engines\gameplay\CNSGodheadPulseVolley.ts:1061:                    logger.debug({ id: sid }, '[VOLLEY] ENTITY_MANIFEST staged for deterministic spawn.');
+src\engines\gameplay\LootBeamRegistry.ts:24: * - Below player's threshold: no beam spawned
+src\engines\gameplay\CombatRotationEngine.ts:60:    /** Secondary entities in range (minions, spawns) */
+src\engines\gameplay\CombatRotationEngine.ts:82:    /** Secondary entities in range (minions, spawns) */
+src\engines\gameplay\CombatRotationEngine.ts:88:        action: 'execute_ability';
+src\engines\gameplay\CombatRotationEngine.ts:201:                    action: 'execute_ability',
+src\engines\gameplay\CombatRotationEngine.ts:276:                    // Soft Rejection: Advisory warning but allows execution if it's the intended rotation
+src\engines\gameplay\CombatRotationEngine.ts:290:                    // Success: Pop the ability and execute
+src\engines\gameplay\CombatRotationEngine.ts:293:                        action: 'execute_ability',
+src\engines\gameplay\CombatRotationEngine.ts:344:                                    action: 'execute_ability',
+src\engines\gameplay\CombatRotationEngine.ts:387:                    action: 'execute_ability',
+src\limbs\world_grounding\WorldGroundingLimb.ts:347:    public async spawnEntity(tx: Map<string, any>, entityDef: any): Promise<void> {
+src\limbs\world_grounding\WorldGroundingLimb.ts:363:            // Phase 116: Check public/authentic_spawn_manifest.json for breakthrough tests
+src\limbs\world_grounding\WorldGroundingLimb.ts:364:            const publicSpawns = join(process.cwd(), 'public', 'authentic_spawn_manifest.json');
+src\limbs\world_grounding\WorldGroundingLimb.ts:368:            const spawnsPath = join(base, 'npc_spawns.json');
+src\limbs\world_grounding\WorldGroundingLimb.ts:371:            const fallbackPath = join(spatialRoot, 'npc_extract', 'npc_spawns.json');
+src\limbs\world_grounding\WorldGroundingLimb.ts:372:            const effectivePath = fs.existsSync(publicSpawns) ? publicSpawns : (fs.existsSync(spawnsPath) ? spawnsPath : fallbackPath);
+src\limbs\world_grounding\WorldGroundingLimb.ts:404:        for (const spawn of localSpawns) {
+src\limbs\world_grounding\WorldGroundingLimb.ts:405:            const x = spawn.worldX ?? spawn.coord?.x;
+src\limbs\world_grounding\WorldGroundingLimb.ts:406:            const z = spawn.worldZ ?? spawn.coord?.z ?? spawn.coord?.y;
+src\limbs\world_grounding\WorldGroundingLimb.ts:407:            const plane = spawn.plane ?? spawn.coord?.plane ?? 0;
+src\limbs\world_grounding\WorldGroundingLimb.ts:408:            const npcId = spawn.npcId ?? spawn.entityId;
+src\limbs\world_grounding\WorldGroundingLimb.ts:409:            const npcName = spawn.npcName ?? spawn.title ?? `Entity ${npcId}`;
+src\vision\PuppeteerEye.ts:9:import { exec } from 'child_process';
+src\vision\PuppeteerEye.ts:12:const execAsync = promisify(exec);
+src\vision\PuppeteerEye.ts:52:            const { stdout } = await execAsync(`powershell -NoProfile -Command "${psScript.replace(/"/g, '\\"')}"`);
+src\engines\gameplay\NpcAgent.ts:15:    wanderRadius?: number;       // Max tile distance from spawn to wander
+src\engines\gameplay\NpcAgent.ts:31:    private spawnCoord: Coord;
+src\engines\gameplay\NpcAgent.ts:52:        this.spawnCoord = { x: npc.x, y: npc.y, plane: npc.plane };
+src\engines\gameplay\NpcAgent.ts:162:     * pickWanderTile — Picks a random walkable tile within wanderRadius of spawn.
+src\engines\gameplay\NpcAgent.ts:172:            const tx = this.spawnCoord.x + dx;
+src\engines\gameplay\NpcAgent.ts:173:            const ty = this.spawnCoord.y + dy;
+src\engines\gameplay\NpcAgent.ts:174:            const plane = this.spawnCoord.plane;
+src\engines\gameplay\PlayerAgent.ts:63:            // Silently fail, grounding will just use fallback respawn
+src\engines\gameplay\PlayerAgent.ts:247:                // Heuristic: identify minions by name patterns (Nex minions, spawns)
+src\engines\gameplay\PlayerAgent.ts:358:            rotation?.action === 'execute_ability' ? rotation.abilityName : undefined,
+src\engines\gameplay\PlayerAgent.ts:369:            if (rotation.action === 'execute_ability') {
+src\engines\gameplay\PlayerAgent.ts:631:            // Fallback: Hard respawn
+src\engines\gameplay\PlayerAgent.ts:632:            this.avatar.respawn();
+src\engines\MetabolicEngine.ts:223:Lines 1-3: "New" (Change/Future) YaoStates - Growth, innovation, upcoming execution.
+src\engines\gameplay\ServerLogicRegistry.ts:29:        spawn:      { id: 1,  action: LogicalSignature.ENTITY_MANIFEST },
+src\engines\gameplay\SubstrateResolver.ts:38:        // Logic execution remains O(1) during the CNS Pulse.
+src\engines\OrchestrateEngine.ts:485:    public async gcloud(command: string): Promise<Result<EngineOutput>> { return this.executeTool('gcloud_exec', { command }); }
+src\engines\OrchestrateEngine.ts:486:    public async wranglerDeploy(scriptName: string): Promise<Result<EngineOutput>> { return this.executeTool('wrangler_deploy', { scriptName }); }
+src\engines\OrchestrateEngine.ts:487:    public async ollamaRun(model: string, prompt: string): Promise<Result<EngineOutput>> { return this.executeTool('ollama_run', { model, prompt }); }
+src\engines\OrchestrateEngine.ts:488:    public async serviceStatus(): Promise<Result<EngineOutput>> { return this.executeTool('service_status', {}); }
+src\engines\OrchestrateEngine.ts:495:    public async executeTool(
+src\engines\OrchestrateEngine.ts:523:                lines: [0, 0], // Will be updated post-execution if file modified
+src\engines\OrchestrateEngine.ts:542:                    message: `Cognitive Immunology blocked execution. Threat: ${report.threatLevel}. Reasons: ${report.reasons.join('; ')}`,
+src\engines\OrchestrateEngine.ts:575:        return tool.execute(args);
+src\engines\OrchestrateEngine.ts:580:     * This awaits all critical neural links (MCP, DB, etc.) before execution begins.
+src\engines\OrchestrateEngine.ts:1126:            execute: async (args) => {
+src\engines\OrchestrateEngine.ts:1143:            execute: async (args) => {
+src\engines\OrchestrateEngine.ts:1174:            execute: async (args) => {
+src\engines\OrchestrateEngine.ts:1195:            execute: async (args) => {
+src\engines\OrchestrateEngine.ts:1220:            execute: async (args) => {
+src\engines\OrchestrateEngine.ts:1236:            humanDescription: 'Decide and execute an action for an entity.',
+src\engines\OrchestrateEngine.ts:1237:            jargonDescription: 'Calls decideAction and executeAction on EntityLimb.',
+src\engines\OrchestrateEngine.ts:1242:            execute: async (args) => {
+
+[Showing results with pagination = limit: 250]

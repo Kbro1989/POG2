@@ -1,0 +1,25 @@
+ This is a duplicate of the earlier GeApi implementation plan — already completed and verified. All items checked:
+
+- ✅ Dual-source strategy (Weird Gloop → Jagex proxy)
+- ✅ Price parser (k/m/b + commas)
+- ✅ ApiThrottle integration
+- ✅ Worker proxy deployed
+- ✅ All verification tests passed
+
+**Current status:** GeApi is production-ready. The proxy routes are live at `multiplayer-globe-pog2.kristain33rs.workers.dev/api/ge/*`.
+
+**What's actually next:**
+
+| Priority | Task | Status |
+|---|---|---|
+| 1 | **Corpus generation** | Running — 59,984 items, filtering garbage entries, adding resume mechanism |
+| 2 | **Mechanics track** | Ready to add — 185 wiki pages for combat/game systems |
+| 3 | **Unsloth LoRA training** | Blocked until corpus complete |
+| 4 | **ModelRolodex registration** | Blocked until models trained |
+
+The GeApi work is done. Focus should be on:
+1. Finishing the corpus generator updates (filter, resume, streaming)
+2. Adding mechanics page ingestion
+3. Running the full generation pipeline
+
+Proceed with corpus generator refinement?

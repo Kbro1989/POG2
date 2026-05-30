@@ -1,0 +1,8 @@
+{
+  "id": "6",
+  "subject": "Integrate Resolution Chain in POG2WorldDO",
+  "description": "Integrate resolver and bridge into POG2WorldDO WebSocket handler for async pedagogy requests.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

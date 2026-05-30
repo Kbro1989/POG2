@@ -1,0 +1,963 @@
+/**
+ * WikiEquipmentEnricher.ts
+ *
+ * Structured parser for RS Wiki Infobox templates and drop tables.
+ * Extracts equipment bonuses, item metadata, monster stats, and complete
+ * drop tables (including sub-table resolution) with respectful rate limiting.
+ *
+ * Sovereign Substrate: Semantic Enrichment Layer
+ * Cache Authority: D:\sovereign\atlas\wiki\cache\
+ *
+ * Template Coverage:
+ *   - {{Infobox Bonuses}}  → Equipment combat stats
+ *   - {{Infobox Item}}     → Item metadata
+ *   - {{Infobox Monster}}  → Monster/NPC stats
+ *   - {{DropsLine}}        → Individual drop entries
+ *   - {{Rare drop table}}, {{Gem drop table}}, etc. → Sub-table resolution
+ */
+
+import { createLogger } from './logger.js';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+
+const logger = createLogger('WikiEquipmentEnricher');
+
+// ═══════════════════════════════════════════════════════
+// Interfaces
+// ═══════════════════════════════════════════════════════
+
+export interface WikiEquipmentBonuses {
+    tier: number;
+    slot: string;          // mainhand, off-hand, 2h, head, body, legs, feet, hands, back, neck, ring, ammo, pocket, shield
+    class: string;         // melee, ranged, magic, necromancy, all, hybrid
+    style: string;         // slash, stab, crush, none
+    damage: number;
+    accuracy: number;
+    armour: number;
+    lifeBonus: number;
+    prayerBonus: number;
+    attackSpeed: string;   // fastest, fast, average, slow, slowest
+}
+
+export interface WikiItemMeta {
+    name: string;
+    examine: string;
+    tradeable: boolean;
+    stackable: boolean;
+    members: boolean;
+    weight: number;
+    highAlch: number;
+    lowAlch: number;
+    /** Grand Exchange price in coins. 0 = not on GE or unknown. */
+    geValue: number;
+    quest: string;
+    release: string;
+}
+
+export interface WikiMonsterMeta {
+    name: string;
+    combatLevel: number;
+    lifePoints: number;
+    maxHit: number;
+    weakness: string;
+    slayerLevel: number;
+    slayerCategory: string;
+    aggressive: boolean;
+    poisonous: boolean;
+    attackStyle: string;
+    members: boolean;
+    experience: number;
+    
+    // March 2026 Combat Affinities
+    defence: number;
+    armour: number;
+    affinityMelee: number;
+    affinityRanged: number;
+    affinityMagic: number;
+    affinityNecromancy: number;
+}
+
+export interface WikiDropEntry {
+    itemName: string;
+    quantity: string;       // "1", "1-3", "1 (noted)", etc.
+    rarity: string;         // "Always", "Common", "Uncommon", "Rare", "Very rare", "1/128"
+    isMembers: boolean;
+    notes: string;
+    /** Grand Exchange value in coins. 0 = not tradeable or unknown. Used by LootBeamRegistry. */
+    geValue: number;
+}
+
+export interface WikiDropTable {
+    section: string;        // "Main", "Charms", "Tertiary", sub-table name
+    entries: WikiDropEntry[];
+}
+
+export interface WikiPageData {
+    title: string;
+    fetchedAt: number;
+    bonuses: WikiEquipmentBonuses | null;
+    itemMeta: WikiItemMeta | null;
+    monsterMeta: WikiMonsterMeta | null;
+    dropTables: WikiDropTable[];
+    rawVariables: Record<string, string>;
+    pageType?: 'npc' | 'item' | 'equipment' | 'place' | 'mechanic' | 'lore';
+    extract?: string;
+    categoryMembers?: string[];
+}
+
+// ═══════════════════════════════════════════════════════
+// Generic Enrichment Types
+// ═══════════════════════════════════════════════════════
+
+export interface WikiGenericMeta {
+    title: string;
+    pageType: 'npc' | 'item' | 'equipment' | 'place' | 'mechanic' | 'lore';
+    extract: string;
+    infoboxVars: Record<string, string>;
+    categoryMembers?: string[];
+    fetchedAt: number;
+}
+
+export class WikiEquipmentEnricher {
+    private static instance: WikiEquipmentEnricher;
+
+    private readonly API_BASE = 'https://runescape.wiki/api.php';
+    private readonly USER_AGENT = 'POG2-Sovereign/1.0 (Sovereign Research Node; respectful-soft-parse)';
+    private readonly RATE_LIMIT_MS = 1500;
+    private readonly CACHE_DIR: string;
+    private readonly CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+    private lastRequestTime = 0;
+    private requestCount = 0;
+
+    private constructor() {
+        this.CACHE_DIR = join('D:', 'sovereign', 'atlas', 'wiki', 'cache');
+        this.ensureCacheDir();
+    }
+
+    public static getInstance(): WikiEquipmentEnricher {
+        if (!this.instance) {
+            this.instance = new WikiEquipmentEnricher();
+        }
+        return this.instance;
+    }
+
+    // ── Cache Layer ────────────────────────────────────────
+
+    private ensureCacheDir(): void {
+        const dirs = [
+            this.CACHE_DIR,
+            join(this.CACHE_DIR, 'items'),
+            join(this.CACHE_DIR, 'monsters'),
+            join(this.CACHE_DIR, 'templates'),
+            join(this.CACHE_DIR, 'wikitext'),
+            join(this.CACHE_DIR, 'generic')
+        ];
+        for (const dir of dirs) {
+            if (!existsSync(dir)) {
+                mkdirSync(dir, { recursive: true });
+            }
+        }
+    }
+
+    private sanitizeFilename(name: string): string {
+        return name.replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, '_').toLowerCase();
+    }
+
+    private readCache(subdir: string, key: string): any | null {
+        const filePath = join(this.CACHE_DIR, subdir, `${this.sanitizeFilename(key)}.json`);
+        if (!existsSync(filePath)) return null;
+
+        try {
+            const raw = readFileSync(filePath, 'utf8');
+            const cached = JSON.parse(raw);
+
+            // TTL check
+            if (cached._cachedAt && (Date.now() - cached._cachedAt) > this.CACHE_TTL_MS) {
+                logger.debug({ key }, 'Cache expired, will re-fetch.');
+                return null;
+            }
+
+            return cached;
+        } catch {
+            return null;
+        }
+    }
+
+    private writeCache(subdir: string, key: string, data: any): void {
+        const filePath = join(this.CACHE_DIR, subdir, `${this.sanitizeFilename(key)}.json`);
+        try {
+            writeFileSync(filePath, JSON.stringify({ ...data, _cachedAt: Date.now() }, null, 2), 'utf8');
+        } catch (err) {
+            logger.warn({ key, err }, 'Failed to write cache.');
+        }
+    }
+
+    // ── Rate Limiter ───────────────────────────────────────
+
+    private async throttle(): Promise<void> {
+        const now = Date.now();
+        const elapsed = now - this.lastRequestTime;
+        if (elapsed < this.RATE_LIMIT_MS) {
+            const delay = this.RATE_LIMIT_MS - elapsed;
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        this.lastRequestTime = Date.now();
+        this.requestCount++;
+    }
+
+    // ── API Layer ──────────────────────────────────────────
+
+    /**
+     * Fetch raw wikitext for a page. Checks disk cache first.
+     */
+    private async fetchWikitext(pageTitle: string): Promise<string | null> {
+        const cached = this.readCache('wikitext', pageTitle);
+        if (cached?.wikitext) {
+            logger.debug({ title: pageTitle }, 'Wikitext served from cache.');
+            return cached.wikitext;
+        }
+
+        await this.throttle();
+
+        const params = new URLSearchParams({
+            action: 'parse',
+            format: 'json',
+            page: pageTitle,
+            prop: 'wikitext',
+            origin: '*'
+        });
+
+        try {
+            const response = await fetch(`${this.API_BASE}?${params.toString()}`, {
+                headers: {
+                    'User-Agent': this.USER_AGENT,
+                    'Accept': 'application/json'
+                },
+                signal: AbortSignal.timeout(10000)
+            });
+
+            if (!response.ok) {
+                logger.warn({ title: pageTitle, status: response.status }, 'Wiki API non-OK response.');
+                return null;
+            }
+
+            const data = await response.json() as any;
+            const wikitext = data.parse?.wikitext?.['*'] || null;
+
+            if (wikitext) {
+                this.writeCache('wikitext', pageTitle, { wikitext });
+                logger.info({ title: pageTitle, length: wikitext.length, request: this.requestCount }, 'Wikitext fetched.');
+            }
+
+            return wikitext;
+        } catch (err) {
+            logger.error({ title: pageTitle, err }, 'Failed to fetch wikitext.');
+            return null;
+        }
+    }
+
+    /**
+     * Search for the canonical page title matching a query.
+     */
+    private async searchPage(query: string): Promise<string | null> {
+        await this.throttle();
+
+        const params = new URLSearchParams({
+            action: 'query',
+            format: 'json',
+            list: 'search',
+            srsearch: query,
+            srlimit: '1',
+            origin: '*'
+        });
+
+        try {
+            const response = await fetch(`${this.API_BASE}?${params.toString()}`, {
+                headers: { 'User-Agent': this.USER_AGENT },
+                signal: AbortSignal.timeout(10000)
+            });
+
+            const data = await response.json() as any;
+            return data.query?.search?.[0]?.title || null;
+        } catch (err) {
+            logger.error({ query, err }, 'Wiki search failed.');
+            return null;
+        }
+    }
+
+    /**
+     * Resolves a name to wikitext. Tries direct fetch, follows redirects, falls back to search.
+     */
+    private async getWikitextForName(name: string): Promise<string | null> {
+        // Try direct page first
+        let wikitext = await this.fetchWikitext(name);
+
+        // Follow #REDIRECT if the page is a redirect stub
+        if (wikitext && wikitext.trim().startsWith('#REDIRECT')) {
+            const redirectMatch = wikitext.match(/\[\[([^\]]+)\]\]/);
+            if (redirectMatch) {
+                const redirectTarget = redirectMatch[1].trim();
+                logger.info({ from: name, to: redirectTarget }, 'Following wiki redirect...');
+                wikitext = await this.fetchWikitext(redirectTarget);
+            }
+        }
+
+        if (!wikitext) {
+            // Fallback: search for the page
+            const title = await this.searchPage(name);
+            if (title && title !== name) {
+                wikitext = await this.fetchWikitext(title);
+                // Follow redirect on search result too
+                if (wikitext && wikitext.trim().startsWith('#REDIRECT')) {
+                    const redirectMatch = wikitext.match(/\[\[([^\]]+)\]\]/);
+                    if (redirectMatch) {
+                        const redirectTarget = redirectMatch[1].trim();
+                        logger.info({ from: title, to: redirectTarget }, 'Following wiki redirect (search fallback)...');
+                        wikitext = await this.fetchWikitext(redirectTarget);
+                    }
+                }
+            }
+        }
+
+        return wikitext;
+    }
+
+    // ── Template Parser ────────────────────────────────────
+
+    /**
+     * Extract a single template's parameters from wikitext.
+     * Handles nested templates via bracket-depth tracking.
+     */
+    private extractTemplate(wikitext: string, templateName: string): Record<string, string> | null {
+        const lowerText = wikitext.toLowerCase();
+        const lowerName = templateName.toLowerCase();
+
+        let searchIdx = 0;
+        let startIdx = -1;
+
+        while (searchIdx < lowerText.length) {
+            const bracePos = lowerText.indexOf('{{', searchIdx);
+            if (bracePos === -1) break;
+
+            let nameStart = bracePos + 2;
+            while (nameStart < lowerText.length && (lowerText[nameStart] === ' ' || lowerText[nameStart] === '\n')) nameStart++;
+
+            if (lowerText.substring(nameStart, nameStart + lowerName.length) === lowerName) {
+                const afterName = lowerText[nameStart + lowerName.length];
+                if (afterName === '|' || afterName === '}' || afterName === ' ' || afterName === '\n' || afterName === '\r' || afterName === undefined) {
+                    startIdx = bracePos;
+                    break;
+                }
+            }
+            searchIdx = bracePos + 2;
+        }
+
+        if (startIdx === -1) return null;
+
+        // Find matching closing }} using bracket depth
+        let depth = 0;
+        let endIdx = startIdx;
+        for (let i = startIdx; i < wikitext.length - 1; i++) {
+            if (wikitext[i] === '{' && wikitext[i + 1] === '{') {
+                depth++;
+                i++;
+            } else if (wikitext[i] === '}' && wikitext[i + 1] === '}') {
+                depth--;
+                i++;
+                if (depth === 0) {
+                    endIdx = i + 1;
+                    break;
+                }
+            }
+        }
+
+        if (depth !== 0) return null;
+
+        const fullContent = wikitext.substring(startIdx + 2, endIdx - 2);
+        const pipeIdx = fullContent.indexOf('|');
+        if (pipeIdx === -1) return {};
+
+        return this.parseTemplateParams(fullContent.substring(pipeIdx + 1));
+    }
+
+    /**
+     * Extract ALL instances of a template from wikitext.
+     * Critical for DropsLine parsing where each drop is a separate template call.
+     */
+    private extractAllTemplateInstances(wikitext: string, templateName: string): Record<string, string>[] {
+        const results: Record<string, string>[] = [];
+        const lowerText = wikitext.toLowerCase();
+        const lowerName = templateName.toLowerCase();
+        let searchIdx = 0;
+
+        while (searchIdx < lowerText.length) {
+            const bracePos = lowerText.indexOf('{{', searchIdx);
+            if (bracePos === -1) break;
+
+            let nameStart = bracePos + 2;
+            while (nameStart < lowerText.length && (lowerText[nameStart] === ' ' || lowerText[nameStart] === '\n')) nameStart++;
+
+            if (lowerText.substring(nameStart, nameStart + lowerName.length) === lowerName) {
+                const afterName = lowerText[nameStart + lowerName.length];
+                if (afterName === '|' || afterName === '}' || afterName === ' ' || afterName === '\n') {
+                    // Find closing braces
+                    let depth = 0;
+                    let endIdx = bracePos;
+                    for (let i = bracePos; i < wikitext.length - 1; i++) {
+                        if (wikitext[i] === '{' && wikitext[i + 1] === '{') { depth++; i++; }
+                        else if (wikitext[i] === '}' && wikitext[i + 1] === '}') {
+                            depth--; i++;
+                            if (depth === 0) { endIdx = i + 1; break; }
+                        }
+                    }
+
+                    const fullContent = wikitext.substring(bracePos + 2, endIdx - 2);
+                    const pipeIdx = fullContent.indexOf('|');
+                    if (pipeIdx !== -1) {
+                        results.push(this.parseTemplateParams(fullContent.substring(pipeIdx + 1)));
+                    }
+
+                    searchIdx = endIdx;
+                    continue;
+                }
+            }
+            searchIdx = bracePos + 2;
+        }
+
+        return results;
+    }
+
+    /**
+     * Parse pipe-separated template parameters, respecting nested template depth.
+     * Handles {{nested|templates}} and [[wiki|links]] inside parameter values.
+     */
+    private parseTemplateParams(text: string): Record<string, string> {
+        const params: Record<string, string> = {};
+        let depth = 0;
+        let currentParam = '';
+        let positionalIdx = 1;
+
+        for (let i = 0; i < text.length; i++) {
+            const ch = text[i];
+            const next = text[i + 1];
+
+            if (ch === '{' && next === '{') { depth++; currentParam += '{{'; i++; }
+            else if (ch === '}' && next === '}') { depth--; currentParam += '}}'; i++; }
+            else if (ch === '[' && next === '[') { depth++; currentParam += '[['; i++; }
+            else if (ch === ']' && next === ']') { depth--; currentParam += ']]'; i++; }
+            else if (ch === '|' && depth === 0) {
+                this.assignParam(params, currentParam, positionalIdx);
+                positionalIdx++;
+                currentParam = '';
+            } else {
+                currentParam += ch;
+            }
+        }
+
+        // Last parameter
+        if (currentParam.trim()) {
+            this.assignParam(params, currentParam, positionalIdx);
+        }
+
+        return params;
+    }
+
+    private assignParam(params: Record<string, string>, raw: string, positionalIdx: number): void {
+        const eqIdx = raw.indexOf('=');
+        if (eqIdx > 0 && !raw.substring(0, eqIdx).includes('{{')) {
+            const key = raw.substring(0, eqIdx).trim().toLowerCase();
+            const value = this.cleanWikiMarkup(raw.substring(eqIdx + 1).trim());
+            if (key) params[key] = value;
+        } else {
+            params[`_${positionalIdx}`] = this.cleanWikiMarkup(raw.trim());
+        }
+    }
+
+    /**
+     * Strip wiki markup from a value (links, formatting, refs).
+     */
+    private cleanWikiMarkup(text: string): string {
+        return text
+            .replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1')  // [[Link|Text]] -> Text
+            .replace(/'''?/g, '')                                // Bold/italic
+            .replace(/<ref[^>]*>.*?<\/ref>/gs, '')               // References
+            .replace(/<ref[^/]*\/>/g, '')                        // Self-closing refs
+            .replace(/<br\s*\/?>/gi, ' ')                        // Line breaks
+            .replace(/<!--.*?-->/gs, '')                         // HTML comments
+            .replace(/&nbsp;/g, ' ')                             // Non-breaking spaces
+            .trim();
+    }
+
+    // ── Structured Parsers ─────────────────────────────────
+
+    /**
+     * Parse equipment bonuses from an item's wiki page.
+     * Tries: Infobox Bonuses, Infobox bonuses, Infobox Bonuses Beta
+     */
+    public async parseEquipmentBonuses(itemName: string): Promise<WikiEquipmentBonuses | null> {
+        const wikitext = await this.getWikitextForName(itemName);
+        if (!wikitext) return null;
+
+        const templateNames = ['Infobox Bonuses', 'Infobox bonuses', 'Infobox Bonuses Beta'];
+        let bonuses: Record<string, string> | null = null;
+
+        for (const name of templateNames) {
+            bonuses = this.extractTemplate(wikitext, name);
+            if (bonuses) break;
+        }
+
+        if (!bonuses) return null;
+
+        return {
+            tier: this.safeInt(bonuses['tier'] || bonuses['level'] || '0'),
+            slot: bonuses['slot'] || 'unknown',
+            class: bonuses['class'] || bonuses['type'] || 'none',
+            style: bonuses['style'] || bonuses['astyle'] || 'none',
+            damage: this.safeInt(bonuses['damage'] || bonuses['dmg'] || '0'),
+            accuracy: this.safeInt(bonuses['accuracy'] || bonuses['acc'] || '0'),
+            armour: this.safeInt(bonuses['armour'] || bonuses['armor'] || bonuses['defence'] || '0'),
+            lifeBonus: this.safeInt(bonuses['life'] || bonuses['lp'] || bonuses['lifepoints'] || '0'),
+            prayerBonus: this.safeInt(bonuses['prayer'] || '0'),
+            attackSpeed: bonuses['speed'] || bonuses['aspeed'] || 'average'
+        };
+    }
+
+    /**
+     * Parse item metadata from an item's wiki page.
+     */
+    public async parseItemMeta(itemName: string): Promise<WikiItemMeta | null> {
+        const wikitext = await this.getWikitextForName(itemName);
+        if (!wikitext) return null;
+
+        const info = this.extractTemplate(wikitext, 'Infobox Item')
+                   || this.extractTemplate(wikitext, 'Infobox item');
+        if (!info) return null;
+
+        return {
+            name: info['name'] || itemName,
+            examine: info['examine'] || '',
+            tradeable: this.safeBool(info['tradeable'] || info['tradable']),
+            stackable: this.safeBool(info['stackable']),
+            members: this.safeBool(info['members']),
+            weight: parseFloat(info['weight'] || '0') || 0,
+            highAlch: this.safeInt(info['high'] || info['highalch'] || '0'),
+            lowAlch: this.safeInt(info['low'] || info['lowalch'] || '0'),
+            // ge field: Grand Exchange mid-price (or ge_sell, exchange, value)
+            geValue: this.safeInt(info['ge'] || info['exchange'] || info['ge_buy'] || info['value'] || '0'),
+            quest: info['quest'] || 'No',
+            release: info['release'] || 'Unknown'
+        };
+    }
+
+    /**
+     * Parse monster metadata from an NPC's wiki page.
+     */
+    public async parseMonsterMeta(npcName: string): Promise<WikiMonsterMeta | null> {
+        const wikitext = await this.getWikitextForName(npcName);
+        if (!wikitext) return null;
+
+        const info = this.extractTemplate(wikitext, 'Infobox Monster')
+                   || this.extractTemplate(wikitext, 'Infobox monster');
+        if (!info) return null;
+
+        return {
+            name: info['name'] || npcName,
+            combatLevel: this.safeInt(info['combat'] || info['combatlevel'] || info['level'] || '0'),
+            lifePoints: this.safeInt(info['lifepoints'] || info['lp'] || info['hp'] || '0'),
+            maxHit: this.safeInt(info['max hit'] || info['maxhit'] || '0'),
+            weakness: info['weakness'] || 'None',
+            slayerLevel: this.safeInt(info['slaylvl'] || info['slayerlevel'] || '0'),
+            slayerCategory: info['slayercat'] || info['category'] || 'None',
+            aggressive: this.safeBool(info['aggressive']),
+            poisonous: this.safeBool(info['poisonous'] || info['poison']),
+            attackStyle: info['attack style'] || info['attackstyle'] || info['style'] || 'Melee',
+            members: this.safeBool(info['members']),
+            experience: this.safeInt(info['experience'] || info['xp'] || '0'),
+            
+            // March 2026 Combat Affinities
+            defence: this.safeInt(info['defence'] || '0'),
+            armour: this.safeInt(info['armour'] || '0'),
+            affinityMelee: this.safeInt(info['aff_melee'] || '55'),
+            affinityRanged: this.safeInt(info['aff_ranged'] || '55'),
+            affinityMagic: this.safeInt(info['aff_magic'] || '55'),
+            affinityNecromancy: this.safeInt(info['aff_necromancy'] || '55')
+        };
+    }
+
+    /**
+     * Parse all drop table entries from a monster's wiki page.
+     * Includes sub-table resolution (Rare drop table, Gem drop table, etc.)
+     */
+    public async parseDropTables(npcName: string): Promise<WikiDropTable[]> {
+        const wikitext = await this.getWikitextForName(npcName);
+        if (!wikitext) return [];
+
+        const tables: WikiDropTable[] = [];
+
+        // Extract all DropsLine instances from the page
+        const dropLines = this.extractAllTemplateInstances(wikitext, 'DropsLine');
+
+        if (dropLines.length > 0) {
+            const mainEntries: WikiDropEntry[] = dropLines.map(dl => ({
+                itemName: dl['name'] || dl['_1'] || 'Unknown',
+                quantity: dl['quantity'] || dl['_2'] || '1',
+                rarity: dl['rarity'] || dl['_3'] || 'Unknown',
+                isMembers: this.safeBool(dl['members']),
+                notes: dl['raritynotes'] || dl['altrarity'] || '',
+                // ge: Some DropsLine templates include a |ge= param for price override
+                geValue: this.safeInt(dl['ge'] || dl['value'] || dl['price'] || '0')
+            }));
+
+            tables.push({
+                section: 'Main',
+                entries: mainEntries
+            });
+        }
+
+        // Detect and resolve sub-table references
+        const subTableRefs = this.detectSubTableRefs(wikitext);
+        for (const ref of subTableRefs) {
+            logger.info({ ref, npc: npcName }, 'Resolving sub-table reference...');
+            const subEntries = await this.resolveSubTable(ref);
+            if (subEntries.length > 0) {
+                tables.push({
+                    section: ref,
+                    entries: subEntries
+                });
+            }
+        }
+
+        return tables;
+    }
+
+    // ── Sub-Table Resolution ───────────────────────────────
+
+    /** Known sub-drop-table templates on RS Wiki. */
+    private static readonly KNOWN_SUB_TABLES = [
+        'Rare drop table',
+        'Gem drop table',
+        'Herb drop table',
+        'Seed drop table',
+        'Salvage drop table',
+        'Triskelion drop table',
+        'Ushabti drop table',
+        'Shard drop table',
+        'Spirit gem drop table',
+        'Uncommon drop table',
+        'Common drop table',
+        'Charm drop table'
+    ];
+
+    /**
+     * Detect references to sub-drop-tables in the wikitext.
+     */
+    private detectSubTableRefs(wikitext: string): string[] {
+        const found: string[] = [];
+        const lowerText = wikitext.toLowerCase();
+
+        for (const table of WikiEquipmentEnricher.KNOWN_SUB_TABLES) {
+            if (lowerText.includes(`{{${table.toLowerCase()}`)) {
+                found.push(table);
+            }
+        }
+
+        return found;
+    }
+
+    /**
+     * Fetch and parse a sub-drop-table template page.
+     * These live at Template:{name} on the wiki.
+     */
+    private async resolveSubTable(templateName: string): Promise<WikiDropEntry[]> {
+        // Check cache
+        const cached = this.readCache('templates', templateName);
+        if (cached?.entries) {
+            logger.debug({ templateName }, 'Sub-table served from cache.');
+            return cached.entries;
+        }
+
+        // Fetch the template page
+        const wikitext = await this.fetchWikitext(`Template:${templateName}`);
+        if (!wikitext) return [];
+
+        const dropLines = this.extractAllTemplateInstances(wikitext, 'DropsLine');
+        const entries: WikiDropEntry[] = dropLines.map(dl => ({
+            itemName: dl['name'] || dl['_1'] || 'Unknown',
+            quantity: dl['quantity'] || dl['_2'] || '1',
+            rarity: dl['rarity'] || dl['_3'] || 'Unknown',
+            isMembers: this.safeBool(dl['members']),
+            notes: `[${templateName}] ${dl['raritynotes'] || ''}`.trim(),
+            // Sub-tables (RDT, Gem table) typically have no direct GE price in the template.
+            // geValue defaults to 0; LootBeamRegistry will use the rarity label (e.g. "Rare drop table") instead.
+            geValue: this.safeInt(dl['ge'] || dl['value'] || '0')
+        }));
+
+        // Cache the resolved sub-table
+        this.writeCache('templates', templateName, { entries });
+        logger.info({ templateName, count: entries.length }, 'Sub-table resolved and cached.');
+
+        return entries;
+    }
+
+    // ── Generic Enrichment Logic ─────────────────────────────
+
+    private detectPageType(wikitext: string): 'npc' | 'item' | 'equipment' | 'place' | 'mechanic' | 'lore' {
+        const lower = wikitext.toLowerCase();
+        if (lower.includes('{{infobox monster')) return 'npc';
+        if (lower.includes('{{infobox item')) return 'item';
+        if (lower.includes('{{infobox bonuses')) return 'equipment';
+        if (lower.includes('{{infobox location')) || lower.includes('{{infobox area'))) return 'place';
+        if (lower.includes('{{infobox mechanic')) || lower.includes('{{infobox gameplay'))) return 'mechanic';
+        return 'lore';
+    }
+
+    private async fetchCategoryMembers(pageTitle: string): Promise<string[]> {
+        await this.throttle();
+        const params = new URLSearchParams({
+            action: 'query',
+            format: 'json',
+            list: 'categorymembers',
+            cmtitle: pageTitle,
+            cmlimit: '500',
+            origin: '*'
+        });
+
+        try {
+            const response = await fetch(`${this.API_BASE}?${params.toString()}`, {
+                headers: { 'User-Agent': this.USER_AGENT },
+                signal: AbortSignal.timeout(10000)
+            });
+            const data = await response.json() as any;
+            return data.query?.categorymembers?.map((m: any) => m.title) || [];
+        } catch (err) {
+            logger.error({ pageTitle, err }, 'Failed to fetch category members.');
+            return [];
+        }
+    }
+
+    private async fetchExtract(pageTitle: string): Promise<string | null> {
+        await this.throttle();
+        const params = new URLSearchParams({
+            action: 'query',
+            format: 'json',
+            prop: 'extracts',
+            exintro: '1',
+            explaindepth: '0',
+            titles: pageTitle,
+            origin: '*'
+        });
+
+        try {
+            const response = await fetch(`${this.API_BASE}?${params.toString()}`, {
+                headers: { 'User-Agent': this.USER_AGENT },
+                signal: AbortSignal.timeout(10000)
+            });
+            const data = await response.json() as any;
+            const pages = data.query?.pages;
+            if (!pages) return null;
+            const pageId = Object.keys(pages)[0];
+            return pages[pageId]?.extract || null;
+        } catch (err) {
+            logger.error({ pageTitle, err }, 'Failed to fetch page extract.');
+            return null;
+        }
+    }
+
+    public async enrichGeneric(pageTitle: string): Promise<WikiPageData | null> {
+        const cached = this.readCache('generic', pageTitle);
+        if (cached && cached.title) {
+            logger.debug({ pageTitle }, 'Generic enrichment served from cache.');
+            return cached;
+        }
+
+        const wikitext = await this.getWikitextForName(pageTitle);
+        if (!wikitext) return null;
+
+        const pageType = this.detectPageType(wikitext);
+        let categoryMembers: string[] | undefined;
+        if (pageTitle.startsWith('Category:')) {
+            categoryMembers = await this.fetchCategoryMembers(pageTitle);
+        }
+
+        const result: WikiPageData = {
+            title: pageTitle,
+            fetchedAt: Date.now(),
+            bonuses: null,
+            itemMeta: null,
+            monsterMeta: null,
+            dropTables: [],
+            rawVariables: this.extractTemplate(wikitext, 'Infobox Item')
+                         || this.extractTemplate(wikitext, 'Infobox Monster')
+                         || this.extractTemplate(wikitext, 'Infobox Bonuses')
+                         || {},
+            pageType,
+            extract: await this.fetchExtract(pageTitle),
+            categoryMembers
+        };
+
+        this.writeCache('generic', pageTitle, result);
+        return result;
+    }
+
+    // ── High-Level API ─────────────────────────────────────
+
+    /**
+     * Full enrichment pipeline for an equipment item.
+     * Returns bonuses, item metadata, and all raw infobox variables.
+     */
+    public async enrichItem(name: string): Promise<WikiPageData> {
+        const cached = this.readCache('items', name);
+        if (cached && cached.title) {
+            logger.debug({ name }, 'Item enrichment served from cache.');
+            return cached;
+        }
+
+        const bonuses = await this.parseEquipmentBonuses(name);
+        const itemMeta = await this.parseItemMeta(name);
+
+        // Extract all raw variables from any infobox
+        const wikitext = await this.getWikitextForName(name);
+        const rawVariables = wikitext
+            ? (this.extractTemplate(wikitext, 'Infobox Item')
+               || this.extractTemplate(wikitext, 'Infobox Bonuses')
+               || {})
+            : {};
+
+        const result: WikiPageData = {
+            title: name,
+            fetchedAt: Date.now(),
+            bonuses,
+            itemMeta,
+            monsterMeta: null,
+            dropTables: [],
+            rawVariables
+        };
+
+        this.writeCache('items', name, result);
+        return result;
+    }
+
+    /**
+     * Full enrichment pipeline for a monster/NPC.
+     * Returns stats, drop tables (with sub-tables), and all raw infobox variables.
+     */
+    public async enrichMonster(name: string): Promise<WikiPageData> {
+        const cached = this.readCache('monsters', name);
+        if (cached && cached.title) {
+            logger.debug({ name }, 'Monster enrichment served from cache.');
+            return cached;
+        }
+
+        const monsterMeta = await this.parseMonsterMeta(name);
+        const dropTables = await this.parseDropTables(name);
+
+        const wikitext = await this.getWikitextForName(name);
+        const rawVariables = wikitext
+            ? (this.extractTemplate(wikitext, 'Infobox Monster') || {})
+            : {};
+
+        const result: WikiPageData = {
+            title: name,
+            fetchedAt: Date.now(),
+            bonuses: null,
+            itemMeta: null,
+            monsterMeta,
+            dropTables,
+            rawVariables
+        };
+
+        this.writeCache('monsters', name, result);
+        return result;
+    }
+
+    /**
+     * Batch enrichment with progress callback.
+     * Respectfully rate-limited — each API hit spaced by RATE_LIMIT_MS.
+     */
+    public async batchEnrich(
+        names: string[],
+        type: 'item' | 'monster',
+        onProgress?: (current: number, total: number, name: string) => void
+    ): Promise<Map<string, WikiPageData>> {
+        const results = new Map<string, WikiPageData>();
+
+        logger.info({ count: names.length, type }, 'Beginning batch wiki enrichment...');
+
+        for (let i = 0; i < names.length; i++) {
+            const name = names[i];
+            onProgress?.(i + 1, names.length, name);
+
+            try {
+                const data = type === 'item'
+                    ? await this.enrichItem(name)
+                    : await this.enrichMonster(name);
+                results.set(name, data);
+            } catch (err) {
+                logger.warn({ name, err }, 'Batch enrichment failed for entry.');
+            }
+        }
+
+        logger.info({ completed: results.size, total: names.length }, 'Batch enrichment complete.');
+        return results;
+    }
+
+    // ── Integration Helper ─────────────────────────────────
+
+    /**
+     * Converts wiki bonuses into a patch compatible with ItemBook's semanticStats.
+     * Use this to fill gaps in item_definitions_enriched.json.
+     */
+    public toItemBookPatch(bonuses: WikiEquipmentBonuses): Record<string, any> {
+        const patch: Record<string, any> = {};
+
+        if (bonuses.tier > 0) {
+            const cls = bonuses.class.toLowerCase();
+            if (cls === 'melee' || bonuses.style === 'slash' || bonuses.style === 'stab' || bonuses.style === 'crush') {
+                patch.req_attack = bonuses.tier;
+            } else if (cls === 'ranged') {
+                patch.req_ranged = bonuses.tier;
+            } else if (cls === 'magic') {
+                patch.req_magic = bonuses.tier;
+            } else if (cls === 'necromancy') {
+                patch.req_necromancy = bonuses.tier;
+            }
+            patch.tier = bonuses.tier;
+        }
+
+        if (bonuses.damage > 0) patch.damage = bonuses.damage;
+        if (bonuses.accuracy > 0) patch.accuracy = bonuses.accuracy;
+        if (bonuses.armour > 0) patch.armour = bonuses.armour;
+        if (bonuses.lifeBonus > 0) patch.lifeBonus = bonuses.lifeBonus;
+        if (bonuses.prayerBonus > 0) patch.prayerBonus = bonuses.prayerBonus;
+        patch.slot = bonuses.slot;
+        patch.style = bonuses.style;
+        patch.attackSpeed = bonuses.attackSpeed;
+
+        return patch;
+    }
+
+    // ── Utilities ──────────────────────────────────────────
+
+    private safeInt(value: string): number {
+        const cleaned = value.replace(/,/g, '').replace(/[^0-9.-]/g, '');
+        const parsed = parseInt(cleaned, 10);
+        return isNaN(parsed) ? 0 : parsed;
+    }
+
+    private safeBool(value: string | undefined): boolean {
+        if (!value) return false;
+        const lower = value.toLowerCase().trim();
+        return lower === 'yes' || lower === 'true' || lower === '1';
+    }
+
+    /**
+     * Session telemetry — how many API calls have been made.
+     */
+    public getStats(): { requestCount: number; lastRequest: number } {
+        return {
+            requestCount: this.requestCount,
+            lastRequest: this.lastRequestTime
+        };
+    }
+}

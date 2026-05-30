@@ -1,0 +1,42 @@
+ The corpus generation is running — I can see `WikiEquipmentEnricher` processing items at ~1-2 seconds per entity with proper query classification. The logs show:
+
+- `rat poison` → semantic_name → wikitext fetched (request 23)
+- `Red vine worm` → semantic_name → wikitext fetched (request 24)
+- `ITEMS 29` → hybrid → classified correctly
+- `Bucket of wax` → semantic_name → wikitext fetched (request 28)
+
+**Observations:**
+
+1. **"ITEMS 29", "ITEMS 31", "ITEMS 34"** — These are hybrid queries with numbers. The classifier is working but these look like catalog index entries, not actual item names. If your `items.json` dump contains entries like `{id: 29, name: "ITEMS 29"}`, the enricher is trying to wiki-search garbage names.
+
+2. **Rate limiting is working** — Requests are spaced ~1 second apart, well within the 40/min wiki API limit.
+
+3. **BATCH_SIZE = 50** — At this rate, processing your full item catalog (potentially thousands of entries) will take hours. Consider:
+   - Running overnight
+   - Parallelizing across multiple API keys
+   - Filtering the catalog to only named items before enrichment
+
+**Critical check:** What's in `D:/D-sovereign-/cache_pedagogy/json_dumps/items.json`? If it contains raw cache entries with IDs like `ITEMS 29`, you should pre-filter:
+
+```typescript
+// In generate_pedagogy_corpus.ts
+const itemsData = JSON.parse(readFileSync(CATALOG_PATHS.items, 'utf8'))
+  .filter((item: any) => item.name && !item.name.match(/^ITEMS?\s*\d+$/i));
+```
+
+**Current corpus output format:**
+```json
+{
+  "instruction": "Generate verified entity definition for {name}",
+  "input": "{\"id\": {id}, \"wiki\": {...}}",
+  "output": "[{tag}] Item {id}: {name}. {excerpt}",
+  "tags": ["[VERIFIED]"],
+  "verified": true/false
+}
+```
+
+This is good for Unsloth training. The `[VERIFIED]` / `[WIKI_ONLY]` tags will help the model learn source reliability.
+
+**Recommendation:** Let the batch finish. Check the output file size after 100-200 entries to verify format correctness. If the `ITEMS XX` entries are polluting the corpus, stop and add the filter.
+
+How large is your `items.json` dump?

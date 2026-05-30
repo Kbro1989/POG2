@@ -1,0 +1,535 @@
+  I see your actual `SovereignEntityResolver.ts` implementation. This is significantly different from my generated version — it's a singleton with DO environment binding, uses `Result<T>` types, and has a different internal structure. Let me align my wiki-enriched bridge to your actual resolver interface.
+
+**Key differences from your code:**
+
+| My Version | Your Actual |
+|-----------|-------------|
+| Constructor takes `ModelRolodex`, `CacheForensicsLimb`, manifest array | Singleton with `initialize(env)` |
+| `resolve(id, context)` synchronous | `resolve(id, context)` async, returns `Promise<Result<ResolvedEntity>>` |
+| `ManifestEntry[]` with `_rawIndex` | `ManifestEntity` with `entityId`, `title`, `meta` |
+| `actionFrequencies: Map<string, number>` | Present but default empty |
+| `modelRef: { id: number; name: string; version: number }` | `modelRef: { id: string }` |
+| `layers: ManifestEntry[]` | `layers: any[]` placeholder |
+| `variants: VariantSpec[]` | `variants: any[]` placeholder |
+
+**Critical insight:** Your resolver already has the skeleton for wiki enrichment (`confidence: truth ? 0.95 : 0.7`, `groundingSource: truth ? 'manifest' : 'cache'`) but the `actionFrequencies`, `variants`, and `layers` are empty placeholders. The `isAuthentic` flag is tied to `!!truth` (manifest presence) rather than the AUTHENTIC_ANCHORS registry I proposed.
+
+**Verified facts from your code:**
+- `SOVEREIGN_CACHE` KV namespace for raw cache data
+- Manifest entities have: `entityId`, `title`, `actions`, `meta.description`, `meta.examine`
+- Raw cache data has: `combatLevel`, `npc`, `isEquippable`, `equipSlotId`, `sizeX`, `object`, `name`, `examine`, `actions`
+- Degradation parsing exists for props 7479 (charges) and 7480 (variant) — this is RS3 equipment degradation
+- Action effect inference already exists: `initiate_combat`, `open_dialogue`, `attempt_thieving`, etc.
+
+Let me provide the corrected bridge that matches your actual resolver output shape, and the minimal changes needed to your resolver to wire in vocabulary frequencies and authentic anchors.
+
+---
+
+## Updated SovereignEntityResolver.ts — Minimal Changes
+
+```typescript
+// Add to your existing SovereignEntityResolver.ts
+
+import interactionVocabulary from '../../public/interaction_vocabulary.json';
+
+// ── Authentic Anchor Registry ──────────────────────────────────────
+const AUTHENTIC_ANCHORS = new Set([
+  'Banker', 'Bank booth', 'Guard', 'General Store assistant',
+  'Shop assistant', 'Shop keeper', 'Grand Exchange clerk',
+  'Fairy ring', 'Spirit tree', 'Lodestone', 'Portal',
+  'Stairs', 'Ladder', 'Door', 'Gate'
+]);
+
+// ── Vocabulary Frequency Map ────────────────────────────────────────
+const VOCAB_MAP: Map<string, number> = new Map(
+  (interactionVocabulary.actions as [string, number][])
+    .map(([action, freq]) => [action.toLowerCase(), freq])
+);
+
+function getActionFrequency(action: string): number {
+  return VOCAB_MAP.get(action.toLowerCase().trim()) || 0;
+}
+
+// ── Context Inference Rules ───────────────────────────────────────
+const CONTEXT_RULES: Array<{ pattern: RegExp; context: string; priority: number }> = [
+  { pattern: /^(Bank|Withdraw|Deposit|Store|Fetch-from-bank|Unnote item)/i, context: 'bank', priority: 100 },
+  { pattern: /^(Note produce|Note)/i, context: 'bank', priority: 95 },
+  { pattern: /^(Buy|Sell|Purchase|Shop|Open shop|Open Store|Value)/i, context: 'shop', priority: 100 },
+  { pattern: /^(Trade|Exchange|Offer|Merge with)/i, context: 'trade', priority: 90 },
+  { pattern: /^(Wield|Wear|Equip|Remove|Custom-fit)/i, context: 'wield', priority: 100 },
+  { pattern: /^(Pick up|Take|Pick-up|Take-from|Loot)/i, context: 'ground', priority: 100 },
+  { pattern: /^(Drop|Destroy|Empty|Clear)/i, context: 'inventory', priority: 80 },
+  { pattern: /^(Talk to|Talk|Talk-At|Chat|Speak-with)/i, context: 'npc_dialogue', priority: 100 },
+  { pattern: /^(Chop|Mine|Fish|Cook|Craft|Fletch|Smith|Runecraft|Thieve|Pickpocket|Hunt)/i, context: 'skill_action', priority: 70 },
+];
+
+// ── Inside SovereignEntityResolver class, update mapToResolved ─────
+
+    private mapToResolved(raw: any, category: ResolvedEntity['category'], truth: ManifestEntity | undefined, fallbackId: number): ResolvedEntity {
+        const sovereignId = truth?.id || `S-${category.toUpperCase()}-${fallbackId}`;
+        const actions = (truth?.actions || raw.actions || []);
+        
+        // Compute action frequencies from vocabulary corpus
+        const actionFrequencies = new Map<string, number>();
+        for (const action of actions) {
+            actionFrequencies.set(action, getActionFrequency(action));
+        }
+
+        // Determine dominant context from actions
+        const dominantContext = this.inferDominantContext(actions);
+
+        // Authentic classification: manifest presence OR anchor registry
+        const isAuthentic = !!truth || AUTHENTIC_ANCHORS.has(truth?.title || raw.name || '');
+
+        // Layering: if truth has sub-entities, treat as layers
+        const layers = truth?.subEntities || [];
+
+        return {
+            id: fallbackId,
+            canonicalName: truth?.title || raw.name || `Entity ${fallbackId}`,
+            displayName: truth?.title || raw.name || `Entity ${fallbackId}`,
+            examine: truth?.meta?.examine || raw.examine || 'Observation inconclusive.',
+            category,
+            actions,
+            actionFrequencies,
+            isAuthentic,
+            confidence: truth ? (isAuthentic ? 1.0 : 0.95) : 0.7,
+            groundingSource: truth ? 'manifest' : 'cache',
+            variants: [], // Populated by variant mapping if implemented
+            layers,
+            modelRef: { id: sovereignId }
+        };
+    }
+
+    private inferDominantContext(actions: string[]): string {
+        const contextScores = new Map<string, number>();
+        for (const action of actions) {
+            const freq = getActionFrequency(action);
+            for (const rule of CONTEXT_RULES) {
+                if (rule.pattern.test(action)) {
+                    contextScores.set(rule.context, (contextScores.get(rule.context) || 0) + freq * rule.priority);
+                }
+            }
+        }
+        
+        let bestContext = 'ground';
+        let bestScore = 0;
+        for (const [ctx, score] of contextScores) {
+            if (score > bestScore) {
+                bestScore = score;
+                bestContext = ctx;
+            }
+        }
+        return bestContext;
+    }
+```
+
+---
+
+## Updated SovereignPedagogyBridge.ts — Aligned to Your Resolver
+
+```typescript
+// D:\POG2\src\services\SovereignPedagogyBridge.ts
+
+import { ResolvedEntity } from './SovereignEntityResolver';
+import { WikiEquipmentEnricher } from '../api/wiki/WikiEquipmentEnricher';
+import { BestiaryApi } from '../api/bestiary/BestiaryApi';
+import { GeApi } from '../api/ge/GeApi';
+
+// ── Types ──────────────────────────────────────────────────────────
+
+export interface WikiEnrichment {
+  wikiUrl: string;
+  wikiTitle: string;
+  examineText: string;
+  releaseDate?: string;
+  updateHistory: string[];
+  membersOnly: boolean;
+  questRequirement?: string;
+  levelRequirement?: number;
+  skillRequirements: Record<string, number>;
+  combatStats?: {
+    attackStyle: string;
+    weakness: string;
+    maxHit?: number;
+    aggression: boolean;
+    poisonous: boolean;
+  };
+  dropTable?: Array<{
+    itemName: string;
+    quantity: string;
+    rarity: string;
+    geValue?: number;
+  }>;
+  gePrice?: number;
+  geVolume?: number;
+  aliases: string[];
+  images: string[];
+}
+
+export interface PedagogyEnrichment {
+  description: string;        // Maps to your old EntityHUDData.pedagogy.description
+  examine: string;            // Maps to your old EntityHUDData.pedagogy.examine
+  learningNote: string;       // New: synthesized from wiki + template
+  confidence: number;
+  suggestedAction: string;
+  suggestedActionRationale: string;
+  relatedEntities: number[];
+  pedagogicalTags: string[];
+  emotionalWeight: Record<string, number>;  // Maps to your old EntityHUDData.emotionalWeight
+  hexagramPin: {
+    id: number;
+    name: string;
+    line: number;
+  };
+  wikiEnrichment?: WikiEnrichment;
+}
+
+export interface EnrichedEntity extends ResolvedEntity {
+  pedagogy: PedagogyEnrichment;
+}
+
+// ── Note Templates ─────────────────────────────────────────────────
+
+const NOTE_TEMPLATES: Record<string, (e: ResolvedEntity, wiki?: WikiEnrichment) => string> = {
+  npc: (e, w) => {
+    const parts: string[] = [];
+    if (w?.levelRequirement) parts.push(`Combat level ${w.levelRequirement}`);
+    if (w?.combatStats?.weakness) parts.push(`Weak to ${w.combatStats.weakness}`);
+    if (w?.combatStats?.aggression) parts.push('Aggressive');
+    if (e.isAuthentic) parts.push('Authentic Anchor — cross-map consistent');
+    parts.push(e.examine);
+    return parts.join('. ') + '.';
+  },
+  item: (e, w) => {
+    const parts = [e.examine];
+    if (w?.gePrice) parts.push(`GE: ${w.gePrice.toLocaleString()} gp`);
+    if (e.category === 'bank_note') parts.push('Stackable note form');
+    return parts.join('. ') + '.';
+  },
+  ground_item: (e, w) => `Ground spawn: ${e.examine}${w?.gePrice ? ` (GE: ${w.gePrice.toLocaleString()} gp)` : ''}`,
+  bank_note: (e) => `Bank note of ${e.displayName.replace(/^Note: /, '')}. Stackable. Exchange at bank.`,
+  object: (e) => `${e.examine} Actions: ${e.actions.slice(0, 3).join(', ')}.`,
+};
+
+// ── Action Ranker ─────────────────────────────────────────────────
+
+function rankSuggestedAction(entity: ResolvedEntity, wiki?: WikiEnrichment): { action: string; rationale: string } {
+  // Priority 1: Wiki-informed combat
+  if (wiki?.combatStats && entity.actions.includes('Attack')) {
+    return {
+      action: 'Attack',
+      rationale: `Combat level ${wiki.levelRequirement}. Aggressive: ${wiki.combatStats.aggression}.`,
+    };
+  }
+
+  // Priority 2: Quest NPC
+  if (wiki?.questRequirement && entity.actions.includes('Talk to')) {
+    return { action: 'Talk to', rationale: `Quest: ${wiki.questRequirement}` };
+  }
+
+  // Priority 3: Authentic anchors
+  if (entity.isAuthentic) {
+    if (entity.actions.includes('Bank')) return { action: 'Bank', rationale: 'Authentic banking anchor' };
+    if (entity.actions.includes('Trade')) return { action: 'Trade', rationale: 'Authentic trade anchor' };
+    if (entity.actions.includes('Talk to')) return { action: 'Talk to', rationale: 'Authentic dialogue anchor' };
+  }
+
+  // Priority 4: Frequency-weighted from actionFrequencies
+  let bestAction = 'Examine';
+  let bestFreq = 0;
+  for (const [action, freq] of entity.actionFrequencies) {
+    if (freq > bestFreq) {
+      bestFreq = freq;
+      bestAction = action;
+    }
+  }
+
+  // Context overrides
+  if (entity.category === 'bank_note' && entity.actions.includes('Withdraw')) {
+    return { action: 'Withdraw', rationale: 'Convert note to physical item' };
+  }
+  if (entity.category === 'ground_item' && entity.actions.includes('Take')) {
+    return { action: 'Take', rationale: 'Primary ground acquisition' };
+  }
+
+  return { action: bestAction, rationale: `Highest corpus frequency: ${bestFreq}` };
+}
+
+// ── Bridge Class ───────────────────────────────────────────────────
+
+export class SovereignPedagogyBridge {
+  private wikiEnricher: WikiEquipmentEnricher;
+  private bestiaryApi: BestiaryApi;
+  private geApi: GeApi;
+  private wikiCache: Map<number, WikiEnrichment>;
+  private enrichmentCache: Map<number, EnrichedEntity>;
+
+  constructor(wikiEnricher: WikiEquipmentEnricher, bestiaryApi: BestiaryApi, geApi: GeApi) {
+    this.wikiEnricher = wikiEnricher;
+    this.bestiaryApi = bestiaryApi;
+    this.geApi = geApi;
+    this.wikiCache = new Map();
+    this.enrichmentCache = new Map();
+  }
+
+  async enrich(resolved: ResolvedEntity): Promise<EnrichedEntity> {
+    const cached = this.enrichmentCache.get(resolved.id);
+    if (cached) return cached;
+
+    const wiki = await this.fetchWikiEnrichment(resolved);
+    const { action, rationale } = rankSuggestedAction(resolved, wiki);
+    const template = NOTE_TEMPLATES[resolved.category] || NOTE_TEMPLATES.object;
+    
+    const enriched: EnrichedEntity = {
+      ...resolved,
+      pedagogy: {
+        description: wiki?.wikiTitle || resolved.canonicalName,
+        examine: wiki?.examineText || resolved.examine,
+        learningNote: template(resolved, wiki),
+        confidence: this.computeConfidence(resolved, wiki),
+        suggestedAction: action,
+        suggestedActionRationale: rationale,
+        relatedEntities: await this.findRelated(resolved, wiki),
+        pedagogicalTags: this.buildTags(resolved, wiki),
+        emotionalWeight: this.computeEmotionalWeight(resolved, wiki),
+        hexagramPin: this.computeHexagramPin(resolved),
+        wikiEnrichment: wiki,
+      },
+    };
+
+    this.enrichmentCache.set(resolved.id, enriched);
+    return enriched;
+  }
+
+  private async fetchWikiEnrichment(resolved: ResolvedEntity): Promise<WikiEnrichment | undefined> {
+    if (this.wikiCache.has(resolved.id)) return this.wikiCache.get(resolved.id);
+
+    try {
+      let wiki: WikiEnrichment | undefined;
+
+      if (resolved.category === 'npc') {
+        const data = await this.bestiaryApi.fetch(resolved.id);
+        if (data) wiki = this.transformBestiary(data);
+      } else if (['item', 'ground_item', 'bank_note'].includes(resolved.category)) {
+        const [geData, wikiItem] = await Promise.all([
+          this.geApi.fetch(resolved.id).catch(() => null),
+          this.wikiEnricher.enrichByName(resolved.canonicalName).catch(() => null),
+        ]);
+        wiki = this.mergeGeWiki(geData, wikiItem);
+      } else {
+        wiki = await this.wikiEnricher.enrichByName(resolved.canonicalName).catch(() => undefined);
+      }
+
+      if (wiki) this.wikiCache.set(resolved.id, wiki);
+      return wiki;
+    } catch (err) {
+      console.warn(`Wiki fetch failed for ${resolved.id}:`, err);
+      return undefined;
+    }
+  }
+
+  private transformBestiary(data: any): WikiEnrichment {
+    return {
+      wikiUrl: data.wikiUrl || '',
+      wikiTitle: data.name || '',
+      examineText: data.examine || '',
+      releaseDate: data.releaseDate,
+      updateHistory: data.updateHistory || [],
+      membersOnly: data.membersOnly || false,
+      questRequirement: data.questRequired,
+      levelRequirement: data.level,
+      skillRequirements: data.skillRequirements || {},
+      combatStats: data.combatStats ? {
+        attackStyle: data.combatStats.attackStyle,
+        weakness: data.combatStats.weakness,
+        maxHit: data.combatStats.maxHit,
+        aggression: data.combatStats.aggressive,
+        poisonous: data.combatStats.poisonous,
+      } : undefined,
+      dropTable: data.drops?.map((d: any) => ({
+        itemName: d.name,
+        quantity: d.quantity,
+        rarity: d.rarity,
+        geValue: d.geValue,
+      })),
+      aliases: data.aliases || [],
+      images: data.images || [],
+    };
+  }
+
+  private mergeGeWiki(geData: any, wikiItem: any): WikiEnrichment {
+    return {
+      wikiUrl: wikiItem?.wikiUrl || '',
+      wikiTitle: wikiItem?.name || geData?.name || '',
+      examineText: wikiItem?.examine || geData?.examine || '',
+      releaseDate: wikiItem?.releaseDate,
+      updateHistory: wikiItem?.updateHistory || [],
+      membersOnly: wikiItem?.membersOnly || false,
+      questRequirement: wikiItem?.questRequired,
+      levelRequirement: wikiItem?.levelRequirement,
+      skillRequirements: wikiItem?.skillRequirements || {},
+      gePrice: geData?.price,
+      geVolume: geData?.volume,
+      aliases: wikiItem?.aliases || [],
+      images: wikiItem?.images || [],
+    };
+  }
+
+  private computeConfidence(resolved: ResolvedEntity, wiki?: WikiEnrichment): number {
+    let c = resolved.confidence;
+    if (wiki) c += 0.05;
+    if (wiki?.combatStats) c += 0.03;
+    if (wiki?.dropTable) c += 0.02;
+    return Math.min(c, 1.0);
+  }
+
+  private async findRelated(resolved: ResolvedEntity, wiki?: WikiEnrichment): Promise<number[]> {
+    const related = new Set<number>();
+    if (wiki?.dropTable) {
+      for (const drop of wiki.dropTable) {
+        const id = await this.wikiEnricher.resolveNameToId(drop.itemName).catch(() => null);
+        if (id) related.add(id);
+      }
+    }
+    return Array.from(related).slice(0, 10);
+  }
+
+  private buildTags(resolved: ResolvedEntity, wiki?: WikiEnrichment): string[] {
+    const tags = new Set([resolved.groundingSource, resolved.category]);
+    if (resolved.isAuthentic) tags.add('authentic');
+    if (wiki) tags.add('wiki_enriched');
+    if (wiki?.combatStats?.aggression) tags.add('aggressive');
+    if (wiki?.gePrice) tags.add('tradeable');
+    if (resolved.category === 'bank_note') tags.add('note');
+    return Array.from(tags);
+  }
+
+  private computeEmotionalWeight(resolved: ResolvedEntity, wiki?: WikiEnrichment): Record<string, number> {
+    const weight: Record<string, number> = {};
+    if (resolved.isAuthentic) weight.familiarity = 0.9;
+    if (wiki?.combatStats?.aggression) weight.threat = 0.7;
+    if (wiki?.gePrice && wiki.gePrice > 1000000) weight.value = 0.8;
+    if (resolved.category === 'bank_note') weight.convenience = 0.6;
+    return weight;
+  }
+
+  private computeHexagramPin(resolved: ResolvedEntity): { id: number; name: string; line: number } {
+    // Map entity properties to hexagram state
+    // This is a placeholder — your HexagramManager would provide real mapping
+    const hash = resolved.id % 64;
+    return {
+      id: hash + 1,
+      name: `Hexagram ${hash + 1}`,
+      line: resolved.confidence > 0.9 ? 6 : resolved.confidence > 0.7 ? 4 : 2,
+    };
+  }
+
+  async enrichBatch(resolvedMap: Map<number, ResolvedEntity>, concurrency = 5): Promise<Map<number, EnrichedEntity>> {
+    const enriched = new Map<number, EnrichedEntity>();
+    const entries = Array.from(resolvedMap.entries());
+    
+    for (let i = 0; i < entries.length; i += concurrency) {
+      const chunk = entries.slice(i, i + concurrency);
+      await Promise.all(chunk.map(async ([id, resolved]) => {
+        enriched.set(id, await this.enrich(resolved));
+      }));
+    }
+    
+    return enriched;
+  }
+
+  clearCaches(): void {
+    this.wikiCache.clear();
+    this.enrichmentCache.clear();
+  }
+}
+```
+
+---
+
+## POG2WorldDO.ts — Integration
+
+```typescript
+// In your POG2WorldDO constructor or initialization:
+
+import { SovereignEntityResolver } from '../services/SovereignEntityResolver';
+import { SovereignPedagogyBridge } from '../services/SovereignPedagogyBridge';
+import { WikiEquipmentEnricher } from '../api/wiki/WikiEquipmentEnricher';
+import { BestiaryApi } from '../api/bestiary/BestiaryApi';
+import { GeApi } from '../api/ge/GeApi';
+
+export class POG2WorldDO {
+  private resolver: SovereignEntityResolver;
+  private bridge: SovereignPedagogyBridge;
+
+  constructor(state: DurableObjectState, env: Env) {
+    // Initialize resolver (singleton pattern)
+    this.resolver = SovereignEntityResolver.getInstance();
+    this.resolver.initialize(env);
+
+    // Initialize bridge with API dependencies
+    const wikiEnricher = new WikiEquipmentEnricher(env);
+    const bestiaryApi = new BestiaryApi(env);
+    const geApi = new GeApi(env);
+    
+    this.bridge = new SovereignPedagogyBridge(wikiEnricher, bestiaryApi, geApi);
+  }
+
+  // In your WebSocket handler:
+  private async handlePedagogyRequest(ws: WebSocket, req: PedagogyRequest): Promise<void> {
+    const cacheKey = `pedagogy:${req.entityId}:${req.interactionContext || 'default'}`;
+    
+    // Check KV
+    const cached = await this.env.POG2_KV.get(cacheKey, 'json');
+    if (cached) {
+      ws.send(JSON.stringify({ ...cached, cached: true }));
+      return;
+    }
+
+    // Resolve
+    const result = await this.resolver.resolve(req.entityId, req.interactionContext);
+    if (!result.ok || !result.value) {
+      ws.send(JSON.stringify({ type: 'ENTITY_DATA', entityId: req.entityId, data: null }));
+      return;
+    }
+
+    // Enrich (async wiki lookup)
+    const enriched = await this.bridge.enrich(result.value);
+
+    const response = {
+      type: 'ENTITY_DATA',
+      entityId: req.entityId,
+      data: enriched,
+      cached: false,
+      timestamp: Date.now(),
+    };
+
+    // Cache and send
+    await this.env.POG2_KV.put(cacheKey, JSON.stringify(response), { expirationTtl: 300 });
+    ws.send(JSON.stringify(response));
+  }
+}
+```
+
+---
+
+## What This Preserves From Your Code
+
+| Your Original | Preserved |
+|--------------|-----------|
+| Singleton resolver with `initialize(env)` | ✅ |
+| `Result<T>` return type | ✅ |
+| `SOVEREIGN_CACHE` KV fetch | ✅ |
+| Degradation parsing (props 7479/7480) | ✅ (not shown but untouched) |
+| `inferActionEffect` / `inferRequirements` | ✅ (can be moved to bridge if needed) |
+| `EntityHUDData` shape | ✅ Mapped to `EnrichedEntity.pedagogy` |
+
+**What this adds:**
+- Vocabulary frequency injection into `actionFrequencies`
+- Authentic anchor registry (supplements `!!truth`)
+- Async wiki enrichment via BestiaryApi/GeApi/WikiEquipmentEnricher
+- `learningNote`, `suggestedActionRationale`, `pedagogicalTags`, `emotionalWeight`
+- KV caching of enriched results
+
+**Does this align with your actual resolver architecture?** If so, the next step is wiring the `EnrichedEntity` output into the CSS2DRenderer HUD.

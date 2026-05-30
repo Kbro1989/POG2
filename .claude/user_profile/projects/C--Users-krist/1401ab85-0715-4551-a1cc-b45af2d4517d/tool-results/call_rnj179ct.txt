@@ -1,0 +1,252 @@
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\readme.md:30:### [Experimental] GitHub Copilot chat agent
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\readme.md:32:For users of Copilot, the Ruby LSP contributes a Ruby agent for AI assisted development of Ruby applications. Below you
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\readme.md:33:can find the documentation of each command for the Ruby agent. For information about how to interact with Copilot Chat,
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\readme.md:51:continue chatting with the `@ruby` agent to fine tune the suggestions given, before deciding to move forward with
+.antigravity\extensions\anilkumarum.compile-ts-0.1.5-universal\out\extension.js:1:[Omitted long matching line]
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\out\extension.js:1:[Omitted long matching line]
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\out\extension.js:31:[Omitted long matching line]
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\out\extension.js:35:[Omitted long matching line]
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\out\extension.js:36:[Omitted long matching line]
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\out\extension.js:39:[Omitted long matching line]
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\out\extension.js:44:[Omitted long matching line]
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\out\extension.js:74:[Omitted long matching line]
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\out\extension.js:80:[Omitted long matching line]
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\out\extension.js:154:[Omitted long matching line]
+.antigravity\extensions\dbaeumer.vscode-eslint-3.0.24-universal\server\out\eslintServer.js:1:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:1529:					"description": "Set the source location of dynamically discovered subtests to the location of the containing function. As a result, dynamically discovered subtests will be added to the gutter test widget of the containing function.",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2131:							"markdownDescription": "completeFunctionCalls enables function call completion.\n\nWhen completing a statement, or when a function return type matches the\nexpected of the expression being completed, completion may suggest call\nexpressions (i.e. may include parentheses).\n",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2316:									"markdownDescription": "Simplify 'make' call by omitting redundant arguments\n\nThe 'make' function has default values for the length and capacity\narguments. For channels, the length defaults to zero, and for slices,\nthe capacity defaults to the length.\n\nAvailable since\n    2017.1\n",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2431:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2451:									"markdownDescription": "(*regexp.Regexp).FindAll called with n == 0, which will always return zero results\n\nIf n >= 0, the function returns at most n matches/submatches. To\nreturn all results, specify a negative number.\n\nAvailable since\n    2017.1\n",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2541:									"markdownDescription": "Invalid argument in call to a strconv function\n\nThis check validates the format, number base and bit size arguments of\nthe various parsing and formatting functions in strconv.\n\nAvailable since\n    2021.1\n",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2551:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2571:									"markdownDescription": "TestMain doesn't call os.Exit, hiding test failures\n\nTest executables (and in turn 'go test') exit with a non-zero status\ncode if any tests failed. When specifying your own TestMain function,\nit is your responsibility to arrange for this, by calling os.Exit with\nthe correct code. The correct code is returned by (*testing.M).Run, so\nthe usual way of implementing TestMain is to end it with\nos.Exit(m.Run()).\n\nAvailable since\n    2017.1\n",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2656:									"markdownDescription": "Discarding the return values of a function without side effects, making the call pointless\n\nAvailable since\n    2017.1\n",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2681:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2761:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2771:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2776:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2781:									"markdownDescription": "Passing odd-sized slice to function expecting even size\n\nSome functions that take slices as parameters expect the slices to have an even number of elements. \nOften, these functions treat elements in a slice as pairs. \nFor example, strings.NewReplacer takes pairs of old and new strings, \nand calling it with an odd number of elements would be an error.\n\nAvailable since\n    2020.2\n",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2881:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:2986:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3076:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3086:									"markdownDescription": "check for unnecessary type arguments in call expressions\n\nExplicit type arguments may be omitted from call expressions if they can be\ninferred from function arguments, or from other type arguments:\n\n\tfunc f[T any](T) {}\n\t\n\tfunc _() {\n\t\tf[string](\"foo\") // string could be inferred\n\t}\n",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3091:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3096:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3101:									"markdownDescription": "check cancel func returned by context.WithCancel is called\n\nThe cancellation function returned by context.WithCancel, WithTimeout,\nWithDeadline and variants such as WithCancelCause must be called,\nor the new context will remain live until its parent context is cancelled.\n(The background context is never cancelled.)",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3111:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3116:									"markdownDescription": "replace if/else statements with calls to min or max\n\nThe minmax analyzer simplifies conditional assignments by suggesting the use\nof the built-in `min` and `max` functions, introduced in Go 1.21. For example,\n\n\tif a < b { x = a } else { x = b }\n\nis replaced by\n\n\tx = min(a, b).\n\nThis analyzer avoids making suggestions for floating-point types,\nas the behavior of `min` and `max` with NaN values can differ from\nthe original if/else statement.",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3121:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3131:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3156:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3166:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3221:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3251:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3261:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3276:									"markdownDescription": "replace context.WithCancel with t.Context in tests\n\nThe testingcontext analyzer simplifies context management in tests. It\nreplaces the manual creation of a cancellable context,\n\n\tctx, cancel := context.WithCancel(context.Background())\n\tdefer cancel()\n\nwith a single call to t.Context(), which was added in Go 1.24.\n\nThis change is only suggested if the `cancel` function is not used\nfor any other purpose.",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3281:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3296:									"markdownDescription": "report passing non-pointer or non-interface values to unmarshal\n\nThe unmarshal analysis reports calls to functions such as json.Unmarshal\nin which the argument type is not a pointer or an interface.",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3306:									"markdownDescription": "replace unsafe pointer arithmetic with function calls\n\nThe unsafefuncs analyzer simplifies pointer arithmetic expressions by\nreplacing them with calls to helper functions such as unsafe.Add,\nadded in Go 1.17.\n\nExample:\n\n\tunsafe.Pointer(uintptr(ptr) + uintptr(n))\n\nwhere ptr is an unsafe.Pointer, is replaced by:\n\n\tunsafe.Add(ptr, n)",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3316:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3321:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3326:									"markdownDescription": "check for unused results of calls to some functions\n\nSome functions like fmt.Errorf return a result and have no side\neffects, so it is always a mistake to discard the result. Other\nfunctions may return an error that must not be ignored, or a cleanup\noperation that must be called. This analyzer reports calls to\nfunctions like these when the result of the call is ignored.\n\nThe set of functions may be controlled using flags.",
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3346:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\package.json:3628:[Omitted long matching line]
+.antigravity\extensions\davidanson.vscode-markdownlint-0.61.2-universal\bundle.web.js:7:[Omitted long matching line]
+.antigravity\extensions\davidanson.vscode-markdownlint-0.61.2-universal\bundle.web.js:9:[Omitted long matching line]
+.antigravity\extensions\davidanson.vscode-markdownlint-0.61.2-universal\bundle.web.js:16:[Omitted long matching line]
+.antigravity\extensions\davidanson.vscode-markdownlint-0.61.2-universal\bundle.web.js:22:[Omitted long matching line]
+.antigravity\extensions\davidanson.vscode-markdownlint-0.61.2-universal\bundle.web.js:29:[Omitted long matching line]
+.antigravity\extensions\davidanson.vscode-markdownlint-0.61.2-universal\bundle.web.js:35:[Omitted long matching line]
+.antigravity\extensions\davidanson.vscode-markdownlint-0.61.2-universal\bundle.web.js:43:[Omitted long matching line]
+.antigravity\extensions\davidanson.vscode-markdownlint-0.61.2-universal\bundle.web.js:45:[Omitted long matching line]
+.antigravity\extensions\davidanson.vscode-markdownlint-0.61.2-universal\bundle.web.js:47:[Omitted long matching line]
+.antigravity\extensions\davidanson.vscode-markdownlint-0.61.2-universal\bundle.js:27:[Omitted long matching line]
+.antigravity\extensions\davidanson.vscode-markdownlint-0.61.2-universal\bundle.js:33:[Omitted long matching line]
+.antigravity\extensions\davidanson.vscode-markdownlint-0.61.2-universal\bundle.js:37:[Omitted long matching line]
+.antigravity\extensions\davidanson.vscode-markdownlint-0.61.2-universal\bundle.js:39:[Omitted long matching line]
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\package.json:27737:		"https-proxy-agent": "5.0.1",
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\package.json:27843:		"https-proxy-agent": "5.0.1",
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\changelog.md:31:- Adds the ability to register the GitKraken MCP server with additional agents detected on your machine (e.g. Claude Desktop, Codex, Gemini CLI) &mdash; available after MCP installation or via the "Connect More Agents" action in the _Home_ view, _Welcome_ page ([#5096](https://github.com/gitkraken/vscode-gitlens/issues/5096))
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\changelog.md:97:- Adds support for Claude Sonnet 4.6, Claude Opus 4.6, Gemini 3.1 Pro Preview, and Gemini 3.1 Flash-Lite Preview AI models ([#4991](https://github.com/gitkraken/vscode-gitlens/issues/4991))
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\changelog.md:279:- Adds Claude Opus 4.5, Gemini 3 Pro, and GPT-5.1 and GPT-5.2 model support for AI features ([#4785](https://github.com/gitkraken/vscode-gitlens/issues/4785))
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\changelog.md:372:- Adds support for Claude 4.5 Haiku model and hides older Claude models for GitLens' AI features
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\changelog.md:440:- Adds support for Claude Sonnet 4.5 for GitLens' AI features
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\changelog.md:505:  - Adds GPT-5 family (GPT-5, GPT-5 Mini, GPT-5 Nano), and Claude 4.1 Opus models
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\changelog.md:629:- Adds Anthropic Claude 4 Opus and Claude 4 Sonnet support to GitLens AI features
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\changelog.md:805:- Adds Anthropic Claude 3.7 Sonnet model for GitLens' AI features ([#4101](https://github.com/gitkraken/vscode-gitlens/issues/4101))
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\changelog.md:1120:  - Adds the latest OpenAI and Claude models
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\changelog.md:1404:- Adds support for Anthropic's Claude 3.5 Sonnet model for GitLens' experimental AI features
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\changelog.md:1596:- Adds support for Anthropic's Claude 3 Opus & Sonnet models for GitLens' experimental AI features
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\changelog.md:1756:- Adds support for Anthropic's Claude 2.1 model for GitLens' experimental AI features
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\changelog.md:2001:- Adds support for Anthropic's Claude 2 AI model
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:34:29. https-proxy-agent version 5.0.1 (https://github.com/TooTallNate/node-https-proxy-agent)
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:899:forwards calls back. This is how functions, promises, and class instances work
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:3333:%% https-proxy-agent NOTICES AND INFORMATION BEGIN HERE
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:3335:https-proxy-agent
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:3338:[![Build Status](https://github.com/TooTallNate/node-https-proxy-agent/workflows/Node%20CI/badge.svg)](https://github.com/TooTallNate/node-https-proxy-agent/actions?workflow=Node+CI)
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:3347:Since this agent implements the CONNECT HTTP method, it also works with other
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:3358:$ npm install https-proxy-agent
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:3370:var HttpsProxyAgent = require('https-proxy-agent');
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:3382:var agent = new HttpsProxyAgent(proxy);
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:3383:options.agent = agent;
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:3396:var HttpsProxyAgent = require('https-proxy-agent');
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:3410:var agent = new HttpsProxyAgent(options);
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:3413:var socket = new WebSocket(endpoint, { agent: agent });
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\ThirdPartyNotices.txt:3474:END OF  https-proxy-agent NOTICES AND INFORMATION
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\grammars\ruby.cson.json:2363:      "name": "meta.function-call.ruby",
+.antigravity\extensions\shopify.ruby-lsp-0.10.3-universal\grammars\ruby.cson.json:2389:      "name": "meta.function-call.ruby",
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:2478:    module2.exports = function(pid, signal, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:2479:      if (typeof signal === "function" && callback === void 0) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:2515:    function killAll(tree, signal, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:2996:      function setHookCallback(callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:3096:          var flags = getParsingFlags(m), parsedParts = some.call(flags.parsedDateParts, function(i) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:3304:      function addFormatToken(token2, padded, ordinal2, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:3560:      function addParseToken(token2, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:3575:      function addWeekParseToken(token2, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:7813:    var shortcutEvent = Object.freeze(function(callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:25042:        throw new TypeError("Failed to construct 'URL': Please use the 'new' operator, this DOM object constructor cannot be called as a function.");
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:25414:        return consumeBody.call(this).then(function(buf) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:25425:        return consumeBody.call(this).then(function(buf) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:25444:        return consumeBody.call(this).then(function(buffer) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:25458:        return consumeBody.call(this).then(function(buffer) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:25478:        return consumeBody.call(this).then(function(buffer) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:25606:      return obj.constructor.name === "URLSearchParams" || Object.prototype.toString.call(obj) === "[object URLSearchParams]" || typeof obj.sort === "function";
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:25776:       * @param   Boolean   thisArg   `this` context for callback function
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:26124:        this.agent = init.agent || input.agent;
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:26199:      let agent = request.agent;
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:26200:      if (typeof agent === "function") {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:26201:        agent = agent(parsedURL);
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:26206:        agent
+.antigravity\extensions\golang.go-0.52.2-universal\dist\goMain.js:26347:                  agent: request.agent,
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:1:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:5:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:31:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:35:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:36:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:39:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:44:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:46:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:47:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:52:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:55:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:59:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:64:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:70:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:86:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:92:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:115:            [TheName].prototype._callFunction = function(promise) {          
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:144:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:161:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:174:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:177:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:221:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:224:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:230:[Omitted long matching line]
+.antigravity\extensions\llvm-vs-code-extensions.vscode-clangd-0.4.0-universal\out\bundle.js:232:[Omitted long matching line]
+.antigravity\extensions\dbaeumer.vscode-eslint-3.0.24-universal\client\out\extension.js:1:[Omitted long matching line]
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:3112:          "^" + funcToString.call(hasOwnProperty).replace(reRegExpChar, "\\$&").replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, "$1.*?") + "$"
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:4595:        function createCompounder(callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:6563:          return typeof Ctor == "function" && Ctor instanceof Ctor && funcToString.call(Ctor) == objectCtorString;
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:7085:          source = "function(" + (variable || "obj") + ") {\n" + (variable ? "" : "obj || (obj = {});\n") + "var __t, __p = ''" + (isEscaping ? ", __e = _.escape" : "") + (isEvaluating ? ", __j = Array.prototype.join;\nfunction print() { __p += __j.call(arguments, '') }\n" : ";\n") + source + "return __p\n}";
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:9034:    StreamReader.prototype.eachByte = function(callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:9815:    Offers.prototype.eachOffer = function(callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:9905:    Functor.prototype.call = function(error, message, callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:9977:    Pledge.prototype.then = function(callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:10012:    Cell.prototype.incoming = function(error, message, callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:10015:    Cell.prototype.outgoing = function(error, message, callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:10023:    Cell.prototype._exec = function(direction, error, message, callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:10024:      this._functors[direction].call(error, message, function(err, msg) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:10056:    Pipeline.prototype.processIncomingMessage = function(message, callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:10061:    Pipeline.prototype.processOutgoingMessage = function(message, callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:10066:    Pipeline.prototype.close = function(callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:10076:    Pipeline.prototype._loop = function(direction, start, end, step, message, callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:10191:      processIncomingMessage: function(message, callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:10194:      processOutgoingMessage: function(message, callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:10197:      close: function(callback, context) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:10422:      ping: function(message, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:11376:      ping: function(message, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:12569:        handleCall: function(decoded, conn, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:12609:        call: function(method, params, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:13498:            var callback = function callback2(err, result) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:13608:         * Can be called with a custom handler function:
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:13685:        connectHttp: function(method, params, opts, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:13726:        connectWebsocket: function(callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:13762:        connectSocket: function(callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:13766:              conn.call("auth", [self2.user, self2.password], function connectionAuth(err) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:13796:        stream: function(method, params, opts, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:13808:              connection.expose = function connectionExpose(method2, callback2) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:13809:                connection.on("call:" + method2, function connectionCall(data) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:13848:        call: function(method, params, opts, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:15400:    module2.exports = function(pid, signal, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:15401:      if (typeof signal === "function" && callback === void 0) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:15437:    function killAll(tree, signal, callback) {
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:17014:  // like a function call, the request is interpreted as a 'call' command request,
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:17376:  // values from a function call.
+.antigravity\extensions\golang.go-0.52.2-universal\dist\debugAdapter.js:17625:          "Failed to call function: ",
+.antigravity\extensions\ms-azuretools.vscode-docker-2.0.0-universal\changelog.md:164:* The explorer view did not work if certificates were needed to authenticate to the Docker server, or if a `gpg-agent` was in use, or several other scenarios. [#2058](https://github.com/microsoft/vscode-docker/issues/2058), [#3295](https://github.com/microsoft/vscode-docker/issues/3295), [#3590](https://github.com/microsoft/vscode-docker/issues/3590)
+.antigravity\extensions\meta.pyrefly-1.0.0-win32-x64\package.json:255:					"description": "Automatically insert parentheses when completing a function or method.",
+.antigravity\extensions\ms-python.vscode-python-envs-1.20.1-universal\readme.md:329:VS Code supports trust management, allowing extensions to function in either **trusted** or **untrusted** scenarios. Code execution and tools that can modify the user’s environment are typically unavailable in untrusted scenarios.
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:2:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:6:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:9:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:13:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:16:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:17:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:18:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:21:return function (`+r+`) {log.call(deprecate, message, site)
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:23:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:28:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:32:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:37:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:38:`)>=0)return!1;return!0}function FY(t,e){var r;if(t.indent==="	")r="	";else if(typeof t.indent=="number"&&t.indent>0)r=bn.call(Array(t.indent+1)," ");else return null;return{base:r,prev:bn.call(Array(e+1),r)}}function kb(t,e){if(t.length===0)return"";var r=`
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:40:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:55:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:65:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:69:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:89:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:116:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:120:[Omitted long matching line]
+.antigravity\extensions\google.gemini-cli-vscode-ide-companion-0.20.0-universal\dist\extension.cjs:131:[Omitted long matching line]
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\dist\webviews\welcome.js:1:[Omitted long matching line]
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\dist\webviews\welcome.js:3:[Omitted long matching line]
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\dist\webviews\welcome.js:517:[Omitted long matching line]
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\dist\webviews\welcome.js:641:[Omitted long matching line]
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\dist\webviews\welcome.js:656:[Omitted long matching line]
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\dist\webviews\welcome.js:1016:[Omitted long matching line]
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\dist\webviews\welcome.js:1366:				perform actions. You can also connect MCP to other agents on your machine.
+.antigravity\extensions\eamodio.gitlens-17.12.2-universal\dist\webviews\welcome.js:1377:				perform actions. You can also connect MCP to other agents on your machine.
+.antigravity\extensions\mechatroner.rainbow-csv-3.24.1-universal\rbql_suggest.js:52:function initialize_suggest(input_id, suggest_list_id, suggest_entry_class, apply_suggest_callback, header, fetch_join_header_callback=null) {
+.antigravity\extensions\mechatroner.rainbow-csv-3.24.1-universal\rbql_suggest.js:92:function register_suggest_callback(button_element, suggest_index) {
+.antigravity\extensions\mechatroner.rainbow-csv-3.24.1-universal\rbql_suggest.js:221:function adjust_join_table_header_callback(join_header) {
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.nls.json:25:	"githubPullRequests.codingAgent.description": "Enables integration with the asynchronous Copilot coding agent. The '#copilotCodingAgent' tool will be available in agent mode when this setting is enabled.",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.nls.json:26:	"githubPullRequests.codingAgent.uiIntegration.description": "Enables UI integration within VS Code to create new coding agent sessions.",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.nls.json:27:	"githubPullRequests.codingAgent.autoCommitAndPush.description": "Allow automatic git operations (commit, push) to be performed when starting a coding agent session.",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.nls.json:28:	"githubPullRequests.codingAgent.promptForConfirmation.description": "Prompt for confirmation before initiating a coding agent session from the UI integration.",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.nls.json:116:	"githubPullRequests.codingAgent.codeLens.description": "Show the 'Delegate to agent' CodeLens actions above TODO comments for delegating to coding agent.",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.nls.json:204:	"command.githubpr.remoteAgent.title": "Remote agent integration",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.nls.json:424:	"welcome.chat.sessions.copilot-swe-agent.login.contents": {
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.nls.json:425:		"message": "Sign in to get started with Copilot coding agent\n[Sign in](command:pr.signin)",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.nls.json:431:	"welcome.chat.sessions.copilot-swe-agent.startSession.contents": {
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.nls.json:432:		"message": "No Copilot coding agent sessions\n[Start a coding session](command:workbench.action.chat.openNewSessionEditor.copilot-swe-agent)",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.nls.json:438:	"welcome.chat.sessions.copilot-swe-agent.noGitHub.contents": "Clone or open a GitHub repository to get started",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.nls.json:451:	"languageModelTools.github-pull-request_copilot-coding-agent.displayName": "Copilot coding agent",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.nls.json:452:	"languageModelTools.github-pull-request_copilot-coding-agent.userDescription": "Completes the provided task using an asynchronous coding agent. Use when the user wants copilot continue completing a task in the background or asynchronously. Launch an autonomous GitHub Copilot agent to work on coding tasks in the background. The agent will create a new branch, implement the requested changes, and open a pull request with the completed work."
+.antigravity\extensions\meta.pyrefly-1.0.0-win32-x64\dist\extension.js:1:[Omitted long matching line]
+.antigravity\extensions\meta.pyrefly-1.0.0-win32-x64\dist\extension.js:31:[Omitted long matching line]
+.antigravity\extensions\meta.pyrefly-1.0.0-win32-x64\dist\extension.js:35:[Omitted long matching line]
+.antigravity\extensions\meta.pyrefly-1.0.0-win32-x64\dist\extension.js:36:[Omitted long matching line]
+.antigravity\extensions\meta.pyrefly-1.0.0-win32-x64\dist\extension.js:37:[Omitted long matching line]
+.antigravity\extensions\meta.pyrefly-1.0.0-win32-x64\dist\extension.js:42:[Omitted long matching line]
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.json:93:				"type": "copilot-swe-agent",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.json:95:				"displayName": "GitHub Copilot coding agent",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.json:96:				"description": "Delegate tasks to the GitHub Copilot coding agent. The agent works asynchronously to implement changes, iterates via chat, and can create or update pull requests as needed.",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.json:97:				"when": "config.chat.agentSessionsViewLocation && config.chat.agentSessionsViewLocation != 'disabled' && config.github.copilot.chat.advanced.copilotCodingAgentV0.enabled",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.json:107:				"displayName": "GitHub Copilot coding agent",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.json:108:				"description": "Copilot coding agent is a remote, autonomous software development agent. Developers delegate tasks to the agent, which iterates on pull requests based on feedback and reviews.",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.json:1819:				"icon": "$(send-to-remote-agent)",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.json:2032:				"view": "workbench.view.chat.sessions.copilot-swe-agent",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.json:2037:				"view": "workbench.view.chat.sessions.copilot-swe-agent",
+.antigravity\extensions\github.vscode-pull-request-github-0.126.0-universal\package.json:2042:				"view": "workbench.view.chat.sessions.copilot-swe-agent",
+
+[Showing results with pagination = limit: 250]

@@ -1,0 +1,58 @@
+# Plan: Implementation of Sovereign Training Ground Visualizer
+
+## Context
+The goal is to transform the `RSMV Viewer` (specifically `rsmv_inspector`) into a "Sovereign Training Ground". This involves overlaying the "Sovereign" pedagogical residues (Ground Truth) and gameplay logic onto the 3D world representation. This allows for the visual audit of what the AI "sees" and "learns", creating a feedback loop between the 3D substrate and the pedagogy distillation pipeline.
+
+## Proposed Architecture: The Sovereign Overlay
+
+We will implement a three-layered visual system on top of the existing `SovereignObjectRenderer`.
+
+### 1. The Influence Layer (GhostSplat)
+- **Concept**: A visual "aura" or "heatmap" around entities that represents their "Sovereign Value" or "Training Signal".
+- **Sovereign Predictive Window**: Implements a **66x66 tile buffer** centered on the avatar. This window determines the "next map area" to be rendered, triggering the pre-fetching of grounding manifests and authentic spawns from `D:\POG2\public`.
+- **Implementation**: 
+    - Create `SovereignSplatRenderer.ts`.
+    - Use a semi-transparent, pulsating sphere or "splat" mesh centered on `SovereignObjectRenderer`'s spawned objects.
+    - **Color Coding**:
+        - `Cyan`: High Training Value (Active Pedagogy Target).
+        - `Magenta`: Logic Trigger (Varbit/Sovereign Bridge linked).
+        - `Yellow`: Ground Truth Verified (Sovereign Memory match).
+
+### 2. The Grounding Layer (Collision & Boundaries)
+- **Concept**: Visualizing the "World Truth" boundaries used by the model for navigation and interaction.
+- **Implementation**:
+    - Create `SovereignGroundingOverlay.ts`.
+    - Iterate through `SovereignGroundingStream.ChunkMeshManifest.collisionMatrix`.
+    - Render the `CollisionEntry` (walkable vs non-walkable) as a 3D grid of low-poly boxes (e.g., `BoxGeometry` with `Wireframe` enabled).
+    - **Color Coding**:
+        - `Green`: Walkable.
+        - `Red`: Collision/Blocked.
+
+### 3. The Semantic Layer (Sovereign HUD)
+- **Concept**: Contextual "Knowledge" overlays for every object/NPC.
+- **Implementation**:
+    - Create `SovereignTrainingHUD.tsx`.
+    - Link to `ItemBook.ts` and `SovereignVarbitBridge`.
+    - On object hover, display a 3D floating label (using `CSS2DRenderer` or similar) containing:
+        - **Name**: The pedagogy-enriched name.
+        - **Type**: (NPC/Object/Loc).
+        - **Stats**: Requirements from `ItemBook` (e.g., "Req. Necromancy 80").
+        - **Sovereign ID**: The internal `Sovereign` identifier.
+
+## Critical Files to Modify/Create
+
+### New Files:
+- `D:\POG2\rsmv_inspector\src\viewer\SovereignSplatRenderer.ts`: Handles the visual auras.
+- `D:\POG2\rsmv_inspector\src\viewer\SovereignGroundingOverlay.ts`: Handles collision/boundary rendering.
+- `D:\POG2\rsmv_inspector\src\viewer\SovereignTrainingHUD.tsx`: React-based UI for semantic overlays.
+
+### Modified Files:
+- `D:\POG2\rsmv_inspector\src\viewer\SovereignObjectRenderer.ts`: Update `spawnObject` to trigger the SplatRenderer.
+- `D:\POG2\rsmv_inspector\src\viewer\SovereignGroundingStream.ts`: Add methods to export the `CollisionMatrix` and `Entity` list for the overlay.
+- `D:\POG2\rsmv_inspector\src\viewer\index.tsx`: Integrate the new layers into the main render loop.
+
+## Verification Plan
+1. **Splat Verification**: Spawn an object via `SovereignObjectRenderer` and verify the "GhostSplat" aura appears and changes color based on training value.
+2. **Collision Verification**: Load a `ChunkMeshManifest` and verify that the collision grid aligns with the physical mesh boundaries.
+3. **HUD Verification**: Hover over an object and verify that stats from `ItemBook.ts` (e.g., Necromancy requirements) are correctly displayed.
+4. **End-to-End**: Run `rsmv_inspector`, enter a "Sovereign" zone (e.g., Haven Hythe), and confirm all three layers are active and synchronised.

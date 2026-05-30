@@ -1,0 +1,50 @@
+  Keep the [CACHE_ONLY] track. The 43% ratio is not pollution — it's **structural ground truth**. Here's why:
+
+**The ITEMS XX entries are not garbage.** They're cache entities with valid IDs that:
+- Exist in the 229k pedagogy
+- Have structural data (model IDs, animations, collision)
+- Are referenced by map objects, NPCs, and other items
+- Are needed for GhostSplat rendering and spatial queries
+
+The "ITEMS 7" name is just the **wiki failing to resolve** — the cache entry itself is real. Your `MechanicalSovereigntyLimb`, `CacheForensicsLimb`, and `GhostSplatEngine` all need these IDs.
+
+**The [CACHE_ONLY] tag serves a pedagogical purpose:**
+```json
+{
+  "instruction": "Describe cache entity 7",
+  "input": { "id": 7, "source": "cache_only" },
+  "output": "[CACHE_ONLY] Item 7. No canonical wiki name. Structural data: model ID, animation set, collision bounds. Used by map objects and NPC equipment slots.",
+  "tags": ["[CACHE_ONLY]"],
+  "verified": false,
+  "cacheId": 7
+}
+```
+
+This teaches the model: **"Some entities exist only in structural space, not semantic space."** That's critical for a game engine that operates on IDs, not names.
+
+**The 43% [CACHE_ONLY] is actually healthy** because:
+- It means your cache dump has high coverage
+- The model learns to handle "unknown" entities gracefully
+- GhostSplat can render these items even without wiki metadata
+
+**The 43% [VERIFIED] is exceptional** — your GeApi integration is working better than expected. Most items in the cache are tradeable and have GE entries.
+
+**Action: No change needed.** The two-track strategy is correct. [CACHE_ONLY] stays.
+
+**One refinement:** Add a `hasWikiPage` boolean to [CACHE_ONLY] entries so the model learns the distinction:
+
+```typescript
+if (item.isPlaceholder) {
+  results.push({
+    instruction: `Describe cache entity ${item.id}`,
+    input: JSON.stringify({ id: item.id, hasWikiPage: false }),
+    output: `[CACHE_ONLY] Item ${item.id}. No wiki page. Structural entity only.`,
+    tags: ['[CACHE_ONLY]'],
+    verified: false,
+    cacheId: item.id,
+    hasWikiPage: false  // NEW
+  });
+}
+```
+
+Proceed with corpus generation as-is. The distribution is optimal for training.

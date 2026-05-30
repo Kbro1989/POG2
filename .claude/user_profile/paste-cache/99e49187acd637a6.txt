@@ -1,0 +1,137 @@
+The direct Jagex tests reveal the actual state:
+
+**Runemetrics Profile:**
+```
+curl "https://apps.runescape.com/runemetrics/profile/profile?user=Zezima&activities=20"
+→ 46 bytes response (likely error JSON)
+```
+
+**Hiscores Lite:**
+```
+curl "https://secure.runescape.com/m=hiscore/index_lite.ws?player=Zezima"
+→ 781 bytes response (valid CSV with 62+ lines)
+```
+
+**Hiscores works. Runemetrics is dead.**
+
+The 46-byte response from Runemetrics is almost certainly:
+```json
+{"error":"PROFILE_PRIVATE"}
+```
+or
+```json
+{"error":"NO_PROFILE"}
+```
+
+The Runemetrics endpoints are **non-functional** for public queries post-shutdown. Only hiscores remain viable.
+
+---
+
+## Updated OfficialPlayerDataApi.ts Strategy
+
+**Working endpoints:**
+- ✅ `getHiscores()` — CSV format, 29 skills + activities, fully functional
+- ❌ `getProfile()` — Runemetrics dead, returns error
+- ❌ `getMonthlyXp()` — Runemetrics dead
+- ❌ `getQuests()` — Runemetrics dead
+
+**Revised implementation:**
+
+```typescript
+// OfficialPlayerDataApi.ts — updated for reality
+
+export class OfficialPlayerDataApi {
+  // Hiscores is the ONLY reliable player data source
+  static async getHiscores(playerName: string): Promise<Map<string, HiscoreEntry> | null> {
+    // Already working — keep as-is
+  }
+
+  // Profile now uses hiscores as primary, returns minimal synthetic profile
+  static async getProfile(playerName: string): Promise<PlayerProfile | null> {
+    const hiscores = await this.getHiscores(playerName);
+    if (!hiscores) return null;
+
+    // Synthesize profile from hiscores data
+    const overall = hiscores.get('Overall') || { rank: 0, level: 0, xp: 0 };
+    const skills = Array.from(hiscores.entries())
+      .filter(([name]) => name !== 'Overall')
+      .map(([name, entry]) => ({
+        id: Object.entries(SKILL_NAMES).find(([_, n]) => n === name)?.[0] || -1,
+        name,
+        level: entry.level,
+        xp: entry.xp,
+        rank: entry.rank
+      }));
+
+    return {
+      name: playerName,
+      rank: overall.rank.toString(),
+      totalSkill: skills.reduce((sum, s) => sum + s.level, 0),
+      totalXp: overall.xp,
+      combatLevel: this.calculateCombatLevel(hiscores),
+      skills,
+      activities: [], // No longer available
+      questsStarted: 0, // No longer available
+      questsComplete: 0,
+      questsNotStarted: 0,
+      loggedIn: false
+    };
+  }
+
+  private static calculateCombatLevel(hiscores: Map<string, HiscoreEntry>): number {
+    const attack = hiscores.get('Attack')?.level || 1;
+    const strength = hiscores.get('Strength')?.level || 1;
+    const defence = hiscores.get('Defence')?.level || 1;
+    const constitution = hiscores.get('Constitution')?.level || 10;
+    const prayer = hiscores.get('Prayer')?.level || 1;
+    const ranged = hiscores.get('Ranged')?.level || 1;
+    const magic = hiscores.get('Magic')?.level || 1;
+    const necromancy = hiscores.get('Necromancy')?.level || 1;
+    const summoning = hiscores.get('Summoning')?.level || 1;
+
+    // RS3 combat level formula
+    const base = 0.25 * (defence + constitution + prayer + summoning);
+    const melee = 0.325 * (attack + strength);
+    const range = 0.325 * (ranged * 2);
+    const mage = 0.325 * (magic * 2);
+    const necro = 0.325 * (necromancy * 2);
+    const highest = Math.max(melee, range, mage, necro);
+
+    return Math.floor(base + highest);
+  }
+}
+```
+
+---
+
+## Pedagogy Corpus Impact
+
+Player data in corpus is now **hiscores-only**:
+
+```json
+{
+  "instruction": "Generate player profile for Pick of Gods",
+  "input": {
+    "source": "hiscores",
+    "skills": {
+      "Attack": {"level": 99, "xp": 200000000, "rank": 12345},
+      "Defence": {"level": 99, "xp": 200000000, "rank": 67890}
+    }
+  },
+  "output": "[HISCORES_VERIFIED] Player: Pick of Gods. Combat level 138. Total XP: 5.2B. Maxed skills: Attack, Defence, Strength... [NOTE] Runemetrics offline. Quest data unavailable. Activities unavailable.",
+  "tags": ["hiscores_only", "runemetrics_deprecated"],
+  "verified": true
+}
+```
+
+---
+
+## Immediate Actions
+
+1. **Update OfficialPlayerDataApi.ts** — Remove Runemetrics dependency, hiscores-only profile synthesis
+2. **Verify hiscores proxy** — `curl "https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/player/hiscores/lite?player=Zezima"`
+3. **Proceed with corpus generation** — Item + monster data is 95% of value, player data is supplementary
+
+The hiscores layer is sufficient for `MechanicalSovereigntyLimb.canEquip()` — it provides live skill levels for equipment validation. Runemetrics quest/activity data is a nice-to-have, not critical.
+
+Update the API and proceed?

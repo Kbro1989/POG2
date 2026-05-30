@@ -1,0 +1,65 @@
+This is a clean npm audit report from your POG2 project. Here's the breakdown:
+
+## Vulnerability Summary
+- **18 total**: 10 moderate, 8 high
+- **4 root cause packages**: `electron`, `serialize-javascript`, `tar`, `uuid`
+
+## The Problem with `--force`
+Every fix path is flagged as a **breaking change**. Here's why:
+
+| Package | Current | Proposed Fix | Risk |
+|---------|---------|--------------|------|
+| `electron` | ≤39.8.4 | 42.3.0 | Major version jump (39→42). RSMV renderer, native modules, and any `nodeIntegration`/`contextIsolation` configs may break. |
+| `copy-webpack-plugin` | 6.1.1–13.0.1 | 14.0.0 | Webpack plugin API changes. Your build pipeline could fail. |
+| `electron-rebuild` | ≥1.5.0 | 2.0.3 | Native module rebuild behavior changed. `gl` (WebGL context) and other native deps may fail to compile. |
+| `webpack-dev-server` | ≥2.0.0-beta | 1.16.5 | **Downgrade**. This is a red flag — suggests dependency tree conflicts. |
+
+## Recommended Approach (Don't `--force` yet)
+
+**Step 1: Check if these are actually exploitable in your threat model**
+
+- **Electron heap overflow / use-after-free**: Only matters if you're loading untrusted third-party web content or allowing arbitrary `executeJavaScript`. If RSMV only loads your own local/cache assets, severity drops.
+- **tar path traversal**: Only exploitable during archive extraction. If you don't extract untrusted `.tar`/`.tgz` files at runtime, this is build-time only.
+- **serialize-javascript RCE**: Only if you're serializing untrusted user input through `copy-webpack-plugin` (unlikely — this runs at build time).
+- **uuid buffer bounds check**: Moderate. Only if you're passing external buffers into `uuid.v3/v5/v6` directly.
+
+**Step 2: Pin what you can without breaking changes**
+
+```bash
+# Try non-force first — this may resolve some without breaking
+npm audit fix
+
+# For electron specifically, test in a branch:
+npm install electron@42.3.0 --save-exact
+# Then run your RSMV viewer and check:
+# - Native module loading (gl, any WASM bindings)
+# - Renderer process startup
+# - Context isolation / preload script behavior
+```
+
+**Step 3: Isolate the native module chain**
+
+The `tar` vulnerability drags in `node-gyp` → `electron-rebuild` → `gl`. Since your RSMV viewer relies on WebGL contexts through `gl`, you need to verify rebuild behavior:
+
+```bash
+# After any electron bump, force rebuild:
+npx electron-rebuild
+# Check if gl compiles against the new Electron ABI
+```
+
+## What I'd Do
+Given your constraint-driven, trauma-informed architecture (memory: you don't let external systems break your build without verification):
+
+1. **Branch first** — `git checkout -b security/electron-42`
+2. **Upgrade Electron in isolation** — it's the highest-value target (8 CVEs, all high)
+3. **Run your full RSMV pipeline**: cache load → model render → avatar composition → spatial validation (Lumbridge 50,50 test)
+4. **If `gl` fails to rebuild**, pin `electron-rebuild@3.x` or switch to `prebuild-install` for the `gl` dependency
+5. **Only then** address `serialize-javascript` and `uuid` — these are lower actual risk for your use case
+
+The `webpack-dev-server` downgrade suggestion is suspicious. Check if you have multiple webpack versions in your tree:
+
+```bash
+npm ls webpack webpack-dev-server
+```
+
+Want me to help map which of these CVEs actually touch your runtime paths vs. build-only?
