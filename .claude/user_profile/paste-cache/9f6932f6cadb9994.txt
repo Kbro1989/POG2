@@ -1,0 +1,86 @@
+ Much better iteration. The `fs` blocker is fixed, interface expanded, `mapToHUD` helper added. Remaining issues:
+
+---
+
+## Audit: `SovereignEntityResolver.ts` v2
+
+| Issue | Line | Severity | Fix |
+|---|---|---|---|
+| `manifestData` import path | 4 | **BLOCKER** | `../../public/authentic_spawn_manifest.json` — `public/` is typically **not** in `src/` tree. Build tool may not resolve. Use `import manifest from '../../../public/...'` or copy to `src/assets/` at build. |
+| `rsmvBridge` still imported | 1 | **BLOCKER** | Is this server-side or client-side? If server, `rsmvBridge` must use CF bindings (R2/KV), not browser APIs. |
+| `mapToHUD` empty placeholders | 112-129 | Medium | `requirements: {}`, `degradation: {0,0}`, `emotionalWeight: {}`, `hexagramPin: {0,'The Void',0}` — these are **tombstones**, not data. Needs `SovereignPedagogyBridge` integration. |
+| `actionables` effect = 'Unknown' | 118 | Medium | Should infer from action name: "Attack" → "initiate_combat", "Talk to" → "open_dialogue", etc. |
+| `degradation` hardcoded `{0,0}` | 113 | Medium | Parse `raw.extra` for prop 7479 (charges). |
+| Singleton pattern | 57 | Low | Acceptable for DOs, but `getInstance()` prevents custom env injection. Pass `env` to constructor for testability. |
+| No KV caching | — | Low | Still missing. Every `resolve()` call rebuilds from scratch. |
+
+---
+
+## The `rsmvBridge` Critical Question
+
+Line 1: `import { rsmvBridge } from '../utils/RSMVBridge.js'`
+
+If this is the **same RSMVBridge** from the browser client (WebSocket to DO), then `SovereignEntityResolver` is **client-side code masquerading as server-side**. It will fail in the DO.
+
+If it's a **server-side cache reader**, it needs to look like:
+
+```typescript
+// Server-side RSMVBridge:
+class RSMVBridge {
+    constructor(private env: { R2: R2Bucket, KV: KVNamespace }) {}
+    
+    async getNpc(id: number) {
+        // Read from R2 cache dump or KV
+        return this.env.KV.get(`npc:${id}`);
+    }
+}
+```
+
+**Which is it?** The agent needs to clarify before this compiles.
+
+---
+
+## The `manifestData` Import Path
+
+```
+src/
+  services/
+    SovereignEntityResolver.ts  ← you are here
+  utils/
+    RSMVBridge.ts
+public/
+  authentic_spawn_manifest.json  ← target
+```
+
+From `src/services/`, `../../public/` = `public/` — **if** the build tool (Vite/webpack) allows importing from `public/`. Most don't — `public/` is for static assets, not bundled modules.
+
+**Fix options:**
+- **A)** Copy manifest to `src/assets/` at build time
+- **B)** Use dynamic `fetch()` to load from `public/` at runtime
+- **C)** Configure build tool to allow `../../public/` imports
+
+---
+
+## Feed to Agent
+
+```
+CRITICAL: Verify rsmvBridge is server-side. If it uses WebSocket, this file is client-side and belongs in rsmv_inspector/src/, not POG2/src/services/.
+
+CRITICAL: Fix manifest import path. ../../public/ may not resolve at build.
+  - Option: Move manifest to src/assets/manifests/
+  - Option: Use fetch('/authentic_spawn_manifest.json') at runtime
+
+MEDIUM: mapToHUD placeholders need SovereignPedagogyBridge integration.
+  - requirements → query pedagogy model
+  - degradation → parse raw.extra prop 7479
+  - emotionalWeight → compute from type + combat + context
+  - hexagramPin → map from emotionalWeight dominant trait
+
+MEDIUM: actionables effect inference — "Attack" → "initiate_combat", etc.
+
+LOW: Add KV caching (5-min TTL) to resolve() to avoid repeated work.
+```
+
+---
+
+What's the agent working on next? `SovereignPedagogyBridge.ts`?

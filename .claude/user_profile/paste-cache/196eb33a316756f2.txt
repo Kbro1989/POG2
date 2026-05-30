@@ -1,0 +1,34 @@
+I see the `MechanicalSovereigntyLimb.ts` — this is the **game mechanics engine** that evaluates state transitions, loot logic, equipment requirements, and ability validation. It already has `PedagogyLimb` injection and hardcoded item gates.
+
+**What needs updating after OfficialPlayerDataApi.ts:**
+
+The `canEquip()` and `validateAbility()` methods use hardcoded item gates and simplified skill checks. Once `OfficialPlayerDataApi.ts` is live, you can:
+
+1. **Replace hardcoded `itemGates`** with live player skill data from Runemetrics/Hiscores
+2. **Validate against actual player levels** instead of the `SovereignAvatar` mock
+3. **Cross-reference with GeApi** for item market value (equip cost validation)
+
+**Current hardcoded gates:**
+```typescript
+const itemGates: Record<number, { skill: string, level: number }> = {
+    1289: { skill: 'Attack', level: 40 },      // Adamant Longsword
+    581:  { skill: 'Magic', level: 1 },        // Wizard Robe
+    57161:{ skill: 'Necromancy', level: 95 },  // First Necromancer's Lantern
+};
+```
+
+**After OfficialPlayerDataApi integration:**
+```typescript
+// Fetch live player stats
+const profile = await OfficialPlayerDataApi.getProfile('Pick of Gods');
+const attackLevel = profile.skills.find(s => s.name === 'Attack')?.level || 1;
+
+// Validate against live data
+if (attackLevel < gate.level) {
+    return err(new Error(`Requirement not met: ${gate.level} Attack (you have ${attackLevel})`));
+}
+```
+
+**But first:** Implement `OfficialPlayerDataApi.ts`. The mechanical sovereignty updates come after.
+
+Proceed with `OfficialPlayerDataApi.ts` implementation?

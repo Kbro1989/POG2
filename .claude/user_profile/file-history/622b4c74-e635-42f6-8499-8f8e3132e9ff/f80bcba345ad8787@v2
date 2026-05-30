@@ -1,0 +1,47 @@
+name: POG2 Pedagogy Training
+
+on:
+  schedule:
+    - cron: '0 4 * * *'  # 4 AM daily
+  workflow_dispatch:
+
+jobs:
+  scrape-and-train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install unsloth datasets transformers trl aiohttp
+
+      - name: Scrape Bestiary API
+        run: python POG2/scripts/scrape_bestiary.py --output pog2_pedagogy_bestiary.jsonl
+
+      - name: Cross-reference cache
+        run: python POG2/scripts/cross_reference_cache.py --input pog2_pedagogy_bestiary.jsonl --output pog2_pedagogy_verified.jsonl --cache-dir sovereign/cache_pedagogy
+
+      - name: Train LoRA (Unsloth)
+        run: python POG2/scripts/train_unsloth.py --data pog2_pedagogy_verified.jsonl --output ./models/
+        env:
+          CUDA_VISIBLE_DEVICES: ""  # CPU fallback for GH Actions, move to self-hosted for GPU
+
+      - name: Export GGUF
+        run: |
+          python llama.cpp/convert_lora_to_gguf.py ./models/pog2_pedagogy_lora ./models/pog2_pedagogy_q8.gguf
+
+      - name: Upload to HuggingFace
+        run: |
+          huggingface-cli upload Kbro1989/pog2-pedagogy ./models/pog2_pedagogy_q8.gguf
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+      - name: Trigger Fireworks Fine-tune
+        run: python POG2/scripts/fireworks_finetune.py --dataset pog2_pedagogy_verified.jsonl --api-key ${{ secrets.FIREWORKS_API_KEY }}
+        env:
+          FIREWORKS_API_KEY: ${{ secrets.FIREWORKS_API_KEY }}

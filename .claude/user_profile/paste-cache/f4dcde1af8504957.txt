@@ -1,0 +1,42 @@
+The wiki page confirms the Runemetrics endpoint status. Key finding:
+
+> "The Runemetrics website itself was shut down on 20 March 2026, however the endpoints have remained available with no announced shutdown date."
+
+**But** — the endpoints are **not** `apps.runescape.com/runemetrics/profile/profile`. The canonical URL from the wiki is:
+
+```
+https://apps.runescape.com/runemetrics/profile/profile?user=X&activities=20
+```
+
+Your proxy route likely has a path mismatch. Verify:
+
+```bash
+# Direct Jagex test
+curl "https://apps.runescape.com/runemetrics/profile/profile?user=Zezima&activities=20"
+
+# Your proxy test
+curl "https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/player/runemetrics/profile?user=Zezima&activities=20"
+```
+
+If direct Jagex returns data but your proxy 404s, the proxy path is wrong. Check your worker code:
+
+```typescript
+// Should be:
+const jagexUrl = `https://apps.runescape.com/runemetrics/profile/profile?user=${encodeURIComponent(user)}&activities=20`;
+
+// NOT:
+const jagexUrl = `https://apps.runescape.com/runemetrics/profile?user=${encodeURIComponent(user)}&activities=20`;
+```
+
+The path is `/runemetrics/profile/profile` (note the double `profile`), not `/runemetrics/profile`.
+
+**Also:** The wiki notes these endpoints have **no strict throttling** — good for your use case. But they're **unofficial** and could disappear without notice.
+
+**Fix and verify:**
+
+1. Update proxy route to use exact path: `/runemetrics/profile/profile`
+2. Deploy
+3. Test direct + proxy
+4. If both work, OfficialPlayerDataApi.ts is fully operational
+
+If direct Jagex also fails, the endpoints are dead and you should proceed with corpus generation using `[WIKI_ONLY]` fallback for player data.

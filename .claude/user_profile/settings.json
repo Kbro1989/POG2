@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build)",
+      "Bash(node dist/cli.js config set:*)",
+      "Bash(node:*)",
+      "Bash(cat:*)",
+      "Bash(start cmd:*)",
+      "Bash(pog2 *)",
+      "PowerShell(npm run *)",
+      "Bash(npx tsc *)"
+    ],
+    "deny": [],
+    "ask": [],
+    "defaultMode": "auto"
+  },
+  "model": "pog2-pedagogy",
+  "worktree": {
+    "baseRef": "head"
+  },
+  "effortLevel": "xhigh",
+  "advisorModel": "sonnet",
+  "autoUpdatesChannel": "stable",
+  "minimumVersion": "2.1.148",
+  "theme": "dark",
+  "editorMode": "vim",
+  "skipAutoPermissionPrompt": true
+}

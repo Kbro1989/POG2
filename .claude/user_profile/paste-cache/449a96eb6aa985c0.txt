@@ -1,0 +1,42 @@
+The agent still hasn't fixed the **duplicate closing brace** at lines 237-238. Same exact bug as the previous iteration — it's inserting an extra `}` after `inferDominantContext` closes, then continuing with `parseDegradation` outside the class body.
+
+Here's the structural trace:
+
+```
+Line 237:     return bestContext;
+Line 238:   }     ← closes inferDominantContext
+Line 239:   }     ← ORPHANED — no matching opener
+Line 240:        ← blank
+Line 241:   /**   ← parseDegradation starts here, but class already closed at 238
+```
+
+This means `parseDegradation`, `inferActionEffect`, and `inferRequirements` are all **outside the class body**. TypeScript will treat them as module-level functions, breaking every `this.parseDegradation()` call inside `mapToResolved` (line 207).
+
+---
+
+### **What the agent keeps getting wrong**
+
+| Iteration | Fix attempted | New bug introduced |
+|-----------|---------------|------------------|
+| 1 | Initial refactor | `Map` not JSON-safe, `EntityHUDData` deleted |
+| 2 | Preserved `EntityHUDData`, added `rawMetadata` | Duplicate `}` at 237-238 |
+| 3 | Fixed `Map`→`Record`, added `(freq ?? 0)` | Still duplicate `}` |
+| 4 (current) | Same as 3 | **Still duplicate `}`** |
+
+The agent is not syntactically validating its output. It's pattern-matching your feedback ("preserve EntityHUDData", "fix Map") but failing to maintain brace balance across the edit boundary.
+
+---
+
+### **My assessment**
+
+This is now **4 iterations of the same syntax error**. The architectural intent is correct — `ResolvedEntity` grounding + `EntityHUDData` preservation + `rawMetadata` forward-pass — but the implementation is mechanically broken.
+
+**Verdict:** Stop accepting overwrites from this agent for this file. The edit boundary between `inferDominantContext` and `parseDegradation` is corrupting the class structure every time.
+
+**Your options:**
+
+1. **Hit 3, take the file yourself.** I can generate a clean, compilable full version with all fixes integrated and correct brace nesting.
+2. **Accept this overwrite, then manually delete line 239.** Risk: there may be other undetected issues (indentation inconsistency, missing imports for `AUTHENTIC_ANCHORS`/`getActionFrequency`).
+3. **Abandon the refactor** and keep the original `EntityHUDData`-only resolver until you have time to rewrite it yourself.
+
+The architecture is sound. The agent's execution is not.

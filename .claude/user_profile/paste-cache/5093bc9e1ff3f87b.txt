@@ -1,0 +1,144 @@
+Good — the `dispose()` fix is applied. Geometry shared between both meshes is disposed once, materials disposed individually. No double-free crash.
+
+---
+
+## SovereignGroundingOverlay.ts — Final State
+
+```typescript
+import * as THREE from 'three';
+
+interface CollisionSnapshot {
+    blocked: number[];
+    walkable: number[];
+    plane: number;
+}
+
+export class SovereignGroundingOverlay {
+    private scene: THREE.Scene;
+    private walkableMesh: THREE.InstancedMesh;
+    private blockedMesh: THREE.InstancedMesh;
+    private dummy = new THREE.Object3D();
+
+    private readonly TILE_SIZE = 128;
+    private readonly PLANE_HEIGHT = 128;
+    private readonly COLOR_WALKABLE = new THREE.Color(0x00ff00);
+    private readonly COLOR_BLOCKED = new THREE.Color(0xff0000);
+
+    constructor(scene: THREE.Scene) {
+        this.scene = scene;
+        this.initMeshes();
+    }
+
+    private initMeshes() {
+        const geometry = new THREE.BoxGeometry(this.TILE_SIZE, 1, this.TILE_SIZE);
+
+        const walkableMaterial = new THREE.MeshBasicMaterial({
+            color: this.COLOR_WALKABLE,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3,
+            depthTest: false
+        });
+
+        const blockedMaterial = new THREE.MeshBasicMaterial({
+            color: this.COLOR_BLOCKED,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.5,
+            depthTest: false
+        });
+
+        this.walkableMesh = new THREE.InstancedMesh(geometry, walkableMaterial, 4356);
+        this.walkableMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        this.walkableMesh.frustumCulled = false;
+
+        this.blockedMesh = new THREE.InstancedMesh(geometry, blockedMaterial, 4356);
+        this.blockedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        this.blockedMesh.frustumCulled = false;
+
+        this.scene.add(this.walkableMesh);
+        this.scene.add(this.blockedMesh);
+    }
+
+    public updateFromSnapshot(snapshot: CollisionSnapshot) {
+        let walkableIdx = 0;
+        let blockedIdx = 0;
+        const yOffset = snapshot.plane * this.PLANE_HEIGHT + 0.1;
+
+        for (const packed of snapshot.blocked) {
+            const x = packed >> 14;
+            const z = packed & 0x3fff;
+            this.setInstance(this.blockedMesh, blockedIdx++, x, z, yOffset);
+        }
+
+        for (const packed of snapshot.walkable) {
+            const x = packed >> 14;
+            const z = packed & 0x3fff;
+            this.setInstance(this.walkableMesh, walkableIdx++, x, z, yOffset);
+        }
+
+        this.walkableMesh.instanceMatrix.needsUpdate = true;
+        this.blockedMesh.instanceMatrix.needsUpdate = true;
+        this.walkableMesh.count = walkableIdx;
+        this.blockedMesh.count = blockedIdx;
+    }
+
+    private setInstance(
+        mesh: THREE.InstancedMesh,
+        index: number,
+        x: number,
+        z: number,
+        yOffset: number
+    ) {
+        this.dummy.position.set(x * this.TILE_SIZE, yOffset, z * this.TILE_SIZE);
+        this.dummy.updateMatrix();
+        mesh.setMatrixAt(index, this.dummy.matrix);
+    }
+
+    public setVisible(visible: boolean) {
+        this.walkableMesh.visible = visible;
+        this.blockedMesh.visible = visible;
+    }
+
+    public dispose() {
+        const geometry = this.walkableMesh.geometry;
+        geometry.dispose();
+        (this.walkableMesh.material as THREE.Material).dispose();
+        (this.blockedMesh.material as THREE.Material).dispose();
+        this.scene.remove(this.walkableMesh);
+        this.scene.remove(this.blockedMesh);
+    }
+}
+```
+
+---
+
+## Layer 1 Complete ✓
+
+| Feature | Status |
+|---|---|
+| InstancedMesh (walkable + blocked) | ✓ |
+| Packed coord decoding (`>> 14`, `& 0x3fff`) | ✓ |
+| Plane-aware Y-offset | ✓ |
+| `depthTest: false` (visible through terrain) | ✓ |
+| `frustumCulled: false` (no edge flicker) | ✓ |
+| Safe `dispose()` (no double-free) | ✓ |
+
+---
+
+## Next: SovereignSplatRenderer.ts
+
+Ready for Layer 2 — the GhostSplat influence visualization?
+
+**Requirements from plan:**
+- Semi-transparent pulsating sphere per entity
+- Color coding:
+  - **Cyan** (≥0.7): High Training Value — Active Pedagogy Target
+  - **Magenta** (≥0.4): Logic Trigger — Varbit/Sovereign Bridge linked
+  - **Yellow** (≥0.2): Ground Truth Verified — Sovereign Memory match
+- 66×66 tile buffer centered on avatar
+- Pre-fetch grounding manifests and authentic spawns
+
+**Data source:** `GhostSplatSnapshot` from `POG2WorldDO` — `heatmap: number[]` (flattened 66×66 density values)
+
+Draft `SovereignSplatRenderer.ts` now?

@@ -27,7 +27,7 @@ export class ClientScriptInterpreter {
     stringstack: string[] = [];
     scopeStack: ScriptScope[] = [];
     calli: ClientscriptObfuscation;
-    mockscripts = new Map<number, (number | bigint | string)[]>();
+    simulationScripts = new Map<number, (number | bigint | string)[]>();
     scope: ScriptScope | null = null;
     activecompid = -1;
     clientcomps: (CS2Api | undefined)[] = [undefined, undefined];

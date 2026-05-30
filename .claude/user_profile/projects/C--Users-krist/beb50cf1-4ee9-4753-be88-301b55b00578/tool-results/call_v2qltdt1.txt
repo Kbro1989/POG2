@@ -1,0 +1,251 @@
+Found 250 files limit: 250
+.claude\projects\C--Users-krist\beb50cf1-4ee9-4753-be88-301b55b00578.jsonl
+.claude\history.jsonl
+.claude.json
+.claude\projects\C--Users-krist\beb50cf1-4ee9-4753-be88-301b55b00578\subagents\agent-afbb96f9a25e6b799.jsonl
+.claude\projects\C--Users-krist\beb50cf1-4ee9-4753-be88-301b55b00578\tool-results\b887ar2u5.txt
+.claude\backups\.claude.json.backup.1779492807034
+.claude\projects\C--Users-krist\beb50cf1-4ee9-4753-be88-301b55b00578\tool-results\b1alzj0ak.txt
+AppData\Roaming\ollama app.exe\EBWebView\Default\Preferences
+.claude\projects\C--Users-krist\beb50cf1-4ee9-4753-be88-301b55b00578\tool-results\b01kp4vfk.txt
+AppData\Roaming\ollama app.exe\EBWebView\Local State
+.claude\backups\.claude.json.backup.1779492713980
+.claude\backups\.claude.json.backup.1779492320998
+.ollama\config.json
+.ollama\backup\config.json.1779492128
+.ollama\cache\model-recommendations.json
+.claude\projects\C--Users-krist\1401ab85-0715-4551-a1cc-b45af2d4517d.jsonl
+.claude\projects\C--Users-krist\1401ab85-0715-4551-a1cc-b45af2d4517d\tool-results\call_rnj179ct.txt
+AppData\Roaming\ollama app.exe\EBWebView\Default\Network\Network Persistent State
+AppData\Roaming\ollama app.exe\EBWebView\Default\BrowsingTopicsState
+AppData\Roaming\ollama app.exe\EBWebView\Default\Cache\Cache_Data\f_000091
+AppData\Roaming\ollama app.exe\EBWebView\Default\Cache\Cache_Data\f_00008a
+AppData\Roaming\ollama app.exe\EBWebView\Default\Cache\Cache_Data\f_000087
+AppData\Roaming\ollama app.exe\EBWebView\Default\Cache\Cache_Data\f_000083
+AppData\Roaming\ollama app.exe\EBWebView\Default\Cache\Cache_Data\f_000082
+AppData\Roaming\ollama app.exe\EBWebView\Default\Session Storage\LOG
+AppData\Roaming\ollama app.exe\EBWebView\Default\Extension State\LOG
+AppData\Roaming\ollama app.exe\EBWebView\Default\Local Storage\leveldb\LOG
+AppData\Roaming\ollama app.exe\EBWebView\Default\shared_proto_db\LOG
+AppData\Roaming\ollama app.exe\EBWebView\Default\shared_proto_db\metadata\LOG
+AppData\Roaming\ollama app.exe\EBWebView\Default\Sync Data\LevelDB\LOG
+AppData\Roaming\ollama app.exe\EBWebView\Default\Site Characteristics Database\LOG
+.claude\backups\.claude.json.backup.1779492117155
+.ollama\backup\config.json.1779491851
+.claude\projects\C--Users-krist\8ae0b4ab-d09d-4946-bf4f-4d932e0fa010.jsonl
+AppData\Roaming\Code\User\globalStorage\github.copilot-chat\explore-agent\Explore.agent.md
+AppData\Roaming\Code\User\globalStorage\github.copilot-chat\ask-agent\Ask.agent.md
+AppData\Roaming\Code\User\globalStorage\github.copilot-chat\plan-agent\Plan.agent.md
+.ollama\backup\config.json.1779491757
+.claude\projects\D--POG2\b6d83894-2750-457c-95e3-d83d85038269.jsonl
+.claude\paste-cache\3ca158774e77d35a.txt
+.claude\file-history\b6d83894-2750-457c-95e3-d83d85038269\42fc2e7bd0e93efa@v5
+.claude\file-history\b6d83894-2750-457c-95e3-d83d85038269\90f50857ce28401f@v2
+.claude\paste-cache\a907a7bbbf91ceb6.txt
+.claude\file-history\b6d83894-2750-457c-95e3-d83d85038269\6a5b188254d3ec70@v2
+.claude\paste-cache\18cd3dfa03c4f89e.txt
+.claude\file-history\b6d83894-2750-457c-95e3-d83d85038269\086a09217ebeb106@v2
+.claude\file-history\b6d83894-2750-457c-95e3-d83d85038269\42fc2e7bd0e93efa@v4
+.claude\file-history\b6d83894-2750-457c-95e3-d83d85038269\b9bf18de3dd993a4@v2
+.claude\file-history\b6d83894-2750-457c-95e3-d83d85038269\42fc2e7bd0e93efa@v3
+.claude\file-history\b6d83894-2750-457c-95e3-d83d85038269\a873a3075873a9d0@v2
+.claude\file-history\b6d83894-2750-457c-95e3-d83d85038269\42fc2e7bd0e93efa@v2
+.ollama\backup\config.json.1779488207
+.claude\projects\D--POG2\0270cb60-98ad-49a7-a645-d87f9aa34b77.jsonl
+.ollama\backup\config.json.1779487113
+AppData\Roaming\Code\User\workspaceStorage\b886a35351650c41752a164b29fee1d1\chatSessions\7e822832-ef20-4c1a-a608-d7f227041d54.jsonl
+AppData\Roaming\Code\CachedProfilesData\__default__profile__\extensions.builtin.cache
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779478784485_0_be3c3.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\invoke_agent_invoke_agent__invoke_agent_1779478818612_0_1zrsdh.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779479012753_0_1g0dde.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779479634301_0_oq56sr.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779479970685_0_x7296u.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779480485574_0_py0hdd.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\list_directory_list_directory__list_directory_1779481472536_0_5gq4yj.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779482443148_0_ykzb4p.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779482503428_0_ldcql.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779482554213_0_56czum.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779482585523_0_v5ibjg.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779482655803_0_oddj56i.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779482664731_0_e1t24.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779482692411_0_sxvqcy.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779482786238_0_6ousuu.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779483612454_0_tcpycs.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779483624574_0_2gk0w4.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779483673830_0_gdqq3q.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779478784485_0_vlsty.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\invoke_agent_invoke_agent__invoke_agent_1779478818612_0_pdbbep.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779479012753_0_reuj3n.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779479634301_0_q5cs0d.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779479970685_0_a8gnav.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779480485574_0_ov1d49.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\list_directory_list_directory__list_directory_1779481472536_0_zdkrxm.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779482422931_0_yr8gaa.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779482443148_0_t0n4ei.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command__run_shell_command_1779484293689_0.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command__run_shell_command_1779483673830_0.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\invoke_agent_invoke_agent__invoke_agent_1779478818612_0_nrptm39.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779478784485_0_gadqyq.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779479012753_0_zpw9yg.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779479634301_0_yo1i1h.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779479970685_0_rbnh4t.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779480485574_0_8egqgs.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\list_directory_list_directory__list_directory_1779481472536_0_88719.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779481764786_0_l0pcuk.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779481832890_0_qzzxaf.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779481885821_0_6ocw6o.txt
+AppData\Roaming\xdg.config\.wrangler\logs\wrangler-2026-05-22_21-00-26_346.log
+AppData\Roaming\xdg.config\.wrangler\logs\wrangler-2026-05-22_21-00-13_909.log
+AppData\Roaming\xdg.config\.wrangler\logs\wrangler-2026-05-22_20-46-30_331.log
+AppData\Roaming\xdg.config\.wrangler\logs\wrangler-2026-05-22_20-46-29_080.log
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\invoke_agent_invoke_agent__invoke_agent_1779478818612_0_e6an1b.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779479012753_0_bh2w8d.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779478784485_0_9rxib.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779479634301_0_ekygpr.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779479970685_0_0l5pge.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779480485574_0_thogf.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\list_directory_list_directory__list_directory_1779481472536_0_oetl6d.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779481532295_0_s8bmc.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779481649092_0_o0hfa.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command__run_shell_command_1779482422931_0.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779478784485_0_fzxvny.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\invoke_agent_invoke_agent__invoke_agent_1779478818612_0_qyu67.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779479012753_0_ajygcg.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779479634301_0_k169nc.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779479970685_0_700cdd.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779480298344_0_0guas.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779480303971_0_gfo46i.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\write_file_write_file__write_file_1779480311804_0_19z723.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779480453037_0_pvzvb.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779480485574_0_5lwrmn.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779480791975_0_jw7wg9.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779480931100_0_y7hrtq.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\grep_search_grep_search__grep_search_1779481375588_0_d402pb.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\list_directory_list_directory__list_directory_1779481472536_0_23k3vf.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\read_file_read_file__read_file_1779481520940_0_izip6.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command__run_shell_command_1779481649092_0.txt
+.gemini\tmp\pog2\chats\session-2026-05-22T18-33-29ee1e77.jsonl
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779478784485_0_4xjib.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\invoke_agent_invoke_agent__invoke_agent_1779478818612_0_o984ce.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779479012753_0_4szacp.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779479634301_0_2rq5m1.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\grep_search_grep_search__grep_search_1779479890853_0_isx5th.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779479902124_0_4wkoti.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\read_file_read_file__read_file_1779479922906_0_icp78.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779479970685_0_gti2c.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779480060178_0_1m04d8.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779480090911_0_pwg9rq.txt
+.claude\file-history\b6d83894-2750-457c-95e3-d83d85038269\42fc2e7bd0e93efa@v1
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command__run_shell_command_1779480060178_0.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command__run_shell_command_1779479989767_0.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779478784485_0_i2xuvb.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\invoke_agent_invoke_agent__invoke_agent_1779478818612_0_w0kzzd.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779479012753_0_ue0th8.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779479634301_0_tw8jq9.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\read_file_read_file__read_file_1779479636576_0_lrqt93.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\grep_search_grep_search__grep_search_1779479661778_0_8komn.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\grep_search_grep_search__grep_search_1779479691539_0_wmwoew.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779479756722_0_6howsp.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\update_topic_update_topic__update_topic_1779478784485_0_bojgn.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\grep_search_grep_search__grep_search_1779478792583_0_jc3gdc.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779478807325_0_f7v05o.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\invoke_agent_invoke_agent__invoke_agent_1779478818612_0_l4bpa9.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\read_file_read_file__read_file_1779479004359_0_i4ue2.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779479012753_0_han5ba.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779479026025_0_wzswmk.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779479034567_0_2z9t6b.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779479118735_0_baqv.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command__run_shell_command_1779479034567_0.txt
+.gemini\tmp\pog2\chats\29ee1e77-891a-4c6e-82d2-d832fcaa0950\pz2lmk.jsonl
+AppData\Roaming\xdg.config\.wrangler\logs\wrangler-2026-05-22_19-40-13_123.log
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779477860720_0_lpu5h.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779477850692_0_uqkv2i.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\grep_search_grep_search__grep_search_1779477818515_0_xrwgzp.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779477829681_0_0n69a6.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\list_directory_list_directory__list_directory_1779477670045_0_kk303q.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779477707001_0_7ds4eh.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\grep_search_grep_search__grep_search_1779477731060_0_nnufwoq.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\read_file_read_file__read_file_1779477739664_0_g4kzg.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\read_file_read_file__read_file_1779477759492_0_1whl0c.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779477786150_0_0rrmul.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779477624783_0_kme4ie.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779477539262_0_ntufng.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779477596722_0_z1mj8k.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\read_file_read_file__read_file_1779474802937_1_f72ao.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\read_file_read_file__read_file_1779474839120_0_smi95.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\read_file_read_file__read_file_1779474860116_0_1ji9k.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\read_file_read_file__read_file_1779474981772_0_j3bajb.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\grep_search_grep_search__grep_search_1779474989535_0_6z3w0k.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779476640985_0_cwubpt.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779476649894_0_khc9w.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\list_directory_list_directory__list_directory_1779476662079_0_pggkjm.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\read_file_read_file__read_file_1779476670062_0_4svuc.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779476680915_0_7twyk.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\invoke_agent_invoke_agent__invoke_agent_1779476771759_0_fpzrr.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\read_file_read_file__read_file_1779476869876_0_ul2ctm.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\read_file_read_file__read_file_1779476897986_0_f7o85cj.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command_run_shell_command__run_shell_command_1779477478641_0_hrc12o.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\replace_replace__replace_1779477526665_0_7aasnu.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command__run_shell_command_1779477539262_0.txt
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command__run_shell_command_1779477179960_0.txt
+.gemini\tmp\pog2\chats\29ee1e77-891a-4c6e-82d2-d832fcaa0950\sycuri.jsonl
+.gemini\tmp\pog2\tool-outputs\session-29ee1e77-891a-4c6e-82d2-d832fcaa0950\run_shell_command__run_shell_command_1779476680915_0.txt
+.gemini\tmp\pog2\chats\session-2026-05-20T02-49-fa7389eb.jsonl
+.gemini\tmp\system32\chats\session-2026-05-22T18-15-d764c5bd.jsonl
+.gemini\tmp\background-processes\background-49212.log
+.gemini\tmp\background-processes\background-36336.log
+.gemini\tmp\background-processes\background-55200.log
+.gemini\tmp\system32\chats\session-2026-05-22T18-14-a7bb8d24.jsonl
+.claude\projects\D--POG2\a0720ced-51fc-4414-9df4-d346bf76898f.jsonl
+.claude\projects\D--POG2\6d32422a-ea7e-4438-912d-9d832459b1ea.jsonl
+.claude\settings.json
+.claude\projects\D--POG2\b1cd6586-3909-4c16-b44c-a2a3b11c24e7.jsonl
+.claude\paste-cache\6e045ae698e002a4.txt
+.claude\projects\D--POG2\fa54de52-02a0-4b4e-8899-07e8f5c14bed.jsonl
+AppData\Roaming\ollama app.exe\EBWebView\Default\Cache\Cache_Data\f_00007f
+AppData\Roaming\ollama app.exe\EBWebView\Default\Cache\Cache_Data\f_000077
+AppData\Roaming\ollama app.exe\EBWebView\Default\Cache\Cache_Data\f_000074
+AppData\Roaming\ollama app.exe\EBWebView\Default\Cache\Cache_Data\f_000072
+AppData\Roaming\ollama app.exe\EBWebView\Default\Cache\Cache_Data\f_00006f
+AppData\Roaming\ollama app.exe\EBWebView\Default\Session Storage\LOG.old
+AppData\Roaming\ollama app.exe\EBWebView\Default\Extension State\LOG.old
+AppData\Roaming\ollama app.exe\EBWebView\Default\Local Storage\leveldb\LOG.old
+AppData\Roaming\ollama app.exe\EBWebView\Default\shared_proto_db\LOG.old
+AppData\Roaming\ollama app.exe\EBWebView\Default\shared_proto_db\metadata\LOG.old
+AppData\Roaming\ollama app.exe\EBWebView\Default\Site Characteristics Database\LOG.old
+AppData\Roaming\ollama app.exe\EBWebView\Default\Sync Data\LevelDB\LOG.old
+.claude\projects\D--POG2\2e1ea381-4f81-4ed8-9b6a-ce060cbe39c4.jsonl
+.claude\projects\D--POG2\99e34ab5-1828-4020-916a-c41fc46c98a1.jsonl
+.claude\projects\D--POG2\efa46b0e-147e-49d4-932b-2c535bb9870a.jsonl
+AppData\Roaming\Code\User\workspaceStorage\b886a35351650c41752a164b29fee1d1\chatSessions\be47b82b-755f-4b07-af6e-50512b912710.jsonl
+.claude\file-history\efa46b0e-147e-49d4-932b-2c535bb9870a\7b1ada0511c83602@v2
+.claude\file-history\efa46b0e-147e-49d4-932b-2c535bb9870a\1782bb6260ecbbfe@v2
+.claude\projects\D--POG2\efa46b0e-147e-49d4-932b-2c535bb9870a\tool-results\call_qzl74blf.txt
+.claude\plugins\marketplaces\claude-plugins-official\plugins\skill-creator\skills\skill-creator\scripts\run_loop.py
+.claude\plugins\marketplaces\claude-plugins-official\plugins\skill-creator\skills\skill-creator\scripts\run_eval.py
+.claude\plugins\marketplaces\claude-plugins-official\plugins\skill-creator\skills\skill-creator\scripts\improve_description.py
+.claude\plugins\marketplaces\claude-plugins-official\plugins\skill-creator\skills\skill-creator\scripts\aggregate_benchmark.py
+.claude\plugins\marketplaces\claude-plugins-official\plugins\skill-creator\skills\skill-creator\references\schemas.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\skill-creator\skills\skill-creator\eval-viewer\viewer.html
+.claude\plugins\marketplaces\claude-plugins-official\plugins\skill-creator\skills\skill-creator\eval-viewer\generate_review.py
+.claude\plugins\marketplaces\claude-plugins-official\plugins\skill-creator\skills\skill-creator\agents\grader.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\skill-creator\skills\skill-creator\agents\comparator.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\skill-creator\skills\skill-creator\agents\analyzer.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\skill-creator\skills\skill-creator\SKILL.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\session-report\skills\session-report\analyze-sessions.mjs
+.claude\plugins\marketplaces\claude-plugins-official\plugins\session-report\skills\session-report\template.html
+.claude\plugins\marketplaces\claude-plugins-official\plugins\session-report\skills\session-report\SKILL.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\ralph-loop\scripts\setup-ralph-loop.sh
+.claude\plugins\marketplaces\claude-plugins-official\plugins\ralph-loop\hooks\stop-hook.sh
+.claude\plugins\marketplaces\claude-plugins-official\plugins\ralph-loop\commands\ralph-loop.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\ralph-loop\commands\help.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\ralph-loop\README.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\ralph-loop\.claude-plugin\plugin.json
+.claude\plugins\marketplaces\claude-plugins-official\plugins\pr-review-toolkit\commands\review-pr.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\pr-review-toolkit\agents\type-design-analyzer.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\pr-review-toolkit\agents\pr-test-analyzer.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\pr-review-toolkit\agents\silent-failure-hunter.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\pr-review-toolkit\agents\comment-analyzer.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\pr-review-toolkit\agents\code-reviewer.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\pr-review-toolkit\agents\code-simplifier.md
+.claude\plugins\marketplaces\claude-plugins-official\plugins\pr-review-toolkit\README.md

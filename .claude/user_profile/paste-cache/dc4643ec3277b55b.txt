@@ -1,0 +1,164 @@
+Understood. Your apps are already in local git repos — no new setup needed. Here's the exact path to deploy the GE proxy route:
+
+---
+
+## 1. Add Route to `multiplayer-globe-pog2`
+
+Edit `D:\multiplayer-globe-template\src\server\index.ts`:
+
+```typescript
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    
+    // === EXISTING: Bestiary proxy (already deployed) ===
+    if (url.pathname.startsWith('/api/bestiary/')) {
+      // ... your existing bestiary proxy code ...
+    }
+    
+    // === NEW: GE proxy routes ===
+    if (url.pathname.startsWith('/api/ge/')) {
+      const path = url.pathname.replace('/api/ge/', '');
+      
+      // Handle graph endpoint special URL pattern
+      if (path === 'graph.json') {
+        const itemId = url.searchParams.get('item');
+        const jagexUrl = `https://secure.runescape.com/m=itemdb_rs/api/graph/${itemId}.json`;
+        
+        const res = await fetch(jagexUrl, {
+          headers: { 'User-Agent': 'POG2-Sovereign/1.0' },
+          redirect: 'follow'
+        });
+        
+        return new Response(res.body, {
+          status: res.status,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'max-age=300'  // 5 min cache for prices
+          }
+        });
+      }
+      
+      // Standard catalogue endpoints (detail.json, items.json, etc.)
+      const search = url.search;
+      const jagexUrl = `https://secure.runescape.com/m=itemdb_rs/api/catalogue/${path}${search}`;
+      
+      const res = await fetch(jagexUrl, {
+        headers: { 'User-Agent': 'POG2-Sovereign/1.0' },
+        redirect: 'follow'
+      });
+      
+      return new Response(res.body, {
+        status: res.status,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Cache-Control': 'max-age=300'
+        }
+      });
+    }
+    
+    // === EXISTING: PartyKit / Globe DO routes ===
+    // ... your existing PartyKit routing ...
+    
+    // Health check
+    if (url.pathname === '/health') {
+      return new Response('OK', { status: 200 });
+    }
+    
+    return new Response('Not Found', { status: 404 });
+  }
+};
+```
+
+---
+
+## 2. Deploy
+
+```bash
+cd D:\multiplayer-globe-template
+git add src/server/index.ts
+git commit -m "Add GE proxy routes for POG2 GeApi"
+git push origin main
+# Or if wrangler deploy is your workflow:
+npx wrangler deploy
+```
+
+---
+
+## 3. Verify
+
+```bash
+# Test detail endpoint
+curl "https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/ge/detail.json?item=21787"
+
+# Test graph endpoint  
+curl "https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/ge/graph.json?item=21787"
+
+# Test CORS
+curl -H "Origin: https://example.com" \
+  "https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/ge/detail.json?item=21787"
+```
+
+All three should return JSON. If the graph endpoint returns 404, the special-case routing isn't matching.
+
+---
+
+## 4. Run GeApi Verification
+
+Once proxy is live:
+
+```bash
+cd D:\POG2
+npx tsx verify_ge.ts
+```
+
+With this test script:
+
+```typescript
+// verify_ge.ts
+import { GeApi } from './src/utils/GeApi.js';
+
+async function test() {
+    console.log('--- GeApi Verification ---');
+    
+    // Test 1: Price parser
+    console.log('parsePrice("5.2m"):', GeApi.parsePrice('5.2m') === 5200000 ? 'PASS' : 'FAIL');
+    console.log('parsePrice("1.1k"):', GeApi.parsePrice('1.1k') === 1100 ? 'PASS' : 'FAIL');
+    console.log('parsePrice("1,234"):', GeApi.parsePrice('1,234') === 1234 ? 'PASS' : 'FAIL');
+    console.log('parsePrice("1.5b"):', GeApi.parsePrice('1.5b') === 1500000000 ? 'PASS' : 'FAIL');
+    
+    // Test 2: Live price fetch
+    const price = await GeApi.getLatestPrice(21787);  // Steadfast boots
+    console.log('getLatestPrice(21787):', price ? `PASS (${price.price} gp)` : 'FAIL');
+    console.log('Source:', price?.source);
+    
+    // Test 3: Item details
+    const details = await GeApi.getItemDetails(21787);
+    console.log('getItemDetails(21787):', details ? 'PASS' : 'FAIL');
+    console.log('Members (bool):', details?.members);
+    
+    // Test 4: History
+    const history = await GeApi.getHistoricalData(21787);
+    console.log('getHistoricalData(21787):', history?.daily.length ? `PASS (${history.daily.length} days)` : 'FAIL');
+}
+
+test().catch(console.error);
+```
+
+---
+
+## Git Workflow Summary
+
+| Step | Command | Location |
+|---|---|---|
+| Edit | `code src/server/index.ts` | `D:\multiplayer-globe-template` |
+| Commit | `git commit -am "Add GE proxy"` | `D:\multiplayer-globe-template` |
+| Push | `git push origin main` | `D:\multiplayer-globe-template` |
+| Verify | `curl ...` | Any terminal |
+| Test | `npx tsx verify_ge.ts` | `D:\POG2` |
+
+Your existing git→deploy pipeline handles the rest. No new infrastructure needed.

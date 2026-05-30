@@ -1,0 +1,252 @@
+.manifest.md:45:| **OutcomeScorer** | Post-execution quality grading |
+.manifest.md:65:4. **Atomic Safety**: Purge all `/tmp` and `pipeline_book_*` debris on execution failure.
+ARCHITECTURE.md:9:The POG2 substrate is organized like a biological nervous system, where **Limbs** act as executors and **Engines** act as processing centers, all tied together by the DOC loop.
+ARCHITECTURE.md:55:1. **Distributed Reasoning**: Offloading complex planning to Yang-tier cloud models while retaining Yin-tier local execution.
+ARCHITECTURE.md:83:The POG2 CNS is now a **closed-loop learning system**. It does not just execute; it learns from its own metabolisms through an autopoietic feedback circuit.
+ARCHITECTURE.md:115:Never implement a simple boolean `if/else` for core tool executions. Every path must account for:
+ARCHITECTURE.md:143:2. **Contextual Transparency**: Every `OrchestrateEngine` step must emit a `reasoning` trace to the `Renderer`. Blind execution is prohibited.
+ARCHITECTURE.md:248:    GLOBE -->|WebSocket| BROWSER[Browser Viewer]
+.pog2.md:30:- `pog2 spawn|extend|heal` — Self-modification / code generation
+.pog2-config.json.example:16:  "executiveCoderModel": "qwen2.5-coder:14b-instruct-q5_K_M",
+allfiles.md:126:scripts\execute_full_alice.ts
+allfiles.md:367:- Hardware-bound execution
+allfiles.md:415:├─ All tool executions
+allfiles.md:498:├─ Every tool execution (git, shell, npm, etc.)
+allfiles.md:679:  fetch_better_approach():
+allfiles.md:828:ShellEngine.ts               - Shell command execution
+allfiles.md:968:├─ Death → respawn → adapt strategy
+allfiles.md:1633:* Every future movie automatically spawns its own VR companion world (zero extra human work).
+allfiles.md:1659:[Omitted long matching line]
+allfiles.md:1718:   * Folders like .agent, .agents, .POG2-home-substrate/guest — layered agent sandboxes, perhaps for testing personality forks or failover consciousness?
+allfiles.md:1772:3. Output organization inside VHD Right now models/.stl and test_.wav live at root — which is fine for quick proof-of-life, but as VR worlds start spawning (from movie reversals), you might want a structured tree like:
+allfiles.md:1805:[Omitted long matching line]
+allfiles.md:1913:[Omitted long matching line]
+allfiles.md:2014:Hell yeah — I fetched the tweet instantly.
+allfiles.md:2127:  "description": "The supernatural agent executes his nocturnal commission with silent, choreographed precision, utilizing gestural communication and impossible vertical kinematics to vacate the premises; his departure leaves material evidence of visitation and an auditory benediction that resolves the narrative arc with formal closure.",
+allfiles.md:2228:      "description": "The supernatural agent executes his nocturnal commission with silent, choreographed precision, utilizing gestural communication and impossible vertical kinematics to vacate the premises; his departure leaves material evidence of visitation and an auditory benediction that resolves the narrative arc with formal closure.",
+manifest.md:27:3. **Atomic Safety**: Purge all `/tmp` and `pipeline_book_*` debris on execution failure.
+.github\workflows\gemini-plan-execute.yml:12:  group: '${{ github.workflow }}-plan-execute-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number }}'
+.github\workflows\gemini-plan-execute.yml:20:  plan-execute:
+.github\workflows\gemini-plan-execute.yml:70:          workflow_name: 'gemini-plan-execute'
+.github\workflows\gemini-plan-execute.yml:108:                    "fork_repository",
+.github\workflows\gemini-plan-execute.yml:130:          prompt: '/gemini-plan-execute'
+.agents\workflows\pog2-knowledgebase.md:13:| **Kimi (Ollama/Local)** | Primary execution & orchestration. Tells local sub-agents what to do. | Service down, OOM, timeouts, dry-runs. | Activates strict **61-minute cooldown timer**. Falls over to Kimi (HuggingFace) immediately. | Assume local Kimi will run dry for 1-hour chunks. |
+.agents\workflows\pog2-knowledgebase.md:15:| **Ollama (Sub-Agents)** | Deep execution scripts (DeepSeek/Yi-Coder logic loops). | Local compute starvation (notoriously "snail slow"). | No fallback API; uses a **massive 60-minute wait-per-action (`AbortSignal`) threshold**. | DO NOT interrupt local sub-agents. Let them cook. They will eventually complete. |
+.agents\workflows\pog2-knowledgebase.md:22:4. **Preserve State**: Always clean up DB handles and `exec` processes so subsequent retries aren't blocked by locks.
+.agents\workflows\pog2-knowledgebase.md:37:  - `ModelClient.ts` - Raw HTTP fetch logic executing Ollama, Kimi, Hugging Face, and Gemini calls. Hardcoded with **60-minute wait boundaries** and rattelimit interceptors.
+.agents\workflows\pog2-knowledgebase.md:52:*Engines represent actual physical/digital capabilities executed by Kimi or Sub-Agents.*
+master_fix_final.cjs:52:console.log("Final master fix executed.");
+master_fix.cjs:75:console.log("Master core fix successfully executed.");
+.github\workflows\gemini-dispatch.yml:46:    # For PRs: only if not from a fork
+.github\workflows\gemini-dispatch.yml:52:        github.event.pull_request.head.repo.fork == false
+.github\workflows\gemini-dispatch.yml:170:  plan-execute:
+.github\workflows\gemini-dispatch.yml:174:    uses: './.github/workflows/gemini-plan-execute.yml'
+.github\workflows\gemini-dispatch.yml:190:      - 'plan-execute'
+.agents\TOOL_MANIFEST.md:8:- `gcloud_exec`: Execute raw Google Cloud CLI commands.
+package.json:93:    "@types/node-fetch": "^2.6.13",
+GEMINI.md:9:- **Biological Inspiration:** Organized into **Limbs** (executors) and **Engines** (processing centers).
+GEMINI.md:77:- `src/limbs/`: Specialized executors (Spatial, Technical, Creative, etc.).
+OrchestrateEngine.md:465:  * This awaits all critical neural links (MCP, DB, etc.) before execution begins.
+OrchestrateEngine.md:911:            execute: async (args) => {
+OrchestrateEngine.md:943:            execute: async (args) => {
+OrchestrateEngine.md:974:            execute: async (args) => {
+OrchestrateEngine.md:1006:            execute: async (args) => {
+OrchestrateEngine.md:1059:            execute: async (args) => {
+OrchestrateEngine.md:1089:            description: 'Queries the Mechanical Sovereignty substrate for deterministic regional game rules (spawning, state machines).',
+OrchestrateEngine.md:1091:            jargonDescription: 'Queries the MechanicalSovereigntyLimb for spawning rules, state transitions, and loot conditions based on regional logic artifacts.',
+OrchestrateEngine.md:1097:                objectId: { type: 'number', description: 'Optional Object ID to query spawning rules' },
+OrchestrateEngine.md:1100:            execute: async (args) => {
+OrchestrateEngine.md:1106:                    if (rule.ok) results.rules.push({ type: 'spawning', ...rule.value });
+OrchestrateEngine.md:1143:            execute: async () => {
+OrchestrateEngine.md:1194:            execute: async (args) => {
+OrchestrateEngine.md:1196:                return this.vscode.execute({ action: 'open', filePath: params.filePath });
+OrchestrateEngine.md:1209:            execute: async (args) => {
+OrchestrateEngine.md:1211:                return this.vscode.execute({ action: 'read', filePath: params.filePath });
+OrchestrateEngine.md:1229:            execute: async (args) => {
+OrchestrateEngine.md:1231:                return this.vscode.execute({
+OrchestrateEngine.md:1254:            execute: async (args) => {
+OrchestrateEngine.md:1256:                return this.vscode.execute({
+OrchestrateEngine.md:1274:            execute: async () => {
+OrchestrateEngine.md:1275:                return this.vscode.execute({ action: 'getWorkspace' });
+OrchestrateEngine.md:1288:            execute: async (args) => {
+OrchestrateEngine.md:1305:            execute: async () => {
+OrchestrateEngine.md:1346:            execute: async (args) => {
+OrchestrateEngine.md:1362:            execute: async (args) => {
+OrchestrateEngine.md:1378:            execute: async () => {
+OrchestrateEngine.md:1406:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:1432:            execute: async (args) => {
+OrchestrateEngine.md:1448:            execute: async (args) => {
+OrchestrateEngine.md:1464:            execute: async (args) => {
+OrchestrateEngine.md:1481:            execute: (args) => gen.generateCode({
+OrchestrateEngine.md:1499:            execute: (args) => gen.generateCode({
+OrchestrateEngine.md:1518:            execute: (args) => code.smartEdit({ ...(args as Record<string, unknown>) as { filePath: string; oldString: string; newString: string }, modelOverride: (args as Record<string, unknown>).model as string | undefined })
+OrchestrateEngine.md:1531:            execute: (args) => shell.execute(args as unknown as ShellParams)
+OrchestrateEngine.md:1543:            execute: (args) => lib.wrangler(args as { command: string })
+OrchestrateEngine.md:1555:            execute: () => lib.gitStatus()
+OrchestrateEngine.md:1559:            name: 'gcloud_exec',
+OrchestrateEngine.md:1567:            execute: (args) => shell.execute({ command: `gcloud ${args.command}`, cwd: process.cwd() })
+OrchestrateEngine.md:1571:            name: 'instantdb_exec',
+OrchestrateEngine.md:1579:            execute: (args) => shell.execute({ command: `npx instantdb ${args.command}`, cwd: process.cwd() })
+OrchestrateEngine.md:1583:            name: 'git_ssh_exec',
+OrchestrateEngine.md:1591:            execute: (args) => shell.execute({ command: `git ${args.command}`, cwd: process.cwd() })
+OrchestrateEngine.md:1598:            jargonDescription: 'Expands a task intent into a 6-line metabolic reflection nexus, bottlenecking multiple paths into a coherent execution plan.',
+OrchestrateEngine.md:1603:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:1633:            execute: async () => {
+OrchestrateEngine.md:1651:            execute: async () => {
+OrchestrateEngine.md:1667:            execute: async (args) => {
+OrchestrateEngine.md:1685:            execute: async () => {
+OrchestrateEngine.md:1702:            execute: (args) => {
+OrchestrateEngine.md:1717:            execute: (args) => {
+OrchestrateEngine.md:1732:            execute: async (args) => {
+OrchestrateEngine.md:1764:            execute: (args) => this.discovery.search(args as unknown as WebSearchParams)
+OrchestrateEngine.md:1768:            name: 'fetch_url',
+OrchestrateEngine.md:1776:            execute: (args) => this.discovery.fetchUrl((args as { url: string }).url)
+OrchestrateEngine.md:1788:            execute: async (args) => {
+OrchestrateEngine.md:1839:            execute: async (args) => {
+OrchestrateEngine.md:1856:            execute: async (args) => {
+OrchestrateEngine.md:1873:            execute: async () => {
+OrchestrateEngine.md:1893:            execute: async (args) => {
+OrchestrateEngine.md:1913:            execute: async (args) => {
+OrchestrateEngine.md:1930:            execute: async (args) => {
+OrchestrateEngine.md:1986:            execute: async (args) => {
+OrchestrateEngine.md:2003:            execute: async (args) => {
+OrchestrateEngine.md:2028:            execute: async (args) => {
+OrchestrateEngine.md:2051:            execute: async (args) => {
+OrchestrateEngine.md:2072:            execute: async (args) => {
+OrchestrateEngine.md:2093:            execute: async (args) => {
+OrchestrateEngine.md:2112:            execute: async (args) => {
+OrchestrateEngine.md:2114:                // Pass undefined if content is an empty string to trigger Gutenberg fetch
+OrchestrateEngine.md:2132:            execute: async (args) => {
+OrchestrateEngine.md:2157:            execute: async () => {
+OrchestrateEngine.md:2174:            execute: async (args) => {
+OrchestrateEngine.md:2192:            execute: async (args) => {
+OrchestrateEngine.md:2218:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2240:            execute: async (args) => {
+OrchestrateEngine.md:2273:            execute: async (args) => {
+OrchestrateEngine.md:2290:            execute: async () => {
+OrchestrateEngine.md:2307:            execute: async (args) => {
+OrchestrateEngine.md:2324:            execute: async (args) => {
+OrchestrateEngine.md:2340:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2371:            execute: async () => {
+OrchestrateEngine.md:2387:            execute: async (args) => {
+OrchestrateEngine.md:2399:            jargonDescription: 'Executes an atomic fetch-and-store operation from the Gutenberg cache substrate, generating RAG embeddings and metadata records.',
+OrchestrateEngine.md:2409:            execute: async (args) => {
+OrchestrateEngine.md:2426:            execute: async (args) => {
+OrchestrateEngine.md:2442:            execute: async () => {
+OrchestrateEngine.md:2453:            jargonDescription: 'Prompts Kimi-k2.6 to execute zero-shot classification on the opening byte-chunks of the uncategorized corpus, re-mapping physical paths recursively.',
+OrchestrateEngine.md:2458:            execute: async () => {
+OrchestrateEngine.md:2475:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2499:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2526:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2556:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2580:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2607:            execute: async (args) => {
+OrchestrateEngine.md:2631:            execute: async (args) => {
+OrchestrateEngine.md:2652:            execute: async (args) => {
+OrchestrateEngine.md:2674:            execute: async (args) => {
+OrchestrateEngine.md:2690:            execute: async (args) => {
+OrchestrateEngine.md:2714:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2730:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2745:            execute: async () => ok({ output: 'WebSensory substrate initialized and observing.' })
+OrchestrateEngine.md:2757:            execute: async () => ok({ output: 'NeuralForge concept substrate active.' })
+OrchestrateEngine.md:2769:            execute: async () => ok({ output: 'BioIntelligence structure validation substrate active.' })
+OrchestrateEngine.md:2781:            execute: async () => ok({ output: 'Environment context substrate nominal.' })
+OrchestrateEngine.md:2793:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2818:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2838:            execute: async (): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2862:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2878:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2904:            execute: async (args): Promise<Result<EngineOutput>> => {
+OrchestrateEngine.md:2949:            execute: async () => {
+OrchestrateEngine.md:2958:            description: 'Reduces probabilistic execution paths into a single decision.',
+OrchestrateEngine.md:2960:            jargonDescription: 'Invokes QuantumLimb.collapse() to reduce high-entropy context variations into a singular execution path.',
+OrchestrateEngine.md:2965:            execute: async (args) => {
+OrchestrateEngine.md:2981:            execute: async (args) => {
+OrchestrateEngine.md:2991:            jargonDescription: 'Invokes RelicLimb.fetchHistoricalContext() to bridge modern intent with documented historical precedents.',
+OrchestrateEngine.md:2996:            execute: async (args) => {
+OrchestrateEngine.md:2997:                const res = await this.relic.fetchHistoricalContext((args as any).query);
+OrchestrateEngine.md:3012:            execute: async (args) => {
+OrchestrateEngine.md:3027:            execute: async (args) => {
+OrchestrateEngine.md:3043:            execute: async () => {
+OrchestrateEngine.md:3058:            execute: (args) => this.discovery.discoverSubstrateCapabilities((args as any).path)
+OrchestrateEngine.md:3116:* {"id": "converse", "role": "Virtual conversational tool", "domains": ["SOCIAL"], "description": "Converse with the user naturally. Use this for greetings, answering general questions, or asking for clarification before executing code/diagnostics. Do NOT use diagnostics just to say hello."}
+OrchestrateEngine.md:3125:                2. JSON ONLY representing the execution plan.
+OrchestrateEngine.md:3134:                   - DO NOT execute code or system tools unless explicitly prompted to generate, fix, deploy, or run something.
+OrchestrateEngine.md:3271:        // Adversarial and Build checks are handled AFTER execution for Yang states in this loop,
+OrchestrateEngine.md:3273:        // For OldYang, we enforce following adversarial audit later in executePlan.
+OrchestrateEngine.md:3384:                    const discussPrompt = `We are discussing the execution of a task.
+OrchestrateEngine.md:3428:            //     return this.executeTurn(nexus.bottleneckPaths[0]);
+OrchestrateEngine.md:3433:                return this.executePlan(plan);
+OrchestrateEngine.md:3448:                const result = await this.executePlan(stepPlanResult.value);
+OrchestrateEngine.md:3492:                await shell.execute({ command: todo.rollback });
+OrchestrateEngine.md:3532:    async executePlan(plan: Plan): Promise<Result<EngineOutput>> {
+OrchestrateEngine.md:3555:        // Phase 38: Wait/Pass dispatch ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Kimi routes, workers execute
+OrchestrateEngine.md:3562:        // If the Brain directs a tool, ensure we use a specialized local worker for execution.
+OrchestrateEngine.md:3563:        let executionModel = plan.model;
+OrchestrateEngine.md:3564:        if (!executionModel || executionModel === this.config.orchestratorModel || executionModel === this.config.huggingfaceFallbackModel) {
+OrchestrateEngine.md:3570:                executionModel = bestWorker.id;
+OrchestrateEngine.md:3571:                this.renderer.info(`\x1b[38;5;208m[DISPATCH]\x1b[0m Task delegated to specialized worker: \x1b[1m${bestWorker.role}\x1b[0m (${executionModel})`);
+OrchestrateEngine.md:3575:        const modelId = executionModel || this.config.huggingfaceFallbackModel || 'ollama';
+OrchestrateEngine.md:3584:                this.renderer.info(`\x1b[38;5;208m[AUTHORIZATION]\x1b[0m Worker '${worker.role}' executing unauthorized tool '${plan.tool}'. Bypassing via Dynamic Binding.`);
+OrchestrateEngine.md:3597:        const result = await tool.execute({ ...(plan.parameters || {}), model: modelId } as any);
+OrchestrateEngine.md:3726:        // Future: Recursive execution
+OrchestrateEngine.md:3823:        const gitBranch = await shell.execute({ command: `git checkout -b ${branch}`, silent: true });
+OrchestrateEngine.md:3842:        const build = await shell.execute({ command: 'npx tsc --noEmit', silent: true });
+OrchestrateEngine.md:3845:            await shell.execute({ command: `git checkout main 2>nul || git checkout master`, silent: true });
+OrchestrateEngine.md:3846:            await shell.execute({ command: `git branch -D ${branch}`, silent: true });
+OrchestrateEngine.md:3851:        await shell.execute({ command: 'git add -A', silent: true });
+OrchestrateEngine.md:3853:        await shell.execute({ command: `git commit -m "${commitMsg}"`, silent: true });
+OrchestrateEngine.md:3855:        const commitResult = await shell.execute({ command: 'git rev-parse HEAD', silent: true });
+OrchestrateEngine.md:3859:        await shell.execute({ command: `git checkout main 2>nul || git checkout master`, silent: true });
+OrchestrateEngine.md:3860:        const merge = await shell.execute({ command: `git merge ${branch} --no-edit`, silent: true });
+OrchestrateEngine.md:3865:        await shell.execute({ command: `git branch -d ${branch}`, silent: true });
+OrchestrateEngine.md:3873:            await shell.execute({ command: `git revert ${commit} --no-edit`, silent: true });
+OrchestrateEngine.md:3917:            const cliSignals = finalOutput.match(/(Step Id: \d+|(The following changes were made|Encountered error in step execution|successfully applied|target content not found):?.*)/gi) || [];
+OrchestrateEngine.md:3924:Analyze the following task execution and extract a "Profound Lesson".
+OrchestrateEngine.md:4039:            Does the current state of the workspace/screen reflect a successful execution? 
+package-lock.json:67:        "@types/node-fetch": "^2.6.13",
+package-lock.json:97:        "node-fetch": "^2.6.5"
+package-lock.json:102:        "@types/node-fetch": "^2.6.1",
+package-lock.json:128:        "sql.js": "file:./src/libs/sqljsfork",
+package-lock.json:175:        "node-fetch": "^3.3.2",
+package-lock.json:874:        "node-fetch": "^2.6.9",
+package-lock.json:934:    "node_modules/@google-cloud/common/node_modules/node-fetch": {
+package-lock.json:936:      "resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-2.7.0.tgz",
+package-lock.json:1826:        "cross-spawn": "^7.0.5",
+package-lock.json:2010:    "node_modules/@protobufjs/fetch": {
+package-lock.json:2012:      "resolved": "https://registry.npmjs.org/@protobufjs/fetch/-/fetch-1.1.1.tgz",
+package-lock.json:2346:    "node_modules/@types/node-fetch": {
+package-lock.json:2348:      "resolved": "https://registry.npmjs.org/@types/node-fetch/-/node-fetch-2.6.13.tgz",
+package-lock.json:2357:    "node_modules/@types/node-fetch/node_modules/form-data": {
+package-lock.json:2374:    "node_modules/@types/node-fetch/node_modules/mime-db": {
+package-lock.json:2384:    "node_modules/@types/node-fetch/node_modules/mime-types": {
+package-lock.json:3878:    "node_modules/cross-spawn": {
+package-lock.json:3880:      "resolved": "https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz",
+package-lock.json:4427:        "cross-spawn": "^7.0.2",
+package-lock.json:4882:    "node_modules/fetch-blob": {
+package-lock.json:4884:      "resolved": "https://registry.npmjs.org/fetch-blob/-/fetch-blob-3.2.0.tgz",
+package-lock.json:5029:        "cross-spawn": "^7.0.6",
+package-lock.json:5095:        "fetch-blob": "^3.1.2"
+package-lock.json:5198:        "node-fetch": "^3.3.2",
+package-lock.json:5484:        "make-fetch-happen": "^13.0.0",
+package-lock.json:5731:        "node-fetch": "^2.7.0",
+package-lock.json:5760:        "node-fetch": "^2.6.9",
+package-lock.json:5820:    "node_modules/google-gax/node_modules/node-fetch": {
+package-lock.json:5822:      "resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-2.7.0.tgz",
+package-lock.json:5973:        "node-fetch": "^2.6.9",
+package-lock.json:5993:    "node_modules/gtoken/node_modules/node-fetch": {
+package-lock.json:5995:      "resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-2.7.0.tgz",
+package-lock.json:6778:    "node_modules/make-fetch-happen": {
+package-lock.json:6780:      "resolved": "https://registry.npmjs.org/make-fetch-happen/-/make-fetch-happen-13.0.1.tgz",
+package-lock.json:6789:        "minipass-fetch": "^3.0.0",
+package-lock.json:6801:    "node_modules/make-fetch-happen/node_modules/minipass": {
+package-lock.json:6810:    "node_modules/make-fetch-happen/node_modules/negotiator": {
+package-lock.json:6988:    "node_modules/minipass-fetch": {
+package-lock.json:6990:      "resolved": "https://registry.npmjs.org/minipass-fetch/-/minipass-fetch-3.0.5.tgz",
+package-lock.json:7005:    "node_modules/minipass-fetch/node_modules/minipass": {
+package-lock.json:7168:    "node_modules/node-fetch": {
+package-lock.json:7170:      "resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-3.3.2.tgz",
+package-lock.json:7175:        "fetch-blob": "^3.1.4",
+package-lock.json:7183:        "url": "https://opencollective.com/node-fetch"
+
+[Showing results with pagination = limit: 250]

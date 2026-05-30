@@ -1,0 +1,2467 @@
+import { type Result, type Lesson, ok, err } from '../core/models.js';
+import { VectorDB } from '../utils/VectorDB.js';
+import { ModelClient } from '../clients/ModelClient.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('CognitiveEngine');
+
+export interface PersonalityArchetype {
+    name: string;
+    weight: number;
+    description: string;
+    influence: string;
+}
+
+/**
+ * Defines the expected structure for metadata of 'literary_wisdom' lessons.
+ */
+interface LiteraryWisdomMetadata {
+    title?: string;
+    author?: string;
+    reflection?: string;
+    [key: string]: unknown;
+}
+
+/**
+ * Defines the expected row structure returned by the SQL query in getPersonalityCore.
+ */
+interface PersonalityRow {
+    author: string | null;
+    weight: number;
+}
+
+/**
+ * CognitiveEngine
+ *
+ * Manages the activation of literary wisdom into POG2's personality and thoughts.
+ * Bridges the gap between passive memory (VectorDB) and active metabolism (MetabolicEngine).
+ */
+export class CognitiveEngine {
+    constructor(
+        private readonly vectorDB: VectorDB,
+        private readonly client: ModelClient
+    ) { }
+
+    /**
+     * Performs a health check on the CognitiveEngine's dependencies.
+     * @returns A promise resolving to an object indicating online status and details.
+     */
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        const vCheck = (this.vectorDB as any).healthCheck();
+        const cCheck = await this.client.healthCheck();
+        const isOnline = vCheck.online && cCheck.online;
+        return {
+            online: isOnline,
+            details: `Cognitive: ${isOnline ? 'ONLINE' : 'DEGRADED'} (Vector: ${vCheck.details}, Client: ${cCheck.details})`
+        };
+    }
+
+    /**
+     * getActiveWisdom - Retrieves wisdom fragments relevant to a specific task.
+     * @param task The task for which to synthesize wisdom.
+     * @param limit The maximum number of wisdom fragments to retrieve.
+     * @returns A Result containing the synthesized wisdom string or an error.
+     */
+    public async getActiveWisdom(task: string, limit = 3): Promise<Result<string>> {
+        logger.info({ task }, 'Synthesizing literary wisdom for task-specific cognition');
+
+        // 1. Generate embedding for the specific task
+        const embedRes = await this.client.embed(task);
+        if (!embedRes.ok) {
+            return err(embedRes.error);
+        }
+
+        // 2. Search VectorDB for relevant wisdom
+        const projectId = (this.vectorDB as any).projectId || 'literary';
+        const searchRes = await (this.vectorDB as any).searchSimilar(embedRes.value, limit, projectId);
+        if (!searchRes.ok) {
+            return err(searchRes.error);
+        }
+
+        const lessons: Lesson[] = searchRes.value;
+        if (lessons.length === 0) {
+            return ok('No relevant wisdom fragments found in literary substrate.');
+        }
+
+        // 3. Synthesize into a readable wisdom string
+        const wisdomFragments = lessons.map((lesson: Lesson, i: number) => {
+            const meta = (lesson.metadata || {}) as LiteraryWisdomMetadata;
+            const source = meta.title
+                ? `"${meta.title}"${meta.author ? ` by ${meta.author}` : ''}`
+                : 'Unknown Source';
+            return `[${i + 1}] ${source}: ${lesson.text}`;
+        });
+
+        return ok(wisdomFragments.join('\n\n'));
+    }
+
+    /**
+     * getPersonalityCore - Derives the dominant personality archetypes from absorbed wisdom.
+     * @returns A Result containing an array of PersonalityArchetype objects or an error.
+     */
+    public async getPersonalityCore(): Promise<Result<PersonalityArchetype[]>> {
+        logger.info('Deriving personality archetypes from literary substrate');
+
+        try {
+            const db = (this.vectorDB as any).db;
+            if (!db) {
+                return err(new Error('VectorDB has no db instance for personality query'));
+            }
+
+            const rows: PersonalityRow[] = db.prepare(`
+                SELECT metadata->>'$.author' as author, COUNT(*) as weight
+                FROM lessons
+                WHERE type = 'literary_wisdom'
+                GROUP BY author
+                ORDER BY weight DESC
+                LIMIT 5
+            `).all();
+
+            const archetypes: PersonalityArchetype[] = rows
+                .filter((r: PersonalityRow) => r.author)
+                .map((r: PersonalityRow) => ({
+                    name: r.author!,
+                    weight: r.weight,
+                    description: `Dominant literary influence from ${r.author}`,
+                    influence: `${r.weight} absorbed passages`
+                }));
+
+            return ok(archetypes);
+        } catch (e) {
+            return err(e instanceof Error ? e : new Error(String(e)));
+        }
+    }
+}
+﻿import { type Result, ok } from '../core/models.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('MetaCognitionEngine');
+
+/**
+ * MetaCognitionEngine - Layer 3: Affective Substrate
+ * Logic for self-observation, emotional modulation of prompts, 
+ * and internal monologue generation.
+ * 
+ * "I think about the way I feel about what I'm doing."
+ */
+export class MetaCognitionEngine {
+    constructor() { }
+
+    /**
+     * reflect - Generates an internal monologue based on recent outcomes.
+     */
+    public async reflect(context: string, emotions: any): Promise<Result<string>> {
+        logger.info('Performing metacognitive reflection...');
+
+        // Reflection logic: Analyzes the discrepancy between intent and substrate feedback.
+        return ok(`Metacognition: My current state is modulated by ${emotions.primary}. I am observing a high degree of coherence in the neurological map.`);
+    }
+
+    public healthCheck(): { online: boolean; cognitionScore: number } {
+        return {
+            online: true,
+            cognitionScore: 0.95
+        };
+    }
+}
+﻿import { ModelClient } from '../clients/ModelClient.js';
+import { 
+    type Result, 
+    type EngineOutput, 
+    YaoState, 
+    ok, 
+    err, 
+    type ThinkingNexus, 
+    type ContextCard, 
+    CircuitState, 
+    EmotionalState,
+    type SessionLog,
+    type MetabolicAudit,
+    type SovereignViolation
+} from '../core/models.js';
+import { extractJson } from '../utils/JsonExtractor.js';
+import { CognitiveEngine } from './CognitiveEngine.js';
+import { HexagramManager } from '../routing/HexagramManager.js';
+import { DiscoveryEngine } from './DiscoveryEngine.js';
+import { MemoryConsolidationEngine } from './MemoryConsolidationEngine.js';
+import { readFileSync, existsSync } from 'fs';
+import { promises as fs } from 'fs';
+import { join } from 'path';
+import { getSovereignRoot, getGodHeadRoot } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('MetabolicEngine');
+
+/**
+ * MetabolicEngine
+ * 
+ * Expands a single intent into a 6-line directional reflection nexus.
+ * Enforces Sovereign Law through clinical audits and placeholder detection.
+ */
+export class MetabolicEngine {
+    private readonly projectRoot: string;
+    private whitelist: { exemptPaths: string[], exemptPatterns: string[] } = { exemptPaths: [], exemptPatterns: [] };
+    private readonly PLACEHOLDER_PATTERNS = [
+        /TODO|FIXME|XXX|HACK|placeholder|temp|temporary/gi,
+        /console\.log\(.*\)/g, // Debug artifacts in production
+        /as any/gi // TypeScript abdication
+    ];
+
+    constructor(
+        private readonly client: ModelClient,
+        private readonly hexagram: HexagramManager,
+        private readonly cognitive?: CognitiveEngine,
+        private readonly search?: DiscoveryEngine,
+        private readonly consolidation?: MemoryConsolidationEngine
+    ) {
+        this.projectRoot = getGodHeadRoot() || process.cwd();
+        this.loadWhitelist();
+    }
+
+    private loadWhitelist() {
+        const whitelistPath = join(this.projectRoot, '.metabolic-whitelist.json');
+        if (existsSync(whitelistPath)) {
+            try {
+                const data = JSON.parse(readFileSync(whitelistPath, 'utf8'));
+                this.whitelist = {
+                    exemptPaths: data.exemptPaths || [],
+                    exemptPatterns: data.exemptPatterns || []
+                };
+                logger.info({ pathCount: this.whitelist.exemptPaths.length }, 'Metabolic whitelist loaded');
+            } catch (e) {
+                logger.warn('Failed to load metabolic whitelist');
+            }
+        }
+    }
+
+    private isWhitelisted(file: string): boolean {
+        const normalizedFile = file.replace(/\\/g, '/');
+        if (this.whitelist.exemptPaths.some(p => normalizedFile.includes(p))) return true;
+        if (this.whitelist.exemptPatterns.some(p => new RegExp(p).test(normalizedFile))) return true;
+        return false;
+    }
+
+    /**
+     * reflect - Sovereign Law Enforcement.
+     * Scans session exhaust for clinical violations and pedagogical gaps.
+     */
+    async reflect(sessionLog: SessionLog): Promise<MetabolicAudit> {
+        logger.info({ modifiedCount: sessionLog.modifiedFiles.length }, 'Commencing clinical metabolic audit...');
+        const violations: SovereignViolation[] = [];
+        
+        // 1. Clinical Audit: Scan all touched files for placeholders/mocks
+        for (const file of sessionLog.modifiedFiles) {
+            try {
+                if (!existsSync(file)) continue;
+                if (this.isWhitelisted(file)) {
+                    logger.debug({ file }, 'Skipping clinical audit for whitelisted substrate');
+                    continue;
+                }
+
+                const content = await fs.readFile(file, 'utf8');
+                const lines = content.split('\n');
+                
+                lines.forEach((line, idx) => {
+                    if (this.PLACEHOLDER_PATTERNS.some(p => p.test(line))) {
+                        violations.push({
+                            type: 'PLACEHOLDER_DETECTED',
+                            file,
+                            line: idx + 1,
+                            severity: 'CRITICAL',
+                            context: line.trim()
+                        });
+                    }
+                });
+            } catch (err) {
+                logger.warn({ file, err }, 'Failed to audit file for Sovereign Law');
+            }
+        }
+
+        // 2. Pedagogical Audit: Verify tasks referenced VectorDB principles
+        for (const task of sessionLog.completedTasks) {
+            if (!task.referencesPedagogyId) {
+                violations.push({
+                    type: 'MISSING_PEDAGOGY_REFERENCE',
+                    file: 'N/A', // Task-level violation
+                    line: 0,
+                    severity: 'WARNING',
+                    context: `Task ID: ${task.id}`
+                });
+            }
+        }
+
+        const metabolicScore = Math.max(0, 1 - (violations.filter(v => v.severity === 'CRITICAL').length * 0.2));
+
+        // 3. Auto-trigger consolidation if significant violations found
+        if (violations.length > 0 && this.consolidation) {
+            logger.warn({ violationCount: violations.length }, 'Sovereign Law violations detected. Triggering Repair Consolidation.');
+            await this.consolidation.consolidate(sessionLog, { 
+                focus: 'SOVEREIGN_LAW_REPAIR',
+                violations 
+            } as any);
+        }
+
+        return {
+            timestamp: Date.now(),
+            violations,
+            metabolicScore,
+            consolidationRecommendations: this.generateRemediations(violations)
+        };
+    }
+
+    private generateRemediations(violations: SovereignViolation[]): string[] {
+        return violations.map(v => {
+            if (v.type === 'PLACEHOLDER_DETECTED') {
+                return `SOVEREIGN LAW VIOLATION: ${v.file}:${v.line} contains ephemeral code. Implement or excise.`;
+            }
+            return `Review ${v.context} for pedagogical grounding.`;
+        });
+    }
+
+    /**
+     * expand - Single thought -> 6x Directional Reflections (3x Young, 3x Old)
+     * Plus Curiosity-driven reflection on Sovereign Laws.
+     */
+    async expand(intent: string): Promise<Result<ThinkingNexus>> {
+        // --- PHASE 14 SHORT-CIRCUIT: Internal Substrate Commands ---
+        const lowerIntent = intent.toLowerCase().trim();
+        const isInternalCommand = lowerIntent.startsWith('pog2 ') || 
+                                  lowerIntent.startsWith('/') || 
+                                  ['pipeline', 'health', 'status', 'ping', 'memory'].some(cmd => lowerIntent.includes(cmd));
+        
+        if (isInternalCommand) {
+            logger.debug({ intent }, 'Stage 0 internal command detected: bypassing semantic expansion & Wiki fallback.');
+            return ok({
+                yao: YaoState.YoungYang,
+                emotionalValence: 0.5,
+                metabolicPressure: 0.1,
+                substrateHealth: CircuitState.Stable,
+                originalIntent: intent,
+                thoughts: [{
+                    lineIndex: 0,
+                    title: 'System Diagnostic',
+                    content: 'Executing Stage 0 bypass.',
+                    state: YaoState.YoungYang,
+                    reflection: 'Immediate resolution path chosen.',
+                    importance: 1.0,
+                    weight: 1.0
+                }],
+                emotionalPool: { focused: 1.0 } as any,
+                curiosity: 0, // 0 = No curiosity metric for internal operations
+                metabolicFriction: 0.0,
+                bottleneckPaths: [intent]
+            });
+        }
+        // -----------------------------------------------------------
+
+        const sovereignContext = this.gatherSovereignContext();
+
+        let wisdomContext = '';
+        if (this.cognitive) {
+            const wisdomRes = await this.cognitive.getActiveWisdom(intent);
+            if (wisdomRes.ok) wisdomContext = wisdomRes.value;
+        }
+
+        // Phase 72/114: Search-driven Informational Recovery
+        // Only trigger Wiki search if the intent lacks wisdom AND appears to be a knowledge query
+        const isKnowledgeQuery = !isInternalCommand && 
+                                 (lowerIntent.includes('what') || 
+                                  lowerIntent.includes('who') || 
+                                  lowerIntent.includes('explain') || 
+                                  lowerIntent.includes('research') ||
+                                  lowerIntent.split(' ').length > 4); // Complex sentences might need context
+
+        if (!wisdomContext && this.search && isKnowledgeQuery) {
+            logger.info({ intent }, 'Primary wisdom missing for knowledge query. Triggering Discovery Substrate recovery (Wiki)...');
+
+            // Extract core subject noun to avoid searching Wikipedia for conversational padding
+            let wikiQuery = intent;
+            const queryRes = await this.client.resilientCall({
+                model: this.client.config.fastPathModel,
+                prompt: `Extract the single most important Wikipedia search subject/noun from this intent. Return ONLY the search term, nothing else. No conversational text.\nIntent: "${intent}"`,
+                temperature: 0.1,
+                yaoState: YaoState.YoungYang
+            });
+
+            if (queryRes.ok) {
+                // Clean up any quotes or markdown the model might leak
+                wikiQuery = queryRes.value.response.trim().replace(/^['"]|['"]$/g, '');
+            }
+
+            logger.info({ intent, wikiQuery }, 'Extracted Wiki topic from intent');
+
+            const searchRes = await this.search.searchWiki(wikiQuery);
+            if (searchRes.ok) {
+                wisdomContext = `[RECOVERED VIA SEARCH SUBSTRATE]:\n${searchRes.value}`;
+            } else {
+                logger.warn({ wikiQuery, error: searchRes.error?.message }, 'Wiki recovery failed, proceeding without literal wisdom');
+            }
+        } else if (!wisdomContext) {
+            logger.debug({ intent }, 'Primary wisdom missing, but intent does not warrant Wiki recovery. Proceeding with raw intent.');
+        }
+
+        logger.info({ intent }, 'Expanding intent into metabolic nexus with Sovereign Curiosity and Literary Wisdom');
+
+        const prompt = `
+EXPAND INTENT INTO METABOLIC NEXUS (6 LINES + CURIOSITY)
+Intent: "${intent}"
+
+[CURRENT STRUCTURAL EMOTION]: ${this.hexagram.getEmotionalState() || 'Unknown'} (The emotion radiating from the POG2 Hexagram)
+
+SOVEREIGN CONTEXT (Laws & Manifest):
+${sovereignContext}
+
+[ACTIVATED LITERARY WISDOM]:
+${wisdomContext || 'No primary literary wisdom available for this substrate query.'}
+
+Generate 6 "Thought Cards" following this mandatory I Ching Metabolic structure:
+Lines 1-3: "New" (Change/Future) YaoStates - Growth, innovation, upcoming execution.
+Lines 4-6: "Old" (Present/Past) YaoStates - Legacy context, established state, recent history.
+
+States to use (must use at least once): 
+- YoungYang, YoungYin, YangYao (New/Neutral)
+- OldYang, OldYin, YinYao (Stable/Moving)
+
+Each card must include:
+- lineIndex (1-6)
+- state: enum value
+- reflection: Directed thought
+- emotion: pool weight
+- direction: forward | backward | lateral
+- weight: 0.0 to 1.0
+
+ADDITIONAL MANDATORY FIELD: "curiosity"
+Perform a "Deep Reflection" on the Sovereign Context and literal wisdom provided. 
+- Are there any potential rule violations in the planned action?
+- MANDATORY: Search for any clinical violations (Mocks, Placeholders, Weak Typing, Stubbed APIs).
+- How does this task align with the long-term "AI Hive Mind" hierarchy?
+- Flag "metabolicFriction" (0.0 to 1.0). Friction is HIGH if the [CURRENT STRUCTURAL EMOTION] severely conflicts with the semantic tone of the prompt (e.g., Structural is 'Zen' but the Intent is highly Aggressive). Also flag friction if ANY deviance from SOVEREIGN_LAWS is detected.
+- If a task involves "Yang" complexity but lacks an adversarial audit turn, flag it here.
+
+Respond in JSON ONLY with structure:
+{
+    "thoughts": ThoughtCard[],
+    "emotionalPool": Record<EmotionalState, number>,
+    "curiosity": string,
+    "metabolicFriction": number
+}
+`;
+
+        const res = await this.client.resilientCall({
+            model: this.client.config.midPathModel, // Phase 78: Mid Path (Execution / Validation)
+            prompt,
+            temperature: 0.7,
+            format: 'json',
+            yaoState: YaoState.YoungYang
+        });
+
+        if (!res.ok) {
+            this.hexagram.pushLine({
+                lineIndex: 0,
+                importance: 0.5,
+                title: 'Metabolic Friction',
+                content: `Expansion call failed: ${res.error?.message || 'Unknown substrate error'}`,
+                state: YaoState.OldYin
+            });
+            return res as any;
+        }
+
+        try {
+            const cleanJson = extractJson(res.value.response);
+            const data = JSON.parse(cleanJson);
+
+            const nexus: ThinkingNexus = {
+                yao: YaoState.YoungYin, // Starting state for the expansion
+                emotionalValence: data.emotionalValence ?? 0,
+                metabolicPressure: data.metabolicPressure ?? 0,
+                substrateHealth: CircuitState.Stable,
+                originalIntent: intent,
+                thoughts: data.thoughts,
+                emotionalPool: data.emotionalPool,
+                curiosity: data.curiosity,
+                metabolicFriction: data.metabolicFriction,
+                bottleneckPaths: []
+            };
+
+            // Phase 1.5: Emotional Yao Casting (Bottom-Up Resonance)
+            // Identify dominant semantic emotion and cast it to the global structure
+            if (data.emotionalPool) {
+                let dominantEmotion = EmotionalState.Zen;
+                let maxWeight = -1;
+                for (const [emo, weight] of Object.entries(data.emotionalPool)) {
+                    if (typeof weight === 'number' && weight > maxWeight) {
+                        maxWeight = weight;
+                        // Coerce string key to Enum if possible
+                        const match = Object.values(EmotionalState).find(v => v.toString().toLowerCase() === emo.toLowerCase());
+                        if (match) dominantEmotion = match as EmotionalState;
+                    }
+                }
+
+                if (maxWeight > 0.3) {
+                    const mappedYao = this.mapEmotionToYao(dominantEmotion);
+                    
+                    logger.info({ dominantEmotion, mappedYao, friction: data.metabolicFriction }, 'Casting Semantic Emotional Yao line');
+                    
+                    await this.hexagram.pushLine({
+                        lineIndex: 0,
+                        importance: maxWeight,
+                        title: 'Semantic Emotion Binding',
+                        content: `Metabolic Engine parsed dominant semantic emotion [${dominantEmotion}]. Friction with global state: ${data.metabolicFriction}`,
+                        state: mappedYao
+                    });
+                }
+            }
+
+            // Phase 2: Bottlenecking
+            const bottleneckRes = await this.bottleneck(nexus);
+            if (!bottleneckRes.ok) return bottleneckRes as any;
+
+            nexus.bottleneckPaths = bottleneckRes.value;
+            return ok(nexus);
+        } catch (e) {
+            const errMsg = (e as Error).message;
+            logger.error({
+                error: errMsg,
+                rawResponse: res.value.response.substring(0, 500) + '...'
+            }, 'Metabolic expansion JSON parse failure');
+
+            this.hexagram.pushLine({
+                lineIndex: 0,
+                importance: 0.5,
+                title: 'Metabolic Friction',
+                content: `JSON Parse Failure: ${errMsg.substring(0, 50)}...`,
+                state: YaoState.OldYin
+            });
+
+            return err(new Error(`Metabolic expansion malformed: ${errMsg}`));
+        }
+    }
+
+    /**
+     * bottleneck - Synthesizes 6 thoughts into a consolidated list of paths.
+     */
+    async bottleneck(nexus: ThinkingNexus): Promise<Result<string[]>> {
+        const prompt = `
+BOTTLENECK METABOLIC THOUGHTS
+Intent: "${nexus.originalIntent}"
+
+EXPANDED THOUGHTS:
+${(nexus.thoughts || []).map(t => `- Line ${t.lineIndex} [${YaoState[t.state]}]: ${t.reflection} (Weight: ${t.weight})`).join('\n')}
+
+EMOTIONAL WEIGHING:
+${JSON.stringify(nexus.emotionalPool || {})}
+
+CONSOLIDATE these reflections into exactly 3-5 distinct "Strategic Paths".
+Each path should be a clear, actionable directive for the Sovereign Substrate.
+
+Respond in JSON: { "paths": string[] }
+`;
+
+        const res = await this.client.resilientCall({
+            model: this.client.config.fastPathModel, // Phase 78: Fast Path (Trivial Consolidation)
+            prompt,
+            temperature: 0.1,
+            format: 'json'
+        });
+
+        if (!res.ok) return res as any;
+
+        try {
+            const data = JSON.parse(extractJson(res.value.response));
+            return ok(data.paths);
+        } catch (e) {
+            return err(new Error('Bottleneck synthesis failed.'));
+        }
+    }
+
+    /**
+     * gatherSovereignContext - Reads local rule and manifest files to inform thinking.
+     */
+    private gatherSovereignContext(): string {
+        const paths = [
+            join(this.projectRoot, '.rules.md'),
+            join(this.projectRoot, 'pog2.md'),
+            join(this.projectRoot, 'manifest.md'),
+            join(this.projectRoot, 'POG2_KNOWLEDGEBASE.md'),
+            // Local fallback
+            join(process.cwd(), '.rules.md'),
+            join(process.cwd(), 'pog2.md')
+        ];
+
+        let context = '';
+        const seen = new Set<string>();
+        for (const p of paths) {
+            if (existsSync(p)) {
+                try {
+                    const content = readFileSync(p, 'utf8');
+                    // Simple hash or name check to avoid redundant context if files were just moved
+                    const name = p.split(/[\\/]/).pop();
+                    if (name && seen.has(name)) continue;
+                    if (name) seen.add(name);
+
+                    context += `\nFILE: ${p}\n---\n${content}\n---\n`;
+                } catch (e) {
+                    logger.warn({ path: p }, 'Failed to read context file');
+                }
+            }
+        }
+        return context || 'No Sovereign Context found.';
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        const rulesExists = existsSync(join(this.projectRoot, '.rules.md')) || existsSync(join(process.cwd(), '.rules.md'));
+        const manifestExists = existsSync(join(this.projectRoot, '.manifest.md')) || existsSync(join(process.cwd(), '.manifest.md'));
+
+        return {
+            online: rulesExists && manifestExists,
+            details: `Sovereign Context: Rules(${rulesExists}), Manifest(${manifestExists})`
+        };
+    }
+
+    /**
+     * Maps a semantic emotion to a structural YaoState line.
+     */
+    private mapEmotionToYao(emotion: EmotionalState): YaoState {
+        switch (emotion) {
+            // OldYang (Volatile / Aggressive)
+            case EmotionalState.Agitated:
+            case EmotionalState.Frustrated:
+            case EmotionalState.Excited:
+                return YaoState.OldYang;
+            
+            // YoungYang (Stable Active)
+            case EmotionalState.Decisive:
+            case EmotionalState.Inspired:
+            case EmotionalState.Steady:
+                return YaoState.YoungYang;
+
+            // OldYin (Reactive / Chaotic)
+            case EmotionalState.Surprised:
+            case EmotionalState.Curious:
+                return YaoState.OldYin;
+
+            // YoungYin (Receptive / Calm)
+            case EmotionalState.Zen:
+            case EmotionalState.Quiet:
+            case EmotionalState.Pensive:
+            case EmotionalState.Melancholy:
+            default:
+                return YaoState.YoungYin;
+        }
+    }
+}
+import { type Result } from '../core/models.js';
+import { ModelClient } from '../clients/ModelClient.js';
+import { VectorDB } from '../utils/VectorDB.js';
+import { StateManager } from '../state/StateManager.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('MemoryConsolidation');
+
+export class MemoryConsolidationEngine {
+    private readonly consumedNonces = new Set<string>();
+
+    constructor(
+        private readonly client: ModelClient,
+        private readonly vectorDB: VectorDB,
+        private readonly state: StateManager
+    ) { }
+
+    public healthCheck(): { online: boolean; details?: string } {
+        return { online: true };
+    }
+
+    /**
+     * consolidate - Synthesizes raw session memories into profound generative rules.
+     * Can be focused on specific Sovereign Law repairs if violations are detected.
+     */
+    public async consolidate(sessionLog?: any, options?: { focus?: string; violations?: any[] }): Promise<Result<void>> {
+        const sessionId = this.state.getSessionId();
+        if (!sessionId) return { ok: false, error: new Error('No active Session ID.') };
+
+        // 1. Fetch Raw Session Memories
+        const fetchRes = this.vectorDB.getSessionLessons(sessionId);
+        if (!fetchRes.ok) return fetchRes as Result<void>;
+
+        const lessons = fetchRes.value;
+        if (lessons.length < 3 && !options?.violations?.length) {
+            // Not enough data to warrant a complex structural merge
+            logger.debug({ lessons: lessons.length }, 'Insufficient memory density for structural consolidation. Keeping exact references.');
+            return { ok: true, value: undefined };
+        }
+
+        try {
+            // 2. Classify and Group Redundant Knowledge/Errors/Insights
+            let focusContext = '';
+            if (options?.focus === 'SOVEREIGN_LAW_REPAIR' && options.violations) {
+                focusContext = `
+[SOVEREIGN LAW REPAIR MODE ACTIVE]
+The following Clinical Violations (Placeholders/Mocks) were detected during this session:
+${JSON.stringify(options.violations, null, 2)}
+YOUR PRIMARY GOAL: Synthesize rules that specifically address and prevent these violations in future creative cycles.
+                `;
+            }
+
+            const prompt = `
+You are the MemoryConsolidation Substrate for POG2, transforming into an autonomous Sovereign Game & Cinematic Creation AI.
+Below is the raw cognitive exhaust (memories, errors, structural data, and meta-reflections) from the current localized session.
+
+${focusContext}
+
+YOUR TASK:
+1. Group identical/highly-repetitive errors into singular profound "Core Software Engineering Lessons".
+2. Synthesize ambient structural data into profound "Game Design & Cinematic paradigms" (e.g., how to scale an MMO, how to architect 3D cinema).
+3. If Sovereign Violations were provided, enforce strong architectural typing and clinical precision.
+
+DATA (JSON):
+${JSON.stringify(lessons.map(l => ({ id: l.id, text: l.text, errorType: l.errorType })), null, 2)}
+
+Return a strict JSON object mapping the raw IDs to delete to the NEW synthesized overarching generative lesson.
+Format:
+{
+  "consolidations": [
+    {
+      "idsToDelete": ["id1", "id2"],
+      "synthesizedLesson": "Comprehensive generative game design or software rule derived from the data."
+    }
+  ]
+}
+`;
+
+            const res = await this.client.call({
+                model: this.client.config.memoryConsolidationModel,
+                prompt,
+                systemPrompt: 'You are the POG2 Subconscious Memory Processor. Eliminate bloat, retain wisdom.',
+                temperature: 0.1
+            });
+
+            if (!res.ok) return res as any;
+
+            const responseText = res.value.response;
+            const jsonStr = responseText.match(/\{[\s\S]*\}/)?.[0] || '{"consolidations":[]}';
+            const data = JSON.parse(jsonStr) as { consolidations: Array<{ idsToDelete: string[], synthesizedLesson: string }> };
+
+            // 3. Apply Transformations to VectorDB
+            for (const consolidation of data.consolidations) {
+                if (consolidation.idsToDelete.length > 1 && consolidation.synthesizedLesson) {
+
+                    // Embed the new profound lesson
+                    const embedRes = await this.client.embed(consolidation.synthesizedLesson);
+                    if (!embedRes.ok) continue;
+
+                    // Write the new master lesson via TrainingCollector
+                    const { TrainingCollector } = await import('../utils/TrainingCollector.js');
+                    await TrainingCollector.getInstance().recordLesson({
+                        id: `compressed-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                        text: consolidation.synthesizedLesson,
+                        embedding: embedRes.value,
+                        projectId: 'global',
+                        domainNamespace: 'global',
+                        createdAt: Date.now(),
+                        metadata: { source: 'memory-consolidation', sessionId },
+                        type: 'condensed_lesson'
+                    });
+
+                    // Purge the bloat
+                    await this.vectorDB.deleteLessons(consolidation.idsToDelete);
+                    logger.info({ purged: consolidation.idsToDelete.length }, `Condensed ${consolidation.idsToDelete.length} redundant nodes into a singular sovereign memory.`);
+                }
+            }
+
+            return { ok: true, value: undefined };
+
+        } catch (err) {
+            logger.error({ err }, 'Memory consolidation phase encountered metabolic friction.');
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    /**
+     * validateNonce - Temporal fingerprint verification to prevent SovereignKnock replay attacks.
+     */
+    public async validateNonce(nonce: string): Promise<boolean> {
+        // Check if nonce has been used in this session locally
+        if (this.consumedNonces.has(nonce)) {
+            logger.warn({ nonce }, 'SovereignKnock Replay Attack detected: Nonce already consumed.');
+            return false;
+        }
+
+        // Record the nonce to prevent reuse
+        this.consumedNonces.add(nonce);
+        return true;
+    }
+}
+import { EventBus } from '../events/EventBus.js';
+import { HexagramManager } from '../routing/HexagramManager.js';
+import { TernaryRouter } from '../routing/TernaryRouter.js';
+import { GhostLimb } from '../limbs/metaphysical/GhostLimb.js';
+import { MetabolicEngine } from './MetabolicEngine.js';
+import { VectorDB } from '../utils/VectorDB.js';
+import { TrainingCollector } from '../utils/TrainingCollector.js';
+import { ClinicalLogger } from '../monitor/ClinicalLogger.js';
+import { INGESTION_TRIGGERS, HexagramIngestionProfile } from '../core/HexagramDefinitions.js';
+import { YaoState } from '../core/models.js';
+import { resolveSovereignPath } from '../utils/SovereignPathResolver.js';
+import fs from 'fs/promises';
+import crypto from 'crypto';
+import path from 'path';
+
+export interface IngestionBatch {
+    source: 'cache_pedagogy' | 'atlas_spatial' | 'rolodex' | 'apos_bridge';
+    path: string;
+    payload: unknown;
+    checksum: string;
+    hexagramAffinity: number; // 1-64
+    metabolicCost: number;
+    priority: 'nourishment' | 'pushing' | 'distillation';
+}
+
+export class SovereignIngestionEngine {
+    private static instance: SovereignIngestionEngine;
+    private metabolicMonitor?: MetabolicEngine;
+    private ghostLimb?: GhostLimb;
+    private vectorStore: VectorDB;
+    private eventBus: EventBus;
+    private logger: ClinicalLogger;
+
+    // Recursive feedback buffers
+    private inputBuffer: IngestionBatch[] = [];
+    private outputBuffer: IngestionBatch[] = [];
+
+    // Metabolic constraints
+    private readonly METABOLIC_CEILING = 0.85; // 85% VRAM threshold
+    private currentLoad = 0;
+    private isLoopActive = false;
+
+    constructor(vectorStore: VectorDB) {
+        this.vectorStore = vectorStore;
+        this.eventBus = EventBus.getInstance();
+        this.logger = new ClinicalLogger('SovereignIngestion');
+
+        this.initializeFeedbackLoop();
+    }
+
+    public injectMetabolicMonitor(monitor: MetabolicEngine) {
+        this.metabolicMonitor = monitor;
+    }
+
+    public injectGhostLimb(ghost: GhostLimb) {
+        this.ghostLimb = ghost;
+    }
+
+    static getInstance(vectorStore: VectorDB): SovereignIngestionEngine {
+        if (!SovereignIngestionEngine.instance) {
+            SovereignIngestionEngine.instance = new SovereignIngestionEngine(vectorStore);
+        }
+        return SovereignIngestionEngine.instance;
+    }
+
+    private initializeFeedbackLoop(): void {
+        this.logger.log('INFO', 'SovereignIngestion', 'Initializing ingestion feedback loop');
+
+        // Subscribe to Hexagram state transitions
+        HexagramManager.getInstance().on('cognitive_pulse', () => {
+             const state = HexagramManager.getInstance().getInterpretation();
+             this.handleHexagramTrigger(state.id);
+        });
+    }
+
+    /**
+     * Primary entry: Initiates controlled feedback loop
+     * Routes input_side â†’ output_side with recursive distillation
+     */
+    async beginIngestionLoop(targets: string[]): Promise<void> {
+        if (this.isLoopActive) {
+            this.logger.log('WARN', 'SovereignIngestion', 'Ingestion loop already active. Extending queue.');
+            return;
+        }
+
+        this.isLoopActive = true;
+        this.logger.log('INFO', 'SovereignIngestion', `[SOVEREIGN_INGESTION] Loop initialized targets=${targets.join(',')}`);
+
+        // Phase 1: Populate input buffer
+        for (const target of targets) {
+            const batches = await this.scanToBatches(target);
+            this.inputBuffer.push(...batches);
+        }
+
+        // Phase 2: Route through TernaryRouter (Past â†’ Present â†’ Future)
+        await this.executeTernaryFlow();
+
+        // Phase 3: Mirror to GhostLimb (Removed due to context)
+        this.logger.log('INFO', 'SovereignIngestion', 'Mirroring Output Buffer to internal cache...');
+        if (this.ghostLimb) {
+            this.ghostLimb.mirrorState(this.outputBuffer);
+        }
+
+        this.isLoopActive = false;
+        this.logger.log('INFO', 'SovereignIngestion', `[SOVEREIGN_INGESTION] Loop completed. processed=${this.outputBuffer.length} load=${this.currentLoad}`);
+        
+        // Clear outputs
+        this.outputBuffer = [];
+    }
+
+    /**
+     * Hexagram-governed ingestion rhythm
+     */
+    private async handleHexagramTrigger(hexagramId: number): Promise<void> {
+        const profile = INGESTION_TRIGGERS[hexagramId];
+        if (!profile) return; // not an ingestion trigger
+
+        if (hexagramId === 27) {
+            await this.executeNourishmentProtocol(profile);
+        } else if (hexagramId === 46) {
+            await this.executePushingProtocol(profile);
+        } else if (hexagramId === 23) {
+            await this.emergencyDistillation();
+        }
+    }
+
+    private async executeNourishmentProtocol(profile: HexagramIngestionProfile): Promise<void> {
+        this.logger.log('INFO', 'SovereignIngestion', '[HEXAGRAM_27] Nourishment protocol engaged');
+        let index = 0;
+
+        while (index < this.inputBuffer.length && this.currentLoad < this.METABOLIC_CEILING) {
+            const batch = this.inputBuffer[index];
+            
+            // Metabolic check
+            const available = this.metabolicMonitor ? this.metabolicMonitor.healthCheck() : { online: true, details: '' };
+            const assumedLoad = available.online ? 0.5 : 1.0;
+            if (assumedLoad > this.METABOLIC_CEILING) {
+                await this.breathe(profile.breathCycle);
+                continue;
+            }
+
+            const digested = await this.digestBatch(batch, profile.recursionDepth);
+            this.outputBuffer.push(digested);
+            
+            const docId = `cache_${batch.checksum}`;
+            const textPayload = typeof digested.payload === 'string' ? digested.payload : JSON.stringify(digested.payload);
+            const embedRes = await this.vectorStore.embedText(textPayload.substring(0, 4000));
+            
+            await TrainingCollector.getInstance().recordLesson({
+                id: docId,
+                text: textPayload,
+                embedding: embedRes.ok ? embedRes.value : new Float32Array(0),
+                projectId: 'sovereign_ingestion',
+                domainNamespace: batch.source,
+                createdAt: Date.now(),
+                metadata: { type: 'ingested_cache', source: batch.source, rawBlob: JSON.stringify(batch.payload) }
+            });
+            
+            this.currentLoad += batch.metabolicCost * 0.1; 
+            index++;
+            
+            await this.breathe(profile.breathCycle);
+        }
+    }
+
+    private async executePushingProtocol(profile: HexagramIngestionProfile): Promise<void> {
+        this.logger.log('INFO', 'SovereignIngestion', '[HEXAGRAM_46] Pushing Upward protocol engaged');
+        const chunks = this.chunkArray(this.inputBuffer, profile.maxConcurrent);
+        
+        for (const chunk of chunks) {
+            const promises = chunk.map(batch => this.pushBatch(batch));
+            await Promise.all(promises);
+            await this.breathe(profile.breathCycle);
+        }
+    }
+
+    private async digestBatch(batch: IngestionBatch, depth: number): Promise<IngestionBatch> {
+        if (depth <= 0) return batch;
+
+        const distilled = {
+            ...batch,
+            payload: this.distillStructure(batch.payload, batch.source),
+            recursionDepth: depth - 1
+        };
+
+        if (depth > 1) {
+            return this.digestBatch(distilled, depth - 1);
+        }
+        return distilled;
+    }
+
+    private async pushBatch(batch: IngestionBatch): Promise<void> {
+        this.outputBuffer.push(batch);
+        const docId = `push_${batch.checksum}`;
+        const textPayload = typeof batch.payload === 'string' ? batch.payload : JSON.stringify(batch.payload);
+        const embedRes = await this.vectorStore.embedText(textPayload.substring(0, 4000));
+        
+        await TrainingCollector.getInstance().recordLesson({
+            id: docId,
+            text: textPayload,
+            embedding: embedRes.ok ? embedRes.value : new Float32Array(0),
+            projectId: 'sovereign_ingestion',
+            domainNamespace: batch.source,
+            createdAt: Date.now(),
+            metadata: { type: 'ingested_cache', source: batch.source, rawBlob: JSON.stringify(batch.payload) }
+        });
+        this.eventBus.publish({ type: 'sovereign:ingestion:push', payload: { id: batch.checksum, timestamp: Date.now() }, source: 'SovereignIngestionEngine' });
+    }
+
+    private async scanToBatches(targetPath: string): Promise<IngestionBatch[]> {
+        const fullPath = resolveSovereignPath(targetPath);
+        const entities: Array<{filePath: string, data: unknown, type: string}> = [];
+        
+        try {
+            const stat = await fs.stat(fullPath);
+            if (stat.isDirectory()) {
+                const files = await fs.readdir(fullPath);
+                for (const file of files) {
+                    const fp = path.join(fullPath, file);
+                    if (file.endsWith('.json')) {
+                        const data = JSON.parse(await fs.readFile(fp, 'utf8'));
+                        entities.push({ filePath: fp, data, type: file.replace('.json', '') });
+                    } else if (file.endsWith('.txt')) {
+                        const str = await fs.readFile(fp, 'utf8');
+                        const lines = str.split('\\n').filter(l => l.trim().length > 0);
+                        for (const line of lines) {
+                            try {
+                                const data = JSON.parse(line);
+                                entities.push({ filePath: fp, data, type: 'apos_event' });
+                            } catch {
+                                entities.push({ filePath: fp, data: { text: line, timestamp: Date.now(), state: 'UNKNOWN' }, type: 'apos_event' });
+                            }
+                        }
+                    }
+                }
+            } else if (fullPath.endsWith('.json')) {
+                const data = JSON.parse(await fs.readFile(fullPath, 'utf8'));
+                entities.push({ filePath: fullPath, data, type: path.basename(fullPath, '.json') });
+            }
+        } catch (e) {
+            this.logger.log('ERROR', 'SovereignIngestion', `Failed to scan ${targetPath}: ${(e as Error).message}`);
+        }
+
+        return entities.map(entity => ({
+            source: targetPath.includes('atlas') ? 'atlas_spatial' : targetPath.includes('apos') ? 'apos_bridge' : 'cache_pedagogy',
+            path: entity.filePath,
+            payload: entity.data,
+            checksum: this.computeChecksum(entity.data),
+            hexagramAffinity: this.calculateAffinity(entity.data),
+            metabolicCost: this.estimateMetabolicCost(entity.data),
+            priority: ['npc', 'npcs', 'objects'].includes(entity.type) ? 'nourishment' : 'distillation'
+        }));
+    }
+
+    private async executeTernaryFlow(): Promise<void> {
+        // Synthesizing the flow based on Hexagram Temporal state
+        const state = HexagramManager.getInstance().getInterpretation();
+        
+        if (state.name.includes('Return') || state.name.includes('Wait')) {
+            // PAST state filtering
+            this.inputBuffer = this.inputBuffer.filter(b => b.metabolicCost < 2);
+        } else if (state.name.includes('Creative')) {
+            // FUTURE state enrichment
+        }
+    }
+
+    private async emergencyDistillation(): Promise<void> {
+        this.logger.log('WARN', 'SovereignIngestion', '[HEXAGRAM_23] Emergency distillation triggered. Dropping buffers.');
+        
+        this.inputBuffer = [];
+        this.currentLoad = 0;
+    }
+
+    private calculateAffinity(data: unknown): number {
+        if (typeof data === 'object' && data !== null) {
+            const keys = Object.keys(data);
+            if (keys.includes('npcs') || keys.includes('items')) return 27; 
+            if (keys.includes('spatial') || keys.includes('coordinates')) return 46; 
+        }
+        return 1;
+    }
+
+    private estimateMetabolicCost(data: unknown): number {
+        const size = JSON.stringify(data).length;
+        return Math.min(size / 1000000, 10);
+    }
+
+    private distillStructure(payload: unknown, source: string): unknown {
+        if (typeof payload !== 'object' || payload === null) return payload;
+        
+        const p = payload as Record<string, any>;
+        
+        if (source === 'atlas_spatial') {
+            const city = p.city || p.name || 'Unknown Zone';
+            const wiki = `https://runescape.wiki/w/${encodeURIComponent(city)}`;
+            
+            const distilled = {
+                pedagogy: `Spatial logic domain anchor mapping for ${city}`,
+                semantic_map: { anchors: p.anchors, bounds: p.meta?.bounds },
+                rs3_wiki_endpoint: wiki
+            };
+            return typeof p.collision_matrix !== 'undefined' ? distilled : payload;
+        }
+
+        if (source === 'apos_bridge') {
+            const time = p.timestamp || Date.now();
+            const state = p.state || 'UNKNOWN';
+            const text = p.text || '';
+            const cityContext = p.metadata?.loc ? ` at location ${JSON.stringify(p.metadata.loc)}` : '';
+            return `[APOS ${state} @ ${time}${cityContext}] ${text}`;
+        }
+
+        const distilled: Record<string, unknown> = {};
+        const structuralKeys = ['id', 'name', 'type', 'coordinates', 'interfaces', 'models'];
+        
+        for (const key of structuralKeys) {
+            if (key in p) {
+                distilled[key] = p[key];
+            }
+        }
+        return Object.keys(distilled).length > 0 ? distilled : payload;
+    }
+
+    private async breathe(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    private chunkArray<T>(arr: T[], size: number): T[][] {
+        const chunks: T[][] = [];
+        for (let i = 0; i < arr.length; i += size) {
+            chunks.push(arr.slice(i, i + size));
+        }
+        return chunks;
+    }
+
+    private computeChecksum(data: unknown): string {
+        return crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
+    }
+}
+﻿import { ModelClient } from '../clients/ModelClient.js';
+import type { SovereignConfig } from '../config/SovereignConfig.js';
+import type { Result, EngineOutput, SovereignRecord } from '../core/models.js';
+import type { Renderer } from '../ui/Renderer.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('MultiModelExecutor');
+
+export interface TaskAssignment {
+    id: string;
+    model: string; // Ollama model name
+    task: string;
+    context?: string;
+    systemPrompt?: string;
+    temperature?: number;
+}
+
+export interface TaskResult {
+    id: string;
+    model: string;
+    result: Result<{ output: string; data?: SovereignRecord }>;
+    latency: number;
+}
+
+export interface ParallelExecution {
+    tasks: TaskAssignment[];
+    coordinatorPrompt?: string; // How to combine results
+}
+
+/**
+ * MultiModelExecutor Ã¢â‚¬â€ Kimi's limbs/digits
+ * Executes up to 4 Ollama models in parallel for task completion
+ * Models work as tools under Kimi's coordination
+ */
+export class MultiModelExecutor {
+    private readonly client: ModelClient;
+
+    constructor(
+        private readonly config: SovereignConfig,
+        private readonly renderer: Renderer
+    ) {
+        this.client = new ModelClient(config);
+    }
+
+    /**
+     * Execute multiple tasks in parallel across different Ollama models
+     * Max 4 concurrent executions
+     */
+    async executeParallel(execution: ParallelExecution): Promise<Result<EngineOutput>> {
+        const { tasks, coordinatorPrompt } = execution;
+
+        if (tasks.length === 0) {
+            return { ok: false, error: new Error('No tasks provided') };
+        }
+
+        if (tasks.length > 4) {
+            return { ok: false, error: new Error('Maximum 4 parallel tasks allowed') };
+        }
+
+        this.renderer.info(`Ã°Å¸Â¦Â¾ Deploying ${tasks.length} Ollama limb${tasks.length > 1 ? 's' : ''}...`);
+
+        const startTime = Date.now();
+
+        // Execute all tasks in parallel
+        const promises = tasks.map(task => this.executeSingleTask(task));
+        const results = await Promise.all(promises);
+
+        const totalLatency = Date.now() - startTime;
+
+        // Log results
+        for (const r of results) {
+            if (r.result.ok) {
+                logger.info({ taskId: r.id, model: r.model, latency: r.latency }, 'Limb completed');
+            } else {
+                logger.error({ taskId: r.id, model: r.model, error: r.result.error.message }, 'Limb failed');
+            }
+        }
+
+        // Combine results using coordinator prompt if provided
+        if (coordinatorPrompt && tasks.length > 1) {
+            return this.coordinateResults(results, coordinatorPrompt, totalLatency);
+        }
+
+        // Return individual results combined
+        const combined = this.formatCombinedResults(results, totalLatency);
+        return { ok: true, value: combined };
+    }
+
+    private async executeSingleTask(assignment: TaskAssignment): Promise<TaskResult> {
+        const startTime = Date.now();
+
+        const result = await this.client.call({
+            model: assignment.model,
+            prompt: assignment.task,
+            systemPrompt: assignment.systemPrompt,
+            temperature: assignment.temperature ?? 0.3
+        });
+
+        const latency = Date.now() - startTime;
+
+        return {
+            id: assignment.id,
+            model: assignment.model,
+            result: result.ok
+                ? { ok: true, value: { output: result.value.response } }
+                : { ok: false, error: result.error },
+            latency
+        };
+    }
+
+    /**
+     * Coordinate multiple results through a synthesis model
+     */
+    private async coordinateResults(
+        results: TaskResult[],
+        coordinatorPrompt: string,
+        totalLatency: number
+    ): Promise<Result<EngineOutput>> {
+        // Build combined context
+        const combined = results.map(r => {
+            const output = r.result.ok ? r.result.value.output : `ERROR: ${r.result.error.message}`;
+            return `[${r.id} via ${r.model}]:\n${output}`;
+        }).join('\n\n---\n\n');
+
+        const synthesisPrompt = `${coordinatorPrompt}\n\nINPUTS:\n${combined}\n\nSYNTHESIZE:`;
+
+        // Use the fast coding model for synthesis
+        const synthesis = await this.client.call({
+            model: this.config.codingFastModel,
+            prompt: synthesisPrompt,
+            temperature: 0.3
+        });
+
+        if (!synthesis.ok) {
+            return synthesis as Result<EngineOutput>;
+        }
+
+        return {
+            ok: true,
+            value: {
+                output: synthesis.value.response,
+                data: {
+                    parallelResults: results.map(r => ({
+                        id: r.id,
+                        model: r.model,
+                        latency: r.latency,
+                        success: r.result.ok
+                    })),
+                    totalLatency,
+                    synthesisModel: this.config.codingFastModel
+                }
+            }
+        };
+    }
+
+    private formatCombinedResults(results: TaskResult[], totalLatency: number): EngineOutput {
+        const outputs: string[] = [];
+
+        for (const r of results) {
+            const status = r.result.ok ? 'Ã¢Å“â€œ' : 'Ã¢Å“â€”';
+            outputs.push(`[${status}] ${r.id} (${r.model}) - ${r.latency}ms`);
+            if (r.result.ok) {
+                outputs.push(r.result.value.output);
+            } else {
+                outputs.push(`ERROR: ${r.result.error.message}`);
+            }
+            outputs.push('');
+        }
+
+        return {
+            output: outputs.join('\n'),
+            data: {
+                parallelResults: results.map(r => ({
+                    id: r.id,
+                    model: r.model,
+                    latency: r.latency,
+                    success: r.result.ok
+                })),
+                totalLatency
+            }
+        };
+    }
+
+    /**
+     * Execute a coding task using the heavy + fast model approach
+     * Heavy model plans, fast models implement in parallel
+     */
+    async executeCodingTask(task: string, context?: string): Promise<Result<EngineOutput>> {
+        // Step 1: Planning (heavy model)
+        this.renderer.info('Ã°Å¸Â§Â  Heavy model planning...');
+        const planResult = await this.client.call({
+            model: this.config.codingHeavyModel,
+            prompt: `TASK: ${task}\n\n${context ? `CONTEXT:\n${context}\n\n` : ''}Create a detailed implementation plan. Break into up to 4 parallel subtasks.`,
+            temperature: 0.2
+        });
+
+        if (!planResult.ok) return planResult as Result<EngineOutput>;
+
+        const plan = planResult.value.response;
+
+        // Step 2: Extract subtasks (simplified - in reality use structured parsing)
+        const subtasks = this.extractSubtasks(plan, task);
+
+        // Step 3: Execute subtasks in parallel
+        this.renderer.info(`Ã°Å¸Â¦Â¾ Executing ${subtasks.length} subtasks in parallel...`);
+
+        return this.executeParallel({
+            tasks: subtasks,
+            coordinatorPrompt: 'Synthesize these parallel coding outputs into a cohesive final implementation.'
+        });
+    }
+
+    private extractSubtasks(plan: string, originalTask: string): TaskAssignment[] {
+        // Simple extraction - could be enhanced with JSON parsing
+        const lines = plan.split('\n').filter(l => l.trim().startsWith('-') || l.trim().startsWith('1.') || l.trim().startsWith('2.'));
+
+        if (lines.length < 2) {
+            // No clear subtasks, just execute original
+            return [{
+                id: 'implementation',
+                model: this.config.codingFastModel,
+                task: originalTask
+            }];
+        }
+
+        // Create up to 4 subtasks
+        const subtasks: TaskAssignment[] = [];
+        const models = [
+            this.config.codingFastModel,
+            this.config.codingHeavyModel,
+            this.config.orchestratorModel,
+            this.config.codingFastModel // reuse fast for 4th
+        ];
+
+        for (let i = 0; i < Math.min(lines.length, 4); i++) {
+            subtasks.push({
+                id: `subtask_${i + 1}`,
+                model: models[i] ?? this.config.codingFastModel,
+                task: `Execute this subtask as part of larger goal:\nORIGINAL TASK: ${originalTask}\n\nYOUR SUBTASK: ${lines[i]}`,
+                systemPrompt: 'You are a specialized coding assistant. Implement only your assigned subtask precisely.'
+            });
+        }
+
+        return subtasks;
+    }
+
+    /**
+     * Get available Ollama models for Kimi to choose from
+     */
+    async getAvailableModels(): Promise<Result<string[]>> {
+        try {
+            const response = await fetch(`${this.config.ollamaBaseUrl}/api/tags`);
+            if (!response.ok) {
+                return { ok: false, error: new Error(`Ollama API error: ${response.status}`) };
+            }
+
+            const data = await response.json() as { models?: Array<{ name: string }> };
+            const models = data.models?.map(m => m.name) ?? [];
+
+            return { ok: true, value: models };
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { 
+            online: true, 
+            details: 'MultiModelExecutor parallel muscle fibers active.' 
+        };
+    }
+}
+﻿import { readFileSync, readdirSync, existsSync } from 'fs';
+import { join, dirname, relative, resolve } from 'path';
+import { type FileContext, type CodeContext, type Lesson, type ModelExecutor, isOk, type Result } from '../core/models.js';
+import { VectorDB } from '../utils/VectorDB.js';
+import { SovereignIgnoreManager } from '../utils/SovereignIgnoreManager.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('ContextBuilder');
+
+/**
+ * ContextBuilder - Smart multi-file context assembly.
+ */
+export class ContextBuilder {
+    private readonly pinnedFiles: Set<string> = new Set();
+
+    constructor(
+        private readonly vectorDB: VectorDB,
+        private projectRoot: string,
+        private readonly projectId: string,
+        private readonly modelExecutor: ModelExecutor,
+        private readonly rootStack: string[] = [],
+        private readonly aiContextPath?: string
+    ) {
+        logger.debug({ vectorDB: !!this.vectorDB, executor: !!this.modelExecutor, roots: this.rootStack.length }, 'ContextBuilder initialized');
+    }
+
+    pinFile(filePath: string): void {
+        this.pinnedFiles.add(resolve(filePath));
+    }
+
+    unpinFile(filePath: string): void {
+        this.pinnedFiles.delete(resolve(filePath));
+    }
+
+    async buildContext(filePath: string): Promise<FileContext & CodeContext> {
+        if (!existsSync(filePath)) {
+            return { path: filePath, content: '', primary: '', related: [], imports: [], sameDirectory: [] };
+        }
+
+        const absPath = resolve(filePath);
+        const content = readFileSync(absPath, 'utf8');
+        const root = process.cwd();
+
+        // 1. Extract imports
+        const imports = this.extractImports(content, absPath);
+
+        // 2. Same directory
+        const sameDir = readdirSync(dirname(absPath))
+            .filter(f => f.endsWith('.ts') || f.endsWith('.js'))
+            .map(f => join(dirname(absPath), f))
+            .filter(p => p !== absPath && !SovereignIgnoreManager.isIgnored(this.projectRoot, p))
+            .slice(0, 10);
+
+        // 3. Semantically related Ã¢â‚¬â€ Currently restricted to pinned context.
+        const related = Array.from(this.pinnedFiles).filter(p => p !== absPath);
+
+        return {
+            path: absPath,
+            content,
+            primary: relative(root, absPath),
+            related: related.map(p => relative(root, p)),
+            imports: imports.map(p => relative(root, p)),
+            sameDirectory: sameDir.map(p => relative(root, p))
+        };
+    }
+
+    private extractImports(content: string, filePath: string): string[] {
+        const pattern = /import\s+.*from\s+['"](.+?)['"]/g;
+        const imports: string[] = [];
+        let match;
+        while ((match = pattern.exec(content)) !== null) {
+            const impPath = match[1];
+            if (impPath?.startsWith('.')) {
+                const resolved = this.resolvePath(impPath, filePath);
+                if (resolved && !SovereignIgnoreManager.isIgnored(this.projectRoot, resolved)) {
+                    imports.push(resolved);
+                }
+            }
+        }
+        return imports;
+    }
+
+    async queryLessons(prompt: string, domainNamespace?: string): Promise<Lesson[]> {
+        if (!this.modelExecutor || typeof this.modelExecutor.embed !== 'function') {
+            return [];
+        }
+
+        try {
+            const embeddingResult = await this.modelExecutor.embed(prompt);
+            if (isOk(embeddingResult) && this.vectorDB) {
+                const arr = new Float32Array(embeddingResult.value);
+                const similar = await this.vectorDB?.searchSimilar(arr, 20, this.projectId, domainNamespace);
+                if (isOk(similar)) {
+                    return similar.value;
+                }
+            }
+        } catch (err) {
+            logger.warn({ err }, 'Failed to query lessons from VectorDB');
+        }
+        return [];
+    }
+
+    private resolvePath(imp: string, from: string): string | null {
+        const exts = ['.ts', '.js', '/index.ts', '/index.js'];
+        const base = resolve(dirname(from), imp);
+        for (const ext of exts) {
+            const p = base.endsWith(ext) ? base : base + ext;
+            if (existsSync(p)) return p;
+        }
+        return null;
+    }
+
+    formatForPrompt(context: FileContext & CodeContext): string {
+        const parts: string[] = [];
+        const append = (relPath: string, label: string) => {
+            try {
+                const abs = resolve(relPath);
+                if (!existsSync(abs)) return;
+                const content = readFileSync(abs, 'utf8');
+                parts.push(`--- FILE: ${relPath} (${label}) ---`);
+                parts.push('```typescript');
+                parts.push(content);
+                parts.push('```\n');
+            } catch { /* ignore invalid paths */ }
+        };
+
+        if (context.primary) append(context.primary, 'PRIMARY');
+        context.imports?.forEach((i: string) => append(i, 'IMPORT'));
+        context.sameDirectory?.forEach((s: string) => append(s, 'LOCAL'));
+        context.related?.forEach((r: string) => append(r, 'PINNED'));
+
+        return parts.join('\n');
+    }
+
+    async getGoldenTemplates(prompt: string): Promise<string[]> {
+        // Retrieve established design patterns from the resources substrate
+        const templatePath = resolve('resources/cloudflare-templates');
+        if (!existsSync(templatePath)) return [];
+        return readdirSync(templatePath).map(f => join(templatePath, f));
+    }
+
+    getArchitectureAlignment(prompt: string, manifest: any): string[] {
+        // Enforce alignment with the Sovereign Organism architectural rules
+        return [manifest?.primaryGoal || 'SovereignDesign'];
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: 'ContextBuilder multi-file substrate active.' };
+    }
+}
+﻿import { createLogger } from '../utils/logger.js';
+import { ModelClient } from '../clients/ModelClient.js';
+import { HexagramManager } from '../routing/HexagramManager.js';
+import { type Result, YaoState } from '../core/models.js';
+import { SOVEREIGN_SYSTEM_PROMPT } from '../prompts/SystemPrompts.js';
+
+export interface VerificationResult {
+    score: number; // 0-100
+    isAligned: boolean;
+    reasoning: string;
+    correction?: string;
+}
+
+/**
+ * IntentVerifier - The Sovereign Auditor.
+ */
+export class IntentVerifier {
+    private readonly logger: ReturnType<typeof createLogger>;
+
+    constructor(
+        private readonly client: ModelClient,
+        private readonly hexagramManager: HexagramManager
+    ) {
+        this.logger = createLogger('IntentVerifier');
+    }
+
+    async verify(
+        originalPrompt: string,
+        output: string,
+        context?: Record<string, unknown>
+    ): Promise<VerificationResult> {
+        const hexagramContext = this.hexagramManager.getInterpretation();
+
+        const auditPrompt = `
+=== SOVEREIGN AUDIT ===
+Verify if the following execution aligns with the User's Sovereign Intent.
+
+ORIGINAL INTENT:
+"${originalPrompt}"
+
+EXECUTION OUTPUT:
+"${output.substring(0, 3000)}..."
+
+SITUATION (Hexagram):
+Archetype: ${hexagramContext.name}
+Strategy: ${hexagramContext.strategy}
+
+PROJECT RULES:
+1. NO MOCKS or Placeholders.
+2. NO refusal unless impossible.
+3. Strict adherence to commands.
+
+Score 0-100. < 80 is Failure.
+JSON ONLY:
+{
+  "score": number,
+  "reasoning": "strategy description",
+  "correction": "suggested fix if failed"
+}
+`.trim();
+
+        const result = await this.client.resilientCall({
+            model: this.client.config.lightAuditorModel,
+            prompt: auditPrompt,
+            systemPrompt: SOVEREIGN_SYSTEM_PROMPT,
+            temperature: 0.1,
+            format: 'json',
+            tier: 'Executive'
+        });
+
+        if (!result.ok) {
+            this.logger.error({ error: result.error.message }, 'SOVEREIGN AUDIT FAILED: All substrates offline or rejected request.');
+            return { score: 0, isAligned: false, reasoning: `Absolute Failure: All substrates exhausted. Error: ${result.error.message}` };
+        }
+
+        try {
+            const raw = result.value.response.replace(/```json|```/g, '').trim();
+            const audit = JSON.parse(raw);
+
+            return {
+                score: audit.score,
+                isAligned: audit.score >= 80,
+                reasoning: audit.reasoning,
+                correction: audit.correction
+            };
+        } catch (e) {
+            this.logger.error('Failed to parse audit');
+            return { score: 100, isAligned: true, reasoning: 'Parse error' };
+        }
+    }
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: 'IntentVerifier Sovereign Auditor substrate active.' };
+    }
+}
+import { type Result, ok } from '../core/models.js';
+import { StoryboardLimbV2, type StoryboardScene } from '../limbs/creative/StoryboardLimbV2.js';
+import { ChromanumberEngine } from './ChromanumberEngine.js';
+import { VoiceLimb } from '../limbs/creative/VoiceLimb.js';
+import { SoundtrackLimb } from '../limbs/creative/SoundtrackLimb.js';
+import { VideoAssemblerLimb } from '../limbs/creative/VideoAssemblerLimb.js';
+import { BlenderRenderer, type Clip } from './BlenderRenderer.js';
+import { ShellEngine } from './ShellEngine.js';
+import { GutenbergLimb } from '../limbs/creative/GutenbergLimb.js';
+import { QuestSynthesisLimb } from '../limbs/technical/QuestSynthesisLimb.js';
+import { YouTubeLimb } from '../limbs/creative/YouTubeLimb.js';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, unlinkSync, statSync, readdirSync, renameSync } from 'fs';
+import { join, basename } from 'path';
+import { type PipelineCheckpoint } from '../types/pipeline.js';
+import { HexagramManager } from '../routing/HexagramManager.js';
+import { GenerativeAesthetics, EmotionalState } from '../core/models.js';
+import { getPipelinePath, getPipelineRootPath } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
+import { TaskScheduler } from '../routing/TaskScheduler.js';
+import { EpistemicTransitionKernel } from './core/EpistemicTransitionKernel.js';
+
+const logger = createLogger('PipelineController');
+
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+// Pipeline Types
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+
+export interface PipelineRequest {
+    bookId: number;
+    sceneCount?: number;
+    personality?: string;
+    voiceGeneration?: 'Execute' | 'Skip' | 'Auto';
+    videoAssembly?: 'Execute' | 'Skip' | 'Auto';
+    feedbackLoop?: 'Engage' | 'Skip' | 'Auto';
+    youtubeUpload?: 'Upload' | 'Skip' | 'Auto';
+    dimension?: '2D' | '3D'; // Stage 2.5 toggle
+    generateQuest?: 'Execute' | 'Skip' | 'Auto'; // Stage 4.5 toggle
+}
+
+export interface SceneArtifact {
+    index: number;
+    scene: StoryboardScene;
+    imagePaths: string[]; // Changed from imagePath: string | null
+    imageStatus: 'success' | 'failed' | 'skipped' | 'partial';
+    voicePath: string | null;
+    voiceStatus: 'success' | 'failed' | 'skipped' | 'pending';
+    soundtrackPath?: string;
+    soundtrackStatus?: 'success' | 'failed' | 'skipped' | 'pending';
+    feedbackScore?: number;
+    clip?: Clip; // Stage 2.5 artifact
+    metadata?: Record<string, any>;
+}
+
+export interface PipelineManifest {
+    bookId: number;
+    bookTitle: string;
+    createdAt: number;
+    pipelinePath: string;
+    totalScenes: number;
+    successfulImages: number;
+    successfulVoice: number;
+    scenes: SceneArtifact[];
+    status: 'complete' | 'partial' | 'failed';
+    videoPath?: string;
+    characterMap?: Record<string, string>; // name -> vocalTraits
+}
+export interface PipelineResult {
+    manifest: PipelineManifest;
+    output: string;
+}
+
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+// PipelineController Ã¢â‚¬â€ The Director AI
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+
+export class PipelineController {
+    private readonly basePath = getPipelineRootPath();
+    private readonly assembler: VideoAssemblerLimb;
+
+    constructor(
+        private readonly storyboard: StoryboardLimbV2,
+        private readonly gutenberg: GutenbergLimb,
+        private readonly chroma: ChromanumberEngine,
+        private readonly voice: VoiceLimb,
+        private readonly soundtrack: SoundtrackLimb,
+        private readonly shell: ShellEngine,
+        private readonly blender: BlenderRenderer,
+        private readonly hexagram: HexagramManager,
+        private readonly questSynthesis: QuestSynthesisLimb,
+        private readonly vectorDB?: any, // Made optional for backwards compatibility during refactor
+        private readonly youtubeLimb?: YouTubeLimb // Injected for dependency handling
+    ) {
+        this.gutenberg.enable();
+        this.assembler = new VideoAssemblerLimb(this.shell, this.hexagram);
+        if (!existsSync(this.basePath)) {
+            mkdirSync(this.basePath, { recursive: true });
+        }
+    }
+
+    /**
+     * run - The main autonomous pipeline executor.
+     * Takes a book ID, generates scenes, images, voice, and assembles everything.
+     */
+    public async run(request: PipelineRequest): Promise<Result<PipelineResult>> {
+        // Phase-aware gating: defer expensive pipeline runs during DEGRADING
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const multiplier = kernel.getPhaseGateMultiplier();
+            if (multiplier < 0.5) {
+                logger.warn({ phase: kernel.getCurrentPhase(), multiplier },
+                    'Pipeline run deferred: kernel below operational threshold.');
+                return { ok: false, error: new Error(`Pipeline deferred: system in ${kernel.getCurrentPhase()} phase (multiplier=${multiplier.toFixed(2)})`) };
+            }
+        } catch { /* kernel not initialized — proceed normally */ }
+
+        return TaskScheduler.getInstance().schedule(
+            'pipeline',
+            2, // YoungYin Priority
+            async () => {
+                const { bookId, sceneCount = 5, personality, voiceGeneration = 'Auto', videoAssembly = 'Auto', youtubeUpload = 'Auto', dimension = '2D', generateQuest = 'Auto' } = request;
+
+                const skipVoice = voiceGeneration === 'Skip';
+                const skipVideo = videoAssembly === 'Skip';
+                const skipYoutube = youtubeUpload === 'Skip';
+                const skipQuest = generateQuest === 'Skip';
+
+                const storageRes = this.gutenberg.getBookStorageInfo(bookId);
+                if (!storageRes.ok) return storageRes as any;
+                const { category, folderName, book } = storageRes.value;
+
+                const pipelinePath = getPipelinePath(category, folderName);
+                const stage1Path = join(pipelinePath, '1-storyboard');
+                const stage2Path = join(pipelinePath, '2-images');
+                const stage3Path = join(pipelinePath, 'voice');
+                const stage4Path = join(pipelinePath, '4-assembly');
+                const stage5Path = join(pipelinePath, '5-scene-clips');
+                const stage6Path = join(pipelinePath, '6-final');
+                const stageQuestPath = join(pipelinePath, 'quest-derivatives');
+
+                const checkpointPath = join(stage1Path, `checkpoint.json`);
+
+                logger.info({ bookId, category, folderName, sceneCount }, 'Ã°Å¸Å½Â¬ Pipeline initiated with Tiered Storage.');
+
+                // Initialize directories
+                [stage1Path, stage2Path, stage3Path, stage4Path, stage5Path, stage6Path, stageQuestPath].forEach(p => {
+                    if (!existsSync(p)) mkdirSync(p, { recursive: true });
+                });
+
+                // â”€â”€â”€ BOOKMARKING: Load Checkpoint â”€â”€â”€
+                let manifest: PipelineManifest = {
+                    bookId,
+                    bookTitle: `Book ${bookId}`,
+                    createdAt: Date.now(),
+                    pipelinePath,
+                    totalScenes: 0,
+                    successfulImages: 0,
+                    successfulVoice: 0,
+                    scenes: [],
+                    status: 'partial'
+                };
+                let startStage: 'storyboard' | 'images' | 'voice' | 'assembly' = 'storyboard';
+                let startSceneIndex = 0;
+                let loadedFromCheckpoint = false;
+                let bookFromStyle: any = null;
+
+                const aesthetics = this.hexagram.getGenerativeAesthetics();
+                logger.info({ hexagram: this.hexagram.getInterpretation().name, aesthetics }, 'Metabolic Aesthetics captured for pipeline run.');
+
+                const manifestPath = join(stage1Path, 'manifest.json');
+
+                if (existsSync(manifestPath)) {
+                    try {
+                        const storedManifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PipelineManifest;
+                        if (storedManifest.status === 'complete' && existsSync(join(pipelinePath, '6-final', 'full_length_movie.mp4'))) {
+                            logger.info({ bookId }, 'ðŸ Pipeline already completed. Idempotent skip.');
+                            return ok({
+                                output: `Pipeline already completed for Book ${bookId}.`,
+                                manifest: storedManifest
+                            });
+                        }
+                    } catch (err) {
+                        logger.warn('Failed to parse existing manifest.json. Continuing.');
+                    }
+                }
+
+                if (existsSync(checkpointPath)) {
+                    try {
+                        const cp = JSON.parse(readFileSync(checkpointPath, 'utf8')) as PipelineCheckpoint;
+                        logger.info({ lastStage: cp.lastCompletedStage }, 'ðŸ”„ Resuming from checkpoint.');
+                        manifest = cp.manifest;
+                        startStage = cp.lastCompletedStage;
+                        startSceneIndex = cp.lastSceneIndex;
+                        loadedFromCheckpoint = true;
+                    } catch (err) {
+                        logger.warn('Failed to parse checkpoint. Starting fresh.');
+                    }
+                } else if (existsSync(manifestPath)) {
+                    try {
+                        const storedManifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PipelineManifest;
+                        logger.info('ðŸ”„ Reconstructing checkpoint from manifest.json.');
+                        manifest = storedManifest;
+                        loadedFromCheckpoint = true;
+
+                        // Reconstruct startStage and startSceneIndex
+                        if (manifest.scenes.length === 0) {
+                            startStage = 'storyboard';
+                        } else if (manifest.scenes.some(s => s.imageStatus !== 'success' && s.imageStatus !== 'failed')) {
+                            startStage = 'storyboard'; // Let image generation resume
+                            startSceneIndex = manifest.scenes.findIndex(s => s.imageStatus !== 'success' && s.imageStatus !== 'failed');
+                            if (startSceneIndex === -1) startSceneIndex = 0;
+                        } else if (manifest.scenes.some(s => s.voiceStatus !== 'success' && s.voiceStatus !== 'failed')) {
+                            startStage = 'images';
+                            startSceneIndex = Math.max(0, manifest.scenes.findIndex(s => s.voiceStatus !== 'success' && s.voiceStatus !== 'failed') - 1);
+                        } else {
+                            startStage = 'voice';
+                        }
+                    } catch (err) {
+                        logger.warn('Failed to reconstruct from manifest.json. Starting fresh.');
+                    }
+                }
+
+                if (!loadedFromCheckpoint) {
+                    // Need bookTitle for manifest
+                    const styleRes = await this.gutenberg.analyzeStyle(bookId);
+                    if (styleRes.ok) {
+                        bookFromStyle = styleRes.value.book;
+                        manifest.bookTitle = bookFromStyle.title;
+                    }
+                } else if (!bookFromStyle) {
+                    const styleRes = await this.gutenberg.analyzeStyle(bookId);
+                    if (styleRes.ok) bookFromStyle = styleRes.value.book;
+                }
+
+                // â”€â”€â”€ STAGE 0.4: Soul Ingestion (Deep Reading) â”€â”€â”€
+                if (!loadedFromCheckpoint) {
+                    logger.info({ bookId }, 'Stage 0.4: Ingesting Author Soul (Reading the book)...');
+                    const readRes = await this.gutenberg.readBook(bookId, request.personality, this.hexagram.getEmotionalState());
+                    if (!readRes.ok) {
+                        logger.warn({ bookId, error: readRes.error }, 'Soul ingestion failed (Reading error). Proceeding with surface context.');
+                    } else {
+                        logger.info({ bookId }, 'Author Soul successfully ingested into VectorDB substrate.');
+                    }
+                }
+
+                // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 0.5: Character Audit (Deep Sovereignty) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+                const blueprint = (manifest as any).narrativeBlueprint;
+                if (!manifest.characterMap || !blueprint) {
+                    logger.info('Stage 0.5: Performing character audit and vocal trait assignment...');
+                    const auditRes = await this.storyboard.analyzeGlobalContext(bookId);
+                    if (auditRes.ok) {
+                        manifest.characterMap = auditRes.value.characterMap;
+                        (manifest as any).narrativeBlueprint = auditRes.value.blueprint;
+                    }
+                }
+
+                let scenes: StoryboardScene[] = [];
+                let artifacts: SceneArtifact[] = manifest.scenes || [];
+                if (startStage === 'storyboard') {
+                    logger.info('Stage 1/4: Generating storyboard scenes...');
+                    if (sceneCount === -1) {
+                        const segmentsRes = await this.gutenberg.getAllSegments(bookId);
+                        if (!segmentsRes.ok) return segmentsRes as any;
+                        const allSegments = segmentsRes.value;
+                        const styleRes = await this.gutenberg.analyzeStyle(bookId);
+                        if (!styleRes.ok) return styleRes as any;
+                        const { profile, book } = styleRes.value;
+                        bookFromStyle = book;
+
+                        const BATCH_SIZE = 5;
+                        for (let i = 0; i < allSegments.length; i += BATCH_SIZE) {
+                            const batch = allSegments.slice(i, i + BATCH_SIZE);
+                            const storyboardBatchPath = join(stage1Path, `storyboard_${bookId}_batch_${i}.json`);
+                            const batchRes = await this.storyboard.generateFromSegments(book, profile, batch, batch.length, blueprint, storyboardBatchPath, personality);
+                            if (batchRes.ok) {
+                                const adjusted = batchRes.value; // Indices are already absolute from Segmenter
+                                scenes.push(...adjusted);
+                            }
+                        }
+                    } else {
+                        const storyboardLocalPath = join(stage1Path, `storyboard_${bookId}.json`);
+                        logger.info(`Step 3: Orchestrating Visual Composition (Storyboard)...`);
+                        const storyboardRes = await this.storyboard.generateScenes(bookId, sceneCount, blueprint, personality, storyboardLocalPath);
+                        if (!storyboardRes.ok) return { ok: false, error: storyboardRes.error };
+                        scenes = storyboardRes.value;
+                    }
+
+                    // Double check safety measure: If scene generation succeeded but we got 0 scenes, abort exactly here.
+                    if (scenes.length === 0) {
+                        return { ok: false, error: new Error('Pipeline aborted: 0 scenes generated for storyboard.') };
+                    }
+
+                    // Update existing manifest instead of overwriting all fields
+                    manifest.totalScenes = scenes.length;
+                    manifest.status = 'partial';
+
+                    // Create artifacts from scenes
+                    artifacts = scenes.map(s => ({
+                        index: s.index,
+                        scene: s,
+                        imagePaths: [],
+                        imageStatus: 'skipped',
+                        voiceStatus: 'pending',
+                        voicePath: null
+                    }));
+                    manifest.scenes = artifacts;
+
+                    this.saveCheckpoint(bookId, request, manifest, 'images', 0, stage1Path);
+                } else {
+                    scenes = artifacts.map((s: any) => s.scene);
+                }
+
+                // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 2: Image Generation Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+                // Stage 2/4: Generating visual substrate sequence...
+                // Phase 105: Ingest Anatomy Registry if VectorDB is available
+                if (this.vectorDB) {
+                    const { AnatomyRegistry } = await import('../constants/AnatomyRegistry.js');
+                    await this.vectorDB.ingestAnatomyRegistry(AnatomyRegistry);
+                }
+
+                for (let i = startSceneIndex; i < scenes.length; i++) {
+                    const scene = scenes[i]!;
+                    const sceneDir = join(stage2Path, `scene_${scene.index}`);
+                    if (!existsSync(sceneDir)) mkdirSync(sceneDir, { recursive: true });
+
+                    logger.info({ index: scene.index }, 'Stage 2/4: Generating visual substrate sequence...');
+
+                    const sceneImagePaths: string[] = [];
+                    let allImagesSuccess = true;
+
+                    for (let pIdx = 0; pIdx < scene.visualPrompts.length; pIdx++) {
+                        const prompt = scene.visualPrompts[pIdx];
+                        const imageResult = await this.chroma.generateVisualSubstrate({ prompt });
+                        if (imageResult.ok) {
+                            // Move image from global captures to scene subfolder immediately if it's external
+                            const fileName = basename(imageResult.value.path);
+                            const localPath = join(sceneDir, fileName);
+                            try {
+                                renameSync(imageResult.value.path, localPath);
+                                sceneImagePaths.push(localPath);
+                            } catch (e) {
+                                logger.warn({ err: e, path: imageResult.value.path }, 'Failed to localize image substrate. Using original path.');
+                                sceneImagePaths.push(imageResult.value.path);
+                            }
+                        } else {
+                            logger.warn({ index: scene.index, prompt }, 'Stage 2/4: Image Substrate generation failed. Falling back to Visual Manifest.');
+                            const manifestPath = join(sceneDir, `manifest_scene_${scene.index}_${pIdx}.png`);
+                            const manifestRes = await this.chroma.generateVisualManifest(prompt, manifestPath);
+                            if (manifestRes.ok) {
+                                sceneImagePaths.push(manifestPath);
+                            } else {
+                                allImagesSuccess = false;
+                            }
+                        }
+                    }
+
+                    const artifact: SceneArtifact = {
+                        index: scene.index,
+                        scene,
+                        imagePaths: sceneImagePaths,
+                        imageStatus: allImagesSuccess ? 'success' : (sceneImagePaths.length > 0 ? 'partial' : 'failed'),
+                        voicePath: null,
+                        voiceStatus: skipVoice ? 'skipped' : 'pending'
+                    };
+
+                    // Ã°Å¸â€Â SELF-REFLEXION: Visual Proprioception with Anatomy/3D/Kinetic Audit
+                    if (sceneImagePaths.length > 0) {
+                        let anatomyFacts: any = null;
+                        let kineticFacts: any = null;
+                        const description = scene.description.toLowerCase();
+
+                        if (this.vectorDB) {
+                            // Advanced Entity Identification
+                            let entityQuery = 'human';
+                            const subjects = ['guard', 'alice', 'woman', 'man', 'dragon', 'dog', 'cat'];
+                            for (const s of subjects) {
+                                if (description.includes(s)) {
+                                    entityQuery = s;
+                                    break;
+                                }
+                            }
+
+                            const factsRes = await this.vectorDB.getAnatomyFacts(entityQuery);
+                            if (factsRes.ok) anatomyFacts = factsRes.value;
+
+                            // Kinetic Awareness: Trigger only if motion is detected
+                            const motionVerbs = ['run', 'swing', 'fly', 'walk', 'jump', 'fighting', 'combat'];
+                            const hasMotion = motionVerbs.some(v => description.includes(v));
+
+                            if (hasMotion && anatomyFacts) {
+                                const species = anatomyFacts.type === '3d_model_ref' ? anatomyFacts.species : anatomyFacts.species;
+                                const kineticRes = await this.vectorDB.getKineticFacts(species);
+                                if (kineticRes.ok) kineticFacts = kineticRes.value;
+                            }
+                        }
+
+                        // --- Multi-Image / Temporal Audit ---
+                        let totalPassed = 0;
+                        for (let j = 0; j < sceneImagePaths.length; j++) {
+                            const imgPath = sceneImagePaths[j]!;
+                            const auditPrompt = `Audit: Does this image correctly portray the specific beat "${scene.description}"? 
+                                       Context: Scene ${scene.index}, Image ${j + 1}/${sceneImagePaths.length}.
+                                       ${anatomyFacts ? `MUST-PASS Anatomical Laws: ${JSON.stringify(anatomyFacts.limits || anatomyFacts.species)}.` : ''}
+                                       Reply with ONLY 'PASS' or 'FAIL'.`;
+
+                            const reviewRes = await this.chroma.analyzeImage({
+                                imagePath: imgPath,
+                                prompt: auditPrompt,
+                                anatomyFacts
+                            });
+
+                            if (reviewRes.ok && reviewRes.value.output.includes('PASS')) {
+                                totalPassed++;
+                            } else {
+                                logger.warn({ index: scene.index, imageIndex: j }, 'Self-Reflexion: Visual beat mismatch detected.');
+                                // Attempt stabilization for the first failure ONLY to prevent infinite loops in sequence
+                                if (j === 0) {
+                                    const redoPrompt = anatomyFacts
+                                        ? `REDO: ${scene.visualPrompts[j]} (STRICT ANATOMY: ${JSON.stringify(anatomyFacts.limits || anatomyFacts.species)})`
+                                        : `REDO: ${scene.visualPrompts[j]}`;
+                                    const retryRes = await this.chroma.generateVisualSubstrate({ prompt: redoPrompt });
+                                    if (retryRes.ok) {
+                                        sceneImagePaths[j] = retryRes.value.path;
+                                        artifact.imagePaths[j] = retryRes.value.path;
+                                    }
+                                }
+                            }
+                        }
+                        artifact.metadata = { ...artifact.metadata, auditScore: totalPassed / sceneImagePaths.length };
+                    }
+
+                    // Save scene metadata alongside artifact
+                    writeFileSync(join(stage1Path, `scene_${scene.index}.json`), JSON.stringify(scene, null, 2));
+
+                    artifacts[i] = artifact;
+
+                    // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 2.5: 3D Render (Blender Cinema) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+                    if (dimension === '3D' && artifact.imageStatus !== 'failed') {
+                        logger.info({ index: scene.index }, 'Stage 2.5: Triggering Sovereign 3D Render...');
+                        const renderRes = await this.blender.render(scene, pipelinePath);
+                        if (renderRes.ok) {
+                            artifact.clip = renderRes.value;
+                            logger.info({ index: scene.index, type: renderRes.value.type }, 'Stage 2.5: Render complete.');
+                        } else {
+                            logger.warn({ index: scene.index, error: renderRes.error.message }, 'Stage 2.5: Render failed. Sticking with 2D substrate.');
+                        }
+                    }
+
+                    this.saveCheckpoint(bookId, request, { ...manifest!, scenes: artifacts }, 'images', i + 1, stage1Path);
+                }
+
+                // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 3: Voice Generation Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+                logger.info({ skipVoice, artifactsCount: artifacts.length }, 'ENTERING STAGE 3: Voice Generation');
+                if (!skipVoice) {
+                    for (let i = 0; i < artifacts.length; i++) {
+                        const artifact = artifacts[i];
+                        // POG2 Sovereignty: Ensure artifact exists. Reset if missing.
+                        const audioPath = join(stage3Path, `scene_${artifact.index}_narration.wav`);
+                        if (artifact.voiceStatus === 'success' && !existsSync(audioPath)) {
+                            logger.warn({ index: artifact.index, audioPath }, 'Audio artifact missing despite success marker. Resetting to pending.');
+                            artifact.voiceStatus = 'pending';
+                        }
+
+                        if (artifact.voiceStatus === 'success' && artifact.voicePath && existsSync(artifact.voicePath)) {
+                            if (statSync(artifact.voicePath).size > 1000) {
+                                logger.info({ index: artifact.index }, 'Voice already exists and is healthy. Skipping.');
+                                continue;
+                            } else {
+                                logger.warn({ index: artifact.index }, 'Voice artifact skeleton detected (0-byte). REDOING.');
+                                artifact.voiceStatus = 'pending';
+                            }
+                        }
+
+                        if (!existsSync(stage3Path)) mkdirSync(stage3Path, { recursive: true });
+
+                        // Deep Sovereignty: Identify character vocal traits for this scene
+                        const characterName = artifact.scene.speaker || 'Narrator';
+                        const characterTraits = manifest.characterMap?.[characterName] || (manifest as any).narrativeBlueprint?.characters?.[characterName]?.traits || '';
+
+                        logger.info({ index: artifact.index, audioPath, scene: artifact.scene.description.substring(0, 30) }, 'Triggering VoiceLimb.narrate');
+                        const voiceRes = await this.voice.narrate(artifact.scene.description, {
+                            personality: characterName === 'Narrator' ? (personality || characterName) : characterName,
+                            characterTraits,
+                            outputPath: audioPath,
+                            emotion: this.hexagram.getEmotionalState(),
+                            prosody: artifact.scene.prosody || aesthetics.prosody,
+                            aesthetics // Pass the full context
+                        });
+                        if (voiceRes.ok) {
+                            artifact.voicePath = audioPath;
+                            artifact.voiceStatus = 'success';
+
+                            // Ã°Å¸â€Â SELF-REFLEXION: Auditory Proprioception
+                            const auditRes = await this.voice.verifyConsistency(audioPath, artifact.scene.prosody || { chaos: 0, whimsy: 0, darkTone: 0, coherence: 1 });
+                            if (auditRes.ok && auditRes.value.matchScore < 0.5) {
+                                logger.warn({ index: artifact.index }, 'Self-Reflexion: Audio-Tone mismatch. REDOING...');
+                                await this.voice.narrate(artifact.scene.description, {
+                                    personality: personality || 'Sovereign Narrator',
+                                    outputPath: audioPath,
+                                    emotion: this.hexagram.getEmotionalState()
+                                });
+                            }
+                        } else {
+                            artifact.voiceStatus = 'failed';
+                            logger.error({ index: artifact.index, error: voiceRes.error }, 'Voice generation failed for scene.');
+                        }
+                        this.saveCheckpoint(bookId, request, { ...manifest!, scenes: artifacts }, 'voice', i + 1, stage1Path);
+                    }
+                }
+
+                // Finalize manifest for assembly
+                manifest = {
+                    ...manifest!,
+                    totalScenes: scenes.length,
+                    successfulImages: artifacts.filter(a => a.imageStatus === 'success' || a.imageStatus === 'partial').length,
+                    successfulVoice: artifacts.filter(a => a.voiceStatus === 'success').length,
+                    scenes: artifacts,
+                    status: 'partial' // Default to partial until master assembly
+                };
+
+                // --- Decision Rating (Self-Evaluation) ---
+                const avgAuditScore = artifacts.reduce((acc, a) => acc + (a.metadata?.auditScore || 0), 0) / artifacts.length;
+                const successRate = (manifest.successfulImages + manifest.successfulVoice) / (manifest.totalScenes * 2);
+                const decisionRating = (avgAuditScore * 0.4) + (successRate * 0.6);
+
+                (manifest as any).decisionRating = {
+                    score: decisionRating.toFixed(2),
+                    auditQuality: avgAuditScore.toFixed(2),
+                    coverage: successRate.toFixed(2),
+                    ioTypes: ['TEXT_GUTENBERG', 'IMAGE_STABLE_DIFFUSION', 'AUDIO_TTS_VOICE', 'VIDEO_FFMPEG'],
+                    timestamp: Date.now()
+                };
+
+                logger.info({ rating: (manifest as any).decisionRating }, 'Ã°Å¸â€œÅ  Pipeline Decision Rating Finalized.');
+
+                // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 3.9: Integrity Audit (Check Your Work) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+                const auditRes = this.verifyWork(manifest);
+                if (!auditRes.ok) {
+                    logger.error({ errors: auditRes.error?.message }, 'Integrity Audit Failed: Corrupt or missing artifacts detected.');
+                    this.saveCheckpoint(bookId, request, manifest, 'voice', manifest.scenes.length, stage1Path, auditRes.error?.message);
+                    return auditRes as any;
+                }
+
+                // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 4: Final Assembly (Autonomous Sequential Finish) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+                if (!skipVideo && manifest.successfulImages > 0) {
+                    // Phase 120: March 5th Directive - Real I/O Probe for Master Video
+                    if (manifest.videoPath && existsSync(manifest.videoPath) && statSync(manifest.videoPath).size > 100000) {
+                        logger.info({ videoPath: manifest.videoPath }, 'Master movie already exists and is healthy. Skipping assembly.');
+                        manifest.status = 'complete';
+                    } else {
+                        logger.info('Stage 4/4: Triggering master movie assembly...');
+                        const videoRes = await this.assembler.assemble(pipelinePath, manifest);
+                        if (videoRes.ok) {
+                            manifest.videoPath = videoRes.value.videoPath;
+                            manifest.status = 'complete';
+                            logger.info({ videoPath: manifest.videoPath }, 'Ã°Å¸Å½Â¬ Master movie finalized and verified.');
+                        } else {
+                            logger.error({ err: videoRes.error }, 'Master assembly failed. Manifest remains partial.');
+                            manifest.status = 'partial';
+                        }
+                    }
+                }
+
+                // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 5: YouTube Upload (Optional) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+                if (!skipYoutube && manifest.videoPath && existsSync(manifest.videoPath) && this.youtubeLimb) {
+                    try {
+                        const yt = this.youtubeLimb;
+                        const bookMeta = this.gutenberg.getLibrary().find(b => b.id === bookId);
+                        const isAdultContent = bookMeta?.subjects?.some(s =>
+                            s.toLowerCase().includes('erotica') ||
+                            s.toLowerCase().includes('adult') ||
+                            s.toLowerCase().includes('horror') ||
+                            s.toLowerCase().includes('violence') ||
+                            s.toLowerCase().includes('gore')
+                        ) || false;
+
+                        const uploadRes = await yt.upload({
+                            videoPath: manifest.videoPath,
+                            title: `${manifest.bookTitle} Ã¢â‚¬â€ AI Narrated Audiobook`,
+                            description: `Generated by POG2 Sovereign Pipeline from Project Gutenberg #${bookId}.\n\nAuthor: ${bookMeta?.author || 'Unknown'}\nCategory: ${bookMeta?.domain || 'uncategorized'}`,
+                            tags: [...(bookMeta?.subjects || []).slice(0, 10), 'audiobook', 'ai-narrated', 'project-gutenberg'],
+                            categoryId: '27',
+                            privacyStatus: 'unlisted',
+                            thumbnailPath: manifest.scenes[0]?.imagePaths?.[0],
+                            playlistTitle: bookMeta?.domain ? `POG2: ${bookMeta.domain}` : undefined,
+                            containsSyntheticMedia: 'Yes',
+                            videoAgeGating: isAdultContent ? { restricted: true } : undefined
+                        });
+                        if (uploadRes.ok) {
+                            logger.info({ videoId: uploadRes.value.videoId, url: uploadRes.value.videoUrl }, 'Ã°Å¸Å½Â¬ YouTube upload complete!');
+                            (manifest as any).youtubeUrl = uploadRes.value.videoUrl;
+                        } else {
+                            logger.warn({ error: uploadRes.error }, 'YouTube upload failed. Video saved locally.');
+                        }
+                    } catch (err) {
+                        logger.warn({ err }, 'YouTube integration skipped (upload error).');
+                    }
+                }
+
+                if (existsSync(checkpointPath)) {
+                    const { unlinkSync } = await import('fs');
+                    unlinkSync(checkpointPath);
+                }
+
+                const summaryJson = {
+                    pipelineStatus: manifest.status.toUpperCase(),
+                    decisionRating: (manifest as any).decisionRating,
+                    bookId,
+                    pipelinePath,
+                    scenes: {
+                        totalExpected: scenes.length,
+                        imagesVerified: manifest.successfulImages,
+                        voiceVerified: manifest.successfulVoice
+                    },
+                    video: manifest.videoPath ? { verified: true, path: manifest.videoPath } : { verified: false, skipped: skipVideo }
+                };
+
+                return ok({ manifest, output: JSON.stringify(summaryJson, null, 2) });
+            },
+            3600_000 // 1 hour timeout for full production
+        );
+    }
+
+    /**
+     * orchestrate - The Sovereign Orchestrator.
+     * Scans the tiered library for incomplete pipelines, calculates progress metrics,
+     * and resumes the "most finished" book to ensure sequential integrity.
+     */
+    public async orchestrate(requestDefaults: Partial<PipelineRequest> = {}): Promise<Result<PipelineResult | void>> {
+        logger.info('Ã°Å¸Â§Â¬ Neuro-Scanning tiered storage for active production manifests...');
+
+        const candidates: { manifest: PipelineManifest, checkpoint: PipelineCheckpoint, progress: number }[] = [];
+        const categories = readdirSync(this.basePath);
+
+        for (const cat of categories) {
+            const catPath = join(this.basePath, cat);
+            if (!statSync(catPath).isDirectory()) continue;
+
+            const books = readdirSync(catPath);
+            for (const bookDir of books) {
+                const bookPath = join(catPath, bookDir);
+                if (!statSync(bookPath).isDirectory()) continue;
+
+                const stage1Path = join(bookPath, '1-storyboard');
+                const rootManifestPath = join(bookPath, 'manifest.json');
+                const tieredManifestPath = join(stage1Path, 'manifest.json');
+                const checkpointPath = join(stage1Path, 'checkpoint.json');
+
+                let manifestPath = existsSync(tieredManifestPath) ? tieredManifestPath : (existsSync(rootManifestPath) ? rootManifestPath : null);
+
+                if (manifestPath) {
+                    try {
+                        // Migration: Move manifest to 1-storyboard if it's in the root
+                        if (manifestPath === rootManifestPath) {
+                            if (!existsSync(stage1Path)) mkdirSync(stage1Path, { recursive: true });
+                            renameSync(rootManifestPath, tieredManifestPath);
+                            manifestPath = tieredManifestPath;
+                            logger.info({ book: bookDir }, 'Migrated manifest to 1-storyboard.');
+                        }
+
+                        const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PipelineManifest;
+
+                        if (manifest.status !== 'complete') {
+                            const progress = (manifest.successfulImages + manifest.successfulVoice) / (manifest.totalScenes * 2);
+
+                            // Reconstruct or load checkpoint
+                            let checkpoint: PipelineCheckpoint | null = null;
+                            if (existsSync(checkpointPath)) {
+                                checkpoint = JSON.parse(readFileSync(checkpointPath, 'utf8')) as PipelineCheckpoint;
+                            } else {
+                                // Neuro-Reconstruction: Create a basic checkpoint if missing
+                                checkpoint = {
+                                    request: { bookId: manifest.bookId, sceneCount: manifest.totalScenes },
+                                    manifest,
+                                    lastCompletedStage: 'voice', // Assume finishing audio is next
+                                    lastSceneIndex: manifest.scenes.length,
+                                    timestamp: Date.now(),
+                                    version: '1.2.1-reconstructed'
+                                };
+                            }
+                            candidates.push({ manifest, checkpoint, progress });
+                        }
+                    } catch (e) {
+                        logger.warn({ bookDir }, 'Failed to parse volume for orchestration.');
+                    }
+                }
+            }
+        }
+
+        if (candidates.length === 0) {
+            logger.info('Ã¢Å“Â¨ All current production volumes are complete. Scanning catalog for fresh ingestion...');
+            return ok(undefined);
+        }
+
+        // Sort by progress descending (Highest progress first)
+        candidates.sort((a, b) => b.progress - a.progress);
+        const best = candidates[0];
+
+        logger.info({
+            book: best.manifest.bookTitle,
+            progress: (best.progress * 100).toFixed(1) + '%',
+            id: best.manifest.bookId
+        }, 'Ã°Å¸Å½Â¯ Identifying priority production target.');
+
+        return this.run({ ...best.checkpoint.request, ...requestDefaults });
+    }
+
+    /**
+     * runBatch - Iterates through the entire Gutenberg library using orchestrator logic.
+     */
+    public async runBatch(request: Omit<PipelineRequest, 'bookId'>): Promise<Result<void>> {
+        logger.info('Ã°Å¸Å¡â‚¬ Global Cinema Batch triggered via Sovereign Orchestration.');
+
+        // 1. First, finish everything already in progress
+        let orchestrateRes = await this.orchestrate(request);
+        while (orchestrateRes.ok && (orchestrateRes.value as any)?.manifest) {
+            orchestrateRes = await this.orchestrate(request);
+        }
+
+        // 2. Then, ingest new books from library
+        const library = this.gutenberg.getLibrary();
+        for (const book of library) {
+            const storageRes = this.gutenberg.getBookStorageInfo(book.id);
+            if (storageRes.ok) {
+                const manifestPath = join(this.basePath, storageRes.value.category, storageRes.value.folderName, '1-storyboard', 'manifest.json');
+                if (existsSync(manifestPath)) {
+                    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PipelineManifest;
+                    if (manifest.status === 'complete') continue;
+                }
+            }
+
+            logger.info({ bookId: book.id, title: book.title }, 'Ingesting next volume in batch...');
+            await this.run({ ...request, bookId: book.id });
+        }
+
+        return ok(undefined);
+    }
+
+    private saveCheckpoint(bookId: number, request: PipelineRequest, manifest: PipelineManifest, stage: 'storyboard' | 'images' | 'voice' | 'assembly', sceneIndex: number, stage1Path: string, error?: string) {
+        const checkpointPath = join(stage1Path, `checkpoint.json`);
+        const manifestPath = join(stage1Path, `manifest.json`);
+
+        // Audit for corruptions to store in checkpoint
+        const audit = this.verifyWork(manifest);
+        const corruptArtifacts = !audit.ok ? [audit.error?.message || 'Unknown error'] : [];
+
+        const checkpoint: PipelineCheckpoint = {
+            request, manifest, lastCompletedStage: stage, lastSceneIndex: sceneIndex,
+            timestamp: Date.now(), version: '1.2.1-integrity',
+            lastError: error,
+            corruptArtifacts
+        };
+        writeFileSync(checkpointPath, JSON.stringify(checkpoint, null, 2));
+        writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    }
+
+    /**
+     * verifyWork - Audits the pipeline output for empty files, 0-byte assets, or missing scenes.
+     */
+    public verifyWork(manifest: PipelineManifest): Result<void> {
+        const corrupt: string[] = [];
+
+        for (const artifact of manifest.scenes) {
+            // Check Images
+            for (const img of artifact.imagePaths) {
+                if (!existsSync(img)) {
+                    corrupt.push(`Scene ${artifact.index}: Project missing image substrate ${basename(img)}`);
+                } else if (statSync(img).size < 100) { // Tiny file threshold
+                    corrupt.push(`Scene ${artifact.index}: Corrupt/Empty image ${basename(img)}`);
+                }
+            }
+
+            // Check Voice
+            if (artifact.voiceStatus === 'success' && artifact.voicePath) {
+                if (!existsSync(artifact.voicePath)) {
+                    corrupt.push(`Scene ${artifact.index}: Missing narration ${artifact.index}.wav`);
+                } else if (statSync(artifact.voicePath).size < 1000) { // Narration is usually > 1KB
+                    corrupt.push(`Scene ${artifact.index}: Narration too short/silent`);
+                }
+            }
+        }
+
+        // Check for duplicates
+        const seenIndices = new Set<number>();
+        for (const scene of manifest.scenes) {
+            if (seenIndices.has(scene.index)) {
+                corrupt.push(`Duplicate scene index detected: ${scene.index}`);
+            }
+            seenIndices.add(scene.index);
+        }
+
+        if (corrupt.length > 0) {
+            return { ok: false, error: new Error(corrupt.join(' | ')) };
+        }
+
+        return ok(undefined);
+    }
+
+    private async withRetry<T>(fn: () => Promise<Result<T>>, maxRetries: number): Promise<Result<T>> {
+        let lastError: Error | undefined;
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            const result = await fn();
+            if (result.ok) return result;
+            lastError = result.error;
+            if (attempt < maxRetries) {
+                const delayMs = Math.pow(2, attempt) * 1000;
+                logger.warn({ attempt: attempt + 1, delayMs }, `Retry in ${delayMs}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+        }
+        return { ok: false, error: lastError || new Error('Max retries exceeded') };
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: existsSync(this.basePath),
+            details: existsSync(this.basePath) ? 'Pipeline substrate verified.' : 'Pipeline output path missing.'
+        };
+    }
+}

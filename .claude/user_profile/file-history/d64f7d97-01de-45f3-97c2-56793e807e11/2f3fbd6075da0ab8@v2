@@ -1,0 +1,68 @@
+# Implementation Plan: BestiaryApi Canonical Update
+
+## Context
+The `BestiaryApi.ts` needs to be updated to align with the canonical API reference. This involves changing the base URL to a CORS proxy, implementing a robust name-to-ID resolution mechanism, correcting a known bug in the `members` field of the Jagex API, and updating the data interfaces to match the authoritative specification.
+
+## Goals
+- Update the base URL to use the Cloudflare Worker proxy.
+- Implement `resolveId(name)` with exact-match prioritization to handle `beastSearch` OR results.
+- Implement `getBeastData(beastId)` with the specified `members` field override logic.
+- Update the `BestiaryBeastData` interface to match the canonical specification.
+- Ensure all endpoint patterns match the canonical reference.
+- Integrate with `ApiThrottle` correctly.
+
+## Critical Files
+- `POG2\src\utils\BestiaryApi.ts`
+
+## Implementation Details
+
+### 1. Interface Updates
+Update `BestiaryBeastData` in `POG2\src\utils\BestiaryApi.ts`:
+- Rename `examine` -> `description`
+- Rename `combatLevel` -> `level`
+- Rename `slayerLevel` -> `slayerlevel`
+- Rename `slayerCategory` -> `slayercat`
+- Change `xp` from `number` to `string`
+- Add `attackable: boolean`
+- Add `_membersOverride?: string`
+
+### 2. Base URL Update
+Change `BESTIARY_BASE` to `https://pog2.kristain33rs.workers.dev/api/bestiary`.
+
+### 3. Implement `resolveId(name)`
+Create a new static method `resolveId(name: string): Promise<number | null>`:
+- Call `searchBeasts` (which uses `beastSearch.json`).
+- Filter results for an exact match: `label.replace(/\s*\(\d+\)\s*$/, '').toLowerCase() === name.toLowerCase()`.
+- If no exact match, fall back to a fuzzy match (substring).
+- Return the `value` (ID) of the match or `null`.
+
+### 4. Update `getBeastData(beastId)`
+- Update the mapping to use the new interface fields.
+- Implement the membership override:
+  ```typescript
+  if (data.members === false && data.slayerlevel > 0) {
+    data.members = true;
+    data._membersOverride = 'slayer_level_implied_membership';
+  }
+  ```
+- Ensure `xp` is kept as a string from the API.
+
+### 5. Verify Other Endpoints
+Ensure the following match the specified URL patterns:
+- `beastSearch.json?term={query}`
+- `bestiaryNames.json?letter={A-Z}`
+- `areaNames.json`
+- `areaBeasts.json?identifier={area}`
+- `slayerCatNames.json`
+- `slayerBeasts.json?identifier={catId}`
+- `weaknessNames.json`
+- `weaknessBeasts.json?identifier={weakId}`
+- `levelGroup.json?identifier={min}-{max}`
+
+## Verification Plan
+1. **Unit Test / Manual Call**: Call `resolveId` with "Abyssal demon" and verify it returns `1615` despite other "Abyssal" results.
+2. **Data Verification**: Call `getBeastData(1615)` and verify:
+   - `members` is `true`
+   - `_membersOverride` is `'slayer_level_implied_membership'`
+   - All fields match the `BestiaryBeastData` interface.
+3. **Network Check**: Verify requests are going to `https://pog2.kristain33rs.workers.dev/api/bestiary`.

@@ -1,0 +1,92 @@
+These are clean integration points. Two observations:
+
+**1. `WikiEnricher.enrich('Lumbridge')`**
+This will hit the wiki search → extract pipeline, but `Lumbridge` is a location page, not an NPC/item. Your current heuristic in `WikiEnricher` checks for `npc`, `character`, `boss`, `item`, `equipment` in the extract — location pages will fall through to `Environmental Object` role. That's fine for now, but if you want place-specific enrichment (map coordinates, nearby NPCs, music tracks, quest start points), you'd need a dedicated `enrichPlace()` method or extend the heuristic.
+
+**2. Hitsplat fetcher**
+This is raw wiki scraping without the `WikiEquipmentEnricher` caching layer. The hitsplat data is actually a **GhostSplat Engine integration point** — hitmarks = combat feedback = volition layer input. Currently it's writing to `wiki_hitsplats_raw.txt` and `wiki_hitsplats_images.json` as standalone files, not feeding into `D:\sovereign\atlas\wiki\cache\` or the 229k pedagogy.
+
+---
+
+## Recommended Unification
+
+**Extend `WikiEquipmentEnricher` with a generic `enrichPage()` method** that handles any page type (place, hitsplat, mechanic, lore):
+
+```typescript
+// Add to WikiEquipmentEnricher.ts
+export interface WikiGenericMeta {
+    title: string;
+    pageType: 'npc' | 'item' | 'equipment' | 'place' | 'mechanic' | 'lore';
+    extract: string;
+    infoboxVars: Record<string, string>;
+    categoryMembers?: string[];  // For image categories like Category:Hitsplat_images
+    fetchedAt: number;
+}
+
+public async enrichGeneric(pageTitle: string): Promise<<WikiPageData> {
+    const cached = this.readCache('generic', pageTitle);
+    if (cached?.title) return cached;
+
+    const wikitext = await this.getWikitextForName(pageTitle);
+    if (!wikitext) return null;
+
+    // Detect page type from infobox or categories
+    const pageType = this.detectPageType(wikitext);
+    
+    // Extract category members if it's a category page
+    let categoryMembers: string[] | undefined;
+    if (pageTitle.startsWith('Category:')) {
+        categoryMembers = await this.fetchCategoryMembers(pageTitle);
+    }
+
+    const result: WikiPageData = {
+        title: pageTitle,
+        fetchedAt: Date.now(),
+        bonuses: null,
+        itemMeta: null,
+        monsterMeta: null,
+        dropTables: [],
+        rawVariables: this.extractAllVariables(wikitext),
+        // Extend WikiPageData with generic fields
+        pageType,
+        extract: await this.fetchExtract(pageTitle),
+        categoryMembers
+    } as any;
+
+    this.writeCache('generic', pageTitle, result);
+    return result;
+}
+```
+
+**Hitsplat → GhostSplat Pipeline:**
+
+The hitsplat images and mechanics should feed directly into your `GhostSplatEngine.ts` and `CombatRotationEngine.ts`. Each hitmark type (damage, heal, poison, reflect, etc.) becomes a **volition signal**:
+
+```typescript
+// GhostSplat integration
+interface HitmarkTelemetry {
+    type: 'damage' | 'heal' | 'poison' | 'reflect' | 'miss' | 'crit';
+    spriteId: string;      // From wiki image filename
+    color: string;         // Parsed from image or infobox
+    isPlayer: boolean;     // Player vs NPC hitmark
+    abilityTrigger?: string;  // Which ability caused this hitmark
+}
+
+// In GhostSplatEngine.ts, add hitmark pattern recognition
+// When PlayerAgent sees a hitmark sprite ID, it maps to combat state change
+```
+
+**Cache Integration:**
+Move the hitsplat output from `./wiki_hitsplats_raw.txt` to `D:\sovereign\atlas\wiki\cache\mechanics\hitsplat.json` following the existing `WikiEquipmentEnricher` cache structure. This makes it discoverable by `CacheForensicsLimb` and eligible for `pog2-pedagogy` training.
+
+**Pedagogy Training Input:**
+Each hitsplat variant becomes a training example:
+```json
+{
+  "instruction": "Identify the hitmark type and combat implication for sprite 'Hitsplat (poison).png'",
+  "input": "{\"sprite\": \"Hitsplat (poison).png\", \"category\": \"Hitsplat_images\", \"source\": \"wiki\"}",
+  "output": "[VERIFIED] Hitmark Type: POISON. Combat implication: Damage-over-time effect. GhostSplat routing: AggressionSimulator → HealthMonitorLimb. Hexagram: Kǎn (Water) — danger, persistence."
+}
+```
+
+**Immediate action:** Do you want me to write the unified `enrichGeneric()` extension for `WikiEquipmentEnricher.ts`, or a `GhostSplatHitmarkRegistry.ts` that consumes the hitsplat cache and maps sprite IDs to combat state transitions?

@@ -1,0 +1,142 @@
+/**
+ * verify_enrichment_layer.ts
+ *
+ * Integration test suite for the Hybrid Enrichment Flow.
+ * Verifies QueryClassifier routing, ApiThrottle compliance,
+ * and WikiEquipmentEnricher routing boundaries.
+ */
+
+import { QueryClassifier } from '../src/utils/QueryClassifier.js';
+import { ApiThrottle } from '../src/utils/ApiThrottle.js';
+import { WikiEquipmentEnricher } from '../src/utils/WikiEquipmentEnricher.js';
+import assert from 'assert';
+
+async function runTests() {
+    console.log('🚀 Starting Hybrid Enrichment Integration Tests...\n');
+
+    // =========================================================================
+    // 1. QueryClassifier Routing Accuracy
+    // =========================================================================
+    console.log('--- Test 1: QueryClassifier Routing ---');
+    const classifierTests = [
+      { input: 'enum 1234', expected: 'structural_enum' },
+      { input: 'varbit 28556', expected: 'structural_varbit' },
+      { input: 'dbrow 5678', expected: 'structural_dbrow' },
+      { input: '50,50', expected: 'spatial_area' },
+      { input: 'Lumbridge Castle', expected: 'semantic_name' },
+      { input: 'Abyssal demon 1615', expected: 'hybrid' },
+      { input: '12345', expected: 'structural_id' },
+    ];
+
+    for (const t of classifierTests) {
+      const result = QueryClassifier.classify(t.input);
+      try {
+        assert.strictEqual(result.type, t.expected);
+        console.log(`✅ ${t.input} → ${result.type}`);
+      } catch (e) {
+        console.error(`❌ FAIL: ${t.input} → ${result.type} (expected ${t.expected})`);
+      }
+    }
+    console.log('Done.\n');
+
+    // =========================================================================
+    // 2. ApiThrottle Retry-After Compliance
+    // =========================================================================
+    console.log('--- Test 2: ApiThrottle Retry-After ---');
+    const throttle = ApiThrottle.getInstance();
+    const domain = 'test_domain';
+
+    // We need to ensure the domain exists in the bucket map.
+    // Since ApiThrottle uses a private map, we'll use 'wiki' which is guaranteed.
+    const testDomain = 'wiki';
+
+    console.log(`Simulating 5s Retry-After for domain: ${testDomain}`);
+    throttle.reportRetryAfter(testDomain, 5);
+
+    const start = Date.now();
+    await throttle.acquire(testDomain);
+    const elapsed = Date.now() - start;
+
+    try {
+      assert(elapsed >= 5000, `Throttle did not respect 5s block (elapsed: ${elapsed}ms)`);
+      console.log(`✅ Throttle respected block (elapsed: ${elapsed}ms)`);
+    } catch (e) {
+      console.error(`❌ FAIL: ${e.message}`);
+    }
+    console.log('Done.\n');
+
+    // =========================================================================
+    // 3. enrichEntity() Routing Boundaries
+    // =========================================================================
+    console.log('--- Test 3: enrichEntity Routing ---');
+    const enricher = WikiEquipmentEnricher.getInstance();
+    const statsBefore = enricher.getStats();
+
+    console.log('Testing structural query (enum 1234) -> Should NOT hit Wiki API');
+    await enricher.enrichEntity('enum 1234');
+    const statsAfterStruct = enricher.getStats();
+
+    try {
+      assert.strictEqual(statsAfterStruct.requestCount, statsBefore.requestCount,
+        `Structural query triggered wiki API call (requests: ${statsBefore.requestCount} → ${statsAfterStruct.requestCount})`);
+      console.log('✅ Structural query bypassed Wiki API');
+    } catch (e) {
+      console.error(`❌ FAIL: ${e.message}`);
+    }
+
+    console.log('Testing semantic query (Abyssal demon) -> Should hit Wiki API');
+    await enricher.enrichEntity('Abyssal demon');
+    const statsAfterSemantic = enricher.getStats();
+
+    try {
+      assert(statsAfterSemantic.requestCount > statsAfterStruct.requestCount,
+        `Semantic query did not trigger wiki API call`);
+      console.log(`✅ Semantic query triggered Wiki API (requests: ${statsAfterStruct.requestCount} → ${statsAfterSemantic.requestCount})`);
+    } catch (e) {
+      console.error(`❌ FAIL: ${e.message}`);
+    }
+    console.log('Done.\n');
+
+    // =========================================================================
+    // 4. fetchLatestUpdates() API-Only Verification
+    // =========================================================================
+    console.log('--- Test 4: fetchLatestUpdates() API-Only ---');
+    const updatesBefore = enricher.getStats().requestCount;
+    const updates = await enricher.fetchLatestUpdates();
+    const updatesAfter = enricher.getStats().requestCount;
+
+    try {
+      assert(updates.length > 0, 'No updates returned');
+      assert(updatesAfter > updatesBefore, 'fetchLatestUpdates did not trigger API calls');
+      console.log(`✅ Successfully fetched ${updates.length} updates via API`);
+    } catch (e) {
+      console.error(`❌ FAIL: ${e.message}`);
+    }
+    console.log('Done.\n');
+
+    // =========================================================================
+    // 5. Stress Test: Batch Enrichment
+    // =========================================================================
+    console.log('--- Test 5: Batch Enrichment Stress Test ---');
+    const items = ['Abyssal whip', 'Dragon scimitar', 'Bandos boots', 'Zulrahs scale', 'Slayer helm'];
+
+    const startBatch = Date.now();
+    const results = await enricher.batchEnrich(items, 'item');
+    const elapsedBatch = Date.now() - startBatch;
+
+    try {
+      assert.strictEqual(results.size, items.length, `Batch failure: only ${results.size}/${items.length} items enriched`);
+      console.log(`✅ Batch successful: ${results.size}/${items.length} items in ${elapsedBatch}ms`);
+      console.log(`Rate: ${(items.length / (elapsedBatch / 1000)).toFixed(2)} items/sec`);
+    } catch (e) {
+      console.error(`❌ FAIL: ${e.message}`);
+    }
+    console.log('Done.\n');
+
+    console.log('🏁 Integration tests completed.');
+}
+
+runTests().catch(err => {
+  console.error('Fatal test error:', err);
+  process.exit(1);
+});

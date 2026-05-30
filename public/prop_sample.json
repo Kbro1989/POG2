@@ -1,0 +1,473 @@
+{
+  "1277": {
+    "widget_actions_1": "Wield",
+    "equipSlotId": 3,
+    "category": 2750,
+    "maleModels_0": {
+      "id": 74312,
+      "type": 0
+    },
+    "femaleModels_0": {
+      "id": 74312,
+      "type": 0
+    },
+    "baseModel": 79197,
+    "modelTranslate_0": 4,
+    "modelTranslate_1": -8,
+    "model_zoom": 1129,
+    "rotation_1": 175,
+    "rotation_0": 200,
+    "big_value": [
+      0,
+      168
+    ],
+    "unknown_B2": true,
+    "tradeable": true,
+    "name": "Bronze sword",
+    "noteData": 1278,
+    "loanId": 45409,
+    "extra": [
+      {
+        "type": 0,
+        "key": 686,
+        "intvalue": 14922,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 644,
+        "intvalue": 2584,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2820,
+        "intvalue": 74310,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 4454,
+        "intvalue": 1,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 1397,
+        "intvalue": 1,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 749,
+        "intvalue": 0,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 750,
+        "intvalue": 1,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2825,
+        "intvalue": 1,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 641,
+        "intvalue": 480,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 14,
+        "intvalue": 4,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 3267,
+        "intvalue": 150,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 537,
+        "intvalue": 4165,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 4196,
+        "intvalue": 1,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2195,
+        "intvalue": 22,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2640,
+        "intvalue": 14,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2645,
+        "intvalue": 1,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2641,
+        "intvalue": 62,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2646,
+        "intvalue": 187,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2675,
+        "intvalue": 43273,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2696,
+        "intvalue": 14,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2697,
+        "intvalue": 300,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 7801,
+        "intvalue": 200,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2650,
+        "intvalue": 2347,
+        "stringvalue": null
+      }
+    ],
+    "ground_actions_cursor_2": 45,
+    "widget_actions_cursor_1": 51,
+    "nullopt": true
+  },
+  "31725": {
+    "big_value": [
+      0,
+      1250000
+    ],
+    "members": true,
+    "maleModels_0": {
+      "id": 96990,
+      "type": 0
+    },
+    "femaleModels_0": {
+      "id": 96990,
+      "type": 0
+    },
+    "baseModel": 96996,
+    "widget_actions_1": "Wield",
+    "widget_actions_2": "Check charges",
+    "equipSlotId": 3,
+    "equipId": 5,
+    "category": 2761,
+    "modelTranslate_0": 23,
+    "modelTranslate_1": 22,
+    "model_zoom": 3882,
+    "rotation_1": 65,
+    "rotation_0": 444,
+    "unknown_B2": true,
+    "tradeable": true,
+    "buy_limit": 2,
+    "color_replacements": [
+      [
+        16311,
+        16311
+      ],
+      [
+        16323,
+        16323
+      ],
+      [
+        16335,
+        16335
+      ],
+      [
+        16347,
+        16347
+      ]
+    ],
+    "name": "Noxious scythe",
+    "noteData": 31726,
+    "extra": [
+      {
+        "type": 0,
+        "key": 2195,
+        "intvalue": 24,
+        "stringvalue": null
+      },
+      {
+        "type": 1,
+        "key": 528,
+        "intvalue": null,
+        "stringvalue": "Check charges"
+      },
+      {
+        "type": 0,
+        "key": 14,
+        "intvalue": 6,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 3267,
+        "intvalue": 2458,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 641,
+        "intvalue": 20115,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2825,
+        "intvalue": 1,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 686,
+        "intvalue": 14932,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 13,
+        "intvalue": 2,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2820,
+        "intvalue": 96991,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 749,
+        "intvalue": 0,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 750,
+        "intvalue": 90,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 1324,
+        "intvalue": 1,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 3384,
+        "intvalue": 1,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 3382,
+        "intvalue": 31727,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 3383,
+        "intvalue": 4500000,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 3385,
+        "intvalue": 60000,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2639,
+        "intvalue": 1,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2655,
+        "intvalue": 31722,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2665,
+        "intvalue": 1,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2656,
+        "intvalue": 31721,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2666,
+        "intvalue": 1,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2640,
+        "intvalue": 11,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2645,
+        "intvalue": 90,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2696,
+        "intvalue": 11,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2697,
+        "intvalue": 10000,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 4329,
+        "intvalue": 1,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 4330,
+        "intvalue": 0,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 4332,
+        "intvalue": 1000,
+        "stringvalue": null
+      },
+      {
+        "type": 1,
+        "key": 4333,
+        "intvalue": null,
+        "stringvalue": "Mirrorback"
+      },
+      {
+        "type": 1,
+        "key": 4334,
+        "intvalue": null,
+        "stringvalue": "Summon a mirrorback spider to aid you."
+      },
+      {
+        "type": 0,
+        "key": 8170,
+        "intvalue": 3,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 2796,
+        "intvalue": 0,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 4688,
+        "intvalue": 33330,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 4689,
+        "intvalue": 33396,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 4690,
+        "intvalue": 33462,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 5439,
+        "intvalue": 36333,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 6894,
+        "intvalue": 42049,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 8739,
+        "intvalue": 54229,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 8840,
+        "intvalue": 55030,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 5551,
+        "intvalue": 36715,
+        "stringvalue": null
+      },
+      {
+        "type": 0,
+        "key": 7809,
+        "intvalue": 58219,
+        "stringvalue": null
+      }
+    ],
+    "ground_actions_cursor_2": 45,
+    "widget_actions_cursor_1": 51,
+    "nullopt": true
+  }
+}

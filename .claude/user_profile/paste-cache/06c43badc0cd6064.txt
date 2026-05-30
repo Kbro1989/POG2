@@ -1,0 +1,40 @@
+Before you run `npx electron-rebuild`, let's verify the rebuild is actually needed and will succeed — not all of those native modules may be load-bearing anymore.
+
+**Check what's actually requiring a rebuild:**
+
+```bash
+# From rsmv/, see which native modules are registered for Electron's ABI
+npx electron-rebuild --list
+# Or check the current state
+npx electron-rebuild --dry-run
+```
+
+**Critical check on each native module:**
+
+| Module | Purpose | Can it be replaced? |
+|--------|---------|---------------------|
+| `lzma-native` | Cache decompression | Your POG2 pipeline already has WASM parsers. If the viewer receives decompressed cache data, this is redundant. |
+| `sharp` | Image processing (thumbnails, resizing) | If the viewer only displays pre-processed textures from cache, redundant. If it generates thumbnails at runtime, keep. |
+| `better-sqlite3` | Local database queries | If the viewer queries a local SQLite file directly, keep. If it receives JSON/state from Sovereign pipeline, redundant. |
+
+**The permission block:** What error are you getting? Common causes:
+- No Visual Studio Build Tools / Python 3 installed (Windows)
+- `node-gyp` can't find the Electron headers
+- The module's prebuilt binary doesn't exist for Electron 41's ABI and needs compilation from source
+
+**My recommendation:** Don't blanket-rebuild everything. Test each module's necessity first:
+
+```bash
+# Temporarily rename the module's binary to see if the viewer actually crashes without it
+cd rsmv/node_modules/lzma-native
+mv build/Release/lzma_native.node build/Release/lzma_native.node.bak
+# Then try launching the viewer
+```
+
+If it launches fine, that module wasn't load-bearing. If it crashes with `Cannot find module`, you need the rebuild.
+
+**Alternative path:** If `sharp` and `better-sqlite3` are the only ones you actually need, consider switching to pure-JS or WASM alternatives:
+- `sharp` → browser Canvas API or Three.js texture loaders
+- `better-sqlite3` → `sql.js` (WASM SQLite) if you need client-side queries, or move queries to the Sovereign pipeline
+
+What error did the permission block throw? And do you know which of those three modules the viewer actively calls at runtime vs. which are legacy deps from when the viewer did more local processing?

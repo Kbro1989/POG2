@@ -1,0 +1,8 @@
+{
+  "id": "9",
+  "subject": "Implement BestiaryApi Client",
+  "description": "Implement BestiaryApi client wrapping the existing scraper logic into a typed class, integrated with ApiThrottle.",
+  "status": "in_progress",
+  "blocks": [],
+  "blockedBy": []
+}

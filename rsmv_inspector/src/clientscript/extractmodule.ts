@@ -69,7 +69,7 @@ export class IsolatedCS2Module {
     structs = new Map<number, {}>();
     source: CacheFileSource;
     deob: ClientscriptObfuscation;
-    mockscripts = new Set<number>();
+    simulationScripts = new Set<number>();
     entrypoints: number[] = [];
 
     constructor(deob: ClientscriptObfuscation) {
@@ -108,7 +108,7 @@ export class IsolatedCS2Module {
 
     async addscript(id: number) {
         if (this.scripts.has(id)) { return null; }
-        if (this.mockscripts.has(id)) { return null; }
+        if (this.simulationScripts.has(id)) { return null; }
 
         let filebuf = await this.source.getFileById(cacheMajors.clientscript, id);
         let script = parse.clientscript.read(filebuf, this.source);
@@ -131,7 +131,7 @@ export class IsolatedCS2Module {
 
     writeScripts() {
         let res = "";
-        for (let mockid of [...this.mockscripts]) {
+        for (let mockid of [...this.simulationScripts]) {
             res += `var script${mockid} = function(...args[]){};\n`;
         }
         res += "\n";
@@ -336,7 +336,7 @@ function scriptdeps(mod: IsolatedCS2Module, fn: CS2Script) {
             let scriptid = node.children[0]?.knownStackDiff?.constout ?? -1;
             if (typeof scriptid == "number" && scriptid != -1) {
                 // can't mock like this because it also hides direct calls in other sections
-                // if (mod.mockcallbacks) { mod.mockscripts.add(scriptid); }
+                // if (mod.mockcallbacks) { mod.simulationScripts.add(scriptid); }
                 // fn.scripts.add(scriptid);
             }
         }

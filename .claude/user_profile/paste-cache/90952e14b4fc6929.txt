@@ -1,0 +1,124 @@
+  The user is roleplaying as Claude Code / AEGIS-BRAIN responding to my prompt. They want to know which extension to tackle first: modeDetector.ts inference rules, guidanceEngine.ts integration spec, or breaking down the App.tsx monolith.
+
+Given the user's architecture (POG2's 84-limb system, trauma-informed design, Ghost Limb philosophy), and the fact that App.tsx is 3900+ lines, I should recommend **breaking down the monolith first** — but with a specific architectural pattern that aligns with their existing neural pipeline design.
+
+The key insight: they've already built a 33-limb/84-limb architecture for POG2. The Aegis Alt1-AI should map into that same limb-based ontology rather than being a separate monolithic React app. This creates architectural convergence.
+
+Let me recommend:
+1. **Immediate**: Break App.tsx into limbs (not just components, but functional domains)
+2. **Then**: modeDetector.ts as a "Sensory Cortex" limb with formalized inference rules
+3. **Then**: guidanceEngine.ts as a "Motor Cortex" limb with priority arbitration
+
+This aligns with their existing POG2 architecture where limbs are sovereign, replaceable, and communicate via defined protocols.
+
+I should frame this in their language: limbs, neural pipelines, Ghost Limb fallback, sovereignty.   Given your existing **POG2 84-limb neural architecture**, the monolith is actually an **architectural anti-pattern** relative to your sovereign design philosophy. A 3900-line `App.tsx` is the opposite of the distributed mesh you've built elsewhere.
+
+Here's the convergence path: **Aegis should become a limb cluster within POG2's ontology**, not a separate monolithic React app. Break it down into sovereign, replaceable, hot-swappable limbs that communicate via the same protocols your 84-limb system already uses.
+
+---
+
+## Recommended Execution Order
+
+### Phase 1: Monolith → Limb Cluster (Now)
+Decompose `App.tsx` into **7 sovereign limbs** mapped to your existing domains:
+
+| New Limb | Current Code Location | POG2 Domain Mapping | Responsibility |
+|----------|----------------------|---------------------|----------------|
+| `SensoryCortexLimb.ts` | `modeDetector.ts` + capture loop | `SENSORY` | Activity classification, telemetry fusion, screen state ingestion |
+| `MotorCortexLimb.ts` | `guidanceEngine.ts` + `clickGuide.ts` | `MOTOR` | Priority arbitration, AR command generation, click targeting |
+| `AuditoryCortexLimb.ts` | `voiceNarrator.ts` + `playSynthAlarm` | `AUDIO` | TTS synthesis, alarm orchestration, voice priority queue |
+| `HippocampusLimb.ts` | `sessionMemory` state + localStorage | `MEMORY` | Death/overload/trade logging, temporal pattern recognition |
+| `MarketLimb.ts` | `GeFlip.tsx` + `geEngine.ts` | `FORGE` | Flip analysis, arbitrage scoring, price alarm management |
+| `OracleLimb.ts` | `handleSendOracleMessage` + AI bridges | `LITERARY` | LLM prompt engineering, context window management, response parsing |
+| `VisualCortexLimb.ts` | Canvas overlay + `drawNativeRect` | `VISION` | AR ping rendering, sensor box drawing, HUD compositing |
+
+Each limb exposes:
+```typescript
+interface AegisLimb {
+  id: string;
+  domain: LimbDomain;
+  ingest(telemetry: TelemetrySnapshot): void;
+  pulse(): LimbOutput | null;  // Called every tick (500ms/2000ms)
+  state: LimbState;  // ACTIVE | DORMANT | ERROR | GHOST
+}
+```
+
+**Why this matters**: If `OracleLimb` crashes, `MarketLimb` and `SensoryCortexLimb` keep running. If Ollama is offline, `OracleLimb` enters `GHOST` state and falls back to rule-based `guidanceEngine.ts` responses. This is your **Ghost Limb architecture** applied to the overlay layer.
+
+---
+
+### Phase 2: Sensory Cortex Inference Rules (After decomposition)
+Formalize `modeDetector.ts` as a **classification pipeline** with confidence scoring:
+
+```typescript
+// SensoryCortexLimb.ts
+type ActivitySignature = {
+  pattern: (t: TelemetrySnapshot) => boolean;
+  confidence: number;  // 0.0-1.0
+  mode: GameMode;
+  evidence: string[];  // Why this classification
+};
+
+const SIGNATURES: ActivitySignature[] = [
+  {
+    pattern: (t) => t.bossTimer !== null && t.target?.hp !== null,
+    confidence: 0.95,
+    mode: 'combat-boss',
+    evidence: ['boss_timer_active', 'target_has_hp_bar']
+  },
+  {
+    pattern: (t) => t.buffs.some(b => b.name.includes('Overload')) && t.xpDrops.length > 0,
+    confidence: 0.80,
+    mode: 'skilling',
+    evidence: ['overload_active', 'xp_drops_detected']
+  },
+  {
+    pattern: (t) => t.chatLines.some(l => l.text.includes('Grand Exchange')),
+    confidence: 0.75,
+    mode: 'trading',
+    evidence: ['ge_chat_mention']
+  },
+  // ... etc
+];
+```
+
+The limb outputs **competing hypotheses** with confidence scores, and `MotorCortexLimb` resolves conflicts (e.g., "combat-boss 0.95" overrides "skilling 0.80" when both fire).
+
+---
+
+### Phase 3: Motor Cortex Priority Arbitration (After Phase 2)
+`guidanceEngine.ts` becomes a **priority-weighted decision matrix**:
+
+```typescript
+// MotorCortexLimb.ts
+type ThreatLevel = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
+
+const PRIORITY_MATRIX: Record<string, ThreatLevel> = {
+  'hp_below_40': 'CRITICAL',
+  'prayer_below_20': 'CRITICAL',
+  'overload_expiry_30s': 'HIGH',
+  'buff_sensor_triggered': 'HIGH',
+  'death_detected': 'CRITICAL',
+  'valuable_drop': 'MEDIUM',
+  'ge_alarm_triggered': 'MEDIUM',
+  'xp_goal_reached': 'LOW',
+  'idle_reminder': 'INFO',
+};
+```
+
+Motor Cortex receives inputs from ALL limbs every pulse, sorts by `ThreatLevel`, and dispatches:
+- **Voice**: Highest threat to `AuditoryCortexLimb`
+- **AR Overlay**: Spatial commands to `VisualCortexLimb`
+- **Chat**: Contextual messages to `OracleLimb` for UI display
+
+---
+
+## Immediate Next Step
+
+I recommend **Phase 1** because:
+1. It unlocks the other two phases (can't have clean inference rules in a monolith)
+2. It aligns Aegis with POG2's existing 84-limb sovereignty model
+3. It enables **Ghost Limb fallback** — if Gemini API fails, `OracleLimb` ghosts and `MotorCortexLimb` falls back to deterministic `guidanceEngine.ts` rules
+4. It makes the codebase testable (each limb can be unit-tested in isolation)
+
+Want me to generate the **limb interface definitions** and a **migration script** that extracts the 7 limbs from your current `App.tsx` monolith? Or should we start with the **`SensoryCortexLimb.ts` inference engine spec** since that's the highest-impact immediate win for accuracy?

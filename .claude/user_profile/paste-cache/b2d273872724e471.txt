@@ -1,0 +1,144 @@
+I see the `SovereignSplatRenderer.ts` implementation. Let me analyze before confirming creation.
+
+---
+
+## Analysis
+
+**What's Right:**
+- `InstancedMesh` with `instanceColor` for per-splat color — correct
+- `AdditiveBlending` for glow effect — correct
+- `depthTest: false` — consistent with grounding overlay
+- `frustumCulled: false` — consistent
+- `entity.sovereignHeat` fast path — good optimization
+- Heatmap fallback sampling — sensible fallback
+
+**Issues:**
+
+| Issue | Line | Problem |
+|---|---|---|
+| Duplicate method declaration | 66-67 | `updateFromSnapshot` declared twice |
+| Global pulse scaling | 141 | `this.splatMesh.scale.set(pulse, pulse, pulse)` scales ALL splats together, not individually |
+| No individual pulse | 138-140 | Comment acknowledges limitation — needs custom shader or matrix update per frame |
+| `getHeatAtPosition` modulo | 118-119 | `% 66` wraps incorrectly for negative coords; should clamp to 0-65 |
+| Missing `plane` in snapshot | 3-7 | No plane field — splats won't align vertically with multi-plane worlds |
+| `MAX_SPLATS = 1000` | 28 | Hard limit; 66×66 window could have 4,356 tiles with heat ≥ 0.2 |
+
+---
+
+## Critical Fix: Individual Pulse
+
+The global pulse is wrong — all splats pulse in unison. For individual pulsation, update matrices in `animate()`:
+
+```typescript
+private splatData: Array<{baseScale: number, phase: number}> = [];
+
+// In updateFromSnapshot:
+this.splatData[splatIdx] = {baseScale: scale, phase: Math.random() * Math.PI * 2};
+
+// In animate():
+public animate() {
+    const time = this.clock.getElapsedTime();
+    for (let i = 0; i < this.splatMesh.count; i++) {
+        const data = this.splatData[i];
+        const pulse = Math.sin(time * 3 + data.phase) * 0.2 + 1.0;
+        const s = data.baseScale * pulse;
+        // Reconstruct matrix from stored position... 
+        // Or store position in splatData too
+    }
+}
+```
+
+But this requires storing position per splat. Simpler: **custom shader**.
+
+---
+
+## Custom Shader Approach (Recommended)
+
+```typescript
+const material = new THREE.ShaderMaterial({
+    uniforms: {
+        uTime: { value: 0 }
+    },
+    vertexShader: `
+        uniform float uTime;
+        attribute float aPhase;
+        attribute vec3 aBaseScale;
+        varying vec3 vColor;
+        
+        void main() {
+            float pulse = sin(uTime * 3.0 + aPhase) * 0.2 + 1.0;
+            vec3 scaled = position * aBaseScale * pulse;
+            gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(scaled, 1.0);
+            vColor = instanceColor;
+        }
+    `,
+    fragmentShader: `
+        varying vec3 vColor;
+        void main() {
+            gl_FragColor = vec4(vColor, 0.6);
+        }
+    `,
+    transparent: true,
+    depthTest: false,
+    blending: THREE.AdditiveBlending
+});
+```
+
+This gives **individual pulsation** without CPU matrix updates every frame.
+
+---
+
+## Corrected `getHeatAtPosition`
+
+```typescript
+private getHeatAtPosition(snapshot: GhostSplatSnapshot, entity: any): number {
+    if (entity.sovereignHeat !== undefined) return entity.sovereignHeat;
+    
+    // Convert world position to mapsquare-local tile coords
+    const [msX, msZ] = snapshot.mapsquare.split(',').map(Number);
+    const msWorldX = msX * 64 * this.TILE_SIZE;
+    const msWorldZ = msZ * 64 * this.TILE_SIZE;
+    
+    const localX = Math.floor((entity.position.x - msWorldX) / this.TILE_SIZE);
+    const localZ = Math.floor((entity.position.z - msWorldZ) / this.TILE_SIZE);
+    
+    // Clamp to 0-65 (66×66 window)
+    const lx = Math.max(0, Math.min(65, localX));
+    const lz = Math.max(0, Math.min(65, localZ));
+    
+    const idx = lz * 66 + lx;
+    return snapshot.heatmap[idx] || 0;
+}
+```
+
+---
+
+## Simpler Fix (No Shader)
+
+If you want to avoid custom shaders, accept global pulse for now and fix the other issues:
+
+```typescript
+// Replace animate() with:
+public animate() {
+    // Global pulse is acceptable for v1
+    const time = this.clock.getElapsedTime();
+    const pulse = Math.sin(time * 3) * 0.2 + 1.0;
+    this.splatMesh.scale.set(pulse, pulse, pulse);
+}
+```
+
+---
+
+## My Recommendation
+
+Create the file **with these fixes applied:**
+
+1. Remove duplicate `updateFromSnapshot` declaration
+2. Fix `getHeatAtPosition` clamping (not modulo)
+3. Add `plane` field to `GhostSplatSnapshot` interface
+4. Keep global pulse for v1 (shader upgrade later)
+5. Add `dispose()` safety
+
+Or create as-is and patch in next iteration?
+
+Your call — **strict v1** (global pulse, fixes only) or **shader v2** (individual pulse, more complex)?

@@ -1,0 +1,186 @@
+I see the full plan now. This is a **three-layer visual audit system** that overlays pedagogy, collision truth, and semantic knowledge onto the RSMV 3D world. Let me map this against what we already have and identify what's missing.
+
+---
+
+## Current State vs. Proposed Plan
+
+| Layer | Already Exists | Needs Creation | Status |
+|---|---|---|---|
+| **GhostSplat (Influence)** | `GhostSplatEngine.ts` (server-side density matrix), `POG2WorldDO` broadcasts snapshots | `SovereignSplatRenderer.ts` (client-side visual aura) | **New file needed** |
+| **Grounding (Collision)** | `SovereignCollisionEngine.ts` (server-side), `public/gameplay/state.json` (static), `SovereignGroundingStream.ts` (exists) | `SovereignGroundingOverlay.ts` (3D wireframe grid) | **New file needed** |
+| **Semantic (HUD)** | `ItemBook.ts` (item requirements), `SovereignVarbitBridge.ts` (varbit state), `pog2-pedagogy` model (cache translation) | `SovereignTrainingHUD.tsx` (React floating labels) | **New file needed** |
+
+The plan is solid but has a **gap**: the server→client data flow isn't fully specified. `POG2WorldDO` broadcasts `WorldTelemetryFrame` every 300ms, but the viewer needs **per-entity splat data**, **collision grid for current chunk**, and **pedagogy-enriched names** — all in one stream or separate channels.
+
+---
+
+## Refined Architecture: The Sovereign Overlay
+
+### Data Flow
+
+```
+POG2WorldDO (300ms tick)
+    ↓ WorldTelemetryFrame
+SovereignBridge (WebSocket client)
+    ↓ Demux by channel
+├─→ SovereignSplatRenderer ← GhostSplatSnapshot (heatmap 66×66)
+├─→ SovereignGroundingOverlay ← CollisionSnapshot (blocked/walkable coords)
+└─→ SovereignTrainingHUD ← Entity packets (id, name, stats, sovereignId)
+```
+
+### Channel Protocol (already in POG2WorldDO)
+
+```typescript
+// Client subscribes:
+{type: "SUBSCRIBE", channels: ["ghostsplat", "collision", "entities", "hexagram"]}
+
+// Server responds per channel:
+{type: "GHOSTSPLAT", data: {heatmap: [...], dimensions: {w:66,h:66}, mapsquare: "50,50"}}
+{type: "COLLISION", data: {blocked: [x<<14|y, ...], walkable: [...], plane: 0}}
+{type: "ENTITY", data: {id: 1234, name: "Man", type: "npc", stats: {...}, sovereignId: "npc:man:3222:3218"}}
+{type: "HEXAGRAM", data: {activeId: 1, yaoLines: [1,1,1,1,1,1], engineFocus: ["creation","power"]}}
+```
+
+---
+
+## Critical Implementation Details
+
+### 1. SovereignSplatRenderer.ts
+
+```typescript
+// Receives: GhostSplatSnapshot (66×66 density matrix)
+// Renders: Semi-transparent spheres on entity positions, colored by training value
+
+interface SplatConfig {
+  thresholdHigh: 0.7,    // Cyan: Active Pedagogy Target
+  thresholdTrigger: 0.4, // Magenta: Varbit/Bridge linked
+  thresholdVerified: 0.2 // Yellow: Ground Truth match
+}
+
+class SovereignSplatRenderer {
+  private splatMeshes: Map<string, THREE.Mesh> = new Map();
+  
+  updateFromHeatmap(snapshot: GhostSplatSnapshot, entities: Entity[]) {
+    // Map heatmap coords to world coords
+    // Spawn sphere at each entity position, scale by heat value
+    // Color by threshold crossing
+  }
+  
+  private getColor(heat: number): THREE.Color {
+    if (heat >= 0.7) return new THREE.Color(0x00ffff); // Cyan
+    if (heat >= 0.4) return new THREE.Color(0xff00ff); // Magenta
+    if (heat >= 0.2) return new THREE.Color(0xffff00); // Yellow
+    return null; // No splat
+  }
+}
+```
+
+### 2. SovereignGroundingOverlay.ts
+
+```typescript
+// Receives: CollisionSnapshot (blocked[] + walkable[] packed coords)
+// Renders: Wireframe boxes at tile boundaries
+
+class SovereignGroundingOverlay {
+  private walkableMesh: THREE.InstancedMesh;
+  private blockedMesh: THREE.InstancedMesh;
+  
+  updateFromSnapshot(snapshot: CollisionSnapshot) {
+    // Decode packed coords: x = coord >> 14, y = coord & 0x3fff
+    // Instance wireframe boxes at each tile
+    // Green = walkable, Red = blocked
+  }
+}
+```
+
+### 3. SovereignTrainingHUD.tsx
+
+```typescript
+// Receives: Entity packet + ItemBook lookup + pedagogy model query
+// Renders: CSS2DRenderer floating label on hover
+
+interface HUDData {
+  name: string;           // From pedagogy model
+  type: "npc" | "object" | "loc";
+  stats: {
+    requirements?: Record<string, number>; // From ItemBook
+    combat?: number;
+    degradation?: {charges: number, max: number};
+  };
+  sovereignId: string;    // Internal identifier
+  actionables: string[];  // Available actions
+  hexagramPin?: string;   // Which hexagram this entity resonates with
+}
+
+// On hover:
+// 1. Raycast to find entity
+// 2. Query ItemBook for requirements
+// 3. Query pedagogy model for lore
+// 4. Render floating label at entity position
+```
+
+---
+
+## The 66×66 Predictive Window
+
+This is the **Sovereign Predictive Window** — a buffer centered on the avatar that pre-fetches:
+
+```typescript
+// In POG2WorldDO or RSMVServerDO:
+const PREDICTIVE_WINDOW = 66; // tiles
+const HALF_WINDOW = 33;
+
+function getWindowBounds(avatarX: number, avatarY: number) {
+  return {
+    minX: avatarX - HALF_WINDOW,
+    maxX: avatarX + HALF_WINDOW,
+    minY: avatarY - HALF_WINDOW,
+    maxY: avatarY + HALF_WINDOW
+  };
+}
+
+// Pre-fetch:
+// 1. Grounding manifests from D:\POG2\public (or R2)
+// 2. Authentic spawns for mapsquares in window
+// 3. Collision data for those mapsquares
+// 4. Entity cache data for visible NPCs/objects/items
+```
+
+This is already partially implemented in `SovereignGroundingStream.ts` — it loads chunk manifests. The overlay just needs to **visualize** what the stream already loads.
+
+---
+
+## Verification Plan (Refined)
+
+| Test | Command/Action | Expected Result |
+|---|---|---|
+| **Splat** | Spawn object in Haven Hythe, set high training value | Cyan aura pulses around object |
+| **Collision** | Load chunk (50,50), walk to boundary | Red wireframe at walls, green at walkable tiles |
+| **HUD** | Hover over "Man" NPC | Label shows: Name=Man, Type=NPC, Stats={combat:4}, Sovereign ID=npc:man:3222:3218 |
+| **End-to-End** | Enter Haven Hythe, enable all layers | All three layers sync, no drift between server state and visual overlay |
+| **Predictive Window** | Walk from Lumbridge to Varrock | Window pre-fetches chunks ahead of avatar, no pop-in |
+
+---
+
+## What's Missing from the Plan
+
+1. **Server-side entity resolution** — `POG2WorldDO` currently broadcasts raw entity counts. It needs to stream **resolved entity packets** (name, stats, sovereignId) per tick. This requires integrating `PedagogyLimb` into the DO.
+
+2. **ItemBook integration** — The plan mentions `ItemBook.ts` but doesn't specify how the HUD queries it. Is ItemBook a local JSON file, a KV store, or a query to the pedagogy model?
+
+3. **pog2-pedagogy model access from viewer** — If the model is local (Ollama), the browser can't reach it. The DO must query the model and stream results. If the model is cloud (Workers AI), the viewer could query directly but that's slow.
+
+4. **Performance budget** — 66×66 collision grid = 4,356 tiles. Rendering 4,356 wireframe boxes every frame is expensive. Need `InstancedMesh` or compute shader.
+
+---
+
+## My Recommendation
+
+Implement in this order:
+
+1. **`SovereignGroundingOverlay.ts`** first — collision is deterministic, no async dependencies, easiest to verify
+2. **`SovereignSplatRenderer.ts`** second — depends on GhostSplatSnapshot from server, but heatmap format is stable
+3. **`SovereignTrainingHUD.tsx`** third — depends on entity resolution pipeline (most complex)
+4. **Server-side entity resolution** in parallel — integrate pedagogy model into `POG2WorldDO` tick loop
+
+Want me to draft `SovereignGroundingOverlay.ts` first? It's the foundation — everything else builds on knowing where the ground is.

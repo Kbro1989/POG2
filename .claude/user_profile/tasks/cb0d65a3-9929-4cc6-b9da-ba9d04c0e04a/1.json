@@ -1,0 +1,8 @@
+{
+  "id": "1",
+  "subject": "Fix NodeTester initialization order to prevent pulse monitor detachment",
+  "description": "Move NodeTester creation earlier in OrchestrateEngine.initialize() before it is used in switchboard.injectSubstrates and registerLimbs calls. This prevents TypeError that could halt initialization and stop pulse monitor from starting.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

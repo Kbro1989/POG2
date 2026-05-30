@@ -1,0 +1,186 @@
+  I see the full picture now. Your `.env` reveals the architecture: **HuggingFace is proxying `kimi-k2.6-thinking` as your cloud brain** for all planning/orchestrator/critic roles, while local Ollama handles execution. The `ollama launch` menu showing `kimi-k2.6:cloud` with "Upgrade required" means that HF route is already throttled or about to be.
+
+Let me check what's actually available on HuggingFace's serverless inference and whether those `gemma4`/`qwen3.6` models can slot into your existing `huggingface:openai-compat/` routing scheme.  
+   Now I have the full tactical picture. Your `.env` shows you're routing all planning/orchestrator/critic roles through **HuggingFace's Serverless Inference API** using `huggingface:openai-compat/kimi-k2.6-thinking` — but that free tier is **"few hundred requests per hour"** with no SLA. The "Upgrade required" in your `ollama launch` menu confirms the cutoff is already in progress.
+
+Here's the hard truth: **Neither `gemma4:31b` nor `qwen3.6:35b-a3b` are available on HuggingFace's free Serverless Inference API.** Those are self-host/local-only models. Your current `huggingface:openai-compat/` routing scheme won't work for them without paid Inference Endpoints ($0.033-$80/hr).
+
+But there's a **sovereign path** that doesn't require cloud credits.
+
+---
+
+## The Real Constraint: Your Hardware
+
+You didn't specify your GPU, but your 100GB model fleet suggests either:
+- **High-end consumer GPU** (RTX 4090 24GB, RTX 5090 32GB)
+- **Workstation** (RTX A6000 48GB, or multi-GPU)
+- **Apple Silicon** (Mac Studio with 64GB+ unified memory)
+- **CPU-offload setup** (slow but functional)
+
+This determines which model fits. Let me map the options:
+
+| Your Hardware | Gemma4 31B Dense | Gemma4 26B MoE | Qwen3.6 35B-A3B | Strategy |
+|--------------|------------------|----------------|-----------------|----------|
+| **24GB VRAM** | ❌ Won't fit Q4 | ✅ Fits Q4, fast | ❌ Won't fit | Gemma4 26B MoE is your sovereign king |
+| **32GB VRAM** | ⚠️ Q4_K_M tight | ✅ Perfect fit | ⚠️ Q4 possible | Gemma4 31B or Qwen3.6, pick by task |
+| **48GB+ VRAM** | ✅ Q4 comfortable | ✅ Overkill | ✅ Q4 comfortable | Any model, use 31B dense for max quality |
+| **CPU-only / 16GB** | ❌ | ⚠️ Q4_0 possible | ❌ | Gemma4 26B with KTransformers CPU offload |
+
+---
+
+## The Refactored Fleet: 2-Model Sovereign Core + Cloud Fallback
+
+Based on your `.env` architecture and the agentic coding benchmarks, here's the minimal viable refactor:
+
+### Tier 1: Agentic Sovereign (Local)
+
+**Option A: VRAM ≤ 24GB (Most Likely)**
+```powershell
+ollama pull gemma4:26b          # 26B MoE, ~16GB Q4_K_M, 3.8B active params
+ollama pull deepseek-r1:32b     # ~20GB Q4_K_M, reasoning specialist
+```
+**Total**: ~36 GB on disk, 16-20GB VRAM active per model
+
+**Option B: VRAM ≥ 32GB**
+```powershell
+ollama pull gemma4:31b          # 31B dense, ~20GB Q4_K_M, max quality
+ollama pull deepseek-r1:32b     # ~20GB Q4_K_M
+```
+**Total**: ~40 GB on disk, 20GB+ VRAM active per model
+
+### Tier 2: Fast Cognitive (Keep from existing)
+```powershell
+# Keep these — they're already optimized
+qwen2.5-coder:14b-instruct-q5_K_M   # 10GB, daily driver
+qwen2.5-coder:7b-instruct-q4_K_M    # 4.7GB, Ghost Limb
+deepseek-r1:8b                       # 5.2GB, lightweight reasoning
+```
+
+### Tier 3: Purge These (100GB → 40GB refactor)
+```powershell
+ollama rm deepseek-coder:33b-instruct-q4_K_M    # 19GB, obsolete architecture
+ollama rm deepseek-coder:6.7b-instruct-q4_K_M   # 4.1GB, no tool calling
+ollama rm yi-coder:9b-chat-q5_K_M               # 6.3GB, no native agentic
+ollama rm qwen2.5-coder:1.5b-instruct-q4_K_M    # 986MB, too small
+ollama rm tinyllama:latest                      # 637MB, test only
+ollama rm llava:latest                          # 4.7GB, keep llava-phi3 instead
+ollama rm medgemma:latest                       # 3.3GB, unless medical needed
+```
+
+---
+
+## Updated `.env` Configuration
+
+Replace your Section 9 with this sovereign routing:
+
+```ini
+# --- 9. NEURAL MODEL DEFINITIONS (SOVEREIGN V3 - POST-CUTOFF) ---
+
+# Tier 1: Agentic Sovereign (Local, replaces HF cloud routing)
+POG2_PLANNING_MODEL=gemma4:26b
+POG2_ORCHESTRATOR_MODEL=gemma4:26b
+POG2_CRITIC_MODEL=deepseek-r1:32b
+MASTER_REASONING_MODEL=deepseek-r1:32b
+DEEP_PATH_MODEL=gemma4:26b
+
+# Tier 2: Local High-Performance (Execution)
+POG2_CODING_MODEL=qwen2.5-coder:14b-instruct-q5_K_M
+POG2_CODING_HEAVY_MODEL=gemma4:26b          # Promoted: agentic + code
+EXECUTIVE_CODER_MODEL=qwen2.5-coder:14b-instruct-q5_K_M
+MASTER_LOCAL_MODEL=deepseek-r1:32b
+
+# Tier 3: Fast-Response (Reflexes)
+POG2_CODING_FAST_MODEL=qwen2.5-coder:7b-instruct-q4_K_M
+POG2_REACTIVE_AGENT_MODEL=qwen2.5-coder:7b-instruct-q4_K_M
+FAST_PATH_MODEL=deepseek-r1:8b
+MID_PATH_MODEL=qwen2.5-coder:7b-instruct-q4_K_M
+
+# Specialized Substrates (unchanged)
+POG2_VISION_MODEL=moondream:latest
+VISION_FAST_MODEL=moondream:latest
+POG2_VOICE_MODEL=tinyllama:latest
+POG2_EMBEDDING_MODEL=qwen3-embedding:latest
+LIGHT_AUDITOR_MODEL=all-minilm:latest
+EMBEDDING_DIMENSIONS=768
+
+# Failover Logic (Sovereign cascading)
+HUGGINGFACE_FALLBACK_MODEL=gemma4:26b       # Local replaces cloud
+LOCAL_FALLBACK_MODEL=deepseek-r1:8b
+MASTER_FALLBACK_MODEL=qwen2.5-coder:14b-instruct-q5_K_M
+```
+
+---
+
+## Critical: Ollama Configuration for Agentic Loops
+
+Gemma4 requires specific Ollama settings for agentic tool-calling to work properly. Add to your Ollama startup or Modelfile:
+
+```powershell
+# Set idle timeout to 30 minutes — agentic loops stall during reasoning
+$env:OLLAMA_STREAM_IDLE_TIMEOUT_MS=1800000
+
+# If using Gemma4 31B on 24GB VRAM, force Q4_K_M quantization
+$env:OLLAMA_FLASH_ATTENTION=1
+```
+
+From the Cloud Run benchmarks: Gemma4 26B MoE responds **4x faster** than 31B dense (1.61s vs 5.90s warm response) while using only 3.8B active parameters. For POG2's 600ms tick sync, the 26B MoE is the pragmatic choice unless you have 48GB+ VRAM.
+
+---
+
+## The Kimi K2.6 Test Protocol
+
+Before committing to the refactor, validate capability parity:
+
+```powershell
+# Test 1: Agentic tool use (the critical gap)
+ollama run gemma4:26b "You have access to a file system tool. Create a file called test.txt containing 'POG2 Sovereign'. Return the file path."
+
+# Test 2: Multi-step reasoning (what R1 provides)
+ollama run deepseek-r1:32b "Design a TypeScript class hierarchy for a game entity system with 29 skills, combat state, and projectSelf() method. Think step by step."
+
+# Test 3: Code generation quality (vs your current 14B)
+ollama run gemma4:26b "Write a React component that displays a real-time WebSocket connection status indicator with green/yellow/red states."
+```
+
+If Test 1 returns a structured tool call or coherent file path, Gemma4 is your sovereign replacement. If it hallucinates or fails, you need **Qwen3.6** (better tool training) or a paid HF Inference Endpoint.
+
+---
+
+## Emergency Cloud Fallback (If Local Fails)
+
+If Gemma4/Qwen3.6 underperform for agentic tasks, your paid options ranked by POG2 philosophy (value-per-dollar):
+
+| Provider | Model | Cost | Notes |
+|----------|-------|------|-------|
+| **FriendliAI** | gemma4-31b-it | $0.14/M in, $0.40/M out | Fastest inference, Apache 2.0 model |
+| **OpenRouter** | gemma4-26b-a4b | $0.13/M in, $0.40/M out | MoE efficiency, good for high-volume |
+| **HF Inference Endpoints** | Any | $0.50-$4.50/hr | Dedicated, but costly for 24/7 |
+
+Given your trauma-informed freemium philosophy, local sovereignty is the only sustainable path. The $9/month HF PRO gives 25 min/day H200 ZeroGPU — enough for testing, not enough for production agentic loops.
+
+---
+
+## Immediate Action Script
+
+```powershell
+# 1. Pull sovereign core (do this NOW before cloud cutoff completes)
+ollama pull gemma4:26b
+ollama pull deepseek-r1:32b
+
+# 2. Test agentic capability immediately
+ollama run gemma4:26b "Create a PowerShell function that lists all Ollama models and returns JSON. Use structured output."
+
+# 3. If test passes, execute fleet refactor
+ollama rm deepseek-coder:33b-instruct-q4_K_M
+ollama rm deepseek-coder:6.7b-instruct-q4_K_M
+ollama rm yi-coder:9b-chat-q5_K_M
+ollama rm qwen2.5-coder:1.5b-instruct-q4_K_M
+ollama rm tinyllama:latest
+ollama rm llava:latest
+# Keep: qwen2.5-coder:14b, qwen2.5-coder:7b, deepseek-r1:8b, moondream, llava-phi3, pog2-pedagogy, embeddings
+
+# 4. Verify new topology
+ollama list
+```
+
+What's your GPU VRAM? That determines whether you pull `gemma4:26b` (safe bet) or `gemma4:31b` (max quality).

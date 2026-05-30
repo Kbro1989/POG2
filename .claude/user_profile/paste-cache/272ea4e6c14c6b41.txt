@@ -1,0 +1,27 @@
+PS D:\POG2> npm run build
+
+> pog2-cli@1.1.0 build
+> tsc
+
+src/utils/WikiEquipmentEnricher.ts:710:51 - error TS1109: Expression expected.
+
+710         if (lower.includes('{{infobox location')) || lower.includes('{{infobox area')) return 'place';
+                                                      ~~
+
+src/utils/WikiEquipmentEnricher.ts:710:86 - error TS1005: ';' expected.
+
+710         if (lower.includes('{{infobox location')) || lower.includes('{{infobox area')) return 'place';
+                                                                                         ~
+
+src/utils/WikiEquipmentEnricher.ts:711:51 - error TS1109: Expression expected.
+
+711         if (lower.includes('{{infobox mechanic')) || lower.includes('{{infobox gameplay')) return 'mechanic';
+                                                      ~~
+
+src/utils/WikiEquipmentEnricher.ts:711:90 - error TS1005: ';' expected.
+
+711         if (lower.includes('{{infobox mechanic')) || lower.includes('{{infobox gameplay')) return 'mechanic';
+                                                                                             ~
+
+
+Found 4 errors in the same file, starting at: src/utils/WikiEquipmentEnricher.ts:710

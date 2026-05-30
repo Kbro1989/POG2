@@ -1,0 +1,63 @@
+**Vital deletions found. This overwrite will break compile-time contracts and lose semantic data that downstream limbs need.**
+
+---
+
+### **1. `export interface EntityHUDData` — COMPLETELY REMOVED**
+Any file importing `EntityHUDData` from this module will fail TypeScript compilation immediately. Even if your plan is to synthesize it in `PedagogyBridge`, the export must survive as a re-export or alias until all importers are migrated.
+
+### **2. `stats` block — COMPLETELY REMOVED**
+Old code emitted:
+```ts
+stats: {
+    combat: raw.combatLevel || 0,
+    level: raw.combatLevel || 0,
+    requirements: {},        // PedagogyBridge fill
+    degradation: this.parseDegradation(raw.extra)
+}
+```
+**What's lost:** Live degradation state (trimmed masterwork charges), combat level, and the requirements container.  
+**Impact:** GhostSplat heat-based targeting and CombatRotationEngine (memory #60) read `stats.combat` and `stats.degradation`. `parseDegradation` is now `public` but **uncalled** — the resolver no longer extracts equipment charge data. PedagogyBridge cannot reconstruct this without access to `raw.extra` (which `ResolvedEntity` doesn't carry).
+
+### **3. `actionables` array — STRUCTURE FLATTENED**
+Old code:
+```ts
+actionables: { action: string; requirements: string[]; effect: string }[]
+```
+New code:
+```ts
+actions: string[]
+```
+**What's lost:** Semantic effect mapping (`'initiate_combat'`, `'equip_item'`, etc.) and per-action requirements.  
+**Impact:** Action Bar 1841 wiring (memory #49) depends on `actionables[].effect` to resolve ability IDs. `inferActionEffect` and `inferRequirements` are now `public` but **uncalled** in the resolver. The Bridge can reconstruct this only if you pass it the raw cache data alongside `ResolvedEntity`.
+
+### **4. `pedagogy.description` — REMOVED**
+Only `examine` survives (flattened to top-level). `description` is gone.  
+**Impact:** Training Collector / Pedagogy corpus generation (memory #62) uses description for entity summaries. Bridge must source this from WikiEquipmentEnricher — but the resolver no longer signals that description is missing.
+
+### **5. `hexagramPin` — COMPLETELY REMOVED**
+Old default: `{ id: 0, name: 'The Void', line: 0 }`  
+**Impact:** HexagramManager (memory #4, #11) expects this field for 64-state telemetry. The Bridge can compute it from `dominantContext` + `actionFrequencies`, but only if you embed hexagram mapping logic there.
+
+### **6. `emotionalWeight` — REMOVED**
+Was `{}` with a "To be filled by PedagogyBridge" comment anyway. Low impact — already a pass-through.
+
+### **7. `type: 'loc'` — COLLAPSED INTO `'object'`**
+Old fallback: `'loc'` (location/scenery). New fallback: `'object'`.  
+**Impact:** RS3 cache distinguishes interactive objects from scenery locations. RSMV collision layer and spatial substrate may treat locs differently. Categorizing everything as `'object'` loses that discrimination.
+
+### **8. `Manifest.version` — REMOVED**
+If your build pipeline or `CacheLearningLimb` checks `manifest.version` for cache invalidation or schema drift detection, this breaks silently.
+
+### **9. `mapToHUD` method — DELETED**
+The assembly pipeline is gone. This is intentional per your synthesis plan, but it creates a **functional gap** — nothing produces `EntityHUDData` until `PedagogyBridge` is written and wired.
+
+---
+
+### **Verdict**
+The deletions are architecturally correct for your synthesis pipeline, but this overwrite is **unsafe to apply in isolation**. You need:
+
+1. **Keep `EntityHUDData` export** (as a type alias or re-export from the eventual Bridge) to prevent compile breakage
+2. **Pass `rawData` through to `ResolvedEntity`** (or expose a `resolveWithRaw()` method) so `PedagogyBridge` can call `parseDegradation`, `inferActionEffect`, and `inferRequirements` without re-fetching from KV
+3. **Restore `'loc'` category** or prove your collision/RSMV pipeline doesn't discriminate locs from objects
+
+Hit **3**. This is a coordinated migration, not a single-file refactor.

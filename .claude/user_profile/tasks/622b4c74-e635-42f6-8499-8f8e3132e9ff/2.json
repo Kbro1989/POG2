@@ -1,0 +1,8 @@
+{
+  "id": "2",
+  "subject": "Implement GeApi Client",
+  "description": "Implement GeApi client for real-time prices, trends, and 180-day graphs.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

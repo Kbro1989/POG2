@@ -1,0 +1,30 @@
+ Got it — you've already done the heavy lift of modernizing a 2016-era viewer to 2026+ cache formats. The remaining unknowns are the edge cases where the 2016 parser assumptions break against modern cache revisions.
+
+Given that trajectory, `better-sqlite3` staying in the viewer makes sense — it's not legacy cruft, it's a **working component you modernized** and want to keep functional. The rebuild is a mechanical necessity, not an architectural question.
+
+**Let's solve the rebuild block directly.**
+
+What's the exact error when you run `npx electron-rebuild`? I need the specific text — "permission block" could be:
+
+- `gyp ERR! stack Error: Can't find Python executable "python"`
+- `gyp ERR! stack Error: spawn C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe ENOENT`
+- `node-gyp` downloading headers but failing on write
+- `EPERM: operation not permitted` on `node_modules/better-sqlite3/build`
+- Windows SmartScreen / Defender blocking `prebuild-install`
+
+Each has a different fix path. What does the terminal show?
+
+Also, one quick check — does `better-sqlite3` have a prebuilt for your target?
+
+```bash
+cd rsmv
+node -e "console.log('Electron modules:', process.versions.modules)"
+npx electron --version
+```
+
+Then check if a prebuilt exists at:
+`node_modules/better-sqlite3/build/Release/better_sqlite3.node`
+
+If that file exists but is old (from Electron 26 era), the error is likely a load-time ABI mismatch, not a build failure. If it doesn't exist, `better-sqlite3` is trying to compile from source and hitting the tool chain issue.
+
+What do you see?

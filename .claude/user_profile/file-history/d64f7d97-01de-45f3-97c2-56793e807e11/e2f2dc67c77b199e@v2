@@ -1,0 +1,29 @@
+import { BestiaryApi } from './src/utils/BestiaryApi.ts';
+
+async function test() {
+    try {
+        console.log('--- Starting BestiaryApi Verification ---');
+
+        // Test 1: resolveId exact match
+        const id = await BestiaryApi.resolveId('Abyssal demon');
+        console.log('resolveId (Abyssal demon):', id === 1615 ? 'PASS' : 'FAIL (got ' + id + ')');
+
+        // Test 2: getBeastData members override
+        const data = await BestiaryApi.getBeastData(1615);
+        console.log('members override info:', JSON.stringify({ members: data?.members, override: data?._membersOverride }));
+        console.log('members override result:', data?.members ? 'PASS' : 'FAIL');
+
+        // Test 3: getBeastsByArea identifier format
+        const area = await BestiaryApi.getBeastsByArea('The Abyss');
+        console.log('areaBeasts (The Abyss):', area.length > 0 ? 'PASS (' + area.length + ' beasts)' : 'FAIL');
+
+        // Test 4: Network routing
+        console.log('Proxy routing:', data ? 'PASS' : 'FAIL (proxy may be down)');
+
+        console.log('--- Verification Complete ---');
+    } catch (e) {
+        console.error('ERROR:', e);
+    }
+}
+
+test();

@@ -1344,9 +1344,17 @@ export interface ModelExecutor {
     embed?(text: string): Promise<Result<Float32Array>>;
 }
 
+export interface ModelResponse {
+    response: string;
+    model?: string;
+    tokensUsed?: number;
+    latency?: number;
+    metadata?: Record<string, any>;
+}
+
 export interface ModelCallResult {
     ok: boolean;
-    value: { response: string };
+    value: ModelResponse;
     error?: Error;
 }
 

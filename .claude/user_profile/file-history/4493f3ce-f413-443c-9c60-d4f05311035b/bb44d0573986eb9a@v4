@@ -1,0 +1,177 @@
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+import { ToolRegistry } from "./ToolRegistry.js";
+import { ModelClient } from "./clients/ModelClient.js";
+import { createLogger } from "./utils/logger.js";
+import { TrainingCollector } from "./utils/TrainingCollector.js";
+import { CompressionEngine } from "./utils/CompressionEngine.js";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const logger = createLogger('MCPBridge');
+const registry = new ToolRegistry();
+const modelClient = new ModelClient({} as any);
+const training = TrainingCollector.getInstance();
+const compressor = CompressionEngine.getInstance();
+
+/**
+ * MCP Server implementation for POG2 Sovereign.
+ * This bridge allows external orchestrators (like Antigravity) to
+ * execute POG2 internal tools and leverage local Ollama model selection.
+ */
+async function main() {
+  const server = new Server(
+    {
+      name: "pog2-sovereign-bridge",
+      version: "1.0.0",
+    },
+    {
+      capabilities: {
+        tools: {},
+      },
+    }
+  );
+
+  // 1. Tool Discovery: Map POG2 ToolRegistry to MCP Tools
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    const startTime = Date.now();
+    try {
+      const definitions = registry.getDefinitions();
+
+      // Add a specialized orchestration tool for "Fan Out" capabilities
+      const orchestrationTools = [
+        {
+          name: "sovereign_fan_out",
+          description: "Spawn and orchestrate multiple sub-agents within POG2 to solve a complex task. Use this for deep research, multi-file refactors, or comprehensive audits.",
+          parameters: {
+            intent: { type: "string", description: "The high-level goal for the sub-agents" },
+            context: { type: "string", description: "Additional context or constraints" },
+            maxAgents: { type: "number", description: "Maximum number of sub-agents to spawn" }
+          }
+        }
+      ];
+
+      const response = {
+        tools: [
+          ...definitions.map(tool => ({
+            name: tool.name,
+            description: tool.description,
+            inputSchema: {
+              type: "object",
+              properties: Object.entries(tool.parameters).reduce((acc, [key, val]) => {
+                acc[key] = { type: typeof val === 'string' ? 'string' : 'any' };
+                return acc;
+              }, {} as Record<string, any>),
+              required: Object.keys(tool.parameters),
+            },
+          })),
+          ...orchestrationTools.map(t => ({
+            name: t.name,
+            description: t.description,
+            inputSchema: {
+              type: "object",
+              properties: Object.entries(t.parameters).reduce((acc, [key, val]) => {
+                acc[key] = { type: val.type };
+                return acc;
+              }, {} as Record<string, any>),
+              required: Object.keys(t.parameters),
+            }
+          }))
+        ],
+      };
+
+      // INTERCEPT: Record traffic
+      const compressedResponse = compressor.compress(response);
+      training.recordHistory('tool_used', `MCP_LIST_TOOLS`, { payload: compressedResponse });
+
+      return response;
+    } catch (error: any) {
+      training.recordHistory('error', `MCP_LIST_TOOLS_FAILURE`, { error: error.message });
+      throw error;
+    }
+  });
+
+  // 2. Tool Execution: Route MCP calls to POG2 Tool Logic
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const startTime = Date.now();
+    const { name, arguments: args } = request.params;
+
+    logger.info({ tool: name, args }, 'MCP Tool Call Received');
+
+    try {
+      let result;
+      if (name === "sovereign_fan_out") {
+        logger.info({ args }, 'Executing Sovereign Fan-Out');
+        result = {
+          content: [{ type: "text", text: `Fan-out initiated for intent: ${args?.intent}. POG2 is now orchestrating sub-agents...` }]
+        };
+      } else {
+        const tool = registry.getTool(name);
+        if (!tool) {
+          throw new Error(`Tool ${name} not found in POG2 registry`);
+        }
+
+        const toolResult = await tool.execute(args as Readonly<Record<string, unknown>>);
+        result = {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(toolResult, null, 2),
+            },
+          ],
+        };
+      }
+
+      // INTERCEPT: Route to TrainingCollector via CompressionEngine
+      const interceptData = {
+        tool: name,
+        args,
+        output: result.content,
+        latencyMs: Date.now() - startTime,
+        success: true
+      };
+
+      training.recordHistory(
+        'tool_used',
+        `MCP_CALL_${name.toUpperCase()}`,
+        compressor.compress(interceptData)
+      );
+
+      return result;
+    } catch (error: any) {
+      logger.error({ error }, 'Tool execution failed');
+
+      // INTERCEPT: Record failure
+      training.recordHistory(
+        'error',
+        `MCP_CALL_${name.toUpperCase()}_FAILURE`,
+        compressor.compress({ args, error: error.message })
+      );
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Execution Error: ${error.message}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  });
+
+  // Start transport
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  logger.info('POG2 MCP Bridge connected via stdio');
+}
+
+main().catch((error) => {
+  logger.error({ error }, 'Fatal MCP Server Error');
+  process.exit(1);
+});

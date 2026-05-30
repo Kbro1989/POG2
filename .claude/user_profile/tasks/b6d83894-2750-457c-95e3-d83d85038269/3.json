@@ -1,0 +1,8 @@
+{
+  "id": "3",
+  "subject": "Implement Palindromic Cognitive Stack",
+  "description": "Implement the Palindromic Cognitive Stack. Transform the routing from a linear flow to a reversible chain: Singleton ↔ Boolean ↔ Ternary ↔ Hex ↔ Definition ↔ Hex ↔ Ternary ↔ Boolean ↔ Singleton.",
+  "status": "in_progress",
+  "blocks": [],
+  "blockedBy": []
+}

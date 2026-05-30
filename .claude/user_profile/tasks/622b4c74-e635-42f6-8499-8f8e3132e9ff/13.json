@@ -1,0 +1,8 @@
+{
+  "id": "13",
+  "subject": "Overhaul WikiEquipmentEnricher Routing",
+  "description": "Overhaul WikiEquipmentEnricher routing: Official ID Resolution -> Official API Base -> Wiki Semantic Enrichment -> WikiReconciliationLimb Fallback.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

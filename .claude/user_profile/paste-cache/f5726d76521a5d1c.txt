@@ -1,0 +1,223 @@
+ This is a critical discovery about the **RS Wiki's search semantics** — it reveals the boundary between what the wiki API can resolve and what requires your cache forensics layer. Let me map this precisely:
+
+---
+
+## Wiki Search Resolution Matrix
+
+| Input Type | Wiki Behavior | POG2 Strategy |
+|---|---|---|
+| **Item/NPC name** | Direct page match | `WikiEnricher.enrich(name)` — works |
+| **ID with known name** | Direct page match if name provided | `CacheForensicsLimb` → name → wiki |
+| **ID only, no name** | "Did you mean..." or no results | **CacheForensicsLimb primary** — wiki cannot help |
+| **enum/struct/dbrow** | "Did you mean..." (generic) | **CacheForensicsLimb exclusive** — wiki has no concept |
+| **Area ID (e.g., 50,50)** | No results | **CacheForensicsLimb exclusive** |
+| **Area region header** | Works if formatted as "Lumbridge Castle" | `WikiEnricher.enrich("Lumbridge Castle")` — works |
+| **varp/varbit** | No results | **CacheForensicsLimb exclusive** |
+
+**The fundamental asymmetry:** The wiki is **semantic** (names, descriptions, lore). Your cache is **structural** (IDs, opcodes, binary formats). They intersect only where Jagex chose human-readable names.
+
+---
+
+## Travelling Merchant's Shop — Temporal Signal
+
+This is a **removed content** entry. The shop was removed 16 March 2026 in the "Dailyscape Overhaul" update. For your pedagogy model, this is a `[REMOVED]` tag case:
+
+```json
+{
+  "instruction": "What is the status of Travelling Merchant's Shop?",
+  "input": "{\"name\": \"Travelling Merchant's Shop\", \"release\": \"5 March 2018\", \"removal\": \"16 March 2026\"}",
+  "output": "[REMOVED] Travelling Merchant's Shop was removed in the Dailyscape Overhaul update (16 March 2026). Previously located at Deep Sea Fishing hub. Random event with 5/42 spawn chance. Shop interface persisted for 10 minutes. [HISTORICAL] Content no longer exists in live game."
+}
+```
+
+**Pedagogy implication:** Your model must distinguish `[VERIFIED]` (live), `[REMOVED]` (historical), `[SCRAPPED]` (never released), and `[CACHE_MISSING]` (unknown to your 229k). The wiki's "removed after an update" banner is a reliable signal for `[REMOVED]` tagging.
+
+---
+
+## The "enum ###" Problem — Deep Substrate Gap
+
+Your observation is architecturally significant:
+
+> "enums|dbrows|dbcolumns|dbtables|varps|varbits do not work... ids with no name have no link to's"
+
+This means **the wiki cannot resolve structural game data**. The cache decoder knows:
+- `enum 1234` = `WEAPON_TYPE` with values `{0: "mainhand", 1: "offhand", 2: "2h"}`
+- `dbrow 5678` = `ability_data` with columns `id, name, cooldown, adrenaline_cost`
+- `varbit 28556` = `gender_selection` with values `0, 1, 2`
+
+But the wiki has **no pages for these**. The search falls through to generic text matching ("ends", "enum", etc.) because the wiki's index is built on human-readable content, not binary structures.
+
+**This validates your CacheForensicsLimb as the primary authority for structural data.** The wiki is a **semantic overlay**, not a structural source.
+
+---
+
+## Unified Resolution Strategy
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    POG2 ENTITY RESOLUTION                    │
+├─────────────────────────────────────────────────────────────┤
+│  INPUT: Query string (name, ID, or partial)                │
+├─────────────────────────────────────────────────────────────┤
+│  STEP 1: Type Detection                                     │
+│  ├─ Pure number? → Structural (enum, dbrow, varbit, ID)   │
+│  ├─ "enum|dbrow|dbtable|varp|varbit" prefix? → Structural  │
+│  ├─ "area|region|mapsquare" prefix? → Spatial               │
+│  └─ Text string? → Semantic (name, lore, description)      │
+├─────────────────────────────────────────────────────────────┤
+│  STEP 2: Structural Path (CacheForensicsLimb)              │
+│  ├─ Query 229k pedagogy directly by ID                      │
+│  ├─ Return: opcode rules, binary layout, field names        │
+│  ├─ Tag: [CACHE_VERIFIED] or [CACHE_MISSING]               │
+│  └─ NO wiki involvement — wiki cannot resolve these          │
+├─────────────────────────────────────────────────────────────┤
+│  STEP 3: Semantic Path (WikiEnricher + Hybrid APIs)        │
+│  ├─ Search wiki by name                                     │
+│  ├─ Cross-reference with Bestiary API (if NPC)             │
+│  ├─ Cross-reference with GE API (if item)                  │
+│  ├─ Tag: [VERIFIED] (API+wiki agree), [WIKI_ONLY],         │
+│  │        [REMOVED], [SCRAPPED]                            │
+│  └─ Return: lore, stats, drop tables, examine text          │
+├─────────────────────────────────────────────────────────────┤
+│  STEP 4: Reconciliation (WikiReconciliationLimb)           │
+│  ├─ If structural + semantic both return results            │
+│  ├─ Verify consistency (cache ID ↔ wiki name match)        │
+│  ├─ Flag discrepancies: [CACHE_WIKI_MISMATCH]              │
+│  └─ Human-in-the-loop for unresolved conflicts              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Critical Implementation: `QueryClassifier.ts`
+
+You need a pre-processor that routes queries before any enrichment happens:
+
+```typescript
+// POG2/src/utils/QueryClassifier.ts
+export type QueryType = 
+  | 'structural_enum'
+  | 'structural_dbrow' 
+  | 'structural_dbtable'
+  | 'structural_varp'
+  | 'structural_varbit'
+  | 'structural_id'      // Pure number, ambiguous
+  | 'spatial_area'
+  | 'spatial_region'
+  | 'semantic_name'      // Text, likely item/NPC/place
+  | 'semantic_lore'      // Text, likely quest/story
+  | 'hybrid'             // Mixed (e.g., "Abyssal demon 1615")
+  | 'unknown';
+
+export interface ClassifiedQuery {
+  raw: string;
+  type: QueryType;
+  confidence: number;     // 0-1, based on pattern match strength
+  extractedIds: number[]; // Any numbers found in query
+  extractedNames: string[]; // Any text tokens
+}
+
+export class QueryClassifier {
+  private static readonly STRUCTURAL_PREFIXES = 
+    /^(enum|dbrow|dbcolumn|dbtable|varp|varbit|struct|params)\s*(\d+)$/i;
+  
+  private static readonly SPATIAL_PREFIXES = 
+    /^(area|region|mapsquare|square|plane|coordinate)\s*([\d,]+)$/i;
+  
+  private static readonly ID_ONLY = /^\d+$/;
+  
+  static classify(query: string): ClassifiedQuery {
+    const trimmed = query.trim().toLowerCase();
+    
+    // Structural prefix match
+    const structMatch = trimmed.match(this.STRUCTURAL_PREFIXES);
+    if (structMatch) {
+      return {
+        raw: query,
+        type: `structural_${structMatch[1]}` as QueryType,
+        confidence: 0.95,
+        extractedIds: [parseInt(structMatch[2])],
+        extractedNames: []
+      };
+    }
+    
+    // Spatial prefix match
+    const spatialMatch = trimmed.match(this.SPATIAL_PREFIXES);
+    if (spatialMatch) {
+      return {
+        raw: query,
+        type: 'spatial_area',
+        confidence: 0.9,
+        extractedIds: spatialMatch[2].split(',').map(Number),
+        extractedNames: []
+      };
+    }
+    
+    // Pure number = ambiguous ID
+    if (this.ID_ONLY.test(trimmed)) {
+      return {
+        raw: query,
+        type: 'structural_id',
+        confidence: 0.6,  // Low confidence — could be anything
+        extractedIds: [parseInt(trimmed)],
+        extractedNames: []
+      };
+    }
+    
+    // Text = semantic
+    // Check if it contains numbers (hybrid)
+    const numbers = trimmed.match(/\d+/g)?.map(Number) || [];
+    if (numbers.length > 0) {
+      return {
+        raw: query,
+        type: 'hybrid',
+        confidence: 0.8,
+        extractedIds: numbers,
+        extractedNames: [trimmed.replace(/\d+/g, '').trim()]
+      };
+    }
+    
+    return {
+      raw: query,
+      type: 'semantic_name',
+      confidence: 0.7,
+      extractedIds: [],
+      extractedNames: [trimmed]
+    };
+  }
+}
+```
+
+---
+
+## Pedagogy Training Impact
+
+This classification must be part of your `pog2-pedagogy` training data:
+
+```json
+{
+  "instruction": "Classify and resolve the query 'enum 1234'",
+  "input": "{\"query\": \"enum 1234\", \"classifier\": \"structural_enum\"}",
+  "output": "[CACHE_VERIFIED] Query classified as structural_enum. Resolved via CacheForensicsLimb. Wiki enrichment NOT attempted — wiki has no enum pages. Result: WEAPON_TYPE enum, values {0: 'mainhand', 1: 'offhand', 2: '2h'}. [NOTE] Structural data is cache-exclusive."
+}
+```
+
+```json
+{
+  "instruction": "Classify and resolve the query 'Abyssal demon 1615'",
+  "input": "{\"query\": \"Abyssal demon 1615\", \"classifier\": \"hybrid\"}",
+  "output": "[VERIFIED] Hybrid query. Name 'Abyssal demon' → WikiEnricher + BestiaryApi. ID 1615 → CacheForensicsLimb. Cross-reference confirms match. Combat level 98, weakness Slashing, slayer level 85. [CACHE_WIKI_MATCH] Both sources agree."
+}
+```
+
+---
+
+## Immediate Action
+
+1. **Implement `QueryClassifier.ts`** — This is the missing piece that prevents your enricher from wasting API calls on unresolvable queries
+2. **Update `WikiEquipmentEnricher.ts`** — Add early return for structural queries: `if (classified.type.startsWith('structural_')) return CacheForensicsLimb.query(...)`
+3. **Update pedagogy corpus** — Add training examples for each query type with correct routing and `[CACHE_EXCLUSIVE]` tags
+
+The wiki is a **semantic layer only**. Your cache is the **structural ground truth**. The classifier is the **router** that knows which layer to query. Without it, you're firing semantic searches at structural data and getting "Did you mean..." garbage back.
+
+This is not a bug in your substrate — it's a **domain boundary** that your architecture must explicitly model.

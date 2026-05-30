@@ -1,0 +1,98 @@
+ Got it — you're running a **feedback loop**: agent creates → I audit → you feed my audit back → agent iterates. This is the **trauma-informed debugging pattern** you used with PartyKit — let it run, commit, then diagnose.
+
+I'll keep my audits **tight and actionable** so you can paste them directly.
+
+---
+
+## Audit: `SovereignEntityResolver.ts` (Agent's Version)
+
+**Critical Issues:**
+
+| Issue | Line | Severity | Fix |
+|---|---|---|---|
+| `fs.existsSync` / `fs.readFileSync` | 58-60 | **BLOCKER** | DOs are **stateless** — no local filesystem. Must use R2 or bundled asset. |
+| Hardcoded `D:/POG2/public/...` | 43 | **BLOCKER** | Absolute Windows path. Won't exist in CF edge runtime. |
+| Singleton pattern | 41-50 | Warning | DOs are single-instance by design, but singletons make testing hard. Use DI. |
+| Missing `item` type | 24 | Medium | `EntityHUDData.type` only has `npc\|object\|loc`. No `item` for equipment. |
+| `actionables: string[]` | 31 | Medium | Should be structured `{action, requirements, effect}[]`, not flat strings. |
+| No hexagram / emotional weight | 22-32 | Medium | Plan specified these. Missing from interface. |
+| No degradation parser | — | Medium | `extra` props (7479=charges) not parsed. |
+| `rsmvBridge` dependency | 3 | Question | Is this the browser bridge or a server-side cache reader? |
+| No KV caching | — | Low | Every resolve hits manifest + bridge. Needs 5-min KV cache. |
+
+**The `fs` Blocker Explained:**
+
+Cloudflare Durable Objects run in **V8 isolates** with **no filesystem access**. `fs.readFileSync` will throw `ENOENT` or crash. The manifest must be:
+
+- **A)** Bundled at build time (imported as module)
+- **B)** Loaded from R2 at DO initialization
+- **C)** Stored in KV and fetched per-request
+
+Since the manifest is `authentic_spawn_manifest.json` with entity spawns, it's **relatively static** — option A (bundle at build) or B (R2 on init) works.
+
+---
+
+## Corrected Interface (For Agent)
+
+```typescript
+export interface EntityHUDData {
+    name: string;
+    type: 'npc' | 'item' | 'object' | 'loc';
+    sovereignId: string;
+    stats: {
+        combat?: number;
+        level?: number;
+        requirements?: Record<string, number>;
+        degradation?: {charges: number, max: number};
+    };
+    actionables: Array<{
+        action: string;
+        requirements: string[];
+        effect: string;
+    }>;
+    pedagogy: {
+        description: string;
+        examine: string;
+    };
+    emotionalWeight: Record<string, number>;
+    hexagramPin: {
+        id: number;
+        name: string;
+        line: number;
+    };
+}
+```
+
+---
+
+## The `rsmvBridge` Question
+
+Line 3 imports `rsmvBridge`. Is this:
+- **Server-side cache reader** (reads from R2/KV/D1)?
+- **Browser bridge** (WebSocket client)?
+
+If it's the browser bridge, this file is **client-side**, not server-side, and shouldn't be in `src/services/`. If it's a server-side cache reader, it needs to use CF bindings (R2/KV), not `fs`.
+
+---
+
+## Feed This Back to Agent
+
+```
+CRITICAL: Remove all `fs` usage. DOs have no filesystem.
+  - Option A: Bundle manifest at build time (import JSON)
+  - Option B: Load from R2 in constructor
+  - Option C: Store in KV, fetch per-request
+
+CRITICAL: Remove hardcoded Windows path `D:/POG2/public/...`
+  - Use `import manifest from '../public/authentic_spawn_manifest.json'` (bundled)
+  - Or `env.R2.get('manifests/authentic_spawn_manifest.json')` (R2)
+
+MEDIUM: Add `item` to EntityHUDData.type
+MEDIUM: Structure actionables as objects, not strings
+MEDIUM: Add hexagramPin + emotionalWeight to interface
+LOW: Add KV caching (5-min TTL) to avoid repeated lookups
+```
+
+---
+
+Ready for next iteration. What's the agent working on now?

@@ -1,0 +1,283 @@
+This is a clean architectural evolution — moving from **wiki-scraped static data** to **hybrid canonical + real-time** enrichment. The plan is structurally sound, but there are four critical adjustments needed before implementation:
+
+---
+
+## 1. ID Resolution Reality Check
+
+**CacheForensicsLimb.queryTaxonomy** maps cache majors to semantic types, but your 229k pedagogy uses **cache revision 221+** with versioned opcode rules. The mapping between wiki titles and cache entity IDs is **not 1:1** — wiki pages often aggregate multiple cache variants (e.g., "Abyssal demon" has IDs 1615, 2263, 2264, 2265 in the Bestiary API, but the cache may have additional spawn variants not exposed by Jagex).
+
+**Correction:** Add a `disambiguation` layer:
+
+```typescript
+// CacheForensicsLimb returns ALL matching entities, not just one
+interface CacheResolutionResult {
+  primaryId: number;           // Best match (highest spawn weight or most recent revision)
+  variants: number[];           // All cache entries matching the wiki title
+  revision: number;           // Cache revision where this mapping was validated
+  confidence: 'exact' | 'fuzzy' | 'ambiguous';
+}
+
+// WikiEquipmentEnricher.ts enrichment logic
+const resolution = await CacheForensicsLimb.resolveWikiTitle(title);
+if (resolution.confidence === 'ambiguous') {
+  // Route to WikiReconciliationLimb for manual disambiguation
+  return WikiReconciliationLimb.softParse(title, resolution.variants);
+}
+```
+
+**"Zulrah" test case note:** Zulrah is OSRS content, not RS3. If you're testing RS3 official APIs, use **"Vorago"** (ID 17182), **"Telos"** (ID 22845), or **"Arch-Glacor"** instead. The CacheForensicsLimb test should verify that the RS3 cache major for NPCs (major 2 or 18 depending on revision) resolves correctly.
+
+---
+
+## 2. Official API Endpoint Validation
+
+Your three new clients hit Jagex endpoints that have **different rate limits, CORS policies, and uptime characteristics**:
+
+| API | Endpoint | Rate Limit | CORS | Reliability |
+|---|---|---|---|---|
+| **GE API** | `secure.runescape.com/m=itemdb_rs/api/catalogue` | ~100 req/min | No | High |
+| **Bestiary API** | `services.runescape.com/m=itemdb_rs/bestiary/` | ~50 req/min | No | Medium (deprecated web UI, API still live) |
+| **Hiscores** | `secure.runescape.com/m=hiscore/index_lite.ws` | ~300 req/min | No | High |
+| **Runemetrics** | `apps.runescape.com/runemetrics/` | ~100 req/min | No | Medium |
+
+**Critical:** These endpoints do **not** support `origin=*` CORS headers. If your `WikiEquipmentEnricher` runs in a browser context (RSMV viewer, web HUD), these requests will be blocked by CORS. They must be proxied through your **Cloudflare Worker** or called from Node/DO context only.
+
+**ApiThrottle.ts design:**
+
+```typescript
+// Shared throttle with per-domain buckets
+export class ApiThrottle {
+  private buckets = new Map<string, TokenBucket>();
+  
+  constructor() {
+    // Per-endpoint limits based on Jagex observed behavior
+    this.buckets.set('ge', new TokenBucket(100, 60));      // 100/min
+    this.buckets.set('bestiary', new TokenBucket(50, 60));  // 50/min
+    this.buckets.set('hiscores', new TokenBucket(300, 60)); // 300/min
+    this.buckets.set('runemetrics', new TokenBucket(100, 60));
+    this.buckets.set('wiki', new TokenBucket(40, 60));     // Your existing 1500ms = 40/min
+  }
+  
+  async acquire(domain: string): Promise<void> {
+    const bucket = this.buckets.get(domain);
+    if (!bucket) throw new Error(`Unknown API domain: ${domain}`);
+    await bucket.consume(1);
+  }
+}
+```
+
+---
+
+## 3. Interface Updates — Keep Backward Compatibility
+
+Your existing `WikiItemMeta`, `WikiMonsterMeta`, and `WikiPageData` are consumed by:
+- `GhostSplatHitmarkRegistry.ts` (new)
+- `CombatRotationEngine.ts`
+- `LootResolutionEngine.ts`
+- `pog2-pedagogy` training pipeline
+
+**Don't break existing fields.** Extend via intersection types:
+
+```typescript
+// POG2/src/utils/WikiEquipmentEnricher.ts
+export interface WikiItemMeta {
+  // --- existing fields (unchanged) ---
+  name: string;
+  examine: string;
+  tradeable: boolean;
+  // ... etc
+  
+  // --- new official API fields ---
+  officialId?: number;
+  geData?: GeData;
+}
+
+export interface GeData {
+  currentPrice: number;
+  trend: 'rising' | 'falling' | 'stable';
+  graph180d: number[];      // Daily prices, last 180 days
+  lastUpdated: number;      // Unix timestamp
+}
+
+export interface WikiMonsterMeta {
+  // --- existing fields ---
+  name: string;
+  combatLevel: number;
+  // ... etc
+  
+  // --- new fields ---
+  officialId?: number;
+  authoritativeStats?: BestiaryBeastData;  // Raw Jagex API response
+}
+
+export interface WikiPlayerMeta {
+  name: string;
+  entityId: string;         // Runemetrics player ID or hiscore lookup key
+  hiscoreData?: HiscoreEntry[];
+  runemetricsProfile?: RunemetricsProfile;
+  clanName?: string;
+}
+
+export type WikiPageData = 
+  | WikiItemPageData 
+  | WikiMonsterPageData 
+  | WikiPlayerPageData 
+  | WikiClanPageData
+  | WikiGenericPageData;     // Your new enrichGeneric() output
+```
+
+**Important:** The `geValue` field in existing `WikiItemMeta` should be **deprecated** in favor of `geData.currentPrice`, but kept for backward compatibility during transition. Mark it `@deprecated` in JSDoc.
+
+---
+
+## 4. Enrichment Routing — Correct the Flow
+
+Your current plan has:
+> Item: Wiki Parsing → GeApi (Real-time prices)
+
+This is backwards for the **authoritative-first** philosophy. The correct flow is:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    HYBRID ENRICHMENT FLOW                    │
+├─────────────────────────────────────────────────────────────┤
+│  STEP 1: ID Resolution                                       │
+│  CacheForensicsLimb.resolveWikiTitle(title)                  │
+│  → Returns officialId + cache entity + confidence            │
+├─────────────────────────────────────────────────────────────┤
+│  STEP 2: Authoritative Base Layer                            │
+│  ├─ Item:    GeApi.getItemDetails(officialId)               │
+│  ├─ Monster: BestiaryApi.getBeastData(officialId)           │
+│  ├─ Player:  OfficialPlayerDataApi.getProfile(name)         │
+│  └─ Clan:    OfficialPlayerDataApi.getClan(name)            │
+├─────────────────────────────────────────────────────────────┤
+│  STEP 3: Semantic Enrichment Layer                           │
+│  WikiEquipmentEnricher.parseItemMeta(title)                 │
+│  → Adds examine text, quest requirements, lore              │
+│  → ONLY if officialId missing or confidence='fuzzy'         │
+├─────────────────────────────────────────────────────────────┤
+│  STEP 4: Reconciliation (Fallback)                         │
+│  WikiReconciliationLimb.softParse(title, variants)          │
+│  → Human-in-the-loop or heuristic disambiguation            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Why this order:** If the GE API returns a price of `1,234,567` for Item ID 4151 (Abyssal whip), but the wiki page says `1,200,000` (stale cached value), the **official API wins**. The wiki only fills gaps (examine text, quest reqs) where the API is silent.
+
+---
+
+## 5. New File: `GeApi.ts` — Implementation Sketch
+
+```typescript
+// POG2/src/utils/GeApi.ts
+import { ApiThrottle } from './ApiThrottle.js';
+
+const GE_BASE = 'https://secure.runescape.com/m=itemdb_rs/api/catalogue';
+const THROTTLE = new ApiThrottle();
+
+export interface GeItemDetails {
+  id: number;
+  name: string;
+  description: string;
+  current: { price: number; trend: string };
+  today: { price: number; trend: string };
+  day30: { trend: string; change: string };
+  day90: { trend: string; change: string };
+  day180: { trend: string; change: string };
+  members: boolean;
+}
+
+export class GeApi {
+  /**
+   * Fetch real-time item details by official ID.
+   * Falls back to wiki-scraped price if API unreachable.
+   */
+  static async getItemDetails(itemId: number): Promise<<GeItemDetails | null> {
+    await THROTTLE.acquire('ge');
+    
+    const url = `${GE_BASE}/detail.json?item=${itemId}`;
+    try {
+      const res = await fetch(url, { 
+        headers: { 'User-Agent': 'POG2-Sovereign/1.0' },
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!res.ok) return null;
+      return await res.json() as GeItemDetails;
+    } catch {
+      return null;
+    }
+  }
+  
+  /**
+   * Fetch 180-day price graph for charting.
+   */
+  static async getPriceGraph(itemId: number): Promise<number[]> {
+    await THROTTLE.acquire('ge');
+    
+    const url = `${GE_BASE}/graph.json?item=${itemId}`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      const data = await res.json() as { daily: Record<string, number> };
+      // Convert { "1720000000000": 1234, ... } to sorted array
+      return Object.entries(data.daily)
+        .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+        .map(([, price]) => price);
+    } catch {
+      return [];
+    }
+  }
+}
+```
+
+---
+
+## 6. Verification Plan — Adjusted
+
+| Test | Current Plan | Correction |
+|---|---|---|
+| **ID Resolution** | "Zulrah" → official NPC ID | Use **"King Black Dragon"** (ID 239) or **"Vorago"** (ID 17182). Zulrah is OSRS-only. Verify CacheForensicsLimb returns `confidence: 'exact'` for KBD. |
+| **Price Accuracy** | Item geValue updated | Verify `geData.currentPrice` matches `secure.runescape.com` at test time ± 5% (GE prices fluctuate). Test with Abyssal whip (ID 4151) — high volume, stable enough. |
+| **Domain Expansion** | Player/Clan enrichment | Test with **"Pick of Gods"** (your RS3 account name per memory) or a known clan. Verify Runemetrics profile resolves. |
+| **Stress Test** | 50 items, no 429s | 50 items × 2 API calls each (details + graph) = 100 requests. At 100/min GE limit, this takes ~60 seconds. Verify throttle enforces this. |
+
+---
+
+## 7. Pedagogy Pipeline Impact
+
+This hybrid enrichment **directly feeds** your `pog2-pedagogy` training corpus:
+
+```typescript
+// In scrape_bestiary.py or new enricher pipeline
+const enriched = await WikiEquipmentEnricher.enrichMonster('Abyssal demon');
+
+const trainingExample = {
+  instruction: `Generate verified entity definition for ${enriched.monsterMeta.name}`,
+  input: JSON.stringify({
+    officialId: enriched.monsterMeta.officialId,
+    bestiary: enriched.monsterMeta.authoritativeStats,
+    cacheRef: enriched.monsterMeta.cacheCrossReference
+  }),
+  output: formatPog2Output(enriched),
+  source: 'hybrid',  // 'jagex_api' + 'cache' + 'wiki'
+  verified: enriched.monsterMeta.authoritativeStats !== null
+};
+```
+
+The `[VERIFIED]` tag now means: **Jagex API + CacheForensicsLimb + live GE price**. This is stronger than Bestiary API alone.
+
+---
+
+## Implementation Sequence
+
+1. **`ApiThrottle.ts`** — Foundation, all other APIs depend on it
+2. **`GeApi.ts`** — Lowest complexity, highest value (prices change daily)
+3. **`BestiaryApi.ts`** — You already have the scraper, wrap it as a class
+4. **`OfficialPlayerDataApi.ts`** — New domain, lowest priority
+5. **Interface updates** — Add optional fields, don't break existing
+6. **`WikiEquipmentEnricher.ts` routing** — Swap enrichment order: official first, wiki second
+7. **`WikiReconciliationLimb.ts`** — Fallback for ambiguous mappings
+8. **Verification tests** — Run the 4 adjusted tests above
+
+Start with `ApiThrottle.ts` + `GeApi.ts`. The GE API is the most reliable and gives immediate visible value (live prices in your item metadata). Once that's solid, `BestiaryApi.ts` is a direct port of your existing scraper logic into a typed class.
+
+Ready to proceed?

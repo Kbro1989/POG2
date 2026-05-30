@@ -1,0 +1,229 @@
+ This is the canonical Bestiary API reference. Let me extract the critical implementation details for your `BestiaryApi.ts`:
+
+---
+
+## BestiaryApi.ts — Endpoint Map
+
+| Endpoint | URL Pattern | Returns | Use Case |
+|---|---|---|---|
+| **beastData** | `/bestiary/beastData.json?beastid={id}` | Full stats for one monster | Primary enrichment |
+| **beastSearch** | `/bestiary/beastSearch.json?term={query}` | Array of `{value, label}` matches | Name → ID resolution |
+| **bestiaryNames** | `/bestiary/bestiaryNames.json?letter={A-Z}` | All monsters starting with letter | Bulk indexing |
+| **areaNames** | `/bestiary/areaNames.json` | Array of all area strings | Spatial indexing |
+| **areaBeasts** | `/bestiary/areaBeasts.json?identifier={area}` | Monsters in specific area | Spatial queries |
+| **slayerCatNames** | `/bestiary/slayerCatNames.json` | `{category: id}` mapping | Slayer task lookup |
+| **slayerBeasts** | `/bestiary/slayerBeasts.json?identifier={catId}` | Monsters in slayer category | Slayer assignment |
+| **weaknessNames** | `/bestiary/weaknessNames.json` | `{weakness: id}` mapping | Weakness lookup |
+| **weaknessBeasts** | `/bestiary/weaknessBeasts.json?identifier={weakId}` | Monsters with specific weakness | Target selection |
+| **levelGroup** | `/bestiary/levelGroup.json?identifier={min}-{max}` | Monsters in level range | Power leveling |
+
+---
+
+## Critical API Behaviors
+
+**1. beastSearch is NOT phrase search**
+```
+term=Abyssal+demon → searches "Abyssal" OR "demon" separately
+```
+This returns Abyssal leech, Abyssal guardian, etc. — not just Abyssal demon.
+
+**Your `BestiaryApi.ts` must handle disambiguation:**
+
+```typescript
+export class BestiaryApi {
+  private static readonly BASE = 'https://services.runescape.com/m=itemdb_rs/bestiary';
+  private static readonly THROTTLE = new ApiThrottle();
+
+  /**
+   * Resolve name to ID with exact-match prioritization.
+   * beastSearch returns OR results — we filter for exact matches.
+   */
+  static async resolveId(name: string): Promise<number | null> {
+    await this.THROTTLE.acquire('jagex_bestiary');
+    
+    const url = `${this.BASE}/beastSearch.json?term=${encodeURIComponent(name)}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    const data = await res.json() as Array<{value: number; label: string}>;
+    
+    // Exact match: label starts with name + optional level suffix
+    const exact = data.find(e => {
+      const cleanLabel = e.label.replace(/\s*\(\d+\)\s*$/, '');  // Strip "(98)"
+      return cleanLabel.toLowerCase() === name.toLowerCase();
+    });
+    
+    if (exact) return exact.value;
+    
+    // Fuzzy fallback: first result with name as substring
+    const fuzzy = data.find(e => 
+      e.label.toLowerCase().includes(name.toLowerCase())
+    );
+    
+    return fuzzy?.value || null;
+  }
+
+  /**
+   * Fetch full beast data by ID.
+   */
+  static async getBeastData(beastId: number): Promise<BestiaryBeastData | null> {
+    await this.THROTTLE.acquire('jagex_bestiary');
+    
+    const url = `${this.BASE}/beastData.json?beastid=${beastId}`;
+    const res = await fetch(url, { 
+      headers: { 'User-Agent': 'POG2-Sovereign/1.0' },
+      signal: AbortSignal.timeout(10000)
+    });
+    
+    if (!res.ok) {
+      if (res.status === 429) await this.THROTTLE.acquire('jagex_bestiary', res);
+      return null;
+    }
+    
+    return await res.json() as BestiaryBeastData;
+  }
+}
+```
+
+**2. slayerBeasts is incomplete**
+> "For some categories the resulting listing is incomplete; there are many variants that count towards the Slayer assignment but aren't listed in the JSON result."
+
+**This is a known Jagex limitation.** Your `pog2-pedagogy` model must tag slayer category lookups with `[INCOMPLETE]` when sourced from Bestiary API alone. Cross-reference with your 229k cache pedagogy for full variant lists.
+
+**3. Members field is unreliable**
+The Abyssal demon example shows `"members": false` — but Abyssal demons are members-only content. This is a **known Bestiary API bug** (the field reflects the area accessibility, not membership requirement).
+
+**Your `BestiaryApi.ts` must override this:**
+
+```typescript
+// In getBeastData() response processing
+if (data.members === false && data.slayerlevel > 0) {
+  // Slayer-requiring monsters are always members
+  data.members = true;
+  data._membersOverride = 'slayer_level_implied_membership';
+}
+```
+
+---
+
+## BestiaryBeastData Interface
+
+```typescript
+export interface BestiaryBeastData {
+  id: number;
+  name: string;
+  description: string;        // Examine text
+  level: number;              // Combat level
+  lifepoints: number;
+  attack: number;
+  defence: number;
+  magic: number;
+  ranged: number;
+  xp: string;                 // Experience as string (e.g., "628.6")
+  size: number;               // 1x1, 2x2, etc.
+  weakness: string;           // "Slashing", "Arrow", etc.
+  slayerlevel: number;        // 0 = no requirement
+  slayercat: string;          // Category name
+  areas: string[];            // Spawn locations
+  animations: { death: number; attack: number };
+  attackable: boolean;
+  aggressive: boolean;
+  poisonous: boolean;
+  members: boolean;           // BUG: Often false for members content
+  _membersOverride?: string;  // Your correction reason
+}
+```
+
+---
+
+## CORS Proxy Requirement
+
+As established, Jagex endpoints block CORS. Your Cloudflare Worker proxy must expose all Bestiary endpoints:
+
+```typescript
+// Cloudflare Worker: /api/bestiary/*
+// Routes:
+// /api/bestiary/beastData?beastid={id}
+// /api/bestiary/beastSearch?term={query}
+// /api/bestiary/areaBeasts?identifier={area}
+// /api/bestiary/slayerBeasts?identifier={catId}
+// /api/bestiary/weaknessBeasts?identifier={weakId}
+// /api/bestiary/levelGroup?identifier={min}-{max}
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const path = url.pathname.replace('/api/bestiary/', '');
+    const jagexUrl = `https://services.runescape.com/m=itemdb_rs/bestiary/${path}${url.search}`;
+    
+    const res = await fetch(jagexUrl, {
+      headers: { 'User-Agent': 'POG2-Sovereign/1.0' }
+    });
+    
+    return new Response(res.body, {
+      status: res.status,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'max-age=3600'
+      }
+    });
+  }
+};
+```
+
+Then `BestiaryApi.ts` uses your worker:
+
+```typescript
+private static readonly BASE = 'https://pog2.kristain33rs.workers.dev/api/bestiary';
+// Instead of direct Jagex
+```
+
+---
+
+## Pedagogy Training Example
+
+```json
+{
+  "instruction": "Generate verified entity definition for Abyssal demon (Bestiary ID 1615)",
+  "input": {
+    "bestiary": {
+      "id": 1615,
+      "name": "Abyssal demon",
+      "level": 98,
+      "lifepoints": 8500,
+      "weakness": "Slashing",
+      "slayerlevel": 85,
+      "slayercat": "Abyssal demons",
+      "areas": ["RuneScape Surface", "The Abyss", "Ancient cavern"],
+      "members": true,
+      "_membersOverride": "slayer_level_implied_membership"
+    },
+    "cache": {
+      "entityId": 1615,
+      "revision": 221,
+      "varbits": [28556],
+      "collision": "verified"
+    }
+  },
+  "output": "[VERIFIED] Entity 1615: Abyssal demon. Combat level 98, 8,500 lifepoints. Weakness: Slashing. Slayer requirement: 85 (Abyssal demons). Spawn areas: RuneScape Surface, The Abyss, Ancient cavern. [NOTE] Bestiary API incorrectly reports members=false; corrected via slayer_level implication. [CACHE_WIKI_MATCH] Both sources agree on all combat stats.",
+  "source": "bestiary_api+cache",
+  "verified": true,
+  "tags": ["members_override", "slayer", "multi_area"]
+}
+```
+
+---
+
+## Implementation Checklist for BestiaryApi.ts
+
+| Feature | Status | Notes |
+|---|---|---|
+| `resolveId(name)` | Required | Exact-match filtering on beastSearch OR results |
+| `getBeastData(id)` | Required | Members field override for slayer content |
+| `getAreaBeasts(area)` | Required | Spatial queries for GhostSplat heatmap |
+| `getSlayerBeasts(catId)` | Required | Tag `[INCOMPLETE]` per Jagex limitation |
+| `getWeaknessBeasts(weakId)` | Optional | For combat rotation target selection |
+| `getLevelGroup(min, max)` | Optional | For power-leveling recommendations |
+| CORS proxy | Required | Cloudflare Worker or DO |
+| Cache-Control | Required | 1-hour edge cache for static data |
+
+Start with `resolveId()` + `getBeastData()`. Those two cover 90% of your enrichment use cases. The spatial/slayer/weakness endpoints are optimization features for the GhostSplat combat layer.

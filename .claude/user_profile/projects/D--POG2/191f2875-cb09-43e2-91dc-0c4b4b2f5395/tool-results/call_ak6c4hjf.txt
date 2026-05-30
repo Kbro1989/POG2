@@ -1,0 +1,193 @@
+D:\POG2\cache_name_search.js:15:const DATA_DIR = path.resolve(import.meta.dirname || __dirname);
+D:\POG2\fix_forof.ts:110:    const fullPath = path.resolve(relPath);
+D:\POG2\fix_forin.ts:32:    const fullPath = path.resolve(relPath);
+D:\POG2\fix_rsmv_extensions.cjs:8:        file = path.resolve(dir, file);
+D:\POG2\fix_rsmv_extensions.cjs:19:const rsmvDir = path.resolve('D:/POG2/src/rsmv');
+D:\POG2\src\cli.ts:3404:                    Promise.resolve(extractor.healthCheck()),
+D:\POG2\src\vision\ShaderInjector.ts:112:        const projectRoot = path.resolve(path.dirname(thisFile), '..', '..');
+D:\POG2\src\vision\ShaderInjector.ts:123:    const cwdPath = path.resolve('./tsconfig.json');
+D:\POG2\scripts\discover_collision_rules.ts:72:    const outPath = path.resolve(__dirname, '../atlas/spatial/raw_discovery_8755.json');
+D:\POG2\scripts\extract_directional_collision.ts:10:const POG_ROOT = path.resolve(__dirname, '..');
+D:\POG2\src\core\OpcodeReader.ts:187:				return childresolve.resolve(res, oldvalue);
+D:\POG2\src\core\OpcodeReader.ts:262:				return child.resolve(v[index], old)
+D:\POG2\src\core\OpcodeReader.ts:334:							propvalue = ref.resolve(value, propvalue);
+D:\POG2\src\core\OpcodeReader.ts:372:				return childresolve.resolve(res, oldvalue);
+D:\POG2\src\core\OpcodeReader.ts:424:				return (v != null ? child.resolve(v, old) : old);
+D:\POG2\src\core\OpcodeReader.ts:547:									propvalue = ref.resolve(entry, propvalue);
+D:\POG2\src\core\OpcodeReader.ts:589:				return childresolve.resolve(v.length, old);
+D:\POG2\src\core\OpcodeReader.ts:600:				return childresolve.resolve(res, oldvalue);
+D:\POG2\src\tests\test_ghostsplat_engine.ts:23:    const manifestPath = path.resolve('public/authentic_spawn_manifest.json');
+D:\POG2\src\tests\test_ghostsplat_engine.ts:122:    const outputDir = path.resolve('public/test_output');
+D:\POG2\rsmv_inspector\opdecoder.ts:30:		return new FileParser<T>(Promise.resolve(parser));
+D:\POG2\rsmv_inspector\webpack.config.web.js:69:			process: require.resolve('process/browser'),
+D:\POG2\rsmv_inspector\webpack.config.web.js:73:			buffer: require.resolve('buffer/'),//weird slash needed to import npm buffer instead of node buffer
+D:\POG2\rsmv_inspector\webpack.config.web.js:74:			zlib: require.resolve('browserify-zlib'),
+D:\POG2\rsmv_inspector\webpack.config.web.js:75:			util: require.resolve('util/'),
+D:\POG2\rsmv_inspector\webpack.config.web.js:76:			assert: require.resolve('assert/'),
+D:\POG2\rsmv_inspector\webpack.config.web.js:77:			stream: require.resolve('stream-browserify'),
+D:\POG2\rsmv_inspector\webpack.config.web.js:85:		path: path.resolve(__dirname, 'dist')
+D:\POG2\rsmv_inspector\webpack.config.web.js:95:			process: [require.resolve('process/browser')]
+D:\POG2\rsmv_inspector\opcode_reader.ts:204:				return childresolve.resolve(res, oldvalue);
+D:\POG2\rsmv_inspector\opcode_reader.ts:280:				return child.resolve(v[index], old)
+D:\POG2\rsmv_inspector\opcode_reader.ts:356:							propvalue = ref.resolve(value, propvalue);
+D:\POG2\rsmv_inspector\opcode_reader.ts:394:				return childresolve.resolve(res, oldvalue);
+D:\POG2\rsmv_inspector\opcode_reader.ts:447:				return (v != null ? child.resolve(v, old) : old);
+D:\POG2\rsmv_inspector\opcode_reader.ts:563:									propvalue = ref.resolve(entry, propvalue);
+D:\POG2\rsmv_inspector\opcode_reader.ts:604:				return childresolve.resolve(v.length, old);
+D:\POG2\rsmv_inspector\opcode_reader.ts:615:				return childresolve.resolve(res, oldvalue);
+D:\POG2\rsmv_inspector\opcode_reader.ts:704:				return child.resolve(value.length / vectorLength, old);
+D:\POG2\rsmv_inspector\opcode_reader.ts:755:				return child.resolve(v.length, old);
+D:\POG2\rsmv_inspector\opcode_reader.ts:765:				return child.resolve(v[0], old);
+D:\POG2\rsmv_inspector\opcode_reader.ts:836:				return child.resolve(v[0], old);
+D:\POG2\rsmv_inspector\webpack.config.js:69:		path: path.resolve(__dirname, 'dist')
+D:\POG2\src\scripts_backup\synthesize_teleport_grounding.ts:10:const LOGIC_DIR = path.resolve(SCRIPT_DIR, "../../../d:/sovereign/atlas/logic"); // Fallback due to drive letters across machines
+D:\POG2\src\scripts_backup\synthesize_teleport_grounding.ts:12:const OUT_FILE = path.resolve(SCRIPT_DIR, "../../../public/teleport_grounding.json");
+D:\POG2\src\scripts_backup\synthesize_teleport_grounding.ts:13:const PROJECT_ROOT = path.resolve(SCRIPT_DIR, "../../");
+D:\POG2\src\limbs\technical\HexagramNetworkBridge.ts:79:        return Promise.resolve({
+D:\POG2\src\scripts_backup\pullHans.ts:24:        const p = path.resolve(f);
+D:\POG2\src\scripts_backup\pullHans.ts:46:                if (existsSync(path.resolve('model.png')) && existsSync(path.resolve('model.glb'))) {
+D:\POG2\src\scripts_backup\pullHans.ts:52:            const pngPath = path.resolve('model.png');
+D:\POG2\src\scripts_backup\pullHans.ts:53:            const glbPath = path.resolve('model.glb');
+D:\POG2\src\scripts_backup\liveVisionLoop.ts:38:    const targetFile = path.resolve(getrsmvSubstratePath(), 'src', '3d', 'test_substrate.ts');
+D:\POG2\scratch\fix_all_implicit_any.ts:54:    const filePath = path.resolve(file);
+D:\POG2\scratch\fix_rsmv_browser_calls.ts:10:    const filePath = path.resolve(file);
+D:\POG2\src\engines\gameplay\CNSGodheadPulseVolley.ts:209:        this.resolve();
+D:\POG2\src\engines\gameplay\CNSGodheadPulseVolley.ts:248:                this.resolve();
+D:\POG2\src\engines\gameplay\CNSGodheadPulseVolley.ts:298:            this.resolve();
+D:\POG2\src\engines\gameplay\CNSGodheadPulseVolley.ts:301:            this.substrateState = await SubstrateResolver.resolve();
+D:\POG2\src\engines\gameplay\CNSGodheadPulseVolley.ts:664:        this.resolve();
+D:\POG2\src\engines\gameplay\CNSGodheadPulseVolley.ts:666:        this.substrateState = await SubstrateResolver.resolve();
+D:\POG2\src\engines\gameplay\CNSGodheadPulseVolley.ts:1150:        this.resolve();
+D:\POG2\src\engines\gameplay\CNSGodheadPulseVolley.ts:1157:        // const substrateState = await SubstrateResolver.resolve(); // REMOVED: redundant call
+D:\POG2\rsmv_inspector\rsmv_parser_core.ts:181:                return childresolve.resolve(res, oldvalue);
+D:\POG2\rsmv_inspector\rsmv_parser_core.ts:256:                return child.resolve(v[index], old)
+D:\POG2\rsmv_inspector\rsmv_parser_core.ts:328:                            propvalue = ref.resolve(value, propvalue);
+D:\POG2\rsmv_inspector\rsmv_parser_core.ts:367:                return childresolve.resolve(res, oldvalue);
+D:\POG2\rsmv_inspector\rsmv_parser_core.ts:420:                return (v != null ? child.resolve(v, old) : old);
+D:\POG2\rsmv_inspector\rsmv_parser_core.ts:534:                                    propvalue = ref.resolve(entry, propvalue);
+D:\POG2\rsmv_inspector\rsmv_parser_core.ts:575:                return childresolve.resolve(v.length, old);
+D:\POG2\rsmv_inspector\rsmv_parser_core.ts:586:                return childresolve.resolve(res, oldvalue);
+D:\POG2\rsmv_inspector\rsmv_parser_core.ts:685:                return child.resolve(value.length / vectorLength, old);
+D:\POG2\rsmv_inspector\rsmv_parser_core.ts:735:                return child.resolve(v.length, old);
+D:\POG2\rsmv_inspector\rsmv_parser_core.ts:744:                return child.resolve(v[0], old);
+D:\POG2\rsmv_inspector\rsmv_parser_core.ts:813:                return child.resolve(v[0], old);
+D:\POG2\src\scripts\synthesize_teleport_grounding.ts:10:const LOGIC_DIR = path.resolve(SCRIPT_DIR, "../../../d:/sovereign/atlas/logic"); // Fallback due to drive letters across machines
+D:\POG2\src\scripts\synthesize_teleport_grounding.ts:12:const OUT_FILE = path.resolve(SCRIPT_DIR, "../../../public/teleport_grounding.json");
+D:\POG2\src\scripts\synthesize_teleport_grounding.ts:13:const PROJECT_ROOT = path.resolve(SCRIPT_DIR, "../../");
+D:\POG2\src\limbs\spatial\TeleportGrounding.ts:38:            const targetPath = path.resolve(process.cwd(), 'public/teleport_grounding.json');
+D:\POG2\rsmv_inspector\src\3d\modelnodes.ts:412:				this.anims[animid] = { clip, prom: Promise.resolve(clip) };
+D:\POG2\rsmv_inspector\src\3d\modeltothree.ts:47:	[constModelsIds.materialCube, Promise.resolve(materialPreviewCube)],
+D:\POG2\rsmv_inspector\src\3d\modeltothree.ts:48:	[constModelsIds.classicWall, Promise.resolve(classicWall)],
+D:\POG2\rsmv_inspector\src\3d\modeltothree.ts:49:	[constModelsIds.classicWallDiag, Promise.resolve(classicWallDiag)],
+D:\POG2\rsmv_inspector\src\3d\modeltothree.ts:50:	[constModelsIds.classicRoof10, Promise.resolve(classicRoof10)],
+D:\POG2\rsmv_inspector\src\3d\modeltothree.ts:51:	[constModelsIds.classicRoof12, Promise.resolve(classicRoof12)],
+D:\POG2\rsmv_inspector\src\3d\modeltothree.ts:52:	[constModelsIds.classicRoof13, Promise.resolve(classicRoof13)],
+D:\POG2\rsmv_inspector\src\3d\modeltothree.ts:53:	[constModelsIds.classicRoof14, Promise.resolve(classicRoof14)],
+D:\POG2\rsmv_inspector\src\3d\modeltothree.ts:54:	[constModelsIds.classicRoof15, Promise.resolve(classicRoof15)],
+D:\POG2\rsmv_inspector\src\3d\modeltothree.ts:55:	[constModelsIds.classicRoof16, Promise.resolve(classicRoof16)],
+D:\POG2\rsmv_inspector\src\3d\modeltothree.ts:56:	[constModelsIds.classicRoof17, Promise.resolve(classicRoof17)]
+D:\POG2\rsmv_inspector\src\cache\sqlitewasm.ts:32:				handler?.resolve(e.data.packet);
+D:\POG2\rsmv_inspector\src\headless\runbrowser.ts:96:require(${JSON.stringify(path.resolve(process.cwd(), entry))});
+D:\POG2\rsmv_inspector\src\headless\runbrowser.ts:99:console.log(path.resolve(process.cwd(), entry));
+D:\POG2\rsmv_inspector\src\cache\sqlite.ts:27:		this.cachedir = cachedir || process.env['POG_rsmv_inspector_CACHE_DIR'] || path.resolve(process.env.ProgramData!, "jagex/runescape");
+D:\POG2\rsmv_inspector\src\cache\sqlite.ts:40:		let files = fs.readdirSync(path.resolve(this.cachedir));
+D:\POG2\rsmv_inspector\src\cache\sqlite.ts:64:		const rootIndexFile = path.resolve(this.cachedir, "js5-index.jcache");
+D:\POG2\rsmv_inspector\src\cache\sqlite.ts:91:				const rootIndexFile = path.resolve(this.cachedir, "js5-index.jcache");
+D:\POG2\rsmv_inspector\src\cache\sqlite.ts:105:				let dbfile = path.resolve(this.cachedir, `js5-${major}.jcache`);
+D:\POG2\rsmv_inspector\src\cache\sqlite.ts:111:					const rootIndexFile = path.resolve(this.cachedir, "js5-index.jcache");
+D:\POG2\src\scripts\pullHans.ts:24:        const p = path.resolve(f);
+D:\POG2\src\scripts\pullHans.ts:46:                if (existsSync(path.resolve('model.png')) && existsSync(path.resolve('model.glb'))) {
+D:\POG2\src\scripts\pullHans.ts:52:            const pngPath = path.resolve('model.png');
+D:\POG2\src\scripts\pullHans.ts:53:            const glbPath = path.resolve('model.glb');
+D:\POG2\src\limbs\spatial\GeometryAnnotationLayer.ts:146:        const ann = this.resolve(x, z, plane);
+D:\POG2\rsmv_inspector\src\3d\textures.ts:28:			this.cachedImageDatas = [Promise.resolve(dummyImageData)];
+D:\POG2\rsmv_inspector\src\3d\textures.ts:35:			this.cachedImageDatas = [Promise.resolve(texture)];
+D:\POG2\rsmv_inspector\src\cache\memorycache.ts:59:            return Promise.resolve(bucket.data);
+D:\POG2\src\limbs\spatial\DBRowOracleLimb.ts:194:        return Promise.resolve({
+D:\POG2\scratch\query_sprite_db.ts:7:    const dbFile = path.resolve(BETA_CACHE_PATH, 'js5-8.jcache');
+D:\POG2\rsmv_inspector\src\buildfiletypes.ts:8:	let basedir = path.resolve("./src/opcodes");
+D:\POG2\rsmv_inspector\src\buildfiletypes.ts:9:	let outdir = path.resolve("./generated");
+D:\POG2\rsmv_inspector\src\buildfiletypes.ts:16:	const typedef = commentjson.parse(fs.readFileSync(path.resolve(basedir, "typedef.jsonc"), "utf-8"), undefined, true);
+D:\POG2\rsmv_inspector\src\buildfiletypes.ts:18:		let srcfile = path.resolve(basedir, file);
+D:\POG2\rsmv_inspector\src\buildfiletypes.ts:36:		let outfile = path.resolve(outdir, objname + ".d.ts");
+D:\POG2\rsmv_inspector\src\buildfiletypes.ts:41:	fs.writeFileSync(path.resolve(outdir, "maprenderconfig.schema.json"), JSON.stringify(maprenderConfigSchema, undefined, "\t"));
+D:\POG2\src\scripts\liveVisionLoop.ts:38:    const targetFile = path.resolve(getrsmvSubstratePath(), 'src', '3d', 'test_substrate.ts');
+D:\POG2\rsmv_inspector\src\opcode_reader.ts:198:				return childresolve.resolve(res, oldvalue);
+D:\POG2\rsmv_inspector\src\opcode_reader.ts:273:				return child.resolve(v[index], old)
+D:\POG2\rsmv_inspector\src\opcode_reader.ts:345:							propvalue = ref.resolve(value, propvalue);
+D:\POG2\rsmv_inspector\src\opcode_reader.ts:383:				return childresolve.resolve(res, oldvalue);
+D:\POG2\rsmv_inspector\src\opcode_reader.ts:435:				return (v != null ? child.resolve(v, old) : old);
+D:\POG2\rsmv_inspector\src\opcode_reader.ts:560:									propvalue = ref.resolve(entry, propvalue);
+D:\POG2\rsmv_inspector\src\opcode_reader.ts:601:				return childresolve.resolve(v.length, old);
+D:\POG2\rsmv_inspector\src\opcode_reader.ts:612:				return childresolve.resolve(res, oldvalue);
+D:\POG2\rsmv_inspector\src\opcode_reader.ts:701:				return child.resolve(value.length / vectorLength, old);
+D:\POG2\rsmv_inspector\src\opcode_reader.ts:751:				return child.resolve(v.length, old);
+D:\POG2\rsmv_inspector\src\opcode_reader.ts:761:				return child.resolve(v[0], old);
+D:\POG2\rsmv_inspector\src\opcode_reader.ts:831:				return child.resolve(v[0], old);
+D:\POG2\rsmv_inspector\src\memorycache.ts:60:            return Promise.resolve(bucket.data);
+D:\POG2\rsmv_inspector\src\map\index.ts:466:	let activerender = Promise.resolve();
+D:\POG2\rsmv_inspector\src\map\index.ts:766:			return { file: () => Promise.resolve(buf) };
+D:\POG2\rsmv_inspector\src\map\index.ts:961:				file: () => Promise.resolve(Buffer.from(svg, "utf8"))
+D:\POG2\rsmv_inspector\src\map\index.ts:1003:			return { file: () => Promise.resolve(buf) };
+D:\POG2\rsmv_inspector\src\map\index.ts:1025:			return { file: () => Promise.resolve(buf) };
+D:\POG2\rsmv_inspector\src\map\index.ts:1048:			return { file: () => Promise.resolve(buf) };
+D:\POG2\rsmv_inspector\src\map\index.ts:1067:			return { file: () => Promise.resolve(file) };
+D:\POG2\src\routing\TaskScheduler.ts:180:                task.resolve(result);
+D:\POG2\src\routing\TaskScheduler.js:142:                task.resolve(result);
+D:\POG2\rsmv_inspector\src\UniversalSovereignSynthesizer.ts:16:const OUTPUT_DIR = path.resolve(__dirname, "../../pog-vibe-interactive/files/data/substrate");
+D:\POG2\scratch\scan_appearance_enums.ts:12:    const sqlitePath = pathToFileURL(path.resolve('D:/rsmv_inspector/src/cache/sqlite.ts')).href;
+D:\POG2\scratch\scan_appearance_enums.ts:13:    const opdecoderPath = pathToFileURL(path.resolve('D:/rsmv_inspector/src/opdecoder.ts')).href;
+D:\POG2\rsmv_inspector\src\scripts\build_item_extras_index.ts:9:    const outputDir = path.resolve(__dirname, "../../data");
+D:\POG2\rsmv_inspector\src\scriptrunner.ts:33:        this.dir = path.resolve(dir);
+D:\POG2\rsmv_inspector\src\scriptrunner.ts:37:        let target = path.resolve(this.dir, sub.replace(/^\//g, ""));
+D:\POG2\rsmv_inspector\src\scripts\buildfiletypes.ts:8:	let basedir = path.resolve("./src/opcodes");
+D:\POG2\rsmv_inspector\src\scripts\buildfiletypes.ts:9:	let outdir = path.resolve("./generated");
+D:\POG2\rsmv_inspector\src\scripts\buildfiletypes.ts:16:	const typedef = commentjson.parse(fs.readFileSync(path.resolve(basedir, "typedef.jsonc"), "utf-8"), undefined, true);
+D:\POG2\rsmv_inspector\src\scripts\buildfiletypes.ts:18:		let srcfile = path.resolve(basedir, file);
+D:\POG2\rsmv_inspector\src\scripts\buildfiletypes.ts:36:		let outfile = path.resolve(outdir, objname + ".d.ts");
+D:\POG2\rsmv_inspector\src\scripts\buildfiletypes.ts:41:	fs.writeFileSync(path.resolve(outdir, "maprenderconfig.schema.json"), JSON.stringify(maprenderConfigSchema, undefined, "\t"));
+D:\POG2\rsmv_inspector\src\viewer\threejsrender.ts:975:	return Promise.resolve(new Uint8Array(res.buffer, res.byteOffset, res.byteLength));
+D:\POG2\rsmv_inspector\src\tools\standalone_admin_scan.js:20:    const dbPath = path.resolve(CACHE_DIR, `js5-${MAJOR_CLIENTSCRIPT}.jcache`);
+D:\POG2\rsmv_inspector\src\tools\spatial\extract_global_collision.ts:7:const POG_ROOT = path.resolve(__dirname, "../../../../");
+D:\POG2\rsmv_inspector\src\tools\spatial\extract_directional_collision.ts:9:const POG_ROOT = path.resolve(__dirname, '../../../../');
+D:\POG2\rsmv_inspector\src\tools\spatial\discover_collision_rules.ts:16:const rsmv_inspector_ROOT = path.resolve(__dirname, '../../..');
+D:\POG2\rsmv_inspector\src\tools\spatial\discover_collision_rules.ts:72:    const outPath = path.resolve(__dirname, '../atlas/spatial/raw_discovery_8755.json');
+D:\POG2\rsmv_inspector\src\tools\dump_enum_cmd.js:20:    const enumDb = path.resolve(CACHE_DIR, `js5-${MAJOR_ENUMS}.jcache`);
+D:\POG2\rsmv_inspector\src\tools\decode_kinematics_live.ts:111:    const outPath = path.resolve(MEMORY_DIR, 'kinematic_mechanics_live.json');
+D:\POG2\rsmv_inspector\src\tools\multi_archive_scan.js:25:    const enumDb = path.resolve(CACHE_DIR, `js5-${MAJOR_ENUMS}.jcache`);
+D:\POG2\rsmv_inspector\src\tools\multi_archive_scan.js:49:    const scriptDb = path.resolve(CACHE_DIR, `js5-${MAJOR_SCRIPTS}.jcache`);
+D:\POG2\rsmv_inspector\src\viewer\KitMeshLoader.ts:89:          const def = await this.resolver.resolve(sub.materialArgument);
+D:\POG2\rsmv_inspector\src\viewer\scriptsui.tsx:532:				let dir: Electron.OpenDialogReturnValue = await electron.ipcRenderer.invoke("openfolder", path.resolve(process.env.HOME!, "downloads"));
+D:\POG2\rsmv_inspector\src\viewer\maincomponents.tsx:214:		let dir: import("electron").OpenDialogReturnValue = await electron.ipcRenderer.invoke("openfolder", path.resolve(process.env.ProgramData!, "jagex/runescape"));
+D:\POG2\rsmv_inspector\src\tools\auditors\search_by_varbit_enum.ts:34:    const scriptDb = path.resolve(CACHE_DIR, `js5-${MAJOR_SCRIPTS}.jcache`);
+D:\POG2\rsmv_inspector\src\tools\auditors\map_systems_by_params.ts:7:const CACHE_DIR = path.resolve(__dirname, "../../../");
+D:\POG2\rsmv_inspector\src\tools\auditors\map_systems_by_params.ts:8:const CACHE_DB = path.resolve(CACHE_DIR, "cache/fscache.sqlite3");
+D:\POG2\rsmv_inspector\src\tools\auditors\map_systems_by_params.ts:10:const TRUE_LINKS_OUT = path.resolve(__dirname, "true_system_links.json");
+D:\POG2\rsmv_inspector\src\tools\auditors\extract_ground_truth_params.ts:6:const CACHE_DIR = path.resolve(__dirname, "../../../");
+D:\POG2\rsmv_inspector\src\tools\auditors\decompile_scripts.ts:10:const OUTPUT_DIR = path.resolve(__dirname, "../../../output/decompiled");
+D:\POG2\rsmv_inspector\src\tools\auditors\decompile_scripts.ts:40:    const scriptDb = path.resolve(CACHE_DIR, `js5-${cacheMajors.clientscript}.jcache`);
+D:\POG2\rsmv_inspector\src\scripts\renderrsinterface.ts:208:        loadprom = Promise.resolve();
+D:\POG2\rsmv_inspector\src\scripts\test_ascii_collision.ts:21:    const dataPath = path.resolve(__dirname, `../../../atlas/spatial/directional_${regionId}.json`);
+D:\POG2\scratch\sqlite.ts.bak:27:		this.cachedir = cachedir || process.env['POG_rsmv_inspector_CACHE_DIR'] || path.resolve(process.env.ProgramData!, "jagex/runescape");
+D:\POG2\scratch\sqlite.ts.bak:40:		let files = fs.readdirSync(path.resolve(this.cachedir));
+D:\POG2\scratch\sqlite.ts.bak:64:		const rootIndexFile = path.resolve(this.cachedir, "js5-index.jcache");
+D:\POG2\scratch\sqlite.ts.bak:91:				const rootIndexFile = path.resolve(this.cachedir, "js5-index.jcache");
+D:\POG2\scratch\sqlite.ts.bak:105:				let dbfile = path.resolve(this.cachedir, `js5-${major}.jcache`);
+D:\POG2\scratch\sqlite.ts.bak:111:					const rootIndexFile = path.resolve(this.cachedir, "js5-index.jcache");
+D:\POG2\scratch\no_empty_report.json:257:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:874:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:1298:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:1888:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:2227:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:3329:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:8827:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:8873:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:9117:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:9242:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:11312:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:11611:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:11677:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:11819:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:11934:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:12351:[Omitted long matching line]
+D:\POG2\scratch\no_empty_report.json:12619:[Omitted long matching line]

@@ -1,0 +1,48 @@
+  
+ All verifications passed. The GeApi is production-ready with:
+- **Price parser:** 6/6 tests pass
+- **Latest price:** Weird Gloop primary working
+- **Item details:** Members boolean conversion correct
+- **History:** 180-day data with proper sorting
+
+**Next priority recommendation:** Integrate GeApi + BestiaryApi into `WikiEquipmentEnricher.ts` first, then build `OfficialPlayerDataApi.ts`.
+
+**Why integration first:** Your `WikiEquipmentEnricher.ts` currently has `geValue: number` as a static field from wiki parsing. With GeApi live, you can now provide real-time prices. This is the highest-value immediate impact — every item enrichment gets live market data.
+
+**Integration points:**
+
+```typescript
+// WikiEquipmentEnricher.ts — update enrichItem()
+public async enrichItem(name: string): Promise<WikiPageData> {
+    const cached = this.readCache('items', name);
+    if (cached?.title) return cached;
+
+    // 1. Get wiki data (static)
+    const bonuses = await this.parseEquipmentBonuses(name);
+    const itemMeta = await this.parseItemMeta(name);
+    
+    // 2. Get canonical ID from cache
+    const resolution = await CacheForensicsLimb.resolveWikiTitle(name);
+    
+    // 3. Get live GE price (NEW)
+    let gePrice: GePrice | null = null;
+    if (resolution.primaryId) {
+        gePrice = await GeApi.getLatestPrice(resolution.primaryId);
+    }
+    
+    // 4. Merge — live price overrides wiki static price
+    if (gePrice && itemMeta) {
+        itemMeta.geValue = gePrice.price;  // Real-time override
+        itemMeta._geSource = gePrice.source;
+        itemMeta._geTimestamp = gePrice.timestamp;
+    }
+
+    // ... rest of enrichment
+}
+```
+
+This gives you `[VERIFIED]` tags with live price data — stronger than wiki-only enrichment.
+
+**Alternative:** Build `OfficialPlayerDataApi.ts` now if you need player/clan data for the pedagogy model's "Domain Expansion" test.
+
+Which path do you want?

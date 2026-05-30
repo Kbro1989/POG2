@@ -1,0 +1,98 @@
+ I'll search for the latest on Ollama + Claude Code integration with MCP (Model Context Protocol) and `-g` detection patterns, since this is a rapidly evolving space.  
+ 
+
+The pro move for hooking external AI into Ollama → Claude Code with MCP and `-g` (global/tool) detection is a **two-layer architecture**: native Anthropic API compatibility for the LLM backbone, plus an MCP server bridge for tool orchestration and state detection.
+
+## Layer 1: Native Anthropic API Compatibility (The Backbone)
+
+Ollama v0.14.0+ now speaks Anthropic's Messages API natively . This is the cleanest path—no MCP hacks needed for the LLM itself:
+
+```bash
+# Environment injection (PowerShell)
+$env:ANTHROPIC_AUTH_TOKEN="ollama"
+$env:ANTHROPIC_API_KEY=""
+$env:ANTHROPIC_BASE_URL="http://localhost:11434"
+
+# Launch with local model
+claude --model qwen3-coder
+
+# Or Ollama cloud models (bypass local hardware limits)
+claude --model glm-4.7:cloud
+```
+
+This gives you streaming, tool calling, vision, and extended thinking through Ollama's endpoint . The `-g` detection you're asking about likely refers to **global tool registration** or **MCP server "ghost" detection**—knowing when the bridge is alive.
+
+## Layer 2: MCP Server Bridge (Tool Orchestration & Detection)
+
+For the `-g` (global/tooling) detection after connection, you need an MCP server that exposes Ollama's full SDK as tools and provides health/connection state. The `rawveg/ollama-mcp` server is the current gold standard :
+
+```json
+// claude_desktop_config.json or Claude Code MCP registry
+{
+  "mcpServers": {
+    "ollama": {
+      "command": "npx",
+      "args": ["-y", "ollama-mcp"]
+    }
+  }
+}
+```
+
+This gives Claude Code **14 tools** including `ollama_ps` (running model detection), `ollama_list` (inventory), and `ollama_chat`/`ollama_generate` (delegation) .
+
+## The Pro Move: Hybrid Delegation with State Detection
+
+The real power move is **task-based routing**—Claude Code uses Anthropic API for complex reasoning, but delegates simple tasks to local Ollama models via MCP to save tokens :
+
+```bash
+# 1. Start Ollama with your local army
+ollama serve
+ollama pull qwen2.5-coder
+ollama pull nomic-embed-text
+
+# 2. Launch Claude Code with Ollama backend
+ollama launch claude --model qwen3-coder
+
+# 3. In Claude Code, verify MCP tool detection
+/mcp
+# Should show: ollama_list, ollama_ps, ollama_chat, ollama_generate...
+
+# 4. Test -g (global) detection by querying running models
+"Use ollama_ps to show me what's loaded, then ollama_chat with qwen2.5-coder to summarize this file"
+```
+
+## PowerShell One-Liner for Your POG2 Stack
+
+Given your existing 89-tool sovereignty architecture , wire this into your GhostLimb detection layer:
+
+```powershell
+# POG2-Ollama-Claude Bridge Bootstrap
+$env:ANTHROPIC_BASE_URL="http://localhost:11434"
+$env:ANTHROPIC_AUTH_TOKEN="ollama"
+$env:OLLAMA_BASE_URL="http://localhost:11434"
+
+# Verify Ollama ghost limb is nominal
+$ghostStatus = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -Method GET
+if ($ghostStatus.models) {
+    Write-Host "[GHOST_LIMB][ONLINE] $($ghostStatus.models.Count) models in cache" -ForegroundColor Green
+    
+    # Launch Claude Code with MCP tool detection
+    claude --model qwen3-coder
+    
+    # Post-launch: verify MCP global tools registered
+    # Inside Claude Code: /mcp → should list ollama_* tools
+} else {
+    Write-Host "[GHOST_LIMB][OFFLINE] Ollama serve not detected" -ForegroundColor Red
+}
+```
+
+## Key Detection Points
+
+| Detection Target | Method | MCP Tool |
+|-----------------|--------|----------|
+| Ollama daemon alive | `GET /api/tags` | `ollama_list` |
+| Model loaded in VRAM | `GET /api/ps` | `ollama_ps` |
+| Tool registration | Claude Code `/mcp` | Native |
+| Connection health | `ollama_chat` ping | `ollama_chat` |
+
+The `-g` flag behavior you're referencing likely maps to **global MCP tool scope**—once the MCP server registers, those tools are available across all Claude Code sessions without re-authentication .

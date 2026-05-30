@@ -1,0 +1,252 @@
+src\cli.ts:49:import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
+src\cli.ts:66:import { VectorDB } from './utils/VectorDB.js';
+src\cli.ts:142:            writeFileSync(join(process.cwd(), name), template);
+src\cli.ts:331:                    mkdirSync(target, { recursive: true });
+src\cli.ts:636:            const vectorDB = new VectorDB({ client });
+src\cli.ts:1063:                        const content = fs.readFileSync(filePath, "utf-8");
+src\cli.ts:1144:                fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
+src\cli.ts:1863:            const vectorDB = new VectorDB({ client });
+src\cli.ts:2028:                const data = JSON.parse(fs.readFileSync(storyboardPath, 'utf8'));
+src\cli.ts:2103:                                const manifest = JSON.parse(readFileSync(mPath, 'utf-8'));
+src\cli.ts:2442:            const vectorDB = new VectorDB({ client });
+src\cli.ts:2505:            const vectorDB = new VectorDB({ client });
+src\cli.ts:2525:            const vectorDB = new VectorDB({ client });
+src\cli.ts:2546:            const vectorDB = new VectorDB({ client });
+src\cli.ts:2923:        .description('Index a directory or file into the local VectorDB')
+src\cli.ts:3004:        .description('Inspect the VectorDB learning memory for health and row counts')
+src\cli.ts:3014:        .description('Backup the learning VectorDB to a safe secondary location')
+src\cli.ts:3024:        .description('Compress the learning VectorDB by vacuuming and removing old entries')
+src\cli.ts:3035:        .description('Attempt to repair corruption in the learning VectorDB')
+src\cli.ts:3376:                const modelData = JSON.parse(readFileSync(file, 'utf8'));
+src\cli.ts:3771:        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+src\cli.ts:3774:            ? JSON.parse(readFileSync(configPath, 'utf8'))
+src\cli.ts:3777:        writeFileSync(configPath, JSON.stringify(existing, null, 2));
+src\cli.ts:3787:        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+src\cli.ts:3788:        writeFileSync(configPath, JSON.stringify({
+src\api\ai\ModelRolodex.ts:5:import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+src\api\ai\ModelRolodex.ts:88:                this.state = JSON.parse(readFileSync(this.persistPath, 'utf8'));
+src\api\ai\ModelRolodex.ts:917:            if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+src\api\ai\ModelRolodex.ts:918:            writeFileSync(this.persistPath, JSON.stringify(this.state, null, 2));
+src\config\SovereignConfig.ts:1:import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
+src\config\SovereignConfig.ts:216:        const content = readFileSync(envPath, 'utf8');
+src\config\SovereignConfig.ts:298:            fileConfig = JSON.parse(readFileSync(configPath, 'utf8'));
+src\config\SovereignConfig.ts:355:        mkdirSync(dir, { recursive: true });
+src\config\SovereignConfig.ts:357:    writeFileSync(configPath, JSON.stringify(DEFAULT_CONFIG, null, 2));
+src\generators\CacheSchemaGenerator.ts:1:import { existsSync, writeFileSync, mkdirSync } from 'fs';
+src\generators\CacheSchemaGenerator.ts:79:            mkdirSync(outDir, { recursive: true });
+src\generators\CacheSchemaGenerator.ts:83:        writeFileSync(outFile, tsContent, 'utf8');
+src\core\ArchitectureDigest.ts:2:import { existsSync, readFileSync } from 'fs';
+src\core\ArchitectureDigest.ts:24:                return JSON.parse(readFileSync(manifestPath, 'utf8'));
+src\core\CognitiveImmunologyEmergency.ts:14:import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+src\core\CognitiveImmunologyEmergency.ts:174:        'rm -rf /', 'fs.rmSync(', 'rmSync', 'unlinkSync'
+src\core\CognitiveImmunologyEmergency.ts:486:            const log = JSON.parse(readFileSync(logPath, 'utf-8'));
+src\core\CognitiveImmunologyEmergency.ts:565:        if (!existsSync(emergencyDir)) mkdirSync(emergencyDir, { recursive: true });
+src\core\CognitiveImmunologyEmergency.ts:567:        writeFileSync(
+src\core\CognitiveImmunologyEmergency.ts:624:        if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true });
+src\core\CognitiveImmunologyEmergency.ts:627:        writeFileSync(logPath, JSON.stringify(report) + '\n', { flag: 'a' });
+src\core\HexagramDefinitions.ts:247:        targetLayers: ['VectorDB', 'Rolodex'],
+src\events\processors\TrainingProcessor.ts:2:import { existsSync, mkdirSync } from 'fs';
+src\events\processors\TrainingProcessor.ts:43:            if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+src\engines\VSCodeEngine.ts:3:import { readFileSync, writeFileSync, existsSync } from 'fs';
+src\engines\VSCodeEngine.ts:91:            const content = readFileSync(filePath, 'utf8');
+src\engines\VSCodeEngine.ts:116:            writeFileSync(filePath, content, 'utf8');
+src\engines\VSCodeEngine.ts:142:                const existing = readFileSync(filePath, 'utf8');
+src\engines\VSCodeEngine.ts:149:                    writeFileSync(filePath, lines.join('\n'), 'utf8');
+src\engines\VSCodeEngine.ts:153:                    writeFileSync(filePath, lines.join('\n'), 'utf8');
+src\engines\VSCodeEngine.ts:157:                writeFileSync(filePath, newContent, 'utf8');
+src\events\processors\MetricsAggregator.ts:2:import { existsSync, mkdirSync } from 'fs';
+src\events\processors\MetricsAggregator.ts:29:            if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+src\state\NeurologicalMap.ts:195:        biologicalRole: { organ: 'Skill Center', input: 'Interaction', output: 'Competency gain', constraints: 'Persists to VectorDB' }
+src\state\NeurologicalMap.ts:387:        path: 'src/utils/VectorDB.ts', role: 'Deep Metabolic Memory', category: NeuralCategory.MEMORY, docDomain: 'MEMORY', metabolicBaseCost: 10,
+src\core\RegistryB.ts:56:                this.varbits = JSON.parse(fs.readFileSync(varbitsPath, 'utf-8'));
+src\core\RegistryB.ts:59:                this.mapzones = JSON.parse(fs.readFileSync(mapzonesPath, 'utf-8'));
+src\core\RegistryB.ts:62:                this.synthesis = JSON.parse(fs.readFileSync(synthesisPath, 'utf-8'));
+src\core\RegistryB.ts:67:                this.examineAuthority = JSON.parse(fs.readFileSync(authorityPath, 'utf-8'));
+src\core\RegistryB.ts:132:                    const data = JSON.parse(fs.readFileSync(path.join(publicDir, file), 'utf-8'));
+src\core\RegistryB.ts:140:                    const data = JSON.parse(fs.readFileSync(path.join(publicDir, file), 'utf-8'));
+src\engines\VisionEngine.ts:7:import { readFileSync, existsSync } from 'fs';
+src\engines\VisionEngine.ts:81:        const base64Image = readFileSync(imagePath).toString('base64');
+src\vision\ShaderInjector.ts:6:import { existsSync, readFileSync, writeFileSync, copyFileSync } from 'fs';
+src\engines\VisionActuationHarness.ts:10:import { readFileSync, readdirSync, existsSync, writeFileSync } from 'fs';
+src\engines\VisionActuationHarness.ts:50:                    const data = JSON.parse(readFileSync(join(pedagogyPath, file), 'utf8'));
+src\engines\VisionActuationHarness.ts:94:                writeFileSync(learningPath, JSON.stringify({
+src\vision\PuppeteerEye.ts:5:import { existsSync, mkdirSync } from 'fs';
+src\vision\PuppeteerEye.ts:106:            if (!existsSync(captureDir)) mkdirSync(captureDir, { recursive: true });
+src\engines\TemporalSynchronizer.ts:1:import { readFileSync, writeFileSync } from 'fs';
+src\engines\SyntropyEngine.ts:1:import { readFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
+src\engines\SyntropyEngine.ts:64:        if (!existsSync(this.claudeDir)) mkdirSync(this.claudeDir, { recursive: true });
+src\engines\SyntropyEngine.ts:65:        if (!existsSync(this.geminiExtensionsDir)) mkdirSync(this.geminiExtensionsDir, { recursive: true });
+src\engines\SyntropyEngine.ts:66:        if (!existsSync(this.vscodeDir)) mkdirSync(this.vscodeDir, { recursive: true });
+src\engines\SyntropyEngine.ts:81:            const content = readFileSync(historyPath, 'utf8');
+src\engines\SyntropyEngine.ts:108:                const content = readFileSync(join(agentsDir, file), 'utf8');
+src\engines\SyntropyEngine.ts:170:                const content = JSON.parse(readFileSync(join(todosDir, file), 'utf8'));
+src\engines\SyntropyEngine.ts:193:            const content = JSON.parse(readFileSync(vscodeExtPath, 'utf8'));
+src\engines\SyntropyEngine.ts:212:            const content = readFileSync(argvPath, 'utf8').replace(/\/\/.*$/gm, '');
+src\engines\SpatialVisionEngine.ts:6:import { readFileSync, existsSync, unlinkSync } from 'fs';
+src\engines\SpatialVisionEngine.ts:186:            const base64Image = readFileSync(imagePath).toString('base64');
+src\limbs\gameplay\PVMERotationLimb.ts:3:import { readFileSync, existsSync } from 'fs';
+src\limbs\gameplay\PVMERotationLimb.ts:48:                const data = JSON.parse(readFileSync(p, 'utf8')) as PVMEBossData;
+src\engines\SovereignIngestionEngine.ts:6:import { VectorDB } from '../utils/VectorDB.js';
+src\engines\SovereignIngestionEngine.ts:29:    private vectorStore: VectorDB;
+src\engines\SovereignIngestionEngine.ts:42:    constructor(vectorStore: VectorDB) {
+src\engines\SovereignIngestionEngine.ts:54:    static getInstance(vectorStore: VectorDB): SovereignIngestionEngine {
+src\limbs\world_grounding\WorldGroundingLimb.ts:81:            fs.mkdirSync(eraDir, { recursive: true });
+src\limbs\world_grounding\WorldGroundingLimb.ts:126:                const data = fs.readFileSync(effectivePath, 'utf8');
+src\limbs\world_grounding\WorldGroundingLimb.ts:145:                const data = fs.readFileSync(target, 'utf8');
+src\limbs\world_grounding\WorldGroundingLimb.ts:163:            fs.writeFileSync(this.manifestPath, data, 'utf8');
+src\limbs\world_grounding\WorldGroundingLimb.ts:375:                const data = fs.readFileSync(effectivePath, 'utf8');
+src\engines\ShadowEngine.ts:1:import { readdirSync, readFileSync, existsSync } from 'fs';
+src\engines\ShadowEngine.ts:139:            const content = readFileSync(path, 'utf8');
+src\core\ServiceDiscovery.ts:186:                const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+src\core\ServiceDiscovery.ts:195:                const pkg = JSON.parse(fs.readFileSync(corePkgPath, 'utf8'));
+src\limbs\creative\MediaForgeLimb.ts:1:import { writeFileSync, existsSync, mkdirSync } from 'fs';
+src\limbs\creative\MediaForgeLimb.ts:52:            mkdirSync(outputDir, { recursive: true });
+src\limbs\creative\MediaForgeLimb.ts:69:            writeFileSync(targetPath, buffer);
+src\engines\ReimaginationEngine.ts:52:        // Store in VectorDB under game-design-pedagogy
+src\engines\ReimaginationEngine.ts:133:- Narrative coherence with VectorDB pedagogy
+src\limbs\creative\GutenbergLimb.ts:3:import { VectorDB } from '../../utils/VectorDB.js';
+src\limbs\creative\GutenbergLimb.ts:8:import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync, readdirSync, statSync, renameSync } from 'fs';
+src\limbs\creative\GutenbergLimb.ts:57:        private readonly vectorDB: VectorDB
+src\limbs\creative\GutenbergLimb.ts:63:            mkdirSync(this.cachePath, { recursive: true });
+src\limbs\creative\GutenbergLimb.ts:103:            const rawData = readFileSync(this.metadataPath, 'utf8');
+src\limbs\creative\GutenbergLimb.ts:115:            writeFileSync(this.metadataPath, JSON.stringify(books, null, 2));
+src\limbs\creative\GutenbergLimb.ts:130:            const content = readFileSync(book.path, 'utf8');
+src\limbs\creative\GutenbergLimb.ts:170:            const content = readFileSync(book.path, 'utf8');
+src\limbs\creative\GutenbergLimb.ts:189:            const content = readFileSync(book.path, 'utf8');
+src\limbs\creative\GutenbergLimb.ts:232:        if (!existsSync(domainPath)) mkdirSync(domainPath, { recursive: true });
+src\limbs\creative\GutenbergLimb.ts:249:            writeFileSync(filePath, bookContent!);
+src\limbs\creative\GutenbergLimb.ts:408:                const content = readFileSync(filePath, 'utf8');
+src\limbs\creative\GutenbergLimb.ts:512:            const content = readFileSync(book.path, 'utf8');
+src\limbs\creative\GutenbergLimb.ts:621:                    const content = readFileSync(book.path, 'utf8');
+src\limbs\creative\GutenbergLimb.ts:682:                    const data = JSON.parse(readFileSync(path, 'utf8'));
+src\monitor\SwitchboardLimb.ts:162:                            rawData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+src\monitor\SwitchboardLimb.ts:310:                            fs.mkdirSync(worldExtractDir, { recursive: true });
+src\monitor\SwitchboardLimb.ts:312:                        fs.writeFileSync(localPath, JSON.stringify(syntheticExport, null, 2));
+src\limbs\creative\SoundtrackLimb.ts:1:import { writeFileSync, existsSync } from 'fs';
+src\limbs\pedagogy\SovereignSyncLimb.ts:1:import { existsSync, readFileSync, watch, FSWatcher } from 'fs';
+src\engines\PipelineController.ts:12:import { existsSync, mkdirSync, writeFileSync, readFileSync, unlinkSync, statSync, readdirSync, renameSync } from 'fs';
+src\engines\PipelineController.ts:96:            mkdirSync(this.basePath, { recursive: true });
+src\engines\PipelineController.ts:146:                    if (!existsSync(p)) mkdirSync(p, { recursive: true });
+src\engines\PipelineController.ts:173:                        const storedManifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PipelineManifest;
+src\engines\PipelineController.ts:188:                        const cp = JSON.parse(readFileSync(checkpointPath, 'utf8')) as PipelineCheckpoint;
+src\engines\PipelineController.ts:199:                        const storedManifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PipelineManifest;
+src\engines\PipelineController.ts:241:                        logger.info({ bookId }, 'Author Soul successfully ingested into VectorDB substrate.');
+src\engines\PipelineController.ts:314:                // Phase 105: Ingest Anatomy Registry if VectorDB is available
+src\engines\PipelineController.ts:323:                    if (!existsSync(sceneDir)) mkdirSync(sceneDir, { recursive: true });
+src\engines\PipelineController.ts:432:                    writeFileSync(join(stage1Path, `scene_${scene.index}.json`), JSON.stringify(scene, null, 2));
+src\engines\PipelineController.ts:473:                        if (!existsSync(stage3Path)) mkdirSync(stage3Path, { recursive: true });
+src\engines\PipelineController.ts:654:                            if (!existsSync(stage1Path)) mkdirSync(stage1Path, { recursive: true });
+src\engines\PipelineController.ts:660:                        const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PipelineManifest;
+src\engines\PipelineController.ts:668:                                checkpoint = JSON.parse(readFileSync(checkpointPath, 'utf8')) as PipelineCheckpoint;
+src\engines\PipelineController.ts:726:                    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PipelineManifest;
+src\engines\PipelineController.ts:752:        writeFileSync(checkpointPath, JSON.stringify(checkpoint, null, 2));
+src\engines\PipelineController.ts:753:        writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+src\limbs\pedagogy\GhostTrainingLimb.ts:1:import { existsSync, readFileSync, writeFileSync, mkdirSync, watch, FSWatcher } from 'fs';
+src\limbs\pedagogy\GhostTrainingLimb.ts:44:        mkdirSync(parentDir, { recursive: true });
+src\limbs\pedagogy\GhostTrainingLimb.ts:83:      const data = readFileSync(this.corpusPath, 'utf8');
+src\limbs\pedagogy\GhostTrainingLimb.ts:102:      const lines = readFileSync(this.corpusPath, 'utf8').trim().split('\n').filter(Boolean);
+src\limbs\pedagogy\GhostTrainingLimb.ts:138:      writeFileSync(this.modelfilePath, modelfileContent, 'utf8');
+src\limbs\creative\VideoAssemblerLimb.ts:2:import { existsSync, mkdirSync, writeFileSync, statSync, renameSync, readFileSync } from 'fs';
+src\limbs\creative\VideoAssemblerLimb.ts:104:        if (!existsSync(finalDir)) mkdirSync(finalDir, { recursive: true });
+src\limbs\creative\VideoAssemblerLimb.ts:105:        if (!existsSync(clipDir)) mkdirSync(clipDir, { recursive: true });
+src\limbs\creative\VideoAssemblerLimb.ts:106:        if (!existsSync(stagingDir)) mkdirSync(stagingDir, { recursive: true });
+src\limbs\creative\VideoAssemblerLimb.ts:191:            writeFileSync(sceneConcatPath, sceneVideoConcatContent);
+src\limbs\creative\VideoAssemblerLimb.ts:223:        writeFileSync(masterConcatPath, masterConcatContent);
+src\limbs\creative\VideoAssemblerLimb.ts:269:        const { existsSync: exists, mkdirSync: mkDir, writeFileSync: writeFile, statSync: stat } = await import('fs');
+src\utils\WikiEquipmentEnricher.ts:20:import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+src\utils\WikiEquipmentEnricher.ts:145:                mkdirSync(dir, { recursive: true });
+src\utils\WikiEquipmentEnricher.ts:159:            const raw = readFileSync(filePath, 'utf8');
+src\utils\WikiEquipmentEnricher.ts:177:            writeFileSync(filePath, JSON.stringify({ ...data, _cachedAt: Date.now() }, null, 2), 'utf8');
+src\limbs\creative\StoryboardLimbV2.ts:7:import { VectorDB } from '../../utils/VectorDB.js';
+src\limbs\creative\StoryboardLimbV2.ts:10:import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
+src\limbs\creative\StoryboardLimbV2.ts:52:        private readonly vectorDB: VectorDB,
+src\limbs\creative\StoryboardLimbV2.ts:266:                    writeFileSync(outputPath, JSON.stringify({ bookId: book.id, bookTitle: book.title, profile, scenes, neurologicalContext: { yaostate, yinYang } }, null, 2));
+src\limbs\creative\StoryboardLimbV2.ts:469:                    localConfigs = JSON.parse(readFileSync(kbdSubstratePath, 'utf8'));
+src\limbs\creative\StoryboardLimbV2.ts:476:                    boneAudit = JSON.parse(readFileSync(boneAuditPath, 'utf8'));
+src\limbs\creative\StoryboardLimbV2.ts:486:                kinematicsSubstrate = JSON.parse(readFileSync(kinematicsPath, 'utf8'));
+src\limbs\creative\StoryboardLimbV2.ts:534:            // Fallback to VectorDB if no exact match found
+src\limbs\creative\StoryboardLimbV2.ts:558:                                    logger.info({ scene: scene.index, npcId, name: profile.name }, 'Forensic Casting: Match Found via VectorDB/BioIntel.');
+src\limbs\creative\StoryboardLimbV2.ts:662:                    // Fallback to VectorDB
+src\limbs\creative\StoryboardLimbV2.ts:681:                            logger.info({ scene: scene.index, animationId: scene.animationId, duration: scene.duration }, 'Forensic Acting: VectorDB Match Found.');
+src\limbs\creative\StoryboardLimbV2.ts:713:            if (!existsSync(pedagogyDir)) mkdirSync(pedagogyDir, { recursive: true });
+src\limbs\creative\StoryboardLimbV2.ts:738:            writeFileSync(filePath, JSON.stringify(profile, null, 2));
+src\scripts_backup\decode_npc_handlers.ts:9:    const rawData = JSON.parse(fs.readFileSync(HANDLER_LINKS, "utf-8"));
+src\scripts_backup\decode_npc_handlers.ts:51:    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(mapping, null, 2));
+src\utils\WikiEnricher.ts:4:import { existsSync, mkdirSync, writeFileSync } from 'fs';
+src\utils\WikiEnricher.ts:405:            mkdirSync(join(dest, '..'), { recursive: true });
+src\utils\WikiEnricher.ts:407:        writeFileSync(dest, buffer);
+src\engines\OrchestrateEngine.ts:3:import { existsSync, mkdirSync, readdirSync, statSync, readFileSync } from 'fs';
+src\engines\OrchestrateEngine.ts:5:import Database from 'better-sqlite3';
+src\engines\OrchestrateEngine.ts:84:import { VectorDB } from '../utils/VectorDB.js';
+src\engines\OrchestrateEngine.ts:176:    private readonly vectorDB: VectorDB;
+src\engines\OrchestrateEngine.ts:274:        this.vectorDB = new VectorDB({ client: this.client });
+src\engines\OrchestrateEngine.ts:437:        this.trainingCollector.setVectorDB(this.vectorDB);
+src\engines\OrchestrateEngine.ts:460:            logger.error({ err: dbInit.error }, 'Failed to initialize VectorDB Substrate');
+src\engines\OrchestrateEngine.ts:462:            logger.debug('VectorDB Substrate nominal.');
+src\engines\OrchestrateEngine.ts:592:                logger.error({ err: dbInit.error }, 'Failed to initialize VectorDB Substrate');
+src\engines\OrchestrateEngine.ts:705:                    VectorDB: this.vectorDB,
+src\engines\OrchestrateEngine.ts:995:            VectorDB: this.vectorDB,
+src\engines\OrchestrateEngine.ts:1082:        this.nodeTester.registerLimbs({ VectorDB: this.vectorDB });
+src\engines\OrchestrateEngine.ts:1118:            jargonDescription: 'Invokes the MemoryConsolidationEngine to group redundant nodes and synthesize overarching generative rules in the VectorDB.',
+src\engines\OrchestrateEngine.ts:2139:            description: 'Inspect the VectorDB learning memory for health and row counts.',
+src\engines\OrchestrateEngine.ts:2141:            jargonDescription: 'Performs a structural inspection of the VectorDB substrate, reporting record counts and index integrity.',
+src\engines\OrchestrateEngine.ts:2157:            description: 'Backup the learning VectorDB to a safe secondary location.',
+src\engines\OrchestrateEngine.ts:2159:            jargonDescription: 'Executes a substrate-level backup of the active learning VectorDB to a secondary persistence layer.',
+src\engines\OrchestrateEngine.ts:2173:            description: 'Compress the learning VectorDB by vacuuming and removing old entries.',
+src\engines\OrchestrateEngine.ts:2191:            description: 'Attempt to repair corruption in the learning VectorDB by vacuuming.',
+src\engines\OrchestrateEngine.ts:2306:                // Developmental Memory: Ingest into VectorDB
+src\engines\OrchestrateEngine.ts:3341:            description: 'Verify the structural integrity and path resolution of the VectorDB substrate.',
+src\engines\OrchestrateEngine.ts:3352:                    if (!existsSync(dbDir)) mkdirSync(dbDir, { recursive: true });
+src\engines\OrchestrateEngine.ts:3429:                                const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+src\engines\OrchestrateEngine.ts:4234:                const { writeFileSync, mkdirSync, existsSync } = await import('fs');
+src\engines\OrchestrateEngine.ts:4239:                if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+src\engines\OrchestrateEngine.ts:4242:                writeFileSync(awarenessPath, content, 'utf8');
+src\engines\OrchestrateEngine.ts:4244:                // Embed into VectorDB for semantic retrieval
+src\engines\OrchestrateEngine.ts:4246:                this.renderer.success(`Ã°Å¸Â§Â  [Cognitive Engram] Output synthesized into stateful VectorDB awareness.`);
+src\engines\OrchestrateEngine.ts:4442:                fs.mkdirSync(dir, { recursive: true });
+src\engines\OrchestrateEngine.ts:4446:            fs.writeFileSync(request.targetPath, code, 'utf8');
+src\engines\OrchestrateEngine.ts:4620:                // 5. Add to VectorDB for future recall
+src\limbs\creative\WebAppForgeLimb.ts:4:import { existsSync, mkdirSync, writeFileSync, readdirSync, lstatSync, copyFileSync, readFileSync } from 'fs';
+src\limbs\creative\WebAppForgeLimb.ts:40:            const data = JSON.parse(readFileSync(templatesJson, 'utf8'));
+src\limbs\creative\WebAppForgeLimb.ts:67:        if (!existsSync(dest)) mkdirSync(dest, { recursive: true });
+src\limbs\creative\WebAppForgeLimb.ts:92:            mkdirSync(targetPath, { recursive: true });
+src\limbs\creative\WebAppForgeLimb.ts:97:            if (!existsSync(srcDir)) mkdirSync(srcDir, { recursive: true });
+src\limbs\creative\WebAppForgeLimb.ts:99:            writeFileSync(join(targetPath, 'tailwind.config.ts'), SOVEREIGN_TAILWIND_CONFIG);
+src\limbs\creative\WebAppForgeLimb.ts:100:            writeFileSync(join(srcDir, 'index.css'), SOVEREIGN_MAIN_CSS);
+src\limbs\creative\WebAppForgeLimb.ts:101:            writeFileSync(join(srcDir, 'App.tsx'), GHOST_LIMB_APP_TSX(blueprint.name, blueprint.features));
+src\limbs\creative\WebAppForgeLimb.ts:103:            writeFileSync(join(targetPath, 'INTENT_MANIFEST.md'),
+src\limbs\creative\WebAppForgeLimb.ts:124:            mkdirSync(componentsDir, { recursive: true });
+src\limbs\creative\WebAppForgeLimb.ts:134:            writeFileSync(componentPath, code);
+src\limbs\creative\WebAppForgeLimb.ts:154:            writeFileSync(componentPath, code);
+src\limbs\creative\WebAppForgeLimb.ts:202:            if (!existsSync(targetPath)) mkdirSync(targetPath, { recursive: true });
+src\limbs\creative\WebAppForgeLimb.ts:207:                if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+src\limbs\creative\WebAppForgeLimb.ts:208:                writeFileSync(fullPath, content as string);
+src\limbs\creative\WebAppForgeLimb.ts:212:            writeFileSync(join(targetPath, 'INTENT_MANIFEST.md'),
+src\monitor\ClinicalLogger.ts:1:import { appendFileSync, existsSync, mkdirSync, statSync, renameSync } from 'fs';
+src\monitor\ClinicalLogger.ts:28:            mkdirSync(this.logDir, { recursive: true });
+src\utils\VectorDB.ts:1:import Database from 'better-sqlite3';
+src\utils\VectorDB.ts:5:import { readFileSync, existsSync } from 'fs';
+src\utils\VectorDB.ts:13:const logger = createLogger('VectorDB');
+src\utils\VectorDB.ts:36:export interface VectorDBConfig {
+src\utils\VectorDB.ts:41: * VectorDB Ã¢â‚¬â€ Sovereign memory substrate using better-sqlite3.
+src\utils\VectorDB.ts:44:export class VectorDB {
+src\utils\VectorDB.ts:51:    constructor(config: VectorDBConfig) {
+src\utils\VectorDB.ts:83:            logger.info({ dbPath: this.dbPath }, 'Initializing VectorDB Substrate');
+src\utils\VectorDB.ts:112:        SovereignDBLifecycle.getInstance().register('VectorDB', this);
+src\utils\VectorDB.ts:241:                const now = ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB');
+src\utils\VectorDB.ts:388:            `).run(strength, ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB'), id);
+src\utils\VectorDB.ts:413:            const content = readFileSync(filePath, 'utf-8');
+src\utils\VectorDB.ts:425:                return { ok: false, error: new Error('Embedding capability (client.embed) not available on VectorDB.') };
+src\utils\VectorDB.ts:431:            const inferenceTime = ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB');
+src\utils\VectorDB.ts:488:                createdAt: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB'),
+src\utils\VectorDB.ts:520:                createdAt: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB'),
+src\utils\VectorDB.ts:552:                createdAt: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB'),
+src\utils\VectorDB.ts:610:            `).run(tick, eventId, type, JSON.stringify(data), ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB'));
+src\utils\VectorDB.ts:627:            logger.info('VectorDB WAL checkpointed and closed.');
+src\limbs\creative\VoiceLimb.ts:1:import { writeFileSync } from 'fs';
+src\limbs\creative\VoiceLimb.ts:142:        const { mkdirSync, existsSync, writeFileSync, rmSync } = await import('fs');
+src\limbs\creative\VoiceLimb.ts:145:        if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
+src\limbs\creative\VoiceLimb.ts:186:                writeFileSync(segPath, res.value);
+src\limbs\creative\VoiceLimb.ts:201:                    mkdirSync(outDir, { recursive: true });
+
+[Showing results with pagination = limit: 250]

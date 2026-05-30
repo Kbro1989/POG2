@@ -1,0 +1,42 @@
+import { OfficialPlayerDataApi } from './src/utils/OfficialPlayerDataApi.js';
+
+async function test() {
+    console.log('--- OfficialPlayerDataApi Verification ---\n');
+
+    const testPlayer = 'Zezima'; // Use a known high-profile player for testing
+
+    console.log(`Testing player: ${testPlayer}`);
+
+    // 1. Profile Test
+    console.log('\nFetching Profile...');
+    const profile = await OfficialPlayerDataApi.getProfile(testPlayer);
+    if (profile) {
+        console.log('Profile: PASS');
+        console.log('  Name:', profile.name);
+        console.log('  Total XP:', profile.totalXp);
+        console.log('  Combat Level:', profile.combatLevel);
+    } else {
+        console.log('Profile: FAIL (could not fetch or parse)');
+    }
+
+    // 2. Hiscores Test
+    console.log('\nFetching Hiscores...');
+    const hiscores = await OfficialPlayerDataApi.getHiscores(testPlayer);
+    if (hiscores) {
+        console.log('Hiscores: PASS');
+        console.log('  Entries found:', hiscores.size);
+        const overall = hiscores.get('Overall');
+        if (overall) {
+            console.log('  Overall Rank:', overall.rank);
+            console.log('  Overall XP:', overall.xp);
+        }
+        const attack = hiscores.get('Attack');
+        if (attack) {
+            console.log('  Attack Level:', attack.level);
+        }
+    } else {
+        console.log('Hiscores: FAIL (could not fetch or parse)');
+    }
+}
+
+test().catch(console.error);

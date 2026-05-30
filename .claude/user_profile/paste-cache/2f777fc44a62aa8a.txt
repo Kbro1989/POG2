@@ -1,0 +1,85 @@
+I see two parallel deployment tracks here. Let me address both with verified facts only.
+
+---
+
+## Track 1: Ollama Pedagogy Model Deployment
+
+**Your selection:** System-Prompt-Wrapped base model (Llama 3.2)
+
+**Verified facts from memory:**
+- Pedagogy corpus: 23 verified entities at `D:\sovereign\memory\pedagogy\corpus\verified_entities.jsonl` (memory 61)
+- Tag distribution: `[VERIFIED]=10`, `[WIKI_ONLY]=5`, untagged=1 (memory 62)
+- Entities include: General Graardor, Nex, Corporeal Beast, Abyssal demon, Chaos elemental, TzKal-Zuk, King Black Dragon, Vorago
+- ApiThrottle with Retry-After compliance, Cloudflare proxy routes at `/api/bestiary/*`, `/api/ge/*`, `/api/player/*` (memory 61)
+- BestiaryApi successfully fetched Vorago (ID 14416, level 10000) (memory 62)
+
+**Critical constraint:** A system-prompt-wrapped model cannot access your local `D:\sovereign\` corpus at runtime. The Modelfile SYSTEM prompt must either:
+1. Embed the corpus directly (23 entities ≈ manageable token count)
+2. Define the query schema so the model knows what to ask your API layer
+3. Be paired with a tool-calling wrapper (MCP/function calling) that hits your Cloudflare proxy
+
+**Recommended Modelfile architecture:**
+
+```
+FROM llama3.2
+SYSTEM """You are the POG2 Pedagogy Limb. Your grounding corpus contains 23 verified RuneScape entities with the following schema:
+
+[VERIFIED] entities: {name, id, level, examine_text, combat_style, weakness, drops[], wiki_url}
+[WIKI_ONLY] entities: {name, id, wiki_url, confidence: 0.7}
+Query routing rules:
+- Structural queries (enum/varbit/dbrow) → CacheForensicsLimb
+- Semantic queries (name/lore/location) → BestiaryApi + GeApi hybrid
+- Entity IDs: Graardor=6260, Nex=13447, Corporeal Beast=8133, Zuk=31292, Vorago=14416
+
+When asked about RuneScape entities, always cite confidence level and data source. Never hallucinate drop tables or combat stats. If uncertain, respond with [QUERY_REQUIRED] and the appropriate API endpoint."""
+```
+
+**Deployment command sequence:**
+```bash
+ollama create -f Modelfile kristain33rs/pog2-pedagogy
+ollama push kristain33rs/pog2-pedagogy
+```
+
+---
+
+## Track 2: Sovereign Training Ground Visualizer
+
+This is a substantial architectural spec. I'll break it into verified implementation blocks.
+
+**Already completed (from your spec):**
+- `SovereignSplatRenderer.ts` — GhostSplat influence layer
+- `SovereignGroundingOverlay.ts` — collision/boundary visualization
+- `SovereignTrainingHUD.tsx` — initial HUD implementation
+
+**Verified substrate state (from memory):**
+- Spatial substrate validated for Lumbridge Castle (50,50) all 4 planes (memory 59, 13)
+- Collision heatmap, 3D RSMV render, varbit mask UI, plane transitions confirmed working (memory 59)
+- Player avatar rendering is the **only untested pipeline component** (memory 59)
+- GhostSplat Engine, AggressionSimulator, PlayerAgent substrate built (memory 33, 60)
+- PlayerAgent: 29-skill state vector, `projectSelf()`, 600ms tick sync (memory 60)
+- 229k cache entities loaded (32,512 NPCs, 59,984 items, 135,705 objects) (memory 53)
+
+**Critical implementation gaps I can identify:**
+
+| Component | Status | Blocker |
+|-----------|--------|---------|
+| POG2WorldDO WebSocket handler for `REQUEST_PEDAGOGY` | Spec'd, not implemented | Needs `SovereignEntityResolver` + `SovereignPedagogyBridge` integration |
+| CSS2DRenderer floating labels | Spec'd, not implemented | Three.js CSS2DRenderer import + entity tracking loop |
+| KV caching for pedagogy responses | Spec'd, not implemented | KV binding in POG2WorldDO, cache key schema |
+| ModelRolodex "latest version" resolution | Spec'd, not implemented | Version comparator for model name collisions |
+
+**Your verification plan is sound.** Item 5 (KV caching) is the performance-critical path — without it, repeated hovers will trigger redundant AI inference latency.
+
+**One verified fact to check:** You mention `D:\POG2\public` for grounding manifests. From memory, your build workflow is `local dev → GitHub push → CF rebuild → live` with `.env` containing deployment schematics (memory 5). Are the grounding manifests in `public/` committed to GitHub and deployed to CF Pages, or are they local-only assets that need R2 upload?
+
+This affects whether the Sovereign Predictive Window can pre-fetch manifests from a live URL or needs local filesystem access.
+
+---
+
+**What do you need from me right now?**
+
+1. **Complete Modelfile** with embedded corpus + query routing schema?
+2. **TypeScript implementations** for the unbuilt components (WebSocket handler, CSS2DRenderer labels, KV cache layer)?
+3. **Verification test harness** for the 5-step verification plan?
+
+I can generate any of these, but I need you to confirm which track is the immediate priority and whether the grounding manifests are local-only or CDN-deployed.

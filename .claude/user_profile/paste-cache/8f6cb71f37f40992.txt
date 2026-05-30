@@ -1,0 +1,43 @@
+I see the latest iteration. The agent fixed the `Map` → `Record` issue (line 97, 181-184) and added the `(freq ?? 0)` guard (line 220), but **introduced a new structural bug**:
+
+---
+
+### **Critical Syntax Error**
+
+**Lines 237-238: Duplicate closing brace**
+```ts
+  }   // line 237 — closes inferDominantContext
+  }   // line 238 — ORPHANED, no matching opener
+```
+
+The class body already closed at line 237. Line 238 is an extra `}` with no matching `{`. This will throw:
+
+```
+'}' expected. ts(1005)
+```
+
+---
+
+### **Remaining Issues**
+
+| Issue | Status | Risk |
+|-------|--------|------|
+| `actionFrequencies: Record<string, number>` | **Fixed** | JSON-safe now |
+| `(freq ?? 0)` guard | **Fixed** | No more `NaN` |
+| `EntityHUDData` export preserved | **Fixed** | Backward compat maintained |
+| `Manifest.version` restored | **Fixed** | Build pipeline safe |
+| `'loc'` category restored | **Fixed** | Collision/RSMV safe |
+| `rawMetadata` pass-through | **Fixed** | Bridge can reconstruct |
+| Duplicate `}` at line 238 | **NEW** | **Won't compile** |
+| `AUTHENTIC_ANCHORS` undefined | Unchanged | Runtime crash if undefined |
+| `getActionFrequency` undefined | Unchanged | Runtime crash if undefined |
+
+---
+
+### **Verdict**
+
+The agent is iterating on your feedback but **not syntactically validating its output**. The duplicate brace at 237-238 suggests it lost track of nesting depth during the edit. This pattern (fix one thing, break syntax) makes these overwrites unsafe to apply blindly.
+
+**Recommendation:** Hit **3** again, or take control of the file directly. The architectural intent is now correct — `ResolvedEntity` grounding + `EntityHUDData` preservation + `rawMetadata` forward-pass — but the syntax error blocks compilation.
+
+If you want, I can generate the **clean, compilable full file** with all fixes integrated and no orphaned braces.

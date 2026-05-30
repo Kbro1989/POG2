@@ -1,0 +1,174 @@
+import { rsmvBridge } from '../utils/RSMVBridge.js';
+import { Result, ok, err } from '../core/models.js';
+import { createLogger } from '../utils/logger.js';
+import manifestData from '../assets/manifests/authentic_spawn_manifest.json';
+
+const logger = createLogger('SovereignEntityResolver');
+
+interface ManifestEntity {
+    id: string;
+    title: string;
+    entityId: number;
+    actions: string[];
+    meta: Record<string, any>;
+}
+
+interface Manifest {
+    version: string;
+    entities: ManifestEntity[];
+}
+
+export interface EntityHUDData {
+    name: string;
+    type: 'npc' | 'item' | 'object' | 'loc';
+    sovereignId: string;
+    stats: {
+        combat?: number;
+        level?: number;
+        requirements?: Record<string, number>;
+        degradation?: { charges: number; max: number };
+    };
+    actionables: Array<{
+        action: string;
+        requirements: string[];
+        effect: string;
+    }>;
+    pedagogy: {
+        description: string;
+        examine: string;
+    };
+    emotionalWeight: Record<string, number>;
+    hexagramPin: {
+        id: number;
+        name: string;
+        line: number;
+    };
+}
+
+/**
+ * SovereignEntityResolver
+ *
+ * Bridges raw cache IDs to the "Sovereign Truth" found in manifests
+ * and enriched by the pedagogy substrate.
+ *
+ * Refactored for DO compatibility: Uses bundled JSON manifest instead of fs.
+ */
+export class SovereignEntityResolver {
+    private static instance: SovereignEntityResolver;
+    private manifest: Manifest;
+
+    public static getInstance(): SovereignEntityResolver {
+        if (!SovereignEntityResolver.instance) {
+            SovereignEntityResolver.instance = new SovereignEntityResolver();
+        }
+        return SovereignEntityResolver.instance;
+    }
+
+    private constructor() {
+        this.manifest = manifestData;
+        logger.info(`Sovereign Manifest Initialized: ${this.manifest.entities.length} entities grounded.`);
+    }
+
+    /**
+     * resolve - Maps a raw entityId to a high-fidelity HUD data object.
+     */
+    public async resolve(entityId: number): Promise<Result<EntityHUDData>> {
+        // 1. Find Ground Truth in bundled manifest
+        const truth = this.manifest.entities.find(e => e.entityId === entityId);
+
+        // 2. Enrich with raw cache data from RSMVBridge
+        // Try NPC -> Object -> Item -> Loc
+        const npcRes = await rsmvBridge.getNpc(entityId);
+        if (npcRes.ok) {
+            const npc = npcRes.value;
+            return ok(this.mapToHUD(npc, 'npc', truth));
+        }
+
+        const objRes = await rsmvBridge.getObject(entityId);
+        if (objRes.ok) {
+            const obj = objRes.value;
+            return ok(this.mapToHUD(obj, 'object', truth));
+        }
+
+        const itemRes = await rsmvBridge.getItem(entityId);
+        if (itemRes.ok) {
+            const item = itemRes.value;
+            return ok(this.mapToHUD(item, 'item', truth));
+        }
+
+        return ok(this.mapToHUD({}, 'loc', truth, entityId));
+    }
+
+    private mapToHUD(raw: any, type: EntityHUDData['type'], truth: ManifestEntity | undefined, fallbackId?: number): EntityHUDData {
+        const id = truth?.id || `S-${type.toUpperCase()}-${raw.id || fallbackId}`;
+
+        return {
+            name: truth?.title || raw.name || `Entity ${fallbackId}`,
+            type,
+            sovereignId: id,
+            stats: {
+                combat: raw.combatLevel || 0,
+                level: raw.combatLevel || 0,
+                requirements: {}, // To be filled by PedagogyBridge
+                degradation: this.parseDegradation(raw.extra)
+            },
+            actionables: (truth?.actions || raw.actions || []).map(act => ({
+                action: act,
+                requirements: this.inferRequirements(act, raw),
+                effect: this.inferActionEffect(act)
+            })),
+            pedagogy: {
+                description: truth?.meta?.description || 'No pedagogical grounding available.',
+                examine: truth?.meta?.examine || 'Observation inconclusive.'
+            },
+            emotionalWeight: {}, // To be filled by PedagogyBridge
+            hexagramPin: {
+                id: 0,
+                name: 'The Void',
+                line: 0
+            }
+        };
+    }
+
+    private parseDegradation(extra: any): { charges: number, max: number } {
+        if (!extra || !Array.isArray(extra)) return { charges: 0, max: 0 };
+
+        const chargesProp = extra.find((e: any) => e.prop === 7479);
+        const variantProp = extra.find((e: any) => e.prop === 7480);
+
+        const charges = chargesProp?.intvalue || 0;
+
+        let max = 100000; // Standard trimmed masterwork
+        if (variantProp?.intvalue === 1) max = 200000; // Custom-fit
+
+        return { charges, max };
+    }
+
+    private inferActionEffect(action: string): string {
+        const lower = action.toLowerCase();
+        if (lower.includes('attack') || lower.includes('strike')) return 'initiate_combat';
+        if (lower.includes('talk') || lower.includes('chat')) return 'open_dialogue';
+        if (lower.includes('pickpocket') || lower.includes('steal')) return 'attempt_thieving';
+        if (lower.includes('capture')) return 'initiate_capture';
+        if (lower.includes('check') || lower.includes('inspect')) return 'display_status';
+        if (lower.includes('remove') || lower.includes('unequip')) return 'unequip_item';
+        if (lower.includes('wield') || lower.includes('equip')) return 'equip_item';
+        if (lower.includes('use') || lower.includes('activate')) return 'interact_object';
+        if (lower.includes('examine') || lower.includes('look')) return 'perform_inspection';
+        return 'generic_interaction';
+    }
+
+    private inferRequirements(action: string, raw: any): string[] {
+        const lower = action.toLowerCase();
+        const reqs: string[] = [];
+
+        if (lower.includes('attack') || lower.includes('strike')) {
+            if (raw.combatLevel) reqs.push(`combat >= ${raw.combatLevel}`);
+        }
+        if (lower.includes('wield') || lower.includes('equip')) {
+            if (raw.combatLevel) reqs.push(`level >= ${raw.combatLevel}`);
+        }
+
+        return reqs;
+    }
+}

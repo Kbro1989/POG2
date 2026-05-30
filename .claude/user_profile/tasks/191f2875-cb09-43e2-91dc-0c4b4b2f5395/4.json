@@ -1,0 +1,8 @@
+{
+  "id": "4",
+  "subject": "Update SovereignEntityResolver logic",
+  "description": "Update SovereignEntityResolver with authentic anchor registry and vocabulary frequency mapping.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

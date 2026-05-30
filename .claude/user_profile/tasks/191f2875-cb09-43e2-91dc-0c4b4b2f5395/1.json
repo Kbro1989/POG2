@@ -1,0 +1,8 @@
+{
+  "id": "1",
+  "subject": "Implement Sovereign Pedagogy Resolution Chain",
+  "description": "Implement the server-side resolution chain for the Sovereign Training HUD, including the SovereignEntityResolver and SovereignPedagogyBridge, and updating the POG2WorldDO / RSMVServerDO to handle REQUEST_PEDAGOGY messages.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

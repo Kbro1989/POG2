@@ -1,0 +1,8 @@
+{
+  "id": "1",
+  "subject": "Implement SovereignCacheProvider",
+  "description": "Create a singleton provider to map wiki titles to canonical game IDs using files in D:\\sovereign\\cache_pedagogy\\json_dumps\\ (items.json, npcs.json).",
+  "status": "completed",
+  "blocks": [],
+  "blockedBy": []
+}

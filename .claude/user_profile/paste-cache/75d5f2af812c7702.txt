@@ -1,0 +1,94 @@
+ The corpus generation script is being edited. I see the target entities list — some corrections needed:
+
+**Removed (non-RS3 or non-existent):**
+- `Vorkath` — OSRS-only boss
+- `The Elder (boss)` — Not a real RS3 entity
+- `Sovereign platebody` — Your custom item, not in cache
+- `Omni-nexus platebody` — Your custom item, not in cache
+- `Bandos General` — Duplicate of `General Graardor`
+- `Void Knight` — Not a monster, NPC faction
+- `Scythe of vitiation` — Not a real item (maybe `Scythe of vitur`? OSRS)
+
+**Added (canonical RS3):**
+- `King Black Dragon` — Classic boss, verified in Bestiary
+- `Vorago` — High-tier RS3 boss
+
+**Player list corrected:**
+- Removed `Zezima` and ` la- la` (typo?)
+- Kept `Pick of Gods` (your account)
+
+---
+
+## Corpus Generation Script — Key Implementation
+
+The script should produce `.jsonl` format with proper tagging:
+
+```typescript
+// generate_pedagogy_corpus.ts — core logic
+async function generateMonsterCorpus(names: string[]) {
+    const examples = [];
+    
+    for (const name of names) {
+        // 1. Bestiary API (canonical)
+        const bestiary = await BestiaryApi.enrichByName(name);
+        
+        // 2. Wiki enrichment (semantic)
+        const wiki = await WikiEquipmentEnricher.enrichMonster(name);
+        
+        // 3. Cache cross-reference
+        const cache = await CacheForensicsLimb.resolveWikiTitle(name);
+        
+        // 4. Tag based on data quality
+        const tags = [];
+        if (bestiary) tags.push('[VERIFIED]');
+        else tags.push('[WIKI_ONLY]');
+        
+        if (bestiary?._membersOverride) tags.push('[MEMBERS_OVERRIDE]');
+        
+        // 5. Format output
+        examples.push({
+            instruction: `Generate verified entity definition for ${name}`,
+            input: JSON.stringify({
+                bestiary: bestiary || null,
+                wiki: wiki.monsterMeta || null,
+                cache: cache.confidence !== 'none' ? cache : null
+            }),
+            output: formatMonsterOutput(bestiary, wiki, cache, tags),
+            tags,
+            verified: !!bestiary
+        });
+    }
+    
+    return examples;
+}
+```
+
+**Output format example:**
+```json
+{
+  "instruction": "Generate verified entity definition for Abyssal demon",
+  "input": {
+    "bestiary": {"id": 1615, "name": "Abyssal demon", "level": 98, ...},
+    "wiki": {"combatLevel": 98, "weakness": "Slashing", ...},
+    "cache": {"primaryId": 1615, "confidence": "exact"}
+  },
+  "output": "[VERIFIED] Entity 1615: Abyssal demon. Combat level 98, 8,500 lifepoints. Weakness: Slashing. Slayer requirement: 85 (Abyssal demons). Spawn areas: RuneScape Surface, The Abyss, Ancient cavern. [CACHE_WIKI_MATCH] Both sources agree on all combat stats.",
+  "tags": ["[VERIFIED]", "canonical", "cross_referenced"],
+  "verified": true
+}
+```
+
+---
+
+## Verification After Generation
+
+```bash
+cd D:\POG2
+npx tsx src/scripts/generate_pedagogy_corpus.ts
+
+# Check output
+head -5 pog2_pedagogy_corpus.jsonl
+wc -l pog2_pedagogy_corpus.jsonl  # Should be ~15 (items + monsters + players)
+```
+
+The script looks correct. Run it and verify the output format matches expectations. The entity list is now clean — no OSRS-only or custom items polluting the corpus.

@@ -1,0 +1,153 @@
+PS D:\pog2> npm run build
+
+> pog2-cli@1.1.0 build
+> tsc
+
+src/clients/ModelClient.ts:25:10 - error TS2305: Module '"../core/models.js"' has no exported member 'ModelResponse'.
+
+25     type ModelResponse,
+            ~~~~~~~~~~~~~
+
+src/clients/ModelClient.ts:30:5 - error TS2440: Import declaration conflicts with local declaration of 'AITaskType'.
+
+30     type AITaskType,
+       ~~~~~~~~~~~~~~~
+
+src/engines/gameplay/AggressionSimulator.ts:41:52 - error TS18047: 'monster.combatLevel' is possibly 'null'.
+
+41         const def = Math.max(1, monster.defence || monster.combatLevel * 0.8);
+                                                      ~~~~~~~~~~~~~~~~~~~
+
+src/engines/gameplay/AggressionSimulator.ts:61:28 - error TS18047: 'monster.lifePoints' is possibly 'null'.
+
+61         const timeToKill = monster.lifePoints > 0 && dps > 0
+                              ~~~~~~~~~~~~~~~~~~
+
+src/engines/gameplay/AggressionSimulator.ts:62:15 - error TS18047: 'monster.lifePoints' is possibly 'null'.
+
+62             ? monster.lifePoints / dps
+                 ~~~~~~~~~~~~~~~~~~
+
+src/utils/OfficialPlayerDataApi.ts:123:13 - error TS2352: Conversion of type 'string | undefined' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'string' is not comparable to type 'number'.
+
+123         id: Object.entries(SKILL_NAMES).find(([_, n]) => n === name)?.[0] as number || -1,
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/utils/WikiEquipmentEnricher.ts:88:15 - error TS2304: Cannot find name 'WikiItemMeta'.
+
+88     itemMeta: WikiItemMeta | null;
+                 ~~~~~~~~~~~~
+
+src/utils/WikiEquipmentEnricher.ts:243:25 - error TS2304: Cannot find name 'ApiThrottle'.
+
+243                         ApiThrottle.getInstance().reportRetryAfter('wiki', parseInt(retryAfter, 10));
+                            ~~~~~~~~~~~
+
+src/utils/WikiEquipmentEnricher.ts:290:25 - error TS2304: Cannot find name 'ApiThrottle'.
+
+290                         ApiThrottle.getInstance().reportRetryAfter('wiki', parseInt(retryAfter, 10));
+                            ~~~~~~~~~~~
+
+src/utils/WikiEquipmentEnricher.ts:538:59 - error TS2304: Cannot find name 'WikiItemMeta'.
+
+538     public async parseItemMeta(itemName: string): Promise<WikiItemMeta | null> {
+                                                              ~~~~~~~~~~~~
+
+src/utils/WikiEquipmentEnricher.ts:611:19 - error TS2322: Type '{ itemName: string; quantity: string; rarity: string; isMembers: boolean | null; notes: string; geValue: number | null; }[]' is not assignable to type 'WikiDropEntry[]'.
+  Type '{ itemName: string; quantity: string; rarity: string; isMembers: boolean | null; notes: string; geValue: number | null; }' is not assignable to type 'WikiDropEntry'.
+    Types of property 'isMembers' are incompatible.
+      Type 'boolean | null' is not assignable to type 'boolean'.
+        Type 'null' is not assignable to type 'boolean'.
+
+611             const mainEntries: WikiDropEntry[] = dropLines.map(dl => ({
+                      ~~~~~~~~~~~
+
+src/utils/WikiEquipmentEnricher.ts:694:15 - error TS2322: Type '{ itemName: string; quantity: string; rarity: string; isMembers: boolean | null; notes: string; geValue: number | null; }[]' is not assignable to type 'WikiDropEntry[]'.
+  Type '{ itemName: string; quantity: string; rarity: string; isMembers: boolean | null; notes: string; geValue: number | null; }' is not assignable to type 'WikiDropEntry'.
+    Types of property 'isMembers' are incompatible.
+      Type 'boolean | null' is not assignable to type 'boolean'.
+        Type 'null' is not assignable to type 'boolean'.
+
+694         const entries: WikiDropEntry[] = dropLines.map(dl => ({
+                  ~~~~~~~
+
+src/utils/WikiEquipmentEnricher.ts:804:13 - error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+
+804             extract: await this.fetchExtract(pageTitle),
+                ~~~~~~~
+
+  src/utils/WikiEquipmentEnricher.ts:93:5
+    93     extract?: string;
+           ~~~~~~~
+    The expected type comes from property 'extract' which is declared here on type 'WikiPageData'
+
+src/utils/WikiEquipmentEnricher.ts:961:62 - error TS2551: Property 'getEnumDetails' does not exist on type 'CacheForensicsLimb'. Did you mean 'getItemDetails'?
+
+961                 return { type: 'enum', data: await forensics.getEnumDetails(id), tag: '[CACHE_VERIFIED]' };
+                                                                 ~~~~~~~~~~~~~~
+
+  src/limbs/spatial/CacheForensicsLimb.ts:387:18
+    387     public async getItemDetails(itemId: number): Promise<Result<any, Error>> {
+                         ~~~~~~~~~~~~~~
+    'getItemDetails' is declared here.
+
+src/utils/WikiEquipmentEnricher.ts:1033:13 - error TS18047: 'bonuses.tier' is possibly 'null'.
+
+1033         if (bonuses.tier > 0) {
+                 ~~~~~~~~~~~~
+
+src/utils/WikiEquipmentEnricher.ts:1034:25 - error TS18047: 'bonuses.class' is possibly 'null'.
+
+1034             const cls = bonuses.class.toLowerCase();
+                             ~~~~~~~~~~~~~
+
+src/utils/WikiEquipmentEnricher.ts:1047:13 - error TS18047: 'bonuses.damage' is possibly 'null'.
+
+1047         if (bonuses.damage > 0) patch.damage = bonuses.damage;
+                 ~~~~~~~~~~~~~~
+
+src/utils/WikiEquipmentEnricher.ts:1048:13 - error TS18047: 'bonuses.accuracy' is possibly 'null'.
+
+1048         if (bonuses.accuracy > 0) patch.accuracy = bonuses.accuracy;
+                 ~~~~~~~~~~~~~~~~
+
+src/utils/WikiEquipmentEnricher.ts:1049:13 - error TS18047: 'bonuses.armour' is possibly 'null'.
+
+1049         if (bonuses.armour > 0) patch.armour = bonuses.armour;
+                 ~~~~~~~~~~~~~~
+
+src/utils/WikiEquipmentEnricher.ts:1050:13 - error TS18047: 'bonuses.lifeBonus' is possibly 'null'.
+
+1050         if (bonuses.lifeBonus > 0) patch.lifeBonus = bonuses.lifeBonus;
+                 ~~~~~~~~~~~~~~~~~
+
+src/utils/WikiEquipmentEnricher.ts:1051:13 - error TS18047: 'bonuses.prayerBonus' is possibly 'null'.
+
+1051         if (bonuses.prayerBonus > 0) patch.prayerBonus = bonuses.prayerBonus;
+                 ~~~~~~~~~~~~~~~~~~~
+
+
+Found 21 errors in 4 files.
+
+Errors  Files
+     2  src/clients/ModelClient.ts:25
+     3  src/engines/gameplay/AggressionSimulator.ts:41
+     1  src/utils/OfficialPlayerDataApi.ts:123
+    15  src/utils/WikiEquipmentEnricher.ts:88
+PS D:\pog2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

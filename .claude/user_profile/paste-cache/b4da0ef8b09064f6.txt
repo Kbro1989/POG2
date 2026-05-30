@@ -1,0 +1,807 @@
+
+<!DOCTYPE html>
+<html class="client-nojs" lang="en-GB" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>Calculator:Coordinates - The RuneScape Wiki</title>
+<script>(function(){var className="client-js";var cookie=document.cookie.match(/(?:^|; )wgmwclientpreferences=([^;]+)/);if(cookie){cookie[1].split('%2C').forEach(function(pref){className=className.replace(new RegExp('(^| )'+pref.replace(/-clientpref-\w+$|[^\w-]+/g,'')+'-clientpref-\\w+( |$)'),'$1'+pref+'$2');});}document.documentElement.className=className;}());RLCONF={"wgBreakFrames":false,"wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgRequestId":"43eecabaf703d08b9b1067ef0ba7b4a5","wgCanonicalNamespace":"Calculator","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":116,"wgPageName":"Calculator:Coordinates","wgTitle":"Coordinates","wgCurRevisionId":36982379,"wgRevisionId":36982379,"wgArticleId":455357,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Calculators"],"wgPageViewLanguage":"en-gb","wgPageContentLanguage":"en-gb","wgPageContentModel":"wikitext","wgRelevantPageName":"Calculator:Coordinates","wgRelevantArticleId":455357,"wgTempUserName":null,"wgIsProbablyEditable":true,"wgRelevantPageIsProbablyEditable":true,"wgRestrictionEdit":[],"wgRestrictionMove":[],"simpleBatchUploadMaxFilesPerBatch":{"*":1000},"wgMediaViewerOnClick":true,"wgMediaViewerEnabledByDefault":true,"wgVisualEditor":{"pageLanguageCode":"en-GB","pageLanguageDir":"ltr","pageVariantFallbacks":"en-gb"},"wgMFDisplayWikibaseDescriptions":{"search":false,"watchlist":false,"tagline":false},"wgPopupsFlags":0,"wgEditSubmitButtonLabelPublish":false,"wgCheckUserClientHintsHeadersJsApi":["brands","architecture","bitness","fullVersionList","mobile","model","platform","platformVersion"]};
+RLSTATE={"ext.gadget.switch-infobox-styles":"ready","ext.gadget.stickyTableHeaders":"ready","ext.gadget.falseSubpage":"ready","site.styles":"ready","user.styles":"ready","user":"ready","user.options":"loading","skins.vector.styles.legacy":"ready","skins.vector.search.codex.styles":"ready","ext.visualEditor.desktopArticleTarget.noscript":"ready","ext.embedVideo.styles":"ready"};RLPAGEMODULES=["site","mediawiki.page.ready","mediawiki.toc","skins.vector.legacy.js","mmv.bootstrap","ext.gadget.rsw-util","ext.gadget.exchangePages","ext.gadget.GECharts","ext.gadget.exchangeCreate","ext.gadget.charmadd","ext.gadget.cvuform","ext.gadget.titleparenthesis","ext.gadget.timer","ext.gadget.tooltips","ext.gadget.highlightTable","ext.gadget.checkboxList","ext.gadget.autosort","ext.gadget.switch-infobox","ext.gadget.tabber-maps","ext.gadget.compare","ext.gadget.pengLocations","ext.gadget.topIcons","ext.gadget.Username","ext.gadget.countdown","ext.gadget.autocollapse","ext.gadget.VoS","ext.gadget.Charts","ext.gadget.portables","ext.gadget.submitData","ext.gadget.navbox-tracking","ext.gadget.sidebar-tracking","ext.gadget.autolistsfull","ext.gadget.jsonDoc","ext.gadget.articlefeedback","ext.gadget.transcript-util","ext.gadget.jagexLauncherBetaLink","ext.gadget.hover","ext.gadget.rotations","ext.gadget.calc","ext.gadget.calc2","ext.gadget.killCalc","ext.gadget.infoboxQty","ext.gadget.discalc","ext.gadget.itemDiscalc","ext.gadget.revocalcnew","ext.gadget.questchecker","ext.gadget.armoury","ext.gadget.bestiary","ext.gadget.kiln","ext.gadget.dropDisplay","ext.gadget.hitcalc-pageload","ext.gadget.perkcalc","ext.gadget.dynamicMMG","ext.gadget.popcalc","ext.gadget.capecustomiser","ext.gadget.archcalc","ext.gadget.skillplanner","ext.gadget.yaktrack-calc","ext.gadget.viscalc","ext.gadget.mmgfilter","ext.gadget.dropdown","ext.gadget.autocvu","ext.gadget.newPage","ext.gadget.purge","ext.gadget.ReferenceTooltips","ext.gadget.contributions","ext.gadget.fileDownload","ext.gadget.sectionAnchors","ext.gadget.skinTogglesNew","ext.gadget.utcclock","ext.gadget.relativetime","ext.gadget.events","ext.gadget.oswf","ext.gadget.lazyload","ext.gadget.spoiler","ext.gadget.audiobutton","ext.gadget.audioplayer","ext.gadget.musicmap","ext.gadget.trainingGuideLinks","ext.gadget.searchfocus","ext.gadget.nft","ext.visualEditor.desktopArticleTarget.init","ext.visualEditor.targetLoader","ext.embedVideo.overlay","ext.checkUser.clientHints","ext.popups"];</script>
+<script>(RLQ=window.RLQ||[]).push(function(){mw.loader.impl(function(){return["user.options@12s5i",function($,jQuery,require,module){mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
+}];});});</script>
+<link rel="stylesheet" href="/load.php?lang=en-gb&amp;modules=ext.embedVideo.styles%7Cext.visualEditor.desktopArticleTarget.noscript%7Cskins.vector.search.codex.styles%7Cskins.vector.styles.legacy&amp;only=styles&amp;skin=vector">
+<script async="" src="/load.php?lang=en-gb&amp;modules=startup&amp;only=scripts&amp;raw=1&amp;skin=vector"></script>
+<meta name="ResourceLoaderDynamicStyles" content="">
+<link rel="stylesheet" href="/load.php?lang=en-gb&amp;modules=ext.gadget.falseSubpage%2CstickyTableHeaders%2Cswitch-infobox-styles&amp;only=styles&amp;skin=vector">
+<link rel="stylesheet" href="/load.php?lang=en-gb&amp;modules=site.styles&amp;only=styles&amp;skin=vector">
+<link rel="preload" href="/images/PT-Serif_Bold.woff2?1e237" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="/images/IBMPlexSans-Regular.woff2?588f8" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="/images/IBMPlexSans-Italic.woff2?a6bbc" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="/images/IBMPlexSans-Bold.woff2?a8774" as="font" type="font/woff2" crossorigin />
+<meta name="generator" content="MediaWiki 1.45.3">
+<meta name="robots" content="max-image-preview:standard">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="The following are calculators to convert between Developer Coordinates, interative map coordinates and geographical coordinates, especially useful when working with interactive maps on the wiki.">
+<meta property="og:description" content="The following are calculators to convert between Developer Coordinates, interative map coordinates and geographical coordinates, especially useful when working with interactive maps on the wiki.">
+<meta property="og:site_name" content="RuneScape Wiki">
+<meta property="og:title" content="Calculator:Coordinates - The RuneScape Wiki">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://runescape.wiki/w/Calculator:Coordinates">
+<meta property="og:image" content="https://runescape.wiki/images/Wiki.png">
+<meta property="og:image:width" content="135">
+<meta property="og:image:height" content="135">
+<meta name="viewport" content="width=1120">
+<link rel="alternate" type="application/x-wiki" title="Edit" href="/w/Calculator:Coordinates?action=edit">
+<link rel="apple-touch-icon" href="/images/Apple-touch-icon.png">
+<link rel="icon" href="/images/Favicon.ico">
+<link rel="search" type="application/opensearchdescription+xml" href="/rest.php/v1/search" title="RuneScape Wiki (en)">
+<link rel="EditURI" type="application/rsd+xml" href="https://runescape.wiki/api.php?action=rsd">
+<link rel="canonical" href="https://runescape.wiki/w/Calculator:Coordinates">
+<link rel="license" href="https://creativecommons.org/licenses/by-nc-sa/3.0/">
+
+            <script>
+              window.ramp = window.ramp || {};
+              window.ramp.que = window.ramp.que || [];
+            </script>
+            <script async src="//cdn.intergient.com/1024919/74149/ramp_config.js"></script>
+  
+            <script>
+                // Determine ad placement location (contact Jayden/Cook for issues)
+                window.addEventListener('DOMContentLoaded', () => {
+                    const body = document.getElementsByClassName('mw-body')[0];
+                    if (body) {
+                        const sidebar = document.getElementById('mw-panel');
+                        const footer = document.getElementsByClassName('mw-footer')[0];
+  
+                        // Create the elements we will be adding to the page
+                        let wrapper = document.createElement('div');
+                        wrapper.className = 'adplacement';
+                        let placement = document.createElement('div');
+                        let adScript = document.createElement('script');
+  
+                        let reportLink = document.createElement('a');
+                        reportLink.href = 'https://discord.gg/axSGh7GJkq'
+                        reportLink.style.textAlign = 'center';
+                        reportLink.style.display = 'block';
+                        reportLink.style.color = '#777777';
+                        reportLink.style.textDecoration = 'none';
+                        reportLink.style.textTransform = 'uppercase';
+                        reportLink.style.fontSize = '9px';
+                        reportLink.style.fontFamily = 'Helvetica, Arial, sans-serif';
+                        reportLink.style.marginTop = '1em';
+                        reportLink.setAttribute('target', '_blank');
+                        reportLink.innerText = 'Report Ad';
+  
+                        if (body.clientHeight > 1700 && sidebar) {
+                            // If the page body is over a certain height, and sidebar exists, add a sidebar placement.
+                            wrapper.style.paddingBottom = '25px';
+                            wrapper.style.marginTop = '1em';
+                            // wrapper.style.overflow = 'hidden';
+                            // wrapper.style.maxWidth = '160px';
+  
+                            placement.id = 'wgl-sidebar';
+                            placement.id = 'pwDeskSkyBtf1';
+                            placement.setAttribute('data-pw-desk', 'sky_btf');
+  
+                            wrapper.append(placement);
+                            wrapper.append(reportLink);
+                            sidebar.append(wrapper);
+  
+                            // Init the placement
+                            adScript.textContent = `
+                              window.ramp.que.push(function () {
+                                  window.ramp.addTag("pwDeskSkyBtf1");
+                              })
+                            `
+                            console.debug('[WGL] Adding sidebar placement');
+                            sidebar.append(adScript);
+                        } else if (footer) {
+                            // Else, add a footer placement.
+                            wrapper.style.paddingBottom = '25px';
+  
+                            placement.id = 'pwDeskLbBtf1';
+                            placement.setAttribute('data-pw-desk', 'leaderboard_btf');
+  
+                            wrapper.append(placement);
+                            wrapper.append(reportLink);
+                            footer.prepend(wrapper);
+  
+                            // Init the placement
+                            adScript.textContent = `
+                              window.ramp.que.push(function () {
+                                  window.ramp.addTag("pwDeskLbBtf1");
+                              })
+                            `
+                            console.debug('[WGL] Adding footer placement');
+                            footer.append(adScript);
+                        }
+                    }
+                });
+            </script>
+        </head>
+<body class="skin-vector-legacy mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-116 ns-subject mw-editable page-Calculator_Coordinates rootpage-Calculator_Coordinates skin-vector action-view wgl-lightmode wgl-theme-light"><div id="mw-page-base" class="noprint"></div>
+<div id="mw-head-base" class="noprint"></div>
+<div id="content" class="mw-body" role="main">
+    <a id="top"></a>
+    <div id="siteNotice"></div>
+    <div class="mw-indicators">
+    </div>
+    <h1 id="firstHeading" class="firstHeading mw-first-heading"><span class="mw-page-title-namespace">Calculator</span><span class="mw-page-title-separator">:</span><span class="mw-page-title-main">Coordinates</span></h1>
+    <div id="bodyContent" class="vector-body">
+        <div id="siteSub" class="noprint">From the RuneScape Wiki, the wiki for all things RuneScape</div>
+        <div id="contentSub"><div id="mw-content-subtitle"></div></div>
+        <div id="contentSub2"></div>
+        
+        <div id="jump-to-nav"></div>
+        <a class="mw-jump-link" href="#mw-head">Jump to navigation</a>
+        <a class="mw-jump-link" href="#searchInput">Jump to search</a>
+        <div id="mw-content-text" class="mw-body-content"><div class="mw-content-ltr mw-parser-output" lang="en-GB" dir="ltr"><div role="note" class="hatnote seealso navigation-not-searchable">For the <a href="/w/Treasure_Trails" title="Treasure Trails">Treasure Trails</a> coordinate calculator, see <a href="/w/Calculator:Treasure_Trails/Guide/Locate" title="Calculator:Treasure Trails/Guide/Locate">Calculator:Treasure Trails/Guide/Locate</a>.</div>
+<p>The following are calculators to convert between <a href="/w/Developer_console#Developer_Coordinates" title="Developer console">Developer Coordinates</a>, interative map coordinates and geographical coordinates, especially useful when working with <a href="/w/RuneScape:Map" title="RuneScape:Map">interactive maps</a> on the wiki.
+</p>
+<div id="toc" class="toc" role="navigation" aria-labelledby="mw-toc-heading"><input type="checkbox" role="button" id="toctogglecheckbox" class="toctogglecheckbox" style="display:none" /><div class="toctitle" lang="en-GB" dir="ltr"><h2 id="mw-toc-heading">Contents</h2><span class="toctogglespan"><label class="toctogglelabel" for="toctogglecheckbox"></label></span></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Text_to_Map"><span class="tocnumber">1</span> <span class="toctext">Text to Map</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Text_Dev-Map"><span class="tocnumber">2</span> <span class="toctext">Text Dev-Map</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Expected_vs_Actual_Coordinates"><span class="tocnumber">3</span> <span class="toctext">Expected vs Actual Coordinates</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Developer_&amp;_Map"><span class="tocnumber">4</span> <span class="toctext">Developer &amp; Map</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Geographical_And_Developer"><span class="tocnumber">5</span> <span class="toctext">Geographical And Developer</span></a></li>
+</ul>
+</div>
+
+<div class="mw-heading mw-heading2"><h2 id="Text_to_Map">Text to Map</h2><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="/w/Calculator:Coordinates?action=edit&amp;section=1" title="Edit section&#039;s source code: Text to Map"><span>edit source</span></a><span class="mw-editsection-bracket">]</span></span></div>
+<table class="archivelist">
+<tbody><tr>
+<td><span typeof="mw:File"><span title="Templates"><img alt="Templates" src="/images/thumb/Bow_blueprints_detail.png/40px-Bow_blueprints_detail.png?35f70" decoding="async" loading="lazy" width="40" height="38" class="mw-file-element" srcset="/images/thumb/Bow_blueprints_detail.png/80px-Bow_blueprints_detail.png?35f70 2x" data-file-width="1000" data-file-height="941" /></span></span>
+</td></tr>
+<tr>
+<th>Templates used
+</th></tr>
+<tr>
+<td><a href="/w/Calculator:Template/TextTransform" title="Calculator:Template/TextTransform">Calculator:Template/TextTransform</a>
+</td></tr></tbody></table>
+<p>Converts developer to map coordinates and vice-versa, type automatically determined. Values should be comma separated and order should be: <code>x,y</code>, <code>z,x,y</code>, or <code>z,x1,y1,x2,y2</code>. Coordinates from <a href="/w/Developer_console" title="Developer console">developer console</a> can be copy pasted into the field. Will also convert the integer type coordinates from the cache (eg 51891488).
+</p>
+<pre class="jcConfig">  template = Calculator:Template/TextTransform
+  form = FormTextTransform
+  result = ResultTextTransform
+  param = text|String|0,38,49,8,2|string
+</pre>
+<table>
+<tbody><tr>
+<td style="width: 30%; min-width:250px;"><div id="FormTextTransform"><span style="color: red; font-weight: bold;">Loading calculator (requires JavaScript)...</span></div>
+</td>
+<td style="width: 5%; min-width:50px;">
+</td>
+<td><div id="ResultTextTransform">Please Submit Calculator</div>
+</td></tr></tbody></table>
+<div class="mw-heading mw-heading2"><h2 id="Text_Dev-Map">Text Dev-Map</h2><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="/w/Calculator:Coordinates?action=edit&amp;section=2" title="Edit section&#039;s source code: Text Dev-Map"><span>edit source</span></a><span class="mw-editsection-bracket">]</span></span></div>
+<table class="archivelist">
+<tbody><tr>
+<td><span typeof="mw:File"><span title="Templates"><img alt="Templates" src="/images/thumb/Bow_blueprints_detail.png/40px-Bow_blueprints_detail.png?35f70" decoding="async" loading="lazy" width="40" height="38" class="mw-file-element" srcset="/images/thumb/Bow_blueprints_detail.png/80px-Bow_blueprints_detail.png?35f70 2x" data-file-width="1000" data-file-height="941" /></span></span>
+</td></tr>
+<tr>
+<th>Templates used
+</th></tr>
+<tr>
+<td><a href="/w/Calculator:Template/TextCoords" title="Calculator:Template/TextCoords">Calculator:Template/TextCoords</a>
+</td></tr></tbody></table>
+<p>Converts developer to map coordinates and vice-versa, type automatically determined. Values should be comma separated and order should be: <code>x,y</code>, <code>z,x,y</code>, or <code>z,x1,y1,x2,y2</code>. Coordinates from <a href="/w/Developer_console" title="Developer console">developer console</a> can be copy pasted into the field. Will also convert the integer type coordinates from the cache (eg 51891488).
+</p>
+<pre class="jcConfig">  template = Calculator:Template/TextCoords
+  form = FormText
+  result = ResultText
+  param = text|String|0,38,49,8,2|string
+</pre>
+<table>
+<tbody><tr>
+<td style="width: 30%; min-width:250px;"><div id="FormText"><span style="color: red; font-weight: bold;">Loading calculator (requires JavaScript)...</span></div>
+</td>
+<td style="width: 5%; min-width:50px;">
+</td>
+<td><div id="ResultText">Please Submit Calculator</div>
+</td></tr></tbody></table>
+<div class="mw-heading mw-heading2"><h2 id="Expected_vs_Actual_Coordinates">Expected vs Actual Coordinates</h2><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="/w/Calculator:Coordinates?action=edit&amp;section=3" title="Edit section&#039;s source code: Expected vs Actual Coordinates"><span>edit source</span></a><span class="mw-editsection-bracket">]</span></span></div>
+<table class="archivelist">
+<tbody><tr>
+<td><span typeof="mw:File"><span title="Templates"><img alt="Templates" src="/images/thumb/Bow_blueprints_detail.png/40px-Bow_blueprints_detail.png?35f70" decoding="async" loading="lazy" width="40" height="38" class="mw-file-element" srcset="/images/thumb/Bow_blueprints_detail.png/80px-Bow_blueprints_detail.png?35f70 2x" data-file-width="1000" data-file-height="941" /></span></span>
+</td></tr>
+<tr>
+<th>Templates used
+</th></tr>
+<tr>
+<td><a href="/w/Calculator:Template/CoordTransform" title="Calculator:Template/CoordTransform">Calculator:Template/CoordTransform</a>
+</td></tr></tbody></table>
+<p>Transforms interactive map coordinates based on position and mapID for those map areas that are not on the same place in RuneScape as they are on the rs wiki interactive maps. <b>This functionality is integrated into the other calculators on this page, and is mostly for use with large coordinate dumps where specific transforms were not accounted for, or when copying coordinates between maps using different map IDs.</b>
+</p>
+<pre class="jcConfig">  template = Calculator:Template/CoordTransform
+  name = Untransformed &gt; RS Wiki Coordinates
+  form = FormTrans
+  result = ResultTrans
+  param = dir || 1 | hidden 
+  param = z || 0 | int | 0-99
+  param = x || 1373 | int | 0-9999
+  param = y || 5645 | int | 0-19999
+  param = mapID || 28 | hidden | -1-11000 || 28 is the regular runescape surface, for a full list see [[RuneScape:Map/mapIDs]]
+</pre>
+<table>
+<tbody><tr>
+<td style="width:45%"><div id="FormTrans"><span style="color: red; font-weight: bold;">Loading calculator (requires JavaScript)...</span></div>
+</td>
+<td style="width:10%">
+</td>
+<td style="width:45%"><div id="ResultTrans">Please Submit Calculator</div>
+</td></tr></tbody></table>
+<div class="mw-heading mw-heading2"><h2 id="Developer_&amp;_Map">Developer &amp; Map</h2><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="/w/Calculator:Coordinates?action=edit&amp;section=4" title="Edit section&#039;s source code: Developer &amp; Map"><span>edit source</span></a><span class="mw-editsection-bracket">]</span></span></div>
+<table class="archivelist">
+<tbody><tr>
+<td><span typeof="mw:File"><span title="Templates"><img alt="Templates" src="/images/thumb/Bow_blueprints_detail.png/40px-Bow_blueprints_detail.png?35f70" decoding="async" loading="lazy" width="40" height="38" class="mw-file-element" srcset="/images/thumb/Bow_blueprints_detail.png/80px-Bow_blueprints_detail.png?35f70 2x" data-file-width="1000" data-file-height="941" /></span></span>
+</td></tr>
+<tr>
+<th>Templates used
+</th></tr>
+<tr>
+<td><a href="/w/Calculator:Template/DevToMap" title="Calculator:Template/DevToMap">Calculator:Template/DevToMap</a><br /><a href="/w/Calculator:Template/MapToDev" title="Calculator:Template/MapToDev">Calculator:Template/MapToDev</a>
+</td></tr></tbody></table>
+<p>Converts between developer coordinates and interactive map coordinates.
+</p>
+<pre class="jcConfig">  template = Calculator:Template/DevToMap
+  name = Dev to Map
+  form = FormDtoM
+  result = ResultDtoM
+  param = z || 0 | int | 0-199
+  param = x1 || 38 | int | 0-199
+  param = y1 || 49 | int | 0-199
+  param = x2 || 8  | int | 0-63
+  param = y2 || 25 | int | 0-63
+</pre>
+<pre class="jcConfig">  template = Calculator:Template/MapToDev
+  name = Map to Dev
+  form = FormMtoD
+  result = ResultMtoD
+  param = z || 0 | int | 0-199
+  param = x || 2440 | int | 0-9999
+  param = y || 3161 | int | 0-9999
+</pre>
+<table>
+<tbody><tr>
+<td style="width:45%"><div id="FormDtoM"><span style="color: red; font-weight: bold;">Loading calculator (requires JavaScript)...</span></div>
+</td>
+<td style="width:10%">
+</td>
+<td style="width:45%"><div id="FormMtoD"><span style="color: red; font-weight: bold;">Loading calculator (requires JavaScript)...</span></div>
+</td></tr>
+<tr>
+<td style="height:10px;">
+</td></tr>
+<tr>
+<td valign="top" style="width:45%; text-align:center;"><div id="ResultDtoM">Please Submit Calculator</div>
+</td>
+<td style="width:10%">
+</td>
+<td valign="top" style="width:45%; text-align:center;"><div id="ResultMtoD">Please Submit Calculator</div>
+</td></tr></tbody></table>
+<div class="mw-heading mw-heading2"><h2 id="Geographical_And_Developer">Geographical And Developer</h2><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="/w/Calculator:Coordinates?action=edit&amp;section=5" title="Edit section&#039;s source code: Geographical And Developer"><span>edit source</span></a><span class="mw-editsection-bracket">]</span></span></div>
+<table class="archivelist">
+<tbody><tr>
+<td><span typeof="mw:File"><span title="Templates"><img alt="Templates" src="/images/thumb/Bow_blueprints_detail.png/40px-Bow_blueprints_detail.png?35f70" decoding="async" loading="lazy" width="40" height="38" class="mw-file-element" srcset="/images/thumb/Bow_blueprints_detail.png/80px-Bow_blueprints_detail.png?35f70 2x" data-file-width="1000" data-file-height="941" /></span></span>
+</td></tr>
+<tr>
+<th>Templates used
+</th></tr>
+<tr>
+<td><a href="/w/Calculator:Template/DevToGeo" title="Calculator:Template/DevToGeo">Calculator:Template/DevToGeo</a><br /><a href="/w/Calculator:Template/GeoToDev" title="Calculator:Template/GeoToDev">Calculator:Template/GeoToDev</a>
+</td></tr></tbody></table>
+<p>Convert between developer and geographical coordinates.
+</p>
+<pre class="jcConfig">  template = Calculator:Template/DevToGeo
+  form = FormDtoG
+  result = ResultDtoG
+  param = x1 || 38 | int | 0-199
+  param = y1 || 49 | int | 0-199
+  param = x2 || 8  | int | 0-63
+  param = y2 || 25 | int | 0-63
+</pre>
+<pre class="jcConfig">  template = Calculator:Template/GeoToDev
+  form = FormGtoD
+  result = ResultGtoD
+  param = nd | degrees n/s | 0 | int |
+  param = nm | minutes n/s | 0 | int | 0-59
+  param = ns | north/south | n | select | n,s
+  param = ed | degrees e/w | 0 | int |
+  param = em | minutes e/w | 0 | int | 0-59
+  param = ew | east/west   | e | select | e,w
+  param = quadrant | map quadrant | surface | select | q1,dungeon,surface,q4
+</pre>
+<table>
+<tbody><tr>
+<td style="width:45%"><div id="FormDtoG"><span style="color: red; font-weight: bold;">Loading calculator (requires JavaScript)...</span></div>
+</td>
+<td style="width:10%">
+</td>
+<td style="width:45%"><div id="FormGtoD"><span style="color: red; font-weight: bold;">Loading calculator (requires JavaScript)...</span></div>
+</td></tr>
+<tr>
+<td style="height:10px;">
+</td></tr>
+<tr>
+<td valign="top" style="width:45%; text-align:center;"><div id="ResultDtoG">Please Submit Calculator</div>
+</td>
+<td style="width:10%">
+</td>
+<td valign="top" style="width:45%; text-align:center;"><div id="ResultGtoD">Please Submit Calculator</div>
+</td></tr></tbody></table>
+<!-- 
+NewPP limit report
+Parsed by mediawiki‐697868d8d9‐hhfsg
+Cached time: 20260527211306
+Cache expiry: 172800
+Reduced expiry: false
+Complications: [show‐toc]
+CPU time usage: 0.021 seconds
+Real time usage: 0.031 seconds
+Preprocessor visited node count: 295/1000000
+Revision size: 6921/8388608 bytes
+Post‐expand include size: 9987/8388608 bytes
+Template argument size: 814/8388608 bytes
+Highest expansion depth: 8/100
+Expensive parser function count: 0/500
+Unstrip recursion depth: 0/20
+Unstrip post‐expand size: 1964/5000000 bytes
+Bucket time usage: 0.000/10 seconds
+Lua time usage: 0.001/10.000 seconds
+Lua memory usage: 540742/367001600 bytes
+-->
+<!--
+Transclusion expansion time report (%,ms,calls,template)
+100.00%   22.451      1 -total
+ 72.25%   16.222      5 Template:Calc_use
+ 25.88%    5.811      1 Template:Otheruses
+ 23.33%    5.238      1 Template:Hatnote
+ 11.45%    2.570      1 Calculator:Template/DevToGeo
+ 10.91%    2.449      1 Calculator:Template/TextTransform
+  9.86%    2.214      1 Calculator:Template/TextCoords
+  9.76%    2.192      1 Calculator:Template/MapToDev
+  8.54%    1.918      1 Calculator:Template/CoordTransform
+  6.64%    1.490      1 Calculator:Template/GeoToDev
+-->
+
+<!-- Saved in parser cache with key en_rswiki:pcache:455357:|#|:idhash:canonical and timestamp 20260527211306 and revision id 36982379. Rendering was triggered because: page_view
+ -->
+</div>
+<div class="printfooter" data-nosnippet="">Retrieved from "<a dir="ltr" href="https://runescape.wiki/w/Calculator:Coordinates?oldid=36982379">https://runescape.wiki/w/Calculator:Coordinates?oldid=36982379</a>"</div></div>
+        <div id="catlinks" class="catlinks" data-mw="interface"><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/w/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="/w/Category:Calculators" title="Category:Calculators">Calculators</a></li></ul></div></div>
+    </div>
+</div>
+
+<div id="mw-navigation">
+    <h2>Navigation menu</h2>
+    <div id="mw-head">
+        
+<nav id="p-personal" class="mw-portlet mw-portlet-personal vector-user-menu-legacy vector-menu" aria-labelledby="p-personal-label"  >
+    <h3
+        id="p-personal-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">Personal tools</span>
+    </h3>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            <li id="pt-createaccount" class="mw-list-item"><a href="/w/Special:CreateAccount?returnto=Calculator%3ACoordinates" title="You are encouraged to create an account and log in; however, it is not mandatory"><span>Sign up</span></a></li><li id="pt-login" class="mw-list-item"><a href="/w/Special:UserLogin?returnto=Calculator%3ACoordinates" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o"><span>Log in</span></a></li>
+        </ul>
+        
+    </div>
+</nav>
+
+        <div id="left-navigation">
+            
+<nav id="p-associated-pages" class="mw-portlet mw-portlet-associated-pages vector-menu-tabs vector-menu-tabs-legacy vector-menu" aria-labelledby="p-associated-pages-label"  >
+    <h3
+        id="p-associated-pages-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">associated-pages</span>
+    </h3>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            <li id="ca-nstab-calculator" class="selected vector-tab-noicon mw-list-item"><a href="/w/Calculator:Coordinates" title="View the subject page [c]" accesskey="c"><span>Calculator</span></a></li><li id="ca-talk" class="new vector-tab-noicon mw-list-item"><a href="/w/Calculator_talk:Coordinates?action=edit&amp;redlink=1" rel="discussion" class="new" title="Discussion about the content page (page does not exist) [t]" accesskey="t"><span>Discussion</span></a></li>
+        </ul>
+        
+    </div>
+</nav>
+
+            
+<nav id="p-variants" class="mw-portlet mw-portlet-variants emptyPortlet vector-menu-dropdown vector-menu" aria-labelledby="p-variants-label"  >
+    <input type="checkbox"
+        id="p-variants-checkbox"
+        role="button"
+        aria-haspopup="true"
+        data-event-name="ui.dropdown-p-variants"
+        class="vector-menu-checkbox"
+        aria-labelledby="p-variants-label"
+    >
+    <label
+        id="p-variants-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">British English</span>
+    </label>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            
+        </ul>
+        
+    </div>
+</nav>
+
+        </div>
+        <div id="right-navigation">
+            
+<nav id="p-views" class="mw-portlet mw-portlet-views vector-menu-tabs vector-menu-tabs-legacy vector-menu" aria-labelledby="p-views-label"  >
+    <h3
+        id="p-views-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">Views</span>
+    </h3>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            <li id="ca-view" class="selected icon mw-list-item"><a href="/w/Calculator:Coordinates"><span>Read</span></a></li><li id="ca-edit" class="icon mw-list-item"><a href="/w/Calculator:Coordinates?action=edit" title="Edit the source code of this page [e]" accesskey="e"><span>Edit source</span></a></li><li id="ca-history" class="icon mw-list-item"><a href="/w/Calculator:Coordinates?action=history" title="Past revisions of this page [h]" accesskey="h"><span>History</span></a></li>
+        </ul>
+        
+    </div>
+</nav>
+
+            
+<nav id="p-cactions" class="mw-portlet mw-portlet-cactions emptyPortlet vector-menu-dropdown vector-menu" aria-labelledby="p-cactions-label"  title="More options" >
+    <input type="checkbox"
+        id="p-cactions-checkbox"
+        role="button"
+        aria-haspopup="true"
+        data-event-name="ui.dropdown-p-cactions"
+        class="vector-menu-checkbox"
+        aria-labelledby="p-cactions-label"
+    >
+    <label
+        id="p-cactions-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">More</span>
+    </label>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+<div id="p-search" role="search" class="vector-search-box-vue  vector-search-box-show-thumbnail vector-search-box-auto-expand-width vector-search-box">
+    <div class="vector-typeahead-search-container">
+        <div class="cdx-typeahead-search cdx-typeahead-search--show-thumbnail cdx-typeahead-search--auto-expand-width">
+            <form action="/" id="searchform" class="cdx-search-input cdx-search-input--has-end-button">
+                <div id="simpleSearch" class="cdx-search-input__input-wrapper"  data-search-loc="header-navigation">
+                    <div class="cdx-text-input cdx-text-input--has-start-icon">
+                        <input
+                            class="cdx-text-input__input mw-searchInput" autocomplete="off"
+                             type="search" name="search" placeholder="Search the RuneScape Wiki" aria-label="Search the RuneScape Wiki" autocapitalize="sentences" spellcheck="false" title="Search the wiki [f]" accesskey="f" id="searchInput"
+                            >
+                        <span class="cdx-text-input__icon cdx-text-input__start-icon"></span>
+                    </div>
+                    <input type="hidden" name="title" value="Special:Search">
+                </div>
+                <button class="cdx-button cdx-search-input__end-button">Search</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+        </div>
+    </div>
+    
+<div id="mw-panel" class="vector-legacy-sidebar">
+    <div id="p-logo" role="banner">
+        <a class="mw-wiki-logo" href="/"
+            title="Visit the main page"></a>
+    </div>
+    
+<nav id="p-Discord" class="mw-portlet mw-portlet-Discord vector-menu-portal portal vector-menu" aria-labelledby="p-Discord-label"  >
+    <h3
+        id="p-Discord-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">Discord</span>
+    </h3>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            <li id="n-Discord" class="mw-list-item"><a rel="nofollow" target="_blank" href="https://discord.gg/PQcgRAM68T"><span>Discord</span></a></li>
+        </ul>
+        
+    </div>
+</nav>
+
+    
+<nav id="p-Navigation" class="mw-portlet mw-portlet-Navigation vector-menu-portal portal vector-menu" aria-labelledby="p-Navigation-label"  >
+    <h3
+        id="p-Navigation-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">Navigation</span>
+    </h3>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            <li id="n-About-us" class="mw-list-item"><a href="/w/RuneScape:About"><span>About us</span></a></li><li id="n-User-help" class="mw-list-item"><a href="/w/RuneScape:User_help"><span>User help</span></a></li><li id="n-Random-page" class="mw-list-item"><a href="/w/Special:Random/main"><span>Random page</span></a></li>
+        </ul>
+        
+    </div>
+</nav>
+
+<nav id="p-Recent_changes" class="mw-portlet mw-portlet-Recent_changes emptyPortlet vector-menu-portal portal vector-menu" aria-labelledby="p-Recent_changes-label"  >
+    <h3
+        id="p-Recent_changes-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">Recent changes</span>
+    </h3>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            
+        </ul>
+        
+    </div>
+
+<div class="rc-sidebar-item">
+  <a class="rc-sidebar-page" href="/w/Rat_Catchers%2FQuick_guide">Rat Catchers/Quick guide</a>
+  <p class="rc-sidebar-user">
+    <a href="/?diff=37056498">1m <span class="rc-sidebar-ago">ago</span></a>&nbsp;-
+    <a href="/w/Special:Contributions/~2026-RedirectorWhiteCraws9070">~2026-RedirectorWhiteCraws9070</a>
+  </p>
+</div>
+<div class="rc-sidebar-item">
+  <a class="rc-sidebar-page" href="/w/Daemonheim_Dig_Site">Daemonheim Dig Site</a>
+  <p class="rc-sidebar-user">
+    <a href="/?diff=37056497">3m <span class="rc-sidebar-ago">ago</span></a>&nbsp;-
+    <a href="/w/Special:Contributions/Crolut">Crolut</a>
+  </p>
+</div>
+<div class="rc-sidebar-item">
+  <a class="rc-sidebar-page" href="/w/Fox">Fox</a>
+  <p class="rc-sidebar-user">
+    <a href="/?diff=37056491">22m <span class="rc-sidebar-ago">ago</span></a>&nbsp;-
+    <a href="/w/Special:Contributions/Jebrim">Jebrim</a>
+  </p>
+</div>
+<div class="rc-sidebar-item">
+  <a class="rc-sidebar-page" href="/w/Material_cache_(compass_rose)">Material cache (compass rose)</a>
+  <p class="rc-sidebar-user">
+    <a href="/?diff=37056490">25m <span class="rc-sidebar-ago">ago</span></a>&nbsp;-
+    <a href="/w/Special:Contributions/Olegen">Olegen</a>
+  </p>
+</div>
+<div class="rc-sidebar-item rc-sidebar-more">
+    <a class="rc-sidebar-page" href="/w/Special:RecentChanges" accesskey="r">Show more...</a>
+</div></nav>
+
+<nav id="p-Guides" class="mw-portlet mw-portlet-Guides vector-menu-portal portal vector-menu" aria-labelledby="p-Guides-label"  >
+    <h3
+        id="p-Guides-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">Guides</span>
+    </h3>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            <li id="n-List-of-quests" class="mw-list-item"><a href="/w/List_of_quests"><span>List of quests</span></a></li><li id="n-Skill-training" class="mw-list-item"><a href="/w/Skill_training_guides"><span>Skill training</span></a></li><li id="n-Money-making" class="mw-list-item"><a href="/w/Money_making_guide"><span>Money making</span></a></li><li id="n-Treasure-Trails" class="mw-list-item"><a href="/w/Treasure_Trails"><span>Treasure Trails</span></a></li><li id="n-New-player-guide" class="mw-list-item"><a href="/w/New_Player_Guide_to_RuneScape"><span>New player guide</span></a></li>
+        </ul>
+        
+    </div>
+</nav>
+
+<nav id="p-Databases" class="mw-portlet mw-portlet-Databases vector-menu-portal portal vector-menu" aria-labelledby="p-Databases-label"  >
+    <h3
+        id="p-Databases-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">Databases</span>
+    </h3>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            <li id="n-PvM-portal" class="mw-list-item"><a href="/w/PvM_portal"><span>PvM portal</span></a></li><li id="n-Calculators" class="mw-list-item"><a href="/w/Calculators"><span>Calculators</span></a></li><li id="n-Bestiary" class="mw-list-item"><a href="/w/Bestiary"><span>Bestiary</span></a></li><li id="n-Achievements" class="mw-list-item"><a href="/w/Achievements"><span>Achievements</span></a></li>
+        </ul>
+        
+    </div>
+</nav>
+
+<nav id="p-sidebar-editing" class="mw-portlet mw-portlet-sidebar-editing vector-menu-portal portal vector-menu" aria-labelledby="p-sidebar-editing-label"  >
+    <h3
+        id="p-sidebar-editing-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">Editing</span>
+    </h3>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            <li id="n-How-to-edit" class="mw-list-item"><a href="/w/Help:Editing"><span>How to edit</span></a></li><li id="n-Policies" class="mw-list-item"><a href="/w/RuneScape:Policies"><span>Policies</span></a></li><li id="n-Projects" class="mw-list-item"><a href="/w/RuneScape:Maintenance"><span>Projects</span></a></li><li id="n-New-files" class="mw-list-item"><a href="/w/Special:NewFiles"><span>New files</span></a></li><li id="n-The-Wikian" class="mw-list-item"><a href="/w/RuneScape:The_Wikian"><span>The Wikian</span></a></li>
+        </ul>
+        
+    </div>
+</nav>
+
+<nav id="p-Community" class="mw-portlet mw-portlet-Community vector-menu-portal portal vector-menu" aria-labelledby="p-Community-label"  >
+    <h3
+        id="p-Community-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">Community</span>
+    </h3>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            <li id="n-Yew-Grove" class="mw-list-item"><a href="/w/Forum:Yew_Grove"><span>Yew Grove</span></a></li><li id="n-Discussions" class="mw-list-item"><a href="/w/RuneScape:Active_discussions"><span>Discussions</span></a></li><li id="n-Clan-Chat" class="mw-list-item"><a href="/w/RuneScape:Clan_Chat"><span>Clan Chat</span></a></li>
+        </ul>
+        
+    </div>
+</nav>
+
+<nav id="p-More_RuneScape" class="mw-portlet mw-portlet-More_RuneScape vector-menu-portal portal vector-menu" aria-labelledby="p-More_RuneScape-label"  >
+    <h3
+        id="p-More_RuneScape-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">More RuneScape</span>
+    </h3>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            <li id="n-OSRS-Wiki" class="mw-list-item"><a href="//oldschool.runescape.wiki/w/Old_School_RuneScape_Wiki"><span>OSRS Wiki</span></a></li><li id="n-RSC-Wiki" class="mw-list-item"><a href="//classic.runescape.wiki/w/RuneScape_Classic_Wiki"><span>RSC Wiki</span></a></li><li id="n-Dragonwilds-Wiki" class="mw-list-item"><a href="https://dragonwilds.runescape.wiki/w/Main_Page"><span>Dragonwilds Wiki</span></a></li><li id="n-Wiki-Trivia-Games" class="mw-list-item"><a target="_blank" href="https://games.runescape.wiki"><span>Wiki Trivia Games</span></a></li><li id="n-RuneScape.com" class="mw-list-item"><a rel="nofollow" target="_blank" href="https://www.runescape.com"><span>RuneScape.com</span></a></li>
+        </ul>
+        
+    </div>
+</nav>
+
+<nav id="p-tb" class="mw-portlet mw-portlet-tb vector-menu-portal portal vector-menu" aria-labelledby="p-tb-label"  >
+    <h3
+        id="p-tb-label"
+        
+        class="vector-menu-heading "
+    >
+        <span class="vector-menu-heading-label">Tools</span>
+    </h3>
+    <div class="vector-menu-content">
+        
+        <ul class="vector-menu-content-list">
+            
+            <li id="t-whatlinkshere" class="mw-list-item"><a href="/w/Special:WhatLinksHere/Calculator:Coordinates" title="A list of all wiki pages that link here [j]" accesskey="j"><span>What links here</span></a></li><li id="t-recentchangeslinked" class="mw-list-item"><a href="/w/Special:RecentChangesLinked/Calculator:Coordinates" rel="nofollow" title="Recent changes in pages linked from this page [k]" accesskey="k"><span>Related changes</span></a></li><li id="t-print" class="mw-list-item"><a href="javascript:print();" rel="alternate" title="Printable version of this page [p]" accesskey="p"><span>Printable version</span></a></li><li id="t-permalink" class="mw-list-item"><a href="/w/Calculator:Coordinates?oldid=36982379" title="Permanent link to this revision of this page"><span>Permanent link</span></a></li><li id="t-info" class="mw-list-item"><a href="/w/Calculator:Coordinates?action=info" title="More information about this page"><span>Page information</span></a></li>
+        </ul>
+        <div class="after-portlet after-portlet-tb">            <a href="/hp/1780079861" style="display: none;"></a></div>
+    </div>
+</nav>
+
+    
+</div>
+
+</div>
+
+<footer id="footer" class="mw-footer" >
+    <ul id="footer-info">
+    <li id="footer-info-lastmod"> This page was last modified on 24 March 2026, at 16:52.</li>
+    <li id="footer-info-copyright">Content on this site is licensed under <a class="external" rel="nofollow" href="https://creativecommons.org/licenses/by-nc-sa/3.0/">CC BY-NC-SA 3.0</a>; <a href="https://meta.weirdgloop.org/w/Licensing" class="extiw" title="metawg:Licensing">additional terms apply</a>.
+<br /><i>RuneScape</i> and <i>RuneScape Old School</i> are the trademarks of <a target="_blank" rel="nofollow noreferrer noopener" class="external text" href="http://jagex.com">Jagex Limited</a> and are used with the permission of Jagex.</li>
+</ul>
+
+    <ul id="footer-places">
+    <li id="footer-places-privacy"><a href="//weirdgloop.org/privacy">Privacy policy</a></li>
+    <li id="footer-places-about"><a href="/w/RuneScape:About">About the RuneScape Wiki</a></li>
+    <li id="footer-places-disclaimers"><a href="/w/RuneScape:General_disclaimer">Disclaimers</a></li>
+    <li id="footer-places-tou"><a href="//weirdgloop.org/terms">Terms of Use</a></li>
+    <li id="footer-places-contact"><a href="/w/Special:Contact">Contact Weird Gloop</a></li>
+    <li id="footer-places-mobileview"><a href="https://runescape.wiki/w/Calculator:Coordinates?mobileaction=toggle_view_mobile" class="noprint stopMobileRedirectToggle">Mobile view</a></li>
+</ul>
+
+    <ul id="footer-icons" class="noprint">
+    <li id="footer-copyrightico"><a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank"><img src="https://meta.weirdgloop.org/images/Creative_Commons_footer.png" srcset="https://meta.weirdgloop.org/images/Creative_Commons_footer@2x.png 2x" alt="CC BY-NC-SA 3.0" width="88" height="31" loading="lazy"></a></li>
+    <li id="footer-poweredbyico"><a href="https://weirdgloop.org" target="_blank"><img src="https://meta.weirdgloop.org/images/Weird_Gloop_footer.png" srcset="https://meta.weirdgloop.org/images/Weird_Gloop_footer@2x.png 2x" alt="A Weird Gloop wiki" width="88" height="31" loading="lazy"></a></li>
+</ul>
+
+</footer>
+
+<div class="mw-portlet mw-portlet-dock-bottom emptyPortlet vector-menu-portal portal" id="p-dock-bottom">
+    <ul>
+        
+    </ul>
+</div>
+<script>(RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgHostname":"mediawiki-697868d8d9-hhfsg","wgBackendResponseTime":33,"wgPageParseReport":{"limitreport":{"cputime":"0.021","walltime":"0.031","ppvisitednodes":{"value":295,"limit":1000000},"revisionsize":{"value":6921,"limit":8388608},"postexpandincludesize":{"value":9987,"limit":8388608},"templateargumentsize":{"value":814,"limit":8388608},"expansiondepth":{"value":8,"limit":100},"expensivefunctioncount":{"value":0,"limit":500},"unstrip-depth":{"value":0,"limit":20},"unstrip-size":{"value":1964,"limit":5000000},"timingprofile":["100.00%   22.451      1 -total"," 72.25%   16.222      5 Template:Calc_use"," 25.88%    5.811      1 Template:Otheruses"," 23.33%    5.238      1 Template:Hatnote"," 11.45%    2.570      1 Calculator:Template/DevToGeo"," 10.91%    2.449      1 Calculator:Template/TextTransform","  9.86%    2.214      1 Calculator:Template/TextCoords","  9.76%    2.192      1 Calculator:Template/MapToDev","  8.54%    1.918      1 Calculator:Template/CoordTransform","  6.64%    1.490      1 Calculator:Template/GeoToDev"]},"bucket":{"limitreport-run-time":{"value":"0.000","limit":"10"}},"scribunto":{"limitreport-timeusage":{"value":"0.001","limit":"10.000"},"limitreport-memusage":{"value":540742,"limit":367001600}},"cachereport":{"origin":"mediawiki-697868d8d9-hhfsg","timestamp":"20260527211306","ttl":172800,"transientcontent":false}}});});</script>
+
+            <script async src="//cdn.intergient.com/ramp_core.js"></script>
+        
+<script>
+( () => {
+    const initTime = performance.now();
+    const reportFn = p => ( fetch( "https://weirdgloop.org/ai-scrapers-suck", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        referrerPolicy: 'unsafe-url',
+        body: JSON.stringify( {
+            ray: "a0379cb8481220af",
+            time: performance.now() - initTime,
+            ...p,
+        } ),
+    } ) );
+    const events = ["pointermove","pointerdown","pointerup","pointerover","scroll","keydown","visibilitychange"];
+    const callback = e => {
+        removeEventListener( e.type, callback );
+
+        let data = {};
+        if ( event.type.indexOf( 'pointer' ) === 0 ) {
+            data = {
+                pointerType: e.pointerType,
+                x: e.clientX,
+                y: e.clientY,
+                sx: e.screenX,
+                sy: e.screenY,
+                dx: e.movementX,
+                dy: e.movementY,
+            };
+        } else if ( event.type.indexOf( 'visibility' ) === 0 ) {
+            data = { state: document.visibilityState };
+        }
+
+        reportFn( {
+            type: e.type,
+            isTrusted: e.isTrusted,
+            area: !( e.target && e.target.closest ) ? null :
+                !!e.target.closest( '#content' ) ? 'content' :
+                !!e.target.closest( '#mw-panel' ) ? 'panel' :
+                !!e.target.closest( '#mw-head' ) ? 'head' :
+                !!e.target.closest( '#footer' ) ? 'footer' :
+                ( e.target.closest( '[id]' )?.id ?? e.target.tagName ),
+            ...data,
+        } );
+    };
+    for ( const event of events ) {
+        addEventListener( event, callback, { passive: true } );
+    }
+    requestIdleCallback( () => setTimeout( () => ( reportFn( { type: 'idle' } ) ), 4000 ) );
+} )();
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"6348a5ceb9674fe390473560fffff798","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

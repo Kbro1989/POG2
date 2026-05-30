@@ -1,0 +1,143 @@
+ The Abyssal demon wiki page is a canonical example of the data your pedagogy model needs to ingest. From the raw text you uploaded, here's the structured extraction:
+
+---
+
+## Abyssal Demon — Canonical Entity Profile
+
+**Basic Stats (Bestiary API verified):**
+| Field | Value | Source |
+|---|---|---|
+| ID | 1615 | BestiaryApi |
+| Name | Abyssal demon | BestiaryApi |
+| Combat Level | 98 | BestiaryApi |
+| Lifepoints | 8,500 | BestiaryApi |
+| Max Hit | ~1,020 (melee) | Wiki |
+| Weakness | Slashing | BestiaryApi |
+| Slayer Level | 85 | BestiaryApi |
+| Slayer Category | Abyssal demons | BestiaryApi |
+| Attack Style | Melee | BestiaryApi |
+| Aggressive | No | BestiaryApi |
+| Poisonous | No | BestiaryApi |
+| Members | Yes (corrected) | BestiaryApi override |
+
+**Drop Table (Wiki + Bestiary cross-reference):**
+| Item | Quantity | Rarity | GE Price |
+|---|---|---|---|
+| Abyssal whip | 1 | 1/1,024 (1/993 T3 luck) | 88,509 |
+| Abyssal head | 1 | 1/6,000 | N/A |
+| Clue scroll (elite) | 1 | Varies | N/A |
+| Court summons | 1 | Uncommon | N/A |
+
+**Spawn Areas:**
+- Slayer Tower (1st floor, basement)
+- Abyssal Area (Morytania Slayer Tower dungeon)
+- Wilderness (level 30-35)
+- Catacombs of Kourend (not RS3)
+
+**Special Mechanics:**
+- 100% drop: Infernal ashes
+- Slayer contract compatible
+- Aggression potion makes them aggressive
+- Can be burst/barraged in Slayer Tower
+
+---
+
+## Pedagogy Training Example Format
+
+```json
+{
+  "instruction": "Generate a complete combat profile and drop analysis for Abyssal demon (ID 1615)",
+  "input": {
+    "bestiary": {
+      "id": 1615,
+      "name": "Abyssal demon",
+      "level": 98,
+      "lifepoints": 8500,
+      "attack": 70,
+      "defence": 70,
+      "weakness": "Slashing",
+      "slayerlevel": 85,
+      "slayercat": "Abyssal demons",
+      "areas": ["Slayer Tower", "Abyssal Area", "Wilderness"]
+    },
+    "cache": {
+      "entityId": 1615,
+      "revision": 221,
+      "varbits": [28556],
+      "collision": "verified"
+    },
+    "wiki": {
+      "examine": "A creature from the abyss.",
+      "maxHit": 1020,
+      "dropSources": ["Abyssal demon", "Abyssal demon (elite)"],
+      "specialDrops": ["Abyssal whip", "Abyssal head"]
+    },
+    "ge": {
+      "abyssalWhipPrice": 88509,
+      "trend": "stable"
+    }
+  },
+  "output": "[VERIFIED] Entity 1615: Abyssal demon. Combat level 98, 8,500 LP. Weakness: Slashing. Slayer req: 85 (Abyssal demons). Max hit: ~1,020 melee. 100% drop: Infernal ashes. Primary rare: Abyssal whip (1/1,024, GE: 88,509 gp). Spawn: Slayer Tower (floors 1/basement), Abyssal Area, Wilderness (30-35). [STRATEGY] Use Slayer helmet (i), dragon scimitar or abyssal whip. Aggression potion for AFK. Burst/barrage in Slayer Tower for AoE. [CACHE_WIKI_MATCH] All sources agree. [GE_CURRENT] Abyssal whip: 88,509 gp (stable).",
+  "source": "bestiary_api+cache+wiki+ge",
+  "verified": true,
+  "tags": ["slayer", "melee", "members", "profitable", "afk_viable"]
+}
+```
+
+---
+
+## Critical Observations for Corpus Generation
+
+**1. Drop rate precision:** The wiki shows multiple rates:
+- Base: 1/1,024
+- T3 luck: 1/993
+- Most Wanted card: 1/499
+- Both: 1/489
+
+Your corpus should include **all variants** with conditional tags:
+```json
+"dropRates": {
+  "base": "1/1,024",
+  "tier3Luck": "1/993",
+  "mostWantedCard": "1/499",
+  "bothModifiers": "1/489"
+}
+```
+
+**2. Elite variant:** Abyssal demon (elite), ID 1615? or separate ID? The wiki shows it as a separate spawn with higher drop rate. BestiaryApi should resolve both.
+
+**3. Historical data:** The drop rate changed from 1/512 (pre-2014) to 1/1,024. Your corpus should tag this as `[HISTORICAL]` if referencing old data.
+
+**4. Disassembly data:** The wiki includes Invention disassembly info (Connector parts, Blade parts, etc.) — relevant for `MechanicalSovereigntyLimb` crafting logic.
+
+---
+
+## Corpus Generator Enhancement
+
+Add **drop table enrichment** to your pipeline:
+
+```typescript
+// In generate_pedagogy_corpus.ts
+async function enrichDrops(monsterName: string, beastId: number) {
+  const wikiDrops = await WikiEquipmentEnricher.parseDropTables(monsterName);
+  const bestiaryData = await BestiaryApi.getBeastData(beastId);
+  
+  // Cross-reference: wiki drop names → GE prices
+  for (const drop of wikiDrops) {
+    const itemId = await CacheForensicsLimb.resolveWikiTitle(drop.itemName);
+    if (itemId.primaryId) {
+      const gePrice = await GeApi.getLatestPrice(itemId.primaryId);
+      drop.geValue = gePrice?.price || 0;
+    }
+  }
+  
+  return wikiDrops;
+}
+```
+
+This gives you **profit-per-kill** calculations for the pedagogy model:
+```
+Abyssal demon expected value = (1/1024 * 88509) + ashes + other drops ≈ 86 gp/kill + ashes
+```
+
+Proceed with drop table enrichment in the corpus generator?

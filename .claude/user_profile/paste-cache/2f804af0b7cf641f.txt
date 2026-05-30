@@ -1,0 +1,88 @@
+ The corpus generation is hitting two issues:
+
+**1. BestiaryApi.ts null label bug** — You already fixed this with `(r.label || '')`. Good.
+
+**2. The `generate_pedagogy_corpus.ts` file extension got mangled** — The error shows:
+```
+Cannot find module 'D:\POG2\src\scripts\generate_pedagogy_corpus.'
+```
+Note the trailing dot: `corpus.` instead of `corpus.ts`. The file extension was stripped somehow.
+
+**Fix:** Verify the file exists with correct extension:
+```bash
+dir D:\POG2\src\scripts\generate_pedagogy_corpus.ts
+```
+
+If it shows `generate_pedagogy_corpus.` (no extension), rename it:
+```bash
+ren D:\POG2\src\scripts\generate_pedagogy_corpus. generate_pedagogy_corpus.ts
+```
+
+**Also:** The previous run showed `Sovereign platebody` and `Omni-nexus platebody` as target items. These are **not real RS3 items** — they're your custom POG2 content. The wiki search will fail for these, causing the enricher to return null or fallback to generic results.
+
+**Recommendation:** Remove custom items from the corpus generation target list, or handle them specially (skip wiki enrichment, use cache-only data).
+
+**Updated target list:**
+```typescript
+const TARGET_ENTITIES = {
+    items: [
+        'Abyssal whip',           // Real, verified
+        "Tumeken's shadow",       // Real (OSRS, not RS3 — will fail)
+        'Scythe of vitiation',    // Not real RS3 — custom/modded?
+        'Bandos boots',           // Real
+        'Slayer helmet',          // Real
+        'Dragon defender',        // Real
+        'Skeletal armour',        // Real
+        "Guthan's platebody",     // Real
+        'Ancient staff'           // Real
+    ],
+    monsters: [
+        'Vorkath',                // OSRS, not RS3
+        'The Elder (boss)',       // Not real RS3
+        'General Graardor',       // Real
+        'Bandos General',         // Not a real name — "General Graardor" is correct
+        'Nex',                    // Real
+        'Corporeal Beast',        // Real
+        'Abyssal demon',          // Real
+        'Chaos elemental',        // Real
+        'TzKal-Zuk',              // Real
+        'Void Knight'             // Real (but not a boss)
+    ],
+    players: ['Pick of Gods']
+};
+```
+
+**Issues:**
+- `Tumeken's shadow` — OSRS-only, not in RS3 Bestiary
+- `Scythe of vitiation` — Not a real item
+- `Vorkath` — OSRS-only
+- `The Elder (boss)` — Not real
+- `Bandos General` — Wrong name, should be `General Graardor`
+
+**Clean target list for RS3:**
+```typescript
+const TARGET_ENTITIES = {
+    items: [
+        'Abyssal whip',
+        'Bandos boots',
+        'Slayer helmet',
+        'Dragon defender',
+        'Skeletal armour',
+        "Guthan's platebody",
+        'Ancient staff'
+    ],
+    monsters: [
+        'General Graardor',
+        'Nex',
+        'Corporeal Beast',
+        'Abyssal demon',
+        'Chaos elemental',
+        'TzKal-Zuk',
+        'King Black Dragon',
+        'Vorago'
+    ],
+    players: ['Pick of Gods']
+};
+```
+
+Fix the file extension first, then update the target list to real RS3 entities only. The corpus generator should skip items that fail wiki/Bestiary resolution rather than crashing.

@@ -1,0 +1,54 @@
+/**
+ * Limb.ts
+ * Sovereign Interface for Aegis Cognitive Limbs.
+ * Derived from POG2 Distributed Orchestration Cognition (DOC).
+ */
+
+export enum LimbStatus {
+  ACTIVE = 'ACTIVE',   // Nominal operation
+  DORMANT = 'DORMANT', // Low-power/Idle (Stage 0/1 only)
+  ERROR = 'ERROR',     // Substrate failure
+  GHOST = 'GHOST',     // Fail-safe/Deterministic mode (The Ghost Limb)
+}
+
+export interface LimbOutput {
+  payload: any;
+  confidence: number; // 0.0 - 1.0
+  metabolicCost: number; // Latency in ms / Token cost
+  stage: number; // 0 (Deterministic) through 4 (Cloud)
+  decision: 'EXECUTE' | 'MODIFY' | 'DEFER';
+}
+
+export interface TelemetrySnapshot {
+  hp: number;
+  maxHp: number;
+  prayer: number;
+  maxPrayer: number;
+  adrenaline: number;
+  buffs: Array<{ name: string, remaining: number }>;
+  debuffs: string[];
+  target: { name: string, hpPercent: number } | null;
+  chatLines: string[];
+  tooltip: string | null;
+  dialog: { title: string, text: string, options: string[] } | null;
+  bossTimer: number | null;
+  xpDrops: string[];
+  gameMode: string;
+}
+
+export interface IAegisLimb {
+  id: string;
+  domain: string;
+  status: LimbStatus;
+
+  /**
+   * The "Heartbeat" - called every 600ms tick.
+   * Processes telemetry and returns a decision.
+   */
+  pulse(telemetry: TelemetrySnapshot): Promise<LimbOutput | null>;
+
+  /**
+   * Sovereign Reset - allows the limb to recalibrate its internal state.
+   */
+  recalibrate(): Promise<void>;
+}

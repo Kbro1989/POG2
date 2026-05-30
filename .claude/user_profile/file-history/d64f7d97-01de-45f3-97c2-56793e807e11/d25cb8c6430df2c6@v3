@@ -1,0 +1,174 @@
+/**
+ * OfficialPlayerDataApi.ts
+ *
+ * Authoritative interface for RuneScape 3 player statistics.
+ * Implements retrieval from Runemetrics and Hiscores Lite via Cloudflare Worker proxy.
+ *
+ * Sovereign Substrate: Player Grounding Layer
+ */
+
+import { ApiThrottle } from './ApiThrottle.js';
+import { createLogger } from './logger.js';
+
+const logger = createLogger('OfficialPlayerDataApi');
+
+// ═══════════════════════════════════════════════════════
+// Configuration & Interfaces
+// ═══════════════════════════════════════════════════════
+
+const PROXY_BASE = 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/player';
+const USER_AGENT = 'POG2-Sovereign/1.0 (POG2 Player Intelligence Engine; admin@pog2.internal; +https://github.com/Kbro1989/POG2)';
+
+export interface HiscoreEntry {
+    rank: number;
+    level: number;
+    xp: number;
+}
+
+export interface PlayerProfile {
+    name: string;
+    rank: string;
+    totalSkill: number;
+    totalXp: number;
+    combatLevel: number;
+    skills: Array<{ id: number; name: string; level: number; xp: number; rank: number }>;
+    activities: Array<{ text: string; date: string }>;
+    questsStarted: number;
+    questsComplete: number;
+    questsNotStarted: number;
+}
+
+/**
+ * Canonical mapping of Hiscore skill IDs (0-28) to names.
+ */
+export const SKILL_MAP: Record<number, string> = {
+    0: 'Attack', 1: 'Defence', 2: 'Strength', 3: 'Constitution', 4: 'Ranged',
+    5: 'Prayer', 6: 'Magic', 7: 'Cooking', 8: 'Woodcutting', 9: 'Fletching',
+    10: 'Fishing', 11: 'Firemaking', 12: 'Crafting', 13: 'Smithing', 14: 'Mining',
+    15: 'Herblore', 16: 'Agility', 17: 'Thieving', 18: 'Slayer', 19: 'Farming',
+    20: 'Runecrafting', 21: 'Hunter', 22: 'Construction', 23: 'Summoning',
+    24: 'Dungeoneering', 25: 'Divination', 26: 'Invention', 27: 'Archaeology', 28: 'Necromancy'
+};
+
+// ═══════════════════════════════════════════════════════
+// OfficialPlayerDataApi Implementation
+// ═══════════════════════════════════════════════════════
+
+export class OfficialPlayerDataApi {
+    private static throttle = ApiThrottle.getInstance();
+
+    /**
+     * Fetch comprehensive player profile data from Runemetrics.
+     * Route: /api/player/runemetrics/profile?user=X
+     */
+    public static async getProfile(playerName: string): Promise<PlayerProfile | null> {
+        await this.throttle.acquire('runemetrics');
+
+        const url = `${PROXY_BASE}/runemetrics/profile?user=${encodeURIComponent(playerName)}`;
+        try {
+            const res = await fetch(url, {
+                headers: { 'User-Agent': USER_AGENT },
+                signal: AbortSignal.timeout(10000)
+            });
+
+            if (!res.ok) {
+                if (res.status === 429) {
+                    this.throttle.reportRetryAfter('runemetrics', 60);
+                }
+                logger.warn({ playerName, status: res.status }, 'Runemetrics profile fetch failed');
+                return null;
+            }
+
+            const data = await res.json() as any;
+            if (!data) return null;
+
+            // Normalize Runemetrics JSON to PlayerProfile interface
+            return {
+                name: data.name || playerName,
+                rank: data.rank || 'Unknown',
+                totalSkill: data.totalSkill || 0,
+                totalXp: data.totalXp || 0,
+                combatLevel: data.combatLevel || 0,
+                skills: (data.skills || []).map((s: any) => ({
+                    id: s.id,
+                    name: s.name,
+                    level: s.level,
+                    xp: s.xp,
+                    rank: s.rank
+                })),
+                activities: (data.activities || []).map((a: any) => ({
+                    text: a.text,
+                    date: a.date
+                })),
+                questsStarted: data.questsStarted || 0,
+                questsComplete: data.questsComplete || 0,
+                questsNotStarted: data.questsNotStarted || 0
+            };
+        } catch (err) {
+            logger.error({ playerName, err }, 'Failed to fetch player profile');
+            return null;
+        }
+    }
+
+    /**
+     * Fetch high-fidelity hiscores data.
+     * Route: /api/player/hiscores/lite?player=X
+     * Response: CSV string of "rank,level,xp" lines.
+     */
+    public static async getHiscores(playerName: string): Promise<Map<string, HiscoreEntry> | null> {
+        await this.throttle.acquire('hiscores');
+
+        const url = `${PROXY_BASE}/hiscores/lite?player=${encodeURIComponent(playerName)}`;
+        try {
+            const res = await fetch(url, {
+                headers: { 'User-Agent': USER_AGENT },
+                signal: AbortSignal.timeout(10000)
+            });
+
+            if (!res.ok) {
+                if (res.status === 429) {
+                    this.throttle.reportRetryAfter('hiscores', 60);
+                }
+                logger.warn({ playerName, status: res.status }, 'Hiscores lite fetch failed');
+                return null;
+            }
+
+            const csv = await res.text();
+            if (!csv) return null;
+
+            const lines = csv.split('\n').filter(l => l.trim());
+            const skillMap = new Map<string, HiscoreEntry>();
+
+            // RS Hiscores Lite CSV:
+            // Line 0: Overall
+            // Line 1-28: Skills in order of SKILL_MAP
+            // Line 29+: Other activities
+
+            for (let i = 0; i < lines.length; i++) {
+                const [rankStr, levelStr, xpStr] = lines[i].split(',');
+                const entry: HiscoreEntry = {
+                    rank: parseInt(rankStr, 10),
+                    level: parseInt(levelStr, 10),
+                    xp: parseInt(xpStr, 10)
+                };
+
+                if (i === 0) {
+                    skillMap.set('Overall', entry);
+                } else if (i >= 1 && i <= 29) {
+                    // Skill IDs are 0-indexed in SKILL_MAP,
+                    // but indices in CSV are 1-indexed after 'Overall'.
+                    const skillName = SKILL_MAP[i - 1] || `Skill ${i - 1}`;
+                    skillMap.set(skillName, entry);
+                } else {
+                    // Handle activities (e.g. PvP Forum, etc.) if they appear
+                    skillMap.set(`Activity_${i}`, entry);
+                }
+            }
+
+            return skillMap;
+        } catch (err) {
+            logger.error({ playerName, err }, 'Failed to fetch player hiscores');
+            return null;
+        }
+    }
+}

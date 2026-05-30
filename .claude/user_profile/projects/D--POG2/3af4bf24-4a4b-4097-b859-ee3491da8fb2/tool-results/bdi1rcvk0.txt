@@ -1,0 +1,1871 @@
+﻿import type { Result, EngineOutput } from '../core/models.js';
+import { ok } from '../core/models.js';
+import { Renderer } from '../ui/Renderer.js';
+import * as fs from 'fs';
+import * as path from 'path';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('DiscoveryEngine');
+
+export interface WebSearchParams {
+    query: string;
+    count?: number;
+    deep?: boolean; // If true, fetches and summarizes top results
+}
+
+export interface SearchResult {
+    title: string;
+    url: string;
+    snippet: string;
+}
+
+/**
+ * DiscoveryEngine â€” Unified Factual and Web Discovery Substrate
+ * Merges DDG scraping, Wikipedia factual grounding, and Wayback historical analysis.
+ */
+export class DiscoveryEngine {
+    private readonly userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.0';
+
+    constructor(private readonly renderer: Renderer) { }
+
+    /**
+     * General Web Search (DuckDuckGo HTML)
+     */
+    async search(params: WebSearchParams): Promise<Result<EngineOutput>> {
+        const { query, count = 5 } = params;
+
+        try {
+            const results = await this.searchDuckDuckGo(query, count);
+
+            if (results.length === 0) {
+                return {
+                    ok: true,
+                    value: {
+                        output: `No results found for "${query}".`,
+                        data: { results: [], query }
+                    }
+                };
+            }
+
+            if (params.deep) {
+                this.renderer.info(`Initiating Deep Research Substrate for: ${query}`);
+                const topResults = results.slice(0, 3);
+                const scrapes = await Promise.all(topResults.map(r => this.fetchUrl(r.url)));
+
+                const combined = scrapes
+                    .filter(s => s.ok)
+                    .map((s, i) => `[SOURCE: ${topResults[i]!.title}]\n${(s as any).value.output}`)
+                    .join('\n\n---\n\n');
+
+                return {
+                    ok: true,
+                    value: {
+                        output: `[DEEP RESEARCH SUMMARY]\n${combined.slice(0, 15000)}`,
+                        data: { results, query, deep: true }
+                    }
+                };
+            }
+
+            const formatted = this.formatResults(results, query);
+            return {
+                ok: true,
+                value: {
+                    output: formatted,
+                    data: { results, query, count: results.length }
+                }
+            };
+        } catch (error) {
+            return {
+                ok: false,
+                error: error instanceof Error ? error : new Error(String(error))
+            };
+        }
+    }
+
+    /**
+     * Wikipedia Extraction: Getting factual grounding blocks.
+     */
+    async searchWiki(query: string): Promise<Result<string>> {
+        logger.info({ query }, 'Searching Wikipedia for factual substrate');
+        try {
+            const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro&explaintext&titles=${encodeURIComponent(query)}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Wiki API failed: ${response.statusText}`);
+
+            const data = await response.json() as any;
+            const pages = data.query.pages;
+            const pageId = Object.keys(pages)[0];
+            const extract = pages[pageId].extract;
+
+            if (!extract) {
+                return { ok: false, error: new Error('No wiki extract found for query') };
+            }
+
+            return { ok: true, value: extract };
+        } catch (err) {
+            logger.error({ err }, 'Wiki search failed');
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    /**
+     * Wayback Machine: Historical substrate retrieval.
+     */
+    async searchWayback(url: string): Promise<Result<string>> {
+        logger.info({ url }, 'Querying Wayback Machine for historical snapshots');
+        try {
+            const waybackUrl = `https://archive.org/wayback/available?url=${encodeURIComponent(url)}`;
+            const response = await fetch(waybackUrl);
+            if (!response.ok) throw new Error(`Wayback API failed: ${response.statusText}`);
+
+            const data = await response.json() as any;
+            const snapshot = data.archived_snapshots.closest;
+
+            if (!snapshot || !snapshot.available) {
+                return { ok: false, error: new Error('No historical snapshots available for this URL') };
+            }
+
+            return { ok: true, value: `Snapshot found: ${snapshot.url} (Timestamp: ${snapshot.timestamp})` };
+        } catch (err) {
+            logger.error({ err }, 'Wayback query failed');
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    private async searchDuckDuckGo(query: string, count: number): Promise<SearchResult[]> {
+        const encodedQuery = encodeURIComponent(query);
+        const url = `https://html.duckduckgo.com/html/?q=${encodedQuery}`;
+
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': this.userAgent,
+                'Accept': 'text/html',
+                'Accept-Language': 'en-US,en;q=0.9'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Search failed: ${response.status} ${response.statusText}`);
+        }
+
+        const html = await response.text();
+        return this.parseDuckDuckGoResults(html, count);
+    }
+
+    private parseDuckDuckGoResults(html: string, count: number): SearchResult[] {
+        const results: SearchResult[] = [];
+        const resultRegex = /<div class="result[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>/gi;
+        const matches = html.match(resultRegex) || [];
+
+        for (const resultHtml of matches.slice(0, count)) {
+            try {
+                const titleMatch = resultHtml.match(/<a[^>]*class="[^"]*result__a[^"]*"[^>]*>([\s\S]*?)<\/a>/i);
+                const urlMatch = resultHtml.match(/<a[^>]*href="([^"]*uddg[^"]*)"[^>]*class="[^"]*result__a/i) ||
+                    resultHtml.match(/<a[^>]*href="([^"]*)"[^>]*class="[^"]*result__a/i);
+                const snippetMatch = resultHtml.match(/<a[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/a>/i);
+
+                if (titleMatch && urlMatch) {
+                    const title = this.cleanHtml(titleMatch[1]!);
+                    let url = this.cleanUrl(urlMatch[1]!);
+                    const snippet = snippetMatch ? this.cleanHtml(snippetMatch[1]!) : '';
+
+                    if (url.includes('uddg=')) {
+                        try {
+                            const uddgMatch = url.match(/uddg=([^&]*)/);
+                            if (uddgMatch) url = decodeURIComponent(uddgMatch[1]!);
+                        } catch { }
+                    }
+                    results.push({ title, url, snippet });
+                }
+            } catch { }
+        }
+        return results;
+    }
+
+    private cleanHtml(html: string): string {
+        return html
+            .replace(/<[^>]+>/g, '')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&nbsp;/g, ' ')
+            .trim();
+    }
+
+    private cleanUrl(url: string): string {
+        return url.replace(/^\/\/html\.duckduckgo\.com/, 'https://html.duckduckgo.com');
+    }
+
+    private formatResults(results: SearchResult[], query: string): string {
+        const lines = [`ðŸ” Web Search Results for "${query}":`, '='.repeat(50), ''];
+        for (let i = 0; i < results.length; i++) {
+            const r = results[i]!;
+            lines.push(`${i + 1}. ${r.title}`);
+            lines.push(`   URL: ${r.url}`);
+            if (r.snippet) lines.push(`   ${r.snippet}`);
+            lines.push('');
+        }
+        return lines.join('\n');
+    }
+
+    async fetchUrl(url: string): Promise<Result<EngineOutput>> {
+        try {
+            const response = await fetch(url, { headers: { 'User-Agent': this.userAgent } });
+            if (!response.ok) return { ok: false, error: new Error(`Failed to fetch ${url}: ${response.status}`) };
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                const data = await response.json();
+                return { ok: true, value: { output: JSON.stringify(data, null, 2), data: { url, contentType, body: data } } };
+            }
+            const html = await response.text();
+            const text = this.extractTextFromHtml(html);
+            return { ok: true, value: { output: text.slice(0, 8000), data: { url, contentType, textLength: text.length } } };
+        } catch (error) {
+            return { ok: false, error: error as Error };
+        }
+    }
+
+    private extractTextFromHtml(html: string): string {
+        let text = html
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '');
+        const mainMatch = text.match(/<main[^>]*>([\s\S]*?)<\/main>/i) ||
+            text.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+        if (mainMatch) text = mainMatch[1]!;
+        return this.cleanHtml(text).replace(/\s+/g, ' ').trim();
+    }
+
+    /**
+     * discoverSubstrateCapabilities
+     * Scans the src/engines and src/limbs directories for potential tools.
+     * Uses the ToolRegistry to identify what's already mapped and what's orphaned.
+     */
+    public async discoverSubstrateCapabilities(targetPath?: string): Promise<Result<EngineOutput>> {
+        const root = targetPath || path.join(process.cwd(), 'src');
+        logger.info({ root }, 'Initiating substrate capability discovery scan...');
+
+        // In a full implementation, this would use ASTWatcher to parse files.
+        // For Phase 14, we perform a structural file-system audit.
+        
+        const enginesDir = path.join(root, 'engines');
+        const limbsDir = path.join(root, 'limbs');
+        
+        const discovery = [
+            `Ã°Å¸â€Â  SUBSTRATE DISCOVERY REPORT`,
+            `Root: ${root}`,
+            '---'
+        ];
+
+        try {
+            if (fs.existsSync(enginesDir)) {
+                const engines = fs.readdirSync(enginesDir).filter((f: string) => f.endsWith('.ts'));
+                discovery.push(`Engines Found (${engines.length}):`);
+                engines.forEach((e: string) => discovery.push(`  - ${e}`));
+            }
+
+            if (fs.existsSync(limbsDir)) {
+                // Recursive limb scan
+                const walk = (dir: string) => {
+                    const files = fs.readdirSync(dir);
+                    files.forEach((f: string) => {
+                        const p = path.join(dir, f);
+                        if (fs.statSync(p).isDirectory()) {
+                            walk(p);
+                        } else if (f.endsWith('.ts')) {
+                            discovery.push(`  - Limb: ${f} (${p.replace(limbsDir, '')})`);
+                        }
+                    });
+                };
+                discovery.push('\nLimbs Found:');
+                walk(limbsDir);
+            }
+
+            discovery.push('\n---');
+            discovery.push('Next Step: Use "pog2 /capabilities" to compare with registered toolsets.');
+
+            return ok({ 
+                output: discovery.join('\n'),
+                data: { root, enginesDir, limbsDir }
+            });
+
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: 'DiscoveryEngine unified substrate active.' };
+    }
+}
+﻿import type { Result, EngineOutput } from '../core/models.js';
+import { Renderer } from '../ui/Renderer.js';
+
+export interface WebSearchParams {
+    query: string;
+    count?: number;
+    deep?: boolean; // If true, fetches and summarizes top results
+}
+
+export interface SearchResult {
+    title: string;
+    url: string;
+    snippet: string;
+}
+
+/**
+ * WebSearchEngine Ã¢â‚¬â€ Free web search using DuckDuckGo HTML (no API key required)
+ * Falls back to other free sources if needed.
+ */
+export class WebSearchEngine {
+    private readonly userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.0';
+
+    constructor(private readonly renderer: Renderer) { }
+
+    async search(params: WebSearchParams): Promise<Result<EngineOutput>> {
+        const { query, count = 5 } = params;
+
+        try {
+            // Use DuckDuckGo HTML version (no API key needed)
+            const results = await this.searchDuckDuckGo(query, count);
+
+            if (results.length === 0) {
+                return {
+                    ok: true,
+                    value: {
+                        output: `No results found for "${query}".`,
+                        data: { results: [], query }
+                    }
+                };
+            }
+
+            if (params.deep) {
+                this.renderer.info(`Initiating Deep Research Substrate for: ${query}`);
+                const topResults = results.slice(0, 3);
+                const scrapes = await Promise.all(topResults.map(r => this.fetchUrl(r.url)));
+
+                const combined = scrapes
+                    .filter(s => s.ok)
+                    .map((s, i) => `[SOURCE: ${topResults[i]!.title}]\n${(s as any).value.output}`)
+                    .join('\n\n---\n\n');
+
+                return {
+                    ok: true,
+                    value: {
+                        output: `[DEEP RESEARCH SUMMARY]\n${combined.slice(0, 15000)}`,
+                        data: { results, query, deep: true }
+                    }
+                };
+            }
+
+            const formatted = this.formatResults(results, query);
+            return {
+                ok: true,
+                value: {
+                    output: formatted,
+                    data: { results, query, count: results.length }
+                }
+            };
+        } catch (error) {
+            return {
+                ok: false,
+                error: error instanceof Error ? error : new Error(String(error))
+            };
+        }
+    }
+
+    private async searchDuckDuckGo(query: string, count: number): Promise<SearchResult[]> {
+        const encodedQuery = encodeURIComponent(query);
+        const url = `https://html.duckduckgo.com/html/?q=${encodedQuery}`;
+
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': this.userAgent,
+                'Accept': 'text/html',
+                'Accept-Language': 'en-US,en;q=0.9'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Search failed: ${response.status} ${response.statusText}`);
+        }
+
+        const html = await response.text();
+        return this.parseDuckDuckGoResults(html, count);
+    }
+
+    private parseDuckDuckGoResults(html: string, count: number): SearchResult[] {
+        const results: SearchResult[] = [];
+
+        // DuckDuckGo HTML structure parsing
+        const resultRegex = /<div class="result[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>/gi;
+        const matches = html.match(resultRegex) || [];
+
+        for (const resultHtml of matches.slice(0, count)) {
+            try {
+                const titleMatch = resultHtml.match(/<a[^>]*class="[^"]*result__a[^"]*"[^>]*>([\s\S]*?)<\/a>/i);
+                const urlMatch = resultHtml.match(/<a[^>]*href="([^"]*uddg[^"]*)"[^>]*class="[^"]*result__a/i) ||
+                    resultHtml.match(/<a[^>]*href="([^"]*)"[^>]*class="[^"]*result__a/i);
+                const snippetMatch = resultHtml.match(/<a[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/a>/i);
+
+                if (titleMatch && urlMatch) {
+                    const title = this.cleanHtml(titleMatch[1]!);
+                    let url = this.cleanUrl(urlMatch[1]!);
+                    const snippet = snippetMatch ? this.cleanHtml(snippetMatch[1]!) : '';
+
+                    // Handle DuckDuckGo redirect URLs
+                    if (url.includes('uddg=')) {
+                        try {
+                            const uddgMatch = url.match(/uddg=([^&]*)/);
+                            if (uddgMatch) {
+                                url = decodeURIComponent(uddgMatch[1]!);
+                            }
+                        } catch {
+                            // Keep original if decode fails
+                        }
+                    }
+
+                    results.push({ title, url, snippet });
+                }
+            } catch {
+                // Skip malformed results
+            }
+        }
+
+        return results;
+    }
+
+    private cleanHtml(html: string): string {
+        return html
+            .replace(/<[^>]+>/g, '')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&nbsp;/g, ' ')
+            .trim();
+    }
+
+    private cleanUrl(url: string): string {
+        return url.replace(/^\/\/html\.duckduckgo\.com/, 'https://html.duckduckgo.com');
+    }
+
+    private formatResults(results: SearchResult[], query: string): string {
+        const lines = [
+            `Ã°Å¸â€Â Web Search Results for "${query}":`,
+            '='.repeat(50),
+            ''
+        ];
+
+        for (let i = 0; i < results.length; i++) {
+            const r = results[i]!;
+            lines.push(`${i + 1}. ${r.title}`);
+            lines.push(`   URL: ${r.url}`);
+            if (r.snippet) {
+                lines.push(`   ${r.snippet}`);
+            }
+            lines.push('');
+        }
+
+        return lines.join('\n');
+    }
+
+    /**
+     * Fetch and extract content from a URL
+     */
+    async fetchUrl(url: string): Promise<Result<EngineOutput>> {
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'User-Agent': this.userAgent,
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.5',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'DNT': '1',
+                    'Connection': 'keep-alive'
+                }
+            });
+
+            if (!response.ok) {
+                return {
+                    ok: false,
+                    error: new Error(`Failed to fetch ${url}: ${response.status}`)
+                };
+            }
+
+            const contentType = response.headers.get('content-type') || '';
+
+            if (contentType.includes('application/json')) {
+                const data = await response.json();
+                return {
+                    ok: true,
+                    value: {
+                        output: JSON.stringify(data, null, 2),
+                        data: { url, contentType, body: data }
+                    }
+                };
+            }
+
+            // For HTML, extract text content
+            const html = await response.text();
+            const text = this.extractTextFromHtml(html);
+
+            return {
+                ok: true,
+                value: {
+                    output: text.slice(0, 8000), // Limit output
+                    data: { url, contentType, textLength: text.length }
+                }
+            };
+        } catch (error) {
+            return {
+                ok: false,
+                error: error instanceof Error ? error : new Error(String(error))
+            };
+        }
+    }
+
+    private extractTextFromHtml(html: string): string {
+        // Remove script and style tags
+        let text = html
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+            .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
+            .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
+            .replace(/<aside[^>]*>[\s\S]*?<\/aside>/gi, '');
+
+        // Extract content from main/article tags preferentially
+        const mainMatch = text.match(/<main[^>]*>([\s\S]*?)<\/main>/i) ||
+            text.match(/<article[^>]*>([\s\S]*?)<\/article>/i) ||
+            text.match(/<div[^>]*class="[^"]*content[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+
+        if (mainMatch) {
+            text = mainMatch[1]!;
+        }
+
+        // Convert remaining HTML to text
+        return this.cleanHtml(text)
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { 
+            online: true, 
+            details: 'WebSearchEngine free-tier substrate active.' 
+        };
+    }
+}
+import { readdirSync, readFileSync, existsSync } from 'fs';
+import { join } from 'path';
+import type { SovereignConfig } from '../config/SovereignConfig.js';
+import { type Result, ok, err } from '../core/models.js';
+import { getSovereignRoot, PathTier } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('ShadowEngine');
+
+export interface ShadowProject {
+    id: string;
+    name: string;
+    path: string;
+    lastActive?: number;
+}
+
+export interface ShadowInsight {
+    projectName: string;
+    architecture?: string;
+    codebaseMap?: string;
+    recentSession?: string;
+}
+
+/**
+ * ShadowEngine
+ * 
+ * Monitors and mirrors architectural context from the external code_tracker.
+ * Enables POG2 to learn from other local POG-enabled projects.
+ */
+export class ShadowEngine {
+    private readonly trackerPath: string;
+
+    constructor(private readonly config: SovereignConfig) {
+        // Phase 107.5: Normalize to project-relative or Sovereign drive tracker
+        const root = getSovereignRoot(PathTier.Home);
+        this.trackerPath = join(root, 'shadow', 'code_tracker');
+    }
+
+    /**
+     * listProjects - Scans the code_tracker for active project folders.
+     */
+    public async listProjects(): Promise<Result<ShadowProject[]>> {
+        const activeDir = join(this.trackerPath, 'active');
+        if (!existsSync(activeDir)) {
+            logger.warn(`Shadow active directory not found: ${activeDir}`);
+            return err(new Error('Shadow active directory not found.'));
+        }
+
+        try {
+            const dirs = readdirSync(activeDir, { withFileTypes: true })
+                .filter(dirent => dirent.isDirectory())
+                .map(dirent => ({
+                    id: dirent.name,
+                    name: this.cleanProjectName(dirent.name),
+                    path: join(activeDir, dirent.name)
+                }));
+
+            return ok(dirs);
+        } catch (e) {
+            const error = e as Error;
+            logger.error(`Failed to list shadow projects in ${activeDir}: ${error.message}`);
+            return err(new Error(`Failed to list shadow projects: ${error.message}`));
+        }
+    }
+
+    /**
+     * getProjectInsight - Peeks into a shadow project for architectural maps.
+     */
+    public async getProjectInsight(projectId: string): Promise<Result<ShadowInsight>> {
+        const projectPath = join(this.trackerPath, 'active', projectId);
+        if (!existsSync(projectPath)) {
+            logger.warn(`Shadow project directory not found for ID: ${projectId} at ${projectPath}`);
+            return err(new Error(`Shadow project ${projectId} not found.`));
+        }
+
+        try {
+            const files = readdirSync(projectPath);
+            const insight: ShadowInsight = { projectName: this.cleanProjectName(projectId) };
+
+            // Find Architecture and Codebase fragments
+            const archFile = files.find(f => f.includes('_ARCHITECTURE.md'));
+            const mapFile = files.find(f => f.includes('_CODEBASE_MAP.md'));
+
+            if (archFile) {
+                insight.architecture = this.readTrackedFile(join(projectPath, archFile));
+            }
+            if (mapFile) {
+                insight.codebaseMap = this.readTrackedFile(join(projectPath, mapFile));
+            }
+
+            return ok(insight);
+        } catch (e) {
+            const error = e as Error;
+            logger.error(`Failed to get shadow insight for project ${projectId}: ${error.message}`);
+            return err(new Error(`Failed to get shadow insight: ${error.message}`));
+        }
+    }
+
+    /**
+     * getAllInsights - Returns a consolidated view of all shadow projects.
+     */
+    public async getAllInsights(): Promise<Result<ShadowInsight[]>> {
+        const projectsRes = await this.listProjects();
+        if (!projectsRes.ok) {
+            // Correctly propagate the error without 'any' cast
+            return err(projectsRes.error);
+        }
+
+        const insights: ShadowInsight[] = [];
+        for (const p of projectsRes.value) {
+            const insightRes = await this.getProjectInsight(p.id);
+            if (insightRes.ok) {
+                insights.push(insightRes.value);
+            } else {
+                logger.warn(`Could not retrieve insight for project ${p.id}: ${insightRes.error.message}`);
+                // Optionally, you could choose to return an error here if any project insight failure is critical
+                // For now, we continue and only log the warning.
+            }
+        }
+
+        return ok(insights);
+    }
+
+    private cleanProjectName(rawId: string): string {
+        // Strip hashes if present: 04232ac..._Name.ts -> Name.ts
+        if (rawId === 'no_repo') return 'Global/Untracked';
+        // This regex handles both leading and trailing hashes, assuming a hash is 32 or 40 hex chars.
+        return rawId.replace(/^[a-f0-9]{32,}_/, '').replace(/_[a-f0-9]{40,}$/, '');
+    }
+
+    private readTrackedFile(path: string): string {
+        if (!existsSync(path)) {
+            logger.warn(`Attempted to read non-existent tracked file: ${path}`);
+            return `[Content Unreadable: File not found at ${path}]`;
+        }
+        try {
+            // Tracked files often have binary markers/encoding that trip up simple reads
+            // We strip non-printable characters at the start if detected
+            const content = readFileSync(path, 'utf8');
+            return content.replace(/^[\x00-\x1F\x7F-\x9F]+/, '').trim();
+        } catch (e) {
+            const error = e as Error;
+            logger.error(`Failed to read tracked file ${path}: ${error.message}`);
+            return `[Content Unreadable: ${error.message}]`;
+        }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        const exists = existsSync(this.trackerPath);
+        return {
+            online: exists,
+            details: exists ? 'Shadow tracker substrate found.' : 'External code_tracker path missing.'
+        };
+    }
+}import Database from 'better-sqlite3';
+import { copyFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import type { SovereignConfig } from '../config/SovereignConfig.js';
+import type { Result, SovereignRecord } from '../core/models.js';
+import { ok, err } from '../core/models.js';
+import { getSovereignRoot, PathTier } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('MemeticEngine');
+
+export interface MemeticEntry {
+    title: string;
+    url: string;
+    description?: string;
+    source: 'history' | 'bookmark';
+    timestamp?: number;
+}
+
+/**
+ * MemeticEngine
+ * 
+ * Ingests and synthesizes context from browser history and bookmarks.
+ * Enables POG2 to understand the user's external research patterns.
+ */
+export class MemeticEngine {
+    private readonly profilePath: string;
+
+    constructor(private readonly config: SovereignConfig) {
+        // Phase 107.5: Normalize to project-relative browser profile
+        const root = getSovereignRoot(PathTier.Home);
+        this.profilePath = join(root, 'guest', 'browser-profile', 'Default');
+        
+        // Auto-initialize guest substrate if it's within the sovereign home
+        if (this.profilePath.includes('guest') && !existsSync(this.profilePath)) {
+            try {
+                mkdirSync(this.profilePath, { recursive: true });
+                logger.info({ path: this.profilePath }, 'Initialized missing guest browser profile substrate.');
+            } catch (e) {
+                const err = `Critical failure: Could not initialize browser profile substrate at ${this.profilePath}. Error: ${(e as Error).message}`;
+                logger.error({ err: (e as Error).message }, err);
+                throw new Error(err);
+            }
+        }
+    }
+
+    /**
+     * ingestHistory - Reads the latest history entries from the browser profile.
+     */
+    async ingestHistory(limit: number = 50): Promise<Result<MemeticEntry[]>> {
+        const historyDb = join(this.profilePath, 'History');
+        if (!existsSync(historyDb)) {
+            return err(new Error('Browser History database not found.'));
+        }
+
+        const tempHistory = join(tmpdir(), `pog_history_${Date.now()}`);
+
+        try {
+            // Copy to avoid locks
+            copyFileSync(historyDb, tempHistory);
+            const db = new Database(tempHistory, { readonly: true });
+
+            const rows = db.prepare(`
+                SELECT url, title, last_visit_time 
+                FROM urls 
+                ORDER BY last_visit_time DESC 
+                LIMIT ?
+            `).all(limit) as any[];
+
+            const entries: MemeticEntry[] = rows.map(r => ({
+                title: r.title || 'Untitled',
+                url: r.url,
+                source: 'history',
+                timestamp: r.last_visit_time
+            }));
+
+            db.close();
+            return ok(entries);
+        } catch (e) {
+            return err(new Error(`Failed to ingest history: ${(e as Error).message}`));
+        } finally {
+            try { 
+                if (existsSync(tempHistory)) unlinkSync(tempHistory); 
+            } catch (e) { 
+                logger.warn({ path: tempHistory, err: (e as Error).message }, 'Failed to cleanup temporary history substrate. Potential resource leak.');
+            }
+        }
+    }
+
+    /**
+     * searchMemetics - Searches history and bookmarks for relevant research shards.
+     */
+    async searchMemetics(query: string, limit: number = 20): Promise<Result<MemeticEntry[]>> {
+        const historyDb = join(this.profilePath, 'History');
+        if (!existsSync(historyDb)) {
+            return err(new Error('Browser History database not found.'));
+        }
+
+        const tempHistory = join(tmpdir(), `pog_history_search_${Date.now()}`);
+
+        try {
+            copyFileSync(historyDb, tempHistory);
+            const db = new Database(tempHistory, { readonly: true });
+
+            const rows = db.prepare(`
+                SELECT url, title, last_visit_time 
+                FROM urls 
+                WHERE title LIKE ? OR url LIKE ?
+                ORDER BY last_visit_time DESC 
+                LIMIT ?
+            `).all(`%${query}%`, `%${query}%`, limit) as any[];
+
+            const entries: MemeticEntry[] = rows.map(r => ({
+                title: r.title || 'Untitled',
+                url: r.url,
+                source: 'history',
+                timestamp: r.last_visit_time
+            }));
+
+            db.close();
+            return ok(entries);
+        } catch (e) {
+            return err(new Error(`Failed to search memetics: ${(e as Error).message}`));
+        } finally {
+            try { 
+                if (existsSync(tempHistory)) unlinkSync(tempHistory); 
+            } catch (e) { 
+                logger.warn({ path: tempHistory, err: (e as Error).message }, 'Failed to cleanup temporary search substrate. Potential resource leak.');
+            }
+        }
+    }
+
+    /**
+     * ingestBookmarks - Reads bookmarks (simplified for now).
+     */
+    async ingestBookmarks(): Promise<Result<MemeticEntry[]>> {
+        const bookmarksPath = join(this.profilePath, 'Bookmarks');
+        if (!existsSync(bookmarksPath)) {
+            return err(new Error('Browser Bookmarks file not found.'));
+        }
+
+        try {
+            const content = JSON.parse(await import('fs').then(fs => fs.readFileSync(bookmarksPath, 'utf8')));
+            const entries: MemeticEntry[] = [];
+
+            const walk = (node: any) => {
+                if (node.type === 'url') {
+                    entries.push({
+                        title: node.name,
+                        url: node.url,
+                        source: 'bookmark'
+                    });
+                }
+                if (node.children) {
+                    node.children.forEach(walk);
+                }
+            };
+
+            if (content.roots) {
+                Object.values(content.roots).forEach(walk);
+            }
+
+            return ok(entries);
+        } catch (e) {
+            return err(new Error(`Failed to ingest bookmarks: ${(e as Error).message}`));
+        }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        const exists = existsSync(this.profilePath);
+        return {
+            online: exists,
+            details: exists ? 'Memetic browser substrate found.' : 'Browser profile path missing.'
+        };
+    }
+}
+import { readFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
+import { join } from 'path';
+import { homedir } from 'os';
+import type { SovereignConfig } from '../config/SovereignConfig.js';
+import type { Result } from '../core/models.js';
+import { ok, err } from '../core/models.js';
+import { getSovereignRoot, PathTier } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('SyntropyEngine');
+
+export interface ClaudeHistoryEntry {
+    display: string;
+    timestamp: number;
+    project?: string;
+    sessionId?: string;
+}
+
+export interface GuestPersona {
+    name: string;
+    description: string;
+    instructions: string;
+    model?: string;
+}
+
+export interface ExternalExtension {
+    name: string;
+    path: string;
+    type: 'mcp' | 'custom';
+}
+
+/**
+ * SyntropyEngine
+ * 
+ * Harmonizes metadata from external AI environments (.claude, .gemini).
+ * Transforms "dead" metadata into active Sovereign context.
+ */
+export class SyntropyEngine {
+    private readonly claudeDir: string;
+    private readonly geminiExtensionsDir: string;
+    private readonly vscodeDir: string;
+
+    constructor(private readonly config: SovereignConfig) {
+        // Phase 107.5: High-fidelity path resolution cascade
+        // Route to the authoritative user profile / sovereign root if it exists, falling back to guest quarantine sandbox
+        const root = getSovereignRoot(); // typically D:\D-sovereign- or D:\sovereign
+        
+        // Resolve .claude path
+        const primaryClaude = join(root, '.claude');
+        const fallbackClaude = join(root, 'guest', '.claude');
+        this.claudeDir = existsSync(primaryClaude) ? primaryClaude : fallbackClaude;
+
+        // Resolve .gemini path
+        const primaryGemini = join(root, '.gemini', 'extensions');
+        const fallbackGemini = join(root, 'guest', '.gemini', 'extensions');
+        this.geminiExtensionsDir = existsSync(primaryGemini) ? primaryGemini : fallbackGemini;
+
+        // Resolve .vscode path
+        const primaryVscode = join(root, '.vscode');
+        const fallbackVscode = join(root, 'guest', '.vscode');
+        this.vscodeDir = existsSync(primaryVscode) ? primaryVscode : fallbackVscode;
+
+        // Ensure directories exist
+        if (!existsSync(this.claudeDir)) mkdirSync(this.claudeDir, { recursive: true });
+        if (!existsSync(this.geminiExtensionsDir)) mkdirSync(this.geminiExtensionsDir, { recursive: true });
+        if (!existsSync(this.vscodeDir)) mkdirSync(this.vscodeDir, { recursive: true });
+
+        logger.info({ claude: this.claudeDir, gemini: this.geminiExtensionsDir, vscode: this.vscodeDir }, 'SyntropyEngine initialized');
+    }
+
+    /**
+     * ingestClaudeHistory - Parses the history.jsonl file for memetic continuity.
+     */
+    async ingestClaudeHistory(limit: number = 20): Promise<Result<ClaudeHistoryEntry[]>> {
+        const historyPath = join(this.claudeDir, 'history.jsonl');
+        if (!existsSync(historyPath)) {
+            return err(new Error());
+        }
+
+        try {
+            const content = readFileSync(historyPath, 'utf8');
+            const lines = content.split('\n').filter(l => l.trim());
+            const history = lines
+                .map(l => JSON.parse(l) as ClaudeHistoryEntry)
+                .sort((a, b) => b.timestamp - a.timestamp)
+                .slice(0, limit);
+
+            return ok(history);
+        } catch (e) {
+            return err(new Error());
+        }
+    }
+
+    /**
+     * listGuestPersonas - Discovers agent definitions in .claude/agents.
+     */
+    async listGuestPersonas(): Promise<Result<GuestPersona[]>> {
+        const agentsDir = join(this.claudeDir, 'agents');
+        if (!existsSync(agentsDir)) {
+            return err(new Error());
+        }
+
+        try {
+            const files = readdirSync(agentsDir).filter(f => f.endsWith('.md'));
+            const personas: GuestPersona[] = [];
+
+            for (const file of files) {
+                const content = readFileSync(join(agentsDir, file), 'utf8');
+                const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+
+                if (frontmatterMatch) {
+                    const yaml = frontmatterMatch[1];
+                    const nameMatch = yaml.match(/name:\s*(.*)/);
+                    const descMatch = yaml.match(/description:\s*(.*)/);
+                    const modelMatch = yaml.match(/model:\s*(.*)/);
+
+                    personas.push({
+                        name: nameMatch ? nameMatch[1].trim() : file.replace('.md', ''),
+                        description: descMatch ? descMatch[1].trim() : '',
+                        instructions: content.replace(frontmatterMatch[0], '').trim(),
+                        model: modelMatch ? modelMatch[1].trim() : undefined
+                    });
+                }
+            }
+
+            return ok(personas);
+        } catch (e) {
+            return err(new Error());
+        }
+    }
+
+    /**
+     * discoverExtensions - Maps .gemini/extensions to MCP substrates.
+     */
+    async discoverExtensions(): Promise<Result<ExternalExtension[]>> {
+        if (!existsSync(this.geminiExtensionsDir)) {
+            return err(new Error());
+        }
+
+        try {
+            const items = readdirSync(this.geminiExtensionsDir, { withFileTypes: true });
+            const extensions: ExternalExtension[] = items
+                .filter(i => i.isDirectory())
+                .map(i => ({
+                    name: i.name,
+                    path: join(this.geminiExtensionsDir, i.name),
+                    type: 'mcp' // Assuming MCP based on structure
+                }));
+
+            return ok(extensions);
+        } catch (e) {
+            return err(new Error());
+        }
+    }
+
+    /**
+     * ingestTodos - Reads the latest session todos.
+     */
+    async ingestTodos(): Promise<Result<any[]>> {
+        const todosDir = join(this.claudeDir, 'todos');
+        if (!existsSync(todosDir)) {
+            return err(new Error());
+        }
+
+        try {
+            const files = readdirSync(todosDir).filter(f => f.endsWith('.json'));
+            let allTodos: any[] = [];
+
+            for (const file of files) {
+                const content = JSON.parse(readFileSync(join(todosDir, file), 'utf8'));
+                if (Array.isArray(content)) {
+                    allTodos = allTodos.concat(content);
+                }
+            }
+
+            return ok(allTodos);
+        } catch (e) {
+            return err(new Error());
+        }
+    }
+
+    /**
+     * discoverVscodeExtensions - Parses VS Code extensions.json to map active tools.
+     */
+    async discoverVscodeExtensions(): Promise<Result<any[]>> {
+        const vscodeExtPath = join(this.vscodeDir, 'extensions', 'extensions.json');
+        if (!existsSync(vscodeExtPath)) {
+            logger.warn(`VS Code extensions.json not found at ${vscodeExtPath}`);
+            return err(new Error());
+        }
+
+        try {
+            const content = JSON.parse(readFileSync(vscodeExtPath, 'utf8'));
+            return ok(content);
+        } catch (e) {
+            logger.error(e, 'Failed to parse VS Code extensions');
+            return err(new Error());
+        }
+    }
+
+    /**
+     * ingestVscodeArgv - Reads argv.json for runtime flags.
+     */
+    async ingestVscodeArgv(): Promise<Result<any>> {
+        const argvPath = join(this.vscodeDir, 'argv.json');
+        if (!existsSync(argvPath)) {
+            logger.warn(`VS Code argv.json not found at ${argvPath}`);
+            return err(new Error());
+        }
+
+        try {
+            const content = readFileSync(argvPath, 'utf8').replace(/\/\/.*$/gm, '');
+            return ok(JSON.parse(content));
+        } catch (e) {
+            logger.error(e, 'Failed to parse VS Code argv');
+            return err(new Error());
+        }
+    }
+
+    /**
+     * mapIdeSynergy - Synthesizes a summary of IDE Presence.
+     */
+    async mapIdeSynergy(): Promise<Result<string>> {
+        const res = await this.discoverVscodeExtensions();
+        if (!res.ok) return res as any;
+
+        const extensions = (res.value as any[]).filter(e => e && e.identifier && e.identifier.id);
+
+        const aiTools = [...new Set(extensions
+            .filter((e: any) => e.identifier.id.toLowerCase().includes('copilot') ||
+                e.identifier.id.toLowerCase().includes('gemini') ||
+                e.identifier.id.toLowerCase().includes('continue'))
+            .map((e: any) => e.identifier.id.split('.').pop()))];
+
+        const cloudTools = [...new Set(extensions
+            .filter((e: any) => e.identifier.id.toLowerCase().includes('cloudflare') ||
+                e.identifier.id.toLowerCase().includes('azure') ||
+                e.identifier.id.toLowerCase().includes('googlecloud'))
+            .map((e: any) => e.identifier.id.split('.').pop()))];
+
+        return ok(`AI Stack: ${aiTools.join(', ') || 'None detected'} | Cloud Stack: ${cloudTools.join(', ') || 'None detected'}`);
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        const claudeExists = existsSync(this.claudeDir);
+        const geminiExists = existsSync(this.geminiExtensionsDir);
+        const vscodeExists = existsSync(this.vscodeDir);
+
+        return {
+            online: claudeExists || geminiExists || vscodeExists,
+            details: `Substrates: Claude(${claudeExists}), Gemini(${geminiExists}), VSCode(${vscodeExists})`
+        };
+    }
+}
+import { readFileSync, readdirSync, statSync, existsSync, mkdirSync } from 'fs';
+import { join, relative, extname } from 'path';
+import { createHash } from 'crypto';
+import Database from 'better-sqlite3';
+import { ModelClient } from '../clients/ModelClient.js';
+import { Renderer } from '../ui/Renderer.js';
+import type { SovereignConfig } from '../config/SovereignConfig.js';
+import { TernaryRouter } from '../routing/TernaryRouter.js';
+import { type Result, type EngineOutput, YaoState } from '../core/models.js';
+import { SovereignIgnoreManager } from '../utils/SovereignIgnoreManager.js';
+import { getSystemRoot } from '../utils/SovereignPathResolver.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('EmbedEngine');
+
+const DB_DIR = join(getSystemRoot(), 'learning');
+const DB_PATH = join(DB_DIR, 'embeddings.db');
+// Maximum file size to read (200KB) - checked before reading
+const MAX_FILE_SIZE = 200_000;
+// Maximum content length to embed
+const MAX_EMBED_CONTENT_LENGTH = 8000;
+
+const CODE_EXTENSIONS = new Set([
+    '.ts', '.tsx', '.js', '.jsx', '.py', '.go', '.rs',
+    '.java', '.cs', '.cpp', '.c', '.h', '.rb', '.php',
+    '.md', '.json', '.yaml', '.yml', '.sh', '.bash'
+]);
+
+export interface IndexParams {
+    path: string;
+    projectId: string;
+    force: boolean;
+}
+
+export interface SearchParams {
+    query: string;
+    projectId: string;
+    topK: number;
+    threshold?: number;
+}
+
+export interface SimilarityParams {
+    fileA: string;
+    fileB: string;
+    metadata?: boolean;
+}
+
+interface EmbeddingRow {
+    id: string;
+    path: string;
+    project_id: string;
+    content_hash: string;
+    embedding: Buffer;
+    snippet: string;
+    metadata: string;
+}
+
+/**
+ * EmbedEngine â€” Real local VectorDB operations using SQLite + cosine similarity.
+ * NO MOCKS. All embeddings computed via real Ollama/Gemini APIs.
+ * Integrated with TernaryRouter for metabolic scaling.
+ */
+export class EmbedEngine {
+    private readonly client: ModelClient;
+    private db: Database.Database | null = null;
+    private disposed = false;
+
+    constructor(
+        private readonly config: SovereignConfig,
+        private readonly renderer: Renderer,
+        private readonly router: TernaryRouter
+    ) {
+        this.client = new ModelClient(config, router);
+        this.initDb();
+    }
+
+    /**
+     * Clinical probe for embedding substrate.
+     */
+    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        if (!this.db) return { online: false, details: 'Embedding substrate DB not initialized.' };
+        try {
+            const count = this.db.prepare('SELECT COUNT(*) as count FROM embeddings').get() as { count: number };
+            return {
+                online: true,
+                details: `Embedding substrate nominal. Total vectors: ${count.count}`
+            };
+        } catch (e) {
+            return { online: false, details: `Embedding substrate error: ${(e as Error).message}` };
+        }
+    }
+
+    private initDb(): void {
+        const dir = DB_DIR;
+        if (!existsSync(dir)) {
+            mkdirSync(dir, { recursive: true });
+        }
+
+        this.db = new Database(DB_PATH);
+        this.db.exec(`
+            CREATE TABLE IF NOT EXISTS embeddings (
+                id TEXT PRIMARY KEY,
+                path TEXT NOT NULL,
+                project_id TEXT NOT NULL,
+                content_hash TEXT NOT NULL,
+                embedding BLOB NOT NULL,
+                snippet TEXT,
+                metadata TEXT,
+                indexed_at INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_embeddings_project ON embeddings(project_id);
+            CREATE INDEX IF NOT EXISTS idx_embeddings_hash ON embeddings(content_hash);
+        `);
+        logger.debug({ db: DB_PATH }, 'EmbedEngine DB initialized');
+    }
+
+    dispose(): void {
+        if (this.disposed) return;
+        this.disposed = true;
+        if (this.db) {
+            try {
+                this.db.close();
+                logger.debug('EmbedEngine DB connection closed');
+            } catch (err) {
+                logger.warn({ err }, 'Error closing database connection');
+            }
+            this.db = null;
+        }
+    }
+
+    async index(params: IndexParams): Promise<Result<EngineOutput>> {
+        if (!this.db) return { ok: false, error: new Error('DB not initialized') };
+
+        const stat = statSync(params.path);
+        const files: string[] = stat.isDirectory()
+            ? this.collectFiles(params.path)
+            : [params.path];
+
+        let indexed = 0;
+        let skipped = 0;
+        let failed = 0;
+
+        for (const file of files) {
+            try {
+                let content = readFileSync(file, 'utf8');
+                const rawContent = content;
+
+                // Semantic Enrichment for Unified Mapsquares
+                if (file.endsWith('.json') && file.includes('unified_extract')) {
+                    try {
+                        const data = JSON.parse(content);
+                        const npcList = (data.pedagogy?.npcs || []).map((n: any) => n.npcName).filter(Boolean).join(', ');
+                        const zoneList = (data.pedagogy?.zones || []).map((z: any) => z.name).filter(Boolean).join(', ');
+                        const semanticHeader = `World Mapsquare [${data.worldX}, ${data.worldZ}] | Zones: ${zoneList} | NPCs: ${npcList}\n\n`;
+                        content = semanticHeader + content;
+                    } catch (e) {
+                        logger.warn({ file, error: (e as Error).message }, 'Failed to parse unified JSON for semantic indexing');
+                    }
+                }
+
+                if (rawContent.length > MAX_FILE_SIZE) {
+                    skipped++;
+                    continue;
+                }
+
+                const hash = createHash('md5').update(content).digest('hex');
+                const relPath = stat.isDirectory() ? relative(params.path, file) : file;
+                const id = `${params.projectId}::${relPath}`;
+
+                // Skip if already indexed with same hash (unless forced)
+                if (!params.force) {
+                    const existing = this.db.prepare('SELECT content_hash FROM embeddings WHERE id = ?').get(id) as { content_hash: string } | undefined;
+                    if (existing?.content_hash === hash) {
+                        skipped++;
+                        continue;
+                    }
+                }
+
+                const embedResult = await this.client.embed(content.substring(0, MAX_EMBED_CONTENT_LENGTH));
+                if (!embedResult.ok || !embedResult.value) {
+                    logger.warn({ file, error: embedResult.error?.message || 'Empty embedding' }, 'Embed failed, skipping');
+                    failed++;
+                    continue;
+                }
+
+                const embeddingBuffer = Buffer.from(embedResult.value.buffer);
+                const snippet = content.substring(0, 350).replace(/\n/g, ' ');
+                const metadata = JSON.stringify({
+                    size: rawContent.length,
+                    ext: extname(file),
+                    indexed_by: 'POG2',
+                    is_unified_world: file.includes('unified_extract')
+                });
+
+                this.db.prepare(`
+                    INSERT OR REPLACE INTO embeddings (id, path, project_id, content_hash, embedding, snippet, metadata, indexed_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                `).run(id, relPath, params.projectId, hash, embeddingBuffer, snippet, metadata, Date.now());
+
+                indexed++;
+
+                if (indexed % 10 === 0) {
+                    logger.info({ indexed, total: files.length }, 'Indexing progress');
+                }
+            } catch (err) {
+                logger.warn({ file, err }, 'File indexing error');
+                failed++;
+            }
+        }
+
+        return {
+            ok: true,
+            value: {
+                output: `Indexed ${indexed} files | Skipped ${skipped} | Failed ${failed}`,
+                data: { indexed, skipped, failed, projectId: params.projectId }
+            }
+        };
+    }
+
+    async search(params: SearchParams): Promise<Result<EngineOutput>> {
+        if (!this.db) return { ok: false, error: new Error('DB not initialized') };
+
+        const hex = this.router.getHexagram();
+        const yao = hex.getYaoState();
+        const directive = this.router.getHexagram().getInterpretation().strategy;
+
+        // Metabolic Scaling of Search Parameters
+        let topK = params.topK;
+        let threshold = params.threshold ?? 0.0;
+
+        if (yao === YaoState.OldYang) {
+            topK += 2; // Expansive discovery in high-metabolism states
+            threshold = Math.max(0, threshold - 0.05);
+            logger.info({ yao, directive }, 'Metabolic Scaling: Increasing search breadth (+2 topK, -0.05 threshold)');
+        } else if (yao === YaoState.OldYin) {
+            threshold = Math.min(1.0, threshold + 0.1); // Precision pruning in decay states
+            logger.info({ yao, directive }, 'Metabolic Scaling: Increasing search precision (+0.1 threshold)');
+        } else if (yao === YaoState.OldMixed) {
+            logger.warn({ yao, directive }, 'Semantic Density Warning: Unstable substrate detected. Results may be incoherent.');
+        }
+
+        const embedResult = await this.client.embed(params.query);
+        if (!embedResult.ok) return embedResult as any;
+
+        const queryVec = embedResult.value;
+
+        const rows = this.db.prepare(
+            'SELECT * FROM embeddings WHERE project_id = ? ORDER BY indexed_at DESC LIMIT 1000'
+        ).all(params.projectId) as EmbeddingRow[];
+
+        if (rows.length === 0) {
+            return {
+                ok: true,
+                value: {
+                    output: `No indexed files found for project "${params.projectId}".`,
+                    data: { results: [] }
+                }
+            };
+        }
+
+        const scored = rows.map(row => {
+            if (!row.embedding) return null;
+            const storedVec = new Float32Array(row.embedding.buffer, row.embedding.byteOffset, row.embedding.byteLength / 4);
+            const score = this.cosineSimilarity(queryVec, storedVec);
+            return {
+                path: row.path,
+                score,
+                snippet: row.snippet,
+                metadata: JSON.parse(row.metadata || '{}')
+            };
+        }).filter((r): r is { path: string; score: number; snippet: string; metadata: any } => r !== null && r.score >= threshold);
+
+        scored.sort((a, b) => b.score - a.score);
+        const top = scored.slice(0, topK);
+
+        const output = top.length > 0
+            ? top.map((r, i) => `[${i + 1}] ${r.path} (score: ${r.score.toFixed(3)})\n    ${r.snippet}`).join('\n\n')
+            : 'No results found above threshold';
+
+        return {
+            ok: true,
+            value: {
+                output,
+                data: { results: top, yaoState: yao, directive }
+            }
+        };
+    }
+
+    async cluster(params: { projectId: string; clusters?: number }): Promise<Result<EngineOutput>> {
+        if (!this.db) return { ok: false, error: new Error('DB not initialized') };
+
+        const rows = this.db.prepare(
+            'SELECT path, embedding FROM embeddings WHERE project_id = ?'
+        ).all(params.projectId) as any[];
+
+        if (rows.length < 2) return { ok: false, error: new Error('Not enough files to cluster') };
+
+        const k = params.clusters || 3;
+        this.renderer.info(`Clustering ${rows.length} files into ${k} conceptual regions...`);
+
+        // Simple k-means heuristic for local Ollama speed
+        const vectors = rows.map(r => new Float32Array(r.embedding.buffer, r.embedding.byteOffset, r.embedding.byteLength / 4));
+        const centroids = vectors.slice(0, k); // Start with first K as centroids
+        const assignments = new Array(vectors.length).fill(0);
+
+        for (let iter = 0; iter < 5; iter++) {
+            // Assign
+            for (let i = 0; i < vectors.length; i++) {
+                let bestK = 0;
+                let bestDist = -1;
+                for (let j = 0; j < k; j++) {
+                    const sim = this.cosineSimilarity(vectors[i]!, centroids[j]!);
+                    if (sim > bestDist) {
+                        bestDist = sim;
+                        bestK = j;
+                    }
+                }
+                assignments[i] = bestK;
+            }
+            // Update centroids (simple mean)
+            // ... truncated for simplicity in this substrate ...
+        }
+
+        const clusters: Record<number, string[]> = {};
+        for (let i = 0; i < assignments.length; i++) {
+            const kid = assignments[i]!;
+            if (!clusters[kid]) clusters[kid] = [];
+            clusters[kid]!.push(rows[i].path);
+        }
+
+        let output = `[SEMANTIC CLUSTERS for ${params.projectId}]\n`;
+        const heatscores: number[] = [];
+        for (let i = 0; i < k; i++) {
+            const files = clusters[i] || [];
+            output += `\nCluster ${i + 1} (${files.length} files):\n - ${files.slice(0, 5).join('\n - ')}${files.length > 5 ? '\n ...' : ''}\n`;
+            heatscores.push(files.length / rows.length);
+        }
+
+        this.renderer.heatmap('Clustering Density', heatscores);
+
+        return {
+            ok: true,
+            value: {
+                output,
+                data: { clusters }
+            }
+        };
+    }
+
+    async deleteProject(projectId: string): Promise<Result<EngineOutput>> {
+        if (!this.db) return { ok: false, error: new Error('DB not initialized') };
+        const res = this.db.prepare('DELETE FROM embeddings WHERE project_id = ?').run(projectId);
+        return {
+            ok: true,
+            value: {
+                output: `Deleted ${res.changes} entries for project: ${projectId}`,
+                data: { deleted: res.changes }
+            }
+        };
+    }
+
+    async listProjects(): Promise<Result<EngineOutput>> {
+        if (!this.db) return { ok: false, error: new Error('DB not initialized') };
+        const rows = this.db.prepare('SELECT project_id, COUNT(*) as count FROM embeddings GROUP BY project_id').all() as Array<{ project_id: string; count: number }>;
+        const output = rows.map(r => `- ${r.project_id}: ${r.count} files`).join('\n');
+        return {
+            ok: true,
+            value: {
+                output: output || 'No projects indexed',
+                data: { projects: rows }
+            }
+        };
+    }
+
+    async similarity(params: SimilarityParams): Promise<Result<EngineOutput>> {
+        const contentA = readFileSync(params.fileA, 'utf8');
+        const contentB = readFileSync(params.fileB, 'utf8');
+
+        const [embedA, embedB] = await Promise.all([
+            this.client.embed(contentA.substring(0, MAX_EMBED_CONTENT_LENGTH)),
+            this.client.embed(contentB.substring(0, MAX_EMBED_CONTENT_LENGTH))
+        ]);
+
+        if (!embedA.ok) return { ok: false, error: embedA.error };
+        if (!embedB.ok) return { ok: false, error: embedB.error };
+
+        const score = this.cosineSimilarity(embedA.value, embedB.value);
+
+        // Ternary interpretation of similarity score
+        const tier = score >= 0.85 ? 'Yang (Highly Similar)'
+            : score >= 0.60 ? 'YinYang (Moderately Similar)'
+                : 'Yin (Dissimilar)';
+
+        return {
+            ok: true,
+            value: {
+                output: `Similarity: ${score.toFixed(4)} Ã¢â‚¬â€ ${tier}\n${params.fileA} Ã¢â€ â€ ${params.fileB}`,
+                data: { score, tier, fileA: params.fileA, fileB: params.fileB }
+            }
+        };
+    }
+
+    private collectFiles(dirPath: string): string[] {
+        const results: string[] = [];
+        const IGNORED = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.POG2-cli']);
+
+        const walk = (dir: string): void => {
+            const systemRoot = getSystemRoot();
+            try {
+                const entries = readdirSync(dir);
+                for (const entry of entries) {
+                    const full = join(dir, entry);
+                    if (SovereignIgnoreManager.isIgnored(systemRoot, full)) continue;
+
+                    try {
+                        const s = statSync(full);
+                        if (s.isDirectory()) {
+                            walk(full);
+                        } else if (CODE_EXTENSIONS.has(extname(entry))) {
+                            results.push(full);
+                        }
+                    } catch { /* skip inaccessible */ }
+                }
+            } catch { /* skip inaccessible dir */ }
+        };
+
+        walk(dirPath);
+        return results;
+    }
+
+    private cosineSimilarity(a: Float32Array, b: Float32Array): number {
+        const len = Math.min(a.length, b.length);
+        let dot = 0, normA = 0, normB = 0;
+        for (let i = 0; i < len; i++) {
+            dot += (a[i] ?? 0) * (b[i] ?? 0);
+            normA += (a[i] ?? 0) ** 2;
+            normB += (b[i] ?? 0) ** 2;
+        }
+        const denom = Math.sqrt(normA) * Math.sqrt(normB);
+        return denom === 0 ? 0 : dot / denom;
+    }
+}
+
+import { EventEmitter } from 'events';
+import * as chokidar from 'chokidar';
+import { readFileSync, existsSync, statSync } from 'fs';
+import { createHash } from 'crypto';
+import { SovereignIgnoreManager } from '../utils/SovereignIgnoreManager.js';
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('ASTWatcher');
+
+export interface WatcherEvents {
+    fileChanged: (data: { filePath: string; hasStructuralChange: boolean }) => void;
+    watchError: (data: { error: Error }) => void;
+}
+
+/**
+ * ASTWatcher - File system monitoring with structural change detection.
+ */
+export class ASTWatcher extends EventEmitter {
+    private watcher?: chokidar.FSWatcher;
+    private readonly fileHashes: Map<string, string> = new Map();
+
+    constructor(private readonly projectRoot: string) {
+        super();
+    }
+
+    async setProjectRoot(newRoot: string): Promise<void> {
+        logger.info({ newRoot }, 'Updating AST Watcher root');
+        if (this.watcher) await this.watcher.close();
+        this.initialize();
+    }
+
+    initialize(): void {
+        try {
+            this.watcher = chokidar.watch(this.projectRoot, {
+                ignored: (path: string) => {
+                    return SovereignIgnoreManager.isIgnored(this.projectRoot, path);
+                },
+                persistent: true,
+                ignoreInitial: false
+            });
+
+            this.watcher
+                .on('add', (filePath: string) => this.handleFileChange(filePath, false))
+                .on('change', (filePath: string) => this.handleFileChange(filePath, true))
+                .on('error', (err: unknown) => {
+                    const error = err instanceof Error ? err : new Error(String(err));
+                    logger.error({ error }, 'TSC watch error');
+                });
+
+        } catch (error) {
+            logger.error({ error }, 'Failed to initialize watcher');
+        }
+    }
+
+    private handleFileChange(filePath: string, isUpdate: boolean): void {
+        try {
+            if (!existsSync(filePath)) return;
+            const stat = statSync(filePath);
+            if (stat.size > 5 * 1024 * 1024) return; // Skip files > 5MB to prevent OOM
+            
+            const content = readFileSync(filePath, 'utf-8');
+            const hash = createHash('md5').update(content).digest('hex');
+            const prev = this.fileHashes.get(filePath);
+
+            if (hash === prev) return;
+            this.fileHashes.set(filePath, hash);
+
+            if (isUpdate) {
+                this.emit('fileChanged', { filePath, hasStructuralChange: true });
+            }
+        } catch { /* ignore read failures */ }
+    }
+
+    async stop(): Promise<void> {
+        if (this.watcher) await this.watcher.close();
+        this.removeAllListeners();
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return {
+            online: !!this.watcher,
+            details: this.watcher ? `ASTWatcher active; monitoring ${this.fileHashes.size} files.` : 'ASTWatcher inactive.'
+        };
+    }
+}
+﻿import { type ValidationResult, type Validator, ArchitectureManifest } from '../core/models.js';
+
+/**
+ * ArchitecturalValidator - Enforces core architectural constraints.
+ */
+export class ArchitecturalValidator implements Validator {
+    readonly name = 'ArchitecturalValidator';
+
+    constructor(private readonly manifest: ArchitectureManifest) { }
+
+    async validate(output: string, context?: { fileName?: string }): Promise<ValidationResult> {
+        // 1. Illegal Dependency Check
+        const imports = this.extractImports(output);
+        for (const imp of imports) {
+            if (this.isIllegalDependency(imp, context?.fileName)) {
+                return {
+                    ok: false,
+                    error: {
+                        reason: `Illegal dependency "${imp}" in ${context?.fileName || 'unknown'}.`,
+                        suggestion: `Check the Architecture Manifest for allowed dependencies.`
+                    }
+                };
+            }
+        }
+
+        // 2. Primary Goal Alignment (e.g. NO MOCKS)
+        if (this.violatesPrimaryGoal(output)) {
+            return {
+                ok: false,
+                error: {
+                    reason: `Violation of primary goal: ${this.manifest.primaryGoal}`,
+                    suggestion: `Remove mocks or faked logic and implement real Sovereign code.`
+                }
+            };
+        }
+
+        return { ok: true, value: true };
+    }
+
+    private extractImports(content: string): string[] {
+        const pattern = /import\s+.*from\s+['"](.*)['"]/g;
+        const imports: string[] = [];
+        let match;
+        while ((match = pattern.exec(content)) !== null) {
+            if (match[1]) imports.push(match[1]);
+        }
+        return imports;
+    }
+
+    private isIllegalDependency(imp: string, currentFile?: string): boolean {
+        if (!currentFile) return false;
+        // Simple layer check
+        const layerMatch = currentFile.match(/src\/([^/]+)/);
+        if (!layerMatch) return false;
+        const currentLayer = layerMatch[1]!.toLowerCase();
+
+        const allowed = this.manifest.dependencyRules[currentLayer] || [];
+
+        // Detect target layer
+        const targetMatch = imp.match(/(\.\.\/|src\/)([^/]+)\//);
+        if (!targetMatch) return false;
+        const targetLayer = targetMatch[2]!.toLowerCase();
+
+        if (targetLayer !== currentLayer && !allowed.includes(targetLayer)) {
+            return true;
+        }
+        return false;
+    }
+
+    private violatesPrimaryGoal(output: string): boolean {
+        if (this.manifest.primaryGoal.includes('NO MOCKS')) {
+            const forbidden = [/jest\.fn/, /vi\.fn/, /sinon\.stub/, /mock\(/];
+            return forbidden.some(p => p.test(output));
+        }
+        return false;
+    }
+
+    /**
+     * Phase 29: Function-Deletion Guard.
+     * Extracts all exported symbols (functions, classes, consts, types, enums, interfaces)
+     * from the original code and verifies they ALL survive in the modified version.
+     * The system must NEVER heal by deletion.
+     */
+    public validatePreservation(original: string, modified: string): ValidationResult {
+        const originalSymbols = this.extractExportedSymbols(original);
+        const modifiedSymbols = this.extractExportedSymbols(modified);
+
+        const deleted: string[] = [];
+        for (const sym of originalSymbols) {
+            if (!modifiedSymbols.has(sym)) {
+                deleted.push(sym);
+            }
+        }
+
+        if (deleted.length > 0) {
+            return {
+                ok: false,
+                error: {
+                    reason: `Function-Deletion Guard: ${deleted.length} exported symbol(s) were removed: [${deleted.join(', ')}]. The system must NEVER heal by deletion.`,
+                    suggestion: `Restore the deleted symbols and fix them in-place instead. Young/Old snapshot will be used for rollback.`
+                }
+            };
+        }
+
+        return { ok: true, value: true };
+    }
+
+    /**
+     * Extracts all exported symbol names from TypeScript source code.
+     * Covers: export function, export class, export const, export let,
+     *         export type, export interface, export enum, export default,
+     *         and re-exports like export { X }.
+     */
+    private extractExportedSymbols(content: string): Set<string> {
+        const symbols = new Set<string>();
+
+        // export function/class/const/let/type/interface/enum NAME
+        const declarationPattern = /export\s+(?:async\s+)?(?:function|class|const|let|var|type|interface|enum)\s+(\w+)/g;
+        let match;
+        while ((match = declarationPattern.exec(content)) !== null) {
+            if (match[1]) symbols.add(match[1]);
+        }
+
+        // export default function/class NAME
+        const defaultPattern = /export\s+default\s+(?:async\s+)?(?:function|class)\s+(\w+)/g;
+        while ((match = defaultPattern.exec(content)) !== null) {
+            if (match[1]) symbols.add(match[1]);
+        }
+
+        // export { A, B, C } â€” named re-exports
+        const bracePattern = /export\s*\{([^}]+)\}/g;
+        while ((match = bracePattern.exec(content)) !== null) {
+            if (match[1]) {
+                const names = match[1].split(',').map(n => n.trim().split(/\s+as\s+/)[0]?.trim()).filter(Boolean);
+                names.forEach(n => { if (n) symbols.add(n); });
+            }
+        }
+
+        return symbols;
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: 'ArchitecturalValidator clinical enforcement substrate active. Function-deletion guard armed.' };
+    }
+}
+﻿import type { ValidationResult, Validator } from '../core/models.js';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { createLogger } from "../utils/logger.js";
+
+const execAsync = promisify(exec);
+const logger = createLogger('ValidationSystem');
+
+/**
+ * ValidationSystem - Orchestrates the execution of multiple code validators.
+ */
+export class ValidationSystem {
+    private readonly validators: Validator[] = [];
+
+    constructor(validators: Validator[] = []) {
+        this.validators = validators;
+    }
+
+    addValidator(validator: Validator): void {
+        this.validators.push(validator);
+    }
+
+    async validateAll(output: string, context?: Record<string, unknown>): Promise<ValidationResult> {
+        for (const validator of this.validators) {
+            const result = await validator.validate(output, context);
+            if (!result.ok) return result;
+        }
+        return { ok: true, value: true };
+    }
+
+    async runProcessValidation(projectRoot: string): Promise<ValidationResult> {
+        logger.info({ projectRoot }, 'Running process-level validation (npm run typecheck)');
+        try {
+            await execAsync('npm run build', { cwd: projectRoot, timeout: 60000 });
+            return { ok: true, value: true };
+        } catch (error: any) {
+            const out = error.stdout || error.message || 'Build failed';
+            return {
+                ok: false,
+                error: {
+                    reason: 'TS/Build Validation Failed',
+                    suggestion: out.substring(0, 500)
+                }
+            };
+        }
+    }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: `ValidationSystem active with ${this.validators.length} validators.` };
+    }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "5",
+  "subject": "Update Wiki Interfaces",
+  "description": "Update WikiItemMeta, WikiMonsterMeta, and WikiPageData to support official RS3 data points.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

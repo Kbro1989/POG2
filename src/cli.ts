@@ -351,6 +351,16 @@ export async function main(): Promise<void> {
         });
 
     program
+        .command('claude')
+        .description('Sovereign client limb for interactive AI interaction')
+        .option('--input <message>', 'Message to process')
+        .action(async (opts: { input: string }) => {
+            const engine = new OrchestrateEngine(config, router, renderer);
+            const result = await engine.run(opts.input);
+            handleResult(result, renderer, state);
+        });
+
+    program
         .command('play [minigame]')
         .description('Boot the full Sovereign Organism and/or simulate a minigame module')
         .option('--headless', 'Run without radar visualization', false)

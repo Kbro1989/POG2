@@ -1,0 +1,26 @@
+You're right to reject it. That refactor has **unacknowledged blast radius** across at least six limbs that depend on the `EntityHUDData` contract.
+
+**Upstream dependencies this refactor assumes are stable (but aren't):**
+- `SOVEREIGN_CACHE` KV store — your cache pedagogy corpus (memory #62: 23 verified entities, BestiaryApi/GeApi/WikiEquipmentEnricher) feeds raw data into this resolver. The new `determineCategory(raw, context)` expects `raw.category`, `raw.isGroundItem`, `raw.combatLevel` — but your cache schema from the opcode declarations doesn't guarantee those fields exist on all majors. NPC major (1) has combatLevel, but object major (0) doesn't. The `BANK`/`GROUND` context discrimination is new and untested against your OpenRSC save format (memory #46).
+- `manifestData` — the bundled JSON. The old `Manifest` had a `version` field; the new `ManifestData` strips it. If your build pipeline or `CacheLearningLimb` (memory #47: "learning DB currently empty") checks version for cache invalidation, this breaks silently.
+
+**Downstream limbs that will break if `EntityHUDData` disappears:**
+
+| Limb | Consumes from EntityResolver | Breakage if `ResolvedEntity` replaces `EntityHUDData` |
+|------|------------------------------|------------------------------------------------------|
+| **GhostSplat Engine** (memory #33, #60) | `stats.combat`, `stats.level`, adrenaline state for heat-based target acquisition | `ResolvedEntity` strips `stats` entirely. GhostSplat loses combat evaluation metadata. |
+| **AbilityDiscoveryLimb / Action Bar** (memory #49) | `actionables[].effect` (e.g., `'initiate_combat'`, `'equip_item'`) to wire ability ID 1841 | `ResolvedEntity` only has `actions: string[]`. No `effect` mapping, no `requirements`. Action Bar wiring goes blind. |
+| **PedagogyBridge / Training Collector** (memory #62) | `pedagogy.description`, `pedagogy.examine` for corpus generation and wiki enrichment | Moved out entirely. Training collector expects these fields to exist on the resolved entity; now they're absent. |
+| **HexagramManager** (memory #4, #11) | `hexagramPin.id`, `hexagramPin.line` for 64-state telemetry and yao line evaluation | Stripped. Hexagram routing loses entity-level pin data. |
+| **CombatRotationEngine / NecromancerBrain** (memory #57) | `stats.degradation.charges/max` for trimmed masterwork / custom-fit tracking | `parseDegradation` is now `public` but not called by default; the data isn't attached to `ResolvedEntity`. |
+| **PlayerAgent / SovereignAvatar** (memory #60) | Equipment stats, requirements for `projectSelf()` and 29-skill state vector | `ResolvedEntity` has no equipment slot mapping, no skill requirements. |
+
+**The architectural intent is correct** — separating grounding from presentation — but the execution is a **breaking change without migration stubs**. The proper sequence should be:
+
+1. **Add `ResolvedEntity` alongside `EntityHUDData`** (don't replace yet)
+2. **Update PedagogyBridge** to consume `ResolvedEntity` + enrich back to HUD shape
+3. **Update GhostSplat** to pull combat stats from a new `CombatMetadataLimb`
+4. **Update HexagramManager** to compute pins from `dominantContext` + `actionFrequencies`
+5. **Deprecate `EntityHUDData`** only after all consumers are migrated
+
+Hitting **3** was the right move. This needs a coordinated limb refactor, not a single-file overwrite.

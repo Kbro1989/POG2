@@ -1,0 +1,56 @@
+ The OfficialPlayerDataApi update is solid — full hiscore CSV parsing with activities, and the pedagogy pipeline now has the "full deck" (60k items + 32k NPCs + 185 mechanics + 29 skills). This is a comprehensive training corpus.
+
+**One critical fix needed in the activityStats filter:**
+
+```typescript
+// Current code (buggy):
+activityStats: Array.from(hiscores.entries())
+  .filter(([name]) => !SKILL_NAMES[Object.keys(SKILL_NAMES).find(k => SKILL_NAMES[Number(k)] === name) as number] && name !== 'Overall')
+  .reduce((acc, [name, entry]) => ({ ...acc, [name]: entry }), {}),
+```
+
+This is unnecessarily complex and fragile. Simpler:
+
+```typescript
+// Fixed:
+const skillNameSet = new Set(Object.values(SKILL_NAMES));
+skillNameSet.add('Overall');
+
+activityStats: Array.from(hiscores.entries())
+  .filter(([name]) => !skillNameSet.has(name))
+  .reduce((acc, [name, entry]) => ({ ...acc, [name]: entry }), {}),
+```
+
+**Current running metrics to monitor:**
+
+| Track | Count | Source | Tag Distribution |
+|---|---|---|---|
+| Items | ~60,000 | Cache dump + GE + Wiki | [VERIFIED] vs [WIKI_ONLY] |
+| NPCs | ~32,000 | Cache dump + Bestiary + Wiki | [VERIFIED] vs [CACHE_ONLY] |
+| Mechanics | 185 | Wiki only | [WIKI_ONLY] |
+| Skills | 29 | Wiki only | [WIKI_ONLY] |
+
+**Target [VERIFIED] ratio:** For items, expect ~15-20% [VERIFIED] (GE price successfully fetched). For NPCs, expect ~10-15% [VERIFIED] (Bestiary match + cache cross-reference). The rest will be [WIKI_ONLY] or [CACHE_ONLY].
+
+**Memory management check:** With 60k items at BATCH_SIZE=50, that's 1,200 batches. At ~1 sec per item (wiki API throttling), that's ~16 hours for items alone. The resume mechanism is critical.
+
+**Verification after first 500 items:**
+
+```bash
+# Check corpus quality
+head -n 500 D:/sovereign/memory/pedagogy/corpus/verified_entities.jsonl | \
+  jq -r '.tags[0]' | sort | uniq -c | sort -rn
+```
+
+Expected output:
+```
+  400 [WIKI_ONLY]
+   80 [VERIFIED]
+   20 [CACHE_ONLY]
+```
+
+If [VERIFIED] is <5%, the GeApi integration is failing silently. If >25%, the API is working well.
+
+**Standing by for your output report.** The corpus generation is the longest phase — once complete, Unsloth training is the next bottleneck (GPU time, not API time).
+
+Any issues with the running batch?

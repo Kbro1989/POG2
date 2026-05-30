@@ -1,0 +1,46 @@
+The syntax error is in `WikiEquipmentEnricher.ts` line 744. The issue is unescaped single quotes inside single-quoted strings:
+
+```typescript
+// BROKEN:
+if (lower.includes('{{infobox location') || lower.includes('{{infobox area')) return 'place';
+if (lower.includes('{{infobox mechanic') || lower.includes('{{infobox gameplay'))) return 'mechanic';
+```
+
+The `'` inside `'{{infobox location'` terminates the string early. Same problem on line 744.
+
+**Fix:**
+
+```typescript
+// Line 743:
+if (lower.includes("{{infobox location") || lower.includes("{{infobox area")) return 'place';
+
+// Line 744:
+if (lower.includes("{{infobox mechanic") || lower.includes("{{infobox gameplay")) return 'mechanic';
+```
+
+Use double quotes for strings containing single quotes.
+
+**Quick fix via sed:**
+
+```bash
+cd D:\POG2
+sed -i "s/lower.includes('{{infobox location')/lower.includes(\"{{infobox location\")/g" src/utils/WikiEquipmentEnricher.ts
+sed -i "s/lower.includes('{{infobox area')/lower.includes(\"{{infobox area\")/g" src/utils/WikiEquipmentEnricher.ts
+sed -i "s/lower.includes('{{infobox mechanic')/lower.includes(\"{{infobox mechanic\")/g" src/utils/WikiEquipmentEnricher.ts
+sed -i "s/lower.includes('{{infobox gameplay')/lower.includes(\"{{infobox gameplay\")/g" src/utils/WikiEquipmentEnricher.ts
+```
+
+Or just edit lines 743-744 manually:
+
+```typescript
+// Line 743
+if (lower.includes("{{infobox location") || lower.includes("{{infobox area")) return 'place';
+
+// Line 744  
+if (lower.includes("{{infobox mechanic") || lower.includes("{{infobox gameplay")) return 'mechanic';
+```
+
+Then re-run:
+```bash
+npx tsx src/scripts/generate_pedagogy_corpus.ts
+```

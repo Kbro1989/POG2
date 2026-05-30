@@ -1,0 +1,1 @@
+import{r as e,j as s}from"./vendor-Dx0TSbrP.js";import{u as t,C as n}from"./index-2kTGNrUD.js";import"./tree-sitter-BFuuT2ac.js";const r=e.memo(({enabled:r,onDismiss:o,onAction:i})=>{const{isDriveAuthenticated:a}=t({});return e.useEffect(()=>{r&&a&&i()},[r,a,i]),r?s.jsx(n,{}):null});r.displayName="ConnectGDriveChatBanner";export{r as ConnectGDriveChatBanner};

@@ -1,0 +1,202 @@
+I see the implementation. The `SovereignGroundingOverlay.ts` is already written and it handles the collision visualization well. Let me analyze what's there and what needs refinement.
+
+---
+
+## Current Implementation Analysis
+
+**What's Right:**
+- `InstancedMesh` for both walkable (green wireframe) and blocked (red wireframe) — correct for 4,356 tile performance
+- Packed coord decoding: `x = packed >> 14`, `z = packed & 0x3fff` — matches server format
+- Y-offset of 0.1 to prevent Z-fighting — good
+- Dynamic `count` update — only renders actual instances, not full 4,356 allocation
+
+**What's Wrong/Broken:**
+
+| Issue | Line | Problem |
+|---|---|---|
+| `LuminousMesh` | 13 | `THREE.LuminousMesh` doesn't exist in Three.js. Should be `THREE.InstancedMesh` |
+| `this.groundingStream` | 25 | Assigned but never used. No listener binding |
+| `geometry` size | 30 | `BoxGeometry(512, 1, 512)` — RuneScape tiles are 128×128 world units, not 512 |
+| No cleanup | — | Old instances not cleared when new snapshot arrives |
+| No plane handling | 55 | `plane` parameter received but ignored — multi-plane worlds need Y-offset per plane |
+
+---
+
+## Corrected Implementation
+
+```typescript
+import * as THREE from 'three';
+
+interface CollisionSnapshot {
+    blocked: number[];
+    walkable: number[];
+    plane: number;
+}
+
+/**
+ * SovereignGroundingOverlay
+ *
+ * Renders the "Sovereign Truth" of the world's collision matrix.
+ * Uses InstancedMesh to efficiently render the 66x66 predictive window.
+ */
+export class SovereignGroundingOverlay {
+    private scene: THREE.Scene;
+    private walkableMesh: THREE.InstancedMesh;
+    private blockedMesh: THREE.InstancedMesh;
+    private dummy = new THREE.Object3D();
+
+    // RuneScape tile size in world units
+    private readonly TILE_SIZE = 128;
+    // Plane height offset (each plane is 1 tile height apart)
+    private readonly PLANE_HEIGHT = 128;
+
+    // Color Constants
+    private readonly COLOR_WALKABLE = new THREE.Color(0x00ff00);
+    private readonly COLOR_BLOCKED = new THREE.Color(0xff0000);
+
+    constructor(scene: THREE.Scene) {
+        this.scene = scene;
+        this.initMeshes();
+    }
+
+    private initMeshes() {
+        // A 1x1 tile box, flat (height 1 for visibility)
+        const geometry = new THREE.BoxGeometry(this.TILE_SIZE, 1, this.TILE_SIZE);
+
+        // Allocate for full 66x66 window (4356 tiles)
+        const walkableMaterial = new THREE.MeshBasicMaterial({
+            color: this.COLOR_WALKABLE,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3,
+            depthTest: false // Always visible, even behind terrain
+        });
+
+        const blockedMaterial = new THREE.MeshBasicMaterial({
+            color: this.COLOR_BLOCKED,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.5,
+            depthTest: false
+        });
+
+        this.walkableMesh = new THREE.InstancedMesh(geometry, walkableMaterial, 4356);
+        this.walkableMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        this.walkableMesh.frustumCulled = false; // Prevent flicker during camera movement
+
+        this.blockedMesh = new THREE.InstancedMesh(geometry, blockedMaterial, 4356);
+        this.blockedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        this.blockedMesh.frustumCulled = false;
+
+        this.scene.add(this.walkableMesh);
+        this.scene.add(this.blockedMesh);
+    }
+
+    /**
+     * updateFromSnapshot - Decodes packed coordinates from POG2WorldDO
+     * Format: x = coord >> 14, z = coord & 0x3fff
+     */
+    public updateFromSnapshot(snapshot: CollisionSnapshot) {
+        // Clear previous frame by resetting counts
+        let walkableIdx = 0;
+        let blockedIdx = 0;
+
+        const yOffset = snapshot.plane * this.PLANE_HEIGHT + 0.1;
+
+        // Render Blocked (high contrast, rendered first but visually on top due to opacity)
+        for (const packed of snapshot.blocked) {
+            const x = packed >> 14;
+            const z = packed & 0x3fff;
+            this.setInstance(this.blockedMesh, blockedIdx++, x, z, yOffset);
+        }
+
+        // Render Walkable
+        for (const packed of snapshot.walkable) {
+            const x = packed >> 14;
+            const z = packed & 0x3fff;
+            this.setInstance(this.walkableMesh, walkableIdx++, x, z, yOffset);
+        }
+
+        // Mark matrices for update
+        this.walkableMesh.instanceMatrix.needsUpdate = true;
+        this.blockedMesh.instanceMatrix.needsUpdate = true;
+
+        // Update visible instance counts
+        this.walkableMesh.count = walkableIdx;
+        this.blockedMesh.count = blockedIdx;
+    }
+
+    private setInstance(
+        mesh: THREE.InstancedMesh,
+        index: number,
+        x: number,
+        z: number,
+        yOffset: number
+    ) {
+        // Project tile coords to world space
+        this.dummy.position.set(
+            x * this.TILE_SIZE,
+            yOffset,
+            z * this.TILE_SIZE
+        );
+        this.dummy.updateMatrix();
+        mesh.setMatrixAt(index, this.dummy.matrix);
+    }
+
+    public setVisible(visible: boolean) {
+        this.walkableMesh.visible = visible;
+        this.blockedMesh.visible = visible;
+    }
+
+    public dispose() {
+        this.walkableMesh.geometry.dispose();
+        (this.walkableMesh.material as THREE.Material).dispose();
+        this.blockedMesh.geometry.dispose();
+        (this.blockedMesh.material as THREE.Material).dispose();
+        this.scene.remove(this.walkableMesh);
+        this.scene.remove(this.blockedMesh);
+    }
+}
+```
+
+---
+
+## Key Fixes
+
+| Fix | Reason |
+|---|---|
+| `TILE_SIZE = 128` | RuneScape coordinates: 1 tile = 128 world units |
+| `PLANE_HEIGHT = 128` | Each plane is vertically separated by 1 tile height |
+| `depthTest: false` | Wireframe visible through terrain (grounding truth should always show) |
+| `frustumCulled = false` | Prevents tiles disappearing at screen edges |
+| `LuminousMesh` → `InstancedMesh` | `LuminousMesh` doesn't exist in Three.js |
+| Removed `groundingStream` param | Stream binding should happen in `SovereignBridge`, not constructor |
+| `dispose()` method | Proper cleanup for hot-reloading / scene transitions |
+
+---
+
+## Integration with SovereignBridge
+
+```typescript
+// In SovereignBridge.ts:
+this.groundingOverlay = new SovereignGroundingOverlay(this.scene);
+
+// On COLLISION channel message:
+this.ws.addEventListener('message', (event) => {
+    const msg = JSON.parse(event.data);
+    if (msg.type === 'COLLISION') {
+        this.groundingOverlay.updateFromSnapshot(msg.data);
+    }
+});
+```
+
+---
+
+## Next Steps
+
+1. **Fix the `LuminousMesh` bug** — immediate, breaks build
+2. **Verify tile size** — confirm 128 vs 512 in your RSMV renderer (different viewers use different scales)
+3. **Test multi-plane** — walk up/down stairs, verify overlay follows plane change
+4. **SovereignSplatRenderer.ts** — next layer to implement
+
+Want me to draft `SovereignSplatRenderer.ts` now? It follows the same `InstancedMesh` pattern but renders spheres with pulsing opacity based on GhostSplat heat values.

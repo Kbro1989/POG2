@@ -1,0 +1,74 @@
+ The `formatVerifiedOutput` fix is clean — it now handles three data sources in priority order:
+1. `itemMeta.examine` (items)
+2. `monsterMeta.combatLevel` (NPCs)
+3. `extract` (generic/wiki pages)
+
+This covers items, monsters, and mechanics pages correctly.
+
+**Current corpus generator state:**
+
+| Feature | Status |
+|---|---|
+| Item catalog (59,984 entries) | Processing with placeholder filtering |
+| NPC catalog | Ready |
+| Quest manifest | Ready |
+| Resume mechanism | Implemented |
+| Streaming write | Implemented |
+| Placeholder handling | `ITEMS \d+` / `NPCS \d+` filtered |
+
+**Critical addition needed:**
+
+The mechanics pages from the RS3 Mechanics category (185 articles) should be added as a fourth track. These feed directly into `MechanicalSovereigntyLimb` and `CombatRotationEngine`.
+
+**Quick mechanics ingestion:**
+
+```typescript
+// Add to generate_pedagogy_corpus.ts
+const MECHANICS_PAGES = [
+  'Adrenaline', 'Affinity', 'Combat level', 'Game tick',
+  'Hitsplat', 'Drop table', 'Experience', 'Luck',
+  'Weapon Special Attack', 'Temporary skill boost',
+  'Ability book', 'Action bar', 'Constitution',
+  'Defence', 'Magic', 'Necromancy', 'Prayer',
+  'Ranged', 'Strength', 'Summoning', 'Slayer'
+  // ... expand to full 185 as needed
+];
+
+// In generate():
+try {
+    logger.info('Processing Mechanics Pages...');
+    const results = [];
+    for (const page of MECHANICS_PAGES) {
+        const data = await enricher.enrichGeneric(page);
+        if (data) {
+            results.push({
+                instruction: `Explain the ${page} mechanic in RS3`,
+                input: JSON.stringify({ mechanic: page, wiki: data }),
+                output: formatVerifiedOutput(page, 0, data),
+                tags: ['[WIKI_ONLY]', '[MECHANIC]'],
+                verified: false
+            });
+        }
+    }
+    appendToCorpus(results);
+} catch (err) {
+    logger.error({ err }, 'Mechanics corpus generation failed');
+}
+```
+
+**Running the generator now:**
+
+```bash
+cd D:\POG2
+npx tsx src/scripts/generate_pedagogy_corpus.ts
+```
+
+Monitor:
+- Placeholder entries should be skipped (no `ITEMS 7` in output)
+- `[VERIFIED]` ratio should be ~20-30% for items (GE API hits) and ~80% for monsters (Bestiary API hits)
+- `.progress` file should update after each batch
+- Memory should stay stable (streaming write + array cleanup)
+
+Let it run. The full 59,984 items will take ~2-3 hours at current rate. NPCs and quests are much smaller.
+
+Report back with `[VERIFIED]` ratio after first 500 items.

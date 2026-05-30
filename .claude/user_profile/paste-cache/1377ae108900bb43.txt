@@ -1,0 +1,253 @@
+Category:Mechanics
+This category contains pages related to game mechanics.
+
+Subcategories
+This category has the following 25 subcategories, out of 25 total.
+
+B
+Bonus experience (2 C, 307 P)
+C
+Calculators (8 C, 539 P)
+ Challenge System (20 P, 1 F)
+ Crowd control (3 P)
+Customisations (6 C, 1 P)
+D
+ Drop tables (8 P)
+E
+Economy (8 C, 18 P, 8 F)
+ Effects (2 P)
+G
+ Game modes (7 P)
+Graphical updates (11 C, 67 P, 9 F)
+ Gravestones (21 P, 20 F)
+I
+Ironman Mode (1 C, 128 P)
+L
+Luck (4 C, 10 P)
+M
+Music (9 C, 1,498 P, 2 F)
+P
+Physics (1 C, 10 P)
+R
+ Repeatable content with a hard reset (56 P)
+ Repeatable content with a soft reset (31 P)
+ Repeatable content without a regular reset (9 P)
+S
+ Self-harm (24 P)
+ Skybox (1 P)
+Status effects (30 C, 920 P)
+Storage (1 C, 225 P)
+ Suffixes (45 P)
+T
+Transmogrification (2 C, 103 P, 7 F)
+Transportation (9 C, 149 P)
+Pages in category "Mechanics"
+The following 185 pages are in this category, out of 185 total.
+
+A
+Ability damage
+Accept Aid
+Activity bar
+Adrenaline
+Affinity
+AFK
+Application programming interface
+Application programming interface/Resources
+Area of effect
+Assist System
+Attack range
+Attack rate
+Auto-attack
+Auto-banking
+Autocast
+Average damage
+B
+Backpack
+Bad luck mitigation
+Bank
+Bank PIN
+Bank preset
+Bonus experience
+Botwatch
+Bounty Hunter world
+C
+Canon
+Challenge System
+Challenge System (historical)/Challenges
+Character
+Character name
+Classic Modes
+Combat
+Combat level
+Combat styles (historical)
+Complexity
+Cooldown
+Cube maps
+Customisations
+D
+Damage cap
+Damage over time
+Death (mechanic)
+Defensive ability reset
+Degradation
+Desert heat
+Destroy (option)
+Diminishing returns
+Discovery
+Disease (historical)
+Divine coin
+Dodge
+Door
+Double drops
+Download server
+Dragonfire
+Drop
+Drop table
+Drop trick
+Drops
+Duelling
+Dungeoneering/Prestige
+E
+Early Bird Bonus
+Earning potential
+Energy
+Equipment tier
+Experience
+Experience/Table
+G
+Game controls
+Game square
+Game tick
+Game tick/Ticks per action
+Game world
+God Wars Dungeon/God Protection
+Graphical updates
+Graphics
+Graphics settings
+Gravestone
+H
+Hard mode
+Heat
+High Risk Wilderness world
+Hit chance
+Hitsplat
+HTML5 client
+I
+Idle
+Instance
+Instance shard world
+Instant Demo
+Item spawns
+J
+Jagex cache
+Jagex Launcher
+Java Client
+K
+Killcount
+Kudos
+L
+Ladder
+Lag
+Life points
+Light sources
+Linux
+List of bank locations
+Login server
+Luck
+M
+Magic Damage
+Make-X
+Maximum hit
+Melee
+Momentum
+Mouse keys
+Multicombat area
+Music
+N
+User:Nightsteed/Sandbox/Passive effect
+Non-player character
+Note
+Nothing
+Null
+NXT
+O
+Operate
+Ortho mode
+Overhead prayer
+P
+Particles
+Passive effect
+Playable character
+Player identification number
+Poison
+Poison (historical)
+Prayer points
+Price Checker
+PvP world
+Q
+Quick Chat
+R
+Recovery questions
+Rest
+Restricted trade items
+Retreat
+Revolution
+Runedate
+RuneScape
+RuneScape 2
+RuneScape 3
+RuneScape Classic
+RuneScape Companion
+RuneScape Game Bar
+RuneScape High Detail
+RuneScape Mobile
+RuneScape toolbar
+RuneScript
+RuneTek
+S
+Safe spot
+Scale theory
+Server
+Server blackout
+Set bonus
+Shop
+Shortcut keys
+Single-way combat
+Sink (economy)
+Skilling success chance
+Skills
+Skull (status)
+Skyboxes and filters
+Soft cap
+Sound effects
+Spawning
+Special attacks (historical)
+Stackable items
+Staircase
+Steam
+Storage
+Swamp decay
+System update
+T
+Tagging
+Tanking
+Tell
+Temporary skill boost
+Tick manipulation
+Titles
+Tool belt
+Trade limit
+U
+Use
+Username
+V
+Value
+Voice Over
+W
+Walking
+Wander radius
+Weapon Special Attack
+Weapon Special Attack/Gallery
+Weight
+Wilderness threat system
+Wise Old Man/Item cleanup

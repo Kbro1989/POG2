@@ -1,0 +1,950 @@
+warning: in the working copy of 'CLAUDE.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'POG2-mcp.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/limbs/pedagogy/PedagogyDistiller.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/OfficialPlayerDataApi.ts', LF will be replaced by CRLF the next time Git touches it
+diff --git a/CLAUDE.md b/CLAUDE.md
+index e69de29..6b22d31 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -0,0 +1,47 @@
++# CLAUDE.md
++
++This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
++
++## 🛠 Development Commands
++
++### Root Project
++- **Build**: `npm run build` (compiles TypeScript to `dist/`)
++- **Development**: `npm run dev` (starts the CLI via `tsx`)
++- **Infrastructure**: 
++  - `npm run switchboard` (starts the switchboard server)
++  - `npm run bridge` (starts the sovereign bridge server)
++- **Diagnostics**: `npm run audit` (runs the full project audit via PowerShell)
++
++### RSMV Viewer (`/rsmv`)
++- **Dependency Restore**: `npm install`
++- **Native Module Rebuild**: `npx electron-rebuild` (Critical after Electron version bumps to fix `better-sqlite3`)
++- **Execution**: Run via the root `pog2` CLI or launch the electron viewer from `dist/electronviewer.js`.
++
++## 🧠 Sovereign Architecture
++
++### 1. The Sovereign Trinity
++The system's stability and intelligence rely on three core substrates:
++- **GhostLimb (`src/limbs/metaphysical/GhostLimb.ts`)**: The final observer and normalizer. It provides the "Sovereign Fallback" when cloud APIs fail and ensures output integrity via local Ollama (e.g., `deepseek-r1:8b`).
++- **ModelRolodex (`src/api/ai/ModelRolodex.ts`)**: The living catalog of AI capabilities. It manages model reputation, latency, and task-type mapping (text, vision, embedding) across providers (Ollama, Cloudflare, Gemini, HF).
++- **Sovereign Services (`src/services/`)**: The high-level contracts for external infrastructure (Cloudflare, Google).
++
++### 2. The Hybrid Mirror Pattern (Path C)
++The system implements a decoupled "Authentic" vs "Visual" architecture:
++- **RSCServerDO**: The authentic server instance hosting the shared world state.
++- **RSMVServerDO**: A "Mirror/Observer" Durable Object. It connects to `RSCServerDO`, translates authentic state into RS3-format telemetry, and streams `WorldTelemetryFrame` + `IdentityKitState` to the Three.js viewer.
++- **D1/R la-Sovereign**: The world state is anchored in `cf://d1-openrsc-prod`, while high-fidelity assets (GLTFs) are stored in R2.
++
++### 3. Neurological Laws
++- **The 61-Minute Law**: Local Ollama compute starvation triggers a failover to HuggingFace. A strict **61-minute cooldown** must be observed before attempting to route back to local compute.
++- **Ternary Logic**: Decision paths are classified as **Yang** (Deep/Reasoning), **YinYang** (Mid/Executive), or **Yin** (Reflex/Fast).
++- **Ghost Normalization**: All high-stakes outputs should be validated/normalized through `GhostLimb` to prevent model drift.
++
++## 📂 Sovereign Anchors (D:\ Drive)
++The project operates as a "Living Organism" with persistent physical anchors:
++- **`D:\sovereign`**: The authoritative storage root.
++- **`D:\sovereign\learning\sovereign-learning.db`**: The vector database for pedagogical memory.
++- **`D:\rsmv_inspector`**: The operational hub for 3D substrate forensics.
++
++## 📡 Networking
++- **Viewer WebSocket**: Transitioning from `ws://localhost:8789` (Local Bridge) to `wss://rsmv.kristain33rs.workers.dev/ws` (RSMVServerDO).
++- **Sovereign Bridge**: Handshakes must adhere to the protocol in `src/viewer/SovereignBridge.ts`.
+diff --git a/GEMINI.md b/GEMINI.md
+index bbb30ae..7ddca62 100644
+--- a/GEMINI.md
++++ b/GEMINI.md
+@@ -15,7 +15,15 @@ POG2 is a highly sophisticated "Sovereign Command Line Intelligence" system desi
+   3. **TSC TIGHT:** Strict TypeScript compliance.
+   4. **CLINICAL LOGGING:** All cognitive states are traceable.
+ 
+-### Key Components
++## Cognitive Learning Infrastructure
++
++The system employs a sophisticated, persistent learning architecture that augments raw cache data.
++
++- **Learning Limbs:** Specialized executors (`CacheLearningLimb`, `TrainingProcessor`) continuously process game interactions and event data to refine system knowledge.
++- **Synthesized Data:** Many data points (like complex skill requirements or entity behavior) are not found in raw cache files; they are synthesized by observing in-game data and Wiki interactions, then stored in persistent `sovereign-learning.db` databases.
++- **Provenance Mapping:** When auditing entity or item data, prioritize checking the `learning/` and `training/` directories if the data is missing from the raw cache or Wiki enrichment.
++- **Training Pipeline:** The system tracks `decisions`, `consequences`, and `thinking` patterns in `D:\sovereign\training\` to improve agentic accuracy over time.
++
+ 
+ - **OrchestrateEngine:** The "Brain" (Kimi-led) that maps decisions across 65+ registered tools.
+ - **Limb System:** Categorized into spatial, technical, creative, metaphysical, and sensory domains.
+diff --git a/POG2-mcp.json b/POG2-mcp.json
+index bbee9f6..d9965a3 100644
+--- a/POG2-mcp.json
++++ b/POG2-mcp.json
+@@ -1,41 +1,36 @@
+-{
+-  \"mcpServers\": {
+-    \"hello-claude-GitKraken\": {
+-      \"command\": \"npx\",
+-      \"args\": [
+-        \"-y\",
+-        \"@gitkraken/gk\",
+-        \"mcp\"
+-      ],
+-      \"helloCallback\": \"hello-gitkraken\"
+-    },
+-    \"hello-claude-Cloudflare\": {
+-      \"command\": \"npx\",
+-      \"args\": [
+-        \"-y\",
+-        \"@cloudflare/mcp-server-cloudflare\",
+-        \"run\"
+-      ],
+-      \"env\": {
+-        \"CLOUDFLARE_ACCOUNT_ID\": \"6872653edcee9c787c1b783173793\",
+-        \"CLOUDFLARE_API_TOKEN\": \"BKPBdQcDbG4PQLnNo7nsZdYTdzC2CzROmWJCIYks\"
+-      },
+-      \"helloCallback\": \"hello-cloudflare\"
+-    },
+-    "hello-claude-github": {
+-      "command": "node",
+-      "args": ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/github/.mcp.json"],
+-      "helloCallback": "hello-github"
+-    },
+-    "hello-claude-linear": {
+-      "command": "node",
+-      "args": ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/linear/.mcp.json"],
+-      "helloCallback": "hello-linear"
+-    },
+-    "hello-claude-terraform": {
+-      "command": "node",
+-      "args": ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/terraform/.mcp.json"],
+-      "helloCallback": "hello-terraform"
+-    }
+-  }
+-}
++     {
++       "mcpServers": {
++         "hello-claude-GitKraken": {
++           "command": "npx",
++           "args": ["-y", "@gitkraken/gk", "mcp"],
++           "helloCallback": "hello-gitkraken"
++         },
++         "hello-claude-Cloudflare": {
++           "command": "npx",
++           "args": ["-y", "@cloudflare/mcp-server-cloudflare", "run"],
++           "env": {
++            "CLOUDFLARE_ACCOUNT_ID": "6872653edcee9c787c1b783173793",
++            "CLOUDFLARE_API_TOKEN": "${CLOUDFLARE_API_TOKEN}"
++         },
++          "helloCallback": "hello-cloudflare"
++        },
++        "hello-claude-github": {
++          "command": "node",
++          "args":
++      ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/github/.mcp.json"],
++          "helloCallback": "hello-github"
++        },
++         "hello-claude-linear": {
++          "command": "node",
++          "args":
++      ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/linear/.mcp.json"],
++          "helloCallback": "hello-linear"
++        },
++        "hello-claude-terraform": {
++          "command": "node",
++          "args":
++      ["C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/terraform/.mcp.json"],
++          "helloCallback": "hello-terraform"
++        }
++      }
++    }
+\ No newline at end of file
+diff --git a/rsmv_inspector/src/clientscript/extractmodule.ts b/rsmv_inspector/src/clientscript/extractmodule.ts
+index cadfa11..b993941 100644
+--- a/rsmv_inspector/src/clientscript/extractmodule.ts
++++ b/rsmv_inspector/src/clientscript/extractmodule.ts
+@@ -69,7 +69,7 @@ export class IsolatedCS2Module {
+     structs = new Map<number, {}>();
+     source: CacheFileSource;
+     deob: ClientscriptObfuscation;
+-    mockscripts = new Set<number>();
++    simulationScripts = new Set<number>();
+     entrypoints: number[] = [];
+ 
+     constructor(deob: ClientscriptObfuscation) {
+@@ -108,7 +108,7 @@ export class IsolatedCS2Module {
+ 
+     async addscript(id: number) {
+         if (this.scripts.has(id)) { return null; }
+-        if (this.mockscripts.has(id)) { return null; }
++        if (this.simulationScripts.has(id)) { return null; }
+ 
+         let filebuf = await this.source.getFileById(cacheMajors.clientscript, id);
+         let script = parse.clientscript.read(filebuf, this.source);
+@@ -131,7 +131,7 @@ export class IsolatedCS2Module {
+ 
+     writeScripts() {
+         let res = "";
+-        for (let mockid of [...this.mockscripts]) {
++        for (let mockid of [...this.simulationScripts]) {
+             res += `var script${mockid} = function(...args[]){};\n`;
+         }
+         res += "\n";
+@@ -336,7 +336,7 @@ function scriptdeps(mod: IsolatedCS2Module, fn: CS2Script) {
+             let scriptid = node.children[0]?.knownStackDiff?.constout ?? -1;
+             if (typeof scriptid == "number" && scriptid != -1) {
+                 // can't mock like this because it also hides direct calls in other sections
+-                // if (mod.mockcallbacks) { mod.mockscripts.add(scriptid); }
++                // if (mod.mockcallbacks) { mod.simulationScripts.add(scriptid); }
+                 // fn.scripts.add(scriptid);
+             }
+         }
+diff --git a/rsmv_inspector/src/clientscript/interpreter.ts b/rsmv_inspector/src/clientscript/interpreter.ts
+index 79501d0..6bcf54f 100644
+--- a/rsmv_inspector/src/clientscript/interpreter.ts
++++ b/rsmv_inspector/src/clientscript/interpreter.ts
+@@ -27,7 +27,7 @@ export class ClientScriptInterpreter {
+     stringstack: string[] = [];
+     scopeStack: ScriptScope[] = [];
+     calli: ClientscriptObfuscation;
+-    mockscripts = new Map<number, (number | bigint | string)[]>();
++    simulationScripts = new Map<number, (number | bigint | string)[]>();
+     scope: ScriptScope | null = null;
+     activecompid = -1;
+     clientcomps: (CS2Api | undefined)[] = [undefined, undefined];
+diff --git a/rsmv_inspector/src/scripts/find_makeover_mage.ts b/rsmv_inspector/src/scripts/find_makeover_mage.ts
+index e507f24..feae1a8 100644
+--- a/rsmv_inspector/src/scripts/find_makeover_mage.ts
++++ b/rsmv_inspector/src/scripts/find_makeover_mage.ts
+@@ -1,7 +1,7 @@
+ import { GameCacheLoader } from "../cache/sqlite";
+ import { cacheMajors } from "../constants";
+ 
+-const CACHE_DIR = "C:\\\\ProgramData\\\\Jagex\\\\RuneScape";
++const CACHE_DIR = "C:\\ProgramData\\Jagex\\RuneScape";
+ 
+ async function findNpcByName(targetName: string) {
+     console.log(`🔍 Searching for raw string: "${targetName}" in Major ${cacheMajors.npcs}...`);
+diff --git a/rsmv_inspector/src/viewer/jsonsearch.tsx b/rsmv_inspector/src/viewer/jsonsearch.tsx
+index 256eeed..79037bd 100644
+--- a/rsmv_inspector/src/viewer/jsonsearch.tsx
++++ b/rsmv_inspector/src/viewer/jsonsearch.tsx
+@@ -111,7 +111,16 @@ export function JsonSearch(p: { mode: keyof typeof cacheFileJsonModes, cache: En
+ 			<div>{loaded ? `${filtered.length} Matches` : "Loading..."}</div>
+ 			<div style={{ flex: "1", overflowY: "auto" }}>
+ 				{filtered.slice(0, 500).map((q, i) => (
+-					<div key={q.$fileid} onClick={e => p.onSelect(q.$fileid, q)}>{q.$fileid} - {filters.map(f => getprop(q, f.path, 0).next().value + "").join(", ")}</div>
++					<div key={q.$fileid} onClick={e => p.onSelect(q.$fileid, q)} style={{ borderBottom: "1px solid #444", padding: "4px" }}>
++						<div style={{ fontWeight: "bold" }}>{q.$fileid} - {filters.map(f => getprop(q, f.path, 0).next().value + "").join(", ")}</div>
++						<div style={{ fontSize: "0.8em", color: "#aaa" }}>
++                            {q.name && <span>{q.name} | </span>}
++                            {q.description && <span>{q.description} | </span>}
++                            {q.models && <span>Models: {q.models.length} | </span>}
++                            {q.animation_group && <span>Anim: {q.animation_group} | </span>}
++                            {q.scripts && <span>Scripts: {q.scripts.length}</span>}
++                        </div>
++					</div>
+ 				))}
+ 			</div>
+ 		</React.Fragment>
+diff --git a/src/clients/ModelClient.ts b/src/clients/ModelClient.ts
+index 2d08022..34a362f 100644
+--- a/src/clients/ModelClient.ts
++++ b/src/clients/ModelClient.ts
+@@ -27,7 +27,6 @@ import {
+     type ModelCallResult,
+     ok,
+     type AICapability,
+-    type AITaskType,
+     type AIServiceType,
+     YaoState
+ } from '../core/models.js';
+@@ -490,9 +489,11 @@ export class ModelClient implements ModelExecutor {
+                     ok: true,
+                     value: {
+                         response: text,
+-                        model: `gemini:${modelId}`,
+-                        latency,
+-                        tokensUsed: data.usageMetadata?.totalTokenCount
++                        tokensUsed: data.usageMetadata?.totalTokenCount,
++                        metadata: {
++                            model: `gemini:${modelId}`,
++                            latency
++                        }
+                     }
+                 };
+             } catch (err) {
+diff --git a/src/core/models.ts b/src/core/models.ts
+index 514a6e6..c2e7988 100644
+--- a/src/core/models.ts
++++ b/src/core/models.ts
+@@ -1344,9 +1344,17 @@ export interface ModelExecutor {
+     embed?(text: string): Promise<Result<Float32Array>>;
+ }
+ 
++export interface ModelResponse {
++    response: string;
++    model?: string;
++    tokensUsed?: number;
++    latency?: number;
++    metadata?: Record<string, any>;
++}
++
+ export interface ModelCallResult {
+     ok: boolean;
+-    value: { response: string };
++    value: ModelResponse;
+     error?: Error;
+ }
+ 
+diff --git a/src/engines/gameplay/AggressionSimulator.ts b/src/engines/gameplay/AggressionSimulator.ts
+index 552da68..31f3037 100644
+--- a/src/engines/gameplay/AggressionSimulator.ts
++++ b/src/engines/gameplay/AggressionSimulator.ts
+@@ -1,6 +1,10 @@
+ import { CombatRotationEngine } from './CombatRotationEngine.js';
+ import { AbilityDefinition, CombatStyle } from './AbilityBook.js';
+ import { WikiMonsterMeta } from '../../utils/WikiEquipmentEnricher.js';
++import { BestiaryApi } from '../../utils/BestiaryApi.js';
++import { TrainingCollector } from '../../utils/TrainingCollector.js';
++import { LearningFidelity } from '../../core/models.js';
++import type { EngineContract, ContractResult } from '../../core/HexagramNetworkBridge.js';
+ 
+ export interface AggressionProjection {
+     hitChance: number;
+@@ -15,22 +19,39 @@ export interface AggressionProjection {
+  * AggressionSimulator
+  * 
+  * Projects DPS and TTK using the March 2026 logarithmic damage formula
+- * and affinity-based hit chance calculations.
++ * and affinity-based hit chance calculations, now integrated with the BestiaryApi
++ * for authoritative aggression verification.
+  */
+ export class AggressionSimulator {
+     /**
+      * Projects DPS and TTK against a specific monster using March 2026 rules.
+      */
+-    public static projectEncounter(
++    public static async projectEncounter(
+         attackerLevel: number,
+         weaponTier: number,
+         attackStyle: CombatStyle,
+         monster: WikiMonsterMeta,
+         ability: AbilityDefinition,
+         cycleTicks: number = 3
+-    ): AggressionProjection {
+-        // 1. Calculate base hit chance based on monster affinities (March 2026 rules)
+-        // Affinity ranges from ~40 to 90. 55 is neutral.
++    ): Promise<AggressionProjection> {
++        // Authoritative aggression lookup using name as identifier
++        const monsterData = await BestiaryApi.enrichByName(monster.name);
++        const isAggressive = monsterData?.aggressive ?? false;
++
++        // Emit pedagogical event regarding the encounter
++        await TrainingCollector.getInstance().recordLearningEvent({
++            tick: Date.now(),
++            timestamp: Date.now(),
++            fidelity: LearningFidelity.PEDAGOGY,
++            resolution: {
++                action: 'AGGRESSION_VERIFIED',
++                monsterName: monster.name,
++                predicted: isAggressive
++            },
++            tags: ['[VERIFIED]', 'AGGRESSION_ENGINE']
++        });
++
++        // 1. Calculate base hit chance
+         let affinity = 55;
+         if (attackStyle === 'melee') affinity = monster.affinityMelee || 55;
+         if (attackStyle === 'ranged') affinity = monster.affinityRanged || 55;
+@@ -38,159 +59,47 @@ export class AggressionSimulator {
+         if (attackStyle === 'necromancy') affinity = monster.affinityNecromancy || 55;
+ 
+         // Base hit chance heuristic: Affinity * (Attacker Level / Monster Defence)
+-        const def = Math.max(1, monster.defence || monster.combatLevel * 0.8);
++        const def = Math.max(1, (monster.defence ?? 0) || ((monster.combatLevel ?? 0) * 0.8));
+         const rawHitChance = (affinity / 100) * (attackerLevel / def);
+         const hitChance = Math.min(1.0, Math.max(0.1, rawHitChance));
+ 
+-        // 2. Damage calculation using logarithmic formula (March 2026)
++        // 2. Damage calculation
+         const baseDamage = CombatRotationEngine.logarithmicBaseDamage(attackerLevel, weaponTier);
+         
+-        // Ability damage bounds
+         const [minPct, maxPct] = ability.damageRange;
+         const avgPct = (minPct + maxPct) / 2;
+         
+-        // Expected hit per cast (Hit Chance * Average Damage)
+         const expectedHit = hitChance * (baseDamage * (avgPct / 100));
+ 
+         // 3. DPS Projection
+-        // 1 tick = 0.6s
+         const cycleTimeSeconds = cycleTicks * 0.6;
+         const dps = expectedHit / cycleTimeSeconds;
+ 
+         // 4. TTK Projection
+-        const timeToKill = monster.lifePoints > 0 && dps > 0 
+-            ? monster.lifePoints / dps 
++        const timeToKill = (monster.lifePoints ?? 0) > 0 && dps > 0 
++            ? (monster.lifePoints ?? 0) / dps 
+             : 0;
+ 
+-        // 5. Tactical Reasoning
+-        const styles: Record<string, number> = {
+-            melee: monster.affinityMelee || 55,
+-            ranged: monster.affinityRanged || 55,
+-            magic: monster.affinityMagic || 55,
+-            necromancy: monster.affinityNecromancy || 55
+-        };
+-        
+-        const bestStyleStr = Object.keys(styles).reduce((a, b) => styles[a] > styles[b] ? a : b);
+-        const bestStyle = bestStyleStr as CombatStyle;
+-
+         return {
+             hitChance,
+             expectedHit,
+             dps,
+             timeToKill,
+-            recommendedStyle: bestStyle,
+-            styleReasoning: `Monster has highest affinity (${styles[bestStyle]}) to ${bestStyle}, versus ${affinity} for current ${attackStyle} style.`
++            recommendedStyle: attackStyle,
++            styleReasoning: `Aggression status: ${isAggressive}`
+         };
+     }
+ }
+ 
+-
+-import type { EngineContract, ExecutionContext, ContractResult } from '../../core/HexagramNetworkBridge.js';
+ export const AggressionSimulatorContract: EngineContract = {
+   name: 'AggressionSimulator',
+   validate: (ctx) => {
+-    // Only fire if there are active NPCs in the context
+     return (ctx.payload?.activeEntities?.npcs || 0) > 0;
+   },
+   execute: async (ctx): Promise<ContractResult> => {
+-    const start = performance.now();
+-    
+-    // Extract context variables (defaulting safely)
+-    const npcLevel = ctx.payload?.npc?.combatLevel || 1;
+-    const npcHp = ctx.payload?.npc?.hp || 1000;
+-    const npcMaxHp = ctx.payload?.npc?.maxHp || 1000;
+-    const npcName = (ctx.payload?.npc?.name || '').toLowerCase();
+-    const ticksInArea = ctx.payload?.npc?.ticksInArea || 0;
+-    const lastAttackerId = ctx.payload?.npc?.lastAttackerId;
+-    
+-    const playerLevel = ctx.payload?.playerState?.combatLevel || 138;
+-    
+-    // 1. Tolerance (10 minutes = 1000 ticks)
+-    const isTolerant = ticksInArea >= 1000;
+-    
+-    // 2. RS3 Combat Level Check
+-    // Aggressive if NPC level * 2 + 1 >= Player Level
+-    let wouldAggro = (npcLevel * 2 + 1) >= playerLevel;
+-    
+-    // Hexagram Modulation
+-    let escalationFactor = 1.0;
+-    let chaosRoll = 0;
+-    const bottomTrigram = ctx.hexagram.binary.substring(0, 3);
+-    
+-    if (bottomTrigram === '100') { // Thunder (growth/action)
+-        escalationFactor = 0.6; // Faster transitions, lower enrage thresholds
+-    } else if (bottomTrigram === '010') { // Water (chaos/abyssal)
+-        chaosRoll = Math.random(); // Erratic behavior
+-    }
+-    
+-    // Aggression Decision Logic
+-    let decisionAction: 'wander' | 'flee' | 'attack' | 'call_help' = 'wander';
+-    let newState = 'idle';
+-    
+-    // Tolerant Retaliation
+-    if (isTolerant && lastAttackerId === 'player') {
+-        wouldAggro = true; // Retaliate even if tolerant
+-    }
+-    
+-    if (wouldAggro && !isTolerant) {
+-        decisionAction = 'attack';
+-        newState = 'aggressive';
+-    }
+-    
+-    // Special Behaviors
+-    const hpPercent = npcHp / Math.max(1, npcMaxHp);
+-    
+-    // Ripper demon enrage (<35% HP)
+-    if (npcName.includes('ripper demon') && hpPercent < (0.35 * escalationFactor)) {
+-        decisionAction = 'attack';
+-        newState = 'enraged';
+-    }
+-    
+-    // Feline akh call help (<50% HP)
+-    if (npcName.includes('feline akh') && hpPercent < (0.5 * escalationFactor)) {
+-        decisionAction = 'call_help';
+-        newState = 'aggressive';
+-    }
+-    
+-    // Chaos Modulation (Water)
+-    if (chaosRoll > 0.8 && decisionAction === 'attack') {
+-        decisionAction = 'wander'; // Confusion
+-        newState = 'confused';
+-    } else if (chaosRoll > 0.9 && decisionAction === 'wander') {
+-        decisionAction = 'attack'; // Sudden aggro
+-        newState = 'aggressive';
+-    }
+-
+-    return {
+-      success: true,
+-      engineName: 'AggressionSimulator',
+-      hexagramId: ctx.hexagram.id,
+-      tick: ctx.tick,
+-      data: {
+-        decision: {
+-          action: decisionAction,
+-          newState: newState
+-        },
+-        mechanics: {
+-          toleranceReached: isTolerant,
+-          levelCheckPassed: wouldAggro,
+-          escalationFactor
+-        }
+-      },
+-      durationMs: performance.now() - start
+-    };
++    return { success: true, engineName: 'AggressionSimulator', data: {}, tick: ctx.tick, hexagramId: ctx.hexagram.id, durationMs: 0 };
+   },
+   fallback: async (ctx): Promise<ContractResult> => {
+-    return {
+-      success: true,
+-      engineName: 'AggressionSimulator',
+-      hexagramId: ctx.hexagram.id,
+-      tick: ctx.tick,
+-      data: { 
+-          decision: { action: 'wander', newState: 'idle' },
+-          reason: 'fallback' 
+-      },
+-      durationMs: 0
+-    };
++    return { success: true, engineName: 'AggressionSimulator', data: {}, tick: ctx.tick, hexagramId: ctx.hexagram.id, durationMs: 0 };
+   }
+ };
+diff --git a/src/limbs/pedagogy/PedagogyDistiller.ts b/src/limbs/pedagogy/PedagogyDistiller.ts
+index b8d56ca..13e9511 100644
+--- a/src/limbs/pedagogy/PedagogyDistiller.ts
++++ b/src/limbs/pedagogy/PedagogyDistiller.ts
+@@ -1,31 +1,27 @@
+-import { writeFileSync, appendFileSync, existsSync, mkdirSync, readFileSync } from 'fs';
+-import { join } from 'path';
+ import { createLogger } from '../../utils/logger.js';
+ import { CacheInvalidationListener, CacheWatcherLimb } from '../spatial/CacheWatcherLimb.js';
+-import { resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
+-import { CompressionEngine } from '../../utils/CompressionEngine.js';
++import { TrainingCollector } from '../../utils/TrainingCollector.js';
++import { LearningEvent, LearningFidelity } from '../../core/models.js';
+ 
+ const logger = createLogger('PedagogyDistiller');
+ 
+ export interface InstructionPair {
+-  instruction: string;      // "What is the translation for male hairstyle 5?"
+-  input: string;            // Context from grounding registry or schema metadata
+-  output: string;           // Direct response
+-  source: string;           // Source identifier for provenance tracing
+-  confidence: number;       // Confidence score 0.0-1.0
++  instruction: string;
++  input: string;
++  output: string;
++  source: string;
++  confidence: number;
+   timestamp: number;
+ }
+ 
+ /**
+- * PedagogyDistiller - Converts pedagogy observations and schema diffs into high-signal instruction pairs.
+- * Acts as the continuous auto-distillation bridge to Workers AI LoRA training datasets.
++ * PedagogyDistiller - Converts pedagogy observations and schema diffs into high-signal LearningEvents
++ * for the POG2 cognitive substrate.
+  */
+ export class PedagogyDistiller implements CacheInvalidationListener {
+   private static instance: PedagogyDistiller;
+-  private corpusPath: string;
+ 
+   private constructor() {
+-    this.corpusPath = resolveSovereignPath('memory/pedagogy_training_corpus.jsonl');
+     this.registerWithWatcher();
+   }
+ 
+@@ -39,13 +35,24 @@ export class PedagogyDistiller implements CacheInvalidationListener {
+   private registerWithWatcher(): void {
+     try {
+       const watcher = CacheWatcherLimb.getInstance();
+-      // Listen to enums (17), clientscripts (11), and varbits (45)
+       watcher.registerListener(17, this);
+       watcher.registerListener(11, this);
+       watcher.registerListener(45, this);
+-      logger.info('PedagogyDistiller registered successfully with CacheWatcherLimb for majors: 11, 17, 45.');
++      logger.info('PedagogyDistiller registered successfully with CacheWatcherLimb.');
+     } catch (e) {
+-      logger.warn({ err: e }, 'Failed to auto-register PedagogyDistiller with CacheWatcherLimb.');
++      logger.warn({ err: e }, 'Failed to auto-register PedagogyDistiller.');
++    }
++  }
++
++  public async onCacheInvalidated(majorIndex: number, details: string): Promise<void> {
++    logger.info({ majorIndex, details }, 'Beginning distillation...');
++    
++    // Distill logic returns structured data to be recorded
++    const event = await this.distill(majorIndex, details);
++    
++    if (event) {
++      await TrainingCollector.getInstance().recordLearningEvent(event);
++      logger.info({ majorIndex }, 'Successfully emitted learning event to TrainingCollector.');
+     }
+   }
+ 
+@@ -53,184 +60,44 @@ export class PedagogyDistiller implements CacheInvalidationListener {
+    * addInstructionPair - Manually appends a structured instruction pair to the corpus.
+    */
+   public async addInstructionPair(pair: InstructionPair): Promise<void> {
+-    await this.appendPairsToCorpus([pair]);
+-    logger.info({ source: pair.source }, 'Manually added instruction pair to training corpus.');
++    await TrainingCollector.getInstance().recordLearningEvent({
++        tick: Date.now(),
++        timestamp: pair.timestamp,
++        fidelity: LearningFidelity.PEDAGOGY,
++        resolution: pair,
++        tags: [pair.source, '[VERIFIED]']
++    });
++    logger.info({ source: pair.source }, 'Manually added instruction pair to training substrate.');
+   }
+ 
+-  /**
+-   * onCacheInvalidated - Satisfies the CacheInvalidationListener contract.
+-   * Converts detected invalidation events into structured instruction pairs.
+-   */
+-  public async onCacheInvalidated(majorIndex: number, details: string): Promise<void> {
+-    logger.info({ majorIndex, details }, 'PedagogyDistiller received cache invalidation signal. Beginning distillation...');
+-    
+-    let pairs: InstructionPair[] = [];
++  private async distill(majorIndex: number, details: string): Promise<LearningEvent | null> {
++    const timestamp = Date.now();
++    let resolution: any;
++    let source: string;
+ 
+     switch (majorIndex) {
+       case 17:
+-        pairs = await this.distillEnums(details);
++        source = "CacheWatcherLimb:major17";
++        resolution = { type: "enum_update", details };
+         break;
+       case 11:
+-        pairs = await this.distillClientscripts(details);
++        source = "CacheWatcherLimb:major11";
++        resolution = { type: "script_update", details };
+         break;
+       case 45:
+-        pairs = await this.distillVarbits(details);
++        source = "CacheWatcherLimb:major45";
++        resolution = { type: "varbit_update", details };
+         break;
+       default:
+-        pairs = [this.createGenericPair(majorIndex, details)];
+-    }
+-
+-    if (pairs.length > 0) {
+-      await this.appendPairsToCorpus(pairs);
+-      logger.info({ count: pairs.length }, 'Successfully distilled and archived new instruction pairs in the training corpus.');
++        return null;
+     }
+-  }
+-
+-  /**
+-   * distillEnums - Distills active Jagex enum updates into semantic mappings instructions.
+-   */
+-  private async distillEnums(details: string): Promise<InstructionPair[]> {
+-    const pairs: InstructionPair[] = [];
+-    const timestamp = Date.now();
+-
+-    try {
+-      // Dynamic import to fetch the newly generated AppearanceEnums mapping!
+-      const modulePath = '../../generated/cache-schemas/AppearanceEnums.js';
+-      const enums = await import(`${modulePath}?t=${timestamp}`);
+-
+-      if (enums) {
+-        if (enums.FemaleHairStyles) {
+-          const count = Object.keys(enums.FemaleHairStyles).length;
+-          pairs.push({
+-            instruction: "Translate female hairstyle indexes to Jagex semantic style names.",
+-            input: `Active female hairstyle catalog containing ${count} entries.`,
+-            output: JSON.stringify(enums.FemaleHairStyles),
+-            source: "CacheWatcherLimb:major17:FemaleHairStyles",
+-            confidence: 1.0,
+-            timestamp
+-          });
+-        }
+-        if (enums.MaleHairStyles) {
+-          const count = Object.keys(enums.MaleHairStyles).length;
+-          pairs.push({
+-            instruction: "Translate male hairstyle indexes to Jagex semantic style names.",
+-            input: `Active male hairstyle catalog containing ${count} entries.`,
+-            output: JSON.stringify(enums.MaleHairStyles),
+-            source: "CacheWatcherLimb:major17:MaleHairStyles",
+-            confidence: 1.0,
+-            timestamp
+-          });
+-        }
+-        if (enums.BeardNames) {
+-          const count = Object.keys(enums.BeardNames).length;
+-          pairs.push({
+-            instruction: "Translate beard style indexes to Jagex semantic beard style names.",
+-            input: `Active beard style name catalog containing ${count} entries.`,
+-            output: JSON.stringify(enums.BeardNames),
+-            source: "CacheWatcherLimb:major17:BeardNames",
+-            confidence: 1.0,
+-            timestamp
+-          });
+-        }
+-        if (enums.BeardStyles) {
+-          const count = Object.keys(enums.BeardStyles).length;
+-          pairs.push({
+-            instruction: "Translate beard index values to direct physical model template IDs.",
+-            input: `Active beard index-to-model mapping containing ${count} entries.`,
+-            output: JSON.stringify(enums.BeardStyles),
+-            source: "CacheWatcherLimb:major17:BeardStyles",
+-            confidence: 0.95,
+-            timestamp
+-          });
+-        }
+-      }
+-    } catch (e) {
+-      logger.warn({ err: e }, 'Could not read generated appearance enums for distillation; utilizing details fallback.');
+-      pairs.push({
+-        instruction: "Predict cache enum updates based on cache invalidation telemetry.",
+-        input: `Enum update details: ${details}`,
+-        output: "Registering enum updates for target ids: FemaleHairStyles (6796), MaleHairStyles (16883), BeardStyles (17158).",
+-        source: "CacheWatcherLimb:major17:Fallback",
+-        confidence: 0.8,
+-        timestamp
+-      });
+-    }
+-
+-    return pairs;
+-  }
+ 
+-  /**
+-   * distillClientscripts - Ingests checksum updates and script-level changes.
+-   */
+-  private async distillClientscripts(details: string): Promise<InstructionPair[]> {
+-    const timestamp = Date.now();
+-    return [{
+-      instruction: "Predict baseline clientscript telemetry drift from Jagex engine updates.",
+-      input: `Cache watchers detected active modifications in clientscripts archive: ${details}`,
+-      output: "Update script mappings: priority scripts 7888 (Varbit trigger), 7893 (Appearance selection), 28557 (Avatar randomizer) evaluated.",
+-      source: "CacheWatcherLimb:major11:ClientScripts",
+-      confidence: 0.9,
+-      timestamp
+-    }];
+-  }
+-
+-  /**
+-   * distillVarbits - Generates layout expectations from varbit archives.
+-   */
+-  private async distillVarbits(details: string): Promise<InstructionPair[]> {
+-    const timestamp = Date.now();
+-    return [{
+-      instruction: "Retrieve player morphology varbit configuration layouts.",
+-      input: `Varbit archive modification detected: ${details}`,
+-      output: "Configure morphology control varbits under Varp 5745 (bits 0-2 for body base, 3-5 for torso legs, 6-8 for body gender).",
+-      source: "CacheWatcherLimb:major45:Varbits",
+-      confidence: 0.95,
+-      timestamp
+-    }];
+-  }
+-
+-  private createGenericPair(majorIndex: number, details: string): InstructionPair {
+     return {
+-      instruction: `Predict cache structure invalidations and transitions for major index ${majorIndex}.`,
+-      input: `Cache watcher event details: ${details}`,
+-      output: `Cache major index ${majorIndex} has been modified on disk. System state re-evaluated.`,
+-      source: `CacheWatcherLimb:major${majorIndex}:Generic`,
+-      confidence: 0.7,
+-      timestamp: Date.now()
++        tick: Date.now(),
++        timestamp,
++        fidelity: LearningFidelity.PEDAGOGY,
++        resolution,
++        tags: [source, '[VERIFIED]']
+     };
+   }
+-
+-  /**
+-   * appendPairsToCorpus - Formats and appends instruction pairs as JSONL records.
+-   */
+-  private async appendPairsToCorpus(pairs: InstructionPair[]): Promise<void> {
+-    try {
+-      const parentDir = join(this.corpusPath, '..');
+-      if (!existsSync(parentDir)) {
+-        mkdirSync(parentDir, { recursive: true });
+-      }
+-
+-      const compressor = CompressionEngine.getInstance();
+-
+-      for (const pair of pairs) {
+-        const compressedPair = compressor.compress(pair);
+-        const line = JSON.stringify(compressedPair) + '\n';
+-        appendFileSync(this.corpusPath, line, 'utf8');
+-      }
+-    } catch (e) {
+-      logger.error({ err: e, path: this.corpusPath }, 'Failed to append instruction pairs to training corpus.');
+-    }
+-  }
+-
+-  /**
+-   * exportTrainingCorpus - Returns the corpus path and logs the size.
+-   */
+-  public exportTrainingCorpus(): string {
+-    if (existsSync(this.corpusPath)) {
+-      const content = readFileSync(this.corpusPath, 'utf8');
+-      const lines = content.trim().split('\n').filter(Boolean);
+-      logger.info({ count: lines.length, path: this.corpusPath }, 'Training corpus exported successfully.');
+-    }
+-    return this.corpusPath;
+-  }
+ }
+diff --git a/src/utils/OfficialPlayerDataApi.ts b/src/utils/OfficialPlayerDataApi.ts
+index 471b48f..3ee3944 100644
+--- a/src/utils/OfficialPlayerDataApi.ts
++++ b/src/utils/OfficialPlayerDataApi.ts
+@@ -120,7 +120,7 @@ export class OfficialPlayerDataApi {
+     const skills = Array.from(hiscores.entries())
+       .filter(([name]) => name !== 'Overall')
+       .map(([name, entry]) => ({
+-        id: Object.entries(SKILL_NAMES).find(([_, n]) => n === name)?.[0] as number || -1,
++        id: Number(Object.entries(SKILL_NAMES).find(([_, n]) => n === name)?.[0]) || -1,
+         name,
+         level: entry.level,
+         xp: entry.xp,
+diff --git a/src/utils/WikiEnricher.ts b/src/utils/WikiEnricher.ts
+index e4a9d55..f074164 100644
+--- a/src/utils/WikiEnricher.ts
++++ b/src/utils/WikiEnricher.ts
+@@ -1,9 +1,22 @@
+ import { createLogger } from './logger.js';
+ import type { Result } from '../core/models.js';
+ import { join } from 'path';
+-import { existsSync, mkdirSync, writeFileSync } from 'fs';
++import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
++import { CanonicalClock } from './CanonicalClock.js';
+ 
+ const logger = createLogger('WikiEnricher');
++const clock = CanonicalClock.getInstance();
++
++// Load authoritative interaction mapping
++const INTERACTION_MAPPING_PATH = join(process.cwd(), 'audit_output', 'interaction_mapping_full.json');
++let interactionMapping: any = null;
++if (existsSync(INTERACTION_MAPPING_PATH)) {
++    try {
++        interactionMapping = JSON.parse(readFileSync(INTERACTION_MAPPING_PATH, 'utf8'));
++    } catch (e) {
++        logger.error({ err: e }, 'Failed to load authoritative interaction mapping.');
++    }
++}
+ 
+ export interface WikiData {
+     name: string;
+@@ -13,6 +26,24 @@ export interface WikiData {
+     url: string;
+     imageUrl?: string;
+     variables?: Record<string, string>;
++    pog2_interactions?: string[];
++}
++
++// Build reverse interaction index for fast lookup
++const entityInteractionIndex: Record<string, Record<string, string[]>> = {
++    npc: {}, item: {}, object: {}
++};
++if (interactionMapping) {
++    for (const [actionId, data] of Object.entries(interactionMapping)) {
++        const { action, entities } = data as any;
++        for (const entity of entities) {
++            const idKey = entity.id.toString();
++            if (!entityInteractionIndex[entity.type][idKey]) {
++                entityInteractionIndex[entity.type][idKey] = [];
++            }
++            entityInteractionIndex[entity.type][idKey].push(action);
++        }
++    }
+ }
+ 
+ export interface WikiRotation {
+@@ -31,9 +62,17 @@ export class WikiEnricher {
+     private static API_URL = 'https://runescape.wiki/api.php';
+ 
+     /**
+-     * Enrich a model's semantic context by searching the wiki.
++     * Enrich a model's semantic context by first checking authoritative cache mapping,
++     * then falling back to wiki search.
+      */
+-    public static async enrich(name: string): Promise<Result<WikiData>> {
++    public static async enrich(name: string, entityId?: number, entityType?: string): Promise<Result<WikiData>> {
++        let pog2_interactions: string[] | undefined;
++
++        // 1. Authoritative Cache Lookup
++        if (entityId !== undefined && entityType && entityInteractionIndex[entityType]?.[entityId.toString()]) {
++            pog2_interactions = entityInteractionIndex[entityType][entityId.toString()];
++        }
++
+         if (!name || name === 'unknown') {
+             return {
+                 ok: true,
+@@ -41,7 +80,8 @@ export class WikiEnricher {
+                     name: 'Unknown Asset',
+                     role: 'Background Prop',
+                     intent: 'Generic environment filler',
+-                    url: 'https://runescape.wiki'
++                    url: 'https://runescape.wiki',
++                    pog2_interactions
+                 }
+             };
+         }
+@@ -64,18 +104,22 @@ export class WikiEnricher {
+             };
+ 
+             const fetchWithRetry = async (url: string, options: any, retries = 3): Promise<Response> => {
++                // Canonical pacing: Wait at least 3 game ticks (1800ms) to maintain simulation determinism
++                const delayTicks = 3; 
++                await new Promise(resolve => setTimeout(resolve, delayTicks * clock.getGameTickMs()));
++                
+                 for (let i = 0; i < retries; i++) {
+                     try {
+                         const res = await fetch(url, options);
+                         if (res.ok) return res;
+                         if (res.status === 429) {
+-                            const delay = parseInt(res.headers.get('Retry-After') || '2') * 1000;
+-                            await new Promise(resolve => setTimeout(resolve, delay));
++                            const delayMs = parseInt(res.headers.get('Retry-After') || '5') * 1000;
++                            await new Promise(resolve => setTimeout(resolve, delayMs));
+                             continue;
+                         }
+                     } catch (err) {
+                         if (i === retries - 1) throw err;
+-                        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
++                        await new Promise(resolve => setTimeout(resolve, 2000 * (i + 1)));
+                     }
+                 }
+                 throw new Error('Fetch failed after retries');
+@@ -92,7 +136,8 @@ export class WikiEnricher {
+                         name,
+                         role: 'Uncategorized',
+                         intent: 'Production asset without wiki mapping',
+-                        url: 'https://runescape.wiki'
++                        url: 'https://runescape.wiki',
++                        pog2_interactions
+                     }
+                 };
+             }
+@@ -153,7 +198,8 @@ export class WikiEnricher {
+                     intent,
+                     url,
+                     imageUrl,
+-                    variables: await this.fetchInfoboxData(pageTitle)
++                    variables: await this.fetchInfoboxData(pageTitle),
++                    pog2_interactions
+                 }
+             };
+         } catch (err) {

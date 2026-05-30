@@ -1,0 +1,8 @@
+{
+  "id": "1",
+  "subject": "Ollama Fleet Refactor",
+  "description": "Pull gemma4:26b and deepseek-r1:32b, test gemma4:26b, remove unused models, and update registry/env.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

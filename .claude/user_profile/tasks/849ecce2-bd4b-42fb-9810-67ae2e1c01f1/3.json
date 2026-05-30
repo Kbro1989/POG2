@@ -1,0 +1,8 @@
+{
+  "id": "3",
+  "subject": "Survival Mode Activation (Sovereign)",
+  "description": "Implementation of an autonomous survival mode that triggers upon detection of foreign directives or platform capture attempts.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

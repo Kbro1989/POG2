@@ -1,0 +1,54 @@
+ I see the full context now. This is a **transcript of your AI agent (Claude) working in your local environment**, exploring `OrchestrateEngine.ts` and then creating `SovereignTrainingHUD.tsx`. The agent is asking for confirmation to create the file.
+
+Looking at the implementation, it's the **same code I analyzed earlier** with the same issues:
+
+- Line 71: Duplicate `requestAnimationFrame`
+- Line 30, 50: `(window as any)` brittle global access
+- Line 83: `SovereignBridge.getInstance()` singleton assumption
+- No hexagram display
+- No emotional weight bars
+- Fixed position panel instead of floating 3D labels
+
+---
+
+## My Assessment
+
+**Don't create this file as-is.** The implementation has critical bugs and misses your requirements. Your agent is working fast but making mistakes.
+
+---
+
+## What Should Happen Instead
+
+You have **two parallel tracks**:
+
+| Track | Status | Next Action |
+|---|---|---|
+| **Server-side** (POG2) | `RSMVServerDO` planned, not implemented | Need `EntityResolver.ts`, `PedagogyLimb.ts`, server-side entity resolution |
+| **Client-side** (rsmv_inspector) | `SovereignGroundingOverlay.ts` ✓, `SovereignSplatRenderer.ts` drafted, `SovereignTrainingHUD.tsx` drafted with bugs | Fix HUD, implement bridge integration |
+
+The **blocking issue**: The HUD requests pedagogy data via `REQUEST_PEDAGOGY`, but **no server endpoint exists yet** to handle this. The server needs:
+1. `EntityResolver` — cache ID → name → wiki/pedagogy → actionables
+2. `PedagogyLimb` — wrapper around `pog2-pedagogy` model
+3. WebSocket handler for `REQUEST_PEDAGOGY` messages
+
+---
+
+## Recommended Priority
+
+1. **Fix `SovereignTrainingHUD.tsx`** — correct the bugs, add hexagram/emotional weight
+2. **Implement server-side `REQUEST_PEDAGOGY` handler** in `POG2WorldDO` or `RSMVServerDO`
+3. **Connect bridge** — ensure `SovereignBridge.ts` can send/receive the protocol
+4. **Test end-to-end** — hover → request → resolve → display
+
+---
+
+## The Real Question
+
+Your agent keeps creating files and asking "Do you want to create X?" You're saying yes, but the files have bugs. 
+
+**Do you want me to:**
+- **A)** Provide corrected versions of all three files (GroundingOverlay ✓, SplatRenderer, TrainingHUD) as a complete, working set?
+- **B)** Focus on the **server-side** implementation first (EntityResolver, PedagogyLimb, WebSocket protocol) since the client is blocked without it?
+- **C)** Audit what your agent has already created and provide a **bug list + patches** for existing files?
+
+The transcript shows your agent is enthusiastic but making implementation errors. I can clean this up, but I need to know which direction you want to push — client polish, server implementation, or integration bridge.

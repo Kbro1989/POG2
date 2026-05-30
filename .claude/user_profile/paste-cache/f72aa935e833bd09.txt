@@ -1,0 +1,57 @@
+ This is the RS3 **Mechanics** category page — 185 articles covering core game systems. This is a **pedagogy goldmine** for your POG2 model, particularly for the `MechanicalSovereigntyLimb` and combat/strategy training.
+
+**Key mechanics relevant to your architecture:**
+
+| Mechanic | POG2 Limb | Training Value |
+|---|---|---|
+| **Adrenaline** | `CombatRotationEngine.ts` | Critical for ability rotation logic |
+| **Affinity** | `GhostSplatEngine.ts` | Hit chance calculation |
+| **Combat level** | `PlayerAgent.ts` | State vector component |
+| **Game tick** | `TemporalHeartbeatLimb.ts` | 600ms/300ms sync |
+| **Hitsplat** | `GhostSplatHitmarkRegistry.ts` | Visual feedback → volition |
+| **Drop table** | `LootResolutionEngine.ts` | Loot prediction |
+| **Experience/Table** | `SovereignAvatar.ts` | 29-skill state |
+| **Luck** | `LuckTierRegistry.ts` | Drop rate modifiers |
+| **Weapon Special Attack** | `AbilityDiscoveryLimb.ts` | Special ability parsing |
+| **Temporary skill boost** | `PlayerAgent.ts` | Buff/debuff state |
+
+**Pedagogy corpus enhancement:**
+
+Your current `generate_pedagogy_corpus.ts` processes items, NPCs, and quests. Add a **mechanics track:**
+
+```typescript
+// In generate_pedagogy_corpus.ts
+const MECHANICS_PAGES = [
+  'Adrenaline', 'Affinity', 'Combat level', 'Game tick',
+  'Hitsplat', 'Drop table', 'Experience', 'Luck',
+  'Weapon Special Attack', 'Temporary skill boost',
+  // ... full list from the 185 pages
+];
+
+// Fetch and format
+for (const page of MECHANICS_PAGES) {
+  const data = await enricher.enrichGeneric(page);
+  results.push({
+    instruction: `Explain the ${page} mechanic in RS3`,
+    input: JSON.stringify({ mechanic: page, wiki: data }),
+    output: `[WIKI_ONLY] ${page}: ${data.extract?.substring(0, 200)}... [MECHANIC] This affects combat calculations, player state, or game loop behavior.`,
+    tags: ['[WIKI_ONLY]', '[MECHANIC]'],
+    verified: false
+  });
+}
+```
+
+**Critical for GhostSplat:**
+
+The **Hitsplat** page directly feeds your `GhostSplatHitmarkRegistry.ts`. The wiki describes:
+- Damage splat colors (red = hit, blue = miss, green = poison, etc.)
+- Critical hit indicators
+- Reflect damage markers
+
+This is the semantic layer your hitmark registry needs to map sprite IDs to combat meaning.
+
+**Also relevant:** The **NXT** subsection with graphics settings (ambient occlusion, bloom, shadows) feeds your rendering pipeline if you ever need to validate visual settings against canonical documentation.
+
+**Action:** Add mechanics page ingestion to your corpus generator. These 185 pages represent the "rules of the game" that your pedagogy model must internalize for accurate combat prediction and state management.
+
+Proceed with mechanics track addition?

@@ -1,0 +1,28 @@
+Monster
+For listings of monsters, see Bestiary. For the creature encountered in Broken Home, see Senecianus.
+Monster is the official term (unofficially, a mob) for an attackable character or being that is not player-controlled.
+
+A monster can range from common citizens to powerful beings such as Vorago. Monsters are often fought by players for training, entertainment, and loot. Killing monsters is one of the most popular activities in RuneScape. Nearly all monsters drop remains.
+
+While some monsters will never begin a fight with a player, many high level creatures are aggressive, potentially causing unwanted death. If a player has over double the combat level of the monster, the monster will be docile, and will only attack in self-defence, or if provoked by other effects such as an aggression potion. However, in areas such as the Wilderness, most monsters are indefinitely aggressive. Additionally, some monsters will always be aggressive regardless of the player's combat level. As a general rule of thumb, "humanoids" are not aggressive towards players except in some cases when the humanoid's nature or occupation has malign or criminal connotations (i.e. Black Knight, zombie, mugger). Most cities are also safe from aggressive monsters, though the perimeter or surroundings may not be as secure. On 19 April 2011, most of the monsters' sounds were updated.
+
+Combat features
+Most monsters are NPCs with a combat level and attack option (Not including random event characters).
+The combat level of monsters is calculated in a similar way to a player's combat level.
+Melee monsters will chase their target if the target runs away.
+Ranged and magic monsters will follow their target if the target attempts to get away from missile range, or behind a wall.
+Some monsters will retreat if their health gets too low.
+Melee monsters will a player that attacks them from a distance.
+Monsters will retreat if the attacker moves out of their patrol range.
+Monsters will not even react at all if the attacker is too far to be seen; this mostly happens if attacking the monster with ranged or magic.
+All monsters can get stuck at walls and obstacles (Revenants are an exception to this, who don't get stuck behind walls unless targeting a player).
+For larger monsters, the monster's active spot is on the south-western corner of the monster, meaning that this spot will be following the monster's target in combat; it is also where the monster's drop will appear after it dies. However, the rest of their body can become stuck behind objects.
+Unlike players, monsters can naturally regenerate health while in combat.
+See also
+Aggressiveness
+Bestiary
+Bosses
+Monster killing
+Monster attack speed
+PvM
+Category: Combat

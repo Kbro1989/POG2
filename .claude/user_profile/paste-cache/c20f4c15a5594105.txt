@@ -1,0 +1,42 @@
+The corpus is generated — 23 verified entities written to `D:\sovereign\memory\pedagogy\corpus\verified_entities.jsonl`. The pipeline is operational.
+
+**Critical note on the output path:** The log shows `D:\D-sovereign-\memory\...` which looks like a path resolution artifact. Verify the actual file location:
+
+```bash
+dir D:\sovereign\memory\pedagogy\corpus\verified_entities.jsonl
+dir D:\D-sovereign-\memory\pedagogy\corpus\verified_entities.jsonl
+```
+
+One of these should exist. The `SovereignPathResolver` may be producing a malformed path.
+
+**Next steps for the pedagogy pipeline:**
+
+| Step | Status | Action |
+|---|---|---|
+| Corpus generation | ✅ Complete | 23 entities, [VERIFIED] tags |
+| Corpus audit | ⏳ Next | Verify tag distribution, check for [WIKI_ONLY] vs [VERIFIED] ratio |
+| Unsloth LoRA training | ⏳ Ready | Train `pog2-pedagogy-entity` on corpus |
+| Fireworks deployment | ⏳ Ready | Upload corpus, fine-tune Llama 3.1 8B |
+| ModelRolodex registration | ⏳ Ready | Add pedagogy models with hexagram routing |
+
+**Immediate recommendation:** Audit the corpus before training. Check:
+
+```bash
+cd D:\POG2
+node -e "
+const fs = require('fs');
+const lines = fs.readFileSync('D:/sovereign/memory/pedagogy/corpus/verified_entities.jsonl', 'utf8').split('\n').filter(Boolean);
+console.log('Total entries:', lines.length);
+const tags = {};
+lines.forEach(l => {
+  const entry = JSON.parse(l);
+  const tag = entry.output.match(/\[(.*?)\]/)?.[1] || 'untagged';
+  tags[tag] = (tags[tag] || 0) + 1;
+});
+console.log('Tag distribution:', tags);
+"
+```
+
+Target: >70% [VERIFIED], <20% [WIKI_ONLY], <10% [CACHE_ONLY]. If the distribution is off, expand the entity list or adjust the enrichment pipeline.
+
+Proceed with corpus audit, or jump straight to Unsloth LoRA training?

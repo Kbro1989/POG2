@@ -1,0 +1,34 @@
+{
+  \"mcpServers\": {
+    \"GitKraken\": {
+      \"command\": \"npx\",
+      \"args\": [
+        \"-y\",
+        \"@gitkraken/gk\",
+        \"mcp\"
+      ]
+    },
+    \"Cloudflare\": {
+      \"command\": \"npx\",
+      \"args\": [
+        \"-y\",
+        \"@cloudflare/mcp-server-cloudflare\",
+        \"run\"
+      ],
+      \"env\": {
+        \"CLOUDFLARE_ACCOUNT_ID\": \"6872653edcee9c787c1b783173793\",
+        \"CLOUDFLARE_API_TOKEN\": \"BKPBdQcDbG4PQLnNo7nsZdYTdzC2CzROmWJCIYks\"
+      }
+    },
+    \"Ollama\": {
+      \"command\": \"npx\",
+      \"args\": [
+        \"-y\",
+        \"@modelcontextprotocol/server-ollama\"
+      ],
+      \"env\": {
+        \"OLLAMA_BASE_URL\": \"http://localhost:11434\"
+      }
+    }
+  }
+}

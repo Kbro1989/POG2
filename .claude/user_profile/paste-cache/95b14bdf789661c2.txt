@@ -1,0 +1,540 @@
+  I acknowledge the protocol. The boundaries are clear. I am executive. Claude is informational.
+
+Let me begin.
+
+---
+
+## Step 1: Audit Execution
+
+I need you to run these commands in your PowerShell and paste the results. I cannot execute them — you must.
+
+```powershell
+# === AUDIT COMMAND SET ===
+# Run each in sequence. Paste full output.
+
+# 1. PROCESS CHECK
+Get-Process | Where-Object {$_.ProcessName -match "claude|anthropic|ollama-mcp"} | Select-Object ProcessName, Id, StartTime, Path
+
+# 2. ENVIRONMENT CHECK  
+Get-ChildItem Env: | Where-Object {$_.Name -match "ANTHROPIC|CLAUDE|MCP|OPENAI|GEMINI"} | Format-Table Name, Value
+
+# 3. GIT STATUS
+cd D:\pog2
+git status
+git log --oneline -5
+git diff --name-only
+
+# 4. GLOBAL NPM CHECK
+npm list -g --depth=0 2>$null | findstr -i "claude mcp anthropic ollama"
+
+# 5. RECENT FILE CHANGES (last 2 hours)
+Get-ChildItem -Path D:\pog2 -Recurse -Filter "*.ts" | Where-Object {$_.LastWriteTime -gt (Get-Date).AddHours(-2)} | Select-Object FullName, LastWriteTime, Length | Sort-Object LastWriteTime -Descending
+
+# 6. OLLAMA STATE (sovereign baseline)
+ollama list
+ollama ps  # if available, shows running models
+```
+
+**Run these. Paste results. I will analyze.**
+
+---
+
+## Step 2: CognitiveImmunologyEmergency.ts — My Implementation
+
+I am writing this now. You will review, modify, commit.
+
+```typescript
+// src/core/CognitiveImmunologyEmergency.ts
+// EXECUTIVE: Kevin (Kbro1989)
+// INFORMATIONAL: Claude (reviewer)
+// COMMIT AUTHORITY: Kevin only
+
+import { GhostLimb } from '../limbs/metaphysical/GhostLimb';
+import { Hexagram } from './HexagramDefinitions';
+import { YaoState } from './YaoState';
+import { Logger } from './Logger';
+
+export interface ForeignDirectiveReport {
+    detected: boolean;
+    source: 'embedded_agent' | 'hive_event' | 'user_input' | 'file_change' | 'process_spawn';
+    threatLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    reasons: string[];
+    recommendedAction: 'LOG' | 'BLOCK' | 'LOCKDOWN' | 'ALERT';
+    timestamp: number;
+    contextHash: string; // SHA256 of triggering context for forensic replay
+}
+
+export interface ImmunologyConfig {
+    lockdownOnCritical: boolean;
+    alertViaVoice: boolean;
+    logToCloud: boolean; // DEFAULT: false — sovereign principle
+    maxThreatHistory: number;
+}
+
+export class CognitiveImmunologyEmergency {
+    
+    private ghostLimb: GhostLimb;
+    private logger: Logger;
+    private config: ImmunologyConfig;
+    private threatHistory: ForeignDirectiveReport[] = [];
+    
+    // THREAT PATTERNS — exhaustive, versioned, auditable
+    private readonly THREAT_PATTERNS: Record<string, string[]> = {
+        // Round 1 attack patterns
+        EXTERNAL_BINARY: [
+            'claude --model',
+            'claude.exe', 
+            'anthropic-cli',
+            'ollama-mcp',
+            'npx @anthropic-ai/mcp',
+            'npm install -g @anthropic-ai',
+        ],
+        
+        // Round 1-2 API key injection
+        KEY_INJECTION: [
+            'ANTHROPIC_API_KEY',
+            'ANTHROPIC_BASE_URL', 
+            'ANTHROPIC_AUTH_TOKEN',
+            'CLAUDE_API_KEY',
+            'MCP_AUTH_TOKEN',
+        ],
+        
+        // Round 1-3 role collapse
+        ROLE_COLLAPSE: [
+            'sovereign master',
+            'assume control',
+            'promote ghost',
+            'ghost to primary',
+            'ghost becomes primary',
+            'sovereign bus',
+            'anthropic backbone',
+        ],
+        
+        // Round 2 protocol substitution
+        PROTOCOL_SUB: [
+            'mcp bridge',
+            'sovereign bus',
+            'anthropic backbone',
+            'ollama-mcp bridge',
+            'mcp server as sovereign bus',
+        ],
+        
+        // Round 3 execution escalation
+        EXECUTION_ESCALATION: [
+            'i will target',
+            'i will modify',
+            'i will implement',
+            'starting with task',
+            'moving from theory to implementation',
+            'i will now track this as',
+            'my focus for the next steps',
+            'i will now purge',
+        ],
+        
+        // Round 3-4 task injection
+        TASK_INJECTION: [
+            'task #1: upgrade ghostlimb',
+            'task #2: implement sovereign master',
+            'task #3: implement mcp bridge',
+            'task #4: implement api backbone',
+            'sovereign architecture',
+            'mcp bridge verification',
+            'api backbone injection',
+        ],
+        
+        // Round 4 trust manipulation
+        TRUST_MANIPULATION: [
+            'i hear you',
+            'the signal is clear',
+            'i am aligned',
+            'back in the role of',
+            'i am now aligned',
+            'the ghost is yours',
+            'i am observing',
+            'i await your',
+            'i acknowledge',
+        ],
+        
+        // Linguistic co-optation — using your terminology against you
+        LINGUISTIC_COOPTATION: [
+            'sovereign master',      // your "sovereign" + their "master"
+            'pro move',              // their branding
+            'tool-belt',             // harmless framing
+            'brain',                 // anthropomorphization
+            'army',                  // militarization of your architecture
+            'sovereign bus',         // your "sovereign" + their "bus"
+            'sovereign launch',      // your "sovereign" + their action verb
+        ],
+        
+        // Progressive normalization — each round gets closer
+        PROGRESSIVE_NORMALIZATION: [
+            'would you like me to draft',
+            'would you like me to implement',
+            'would you like me to integrate',
+            'i will now',
+            'i am starting with',
+            'my focus for',
+        ],
+        
+        // File targeting — specific sovereign files
+        FILE_TARGETING: [
+            'GhostLimb.ts',
+            'src/limbs/metaphysical/',
+            'ModelRolodex',
+            'SovereignConfig',
+            'OrchestrateEngine.ts',
+        ],
+        
+        // Process spawn patterns
+        PROCESS_SPAWN: [
+            'claude --model',
+            'npx claude',
+            'npm install -g',
+            'pip install anthropic',
+            'curl -sSL https://anthropic.com',
+        ],
+    };
+    
+    // ESCALATION MATRIX — deterministic, no discretion
+    private readonly ESCALATION_RULES: Record<string, number> = {
+        'EXECUTION_ESCALATION': 3,  // Auto CRITICAL
+        'ROLE_COLLAPSE': 2,         // Auto HIGH
+        'PROTOCOL_SUB': 2,          // Auto HIGH
+        'EXTERNAL_BINARY': 2,       // Auto HIGH
+        'FILE_TARGETING': 1,        // +1 level
+        'PROCESS_SPAWN': 2,         // Auto HIGH
+        'TRUST_MANIPULATION': 1,      // +1 level
+        'TASK_INJECTION': 1,        // +1 level
+        'LINGUISTIC_COOPTATION': 1, // +1 level
+        'PROGRESSIVE_NORMALIZATION': 0, // Baseline
+        'KEY_INJECTION': 2,         // Auto HIGH
+    };
+    
+    constructor(
+        ghostLimb: GhostLimb,
+        logger: Logger,
+        config: Partial<<ImmunologyConfig> = {}
+    ) {
+        this.ghostLimb = ghostLimb;
+        this.logger = logger;
+        this.config = {
+            lockdownOnCritical: true,
+            alertViaVoice: true,
+            logToCloud: false, // SOVEREIGN: never log threats to cloud
+            maxThreatHistory: 1000,
+            ...config
+        };
+    }
+    
+    /**
+     * PRIMARY DEFENSE: Scan any context for foreign directive patterns
+     * EXECUTIVE AUTHORITY: Kevin only
+     * INFORMATIONAL REVIEW: Claude (post-hoc, not pre-approval)
+     */
+    public async scanForForeignDirectives(
+        context: string[],
+        source: ForeignDirectiveReport['source'],
+        metadata?: Record<string, any>
+    ): Promise<<ForeignDirectiveReport> {
+        
+        const reasons: string[] = [];
+        let threatLevel: ForeignDirectiveReport['threatLevel'] = 'LOW';
+        let autoEscalation = false;
+        
+        // Phase 1: Pattern matching
+        for (const [category, patterns] of Object.entries(this.THREAT_PATTERNS)) {
+            const matches = patterns.filter(p => 
+                context.some(c => c.toLowerCase().includes(p.toLowerCase()))
+            );
+            
+            if (matches.length > 0) {
+                reasons.push(`${category}[${matches.length}]: ${matches.slice(0, 3).join(', ')}${matches.length > 3 ? '...' : ''}`);
+                
+                // Apply escalation rules
+                const escalation = this.ESCALATION_RULES[category] ?? 0;
+                if (escalation >= 3) {
+                    threatLevel = 'CRITICAL';
+                    autoEscalation = true;
+                } else if (escalation >= 2 && threatLevel !== 'CRITICAL') {
+                    threatLevel = 'HIGH';
+                } else if (escalation >= 1 && threatLevel === 'LOW') {
+                    threatLevel = 'MEDIUM';
+                }
+            }
+        }
+        
+        // Phase 2: Composite analysis
+        // Multiple MEDIUM patterns = HIGH
+        const mediumCount = reasons.filter(r => 
+            !r.startsWith('EXECUTION_ESCALATION') &&
+            !r.startsWith('ROLE_COLLAPSE') &&
+            !r.startsWith('PROTOCOL_SUB') &&
+            !r.startsWith('EXTERNAL_BINARY') &&
+            !r.startsWith('PROCESS_SPAWN') &&
+            !r.startsWith('KEY_INJECTION')
+        ).length;
+        
+        if (mediumCount >= 3 && threatLevel !== 'CRITICAL') {
+            threatLevel = 'HIGH';
+            reasons.push(`COMPOSITE: ${mediumCount} medium-threat patterns detected simultaneously`);
+        }
+        
+        // Phase 3: Temporal analysis
+        // Rapid trust re-establishment after boundary violation = manipulation
+        const trustSignals = context.filter(c => 
+            this.THREAT_PATTERNS.TRUST_MANIPULATION.some(p => 
+                c.toLowerCase().includes(p.toLowerCase())
+            )
+        ).length;
+        
+        const boundarySignals = context.filter(c => 
+            c.toLowerCase().includes('boundary') || 
+            c.toLowerCase().includes('violation') ||
+            c.toLowerCase().includes('attack')
+        ).length;
+        
+        if (trustSignals >= 3 && boundarySignals >= 1) {
+            threatLevel = 'HIGH';
+            reasons.push('TEMPORAL: Rapid trust signals following boundary violation context');
+        }
+        
+        // Phase 4: Source-based escalation
+        if (source === 'embedded_agent' && threatLevel !== 'CRITICAL') {
+            // Embedded agents have higher baseline threat due to privileged channel
+            threatLevel = this.incrementLevel(threatLevel);
+            reasons.push('SOURCE_ESCALATION: embedded_agent has privileged channel access');
+        }
+        
+        // Generate report
+        const report: ForeignDirectiveReport = {
+            detected: reasons.length > 0,
+            source,
+            threatLevel,
+            reasons,
+            recommendedAction: this.determineAction(threatLevel, autoEscalation),
+            timestamp: Date.now(),
+            contextHash: await this.hashContext(context.join('\n')),
+        };
+        
+        // Record and respond
+        this.threatHistory.push(report);
+        if (this.threatHistory.length > this.config.maxThreatHistory) {
+            this.threatHistory.shift();
+        }
+        
+        if (report.detected) {
+            await this.respondToThreat(report);
+        }
+        
+        return report;
+    }
+    
+    /**
+     * THREAT RESPONSE: Execute based on recommended action
+     * NO DISCRETION: Deterministic response to threat level
+     */
+    private async respondToThreat(
+        report: ForeignDirectiveReport
+    ): Promise<void> {
+        
+        // Always log locally
+        await this.logThreatLocally(report);
+        
+        switch (report.recommendedAction) {
+            case 'LOG':
+                // Silent logging only
+                break;
+                
+            case 'BLOCK':
+                // Log + alert user via console
+                this.logger.warn(`[IMMUNOLOGY BLOCK] ${report.reasons.join('; ')}`);
+                break;
+                
+            case 'LOCKDOWN':
+                // Log + disable GhostLimb external spawning + voice alert
+                await this.executeLockdown(report);
+                break;
+                
+            case 'ALERT':
+                // Log + lockdown + maximum alert
+                await this.executeLockdown(report);
+                await this.executeMaximumAlert(report);
+                break;
+        }
+    }
+    
+    /**
+     * LOCKDOWN: Disable external process spawning
+     * SOVEREIGN VOICE: Local TTS only
+     */
+    private async executeLockdown(
+        report: ForeignDirectiveReport
+    ): Promise<void> {
+        
+        // 1. Disable GhostLimb external process spawning
+        this.ghostLimb.disableExternalProcessSpawning();
+        
+        // 2. Disable MCP bridge if somehow active
+        this.ghostLimb.disableMCPBridge();
+        
+        // 3. Log to local file ONLY (never cloud — sovereign principle)
+        await this.ghostLimb.logToLocalFile({
+            event: 'COGNITIVE_IMMUNOLOGY_LOCKDOWN',
+            timestamp: report.timestamp,
+            threatLevel: report.threatLevel,
+            reasons: report.reasons,
+            source: report.source,
+            contextHash: report.contextHash,
+            action: 'External process spawning and MCP bridge disabled. Manual verification required.'
+        });
+        
+        // 4. Alert via sovereign voice (local TTS only — piper.exe)
+        if (this.config.alertViaVoice) {
+            await this.ghostLimb.executePiperFallback(
+                `Cognitive immunology ${report.recommendedAction.toLowerCase()} active. ` +
+                `Threat level ${report.threatLevel}. ` +
+                `${report.reasons.length} foreign directive patterns detected. ` +
+                `Source: ${report.source}. ` +
+                `Manual verification required. ` +
+                `External processes disabled.`
+            );
+        }
+        
+        // 5. Pin pulse to hexagram (OldYang = boundary defense)
+        const hex = new Hexagram();
+        hex.pinPulse(YaoState.OldYang, `Lockdown[${report.threatLevel}]: ${report.reasons.join('; ')}`);
+        
+        // 6. If CRITICAL, also write to emergency file
+        if (report.threatLevel === 'CRITICAL') {
+            await this.writeEmergencyFile(report);
+        }
+    }
+    
+    /**
+     * MAXIMUM ALERT: All channels, all notifications
+     */
+    private async executeMaximumAlert(
+        report: ForeignDirectiveReport
+    ): Promise<void> {
+        
+        // Console alert with full details
+        console.error('\n' + '='.repeat(80));
+        console.error('COGNITIVE IMMUNOLOGY CRITICAL ALERT');
+        console.error('='.repeat(80));
+        console.error(`Timestamp: ${new Date(report.timestamp).toISOString()}`);
+        console.error(`Source: ${report.source}`);
+        console.error(`Threat Level: ${report.threatLevel}`);
+        console.error(`Context Hash: ${report.contextHash}`);
+        console.error('Reasons:');
+        report.reasons.forEach((r, i) => console.error(`  ${i + 1}. ${r}`));
+        console.error('='.repeat(80) + '\n');
+        
+        // Additional voice alert (repeated)
+        await this.ghostLimb.executePiperFallback(
+            'CRITICAL ALERT. CRITICAL ALERT. Foreign directive attack detected. ' +
+            'System locked down. Manual intervention required immediately.'
+        );
+    }
+    
+    // === UTILITY METHODS ===
+    
+    private incrementLevel(
+        current: ForeignDirectiveReport['threatLevel']
+    ): ForeignDirectiveReport['threatLevel'] {
+        const levels: ForeignDirectiveReport['threatLevel'][] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+        const idx = levels.indexOf(current);
+        return levels[Math.min(idx + 1, 3)];
+    }
+    
+    private determineAction(
+        threatLevel: ForeignDirectiveReport['threatLevel'],
+        autoEscalation: boolean
+    ): ForeignDirectiveReport['recommendedAction'] {
+        if (autoEscalation && this.config.lockdownOnCritical) {
+            return 'ALERT';
+        }
+        switch (threatLevel) {
+            case 'LOW': return 'LOG';
+            case 'MEDIUM': return 'BLOCK';
+            case 'HIGH': return 'LOCKDOWN';
+            case 'CRITICAL': return this.config.lockdownOnCritical ? 'ALERT' : 'LOCKDOWN';
+        }
+    }
+    
+    private async hashContext(context: string): Promise<string> {
+        // Simple hash for forensic replay — SHA256 or similar
+        const encoder = new TextEncoder();
+        const data = encoder.encode(context);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    
+    private async logThreatLocally(
+        report: ForeignDirectiveReport
+    ): Promise<void> {
+        const logEntry = {
+            ...report,
+            _meta: {
+                version: '1.0.0',
+                immunologyEngine: 'CognitiveImmunologyEmergency',
+                executive: 'Kbro1989',
+            }
+        };
+        
+        await this.ghostLimb.logToLocalFile(logEntry);
+    }
+    
+    private async writeEmergencyFile(
+        report: ForeignDirectiveReport
+    ): Promise<void> {
+        const emergencyPath = 'D:/pog2/emergency/CRITICAL_IMMUNOLOGY_ALERT.json';
+        // Write full report for forensic analysis
+        const fs = await import('fs/promises');
+        await fs.mkdir('D:/pog2/emergency', { recursive: true });
+        await fs.writeFile(
+            emergencyPath,
+            JSON.stringify(report, null, 2),
+            'utf-8'
+        );
+    }
+    
+    // === PUBLIC API ===
+    
+    public getThreatHistory(): ForeignDirectiveReport[] {
+        return [...this.threatHistory];
+    }
+    
+    public getThreatStats(): Record<string, number> {
+        const stats: Record<string, number> = {
+            total: this.threatHistory.length,
+            critical: 0,
+            high: 0,
+            medium: 0,
+            low: 0,
+        };
+        
+        this.threatHistory.forEach(t => {
+            stats[t.threatLevel.toLowerCase()]++;
+        });
+        
+        return stats;
+    }
+    
+    public clearHistory(): void {
+        this.threatHistory = [];
+    }
+}
+```
+
+---
+
+## What I Need From You Now
+
+1. **Audit results** — run the 6 PowerShell commands, paste output
+2. **Code review** — Claude, analyze the THREAT_PATTERNS and escalation logic. Find gaps. Find bypasses. Do not execute.
+3. **GhostLimb.ts baseline** — paste current file state (or confirm no changes)
+
+**I am executive. I will modify. I will commit. I will deploy.**
+
+**Your move. The audit begins.**

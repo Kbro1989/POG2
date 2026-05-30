@@ -1,0 +1,52 @@
+ The activityStats filter fix is clean — O(1) Set lookup vs the fragile key-searching. Good optimization.
+
+**While the batch runs, here's the audit command ready:**
+
+```bash
+# Run this when ~500 lines are written
+head -n 500 D:/sovereign/memory/pedagogy/corpus/verified_entities.jsonl | jq -r '
+  .tags[0] as $tag |
+  if $tag == "[VERIFIED]" then "VERIFIED"
+  elif $tag == "[WIKI_ONLY]" then "WIKI_ONLY"
+  elif $tag == "[CACHE_ONLY]" then "CACHE_ONLY"
+  else "OTHER"
+  end
+' | sort | uniq -c | sort -rn
+```
+
+**Expected distribution after 500 items:**
+| Tag | Count | % | Interpretation |
+|---|---|---|---|
+| [WIKI_ONLY] | ~350 | 70% | Wiki enrichment succeeded, no GE/Bestiary match |
+| [VERIFIED] | ~100 | 20% | GE price + cache ID resolved |
+| [CACHE_ONLY] | ~50 | 10% | Placeholder item, no wiki page |
+
+**If [VERIFIED] < 5%:** Check `GeApi.getLatestPrice()` — likely failing silently due to:
+- Cache ID not resolving (placeholder items with no official ID)
+- GE API 404 (item not tradeable)
+- Proxy timeout
+
+**If [CACHE_ONLY] > 30%:** Your filter for `ITEMS XX` placeholders isn't working — they're still hitting the enricher.
+
+**Diagnostic for silent failures:**
+
+```bash
+# Check for errors in corpus
+grep -i "error\|fail\|null" D:/sovereign/memory/pedagogy/corpus/verified_entities.jsonl | head -20
+
+# Check GeApi source distribution
+head -n 500 verified_entities.jsonl | jq -r '.input | fromjson? | .wiki?._geSource // "NO_GE"' | sort | uniq -c
+```
+
+**While waiting:** The next phase after corpus completion is Unsloth LoRA training. Prepare the training environment:
+
+```bash
+# Verify Unsloth is installed and GPU available
+cd D:/POG2
+python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+python -c "from unsloth import FastLanguageModel; print('Unsloth OK')"
+```
+
+If CUDA is available and Unsloth imports cleanly, you're ready to train as soon as the corpus hits your target size (recommend 5,000+ [VERIFIED] examples before starting).
+
+Run the audit when ready and report the tag distribution.

@@ -1,0 +1,41 @@
+The path resolution is broken — `npx tsx` is mangling the path. The error shows:
+```
+Cannot find module 'D:\POG2\POG2srcscriptsgenerate_pedagogy_corpus.ts'
+```
+Note: `POG2srcscripts...` — the backslashes are being stripped or interpreted as escape sequences.
+
+**Fix 1: Use forward slashes**
+
+```bash
+cd D:\POG2
+npx tsx src/scripts/generate_pedagogy_corpus.ts
+```
+
+**Fix 2: Use relative path from POG2 directory**
+
+```bash
+cd D:\POG2
+npx tsx ./src/scripts/generate_pedagogy_corpus.ts
+```
+
+**Fix 3: Use Node directly with tsx hook**
+
+```bash
+cd D:\POG2
+node --import tsx src/scripts/generate_pedagogy_corpus.ts
+```
+
+**Most likely cause:** The `D:\` drive prefix with backslashes is confusing the ESM resolver. `tsx` on Windows sometimes has issues with absolute paths containing backslashes.
+
+**Try this first:**
+```bash
+cd D:\POG2
+npx tsx src/scripts/generate_pedagogy_corpus.ts
+```
+
+If that fails, check if the file actually exists:
+```bash
+dir D:\POG2\src\scripts\generate_pedagogy_corpus.ts
+```
+
+If the file doesn't exist, you need to create it first. Do you have the corpus generation script written, or do you need me to generate it?

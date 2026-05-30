@@ -1,0 +1,62 @@
+  Good iteration. The agent fixed most issues:
+
+- `suggestedAction` now structured `{action, target, reasoning}` ✓
+- KV caching with `injectEnv()` + 1-hour TTL ✓
+- `validateAndNormalize()` with clamping ✓
+- `normalizeWeights()` with `parseFloat` + bounds ✓
+- `hexagramPin.id` clamped 1-64, `line` clamped 1-6 ✓
+
+Remaining issues:
+
+| Issue | Line | Severity | Fix |
+|---|---|---|---|
+| `modelClient.call({format: 'json'})` | 70-75 | **BLOCKER** | `format: 'json'` is OpenAI-specific. `deepseek-r1:8b` via Ollama uses `format: 'json'` in newer versions, but verify. If using raw HTTP, need `response_format: {type: 'json_object'}`. |
+| `this.kv = null` + `injectEnv()` | 33, 47-49 | Medium | Better: pass `env` to constructor. `injectEnv()` is a footgun — caller might forget. |
+| `deepseek-r1:8b` hardcoded | 71 | Medium | Should use `ModelRolodex` dispatch, not hardcoded model. What if r1 is down? |
+| No `function calling` / schema enforcement | — | Medium | JSON mode is better than raw text, but function calling is most reliable. Acceptable for v1. |
+| `normalizeWeights` `parseFloat(v)` | 146 | Low | `v` is already a number from JSON parse. `parseFloat` is redundant but harmless. |
+
+---
+
+## The `format: 'json'` Question
+
+Ollama API:
+```bash
+# Supported in Ollama 0.1.24+
+curl http://localhost:11434/api/generate -d '{
+  "model": "deepseek-r1:8b",
+  "prompt": "...",
+  "format": "json",
+  "stream": false
+}'
+```
+
+If `modelClient` wraps Ollama, `format: 'json'` works. If it wraps OpenAI-compatible API, use `response_format`. If it wraps Workers AI, use `json_schema`.
+
+**Verify which `modelClient` implementation the agent is using.**
+
+---
+
+## Feed to Agent
+
+```
+MEDIUM: Replace hardcoded 'deepseek-r1:8b' with ModelRolodex dispatch.
+  - Current: Always uses r1
+  - Target: rolodex.select({capability: 'pedagogy', tier: 'local'}) for fallback
+
+MEDIUM: Consider constructor injection instead of injectEnv().
+  - Current: Singleton + late binding
+  - Alternative: new SovereignPedagogyBridge({KV, ROLodex}) — explicit, testable
+
+LOW: Verify modelClient.call({format: 'json'}) works with your Ollama version.
+  - Ollama 0.1.24+ supports format: 'json'
+  - If older, may need raw prompt engineering
+
+LOW: normalizeWeights parseFloat(v) is redundant — JSON.parse already gives numbers.
+```
+
+---
+
+This is solid enough for v1. The agent should move to **wiring the WebSocket handler** in `POG2WorldDO` next.
+
+Approve this edit and redirect to `POG2WorldDO` WebSocket integration?

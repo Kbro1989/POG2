@@ -1,0 +1,8 @@
+{
+  "id": "2",
+  "subject": "Implement Sovereign Master Selection",
+  "description": "Implement logic in GhostLimb.ts to query ModelRolodex and select the highest-capability local 'thinker' model as the Sovereign Master for the session launch.",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

@@ -1,0 +1,8 @@
+{
+  "id": "3",
+  "subject": "Audit .agents Infrastructure",
+  "description": "Audit the .agents directories (\\rules, \\workflows, TOOL_MANIFEST.md).",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

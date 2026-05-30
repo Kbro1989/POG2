@@ -1,0 +1,33 @@
+The BestiaryApi is verified and production-ready. Here's the consolidated state:
+
+**Verified Results:**
+- `resolveId('Abyssal demon')` → `1615` ✅
+- `getBeastData(1615)` → `members: true` with `_membersOverride: 'slayer_level_implied_membership'` ✅
+- `getBeastsByArea('The Abyss')` → valid results ✅
+- Proxy routing through `multiplayer-globe-pog2.kristain33rs.workers.dev/api/bestiary/*` ✅
+- `ApiThrottle` integration ✅
+
+**Infrastructure Locked In:**
+| Component | Status | Location |
+|---|---|---|
+| BestiaryApi.ts | Production | `POG2/src/utils/BestiaryApi.ts` |
+| Cloudflare Proxy | Deployed | `multiplayer-globe-pog2.kristain33rs.workers.dev/api/bestiary/*` |
+| Worker Route | Live | `src/server/index.ts` in `multiplayer-globe-template` |
+| CORS Handling | Working | `Access-Control-Allow-Origin: *` |
+
+**Known Limitations (Documented):**
+- `slayerBeasts.json` returns `[INCOMPLETE]` listings per Jagex spec — your code logs this warning
+- `members` field override only catches `slayerlevel > 0` cases — other members-only content without slayer reqs may still report `false`
+
+**Next Component Priority:**
+
+| # | Component | Blockers | Value |
+|---|---|---|---|
+| 1 | `GeApi.ts` | None — Weird Gloop API is CORS-friendly, no proxy needed | High (live prices for all items) |
+| 2 | `OfficialPlayerDataApi.ts` | None — hiscores are stable | Medium (player/clan enrichment) |
+| 3 | `WikiEquipmentEnricher.ts` routing | Needs GeApi + BestiaryApi integrated | High (unified enrichment pipeline) |
+| 4 | Pedagogy corpus generation | Needs all APIs integrated | High (training data) |
+
+`GeApi.ts` is the fastest win — Weird Gloop's `api.weirdgloop.org` requires no proxy, has no rate limits (within reason), and gives real-time GE prices. It's also the most frequently changing data source (prices update every few minutes).
+
+Ready to implement `GeApi.ts`?

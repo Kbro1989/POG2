@@ -1,0 +1,86 @@
+{
+  "actions_1": "Attack",
+  "boundSize": 1,
+  "animation_group": 4685,
+  "combat": 66,
+  "color_replacements": [
+    [4554, 24135],
+    [113, 23953]
+  ],
+  "material_replacements": [
+    [15782, 15817],
+    [15779, 15814],
+    [15781, 15815],
+    [15780, 15816],
+    [15783, 15818],
+    [15784, 15819],
+    [15785, 15820]
+  ],
+  "name": "Fetid zombie",
+  "models": [
+    128194,
+    128195,
+    128196,
+    128197,
+    128198,
+    128199,
+    128200,
+    128189,
+    128188,
+    128192
+  ],
+  "extra": [
+    {
+      "prop": 2836,
+      "intvalue": 8,
+      "stringvalue": null
+    },
+    {
+      "prop": 50,
+      "intvalue": 185,
+      "stringvalue": null
+    },
+    {
+      "prop": 2836,
+      "intvalue": 8,
+      "stringvalue": null
+    },
+    {
+      "prop": 2865,
+      "intvalue": 732,
+      "stringvalue": null
+    },
+    {
+      "prop": 2848,
+      "intvalue": 1,
+      "stringvalue": null
+    },
+    {
+      "prop": 8358,
+      "intvalue": 6,
+      "stringvalue": null
+    },
+    {
+      "prop": 14,
+      "intvalue": 4,
+      "stringvalue": null
+    },
+    {
+      "prop": 641,
+      "intvalue": 4800,
+      "stringvalue": null
+    },
+    {
+      "prop": 29,
+      "intvalue": 850,
+      "stringvalue": null
+    },
+    {
+      "prop": 26,
+      "intvalue": 1,
+      "stringvalue": null
+    }
+  ],
+  "movementCapabilities": 3,
+  "attackCursor": 42
+}

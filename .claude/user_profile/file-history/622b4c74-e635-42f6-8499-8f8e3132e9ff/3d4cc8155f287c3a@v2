@@ -1,0 +1,113 @@
+/**
+ * BestiaryApi.ts
+ *
+ * High-fidelity interface for the Official RuneScape Bestiary.
+ * Provides authoritative monster statistics, weaknesses, and spawn data.
+ *
+ * Endpoint: http://services.runescape.com/m=itemdb_rs/bestiary
+ */
+
+import { ApiThrottle } from './ApiThrottle.js';
+import { createLogger } from './logger.js';
+
+const logger = createLogger('BestiaryApi');
+const BESTIARY_BASE = 'http://services.runescape.com/m=itemdb_rs/bestiary';
+
+export interface BestiaryBeastData {
+    id: number;
+    name: string;
+    examine: string;
+    combatLevel: number;
+    lifepoints: number;
+    attack: number;
+    defence: number;
+    magic: number;
+    ranged: number;
+    weakness: string;
+    slayerLevel: number;
+    slayerCategory: string;
+    size: number;
+    aggressive: boolean;
+    poisonous: boolean;
+    areas: string[];
+    animations: Record<string, any>;
+    members: boolean;
+    xp: number;
+}
+
+export class BestiaryApi {
+    private static throttle = ApiThrottle.getInstance();
+    private static weaknessMap: Record<string, number> | null = null;
+
+    /**
+     * Fetches the canonical mapping of weakness names to IDs.
+     * Cached for the duration of the session.
+     */
+    public static async fetchWeaknessNames(): Promise<Record<string, number>> {
+        if (this.weaknessMap) return this.weaknessMap;
+
+        await this.throttle.acquire('bestiary');
+        try {
+            const res = await fetch(`${BESTIARY_BASE}/weaknessNames.json`, {
+                headers: { 'User-Agent': 'POG2-Sovereign/1.0' },
+                signal: AbortSignal.timeout(10000)
+            });
+            if (!res.ok) throw new Error(`Weakness fetch failed: ${res.status}`);
+            this.weaknessMap = await res.json() as Record<string, number>;
+            return this.weaknessMap;
+        } catch (err) {
+            logger.error({ err }, 'Failed to fetch weakness names.');
+            return {};
+        }
+    }
+
+    /**
+     * Fetch authoritative beast data by official ID.
+     * @param beastId The canonical RS3 Beast ID.
+     */
+    public static async getBeastData(beastId: number): Promise<BestiaryBeastData | null> {
+        await this.throttle.acquire('bestiary');
+
+        const url = `${BESTIARY_BASE}/beastData.json?beastid=${beastId}`;
+        try {
+            const res = await fetch(url, {
+                headers: { 'User-Agent': 'POG2-Sovereign/1.0' },
+                signal: AbortSignal.timeout(10000)
+            });
+
+            if (!res.ok) {
+                logger.warn({ beastId, status: res.status }, 'Bestiary API non-OK response.');
+                return null;
+            }
+
+            const data = await res.json() as any;
+            if (!data) return null;
+
+            // Map API fields to the structured BestiaryBeastData interface
+            return {
+                id: data.id,
+                name: data.name,
+                examine: data.description,
+                combatLevel: data.level,
+                lifepoints: data.lifepoints,
+                attack: data.attack,
+                defence: data.defence,
+                magic: data.magic,
+                ranged: data.ranged,
+                weakness: data.weakness,
+                slayerLevel: data.slayerlevel,
+                slayerCategory: data.slayercat,
+                size: data.size,
+                aggressive: data.aggressive,
+                poisonous: data.poisonous,
+                areas: Array.isArray(data.areas) ? data.areas : [],
+                animations: data.animations || {},
+                members: data.members === 'true' || data.members === true,
+                xp: data.xp,
+            };
+        } catch (err) {
+            logger.error({ beastId, err }, 'Failed to fetch beast data.');
+            return null;
+        }
+    }
+}
