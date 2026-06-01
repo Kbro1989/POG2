@@ -256,3 +256,4 @@ export function registerCapability(cap: AICapability): void {
     }
     CapabilityRegistry[cap.id] = cap;
 }
+

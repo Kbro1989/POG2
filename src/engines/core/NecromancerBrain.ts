@@ -125,3 +125,4 @@ export class NecromancerBrain {
         return predicted;
     }
 }
+

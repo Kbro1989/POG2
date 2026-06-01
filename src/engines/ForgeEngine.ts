@@ -1,4 +1,4 @@
-﻿import { Result, ok, err, YaoState } from '../core/models.js';
+import { Result, ok, err, YaoState } from '../core/models.js';
 import { createLogger } from "../utils/logger.js";
 import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
 import * as fs from 'fs';
@@ -151,3 +151,4 @@ synthesize()
         return filePath;
     }
 }
+

@@ -1,4 +1,4 @@
-﻿import { type Result, ok } from '../../core/models.js';
+import { type Result, ok } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
 
 const logger = createLogger('WebSensoryLimb');
@@ -14,3 +14,4 @@ export class WebSensoryLimb {
         return { online: true };
     }
 }
+

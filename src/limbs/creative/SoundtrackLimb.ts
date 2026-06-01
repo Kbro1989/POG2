@@ -294,3 +294,4 @@ interface SynthParams {
     whimsy: number;
     coherence: number;
 }
+

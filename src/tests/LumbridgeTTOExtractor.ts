@@ -83,3 +83,4 @@ async function extractLumbridgeGrid() {
 extractLumbridgeGrid().catch(e => {
     logger.error({ error: e }, 'Fatal error during Lumbridge TTO Extraction');
 });
+

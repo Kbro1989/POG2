@@ -147,3 +147,4 @@ export function resolveLootBeamTier(
 
     return 0;
 }
+

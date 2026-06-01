@@ -19,13 +19,15 @@ export class ASTWatcher extends EventEmitter {
     private watcher?: chokidar.FSWatcher;
     private readonly fileHashes: Map<string, string> = new Map();
 
-    constructor(private readonly projectRoot: string) {
+    constructor(private projectRoot: string) {
         super();
+        this.initialize();
     }
 
     async setProjectRoot(newRoot: string): Promise<void> {
         logger.info({ newRoot }, 'Updating AST Watcher root');
         if (this.watcher) await this.watcher.close();
+        this.projectRoot = newRoot;
         this.initialize();
     }
 
@@ -83,3 +85,4 @@ export class ASTWatcher extends EventEmitter {
         };
     }
 }
+

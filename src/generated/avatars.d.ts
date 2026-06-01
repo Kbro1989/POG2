@@ -31,3 +31,4 @@ export type avatars = {
 		unkff: number,
 	} | null,
 };
+

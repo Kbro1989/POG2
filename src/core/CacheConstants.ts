@@ -95,3 +95,4 @@ export const cacheConfigPages = {
 
 export const lastLegacyBuildnr = 377;
 export const lastClassicBuildnr = 235;
+

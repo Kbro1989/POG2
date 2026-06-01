@@ -179,3 +179,4 @@ export function getIndexName(indexId: number): string {
 export function getConfigArchiveName(archiveId: number): string {
     return ConfigArchive[archiveId] || `UNKNOWN_ARCHIVE_${archiveId}`;
 }
+

@@ -1,9 +1,9 @@
-﻿import { WorldGroundingLimb } from '../limbs/world_grounding/WorldGroundingLimb.js';
+import { WorldGroundingLimb } from '../limbs/world_grounding/WorldGroundingLimb.js';
 import { ServerLogicRegistry } from '../engines/gameplay/ServerLogicRegistry.js';
 import chalk from 'chalk';
 
 /**
- * trace_provenance.ts â€” Forensic Audit Utility
+ * trace_provenance.ts — Forensic Audit Utility
  * Resolves any Entity ID to its Clinical Substrate Trace.
  */
 async function main() {
@@ -17,16 +17,16 @@ async function main() {
     const entityId = args[0]!;
     const [type, id] = entityId.split('_');
     
-    console.log(chalk.cyan(`\nðŸ” Performing Forensic Trace for [${entityId}]...`));
+    console.log(chalk.cyan(`\n🔍 Performing Forensic Trace for [${entityId}]...`));
 
     const grounding = WorldGroundingLimb.getInstance();
     const entry = grounding.getEntry(entityId);
 
     if (entry && entry.provenance) {
-        console.log(chalk.green('âœ… Source Found in Manifest:'));
+        console.log(chalk.green('✅ Source Found in Manifest:'));
         renderProvenance(entry.provenance);
     } else {
-        console.log(chalk.yellow('âš ï¸  No historical provenance found in manifest.'));
+        console.log(chalk.yellow('⚠️  No historical provenance found in manifest.'));
         console.log(chalk.gray('Resolving canonical substrate default...'));
 
         const canonical = ServerLogicRegistry.getCanonicalProvenance(
@@ -55,6 +55,7 @@ function renderProvenance(prov: any) {
 }
 
 main().catch(err => {
-    console.error(chalk.red('\nâœ˜ Forensic Audit Failed:'), err);
+    console.error(chalk.red('\n✘ Forensic Audit Failed:'), err);
     process.exit(1);
 });
+

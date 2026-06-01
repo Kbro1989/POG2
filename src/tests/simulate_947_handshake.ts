@@ -62,3 +62,4 @@ runSimulation().catch(err => {
     console.error("\x1b[31m[SIMULATION ERROR]\x1b[0m", err);
     process.exit(1);
 });
+

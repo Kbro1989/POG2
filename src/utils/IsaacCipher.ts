@@ -78,3 +78,4 @@ export class IsaacCipher {
         this.count = 256;
     }
 }
+

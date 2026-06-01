@@ -43,3 +43,4 @@ export interface HandshakeTranscript {
         semantic?: any;
     }[];
 }
+

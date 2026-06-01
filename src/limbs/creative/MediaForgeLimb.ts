@@ -1,4 +1,4 @@
-﻿import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { type Result, ok } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
@@ -90,3 +90,4 @@ export class MediaForgeLimb {
         return { online: cfOnline, details };
     }
 }
+

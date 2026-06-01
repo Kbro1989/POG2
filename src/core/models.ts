@@ -1643,3 +1643,4 @@ export interface QueryResponse {
     readonly evidenceSummary: string;
     readonly counterEvidence?: readonly string[]; // IDs of events that contradict the target
 }
+

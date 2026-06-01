@@ -15,3 +15,4 @@ export type classicmodels = {
 		verts: (number | number)[],
 	}[],
 };
+

@@ -47,3 +47,4 @@ export class CombatPedagogyBridge {
         logger.info({ eventId: trace.eventId }, 'Bridged combat trace to pedagogy corpus.');
     }
 }
+

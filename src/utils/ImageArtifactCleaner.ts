@@ -110,3 +110,4 @@ export class ImageArtifactCleaner {
         }, intervalMs);
     }
 }
+

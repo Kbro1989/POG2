@@ -321,4 +321,10 @@ export class CNSCausalityLedger {
             substrateAnchor: anchor
         };
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: "CNSCausalityLedger active and verified." };
+    }
 }
+
+

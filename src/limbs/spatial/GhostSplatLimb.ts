@@ -175,3 +175,4 @@ export class GhostSplatLimb {
         this.splats.clear();
     }
 }
+

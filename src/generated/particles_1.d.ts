@@ -18,3 +18,4 @@ export type particles_1 = {
 	unk09?: true | null
 	unk0A?: true | null
 };
+

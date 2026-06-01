@@ -1,15 +1,14 @@
 {
   "mcpServers": {
-    "hello-claude-GitKraken": {
+    "pog2-GitKraken": {
       "command": "npx",
       "args": [
         "-y",
         "@gitkraken/gk",
         "mcp"
-      ],
-      "helloCallback": "hello-gitkraken"
+      ]
     },
-    "hello-claude-Cloudflare": {
+    "pog2-Cloudflare": {
       "command": "npx",
       "args": [
         "-y",
@@ -19,29 +18,25 @@
       "env": {
         "CLOUDFLARE_ACCOUNT_ID": "6872653edcee9c787c1b783173793",
         "CLOUDFLARE_API_TOKEN": "${CLOUDFLARE_API_TOKEN}"
-      },
-      "helloCallback": "hello-cloudflare"
+      }
     },
-    "hello-claude-github": {
+    "pog2-github": {
       "command": "node",
       "args": [
         "C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/github/.mcp.json"
-      ],
-      "helloCallback": "hello-github"
+      ]
     },
-    "hello-claude-linear": {
+    "pog2-linear": {
       "command": "node",
       "args": [
         "C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/linear/.mcp.json"
-      ],
-      "helloCallback": "hello-linear"
+      ]
     },
-    "hello-claude-terraform": {
+    "pog2-terraform": {
       "command": "node",
       "args": [
         "C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/terraform/.mcp.json"
-      ],
-      "helloCallback": "hello-terraform"
+      ]
     }
   }
 }

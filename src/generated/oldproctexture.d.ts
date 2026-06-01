@@ -9,3 +9,4 @@ export type oldproctexture = {
 	spriteid: number,
 	always00: Uint8Array,
 };
+

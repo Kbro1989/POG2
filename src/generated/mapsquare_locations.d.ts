@@ -25,3 +25,4 @@ export type mapsquare_locations = {
 		}[],
 	}[],
 };
+

@@ -77,3 +77,4 @@ export enum AvatarScripts {
     EXIT_YES_HANDLER = 10703,          // Exit dialog "Yes" + "Log Out" (varbit 17063)
     CHAR_CREATE_PANEL = 16899,         // Character creation panel controller (comp 56)
 }
+

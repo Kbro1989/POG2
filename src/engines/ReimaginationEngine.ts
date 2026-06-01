@@ -1,4 +1,4 @@
-﻿import { 
+import { 
     type Result, 
     type ReimaginationSpec, 
     type CinematicArtifact, 
@@ -141,3 +141,4 @@ Constraints:
         return err(new Error('Deprecated. Use reimagine().'));
     }
 }
+

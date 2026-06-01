@@ -47,7 +47,7 @@ async function main() {
     const { EntityLimb } = await import('./limbs/technical/EntityLimb.js');
     const { SwitchboardLimb } = await import('./monitor/SwitchboardLimb.js');
 
-    HexagramManager.initializeMock();
+    HexagramManager.initializeSimulation();
     const hexManager = HexagramManager.getInstance();
     const router = new TernaryRouter(config);
     const client = new ModelClient(config, router);
@@ -136,3 +136,4 @@ main().catch(err => {
     console.error(`\x1b[38;5;196m[FATAL]\x1b[0m`, err);
     process.exit(1);
 });
+

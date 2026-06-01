@@ -60,3 +60,4 @@ export class PrifddinasInterpreter implements GameplayModule {
         return `[PRIFDDINAS] Unknown action. Try: 'voice', 'walk <x> <y>'`;
     }
 }
+

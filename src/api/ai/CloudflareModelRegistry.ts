@@ -1,4 +1,4 @@
-﻿import type { AICapability } from '../../core/models.js';
+import type { AICapability } from '../../core/models.js';
 
 export const CloudflareModelRegistry: Record<string, AICapability> = {
     'cf_pipecat_aismart_turn_v2': {
@@ -236,3 +236,4 @@ export const CloudflareModelRegistry: Record<string, AICapability> = {
         passthroughEnabled: true
     }
 };
+

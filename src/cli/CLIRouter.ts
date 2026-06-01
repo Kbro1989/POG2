@@ -41,3 +41,4 @@ export class CLIRouter {
         return this.engine.executeTool('hud_forensics_batch', { requests });
     }
 }
+

@@ -14,3 +14,4 @@ export interface RealityGateOptions {
     domain: RealityDomain;
     forceSync?: boolean;
 }
+

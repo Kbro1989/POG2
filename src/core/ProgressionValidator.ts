@@ -102,3 +102,4 @@ export class ProgressionValidator {
     return Math.floor(base + Math.max(melee, range, mage));
   }
 }
+

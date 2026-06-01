@@ -1,4 +1,4 @@
-﻿import type { RoutingContext, RoutingDecision, TerminalStrategy } from '../types.js';
+import type { RoutingContext, RoutingDecision, TerminalStrategy } from '../types.js';
 
 export class DefaultStrategy implements TerminalStrategy {
     readonly name = 'default';
@@ -24,4 +24,5 @@ export class DefaultStrategy implements TerminalStrategy {
         };
     }
 }
+
 

@@ -1,4 +1,4 @@
-﻿import type { Result, EngineOutput } from '../core/models.js';
+import type { Result, EngineOutput } from '../core/models.js';
 import { ok } from '../core/models.js';
 import { Renderer } from '../ui/Renderer.js';
 import * as fs from 'fs';
@@ -20,7 +20,7 @@ export interface SearchResult {
 }
 
 /**
- * DiscoveryEngine â€” Unified Factual and Web Discovery Substrate
+ * DiscoveryEngine — Unified Factual and Web Discovery Substrate
  * Merges DDG scraping, Wikipedia factual grounding, and Wayback historical analysis.
  */
 export class DiscoveryEngine {
@@ -199,7 +199,7 @@ export class DiscoveryEngine {
     }
 
     private formatResults(results: SearchResult[], query: string): string {
-        const lines = [`ðŸ” Web Search Results for "${query}":`, '='.repeat(50), ''];
+        const lines = [`🔍 Web Search Results for "${query}":`, '='.repeat(50), ''];
         for (let i = 0; i < results.length; i++) {
             const r = results[i]!;
             lines.push(`${i + 1}. ${r.title}`);
@@ -254,7 +254,7 @@ export class DiscoveryEngine {
         const limbsDir = path.join(root, 'limbs');
         
         const discovery = [
-            `Ã°Å¸â€Â  SUBSTRATE DISCOVERY REPORT`,
+            `ðŸ”  SUBSTRATE DISCOVERY REPORT`,
             `Root: ${root}`,
             '---'
         ];
@@ -300,3 +300,4 @@ export class DiscoveryEngine {
         return { online: true, details: 'DiscoveryEngine unified substrate active.' };
     }
 }
+

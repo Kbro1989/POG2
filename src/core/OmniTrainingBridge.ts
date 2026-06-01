@@ -17,3 +17,4 @@ export interface OmniTrainingBridge {
      */
     getDomainNamespace(): string;
 }
+

@@ -120,3 +120,4 @@ export function isToolInDomain(toolName: string, activeDomain: SovereignDomain):
     const allowed = DOMAIN_ADJACENCY[activeDomain];
     return allowed.has(toolDomain);
 }
+

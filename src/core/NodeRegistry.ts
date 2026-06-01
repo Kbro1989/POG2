@@ -1,4 +1,4 @@
-﻿import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('NodeRegistry');
 
@@ -70,3 +70,4 @@ export class NodeRegistry {
         return Array.from(this.registry.values());
     }
 }
+

@@ -29,3 +29,4 @@ export class AnimationBlockDecoder {
         return offset; 
     }
 }
+

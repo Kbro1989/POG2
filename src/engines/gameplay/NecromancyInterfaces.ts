@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Cache-grounded SpotAnim reference for a Necromancy ability.
  * These IDs are materialized from Major 21 (spotanims) and Major 20 (sequences).
  */
@@ -24,3 +24,4 @@ export interface NecromancyAbility {
     /** Total animation duration in game ticks (each framelength unit = 1 tick). */
     animDurationTicks?: number;
 }
+

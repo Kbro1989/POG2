@@ -1,9 +1,9 @@
-﻿/**
- * PATHING ARCHAEOLOGIST v2.1 â€” ACTIONABLE MINE CART DEEP DIVE
+/**
+ * PATHING ARCHAEOLOGIST v2.1 — ACTIONABLE MINE CART DEEP DIVE
  * 
  * Reads the Phase 1 report and the raw objects.json to isolate
  * mine carts that have interactive "op" actions (Board, Ride, Travel, etc.)
- * These are the objects that trigger coordinate teleportation â€” the PATH GAP.
+ * These are the objects that trigger coordinate teleportation — the PATH GAP.
  * 
  * We also extract params which may contain destination coordinates.
  */
@@ -26,10 +26,10 @@ function ensureDir(dir: string) {
 }
 
 async function main() {
-    console.log('â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—');
-    console.log('â•‘   PHASE 2.1: ACTIONABLE MINE CART DEEP DIVE           â•‘');
-    console.log('â•‘   Isolating transport triggers with path gap metadata  â•‘');
-    console.log('â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n');
+    console.log('╔══════════════════════════════════════════════════════════╗');
+    console.log('║   PHASE 2.1: ACTIONABLE MINE CART DEEP DIVE           ║');
+    console.log('║   Isolating transport triggers with path gap metadata  ║');
+    console.log('╚══════════════════════════════════════════════════════════╝\n');
 
     ensureDir(OUTPUT_DIR);
 
@@ -45,8 +45,8 @@ async function main() {
     }
     console.log(`  Loaded ${allObjects.length} objects\n`);
 
-    // â”€â”€â”€ FIND ALL MINE CARTS WITH ACTIONS â”€â”€â”€
-    console.log('â”â”â” Scanning for actionable mine carts â”â”â”\n');
+    // ─── FIND ALL MINE CARTS WITH ACTIONS ───
+    console.log('━━━ Scanning for actionable mine carts ━━━\n');
 
     const cartKeywords = ['cart', 'mine cart', 'minecart', 'track'];
     const actionableCarts: any[] = [];
@@ -87,11 +87,11 @@ async function main() {
         }
     }
 
-    // â”€â”€â”€ PRINT ACTIONABLE CARTS â”€â”€â”€
+    // ─── PRINT ACTIONABLE CARTS ───
     console.log(`Found ${actionableCarts.length} ACTIONABLE mine carts (with Board/Ride/Travel/etc):\n`);
     
     for (const cart of actionableCarts) {
-        console.log(`  â•â•â• [${cart.id}] "${cart.name}" â•â•â•`);
+        console.log(`  ═══ [${cart.id}] "${cart.name}" ═══`);
         console.log(`    Actions:  ${JSON.stringify(cart.op)}`);
         if (cart.params) {
             console.log(`    Params:   ${JSON.stringify(cart.params)}`);
@@ -111,8 +111,8 @@ async function main() {
         console.log('');
     }
 
-    // â”€â”€â”€ ALSO FIND NON-CART TRANSPORT OBJECTS (trapdoors, tunnels) â”€â”€â”€
-    console.log('\nâ”â”â” Scanning for trapdoor/tunnel transport triggers â”â”â”\n');
+    // ─── ALSO FIND NON-CART TRANSPORT OBJECTS (trapdoors, tunnels) ───
+    console.log('\n━━━ Scanning for trapdoor/tunnel transport triggers ━━━\n');
     const tunnelKeywords = ['trapdoor', 'tunnel', 'passage', 'ladder', 'stairs'];
     const keldagrimConnectors: any[] = [];
 
@@ -136,19 +136,19 @@ async function main() {
 
     console.log(`Found ${keldagrimConnectors.length} Keldagrim-connected tunnel/trapdoor objects:\n`);
     for (const conn of keldagrimConnectors) {
-        console.log(`  [${conn.id}] "${conn.name}" â€” Actions: ${JSON.stringify(conn.op)}`);
+        console.log(`  [${conn.id}] "${conn.name}" — Actions: ${JSON.stringify(conn.op)}`);
         if (conn.params) console.log(`    Params: ${JSON.stringify(conn.params)}`);
     }
 
-    // â”€â”€â”€ FIND SPECIFIC GE MINECART (IDs from Phase 1) â”€â”€â”€
-    console.log('\nâ”â”â” Deep extraction: Known GE/Keldagrim mine cart IDs â”â”â”\n');
+    // ─── FIND SPECIFIC GE MINECART (IDs from Phase 1) ───
+    console.log('\n━━━ Deep extraction: Known GE/Keldagrim mine cart IDs ━━━\n');
     // Key IDs from our Phase 1 scan that are likely the GE->Keldagrim route
     const targetIds = [2299, 5731, 14997, 22376, 22425, 22429, 24824, 29740, 37618, 72781, 72782, 102272, 102304, 102305, 102315];
     
     for (const tid of targetIds) {
         const obj = allObjects.find((o: any) => o && (o.$fileid === tid || o.id === tid));
         if (obj) {
-            console.log(`  â•â•â• [${tid}] "${obj.name}" â•â•â•`);
+            console.log(`  ═══ [${tid}] "${obj.name}" ═══`);
             console.log(`    FULL DUMP:`);
             // Print all non-null keys
             for (const [key, val] of Object.entries(obj)) {
@@ -160,9 +160,9 @@ async function main() {
         }
     }
 
-    // â”€â”€â”€ COMPILE DEEP REPORT â”€â”€â”€
+    // ─── COMPILE DEEP REPORT ───
     const deepReport = {
-        phase: '2.1 â€” Actionable Mine Cart Deep Dive',
+        phase: '2.1 — Actionable Mine Cart Deep Dive',
         timestamp: new Date().toISOString(),
         actionable_carts: actionableCarts,
         total_cart_objects_with_ops: allTransportObjects.length,
@@ -176,14 +176,15 @@ async function main() {
     writeFileSync(deepPath, JSON.stringify(deepReport, null, 2));
     console.log(`\n[OK] Deep dive report: ${deepPath}`);
 
-    console.log('\nâ•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—');
-    console.log(`â•‘  Actionable Mine Carts:   ${String(actionableCarts.length).padStart(8)}                   â•‘`);
-    console.log(`â•‘  All Cart Objs w/ Ops:    ${String(allTransportObjects.length).padStart(8)}                   â•‘`);
-    console.log(`â•‘  Keldagrim Connectors:    ${String(keldagrimConnectors.length).padStart(8)}                   â•‘`);
-    console.log('â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•');
+    console.log('\n╔══════════════════════════════════════════════════════════╗');
+    console.log(`║  Actionable Mine Carts:   ${String(actionableCarts.length).padStart(8)}                   ║`);
+    console.log(`║  All Cart Objs w/ Ops:    ${String(allTransportObjects.length).padStart(8)}                   ║`);
+    console.log(`║  Keldagrim Connectors:    ${String(keldagrimConnectors.length).padStart(8)}                   ║`);
+    console.log('╚══════════════════════════════════════════════════════════╝');
 }
 
 main().catch(e => {
     console.error('[FATAL]', e);
     process.exit(1);
 });
+

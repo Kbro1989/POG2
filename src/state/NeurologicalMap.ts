@@ -622,3 +622,4 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Observation Log', input: 'System state changes', output: 'Chronological clinical record', constraints: 'Immutable history' }
     }
 ];
+

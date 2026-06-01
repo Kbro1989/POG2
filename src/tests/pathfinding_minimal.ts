@@ -1,4 +1,4 @@
-﻿import { BinaryHeap, Comparable } from '../utils/BinaryHeap.js';
+import { BinaryHeap, Comparable } from '../utils/BinaryHeap.js';
 
 class TestNode implements Comparable<TestNode> {
   constructor(public id: string, public fScore: number) {}
@@ -8,7 +8,7 @@ class TestNode implements Comparable<TestNode> {
 }
 
 function testBinaryHeap() {
-  console.log('ðŸ§ª BINARY HEAP MINIMAL TEST\n');
+  console.log('🧪 BINARY HEAP MINIMAL TEST\n');
 
   const heap = new BinaryHeap<TestNode>();
 
@@ -20,7 +20,7 @@ function testBinaryHeap() {
   heap.insert(new TestNode('E', 30));
 
   console.log(`[HEAP] Size after inserts: ${heap.size()}`);
-  console.log(`[HEAP] Valid property: ${heap.verifyHeapProperty() ? 'âœ“' : 'âœ—'}`);
+  console.log(`[HEAP] Valid property: ${heap.verifyHeapProperty() ? '✓' : '✗'}`);
 
   // 2. Peek should be the minimum (5)
   const top = heap.peek();
@@ -38,7 +38,7 @@ function testBinaryHeap() {
 
   const match = JSON.stringify(expectedScores) === JSON.stringify(actualScores);
   console.log(`\n[RESULT] Final Scores: [${actualScores.join(', ')}]`);
-  console.log(`[RESULT] Ascending match: ${match ? 'âœ“ SUCCESS' : 'âœ— FAILED'}`);
+  console.log(`[RESULT] Ascending match: ${match ? '✓ SUCCESS' : '✗ FAILED'}`);
 
   if (!match) {
     process.exit(1);
@@ -46,3 +46,4 @@ function testBinaryHeap() {
 }
 
 testBinaryHeap();
+

@@ -46,3 +46,4 @@ export class SovereignPathResolver {
         return this.resolveauthoritativePath(rel);
     }
 }
+

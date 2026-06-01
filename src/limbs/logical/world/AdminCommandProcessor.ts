@@ -93,3 +93,4 @@ export class AdminCommandProcessor {
         logger.info({ rx, ry }, 'Admin REGION Injected.');
     }
 }
+

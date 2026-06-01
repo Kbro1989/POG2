@@ -147,3 +147,4 @@ export class VisionActuationHarness {
         logger.info('Harness shutdown complete.');
     }
 }
+

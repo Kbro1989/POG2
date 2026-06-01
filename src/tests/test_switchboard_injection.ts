@@ -16,7 +16,7 @@ async function runTest() {
 
     // Mock dependencies
     const grounding = WorldGroundingLimb.getInstance();
-    HexagramManager.initializeMock();
+    HexagramManager.initializeSimulation();
     const hexagram = HexagramManager.getInstance();
     const dispatcher = {} as AIDispatcher;
     const entityLimb = EntityLimb.getInstance();
@@ -70,3 +70,4 @@ runTest().catch(err => {
     console.error(err);
     process.exit(1);
 });
+

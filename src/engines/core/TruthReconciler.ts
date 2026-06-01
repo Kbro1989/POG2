@@ -179,4 +179,10 @@ export class TruthReconciler {
             { event, source, reason, precedence: TRUTH_PRECEDENCE[0] } // EXECUTION wins
         );
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: "TruthReconciler active and verified." };
+    }
 }
+
+

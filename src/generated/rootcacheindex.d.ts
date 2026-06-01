@@ -18,3 +18,4 @@ export type rootcacheindex = {
 	}[]),
 	maybe_proper_checksum: Uint8Array,
 };
+

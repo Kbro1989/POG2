@@ -1,4 +1,4 @@
-﻿import { OrchestrateEngine } from './engines/OrchestrateEngine.js';
+import { OrchestrateEngine } from './engines/OrchestrateEngine.js';
 import { TernaryRouter } from './routing/TernaryRouter.js';
 import { HexagramManager } from './routing/HexagramManager.js';
 import { ModelClient } from './clients/ModelClient.js';
@@ -8,7 +8,7 @@ import { join } from 'path';
 import { homedir } from 'os';
 
 async function test() {
-    console.log('Ã°Å¸Å¡â‚¬ Starting Vision Pipeline Direct Test...');
+    console.log('ðŸš€ Starting Vision Pipeline Direct Test...');
     const configPath = join(homedir(), '.POG2-cli', 'config.json');
     const config = loadConfig(configPath);
     const renderer = new Renderer();
@@ -28,11 +28,11 @@ async function test() {
     const result = await engine.run(`sovereign_visualize '${prompt}' '${analysisPrompt}'`);
 
     if (result.ok) {
-        console.log('Ã¢Å“â€¦ Pipeline Success!');
+        console.log('âœ… Pipeline Success!');
         console.log('OUTPUT:', result.value.output);
         process.exit(0);
     } else {
-        console.error('Ã¢ÂÅ’ Pipeline Failed:', result.error);
+        console.error('âŒ Pipeline Failed:', result.error);
         process.exit(1);
     }
 }
@@ -41,3 +41,4 @@ test().catch(err => {
     console.error('Fatal Test Error:', err);
     process.exit(1);
 });
+

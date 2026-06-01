@@ -248,3 +248,4 @@ main().catch(e => {
     console.error('[FATAL] Pathing Archaeologist crashed:', e);
     process.exit(1);
 });
+

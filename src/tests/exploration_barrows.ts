@@ -70,3 +70,4 @@ async function testExplorationBarrows() {
 }
 
 testExplorationBarrows().catch(console.error);
+

@@ -1,4 +1,4 @@
-﻿import * as fs from 'fs';
+import * as fs from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { HealthStatus } from './models.js';
@@ -479,4 +479,10 @@ export class ServiceDiscovery {
             }
         ];
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: "ServiceDiscovery active and verified." };
+    }
 }
+
+

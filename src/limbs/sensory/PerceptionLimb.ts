@@ -1,4 +1,4 @@
-﻿import { ChromaCore, PerceivedFrame, ColorDelta, PerceptionValidation, ChromaSampleResult } from '../../utils/ChromaCore.js';
+import { ChromaCore, PerceivedFrame, ColorDelta, PerceptionValidation, ChromaSampleResult } from '../../utils/ChromaCore.js';
 import { SovereignEye } from '../../utils/SovereignEye.js';
 import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from '../../utils/logger.js';
@@ -26,15 +26,15 @@ export interface TemporalState {
 }
 
 /**
- * PerceptionLimb (Limb #36) â€” Single interface over all sensory substrates.
+ * PerceptionLimb (Limb #36) — Single interface over all sensory substrates.
  *
  * Architecture position: Layer 4 (optional / fallback).
  * Cache truth is Layer 1. This is validation only.
  *
  * Subsystems:
- *   - ChromaCore      â†’ pixel sampling (deterministic, no LLM)
- *   - SovereignEye    â†’ screen capture
- *   - Temporal buffer â†’ frame sequence for motion/delta detection
+ *   - ChromaCore      → pixel sampling (deterministic, no LLM)
+ *   - SovereignEye    → screen capture
+ *   - Temporal buffer → frame sequence for motion/delta detection
  */
 export class PerceptionLimb {
   private eye: SovereignEye;
@@ -45,10 +45,10 @@ export class PerceptionLimb {
     this.eye = new SovereignEye('perception-limb');
   }
 
-  // â”€â”€ Primary API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Primary API ─────────────────────────────────────────────────────────────
 
   /**
-   * capture â€” Take a screenshot and return a Frame.
+   * capture — Take a screenshot and return a Frame.
    */
   async capture(): Promise<Result<Frame>> {
     const res = await this.eye.capture({ type: 'window', target: this.captureTarget });
@@ -61,8 +61,8 @@ export class PerceptionLimb {
   }
 
   /**
-   * analyze â€” Sample a frame's pixel palette (deterministic, no LLM).
-   * Returns structured PerceptionState â€” never a "PASS" string.
+   * analyze — Sample a frame's pixel palette (deterministic, no LLM).
+   * Returns structured PerceptionState — never a "PASS" string.
    */
   async analyze(
     frame: Frame,
@@ -96,7 +96,7 @@ export class PerceptionLimb {
   }
 
   /**
-   * track â€” Analyze a sequence of pre-captured frames for temporal state.
+   * track — Analyze a sequence of pre-captured frames for temporal state.
    * Detects animation transitions, UI changes, HP drops, menu opens.
    */
   async track(frames: Frame[]): Promise<Result<TemporalState>> {
@@ -138,7 +138,7 @@ export class PerceptionLimb {
     });
   }
 
-  // â”€â”€ Convenience: capture + analyze in one call â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Convenience: capture + analyze in one call ───────────────────────────
 
   async captureAndAnalyze(expectedPalette?: string[]): Promise<Result<PerceptionState>> {
     const captureRes = await this.capture();
@@ -146,7 +146,7 @@ export class PerceptionLimb {
     return this.analyze(captureRes.value, expectedPalette);
   }
 
-  // â”€â”€ Internal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Internal ─────────────────────────────────────────────────────────────
 
   private computeDeltaFromBuffer(current: ChromaSampleResult): ColorDelta | undefined {
     const prev = this.frameBuffer[this.frameBuffer.length - 1];
@@ -175,3 +175,4 @@ export class PerceptionLimb {
     };
   }
 }
+

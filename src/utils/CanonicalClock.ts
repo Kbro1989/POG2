@@ -466,3 +466,4 @@ export class SeededRNG {
 
 /** Singleton export for convenience */
 export const clock = CanonicalClock.getInstance();
+

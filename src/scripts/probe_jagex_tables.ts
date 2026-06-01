@@ -32,3 +32,4 @@ function probe(dbPath: string, name: string) {
 probe('C:/ProgramData/Jagex/RuneScape/GlobalSettings.jcache', 'GlobalSettings');
 probe('C:/ProgramData/Jagex/RuneScape/ObjCache.jcache', 'ObjCache');
 probe('C:/Users/Destiny/AppData/Local/Jagex/RuneScape/Settings.jcache', 'LocalSettings');
+

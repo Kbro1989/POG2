@@ -120,3 +120,4 @@ main().catch(err => {
     logger.error({ err }, 'Sweep failed');
     process.exit(1);
 });
+

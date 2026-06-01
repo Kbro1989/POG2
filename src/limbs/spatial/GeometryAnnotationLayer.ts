@@ -1,8 +1,8 @@
-﻿/**
+/**
  * GEOMETRY ANNOTATION LAYER (GAL)
  * 
  * The permanent human training signal. Encodes spatial expertise as
- * coordinate-keyed resolved facts â€” so the sovereign never needs to
+ * coordinate-keyed resolved facts — so the sovereign never needs to
  * guess at geometry it's already seen interpreted once.
  * 
  * Storage: D:\sovereign\atlas\annotations\
@@ -11,9 +11,9 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve } from 'path';
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 // TYPES
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 
 export type VoidType =
     | 'pillar_top'
@@ -65,9 +65,9 @@ type GALIndexEntry = {
     confidence:   AnnotationConfidence;
 };
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 // CORE CLASS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 
 export class GeometryAnnotationLayer {
     private static readonly BASE_DIR = 'D:/sovereign/atlas/annotations';
@@ -213,3 +213,4 @@ export class GeometryAnnotationLayer {
         return { total: this.index.entries.length, resolved, regions };
     }
 }
+

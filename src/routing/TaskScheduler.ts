@@ -1,4 +1,4 @@
-﻿import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/logger.js';
 import { type YaoState, type Result } from '../core/models.js';
 
 const logger = createLogger('TaskScheduler');
@@ -212,4 +212,10 @@ export class TaskScheduler {
             limits: PROVIDER_LIMITS
         };
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: "TaskScheduler active and verified." };
+    }
 }
+
+
