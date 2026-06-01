@@ -356,3 +356,4 @@ function bootstrapConfig(configPath: string): void {
     }
     writeFileSync(configPath, JSON.stringify(DEFAULT_CONFIG, null, 2));
 }
+

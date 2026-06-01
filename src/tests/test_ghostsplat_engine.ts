@@ -13,7 +13,7 @@ async function runTest() {
 
     // 1. Initialize Mocks
     try {
-        HexagramManager.initializeMock();
+        HexagramManager.initializeSimulation();
         CanonicalClock.bootstrap(Date.now(), 0);
     } catch (e) {
         // Already initialized or different version
@@ -160,3 +160,4 @@ runTest().catch(err => {
     console.error('Test error:', err);
     process.exit(1);
 });
+

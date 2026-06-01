@@ -48,3 +48,4 @@ export type mapsquare_tiles_66 = {
 		} | null,
 	}[],
 };
+

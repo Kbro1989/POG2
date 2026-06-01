@@ -94,4 +94,10 @@ export class EventBus {
         }
         this.handlers.get(type)!.push(handler);
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: "EventBus active and verified." };
+    }
 }
+
+

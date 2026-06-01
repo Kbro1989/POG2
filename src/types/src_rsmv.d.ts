@@ -75,3 +75,4 @@ declare module 'rsmv/3d/avatar.js' {
   export function bytesToAvatarString(buf: Buffer): string;
   export type EquipSlot = any;
 }
+

@@ -29,3 +29,4 @@ export const BetaConfig = {
     LOCAL_CACHE_ROOT: 'C:/ProgramData/Jagex/RuneScape-BETA',
     SOVEREIGN_CACHE_MIRROR: 'D:/sovereign/cache_pedagogy'
 };
+

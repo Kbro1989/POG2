@@ -10,3 +10,4 @@ export type mapsquare_watertiles = {
 	underlay: number | null,
 	height: number | null,
 }[];
+

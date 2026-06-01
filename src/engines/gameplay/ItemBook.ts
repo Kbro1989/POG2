@@ -109,3 +109,4 @@ export class ItemBook {
         return Math.max(1, tier) * 9.6;
     }
 }
+

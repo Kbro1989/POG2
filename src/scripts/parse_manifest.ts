@@ -79,3 +79,4 @@ function extractMeaningLinks(entity: any): string[] {
   if (entity.grounded) links.push('state:grounded');
   return links;
 }
+

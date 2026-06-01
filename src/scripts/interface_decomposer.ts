@@ -57,3 +57,4 @@ export async function decomposeInterface(interfaceId: number, archiveData: { fil
         textLabels: [...new Set(textLabels)]
     };
 }
+

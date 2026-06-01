@@ -602,3 +602,4 @@ export class TrainingCollector {
         return new Date().toISOString().split('T')[0]!;
     }
 }
+

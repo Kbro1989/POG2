@@ -26,3 +26,4 @@ export interface GameplayModule {
      */
     onAction(action: string, state: GameState, avatar: SovereignAvatar): Promise<string>;
 }
+

@@ -1,5 +1,5 @@
-﻿/**
- * JsonExtractor â€” Parses JSON blocks from LLM markdown responses.
+/**
+ * JsonExtractor — Parses JSON blocks from LLM markdown responses.
  * Ported from CodeExtractor logic for consistent parsing.
  */
 
@@ -53,3 +53,4 @@ function sanitizeJson(json: string): string {
         .replace(/,(\s*[\]}])/g, '$1')
         .trim();
 }
+

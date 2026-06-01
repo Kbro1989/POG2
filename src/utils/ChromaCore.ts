@@ -1,4 +1,4 @@
-﻿import { exec } from 'child_process';
+import { exec } from 'child_process';
 import { promisify } from 'util';
 import { existsSync } from 'fs';
 import { Result, ok, err } from '../core/models.js';
@@ -26,7 +26,7 @@ export interface ChromaSampleOptions {
 }
 
 /**
- * ChromaCore â€” Single authoritative pixel sampler.
+ * ChromaCore — Single authoritative pixel sampler.
  *
  * Usage:
  *   const result = await ChromaCore.sample(imagePath, { gridSize: 50, maxColors: 10 });
@@ -49,7 +49,7 @@ export class ChromaCore {
       return err(new Error(`ChromaCore: image not found at ${imagePath}`));
     }
 
-    // Deterministic PowerShell pixel sampler â€” no LLM, no guessing
+    // Deterministic PowerShell pixel sampler — no LLM, no guessing
     const psScript = `
 [Reflection.Assembly]::LoadWithPartialName('System.Drawing') | Out-Null;
 $bmp = New-Object System.Drawing.Bitmap('${imagePath.replace(/\\/g, '\\\\')}');
@@ -104,7 +104,7 @@ $colors.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First $
 
   /**
    * Validate a frame against an expected palette.
-   * Returns a structured PerceptionResult â€” no soft "PASS" strings.
+   * Returns a structured PerceptionResult — no soft "PASS" strings.
    */
   static async validate(
     imagePath: string,
@@ -140,7 +140,7 @@ $colors.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First $
   }
 
   /**
-   * ChromaCore.diff â€” compare two frames for temporal state detection.
+   * ChromaCore.diff — compare two frames for temporal state detection.
    * Returns a ColorDelta describing palette shift between prev and next.
    */
   static diff(
@@ -167,7 +167,7 @@ $colors.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First $
 }
 
 /**
- * Structured perception validation â€” replaces "PHASE_STABILIZED: PASS" strings.
+ * Structured perception validation — replaces "PHASE_STABILIZED: PASS" strings.
  */
 export interface PerceptionValidation {
   valid: boolean;
@@ -191,5 +191,6 @@ export interface ColorDelta {
   addedColors: string[];
   removedColors: string[];
   shiftedColors: Array<{ from: string; to: string; distance: number }>;
-  changeScore: number; // 0..1 â€” how much the palette shifted
+  changeScore: number; // 0..1 — how much the palette shifted
 }
+

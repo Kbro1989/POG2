@@ -81,3 +81,4 @@ export function getBlockedDirections(type: number, rotation: number, width: numb
 
     return blocked;
 }
+

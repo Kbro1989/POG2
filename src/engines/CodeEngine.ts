@@ -1,4 +1,4 @@
-﻿import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, basename } from 'path';
 import { ModelClient } from '../clients/ModelClient.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
@@ -56,7 +56,7 @@ export interface SmartEditEngineParams {
 }
 
 /**
- * CodeEngine Ã¢â‚¬â€ Code analysis and transformation.
+ * CodeEngine â€” Code analysis and transformation.
  * Review, explain, fix, and refactor with ternary confidence scoring.
  */
 export class CodeEngine {
@@ -85,11 +85,11 @@ export class CodeEngine {
         ]);
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ═══════════════════════════════════════════════════════════════
     // Phase 29: Young/Old Snapshot Infrastructure
     // Young = stable before state. Old = proposed after state.
     // All edits are gated through Hexagram strategy + deletion guard.
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ═══════════════════════════════════════════════════════════════
 
     private getSnapshotDir(): string {
         const dir = join(getSovereignRoot(), 'snapshots', 'edits');
@@ -102,7 +102,7 @@ export class CodeEngine {
         const name = basename(filePath).replace(/\.[^.]+$/, '');
         const snapPath = join(this.getSnapshotDir(), `${ts}_${name}.young.ts`);
         writeFileSync(snapPath, content, 'utf8');
-        logger.info({ snapPath, filePath }, 'ðŸ“¸ Young state snapshot saved (before edit).');
+        logger.info({ snapPath, filePath }, '📸 Young state snapshot saved (before edit).');
         return snapPath;
     }
 
@@ -111,7 +111,7 @@ export class CodeEngine {
         const name = basename(filePath).replace(/\.[^.]+$/, '');
         const snapPath = join(this.getSnapshotDir(), `${ts}_${name}.old.ts`);
         writeFileSync(snapPath, content, 'utf8');
-        logger.info({ snapPath, filePath }, 'ðŸ“¸ Old state snapshot saved (after edit).');
+        logger.info({ snapPath, filePath }, '📸 Old state snapshot saved (after edit).');
         return snapPath;
     }
 
@@ -125,7 +125,7 @@ export class CodeEngine {
         const strategy = interpretation.strategy.split(':')[0]?.trim() || '';
 
         if (EDIT_BLOCKING_STRATEGIES.includes(strategy)) {
-            logger.warn({ strategy, action, filePath }, 'ðŸš« Hexagram gate BLOCKED edit. Strategy forbids modification.');
+            logger.warn({ strategy, action, filePath }, '🚫 Hexagram gate BLOCKED edit. Strategy forbids modification.');
             return {
                 ok: false,
                 error: new Error(`Hexagram Gate: ${strategy} strategy active (${interpretation.name}). Code modifications are suspended. Wait for state transition.`)
@@ -146,8 +146,8 @@ export class CodeEngine {
         const archValidator = new ArchitecturalValidator(this.manifest);
         const preservation = archValidator.validatePreservation(originalContent, modifiedContent);
         if (!preservation.ok) {
-            logger.error({ filePath, error: preservation.error?.reason }, 'ðŸ›¡ï¸ Function-Deletion Guard BLOCKED write. Restoring Young state.');
-            // Restore original â€” the Young snapshot is the safety net
+            logger.error({ filePath, error: preservation.error?.reason }, '🛡️ Function-Deletion Guard BLOCKED write. Restoring Young state.');
+            // Restore original — the Young snapshot is the safety net
             writeFileSync(filePath, originalContent, 'utf8');
             return { ok: false, error: new Error(preservation.error?.reason || 'Function deletion detected') };
         }
@@ -158,7 +158,7 @@ export class CodeEngine {
         // 4. Snapshot Old (after)
         this.snapshotOld(filePath, modifiedContent);
 
-        logger.info({ filePath, youngPath }, 'âœ… Safe write complete. Young/Old snapshots preserved.');
+        logger.info({ filePath, youngPath }, '✅ Safe write complete. Young/Old snapshots preserved.');
         return { ok: true, value: undefined };
     }
 
@@ -177,13 +177,13 @@ export class CodeEngine {
 
         let adversarialDirectives = '';
         if (yao === YaoState.OldYang) {
-            adversarialDirectives = '\nÃ°Å¸Å¡Â§ ADVERSARIAL ALERT: Substrate flux detected. Perform a HYPER-METICULOUS review. Suspect all implicit types.';
+            adversarialDirectives = '\nðŸš§ ADVERSARIAL ALERT: Substrate flux detected. Perform a HYPER-METICULOUS review. Suspect all implicit types.';
         } else if (yao === YaoState.OldYin) {
-            adversarialDirectives = '\nÃ°Å¸Å’Å  ENTROPIC ALERT: System decay detected. Focus on dead-code elimination and minimalist pruning.';
+            adversarialDirectives = '\nðŸŒŠ ENTROPIC ALERT: System decay detected. Focus on dead-code elimination and minimalist pruning.';
         }
 
         const strictRules = params.strict
-            ? `\nSTRICT MODE ACTIVE Ã¢â‚¬â€ enforce ALL of the following:\n- No 'any' types\n- All functions have return types\n- No console.log in production\n- No empty catch blocks\n- No unused variables`
+            ? `\nSTRICT MODE ACTIVE â€” enforce ALL of the following:\n- No 'any' types\n- All functions have return types\n- No console.log in production\n- No empty catch blocks\n- No unused variables`
             : '';
 
         const cognitiveBias = `\nCOGNITIVE STRATEGY: ${interpretation.strategy}\nYAO_STATE: ${yao}${adversarialDirectives}`;
@@ -192,9 +192,9 @@ export class CodeEngine {
 ${cognitiveBias}
 
 Scoring system (ternary):
-  Yang   (80-100): Production-ready Ã¢â‚¬â€ minor suggestions only
-  YinYang (50-79): Needs work Ã¢â‚¬â€ real issues present
-  Yin     (0-49):  Critical Ã¢â‚¬â€ blocking problems
+  Yang   (80-100): Production-ready â€” minor suggestions only
+  YinYang (50-79): Needs work â€” real issues present
+  Yin     (0-49):  Critical â€” blocking problems
 ${strictRules}
 
 FILE: ${params.filePath}
@@ -253,7 +253,7 @@ RECOMMENDATIONS:
         const model = params.modelOverride ?? route.model;
 
         const sectionNote = params.lineRange
-            ? ` (lines ${params.lineRange[0]}Ã¢â‚¬â€œ${params.lineRange[1]})`
+            ? ` (lines ${params.lineRange[0]}â€“${params.lineRange[1]})`
             : '';
 
         const prompt = `Provide a deep, structured explanation of this code${sectionNote}.
@@ -298,7 +298,7 @@ Be precise and technical. Assume the reader is an expert developer.`;
         if (!existsSync(params.filePath)) return { ok: false, error: new Error(`File not found: ${params.filePath}`) };
         const content = readFileSync(params.filePath, 'utf8');
 
-        // Phase 29: Hexagram Gate â€” block edits during FREEZE/ROLLBACK
+        // Phase 29: Hexagram Gate — block edits during FREEZE/ROLLBACK
         const gate = this.checkHexagramGate('fix', params.filePath);
         if (gate) return gate;
 
@@ -314,12 +314,12 @@ Be precise and technical. Assume the reader is an expert developer.`;
 ${cognitiveBias}
 
 Rules:
-1. Fix every error â€” no leaving partial fixes
-2. Maintain all existing functionality â€” DO NOT remove any functions, classes, or exports
+1. Fix every error — no leaving partial fixes
+2. Maintain all existing functionality — DO NOT remove any functions, classes, or exports
 3. Do not introduce mocks or stubs
 4. Add missing return types where TypeScript requires them
 5. Remove all 'any' types where a real type can be inferred
-6. NEVER delete a function to fix an error â€” fix the function itself
+6. NEVER delete a function to fix an error — fix the function itself
 
 FILE: ${params.filePath}
 \`\`\`
@@ -396,14 +396,14 @@ Output the COMPLETE fixed file:`;
 ${cognitiveBias}
 
 SOVEREIGN LAWS:
-1. NO MOCKS or faked data â€” only real implementations
+1. NO MOCKS or faked data — only real implementations
 2. NO TODOs, stubs, or placeholder logic
 3. Use readonly for all immutable properties
 4. Replace 'any' with specific types or 'unknown'
 5. All functions must have explicit return types
 6. Prefer composition over inheritance
 7. Use Result<T> for all fallible operations
-8. NEVER remove/delete existing functions â€” refactor them in-place${extraRules}
+8. NEVER remove/delete existing functions — refactor them in-place${extraRules}
 
 FILE: ${params.filePath}
 \`\`\`
@@ -551,3 +551,4 @@ Provide a structured semantic analysis:`;
         };
     }
 }
+

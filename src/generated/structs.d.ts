@@ -9,3 +9,4 @@ export type structs = {
 		stringvalue: string | null,
 	}[] | null
 };
+

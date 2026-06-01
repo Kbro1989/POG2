@@ -26,3 +26,4 @@ export type oldmaterials = {
 		unk41: (number | null | null),
 	}[],
 };
+

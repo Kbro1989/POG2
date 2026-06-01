@@ -103,3 +103,4 @@ export const AggressionSimulatorContract: EngineContract = {
     return { success: true, engineName: 'AggressionSimulator', data: {}, tick: ctx.tick, hexagramId: ctx.hexagram.id, durationMs: 0 };
   }
 };
+

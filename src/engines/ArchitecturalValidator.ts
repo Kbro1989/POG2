@@ -1,4 +1,4 @@
-﻿import { type ValidationResult, type Validator, ArchitectureManifest } from '../core/models.js';
+import { type ValidationResult, type Validator, ArchitectureManifest } from '../core/models.js';
 
 /**
  * ArchitecturalValidator - Enforces core architectural constraints.
@@ -127,7 +127,7 @@ export class ArchitecturalValidator implements Validator {
             if (match[1]) symbols.add(match[1]);
         }
 
-        // export { A, B, C } â€” named re-exports
+        // export { A, B, C } — named re-exports
         const bracePattern = /export\s*\{([^}]+)\}/g;
         while ((match = bracePattern.exec(content)) !== null) {
             if (match[1]) {
@@ -143,3 +143,4 @@ export class ArchitecturalValidator implements Validator {
         return { online: true, details: 'ArchitecturalValidator clinical enforcement substrate active. Function-deletion guard armed.' };
     }
 }
+

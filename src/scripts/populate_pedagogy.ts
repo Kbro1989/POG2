@@ -119,3 +119,4 @@ run().catch(err => {
     logger.error({ error: err }, 'Fatal error during population.');
     process.exit(1);
 });
+

@@ -18,3 +18,4 @@ export type clientscriptdata = {
 	instructioncount: number,
 	opcodedata: Buffer,
 };
+

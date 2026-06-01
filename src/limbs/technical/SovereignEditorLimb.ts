@@ -1,9 +1,9 @@
-﻿import fs from 'fs';
+import fs from 'fs';
 import path from 'path';
 import { type Result, ok, err } from '../../core/models.js';
 
 /**
- * ðŸ§¬ SovereignEditorLimb (Limb #34)
+ * 🧬 SovereignEditorLimb (Limb #34)
  * The in-viewer RS3-native cache editor.
  * Demonstrates Jagex-grade mastery of their proprietary format.
  */
@@ -46,7 +46,7 @@ export class SovereignEditorLimb {
     // [3] Bio-Intelligence Validation (Clinical Audit)
     const validation = this.bioIntelligence?.healthCheck?.() || { online: true };
     if (!validation.online) {
-      console.warn('[Editor] BioIntelligence offline â€” proceeding with risk.');
+      console.warn('[Editor] BioIntelligence offline — proceeding with risk.');
     }
 
     // [4] Persist to Mod Layer (Non-destructive)
@@ -89,3 +89,4 @@ export class SovereignEditorLimb {
     return ok(true);
   }
 }
+

@@ -52,3 +52,4 @@ export class CompressionEngine {
         return this.compress(payload);
     }
 }
+

@@ -644,3 +644,4 @@ export class VectorDB {
         this.satellites = [];
     }
 }
+

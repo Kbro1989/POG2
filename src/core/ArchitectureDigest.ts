@@ -1,4 +1,4 @@
-﻿import { join } from 'path';
+import { join } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { ArchitectureManifest } from './models.js';
 
@@ -74,3 +74,4 @@ SOVEREIGN LAWS:
         return this.manifest;
     }
 }
+

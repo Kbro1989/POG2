@@ -1,4 +1,4 @@
-﻿import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { ModelClient } from '../clients/ModelClient.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { extractCodeBlock } from '../utils/CodeExtractor.js';
@@ -30,7 +30,7 @@ export interface ContinueFileParams {
 }
 
 /**
- * CompletionEngine Ã¢â‚¬â€ Code completion at cursor positions, fill-in, and file continuation.
+ * CompletionEngine â€” Code completion at cursor positions, fill-in, and file continuation.
  * Uses a context window of surrounding code for maximum accuracy.
  */
 export class CompletionEngine {
@@ -53,7 +53,7 @@ export class CompletionEngine {
             return { ok: false, error: new Error(`Line ${params.line} out of range (file has ${lines.length} lines)`) };
         }
 
-        // Build prefix/suffix context window (Ã‚Â±50 lines)
+        // Build prefix/suffix context window (Â±50 lines)
         const contextStart = Math.max(0, params.line - 51);
         const contextEnd = Math.min(lines.length, params.line + 49);
         const prefix = lines.slice(contextStart, params.line - 1).join('\n');
@@ -126,7 +126,7 @@ Respond with completions numbered 1-${params.count}, each wrapped in a code bloc
             return {
                 ok: true,
                 value: {
-                    output: 'No missing implementations found Ã¢â‚¬â€ file is complete.',
+                    output: 'No missing implementations found â€” file is complete.',
                     data: { file: params.filePath, issues: 0 }
                 }
             };
@@ -146,7 +146,7 @@ ${issueList}
 Rules:
 1. Implement every TODO, stub, and empty function body with REAL logic
 2. Maintain all existing signatures and types exactly
-3. No mocks, no fake returns Ã¢â‚¬â€ real implementations only
+3. No mocks, no fake returns â€” real implementations only
 4. Return the COMPLETE file with all implementations filled
 
 FILE: ${params.filePath}
@@ -201,7 +201,7 @@ Output the complete filled file:`;
 Rules:
 1. Maintain exact same code style, naming conventions, and patterns
 2. The continuation must be logically coherent with what came before
-3. No stubs, no TODOs Ã¢â‚¬â€ only real, runnable code
+3. No stubs, no TODOs â€” only real, runnable code
 4. If the file appears complete, add utility methods or extend the existing interface
 
 CURRENT FILE (${currentLines} lines): ${params.filePath}
@@ -209,7 +209,7 @@ CURRENT FILE (${currentLines} lines): ${params.filePath}
 ${content}
 \`\`\`
 
-Continue from the end of the file Ã¢â‚¬â€ output ONLY the new code to append (not the full file):`;
+Continue from the end of the file â€” output ONLY the new code to append (not the full file):`;
 
         const result = await this.client.call({
             model,
@@ -246,3 +246,4 @@ Continue from the end of the file Ã¢â‚¬â€ output ONLY the new code to
         return { online: true, details: 'CompletionEngine reactive substrate active.' };
     }
 }
+

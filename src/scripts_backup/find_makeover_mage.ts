@@ -1,4 +1,4 @@
-﻿import Database from "better-sqlite3";
+import Database from "better-sqlite3";
 
 const CACHE_DB = "C:\\ProgramData\\Jagex\\RuneScape\\js5-18.jcache"; // NPCs are Major 18
 
@@ -23,7 +23,7 @@ function decompressJagex(data: Buffer): Buffer {
 }
 
 function findNpcByName(targetName: string) {
-    console.log(`ðŸ” Searching for raw string: "${targetName}" in Major 18 (js5-18.jcache)...`);
+    console.log(`🔍 Searching for raw string: "${targetName}" in Major 18 (js5-18.jcache)...`);
     const db = new Database(CACHE_DB, { readonly: true });
     const rows = db.prepare('SELECT KEY, DATA FROM cache').all() as any[];
     let foundCount = 0;
@@ -38,7 +38,7 @@ function findNpcByName(targetName: string) {
             const group = Number(keyBig >> 32n);
             const fileId = Number(keyBig & 0xFFFFFFFFn);
             
-            console.log(`\nðŸŽ¯ Found "${targetName}" in NPC ID/File: ${fileId} (Group: ${group})`);
+            console.log(`\n🎯 Found "${targetName}" in NPC ID/File: ${fileId} (Group: ${group})`);
             
             // Context mapping
             const strIndex = file.toString("utf8").toLowerCase().indexOf(targetName.toLowerCase());
@@ -50,8 +50,9 @@ function findNpcByName(targetName: string) {
         }
     }
     
-    console.log(`\nâœ… Finished scan. Found ${foundCount} results for "${targetName}".`);
+    console.log(`\n✅ Finished scan. Found ${foundCount} results for "${targetName}".`);
     db.close();
 }
 
 findNpcByName("Makeover mage");
+

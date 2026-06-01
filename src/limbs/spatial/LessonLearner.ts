@@ -1,4 +1,4 @@
-﻿import { WorldForensicsLimb } from './WorldForensicsLimb.js';
+import { WorldForensicsLimb } from './WorldForensicsLimb.js';
 import { SovereignKnowledgeDB, TileLesson } from '../../utils/SovereignKnowledgeDB.js';
 import { createLogger } from '../../utils/logger.js';
 
@@ -105,3 +105,4 @@ export class LessonLearner {
         logger.warn('Session log purged.');
     }
 }
+

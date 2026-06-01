@@ -104,3 +104,4 @@ export class InvariantCompiler {
         return this.manifest;
     }
 }
+

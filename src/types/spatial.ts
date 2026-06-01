@@ -26,3 +26,4 @@ export interface SpatialMetrics {
   extractionTimestamp: number;
   sourceFile: string;    // e.g., "pedagogy_profile.json"
 }
+

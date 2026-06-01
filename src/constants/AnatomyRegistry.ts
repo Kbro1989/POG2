@@ -1,4 +1,4 @@
-﻿// src/constants/AnatomyRegistry.ts
+// src/constants/AnatomyRegistry.ts
 // Hard constraints for anatomy validation in POG2
 
 export type AnatomyLimits = {
@@ -184,3 +184,4 @@ export const AnatomyRegistry: SpeciesAnatomy[] = [
         notes: 'Avian-Humanoid hybrid. Arms are replaced by or integrated into wings.'
     }
 ];
+

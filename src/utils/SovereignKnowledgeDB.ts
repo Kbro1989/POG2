@@ -25,6 +25,7 @@ export class SovereignKnowledgeDB {
         getAllTiles: Database.Statement;
         countTiles: Database.Statement;
         insertCapture: Database.Statement;
+        insertMetabolism: Database.Statement;
     };
 
     private constructor(dbPath: string = 'D:\\sovereign\\vibe-learning.db') {
@@ -67,8 +68,19 @@ export class SovereignKnowledgeDB {
                 metadata_json TEXT
             );
 
+            CREATE TABLE IF NOT EXISTS cognitive_metabolism (
+                id TEXT PRIMARY KEY,
+                timestamp INTEGER NOT NULL,
+                anatomy_domain TEXT NOT NULL,
+                source_model TEXT NOT NULL,
+                metabolic_input TEXT NOT NULL,
+                metabolic_output TEXT NOT NULL,
+                metadata_json TEXT
+            );
+
             CREATE INDEX IF NOT EXISTS idx_plane_xy ON spatial_lessons(plane, x, y);
             CREATE INDEX IF NOT EXISTS idx_sensory_timestamp ON sensory_captures(timestamp);
+            CREATE INDEX IF NOT EXISTS idx_metabolism_domain ON cognitive_metabolism(anatomy_domain);
         `);
     }
 
@@ -97,6 +109,11 @@ export class SovereignKnowledgeDB {
 
             insertCapture: this.db.prepare(`
                 INSERT INTO sensory_captures (id, timestamp, source_type, target, image_path, analysis_json, metadata_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `),
+
+            insertMetabolism: this.db.prepare(`
+                INSERT INTO cognitive_metabolism (id, timestamp, anatomy_domain, source_model, metabolic_input, metabolic_output, metadata_json)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             `)
         };
@@ -179,6 +196,23 @@ export class SovereignKnowledgeDB {
         }
     }
 
+    public recordMetabolism(id: string, timestamp: number, anatomyDomain: string, sourceModel: string, input: string, output: string, metadata: any): void {
+        try {
+            this.prepared.insertMetabolism.run(
+                id,
+                timestamp,
+                anatomyDomain,
+                sourceModel,
+                input,
+                output,
+                JSON.stringify(metadata)
+            );
+            logger.debug({ anatomyDomain, sourceModel }, 'Parasitic distillation logic successfully metabolized into Sovereign DB.');
+        } catch (err) {
+            logger.error({ err, id, anatomyDomain }, 'Failed to record cognitive metabolism.');
+        }
+    }
+
     public close(): void {
         if (this.closed) return;
         this.closed = true;
@@ -189,3 +223,4 @@ export class SovereignKnowledgeDB {
         logger.info('SovereignKnowledgeDB WAL checkpointed and closed.');
     }
 }
+

@@ -257,3 +257,4 @@ export class GeApi {
         return 'neutral';
     }
 }
+

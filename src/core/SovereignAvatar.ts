@@ -592,3 +592,4 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
     }
 }
 
+

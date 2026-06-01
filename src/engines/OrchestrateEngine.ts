@@ -85,6 +85,7 @@ import { VectorDB } from '../utils/VectorDB.js';
 import { ModelViewerLimb } from '../limbs/spatial/ModelViewerLimb.js';
 import { ContextBuilder } from './ContextBuilder.js';
 import { ToolRegistry } from '../ToolRegistry.js';
+import { SkillsLimb } from '../limbs/system/SkillsLimb.js';
 import { Renderer } from '../ui/Renderer.js';
 import { DBMaintenance } from '../utils/DBMaintenance.js';
 import { SovereignDBLifecycle } from '../utils/SovereignDBLifecycle.js';
@@ -140,6 +141,10 @@ export class OrchestrateEngine {
     private initPromise: Promise<void> | null = null;
     private readonly client: ModelClient;
     private readonly registry: ToolRegistry;
+
+    public getRegistry(): ToolRegistry {
+        return this.registry;
+    }
     private readonly todoEngine: TodoEngine;
     private readonly visionEngine: SpatialVisionEngine;
     private readonly vision: VisionEngine;
@@ -242,6 +247,10 @@ export class OrchestrateEngine {
         this.shell = new ShellEngine(renderer, router);
         this.vscode = new VSCodeEngine(renderer, router);
         this.registry = new ToolRegistry();
+
+        // Assimilate foreign external capabilities (Anthropic, skills.sh) into the Registry
+        const skillsLimb = new SkillsLimb(this.registry);
+        skillsLimb.bootstrapLocalSkills();
 
         // Connect Database Organs
         DBRowOracleLimb.getInstance();
@@ -3239,6 +3248,10 @@ OUTPUT FORMAT:
             category: 'core',
             parameters: { prompt: 'string', response: 'string', category: 'string?' },
             execute: async (args) => {
+                const validCategories = ['coding', 'gutenberg', 'chromanumber', 'vision', 'voice', 'orchestration', 'diagnostic', 'error_fix', 'search', 'general'];
+                const rawCat = typeof args.category === 'string' ? args.category : 'general';
+                const safeCategory = validCategories.includes(rawCat) ? rawCat : 'general';
+
                 await this.trainingCollector.recordInteraction({
                     model: this.config.masterLocalModel,
                     provider: 'ollama',
@@ -3246,7 +3259,7 @@ OUTPUT FORMAT:
                     response: args.response as string,
                     latencyMs: 0,
                     success: true,
-                    category: (args.category as any) || 'general'
+                    category: safeCategory as 'coding' | 'gutenberg' | 'chromanumber' | 'vision' | 'voice' | 'orchestration' | 'diagnostic' | 'error_fix' | 'search' | 'general'
                 });
                 return ok({ output: 'Interaction absorbed into the training substrate for future Sovereign refinement.' });
             }
@@ -4797,3 +4810,4 @@ Output JSON ONLY:
         };
     }
 }
+

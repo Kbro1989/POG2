@@ -48,3 +48,4 @@ CREATE TABLE IF NOT EXISTS cognitive_anomalies (
   created_at INTEGER NOT NULL
 );
 `;
+

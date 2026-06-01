@@ -1,4 +1,4 @@
-﻿import * as fs from 'fs';
+import * as fs from 'fs';
 import * as path from 'path';
 import { createLogger } from './logger.js';
 import { NodeRegistry, NodeMetadata } from '../core/NodeRegistry.js';
@@ -131,3 +131,4 @@ ${content}
 `;
     }
 }
+

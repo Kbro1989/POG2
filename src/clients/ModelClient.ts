@@ -38,6 +38,8 @@ import { ModelRolodex } from '../api/ai/ModelRolodex.js';
 import type { QuotaTracker, QuotaProvider } from '../utils/QuotaTracker.js';
 
 import { ArchitectureDigest } from '../core/ArchitectureDigest.js';
+import { SovereignKnowledgeDB } from '../utils/SovereignKnowledgeDB.js';
+import { v4 as uuidv4 } from 'uuid';
 import { createLogger } from "../utils/logger.js";
 
 const execAsync = promisify(exec);
@@ -202,12 +204,15 @@ export class ModelClient implements ModelExecutor {
         // Record interaction to D:\ training substrate (Skip for System Pulse)
         const latency = Date.now() - startTime;
         if (!enforcedParams.isSystemPulse) {
+            const validCategories = ['coding', 'gutenberg', 'chromanumber', 'vision', 'voice', 'orchestration', 'diagnostic', 'error_fix', 'search', 'general'];
+            const safeCategory = (enforcedParams.category && validCategories.includes(enforcedParams.category)) ? enforcedParams.category : 'general';
+            
             this.trainingCollector.recordInteraction({
                 model: enforcedParams.model,
                 provider,
-                category: enforcedParams.category as any,
-                prompt: enforcedParams.prompt.substring(0, 2000),
-                response: result.ok ? result.value.response.substring(0, 2000) : '',
+                category: safeCategory as 'coding' | 'gutenberg' | 'chromanumber' | 'vision' | 'voice' | 'orchestration' | 'diagnostic' | 'error_fix' | 'search' | 'general',
+                prompt: enforcedParams.prompt,
+                response: result.ok ? result.value.response : '',
                 latencyMs: latency,
                 tokenCount: result.ok ? result.value.tokensUsed : undefined,
                 success: result.ok,
@@ -221,6 +226,24 @@ export class ModelClient implements ModelExecutor {
                 success: result.ok,
                 tokenCount: result.ok ? result.value.tokensUsed : undefined
             }).catch(() => { /* non-blocking */ });
+
+            // PARASITIC DISTILLATION: Metabolize external intelligence
+            if (provider !== 'ollama' && result.ok) {
+                const anatomyDomain = safeCategory; // e.g., 'coding', 'vision', 'gameplay' mapped to category
+                SovereignKnowledgeDB.getInstance().recordMetabolism(
+                    uuidv4(),
+                    Date.now(),
+                    anatomyDomain,
+                    enforcedParams.model,
+                    enforcedParams.prompt,
+                    result.value.response,
+                    {
+                        provider,
+                        latencyMs: latency,
+                        tokens: result.value.tokensUsed
+                    }
+                );
+            }
         }
 
         // Phase 6: Update ModelRolodex with call metrics (Skip for System Pulse)
@@ -1235,3 +1258,4 @@ export class ModelClient implements ModelExecutor {
         };
     }
 }
+

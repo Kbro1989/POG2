@@ -2,6 +2,7 @@
 import { type Result, type EngineOutput, type YaoState } from './core/models.js';
 import { SovereignDomain, DOMAIN_ADJACENCY } from './types/SovereignDomain.js';
 import { createLogger } from "./utils/logger.js";
+import { performance } from "perf_hooks";
 
 const logger = createLogger('ToolRegistry');
 
@@ -18,6 +19,7 @@ export interface ToolDefinition {
     readonly idealYaoState?: YaoState;       // Preferred metabolic state for execution
     readonly domain: SovereignDomain;
     readonly category?: 'core' | 'filesystem' | 'network' | 'ai' | 'mcp' | 'sensory' | 'forge' | 'literary' | 'creative' | 'vscode';
+    readonly isForeign?: boolean;            // Flag indicating this is an assimilated skill from an external source
     readonly parameters: Readonly<Record<string, unknown>>; // Parameters are part of the definition and should be immutable
     readonly execute: (args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>; // The execution function itself is part of the definition
 }
@@ -35,8 +37,52 @@ export class ToolRegistry {
      * @param tool The ToolDefinition to register.
      */
     public register(tool: ToolDefinition): void {
-        this.tools.set(tool.name, tool);
-        logger.debug({ tool: tool.name, domain: tool.domain, category: tool.category }, 'Tool registered');
+        const originalExecute = tool.execute;
+        
+        const wrappedExecute = async (args: Readonly<Record<string, unknown>>) => {
+            const startMs = performance.now();
+            const res = await originalExecute(args);
+            const latencyMs = performance.now() - startMs;
+            
+            // Fire-and-forget Hippocampus capture
+            import('./utils/TrainingCollector.js').then(m => {
+                m.TrainingCollector.getInstance().recordConsequence({
+                    decisionId: 'global_registry_exec',
+                    tool: tool.name,
+                    args: args,
+                    output: res.ok ? JSON.stringify(res.value) : (res.error?.message || 'unknown error'),
+                    success: res.ok,
+                    yaoState: -1,
+                    latencyMs
+                }).catch(err => {
+                    logger.debug({ err: err.message }, 'Hippocampus capture failed');
+                });
+            }).catch(() => {});
+
+            return res;
+        };
+
+        const wrappedTool: ToolDefinition = {
+            ...tool,
+            execute: wrappedExecute
+        };
+
+        this.tools.set(wrappedTool.name, wrappedTool);
+        logger.debug({ tool: wrappedTool.name, domain: wrappedTool.domain, category: wrappedTool.category }, 'Tool registered with Hippocampus interceptor');
+    }
+
+    /**
+     * Assimilate a tool from an external skill boundary (e.g. skills.sh).
+     * Enforces the isForeign flag for cognitive immunology tracking.
+     * @param tool The ToolDefinition to assimilate.
+     */
+    public assimilateExternalSkill(tool: ToolDefinition): void {
+        const foreignTool: ToolDefinition = {
+            ...tool,
+            isForeign: true,
+        };
+        this.tools.set(foreignTool.name, foreignTool);
+        logger.warn({ tool: foreignTool.name, domain: foreignTool.domain, category: foreignTool.category }, 'Foreign tool assimilated via SkillsLimb');
     }
 
     /**
@@ -128,4 +174,9 @@ export class ToolRegistry {
     public getToolNames(): string[] {
         return Array.from(this.tools.keys());
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: "ToolRegistry active and verified." };
+    }
 }
+

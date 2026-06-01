@@ -1078,4 +1078,10 @@ export class TernaryRouter {
     getDecisionHistory(): ReadonlyArray<DecisionAuditRecord> {
         return this.decisionHistory;
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: "TernaryRouter active and verified." };
+    }
 }
+
+

@@ -52,3 +52,4 @@ export class VariableBlockDecoder {
         return { id, value };
     }
 }
+

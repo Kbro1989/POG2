@@ -82,3 +82,4 @@ export class SpatialTransform {
         return false;
     }
 }
+

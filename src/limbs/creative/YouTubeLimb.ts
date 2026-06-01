@@ -1,4 +1,4 @@
-﻿// @ts-ignore Ã¢â‚¬â€ googleapis types are bundled but TS can lag on resolution
+// @ts-ignore â€” googleapis types are bundled but TS can lag on resolution
 import { google, youtube_v3 } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { createReadStream, existsSync, readFileSync, writeFileSync, statSync } from 'fs';
@@ -11,7 +11,7 @@ import { createLogger } from "../../utils/logger.js";
 
 const logger = createLogger('YouTubeLimb');
 
-// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â YouTube Upload Config Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+// â•â•â• YouTube Upload Config â•â•â•
 const SCOPES = ['https://www.googleapis.com/auth/youtube.upload'];
 const REDIRECT_URI = 'https://chromanumber-auth.kristain33rs.workers.dev/youtube/callback';
 const DEFAULT_TOKEN_PATH = process.env.YOUTUBE_TOKEN_PATH || join(getSovereignRoot(), 'youtube_token.json');
@@ -134,11 +134,11 @@ export class YouTubeLimb {
         });
 
         logger.info({ authUrl }, 'YouTube: Visit this URL to authenticate.');
-        console.log('\nÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â');
+        console.log('\nâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•');
         console.log('  YouTube Authentication Required');
         console.log('  Visit this URL in your browser:');
         console.log(`  ${authUrl}`);
-        console.log('Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â\n');
+        console.log('â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n');
 
         // Try to open in browser automatically
         try {
@@ -309,7 +309,7 @@ export class YouTubeLimb {
                 requestBody: {
                     snippet: {
                         title,
-                        description: `Auto-generated playlist for ${title} Ã¢â‚¬â€ POG2 Sovereign Pipeline`
+                        description: `Auto-generated playlist for ${title} â€” POG2 Sovereign Pipeline`
                     },
                     status: { privacyStatus: 'unlisted' }
                 }
@@ -332,3 +332,4 @@ export class YouTubeLimb {
         }
     }
 }
+

@@ -29,3 +29,4 @@ export class AppearanceBlockDecoder {
         if(avatar.metadata) avatar.metadata.lastAppearanceUpdate = Date.now();
     }
 }
+

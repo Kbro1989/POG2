@@ -1,4 +1,4 @@
-﻿import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
 import type { Result } from '../../core/models.js';
 import { ok, err } from '../../core/models.js';
 
@@ -105,3 +105,4 @@ export class HiScoreLimb {
         };
     }
 }
+

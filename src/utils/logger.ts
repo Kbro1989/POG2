@@ -1,4 +1,4 @@
-﻿import pino, { Logger } from 'pino';
+import pino, { Logger } from 'pino';
 
 export const SOVEREIGN_IDENTITY = 'POG2';
 
@@ -7,7 +7,7 @@ export function createLogger(name: string): Logger {
         name,
         level: process.env['POG_LOG_LEVEL'] || 'info',
         base: { hostname: SOVEREIGN_IDENTITY }
-    });
+    }, pino.destination(2)); // fd 2 is stderr
 
     // Create a Proxy to safely wrap logging calls
     return new Proxy(logger, {
@@ -29,3 +29,4 @@ export function createLogger(name: string): Logger {
 }
 
 export const logger = createLogger('POG2-CORE');
+

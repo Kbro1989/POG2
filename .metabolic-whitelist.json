@@ -6,6 +6,7 @@
     "src/rsmv/opcode_reader.ts",
     "src/utils/rsmv_bridge.ts",
     "src/utils/ClinicalAuditTool.ts",
+    "src/engines/OrchestrateEngine.ts",
     "src/cli.ts",
     "test_",
     "scratch/"

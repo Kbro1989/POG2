@@ -37,3 +37,4 @@ async function fetchWikiHitmarks() {
 }
 
 fetchWikiHitmarks();
+

@@ -22,3 +22,4 @@ export interface EntityGhost {
     };
     source: 'path_queue' | 'extrapolation' | 'intent' | 'offline_fallback';
 }
+
