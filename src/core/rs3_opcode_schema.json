@@ -1,0 +1,14 @@
+{
+  "primitives": {
+    "bool": { "type": "boolean", "readMethod": "readUInt8", "logic": "val !== 0" },
+    "string": { "type": "string", "encoding": "utf8" },
+    "paddedstring": { "type": "string", "padding": 0 },
+    "int8": { "type": "number", "size": 1, "signed": true, "readMethod": "readInt8" },
+    "uint8": { "type": "number", "size": 1, "signed": false, "readMethod": "readUInt8" },
+    "int16": { "type": "number", "size": 2, "signed": true, "readMethod": "readInt16BE" },
+    "uint16": { "type": "number", "size": 2, "signed": false, "readMethod": "readUInt16BE" },
+    "int32": { "type": "number", "size": 4, "signed": true, "readMethod": "readInt32BE" },
+    "uint32": { "type": "number", "size": 4, "signed": false, "readMethod": "readUInt32BE" },
+    "float32": { "type": "number", "size": 4, "float": true, "readMethod": "readFloatBE" }
+  }
+}

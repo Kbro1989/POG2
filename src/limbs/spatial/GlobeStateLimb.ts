@@ -40,26 +40,30 @@ export class GlobeStateLimb {
 
     constructor(config?: SovereignConfig) {
         GlobeStateLimb.instance = this;
-        if (config) {
-            this.enabled = config.globeEnabled ?? false;
-            if (config.globeEndpoint) {
-                this.endpoint = config.globeEndpoint;
+
+        // Strictly prioritize environment variables
+        const enabledEnv = process.env.POG2_GLOBE_ENABLED;
+        const endpointEnv = process.env.POG2_GLOBE_ENDPOINT;
+        const isolationEnv = process.env.POG2_GLOBE_ISOLATION;
+
+        console.log('DEBUG: GlobeStateLimb constructor env vars', { enabledEnv, endpointEnv, isolationEnv });
+
+        this.enabled = enabledEnv === 'true' || (config?.globeEnabled ?? false);
+        this.endpoint = endpointEnv || config?.globeEndpoint || 'wss://multiplayer-globe-pog2.kristain33rs.workers.dev/parties/globe/pog2-sovereign';
+        const isolation = isolationEnv === 'true';
+
+        console.log('DEBUG: GlobeStateLimb constructor resolved', { enabled: this.enabled, endpoint: this.endpoint, isolation });
+
+        // Apply endpoint if isolation is disabled
+        if (isolation) {
+            this.endpoint = 'ws://127.0.0.1:8787/parties/globe/pog2-sovereign';
+            logger.info({ endpoint: this.endpoint }, 'Sovereign local isolation mode active.');
+        } else {
+            // Ensure the endpoint includes the full room path if it doesn't already
+            if (this.endpoint && !this.endpoint.includes('/parties/')) {
+                const base = this.endpoint.endsWith('/') ? this.endpoint.slice(0, -1) : this.endpoint;
+                this.endpoint = `${base}/parties/globe/pog2-sovereign`;
             }
-        }
-
-        // Ensure the endpoint includes the full room path if it doesn't already
-        if (this.endpoint && !this.endpoint.includes('/parties/')) {
-            const base = this.endpoint.endsWith('/') ? this.endpoint.slice(0, -1) : this.endpoint;
-            this.endpoint = `${base}/parties/globe/pog2-sovereign`;
-        }
-
-        // Apply environment-level isolation override ONLY if a real remote wss:// endpoint is NOT specified
-        const isLocalOverride = process.env.POG2_GLOBE_ISOLATION === 'true' || process.env.POG_USE_LOCAL === 'true';
-        if (isLocalOverride) {
-            this.endpoint = 'ws://127.0.0.1:8787/parties/globe/pog2-sovereign';
-            logger.info({ endpoint: this.endpoint }, 'Sovereign local mode active: routing GlobeStateLimb to local wrangler dev server.');
-        } else if (process.env.POG2_GLOBE_ISOLATION === 'true' && !this.endpoint.startsWith('wss://')) {
-            this.endpoint = 'ws://127.0.0.1:8787/parties/globe/pog2-sovereign';
         }
 
         // Tap into the cognitive stream
