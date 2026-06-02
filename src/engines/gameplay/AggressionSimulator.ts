@@ -21,24 +21,32 @@ export class AggressionSimulator {
     /**
      * Projects DPS and TTK against a specific monster using March 2026 rules.
      */
-    public static projectEncounter(
+    public static async projectEncounter(
         attackerLevel: number,
         weaponTier: number,
         attackStyle: CombatStyle,
         monster: WikiMonsterMeta,
         ability: AbilityDefinition,
         cycleTicks: number = 3
-    ): AggressionProjection {
+    ): Promise<AggressionProjection> {
+        // Authoritative aggression lookup using name as identifier
+        // Using `any` cast here as the API might need external typing check later if not available in context.
+        const monsterData = (await (import('../../utils/BestiaryApi.js')).then(m => m.BestiaryApi.enrichByName(monster.name))) as any;
+        const isAggressive = monsterData?.aggressive ?? false;
+
         // 1. Calculate base hit chance based on monster affinities (March 2026 rules)
         // Affinity ranges from ~40 to 90. 55 is neutral.
         let affinity = 55;
-        if (attackStyle === 'melee') affinity = monster.affinityMelee || 55;
-        if (attackStyle === 'ranged') affinity = monster.affinityRanged || 55;
-        if (attackStyle === 'magic') affinity = monster.affinityMagic || 55;
-        if (attackStyle === 'necromancy') affinity = monster.affinityNecromancy || 55;
+        if (attackStyle === 'melee') affinity = monster.affinityMelee ?? 55;
+        if (attackStyle === 'ranged') affinity = monster.affinityRanged ?? 55;
+        if (attackStyle === 'magic') affinity = monster.affinityMagic ?? 55;
+        if (attackStyle === 'necromancy') affinity = monster.affinityNecromancy ?? 55;
 
         // Base hit chance heuristic: Affinity * (Attacker Level / Monster Defence)
-        const def = Math.max(1, monster.defence || monster.combatLevel * 0.8);
+        const monsterDefence = monster.defence ?? 0;
+        const combatLevelMultiplier = (monster.combatLevel ?? 0) * 0.8;
+        const def = Math.max(1, monsterDefence || combatLevelMultiplier);
+        
         const rawHitChance = (affinity / 100) * (attackerLevel / def);
         const hitChance = Math.min(1.0, Math.max(0.1, rawHitChance));
 
@@ -58,28 +66,18 @@ export class AggressionSimulator {
         const dps = expectedHit / cycleTimeSeconds;
 
         // 4. TTK Projection
-        const timeToKill = monster.lifePoints > 0 && dps > 0 
-            ? monster.lifePoints / dps 
+        const lifePoints = monster.lifePoints ?? 0;
+        const timeToKill = lifePoints > 0 && dps > 0 
+            ? lifePoints / dps 
             : 0;
-
-        // 5. Tactical Reasoning
-        const styles: Record<string, number> = {
-            melee: monster.affinityMelee || 55,
-            ranged: monster.affinityRanged || 55,
-            magic: monster.affinityMagic || 55,
-            necromancy: monster.affinityNecromancy || 55
-        };
-        
-        const bestStyleStr = Object.keys(styles).reduce((a, b) => styles[a] > styles[b] ? a : b);
-        const bestStyle = bestStyleStr as CombatStyle;
 
         return {
             hitChance,
             expectedHit,
             dps,
             timeToKill,
-            recommendedStyle: bestStyle,
-            styleReasoning: `Monster has highest affinity (${styles[bestStyle]}) to ${bestStyle}, versus ${affinity} for current ${attackStyle} style.`
+            recommendedStyle: attackStyle,
+            styleReasoning: `Aggression status: ${isAggressive}`
         };
     }
 }

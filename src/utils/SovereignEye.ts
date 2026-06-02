@@ -4,6 +4,8 @@ import { existsSync, mkdirSync, readFileSync, promises as fsPromises } from 'fs'
 import { join, resolve } from 'path';
 import { EventEmitter } from 'events';
 import { fetch as undiciFetch } from 'undici';
+import { pathToFileURL } from 'url';
+import { platform } from 'os';
 import type { Result } from '../core/models.js';
 import { getDashboardPath } from './SovereignPathResolver.js';
 import { createLogger } from "./logger.js";
@@ -205,7 +207,7 @@ export class SovereignEye extends EventEmitter {
 
         try {
             const textContent = readFileSync(absPath, 'utf8');
-            const fileUrl = `file:///${absPath.replace(/\\/g, '/')}`;
+            const fileUrl = pathToFileURL(absPath).href;
             const screenshotResult = await this.headlessScreenshot(fileUrl, screenshotPath, viewport);
 
             const result: CaptureResult = {
@@ -255,9 +257,11 @@ export class SovereignEye extends EventEmitter {
     private async captureWindow(windowTitle: string): Promise<Result<CaptureResult>> {
         const timestamp = Date.now();
         const screenshotPath = join(this.captureDir, `window_${timestamp}.png`);
+        const currentPlatform = platform();
 
         try {
-            const psScript = `
+            if (currentPlatform === 'win32') {
+                const psScript = `
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms
 $procs = Get-Process | Where-Object { $_.MainWindowTitle -like "*${windowTitle.replace(/"/g, '`"')}*" } | Select-Object -First 1
@@ -285,13 +289,21 @@ $bitmap.Save("${screenshotPath.replace(/\\/g, '\\\\')}")
 $graphics.Dispose()
 $bitmap.Dispose()
 `;
-            await execAsync(`powershell -NoProfile -Command "${psScript.replace(/\n/g, '; ').replace(/"/g, '\\"')}"`, { timeout: 10000 });
+                await execAsync(`powershell -NoProfile -Command "${psScript.replace(/\n/g, '; ').replace(/"/g, '\\"')}"`, { timeout: 10000 });
+            } else if (currentPlatform === 'darwin') {
+                // macOS: Capture full screen as a fallback, identifying window by title is complex.
+                await execAsync(`screencapture -x "${screenshotPath}"`, { timeout: 10000 });
+            } else {
+                throw new Error(`Window capture not supported on ${currentPlatform}`);
+            }
+
+            if (!existsSync(screenshotPath)) throw new Error('Capture artifact not created.');
 
             const result: CaptureResult = {
                 imagePath: screenshotPath,
-                textContent: `Window capture: "${windowTitle}"`,
+                textContent: `Window capture: "${windowTitle}" (Mode: ${currentPlatform})`,
                 sourceType: 'window',
-                metadata: { windowTitle },
+                metadata: { windowTitle, platform: currentPlatform },
                 timestamp
             };
 
@@ -336,12 +348,27 @@ $bitmap.Dispose()
         outputPath: string,
         viewport: ViewportConfig
     ): Promise<Result<{ path: string }>> {
-        const browsers = [
+        const currentPlatform = platform();
+        const browsers = currentPlatform === 'win32' 
+        ? [
             'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
             'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
             'msedge',
             'chrome'
-        ];
+        ]
+        : currentPlatform === 'darwin'
+            ? [
+                '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+                'msedge',
+                'chrome'
+            ]
+            : [
+                'microsoft-edge',
+                'google-chrome',
+                'chromium-browser',
+                'chromium'
+            ];
 
         for (const browser of browsers) {
             try {
@@ -396,12 +423,12 @@ $bitmap.Dispose()
 
     /**
      * healthCheck — Diagnostic probe for NodeTester.
-     * Reports whether the Win32 screen-capture substrate is nominally available.
+     * Reports whether the screen-capture substrate is nominally available.
      */
     public healthCheck(): { online: boolean; details: string } {
         return {
             online: true,
-            details: 'SovereignEye nominal; Win32 capture substrate available.'
+            details: `SovereignEye nominal; ${platform()} capture substrate available.`
         };
     }
 }

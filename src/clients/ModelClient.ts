@@ -8,6 +8,18 @@ export type AITaskType =
     | "combat_rotation"
     | "spatial_analysis";
 
+// Define missing contract structure locally to clear downstream usage
+export interface ModelResponse {
+    response: string;
+    model: string;
+    latency: number;
+    tokensUsed?: number;
+    metadata?: {
+        model: string;
+        latency: number;
+    };
+}
+
 export interface Pog2PedagogyRequest {
     beastId?: number;
     entityId?: number;
@@ -22,12 +34,10 @@ import type { SovereignConfig } from '../config/SovereignConfig.js';
 import {
     type Result,
     type ModelCallParams,
-    type ModelResponse,
     type ModelExecutor,
     type ModelCallResult,
     ok,
     type AICapability,
-    type AITaskType,
     type AIServiceType,
     YaoState
 } from '../core/models.js';

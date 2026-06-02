@@ -42,16 +42,27 @@ export class YouTubeLimb {
     private readonly tokenPath: string;
 
     constructor(
-        private readonly clientId: string,
-        private readonly clientSecret: string,
-        private readonly apiKey: string,
+        clientId?: string,
+        clientSecret?: string,
+        apiKey?: string,
         private readonly accessToken?: string,
         tokenPath?: string
     ) {
+        const cId = clientId || process.env.YOUTUBE_CLIENT_ID;
+        const cSecret = clientSecret || process.env.YOUTUBE_CLIENT_SECRET;
+        const aKey = apiKey || process.env.YOUTUBE_API_KEY;
+
+        if (!cId || !cSecret || !aKey) {
+            throw new Error('YouTube credentials missing. Provide them via constructor or environment variables.');
+        }
+
+        this.clientId = cId;
+        this.clientSecret = cSecret;
+        this.apiKey = aKey;
         this.tokenPath = tokenPath || DEFAULT_TOKEN_PATH;
         this.oauth2Client = new google.auth.OAuth2(
-            clientId,
-            clientSecret,
+            this.clientId,
+            this.clientSecret,
             REDIRECT_URI
         );
 
