@@ -1,8 +1,0 @@
-["struct",
-["byte0","ubyte"],
-["switchsize",["footer",2,"ushort"]],
-["switches",["footer",["ref","switchsize"],["array",["struct",
-["value","int"],
-["jump","uint"]
-]]]]
-]
