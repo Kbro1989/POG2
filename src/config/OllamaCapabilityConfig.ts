@@ -50,3 +50,4 @@ export const getCapability = (tier: string): Readonly<OllamaCapability> | null =
 
 export const isCapabilityTier = (tier: string): boolean =>
     _registry.has(tier.toLowerCase());
+

@@ -25,8 +25,10 @@ const logger = createLogger('SelfHealingEngine');
 export class SelfHealingEngine {
     private readonly architectureDigest: ArchitectureDigest;
 
+    private lastGcTime: number = 0;
+
     constructor(
-        projectRoot: string,
+        private readonly projectRoot: string,
         private readonly executor: ModelExecutor,
         private readonly hexagramManager: HexagramManager,
         private readonly correctionModel: string = 'deepseek-r1:8b',
@@ -38,6 +40,35 @@ export class SelfHealingEngine {
         private readonly shellEngine?: ShellEngine
     ) {
         this.architectureDigest = new ArchitectureDigest(projectRoot);
+        
+        // Register metabolic heartbeat for Branch GC
+        import('../utils/CanonicalClock.js').then(({ CanonicalClock }) => {
+            CanonicalClock.getInstance().registerPulse({
+                domain: 'metabolic',
+                name: 'SelfHealingEngine.heartbeat',
+                priority: 10,
+                callback: () => this.heartbeat()
+            });
+        }).catch(err => logger.error({ err }, 'Failed to register SelfHealingEngine heartbeat'));
+    }
+
+    private async heartbeat(): Promise<void> {
+        const now = Date.now();
+        
+        // Daily GC (24h = 86400000ms)
+        // Set to 86400000 in production, maybe lower for testing
+        if (now - this.lastGcTime > 86400000) {
+            try {
+                await this.selfClean({
+                    branchMaxAgeDays: 14,
+                    dryRun: true, // Start dry, flip after 1 week of clean logs
+                    protectPatterns: ['release/*', 'hotfix/*']
+                });
+            } catch (err: any) {
+                logger.error({ err: err.message }, 'Scheduled Branch GC failed');
+            }
+            this.lastGcTime = now;
+        }
     }
 
     async diagnose(error: TSCError, plan?: ExecutionPlan): Promise<{ decision: CognitiveChoice; reasoning: string }> {
@@ -230,6 +261,75 @@ export class SelfHealingEngine {
         };
     }
 
+    /**
+     * Git Hygiene (Branch GC): Scan local branches and delete those exceeding age thresholds.
+     * Running daily on metabolic heartbeat.
+     */
+    async selfClean(opts: { 
+        branchMaxAgeDays: number; 
+        dryRun: boolean;
+        protectPatterns?: string[]; // e.g., ['main', 'master', 'release/*']
+    }): Promise<{ prunedBranches: string[]; protectedBranches: string[] }> {
+        // Dynamic import to avoid early startup cost or assuming simpleGit is strictly required for boot
+        const { default: simpleGit } = await import('simple-git');
+        const git = simpleGit(this.projectRoot);
+        const branches = await git.branchLocal();
+        const now = Date.now();
+        const pruned: string[] = [];
+        const protected_: string[] = [];
+        
+        const protect = new Set([
+            'main', 'master', 'dev', 'develop',
+            ...(opts.protectPatterns || [])
+        ]);
+
+        for (const branch of branches.all) {
+            // Very simple pattern match check (e.g. release/* matches release/1.0)
+            const isProtectedPattern = Array.from(protect).some(pattern => {
+                if (pattern.endsWith('/*')) {
+                    const base = pattern.slice(0, -2);
+                    return branch.startsWith(base + '/');
+                }
+                return branch === pattern;
+            });
+
+            if (isProtectedPattern || branch === branches.current) {
+                protected_.push(branch);
+                continue;
+            }
+
+            const log = await git.log({ from: branch, to: 'HEAD', maxCount: 1 });
+            const lastCommit = log.latest?.date 
+                ? new Date(log.latest.date).getTime() 
+                : 0;
+            const ageDays = (now - lastCommit) / (1000 * 60 * 60 * 24);
+
+            if (ageDays > opts.branchMaxAgeDays) {
+                if (!opts.dryRun) {
+                    try {
+                        await git.deleteLocalBranch(branch, true);
+                        pruned.push(branch);
+                    } catch (err: any) {
+                        logger.error({ branch, err: err.message }, 'Failed to delete branch');
+                    }
+                } else {
+                    logger.info(`[GC DryRun] Would delete branch: ${branch} (age: ${Math.round(ageDays)} days)`);
+                    pruned.push(branch);
+                }
+            } else {
+                protected_.push(`${branch} (Within age limit)`);
+            }
+        }
+
+        logger.info({
+            pruned: pruned.length,
+            protected: protected_.length,
+            dryRun: opts.dryRun
+        }, 'SelfHealingEngine: branch GC complete');
+
+        return { prunedBranches: pruned, protectedBranches: protected_ };
+    }
+
     public healthCheck(): { online: boolean; details: string } {
         const digOk = !!this.architectureDigest;
         const hexOk = !!this.hexagramManager;
@@ -239,3 +339,4 @@ export class SelfHealingEngine {
         };
     }
 }
+

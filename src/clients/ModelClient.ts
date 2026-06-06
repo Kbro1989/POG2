@@ -49,6 +49,9 @@ import { ModelRolodex } from '../api/ai/ModelRolodex.js';
 import type { QuotaTracker, QuotaProvider } from '../utils/QuotaTracker.js';
 
 import { ArchitectureDigest } from '../core/ArchitectureDigest.js';
+import { SovereignKnowledgeDB } from '../utils/SovereignKnowledgeDB.js';
+import { DomainLocker, DomainViolationError } from '../routing/DomainLocker.js';
+import { v4 as uuidv4 } from 'uuid';
 import { createLogger } from "../utils/logger.js";
 
 const execAsync = promisify(exec);
@@ -65,6 +68,18 @@ export class ModelClient implements ModelExecutor {
     private readonly customAgent: Agent;
     private rolodex?: ModelRolodex;
     private quotaTracker?: QuotaTracker;
+    private domainLocker?: DomainLocker;
+
+    public setDomainLocker(dl: DomainLocker): void {
+        this.domainLocker = dl;
+    }
+
+    private inferTierFromModel(modelId: string): 'Master' | 'Executive' | 'Reactive' {
+        const lower = modelId.toLowerCase();
+        if (lower.includes('deepseek') || lower.includes('gemma') || lower.includes('gemini') || lower.includes('master')) return 'Master';
+        if (lower.includes('qwen') || lower.includes('llava') || lower.includes('executive')) return 'Executive';
+        return 'Reactive';
+    }
 
     public async execute(params: ModelCallParams): Promise<Result<string>> {
         const result = await this.call(params);
@@ -165,6 +180,21 @@ export class ModelClient implements ModelExecutor {
     }
 
     async call(params: ModelCallParams): Promise<Result<ModelResponse>> {
+        const domain = params.domain || 'GENERAL';
+        const tier = params.tier || this.inferTierFromModel(params.model);
+
+        if (this.domainLocker) {
+            try {
+                this.domainLocker.check(params.model, domain, tier);
+            } catch (err) {
+                if (err instanceof DomainViolationError) {
+                    logger.warn({ modelId: params.model, domain }, 'ModelClient: domain blocked');
+                    return { ok: false, error: err };
+                }
+                throw err;
+            }
+        }
+
         const startTime = Date.now();
         let provider: 'ollama' | 'huggingface' | 'gemini' | 'cloudflare' | 'fireworks' | 'openrouter' | 'unknown' = 'ollama';
 
@@ -213,12 +243,15 @@ export class ModelClient implements ModelExecutor {
         // Record interaction to D:\ training substrate (Skip for System Pulse)
         const latency = Date.now() - startTime;
         if (!enforcedParams.isSystemPulse) {
+            const validCategories = ['coding', 'gutenberg', 'chromanumber', 'vision', 'voice', 'orchestration', 'diagnostic', 'error_fix', 'search', 'general'];
+            const safeCategory = (enforcedParams.category && validCategories.includes(enforcedParams.category)) ? enforcedParams.category : 'general';
+            
             this.trainingCollector.recordInteraction({
                 model: enforcedParams.model,
                 provider,
-                category: enforcedParams.category as any,
-                prompt: enforcedParams.prompt.substring(0, 2000),
-                response: result.ok ? result.value.response.substring(0, 2000) : '',
+                category: safeCategory as 'coding' | 'gutenberg' | 'chromanumber' | 'vision' | 'voice' | 'orchestration' | 'diagnostic' | 'error_fix' | 'search' | 'general',
+                prompt: enforcedParams.prompt,
+                response: result.ok ? result.value.response : '',
                 latencyMs: latency,
                 tokenCount: result.ok ? result.value.tokensUsed : undefined,
                 success: result.ok,
@@ -232,6 +265,24 @@ export class ModelClient implements ModelExecutor {
                 success: result.ok,
                 tokenCount: result.ok ? result.value.tokensUsed : undefined
             }).catch(() => { /* non-blocking */ });
+
+            // PARASITIC DISTILLATION: Metabolize external intelligence
+            if (provider !== 'ollama' && result.ok) {
+                const anatomyDomain = safeCategory; // e.g., 'coding', 'vision', 'gameplay' mapped to category
+                SovereignKnowledgeDB.getInstance().recordMetabolism(
+                    uuidv4(),
+                    Date.now(),
+                    anatomyDomain,
+                    enforcedParams.model,
+                    enforcedParams.prompt,
+                    result.value.response,
+                    {
+                        provider,
+                        latencyMs: latency,
+                        tokens: result.value.tokensUsed
+                    }
+                );
+            }
         }
 
         // Phase 6: Update ModelRolodex with call metrics (Skip for System Pulse)
@@ -368,6 +419,20 @@ export class ModelClient implements ModelExecutor {
 
     async embed(text: string, modelOverride?: string): Promise<Result<Float32Array>> {
         const model = modelOverride || this.config.embeddingModel || 'qwen3-embedding:latest';
+        const domain = 'EMBEDDING';
+        const tier = 'Reactive';
+
+        if (this.domainLocker) {
+            try {
+                this.domainLocker.check(model, domain, tier);
+            } catch (err) {
+                if (err instanceof DomainViolationError) {
+                    logger.warn({ modelId: model, domain }, 'ModelClient: embedding domain blocked');
+                    return { ok: false, error: err };
+                }
+                throw err;
+            }
+        }
 
         let result: Result<Float32Array>;
         if (model && model.startsWith('gemini:')) {
@@ -502,7 +567,11 @@ export class ModelClient implements ModelExecutor {
                         response: text,
                         model: `gemini:${modelId}`,
                         latency,
-                        tokensUsed: data.usageMetadata?.totalTokenCount
+                        tokensUsed: data.usageMetadata?.totalTokenCount,
+                        metadata: {
+                            model: `gemini:${modelId}`,
+                            latency
+                        }
                     }
                 };
             } catch (err) {
@@ -1244,3 +1313,4 @@ export class ModelClient implements ModelExecutor {
         };
     }
 }
+

@@ -22,3 +22,4 @@ export type clientscript = {
 		imm_obj: number | string | [number, number] | null,
 	}[],
 };
+

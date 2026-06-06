@@ -68,3 +68,4 @@ export type mapsquare_tiles = {
 		unk82?: true | null
 	},
 };
+

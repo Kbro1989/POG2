@@ -1,4 +1,4 @@
-﻿import { execSync } from 'child_process';
+import { execSync } from 'child_process';
 import { type Result, YaoState } from '../core/models.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { $ } from '../utils/shell.js';
@@ -378,3 +378,4 @@ export class CloudflareServices {
         }
     }
 }
+

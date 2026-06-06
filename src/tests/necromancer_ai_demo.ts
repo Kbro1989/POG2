@@ -13,7 +13,7 @@ async function runNecroDemo() {
     logger.info('🕯️ INITIATING NECROMANCER AI GROUNDING DEMO');
 
     // 1. Engine Setup
-    HexagramManager.initializeMock();
+    HexagramManager.initializeSimulation();
     const config = getDefaultSovereignConfig();
     const renderer = new (Renderer as any)(); 
     const router = new TernaryRouter(config);
@@ -67,3 +67,4 @@ async function runNecroDemo() {
 }
 
 runNecroDemo().catch(console.error);
+

@@ -1,4 +1,4 @@
-﻿import type { ValidationResult, Validator } from '../core/models.js';
+import type { ValidationResult, Validator } from '../core/models.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { createLogger } from "../utils/logger.js";
@@ -49,3 +49,4 @@ export class ValidationSystem {
         return { online: true, details: `ValidationSystem active with ${this.validators.length} validators.` };
     }
 }
+

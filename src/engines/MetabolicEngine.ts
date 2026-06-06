@@ -1,4 +1,4 @@
-﻿import { ModelClient } from '../clients/ModelClient.js';
+import { ModelClient } from '../clients/ModelClient.js';
 import { 
     type Result, 
     type EngineOutput, 
@@ -484,3 +484,4 @@ Respond in JSON: { "paths": string[] }
         }
     }
 }
+

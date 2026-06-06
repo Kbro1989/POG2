@@ -1,4 +1,4 @@
-﻿import type { RoutingContext, RoutingDecision, RoutingStrategy } from '../types.js';
+import type { RoutingContext, RoutingDecision, RoutingStrategy } from '../types.js';
 import { TaskType as TT, YaoState, Ternary } from '../../core/models.js';
 import { CognitiveTranslator } from '../../utils/CognitiveTranslator.js';
 
@@ -30,4 +30,5 @@ export class AnalyticalStrategy implements RoutingStrategy {
         };
     }
 }
+
 

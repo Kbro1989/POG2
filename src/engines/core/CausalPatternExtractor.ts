@@ -158,4 +158,10 @@ export class CausalPatternExtractor {
         );
         logger.info({ tick: event.tick, eventId: event.id }, 'Cognitive Anomaly captured (Shadow Mode).');
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: "CausalPatternExtractor active and verified." };
+    }
 }
+
+

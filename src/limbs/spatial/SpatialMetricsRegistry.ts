@@ -77,3 +77,4 @@ export class SpatialMetricsRegistry {
     return this.metrics.get(entityId);
   }
 }
+

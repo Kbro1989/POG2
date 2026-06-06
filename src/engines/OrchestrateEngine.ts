@@ -85,6 +85,7 @@ import { VectorDB } from '../utils/VectorDB.js';
 import { ModelViewerLimb } from '../limbs/spatial/ModelViewerLimb.js';
 import { ContextBuilder } from './ContextBuilder.js';
 import { ToolRegistry } from '../ToolRegistry.js';
+import { SkillsLimb } from '../limbs/system/SkillsLimb.js';
 import { Renderer } from '../ui/Renderer.js';
 import { DBMaintenance } from '../utils/DBMaintenance.js';
 import { SovereignDBLifecycle } from '../utils/SovereignDBLifecycle.js';
@@ -140,11 +141,16 @@ export class OrchestrateEngine {
     private initPromise: Promise<void> | null = null;
     private readonly client: ModelClient;
     private readonly registry: ToolRegistry;
+
+    public getRegistry(): ToolRegistry {
+        return this.registry;
+    }
     private readonly todoEngine: TodoEngine;
     private readonly visionEngine: SpatialVisionEngine;
     private readonly vision: VisionEngine;
     private readonly mcpEngine: MCPEngine;
     private readonly chroma: ChromanumberEngine;
+    private readonly multiModelExecutor: MultiModelExecutor;
     private readonly verifier: IntentVerifier;
     private readonly dispatcher: AIDispatcher;
     private readonly questSynthesis: QuestSynthesisLimb;
@@ -243,6 +249,10 @@ export class OrchestrateEngine {
         this.vscode = new VSCodeEngine(renderer, router);
         this.registry = new ToolRegistry();
 
+        // Assimilate foreign external capabilities (Anthropic, skills.sh) into the Registry
+        const skillsLimb = new SkillsLimb(this.registry);
+        skillsLimb.bootstrapLocalSkills();
+
         // Connect Database Organs
         DBRowOracleLimb.getInstance();
         SovereignKnowledgeDB.getInstance();
@@ -268,6 +278,7 @@ export class OrchestrateEngine {
         this.pulseVolley = CNSGodheadPulseVolley.getInstance();
         this.RSMVController = RSMVController.getInstance();
         this.mcpEngine = new MCPEngine(config, this.registry);
+        this.multiModelExecutor = new MultiModelExecutor(config, renderer);
         this.chroma = ChromanumberEngine.getInstance();
         this.maintenance = new DBMaintenance();
         this.embedEngine = new EmbedEngine(config, renderer, router);
@@ -407,6 +418,8 @@ export class OrchestrateEngine {
         this.workforce = new WorkforceManifest(config);
         this.dispatcher = new AIDispatcher(this.client, this.workforce);
         this.domainLocker = new DomainLocker();
+        this.client.setDomainLocker(this.domainLocker);
+        this.registry.setDomainLocker(this.domainLocker);
 
         // Phase 259: Instantiate Simulation Harness (Heartbeat Logic)
         const worldGrounding = WorldGroundingLimb.getInstance();
@@ -508,8 +521,51 @@ export class OrchestrateEngine {
     public async executeTool(
         toolName: string,
         args: Record<string, unknown> = {},
-        sourceAgent: AgentType = 'unknown'
+        sourceAgent: AgentType = 'unknown',
+        meta?: { modelId?: string; tier?: string; domain?: string }
     ): Promise<Result<EngineOutput>> {
+        // ─── FETCH TOOL DEFINITION ───
+        const tool = this.registry.getTool(toolName);
+        if (!tool) {
+            return err({
+                name: 'Error',
+                message: `Tool not found: ${toolName}`,
+                code: 'TOOL_NOT_FOUND'
+            } as any);
+        }
+
+        // ─── DOMAIN GATE & MIN-TIER ESCALATION ───
+        if (this.domainLocker) {
+            const modelId = meta?.modelId || 'system';
+            const tier = meta?.tier || 'Master';
+            try {
+                this.domainLocker.check(modelId, tool.domain, tier);
+            } catch (error) {
+                if (error instanceof DomainViolationError) {
+                    logger.warn({ tool: toolName, modelId, domain: tool.domain }, 'DomainLocker blocked tool execution');
+                    return err({
+                        name: 'Error',
+                        message: `DOMAIN BLOCKED: ${error.message}`,
+                        code: 'DOMAIN_BLOCKED'
+                    } as any);
+                }
+                throw error;
+            }
+
+            if (tool.minTier) {
+                const tiers = { 'Master': 3, 'Executive': 2, 'Reactive': 1 };
+                const currentRank = tiers[tier as keyof typeof tiers] || 0;
+                const requiredRank = tiers[tool.minTier as keyof typeof tiers] || 0;
+                if (currentRank < requiredRank) {
+                    return err({
+                        name: 'Error',
+                        message: `Tool ${toolName} requires Tier ${tool.minTier}, but active tier is ${tier}.`,
+                        code: 'INSUFFICIENT_TIER'
+                    } as any);
+                }
+            }
+        }
+
         
         // ─── COGNITIVE IMMUNOLOGY PRE-SCAN ───
         const context = [
@@ -572,15 +628,6 @@ export class OrchestrateEngine {
         // LOW: Silent continue
         
         // ─── EXECUTE TOOL ───
-        const tool = this.registry.getTool(toolName);
-        if (!tool) {
-            return err({
-                name: 'Error',
-                message: `Tool not found: ${toolName}`,
-                code: 'TOOL_NOT_FOUND'
-            } as any);
-        }
-        
         return tool.execute(args);
     }
 
@@ -1063,7 +1110,7 @@ export class OrchestrateEngine {
         this.nodeTester.registerLimbs({ TodoEngine: this.todoEngine });
         this.nodeTester.registerLimbs({ MCPEngine: this.mcpEngine });
         this.nodeTester.registerLimbs({ ChromanumberEngine: this.chroma });
-        this.nodeTester.registerLimbs({ MultiModelExecutor: undefined });
+        this.nodeTester.registerLimbs({ MultiModelExecutor: this.multiModelExecutor });
         this.nodeTester.registerLimbs({ RSCLimb: this.rscLimb });
         this.nodeTester.registerLimbs({ rsmvExtractor: this.rsmvExtractor });
         this.nodeTester.registerLimbs({ RSMVController: this.RSMVController });
@@ -1123,7 +1170,7 @@ export class OrchestrateEngine {
         this.nodeTester.registerLimbs({ rsmv: this.rsmvExtractor });
         this.nodeTester.registerLimbs({ ValidationSystem: undefined });
         this.nodeTester.registerLimbs({ IntentVerifier: this.verifier });
-        this.nodeTester.registerLimbs({ SelfHealingEngine: undefined });
+        this.nodeTester.registerLimbs({ SelfHealingEngine: selfHealingEngine });
         this.nodeTester.registerLimbs({ ClinicalAuditTool: this.clinicalAudit });
         this.nodeTester.registerLimbs({ EndpointHealer: undefined });
         this.nodeTester.registerLimbs({ ArchitecturalValidator: undefined });
@@ -1141,7 +1188,7 @@ export class OrchestrateEngine {
 
         // Phase 21: Wire PulseMonitor to use this.nodeTester for lightweight limb health after first pass
         this.pulseMonitor.setNodeTester(this.nodeTester);
-        this.nodeTester = this.nodeTester;
+
 
         // SENSORY HUB: Dual-Retina Injections
         this.registry.register({
@@ -1621,12 +1668,12 @@ export class OrchestrateEngine {
                 const healthyProviders = providerResults.filter(r => r.status === 'ONLINE').length;
                 output += `Provider Health: ${healthyProviders}/${providerResults.length} ONLINE\n`;
                 for (const r of providerResults) {
-                    const icon = r.status === 'ONLINE' ? 'Ã¢Å“â€¦' : (r.status === 'DEGRADED' ? 'Ã¢Å¡Â Ã¯Â¸Â' : 'Ã¢ÂÅ’');
-                    output += `${icon} [PROVIDER] ${r.provider}: ${r.status}${r.error ? ` Ã¢â‚¬â€ ${r.error}` : ''}\n`;
+                    const icon = r.status === 'ONLINE' ? 'Ã¢Å“â€¦' : (r.status === 'DEGRADED' ? '[WARN]' : 'Ã¢ÂÅ’');
+                    output += `${icon} [PROVIDER] ${r.provider}: ${r.status}${r.error ? ` -- ${r.error}` : ''}\n`;
                     if (r.status !== 'ONLINE') {
                         // Trigger Autonomous Endpoint Healing
                         const healRes = await selfHealingEngine.healSubstrateError({ path: '', role: r.provider, category: 'PROVIDER', status: r.status, details: r.error });
-                        output += `   Ã¢â€ Â³ Healing Action: ${healRes.reasoning}\n`;
+                        output += `   -> Healing Action: ${healRes.reasoning}\n`;
                     }
                 }
                 output += '\n';
@@ -1635,12 +1682,12 @@ export class OrchestrateEngine {
                 const healthyNodes = nodeResults.filter(r => r.status === 'ONLINE').length;
                 output += `Neurological Health: ${healthyNodes}/${nodeResults.length} ONLINE\n`;
                 for (const r of nodeResults) {
-                    const icon = r.status === 'ONLINE' ? 'Ã¢Å“â€¦' : (r.status === 'DEGRADED' ? 'Ã¢Å¡Â Ã¯Â¸Â' : 'Ã¢ÂÅ’');
-                    output += `${icon} [${r.category}] ${r.role}: ${r.status}${r.details ? ` Ã¢â‚¬â€ ${r.details}` : ''}\n`;
+                    const icon = r.status === 'ONLINE' ? 'Ã¢Å“â€¦' : (r.status === 'DEGRADED' ? '[WARN]' : 'Ã¢ÂÅ’');
+                    output += `${icon} [${r.category}] ${r.role}: ${r.status}${r.details ? ` -- ${r.details}` : ''}\n`;
                     if (r.status !== 'ONLINE' && r.role !== 'SwitchboardLimb' && r.role !== 'WebSensoryLimb') {
                         // Trigger Autonomous Substrate Healing
                         const healRes = await selfHealingEngine.healSubstrateError(r);
-                        output += `   Ã¢â€ Â³ Healing Action: ${healRes.reasoning}\n`;
+                        output += `   -> Healing Action: ${healRes.reasoning}\n`;
                     }
                 }
 
@@ -2375,7 +2422,7 @@ export class OrchestrateEngine {
                     `Limb Constraints: ${anatomy.limits.limbs} limbs, ${anatomy.limits.eyes} eyes`,
                     `Joint Logic: ${JSON.stringify(anatomy.limits.joints)}`,
                     `Substrate Notes: ${anatomy.notes}`,
-                    `Ã°Å¸Â§Â  Insight ingested into Sovereign Developmental Memory.`
+                    `[BRAIN] Insight ingested into Sovereign Developmental Memory.`
                 ].join('\n');
                 return ok({ output, data: { anatomy, kinetic, packet } });
             }
@@ -2427,7 +2474,7 @@ export class OrchestrateEngine {
             execute: async () => {
                 const res = await this.cacheForensics.checkCacheVolatility();
                 if (!res.ok) return res;
-                const status = res.value.hasChanged ? 'Ã¢Å¡Â Ã¯Â¸Â MODIFIED' : 'Ã¢Å“â€¦ STABLE';
+                const status = res.value.hasChanged ? '[WARN] MODIFIED' : 'Ã¢Å“â€¦ STABLE';
                 return ok({
                     output: `Cache Volatility Audit: ${status}\nLast Modified: ${res.value.lastModified.toLocaleString()}`,
                     data: res.value
@@ -2686,7 +2733,7 @@ OUTPUT FORMAT:
                 if (!res.ok) return res;
                 const { profile, book } = res.value;
                 const output = [
-                    `ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬â€œ STYLE ANALYSIS: ${book.title}`,
+                    `ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“--œ STYLE ANALYSIS: ${book.title}`,
                     `Tone: ${profile.tone}`,
                     `Readability (ARI): ${profile.readabilityScore}`,
                     `Avg Sentence Length: ${profile.avgSentenceLength} words`,
@@ -3018,7 +3065,7 @@ OUTPUT FORMAT:
             name: 'run_pipeline',
             description: 'Run the autonomous story-to-media pipeline: generates scenes, images, and voice narration from a book.',
             humanDescription: 'Run the full creative pipeline to generate scenes, images, and narration from a Gutenberg book.',
-            jargonDescription: 'Executes the PipelineController autonomous orchestration loop: StoryboardLimb ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ChromanumberEngine ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ VoiceLimb ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ VideoAssemblerLimb ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ manifest assembly.',
+            jargonDescription: 'Executes the PipelineController autonomous orchestration loop: StoryboardLimb ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ChromanumberEngine ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ VoiceLimb ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ VideoAssemblerLimb ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ manifest assembly.',
             idealYaoState: YaoState.OldYang,
             domain: SovereignDomain.FORGE,
             category: 'creative',
@@ -3060,7 +3107,7 @@ OUTPUT FORMAT:
             }
         });
 
-        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â UNIVERSAL LIMB ACCESS Ã¢â‚¬â€ The Organism's Body Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+        // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â UNIVERSAL LIMB ACCESS -- The Organism's Body Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
         this.registry.register({
             name: 'voice_narrate',
             description: 'Speak any text aloud using neural speech synthesis.',
@@ -3160,9 +3207,9 @@ OUTPUT FORMAT:
                 if (!res.ok) return res;
                 const nexus = res.value;
                 const output = [
-                    `ÃƒÂ°Ã…Â¸Ã‚Â§Ã‚Â  THOUGHTS:`,
+                    `[BRAIN] THOUGHTS:`,
                     ...(nexus.thoughts || []).map(t => `- [${YaoState[t.state]}] ${t.reflection}`),
-                    `\nÃƒÂ°Ã…Â¸Ã…Â¡Ã¢â€šÂ¬ BOTTLENECK PATHS:`,
+                    `\n[BOTTLENECK] BOTTLENECK PATHS:`,
                     ...(nexus.bottleneckPaths || []).map((p, i) => `  ${i + 1}. ${p}`),
                     nexus.curiosity ? `\n\x1b[38;5;220m[CURIOSITY]\x1b[0m ${nexus.curiosity}` : ''
                 ].join('\n');
@@ -3239,6 +3286,10 @@ OUTPUT FORMAT:
             category: 'core',
             parameters: { prompt: 'string', response: 'string', category: 'string?' },
             execute: async (args) => {
+                const validCategories = ['coding', 'gutenberg', 'chromanumber', 'vision', 'voice', 'orchestration', 'diagnostic', 'error_fix', 'search', 'general'];
+                const rawCat = typeof args.category === 'string' ? args.category : 'general';
+                const safeCategory = validCategories.includes(rawCat) ? rawCat : 'general';
+
                 await this.trainingCollector.recordInteraction({
                     model: this.config.masterLocalModel,
                     provider: 'ollama',
@@ -3246,7 +3297,7 @@ OUTPUT FORMAT:
                     response: args.response as string,
                     latencyMs: 0,
                     success: true,
-                    category: (args.category as any) || 'general'
+                    category: safeCategory as 'coding' | 'gutenberg' | 'chromanumber' | 'vision' | 'voice' | 'orchestration' | 'diagnostic' | 'error_fix' | 'search' | 'general'
                 });
                 return ok({ output: 'Interaction absorbed into the training substrate for future Sovereign refinement.' });
             }
@@ -3470,12 +3521,12 @@ OUTPUT FORMAT:
                                 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
                                 const audit = this.pipeline.verifyWork(manifest);
                                 if (!audit.ok) {
-                                    results.push(`Ã°Å¸Å¡Â¨ Book ${manifest.bookId} (${manifest.bookTitle}): CORRUPT - ${audit.error?.message}`);
+                                    results.push(`[ALERT] Book ${manifest.bookId} (${manifest.bookTitle}): CORRUPT - ${audit.error?.message}`);
                                 } else {
                                     results.push(`Ã¢Å“â€¦ Book ${manifest.bookId}: NOMINAL`);
                                 }
                             } catch (e) {
-                                results.push(`Ã¢Å¡Â Ã¯Â¸Â Failed to parse manifest for ${bookDir}`);
+                                results.push(`[WARN] Failed to parse manifest for ${bookDir}`);
                             }
                         }
                     }
@@ -3715,7 +3766,9 @@ Mapping tool selection over to Y...
             prompt: orchestratorPrompt,
             systemPrompt,
             temperature: 0.1,
-            format: 'text' // Phase 20: Force text mode to allow <reflection> chunks!
+            format: 'text', // Phase 20: Force text mode to allow <reflection> chunks!
+            domain: 'Orchestration',
+            tier: route.tier
         });
 
         if (!result.ok) return result as Result<Plan>;
@@ -3887,7 +3940,7 @@ Mapping tool selection over to Y...
             let plan: Plan;
 
             if (interceptedPlan) {
-                this.renderer.info('ÃƒÂ°Ã…Â¸Ã‚Â§Ã‚Â  SENSORY INTERCEPTION: Skipping planning turn.');
+                this.renderer.info('[BRAIN] SENSORY INTERCEPTION: Skipping planning turn.');
                 plan = interceptedPlan;
             } else {
                 // Thinking Phase: Expand metabolic reflections and identify bottlenecks
@@ -3926,8 +3979,8 @@ Mapping tool selection over to Y...
 
                     // Phase 1.5: Resonance & Friction Routing
                     if ((nexus.metabolicFriction || 0) > 0.6) {
-                        this.renderer.warn(`[Ã°Å¸Â§Â  Dissonance] High Cognitive Friction Detected (${nexus.metabolicFriction}). Injecting reflection mandate...`);
-                        task += `\n\n[Ã°Å¸Å¡Â¨ HIGH COGNITIVE FRICTION Ã°Å¸Å¡Â¨]\nThe Metabolic Substrate detected intense dissonance between the proposed action and the current Structural Emotion, OR a Sovereign Law violation. You MUST heavily scrutinize this in your <reflection> and consider using the 'converse' tool to ask the Operator for clarification before calling any other tool.`;
+                        this.renderer.warn(`[BRAIN] Dissonance] High Cognitive Friction Detected (${nexus.metabolicFriction}). Injecting reflection mandate...`);
+                        task += `\n\n[[ALERT] HIGH COGNITIVE FRICTION [ALERT]]\nThe Metabolic Substrate detected intense dissonance between the proposed action and the current Structural Emotion, OR a Sovereign Law violation. You MUST heavily scrutinize this in your <reflection> and consider using the 'converse' tool to ask the Operator for clarification before calling any other tool.`;
                     }
                 }
 
@@ -3998,7 +4051,8 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
                         model: this.config.orchestratorModel,
                         prompt: discussPrompt,
                         temperature: 0.7,
-                        format: 'text' // Phase 20: Force conversational text response
+                        format: 'text', // Phase 20: Force conversational text response
+                        domain: 'SOCIAL'
                     });
 
                     if (discussRes.ok && discussRes.value.response) {
@@ -4017,7 +4071,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
             }
 
             if (plan.severity >= this.EXTREME_THRESHOLD) {
-                this.renderer.info(`ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â EXTREME CASE(Severity: ${plan.severity})`);
+                this.renderer.info(`[WARN] EXTREME CASE(Severity: ${plan.severity})`);
                 if (!(await this.renderer.confirm('Proceed anyway?'))) {
                     return { ok: false, error: new Error('Aborted by user.') };
                 }
@@ -4103,14 +4157,14 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
     private async narrate(task: string, result: string): Promise<string> {
         const route = await this.router.route('Orchestrator', 'narrate', task);
         const prompt = `Narrate what happened for task: ${task}.Result: ${result.substring(0, 1000)} `;
-        const res = await this.client.call({ model: route.model, prompt, systemPrompt: SOVEREIGN_SYSTEM_PROMPT });
+        const res = await this.client.call({ model: route.model, prompt, systemPrompt: SOVEREIGN_SYSTEM_PROMPT, domain: 'GENERAL', tier: route.tier });
         return res.ok ? res.value.response : result;
     }
 
     private async getStepPlan(subtask: string, lastResult: string): Promise<Result<Plan>> {
         const route = await this.router.route('Orchestrator', subtask, subtask);
         const prompt = `Execute subtask: ${subtask}. Last result: ${lastResult.substring(0, 500)}. Return JSON with yState.`;
-        const result = await this.client.call({ model: route.model, prompt, systemPrompt: SOVEREIGN_SYSTEM_PROMPT });
+        const result = await this.client.call({ model: route.model, prompt, systemPrompt: SOVEREIGN_SYSTEM_PROMPT, domain: 'Orchestration', tier: route.tier });
         if (!result.ok) return result as Result<Plan>;
         try {
             const cleanJson = extractJson(result.value.response);
@@ -4222,7 +4276,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
             this.router.recordActuationReinforcement(actuationVerification);
 
             if (!actuationVerification.success) {
-                this.renderer.warn(`Ã°Å¸Å¡Â¨ [Proprioception] Actuation Mismatch: ${actuationVerification.details}`);
+                this.renderer.warn(`[ALERT] [Proprioception] Actuation Mismatch: ${actuationVerification.details}`);
                 // Future: Trigger recursive healing or metabolic friction increase
             } else {
                 this.renderer.success(`Ã¢Å“â€¦ [Proprioception] Actuation Verified.`);
@@ -4284,7 +4338,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
 
                 // Embed into VectorDB for semantic retrieval
                 await this.vectorDB.autoIndexFile(awarenessPath, 'global');
-                this.renderer.success(`Ã°Å¸Â§Â  [Cognitive Engram] Output synthesized into stateful VectorDB awareness.`);
+                this.renderer.success(`[BRAIN] [Cognitive Engram] Output synthesized into stateful VectorDB awareness.`);
             } catch (err) {
                 logger.error({ err }, 'Failed to persist stateful overwritten awareness');
             }
@@ -4322,7 +4376,8 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
             prompt: adversarialPrompt,
             systemPrompt: SOVEREIGN_SYSTEM_PROMPT,
             temperature: 0.3,
-            category: 'orchestration'
+            category: 'orchestration',
+            domain: 'SECURITY'
         });
 
         if (!res.ok) return ok(initialOutput);
@@ -4331,7 +4386,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
             return ok(initialOutput);
         }
 
-        this.renderer.warn('ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â [ADVERSARIAL] Clinical violations detected. Refining...');
+        this.renderer.warn('[WARN] [ADVERSARIAL] Clinical violations detected. Refining...');
         // For now, we return the audit as clinical feedback in the output to be handled by the next cycle
         // Future: Recursive execution
         return ok({
@@ -4341,7 +4396,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
     }
 
     // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
-    // PHASE 7: SOVEREIGN SELF-MODIFICATION Ã¢â‚¬â€ Autopoietic Closure
+    // PHASE 7: SOVEREIGN SELF-MODIFICATION -- Autopoietic Closure
     // The method that closes the loop. Uses existing components to enable
     // POG2 to modify itself through its own substrate.
     // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
@@ -4350,8 +4405,8 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
      * Self-modify the organism: create, extend, or heal components via divination-gated,
      * git-atomic, health-verified code generation.
      *
-     * Pipeline: Divination Ã¢â€ â€™ Generation Ã¢â€ â€™ Pre-flight Health Ã¢â€ â€™ Git Branch Ã¢â€ â€™ Build Check
-     *           Ã¢â€ â€™ Commit Ã¢â€ â€™ Merge Ã¢â€ â€™ Post-flight Health Ã¢â€ â€™ Regression Rollback Ã¢â€ â€™ Hexagram Inscription
+     * Pipeline: Divination -> Generation -> Pre-flight Health -> Git Branch -> Build Check
+     *           -> Commit -> Merge -> Post-flight Health -> Regression Rollback -> Hexagram Inscription
      */
     public async selfModify(request: {
         targetPath: string;
@@ -4427,7 +4482,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
             const model = request.modelOverride ?? route.model;
             const result = await this.client.call({
                 model,
-                prompt: `Generate a complete, production-ready TypeScript file for: ${request.intent}\n\nTarget path: ${request.targetPath}\nThis is a POG2 sovereign organism component. Follow these rules:\n1. Use real implementations Ã¢â‚¬â€ NO mocks, NO stubs, NO TODOs\n2. Export a class matching the filename\n3. Include a healthCheck() method returning { online: boolean; details: string }\n4. Use pino logger with hostname 'POG2'\n5. Follow existing patterns from the POG2 codebase\n\nOutput the complete file content:`,
+                prompt: `Generate a complete, production-ready TypeScript file for: ${request.intent}\n\nTarget path: ${request.targetPath}\nThis is a POG2 sovereign organism component. Follow these rules:\n1. Use real implementations -- NO mocks, NO stubs, NO TODOs\n2. Export a class matching the filename\n3. Include a healthCheck() method returning { online: boolean; details: string }\n4. Use pino logger with hostname 'POG2'\n5. Follow existing patterns from the POG2 codebase\n\nOutput the complete file content:`,
                 systemPrompt: 'You are a sovereign code generation substrate. Generate production-ready TypeScript only.',
                 temperature: 0.2,
                 category: 'code'
@@ -4491,7 +4546,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         // Ã¢â€â‚¬Ã¢â€â‚¬ 6. Build Verification Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         const build = await shell.execute({ command: 'npx tsc --noEmit', silent: true });
         if (!build.ok) {
-            this.renderer.error('Ã°Å¸â€Â´ Build failed Ã¢â‚¬â€ rolling back sovereign modification.');
+            this.renderer.error('Ã°Å¸â€Â´ Build failed -- rolling back sovereign modification.');
             await shell.execute({ command: `git checkout main 2>nul || git checkout master`, silent: true });
             await shell.execute({ command: `git branch -D ${branch}`, silent: true });
             return { ok: false, error: new Error(`Build verification failed: ${(build.error as Error).message}`) };
@@ -4499,7 +4554,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
 
         // Ã¢â€â‚¬Ã¢â€â‚¬ 7. Git Commit Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         await shell.execute({ command: 'git add -A', silent: true });
-        const commitMsg = `sov: ${request.operation} ${path.basename(request.targetPath)} Ã¢â‚¬â€ ${request.intent.substring(0, 60)} [${sym}]`;
+        const commitMsg = `sov: ${request.operation} ${path.basename(request.targetPath)} -- ${request.intent.substring(0, 60)} [${sym}]`;
         await shell.execute({ command: `git commit -m "${commitMsg}"`, silent: true });
 
         const commitResult = await shell.execute({ command: 'git rev-parse HEAD', silent: true });
@@ -4509,7 +4564,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         await shell.execute({ command: `git checkout main 2>nul || git checkout master`, silent: true });
         const merge = await shell.execute({ command: `git merge ${branch} --no-edit`, silent: true });
         if (!merge.ok) {
-            this.renderer.error('Ã°Å¸â€Â´ Merge conflict Ã¢â‚¬â€ branch preserved for manual resolution.');
+            this.renderer.error('Ã°Å¸â€Â´ Merge conflict -- branch preserved for manual resolution.');
             return { ok: false, error: new Error(`Merge failed for branch ${branch}. Resolve manually.`) };
         }
         await shell.execute({ command: `git branch -d ${branch}`, silent: true });
@@ -4519,14 +4574,14 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
         const afterOffline = afterHealth.filter(h => h.status !== 'ONLINE').length;
 
         if (afterOffline > beforeOffline) {
-            this.renderer.error(`Ã°Å¸â€Â´ Health regression detected (${beforeOffline} Ã¢â€ â€™ ${afterOffline} offline). Reverting commit.`);
+            this.renderer.error(`Ã°Å¸â€Â´ Health regression detected (${beforeOffline} -> ${afterOffline} offline). Reverting commit.`);
             await shell.execute({ command: `git revert ${commit} --no-edit`, silent: true });
             return { ok: false, error: new Error(`Health regression: ${afterOffline - beforeOffline} new offline nodes. Commit reverted.`) };
         }
 
         // Ã¢â€â‚¬Ã¢â€â‚¬ 10. Hexagram Inscription Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         hexagram.pushLine({
-            lineIndex: 5, // Top line Ã¢â‚¬â€ sovereign activity
+            lineIndex: 5, // Top line -- sovereign activity
             title: `Self-Mod: ${request.operation}`,
             content: `${path.basename(request.targetPath)} via ${sym} [${commit.substring(0, 7)}]`,
             state: YaoState.OldYang,
@@ -4559,14 +4614,14 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
                 const successCount = consequences.filter((c: any) => c.success).length;
                 pastSuccessful = successCount >= (consequences.length / 2);
             }
-        } catch (e) {}
+        } catch (_e) { /* Non-critical: consequence history may be empty */ }
 
         let presentPassing = false;
         try {
             const shell = new ShellEngine(this.renderer);
             const build = await shell.execute({ command: 'npx tsc --noEmit', silent: true });
             presentPassing = build.ok;
-        } catch (e) {}
+        } catch (_e) { /* Non-critical: tsc check is best-effort */ }
 
         const lowerIntent = intent.toLowerCase();
         const futureViable = lowerIntent.includes('heal') || lowerIntent.includes('fix') || lowerIntent.includes('refactor') || lowerIntent.includes('enable') || lowerIntent.includes('support');
@@ -4588,7 +4643,7 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
      * Analyzes task outcomes and extracts profound lessons.
      */
     private async conductCognitiveRetrospective(task: string, narrative: string, finalOutput: string, plan: Plan): Promise<void> {
-        this.renderer.info('\x1b[38;5;208m[Ã°Å¸Â§Â  Retrospective]\x1b[0m Distilling profound lessons...');
+        this.renderer.info('\x1b[38;5;208m[BRAIN] Retrospective]\x1b[0m Distilling profound lessons...');
 
         try {
             // 1. Get recent consequences (tool outcomes)
@@ -4632,7 +4687,8 @@ Output JSON ONLY:
                 model: this.config.fastPathModel,
                 prompt: reflectionPrompt,
                 systemPrompt: 'You are an advanced Meta-Cognitive Architect. Distill task outcomes into evolutionary wisdom.',
-                temperature: 0.3
+                temperature: 0.3,
+                domain: 'SYSTEM'
             });
 
             if (res.ok) {
@@ -4689,7 +4745,7 @@ Output JSON ONLY:
                         importance: 1
                     });
 
-                    this.renderer.success(`[Ã°Å¸Â§Â  Retrospective] Lesson anchored: ${insightData.lesson}`);
+                    this.renderer.success(`[BRAIN] Retrospective] Lesson anchored: ${insightData.lesson}`);
                 }
             }
         } catch (err) {
@@ -4797,3 +4853,4 @@ Output JSON ONLY:
         };
     }
 }
+

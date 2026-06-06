@@ -34,3 +34,4 @@ export function isTransversal(objectId: number): boolean {
     const interaction = OBJECT_INTERACTION_STORE[objectId];
     return interaction ? (interaction.type === 'LADDER' || interaction.type === 'CAVE' || interaction.type === 'PORTAL') : false;
 }
+

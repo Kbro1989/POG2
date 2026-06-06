@@ -135,3 +135,4 @@ export class JsonLogicInterpreter implements GameplayModule {
         return false;
     }
 }
+

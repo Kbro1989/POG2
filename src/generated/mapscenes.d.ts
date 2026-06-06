@@ -9,3 +9,4 @@ export type mapscenes = {
 	unknown_4?: true | null
 	unknown_5?: true | null
 };
+

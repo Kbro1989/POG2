@@ -9,3 +9,4 @@ export type mapsquare_underlays = {
 	unknown_0x04?: true | null
 	unknown_0x05?: true | null
 };
+

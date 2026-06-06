@@ -111,7 +111,16 @@ export function JsonSearch(p: { mode: keyof typeof cacheFileJsonModes, cache: En
 			<div>{loaded ? `${filtered.length} Matches` : "Loading..."}</div>
 			<div style={{ flex: "1", overflowY: "auto" }}>
 				{filtered.slice(0, 500).map((q, i) => (
-					<div key={q.$fileid} onClick={e => p.onSelect(q.$fileid, q)}>{q.$fileid} - {filters.map(f => getprop(q, f.path, 0).next().value + "").join(", ")}</div>
+					<div key={q.$fileid} onClick={e => p.onSelect(q.$fileid, q)} style={{ borderBottom: "1px solid #444", padding: "4px" }}>
+						<div style={{ fontWeight: "bold" }}>{q.$fileid} - {filters.map(f => getprop(q, f.path, 0).next().value + "").join(", ")}</div>
+						<div style={{ fontSize: "0.8em", color: "#aaa" }}>
+                            {q.name && <span>{q.name} | </span>}
+                            {q.description && <span>{q.description} | </span>}
+                            {q.models && <span>Models: {q.models.length} | </span>}
+                            {q.animation_group && <span>Anim: {q.animation_group} | </span>}
+                            {q.scripts && <span>Scripts: {q.scripts.length}</span>}
+                        </div>
+					</div>
 				))}
 			</div>
 		</React.Fragment>

@@ -94,3 +94,4 @@ export type achievements = {
 	unknown_0x25?: number | null
 	unknown_0x26?: true | null
 };
+

@@ -48,3 +48,4 @@ runRecovery().catch(err => {
     logger.error({ err }, 'Recovery failed.');
     process.exit(1);
 });
+

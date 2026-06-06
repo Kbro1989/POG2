@@ -1385,3 +1385,4 @@ parserFunctions = {
 	...hardcodes,
 	...parserPrimitives
 }
+

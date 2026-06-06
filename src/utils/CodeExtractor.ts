@@ -1,4 +1,4 @@
-﻿/**
+/**
  * CodeExtractor - Extracting pure code from markdown-wrapped LLM responses.
  * 
  * Philosophy: Absolute extraction. No markdown boilerplate in the final substrate.
@@ -41,3 +41,4 @@ export function ensurePureCode(text: string): string {
     const extract = extractCodeBlock(text);
     return extract || text.trim();
 }
+

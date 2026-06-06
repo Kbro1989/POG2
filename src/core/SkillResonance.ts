@@ -1,4 +1,4 @@
-﻿import { YaoState, EmotionalState } from './models.js';
+import { YaoState, EmotionalState } from './models.js';
 
 export interface SkillResonance {
     id: number;
@@ -46,3 +46,4 @@ export const SKILL_RESONANCE_MAP: Record<number, SkillResonance> = {
 export function getSkillResonanceByName(name: string): SkillResonance | undefined {
     return Object.values(SKILL_RESONANCE_MAP).find(s => s.name.toLowerCase() === name.toLowerCase());
 }
+

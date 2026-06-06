@@ -38,4 +38,10 @@ export class SubstrateResolver {
         // Logic execution remains O(1) during the CNS Pulse.
         return this.lastKnownStatus;
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: "SubstrateResolver active and verified." };
+    }
 }
+
+

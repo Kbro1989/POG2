@@ -1,11 +1,11 @@
-﻿import { Renderer } from '../ui/Renderer.js';
+import { Renderer } from '../ui/Renderer.js';
 import { type Todo, type TodoStatus, ok } from '../core/models.js';
 import { SovereignProprioception } from '../utils/SovereignProprioception.js';
 import { join } from 'path';
 import type { TodoCloudLimb } from '../limbs/spatial/TodoCloudLimb.js';
 
 /**
- * TodoEngine Ã¢â‚¬â€ Real task management and checklisting substrate.
+ * TodoEngine â€” Real task management and checklisting substrate.
  * Ported from gemini-cli's write-todos pattern.
  * Allows the brain to maintain a stateful checklist during complex executions.
  */
@@ -57,7 +57,7 @@ export class TodoEngine {
 
     private getStatusIcon(status: TodoStatus): string {
         switch (status) {
-            case 'completed': return '\x1b[32m[Ã¢Å“â€œ]\x1b[0m';
+            case 'completed': return '\x1b[32m[âœ“]\x1b[0m';
             case 'in_progress': return '\x1b[33m[>]\x1b[0m';
             case 'cancelled': return '\x1b[31m[x]\x1b[0m';
             default: return '[ ]';
@@ -71,3 +71,4 @@ export class TodoEngine {
         };
     }
 }
+

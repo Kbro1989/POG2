@@ -12,7 +12,7 @@ async function runCombatDemo() {
     logger.info('⚔️ INITIATING COMBAT GROUNDING DEMO');
 
     // 1. Singleton Preparation
-    HexagramManager.initializeMock();
+    HexagramManager.initializeSimulation();
     const config = getDefaultSovereignConfig();
     const renderer = new (Renderer as any)(); // Mocking minimal renderer 
     const router = new TernaryRouter(config);
@@ -86,3 +86,4 @@ async function runCombatDemo() {
 runCombatDemo().catch(err => {
     logger.error({ err }, 'Combat Demo CRASHED.');
 });
+

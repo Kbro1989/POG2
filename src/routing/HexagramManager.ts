@@ -79,7 +79,7 @@ export class HexagramManager extends EventEmitter {
         });
     }
     private static instance: HexagramManager | undefined;
-    private static mode: 'production' | 'mock' = 'production';
+    private static mode: 'production' | 'simulation' = 'production';
     private lines: ContextCard[] = [];
     private readonly projectId: string;
 
@@ -90,16 +90,16 @@ export class HexagramManager extends EventEmitter {
         return HexagramManager.instance;
     }
 
-    public static initializeMock(): void {
-        HexagramManager.mode = 'mock';
-        // Create a minimal mock instance that doesn't require a vectorDB
+    public static initializeSimulation(): void {
+        HexagramManager.mode = 'simulation';
+        // Create a simulation instance — real HexagramManager logic, no vectorDB substrate required
         if (!HexagramManager.instance) {
-            HexagramManager.instance = new HexagramManager(null, 'mock-project');
+            HexagramManager.instance = new HexagramManager(null, 'simulation-substrate');
         }
     }
 
-    public static isMock(): boolean {
-        return HexagramManager.mode === 'mock';
+    public static isSimulation(): boolean {
+        return HexagramManager.mode === 'simulation';
     }
 
     public static resetInstance(): void {
@@ -810,7 +810,7 @@ Respond in JSON ONLY:
             pool[future.emotion] = (pool[future.emotion] || 0) + 0.6;
         }
 
-        // Somatic Metabolic Influence (Mock for now, can be wired to system sensors)
+        // Somatic Metabolic Influence — real YaoState-driven simulation of emotional arousal from changing lines
         // If many lines are "Old" (Changing), increase Agitation or Excitement
         const changingLines = this.lines.filter(l => l.state === YaoState.OldYang || l.state === YaoState.OldYin || l.state === YaoState.OldMixed).length;
         if (changingLines >= 3) {
@@ -820,6 +820,69 @@ Respond in JSON ONLY:
         }
 
         return pool;
+    }
+
+    /**
+     * getNumericId — Returns the current hexagram's numeric I Ching ID (1-64)
+     * by looking up the current interpretation from the HEXAGRAM_REGISTRY.
+     */
+    public getNumericId(): number {
+        const interpretation = this.getInterpretation();
+        return interpretation.id;
+    }
+
+    /**
+     * getActiveLimbSet — Returns the list of limb names permitted to execute
+     * in the current hexagram state. Combines brainstem defaults, permission-gated
+     * limb groups, and hexagram-specific engine focus overrides.
+     */
+    public getActiveLimbSet(): string[] {
+        const permissions = this.getPermissions();
+        const interpretation = this.getInterpretation();
+
+        // Brainstem limbs — always active regardless of hexagram state
+        const active: string[] = [
+            'OrchestrateEngine',
+            'TernaryRouter',
+            'CanonicalClock',
+            'HexagramManager',
+            'MetabolicEngine',
+            'ShadowEngine',
+            'CognitiveImmunology'
+        ];
+
+        // Permission-gated limb groups
+        if (permissions.allowForensics) {
+            active.push('CacheForensicsLimb', 'WorldForensicsLimb');
+        }
+        if (permissions.allowPedagogy) {
+            active.push('GutenbergLimb', 'StoryboardLimbV2', 'PedagogyLimb');
+        }
+        if (permissions.allowPatternExtraction) {
+            active.push('GhostSplatEngine', 'DiscoveryEngine', 'SpatialRadarEngine');
+        }
+        if (permissions.allowMemoryConsolidation) {
+            active.push('MemoryConsolidationEngine', 'RelicLimb', 'VectorDB');
+        }
+        if (permissions.allowClinicalAudit) {
+            active.push('BioIntelligenceLimb', 'NodeTester', 'PulseMonitor');
+        }
+        if (permissions.allowSubstrateIngestion) {
+            active.push('CacheLearningLimb', 'SovereignIngestionEngine');
+        }
+        if (permissions.allowInvariantCompilation) {
+            active.push('InvariantCompiler', 'EpistemicVerification');
+        }
+
+        // Hexagram-specific additions from gameplay context
+        if (interpretation.gameplay?.engineFocus) {
+            for (const engine of interpretation.gameplay.engineFocus) {
+                active.push(engine);
+            }
+        }
+
+        // Deduplicate
+        return [...new Set(active)];
     }
 
     private calculateHexagramId(cards: ContextCard[], future: boolean): string {
@@ -847,3 +910,4 @@ Respond in JSON ONLY:
         return 'Balanced';
     }
 }
+

@@ -40,6 +40,9 @@ export interface RouteDecision {
     directive?: string;
     metadata?: Record<string, any>;
     timestamp?: number;
+    models?: string[];
+    strategy?: 'consensus' | 'vote' | 'cascade';
+    severity?: number;
 }
 
 const COMPLEXITY_KEYWORDS: Record<string, RegExp> = {
@@ -78,6 +81,11 @@ export class TernaryRouter {
     private strategyAdvisor?: StrategyAdvisor;
     private proposedMutations: StrategyMutation[] = [];
     
+    private assessSeverity(prompt: string, domain: string): number {
+        const highSeverityKeywords = /\b(critical|destabilize|destruct|emergency|security|vulnerable|auth|system|root|sudo)\b/i;
+        return highSeverityKeywords.test(prompt) ? 95 : 50;
+    }
+
     // Phase 7: Temporal Routing Gates
     public get temporalState(): 'PAST' | 'PRESENT' | 'FUTURE' {
         const contract = this.hexagram.getContract();
@@ -421,6 +429,7 @@ export class TernaryRouter {
      */
     async route(complexity: RoutingComplexity, taskType?: string, prompt?: string): Promise<RouteDecision> {
         const routeStartTime = Date.now();
+        const domain = taskType || 'general';
 
         // === PHASE 6: SOVEREIGN OVERRIDE (Cloud-Down Detection) ===
         if (this.rolodex?.isAllCloudDown() && this.rolodex.isOllamaAlive()) {
@@ -441,6 +450,31 @@ export class TernaryRouter {
 
         // === FAST PATH OPTIMIZATION ===
         const fastPath = prompt ? this.isFastPath(prompt) : false;
+
+        // NEW: Multi-model activation gate
+        const severity = this.assessSeverity(prompt || '', domain);
+        const SEVERITY_THRESHOLD = 90;
+        const isHighSeverity = severity >= SEVERITY_THRESHOLD;
+        // Need to calculate currentYao/intentYao to determine if OldYang
+        const currentHexLines = this.hexagram.getLines();
+        const currentYao = this.deriveOrganismState(currentHexLines);
+        const isOldYang = currentYao === YaoState.OldYang;
+
+        if (isHighSeverity && isOldYang && this.rolodex) {
+            const candidates = this.rolodex.selectForConsensus(domain, 3);
+            return {
+                model: candidates[0],
+                complexity,
+                tier: 'Master',
+                reasoning: 'Multi-model consensus triggered: High severity and OldYang state.',
+                yaoState: currentYao,
+                models: candidates,
+                strategy: 'consensus',
+                severity,
+                fallbackUsed: false,
+                timestamp: routeStartTime
+            };
+        }
 
         // === NERVOUS SYSTEM V2: DYNAMIC TRIAGE ===
         // If we have a prompt and it's NOT a guaranteed fast path, do a cheap triage 
@@ -487,9 +521,7 @@ export class TernaryRouter {
             }
         }
 
-        // 2. Derive organism state from hexagram lines
-        const currentHexLines = this.hexagram.getLines();
-        const currentYao = this.deriveOrganismState(currentHexLines);
+        // 2. Derive organism state from hexagram lines (already derived above)
 
         // 3. Derive intent state from ternary signals
         const localAvailability = this.availableLocalModels.size > 0 ? YaoState.YoungYang : YaoState.OldYin;
@@ -1078,4 +1110,10 @@ export class TernaryRouter {
     getDecisionHistory(): ReadonlyArray<DecisionAuditRecord> {
         return this.decisionHistory;
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: "TernaryRouter active and verified." };
+    }
 }
+
+

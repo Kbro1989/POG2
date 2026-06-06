@@ -298,3 +298,4 @@ export class CombatHUDBridge {
         this.broadcast({ type: 'HITSPLAT', value, kind, entityId });
     }
 }
+

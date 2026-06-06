@@ -89,3 +89,4 @@ export const ${target.name}: Record<number, any> = {};\n\n`;
         throw e;
     }
 }
+

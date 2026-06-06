@@ -1,4 +1,4 @@
-﻿import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, resolve } from 'path';
 import { createLogger } from '../utils/logger.js';
 import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
@@ -57,3 +57,4 @@ main().catch(err => {
     logger.error({ err }, 'Arena synthesis failed');
     process.exit(1);
 });
+

@@ -1,4 +1,4 @@
-﻿import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
 import { type Result, ok } from '../../core/models.js';
 import type { InteractionRecord } from '../../utils/TrainingCollector.js';
 import type { ModelClient } from '../../clients/ModelClient.js';
@@ -16,7 +16,7 @@ export interface OutcomeScore {
 }
 
 /**
- * OutcomeScorer â€” Evaluates technical and semantic quality of a model's output.
+ * OutcomeScorer — Evaluates technical and semantic quality of a model's output.
  * This provides the "Experience" signal to the StrategyAdvisor.
  */
 export class OutcomeScorer {
@@ -125,3 +125,4 @@ export class OutcomeScorer {
         return { match: record.success, confidence: 1.0 };
     }
 }
+

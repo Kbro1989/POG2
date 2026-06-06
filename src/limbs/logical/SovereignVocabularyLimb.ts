@@ -59,3 +59,4 @@ export class SovereignVocabularyLimb {
         return this.categorize(action) === InteractionCategory.TRANSVERSAL;
     }
 }
+

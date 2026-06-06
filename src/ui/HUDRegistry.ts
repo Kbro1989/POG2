@@ -60,3 +60,4 @@ export const HUD_REGISTRY: HUDDefinition[] = [
 export function getHUDForInterface(id: number): HUDDefinition | undefined {
     return HUD_REGISTRY.find(h => h.id === id);
 }
+

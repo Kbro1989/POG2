@@ -8,3 +8,4 @@ export type environments = {
 	model?: number | null
 	unk06?: number | null
 };
+

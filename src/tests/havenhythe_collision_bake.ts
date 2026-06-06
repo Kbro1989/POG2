@@ -1,4 +1,4 @@
-﻿/**
+/**
  * HAVENHYTHE COLLISION BAKE - Phase 1 Hybrid Synthesis
  * 
  * Objective: Ingest raw m_58_52 placement metadata and bake explicit
@@ -13,9 +13,9 @@ import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('HavenhytheCollisionBake');
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════
 // CONFIGURATION
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════
 
 const HAVENHYTHE_BOUNDS = {
   xMin: 3667,
@@ -46,9 +46,9 @@ const CELL = {
   UNKNOWN: '?'        // Unclassified
 };
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════
 // CORE CLASSES
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════
 
 class CollisionMatrix {
   private grid: Map<string, string> = new Map();
@@ -145,9 +145,9 @@ class CollisionMatrix {
   }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════
 // ENTITY CLASSIFICATION ENGINE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════
 
 class EntityClassifier {
   // Object ID ranges and their collision profiles
@@ -226,9 +226,9 @@ class EntityClassifier {
   }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════
 // COLLISION BAKE ENGINE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════
 
 class CollisionBakeEngine {
   private matrix: CollisionMatrix;
@@ -268,7 +268,7 @@ class CollisionBakeEngine {
     
     // Mark high-density zones as terrain
     for (const [key, count] of densityMap.entries()) {
-      if (count > 5) { // Threshold: 5+ objects in 4Ã—4 tile area
+      if (count > 5) { // Threshold: 5+ objects in 4×4 tile area
         const [plane, chunkX, chunkY] = key.split(':').map(Number);
         // Mark entire chunk as terrain
         for (let dy = 0; dy < 4; dy++) {
@@ -317,7 +317,7 @@ class CollisionBakeEngine {
     if (smuggler) {
       logger.info(`Found "Dead Smuggler" at (${smuggler.x}, ${smuggler.y}, ${smuggler.plane})`);
       
-      // Create 3Ã—3 interactable zone around smuggler
+      // Create 3×3 interactable zone around smuggler
       // Center is walkable (can stand on), perimeter is OBJECT (can interact from)
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
@@ -347,9 +347,9 @@ class CollisionBakeEngine {
   }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════
 // VALIDATION ENGINE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════
 
 class InsertionValidator {
   private matrix: CollisionMatrix;
@@ -361,9 +361,9 @@ class InsertionValidator {
   validate(target: typeof TARGET_INSERTION): ValidationResult {
     const cell = this.matrix.get(target.x, target.y, target.plane);
     
-    logger.info(`\nâ•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—`);
-    logger.info(`â•‘       HAVENHYTHE INSERTION VALIDATION REPORT              â•‘`);
-    logger.info(`â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•`);
+    logger.info(`\n╔════════════════════════════════════════════════════════════╗`);
+    logger.info(`║       HAVENHYTHE INSERTION VALIDATION REPORT              ║`);
+    logger.info(`╚════════════════════════════════════════════════════════════╝`);
     logger.info(`Target: (${target.x}, ${target.y}, Plane ${target.plane})`);
     logger.info(`Cell Type: [${cell}]`);
     
@@ -379,12 +379,12 @@ class InsertionValidator {
     // Check direct walkability
     if (cell === CELL.WALKABLE || cell === CELL.OBJECT || cell === 'S') {
       result.isWalkable = true;
-      logger.info(`Status: âœ… WALKABLE - Avatar can spawn here`);
+      logger.info(`Status: ✅ WALKABLE - Avatar can spawn here`);
       return result;
     }
     
     // If blocked, find nearest clear tile
-    logger.info(`Status: âŒ BLOCKED - Finding nearest walkable tile...`);
+    logger.info(`Status: ❌ BLOCKED - Finding nearest walkable tile...`);
     result.nearestClearTile = this.findNearestWalkable(target);
     
     if (result.nearestClearTile) {
@@ -450,15 +450,15 @@ interface ValidationResult {
   pathFromBarrows: string[];
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════
 // MAIN EXECUTION
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════════
 
 async function main() {
-  logger.info('â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—');
-  logger.info('â•‘     HAVENHYTHE COLLISION BAKE - PHASE 1 HYBRID SYNTHESIS    â•‘');
-  logger.info('â•‘              Region 14900 | Mapsquare (58, 52)              â•‘');
-  logger.info('â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n');
+  logger.info('╔════════════════════════════════════════════════════════════╗');
+  logger.info('║     HAVENHYTHE COLLISION BAKE - PHASE 1 HYBRID SYNTHESIS    ║');
+  logger.info('║              Region 14900 | Mapsquare (58, 52)              ║');
+  logger.info('╚════════════════════════════════════════════════════════════╝\n');
   
   try {
     // Step 1: Load raw metadata
@@ -492,18 +492,18 @@ async function main() {
     writeFileSync(OUTPUT_VALIDATION_PATH, JSON.stringify(validation, null, 2));
     
     // Final summary
-    logger.info('\nâ•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—');
-    logger.info('â•‘                  BAKE COMPLETE                              â•‘');
-    logger.info(`â•‘  Matrix Size: ${HAVENHYTHE_BOUNDS.xMax - HAVENHYTHE_BOUNDS.xMin + 1}Ã—${HAVENHYTHE_BOUNDS.yMax - HAVENHYTHE_BOUNDS.yMin + 1}Ã—${HAVENHYTHE_BOUNDS.planeMax - HAVENHYTHE_BOUNDS.planeMin + 1} tiles      â•‘`);
-    logger.info(`â•‘  Total Cells: ${(matrix as any).grid?.size || 'calculated'}                          â•‘`);
-    logger.info(`â•‘  Target (${TARGET_INSERTION.x}, ${TARGET_INSERTION.y}): ${validation.isWalkable ? 'WALKABLE âœ…' : 'BLOCKED âŒ'}              â•‘`);
-    logger.info('â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n');
+    logger.info('\n╔════════════════════════════════════════════════════════════╗');
+    logger.info('║                  BAKE COMPLETE                              ║');
+    logger.info(`║  Matrix Size: ${HAVENHYTHE_BOUNDS.xMax - HAVENHYTHE_BOUNDS.xMin + 1}×${HAVENHYTHE_BOUNDS.yMax - HAVENHYTHE_BOUNDS.yMin + 1}×${HAVENHYTHE_BOUNDS.planeMax - HAVENHYTHE_BOUNDS.planeMin + 1} tiles      ║`);
+    logger.info(`║  Total Cells: ${(matrix as any).grid?.size || 'calculated'}                          ║`);
+    logger.info(`║  Target (${TARGET_INSERTION.x}, ${TARGET_INSERTION.y}): ${validation.isWalkable ? 'WALKABLE ✅' : 'BLOCKED ❌'}              ║`);
+    logger.info('╚════════════════════════════════════════════════════════════╝\n');
     
     if (!validation.isWalkable && validation.nearestClearTile) {
-      logger.info('â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—');
-      logger.info('â•‘           AUTO-ADJUSTMENT RECOMMENDATION                    â•‘');
-      logger.info(`â•‘  Use: (${validation.nearestClearTile.x}, ${validation.nearestClearTile.y}) instead          â•‘`);
-      logger.info('â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•');
+      logger.info('╔════════════════════════════════════════════════════════════╗');
+      logger.info('║           AUTO-ADJUSTMENT RECOMMENDATION                    ║');
+      logger.info(`║  Use: (${validation.nearestClearTile.x}, ${validation.nearestClearTile.y}) instead          ║`);
+      logger.info('╚════════════════════════════════════════════════════════════╝');
     }
     
   } catch (error) {
@@ -513,3 +513,4 @@ async function main() {
 }
 
 main();
+

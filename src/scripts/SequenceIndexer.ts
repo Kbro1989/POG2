@@ -61,3 +61,4 @@ async function index() {
 index().catch(err => {
     logger.error({ err }, 'Kinematic Indexing failed.');
 });
+

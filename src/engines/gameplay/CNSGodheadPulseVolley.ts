@@ -237,6 +237,10 @@ export class CNSGodheadPulseVolley {
             name: 'CNSGodheadPulseVolley'
         });
 
+        // Start the authoritative wall-clock driver.
+        // CanonicalClock.startDriving() owns the setInterval — CNS does NOT self-schedule.
+        CanonicalClock.getInstance().startDriving();
+
         // POG2 Thinking Sub-loop (Async User-behind-Player)
         this.startPog2ThinkingLoop();
     }
@@ -266,10 +270,25 @@ export class CNSGodheadPulseVolley {
         const start = performance.now();
         this.tickCount++;
 
-        // CANONICAL CLOCK ADVANCEMENT — This is the heartbeat.
-        // Every tick advances the deterministic clock by one phase (300ms).
-        // All downstream simulatedNow() and rng() calls derive from this.
-        CanonicalClock.getInstance().pulse();
+        // Daily Metabolic Cycle (Git branch GC and other cleanups)
+        const TICKS_PER_DAY = 288000;
+        if (this.tickCount % TICKS_PER_DAY === 0 && this.nodeTester) {
+            const selfHealing = (this.nodeTester as any).limbs?.['SelfHealingEngine'];
+            if (selfHealing && typeof selfHealing.selfClean === 'function') {
+                logger.info('[CNS] Running scheduled daily metabolic Git branch GC cleanup...');
+                selfHealing.selfClean({ branchMaxAgeDays: 14, dryRun: true }).then((res: any) => {
+                    logger.info({ deleted: res.deleted, skipped: res.skipped }, '[CNS] Daily Git branch GC cleanup completed');
+                }).catch((err: any) => {
+                    logger.error({ err: err.message }, '[CNS] Daily Git branch GC cleanup failed');
+                });
+            } else {
+                logger.warn('[CNS] SelfHealingEngine not found in NodeTester registry for daily GC.');
+            }
+        }
+
+        // CANONICAL CLOCK NOTE: clock.pulse() is intentionally NOT called here.
+        // The CanonicalClock wall-clock driver (startDriving) already advanced the clock
+        // before invoking this callback. CNS is a pure reactor — it does not drive time.
 
         // Swap deterministic queues at start of tick
         this.currentTickQueues = { ...this.nextTickQueues };
@@ -437,14 +456,11 @@ export class CNSGodheadPulseVolley {
             }
 
         } catch (err) {
-            logger.error({ err }, '[CNS GODHEAD] Pulse failure â€” potential world desync.');
+            logger.error({ err }, '[CNS GODHEAD] Pulse failure — potential world desync.');
         } finally {
             const duration = performance.now() - start;
-
-            // Self-Correcting Scheduling (Drift Compensation)
-            const nextDelay = Math.max(0, this.TICK_INTERVAL - duration);
-
             if (duration > this.BUDGET_MS) {
+                // Over budget warning — timing is owned by CanonicalClock, not us
                 logger.warn({ duration, limit: this.TICK_INTERVAL }, 'CNS Tick Overflow — authoritative simulation drift detected.');
             }
         }
@@ -1179,3 +1195,4 @@ export class CNSGodheadPulseVolley {
         };
     }
 }
+

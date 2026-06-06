@@ -119,3 +119,4 @@ export class BarrowsInterpreter implements GameplayModule {
         return `[BARROWS] Unknown action. Try: 'dig <mound>', 'search', 'kill', 'chest'`;
     }
 }
+

@@ -109,6 +109,10 @@ export class CanonicalClock {
 
     private tickListeners: Array<(tick: number, phase: number, time: number) => void> = [];
 
+    /** Wall-clock driver state — owned exclusively by CanonicalClock */
+    private driverInterval: ReturnType<typeof setInterval> | null = null;
+    private playerPhaseCount = 0; // counts 300ms phases; every 2nd = game tick
+
     private constructor() {
         this.realBootTime = performance.now();
         this.realTickStart = this.realBootTime;
@@ -268,6 +272,71 @@ export class CanonicalClock {
 
     public registerPulse(pulse: { domain: string, callback: Function, priority: number, name: string }): void {
         this.tickListeners.push(pulse.callback as any);
+        logger.debug({ name: pulse.name, domain: pulse.domain }, 'Pulse listener registered with CanonicalClock.');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // WALL-CLOCK DRIVER — Sole source of timing authority
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * startDriving() — Starts the authoritative 300ms wall-clock interval.
+     *
+     * This is the ONLY place in the system that calls setInterval for tick timing.
+     * Every 300ms: fires T2 player phase pulse.
+     * Every 600ms (every 2nd fire): fires T1 game tick pulse first, then T2.
+     * All registered pulse listeners are notified after each advance.
+     *
+     * CNSGodheadPulseVolley and all other consumers must NOT call pulse() internally.
+     * They register via registerPulse() and react to callbacks.
+     */
+    public startDriving(): void {
+        CanonicalClock.assertBootstrapped();
+        if (this.driverInterval !== null) {
+            logger.warn('CanonicalClock driver already running. Duplicate startDriving() call ignored.');
+            return;
+        }
+
+        logger.info('CanonicalClock wall-clock driver started. T1=600ms T2=300ms.');
+        this.playerPhaseCount = 0;
+
+        this.driverInterval = setInterval(() => {
+            const isGameTick = (this.playerPhaseCount % 2) === 0;
+            this.playerPhaseCount++;
+
+            if (isGameTick) {
+                // T1: advance game tick (resets playerPhase to 0, fires T1 listeners)
+                this.pulse(TickTier.GAME);
+            } else {
+                // T2: advance player phase
+                this.pulse(TickTier.PLAYER);
+            }
+
+            // Notify all registered pulse callbacks
+            const coord = this.getCoordinate();
+            for (const listener of this.tickListeners) {
+                try {
+                    listener(coord.gameTick, coord.playerPhase, this.simulatedNow());
+                } catch (err) {
+                    logger.error({ err }, 'CanonicalClock: pulse listener threw.');
+                }
+            }
+        }, RS_TICKS.PLAYER_PHASE_MS);
+    }
+
+    /**
+     * stopDriving() — Clears the wall-clock interval. Used for clean shutdown.
+     */
+    public stopDriving(): void {
+        if (this.driverInterval !== null) {
+            clearInterval(this.driverInterval);
+            this.driverInterval = null;
+            logger.info('CanonicalClock wall-clock driver stopped.');
+        }
+    }
+
+    public isDriving(): boolean {
+        return this.driverInterval !== null;
     }
 
     public isTickingPermitted(): boolean {
@@ -466,3 +535,4 @@ export class SeededRNG {
 
 /** Singleton export for convenience */
 export const clock = CanonicalClock.getInstance();
+

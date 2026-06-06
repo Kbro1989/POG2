@@ -243,3 +243,4 @@ export class KBDRoarCinemaV2 {
 
 const cinema = new KBDRoarCinemaV2();
 cinema.executeFullPipeline().catch(console.error);
+

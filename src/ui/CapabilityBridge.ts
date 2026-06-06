@@ -40,3 +40,4 @@ export class CapabilityBridge {
         // The ability then routes the payload through the Switchboard to the MCP server.
     }
 }
+

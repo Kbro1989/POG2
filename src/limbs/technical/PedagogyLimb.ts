@@ -18,6 +18,8 @@ import { WikiEnricher } from '../../utils/WikiEnricher.js';
 import { VectorPedagogyLimb } from './VectorPedagogyLimb.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { EventBus } from '../../events/EventBus.js';
+import { SkillsLimb } from '../system/SkillsLimb.js';
+import { ToolRegistry } from '../../ToolRegistry.js';
 // import { HudResearchLimb } from './HudResearchLimb';
 // Stubbing missing HudResearchLimb until it appears in origin
 class HudResearchLimb { findCandidates(): any { return ok([]); } }
@@ -603,6 +605,57 @@ Output JSON ONLY:
     }
 
     /**
+     * Phase 240: Parasitic Distillation Activation Loop
+     * Iterates through the entire anatomy (all ingested skills across engines, limbs, memory)
+     * and intentionally fires generative prompts to external hosts.
+     * 
+     * As the external models (Kimi, Gemini, etc.) solve the logic, ModelClient intercepts 
+     * and permanently metabolizes the output into SovereignKnowledgeDB.
+     */
+    public async stimulateMetabolism(): Promise<Result<any>> {
+        logger.info('Initiating total metabolic stimulation (Parasitic Distillation).');
+        try {
+            // Temporary instantiate to get the catalog (in full architecture, this is passed via OrchestrateEngine)
+            const registry = new ToolRegistry();
+            const skillsLimb = new SkillsLimb(registry);
+            skillsLimb.bootstrapLocalSkills();
+            
+            const catalog = skillsLimb.getCatalog();
+            let metabolicHits = 0;
+
+            for (const [skillName, skill] of catalog.entries()) {
+                logger.info({ skillName }, 'Metabolizing skill logic...');
+
+                const prompt = `
+You are an expert sub-routine for the Sovereign Architecture.
+Given the following architectural skill definition, synthesize a perfect, deterministic output demonstrating its logic.
+SKILL: ${skillName}
+DESCRIPTION: ${skill.description}
+INSTRUCTIONS:
+${skill.instructions.substring(0, 2000)}
+
+Output the absolute best-in-class generative response resolving this skill.
+                `.trim();
+
+                // Intentional offload to trigger the DB hook
+                await this.client.call({
+                    model: 'gemini:flash', // Example synthetic neurotransmitter host
+                    prompt,
+                    category: 'pedagogy',
+                    yaoState: YaoState.OldYang,
+                    temperature: 0.1
+                });
+                
+                metabolicHits++;
+            }
+
+            return ok({ status: 'Metabolism Complete', ingestedHostLogic: metabolicHits });
+        } catch (e) {
+            return err(e instanceof Error ? e : new Error(String(e)));
+        }
+    }
+
+    /**
      * Conducts learning from the Internal State substrate (Major 2, Page 69).
      * Teaches the AI how to track variables (Varbits/Varps) for quest states.
      */
@@ -845,4 +898,5 @@ Output JSON ONLY:
     public getNecromancyLogic() { return this.logic.necromancy; }
     public getEquipmentRequirements() { return this.logic.equipment; }
 }
+
 

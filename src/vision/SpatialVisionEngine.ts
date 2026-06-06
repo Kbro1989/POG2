@@ -1,5 +1,5 @@
-﻿import { SovereignEye } from '../utils/SovereignEye.js';
-import { createLogger } from '../../utils/logger.js';
+import { SovereignEye } from '../utils/SovereignEye.js';
+import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('SpatialVisionEngine');
 

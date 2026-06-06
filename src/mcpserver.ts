@@ -13,9 +13,34 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+import { loadConfig } from "./config/SovereignConfig.js";
+import { TernaryRouter } from "./routing/TernaryRouter.js";
+import { Renderer } from "./ui/Renderer.js";
+import { OrchestrateEngine } from "./engines/OrchestrateEngine.js";
+import { HexagramManager } from "./routing/HexagramManager.js";
+import { join } from "path";
+import { homedir } from "os";
+
+// Prevent standard logs from polluting stdout, which MCP relies on
+const originalConsoleLog = console.log;
+console.log = function(...args) { process.stderr.write(args.join(' ') + '\n'); };
+console.info = console.log;
+
+const CONFIG_DIR = join(homedir(), '.POG2-cli');
+const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
+
 const logger = createLogger('MCPBridge');
-const registry = new ToolRegistry();
-const modelClient = new ModelClient({} as any);
+const config = loadConfig(CONFIG_FILE);
+
+// HexagramManager must be instantiated before TernaryRouter,
+// whose constructor calls HexagramManager.getInstance().
+const hexagram = new HexagramManager(null, process.cwd());
+
+const router = new TernaryRouter(config);
+const renderer = new Renderer();
+const engine = new OrchestrateEngine(config, router, renderer);
+const registry = engine.getRegistry();
+const modelClient = new ModelClient(config, router);
 const training = TrainingCollector.getInstance();
 const compressor = CompressionEngine.getInstance();
 
@@ -175,3 +200,4 @@ main().catch((error) => {
   logger.error({ error }, 'Fatal MCP Server Error');
   process.exit(1);
 });
+

@@ -19,3 +19,4 @@ bridge.register(LootResolutionEngineContract);
 
 // Connect to WorldDO
 bridge.connect('wss://pog2-world-do.kristain33rs.workers.dev/ws');
+

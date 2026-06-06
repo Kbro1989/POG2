@@ -1,4 +1,4 @@
-﻿/**
+/**
  * NeuralLimb Interface - The contract for all specialized limbs
  */
 
@@ -69,3 +69,4 @@ export interface NeuralLimb {
      */
     healthCheck?(): { online: boolean; details?: string } | Promise<{ online: boolean; details?: string }>;
 }
+

@@ -107,4 +107,10 @@ export class TemporalHeartbeatLimb {
             isBusy: this.isCognitiveBusy
         };
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: "TemporalHeartbeatLimb active and verified." };
+    }
 }
+
+

@@ -287,3 +287,4 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         passthroughEnabled: true
     }
 };
+

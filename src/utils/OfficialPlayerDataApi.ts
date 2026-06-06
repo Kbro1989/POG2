@@ -120,7 +120,7 @@ export class OfficialPlayerDataApi {
     const skills = Array.from(hiscores.entries())
       .filter(([name]) => name !== 'Overall')
       .map(([name, entry]) => ({
-        id: Object.entries(SKILL_NAMES).find(([_, n]) => n === name)?.[0] as number || -1,
+        id: Number(Object.entries(SKILL_NAMES).find(([_, n]) => n === name)?.[0]) || -1,
         name,
         level: entry.level,
         xp: entry.xp,
@@ -341,3 +341,4 @@ export class OfficialPlayerDataApi {
     };
   }
 }
+

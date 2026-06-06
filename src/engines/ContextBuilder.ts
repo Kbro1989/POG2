@@ -1,4 +1,4 @@
-﻿import { readFileSync, readdirSync, existsSync } from 'fs';
+import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname, relative, resolve } from 'path';
 import { type FileContext, type CodeContext, type Lesson, type ModelExecutor, isOk, type Result } from '../core/models.js';
 import { VectorDB } from '../utils/VectorDB.js';
@@ -32,9 +32,13 @@ export class ContextBuilder {
         this.pinnedFiles.delete(resolve(filePath));
     }
 
-    async buildContext(filePath: string): Promise<FileContext & CodeContext> {
+    async buildContext(
+        filePath: string,
+        prompt?: string,
+        opts?: { includeLessons?: boolean; lessonCount?: number }
+    ): Promise<FileContext & CodeContext & { lessons: Lesson[] }> {
         if (!existsSync(filePath)) {
-            return { path: filePath, content: '', primary: '', related: [], imports: [], sameDirectory: [] };
+            return { path: filePath, content: '', primary: '', related: [], imports: [], sameDirectory: [], lessons: [] };
         }
 
         const absPath = resolve(filePath);
@@ -51,8 +55,19 @@ export class ContextBuilder {
             .filter(p => p !== absPath && !SovereignIgnoreManager.isIgnored(this.projectRoot, p))
             .slice(0, 10);
 
-        // 3. Semantically related Ã¢â‚¬â€ Currently restricted to pinned context.
+        // 3. Semantically related
         const related = Array.from(this.pinnedFiles).filter(p => p !== absPath);
+
+        // 4. Fetch lessons
+        let lessons: Lesson[] = [];
+        if (opts?.includeLessons !== false && prompt && this.vectorDB) {
+            try {
+                lessons = (await this.queryLessons(prompt)).slice(0, opts?.lessonCount ?? 5);
+                logger.debug({ count: lessons.length }, 'ContextBuilder: lessons retrieved');
+            } catch (err) {
+                logger.warn({ err }, 'ContextBuilder: queryLessons failed, continuing without lessons');
+            }
+        }
 
         return {
             path: absPath,
@@ -60,7 +75,8 @@ export class ContextBuilder {
             primary: relative(root, absPath),
             related: related.map(p => relative(root, p)),
             imports: imports.map(p => relative(root, p)),
-            sameDirectory: sameDir.map(p => relative(root, p))
+            sameDirectory: sameDir.map(p => relative(root, p)),
+            lessons
         };
     }
 
@@ -110,7 +126,7 @@ export class ContextBuilder {
         return null;
     }
 
-    formatForPrompt(context: FileContext & CodeContext): string {
+    formatForPrompt(context: FileContext & CodeContext & { lessons: Lesson[] }): string {
         const parts: string[] = [];
         const append = (relPath: string, label: string) => {
             try {
@@ -129,7 +145,11 @@ export class ContextBuilder {
         context.sameDirectory?.forEach((s: string) => append(s, 'LOCAL'));
         context.related?.forEach((r: string) => append(r, 'PINNED'));
 
-        return parts.join('\n');
+        context.lessons?.forEach((l, i) => {
+            parts.push(`--- MEMORY: LESSON: [${i + 1}] ${l.text.trim()} (source: ${l.domainNamespace}, id: ${l.id}) ---`);
+        });
+
+        return parts.join('\n\n');
     }
 
     async getGoldenTemplates(prompt: string): Promise<string[]> {
@@ -148,3 +168,4 @@ export class ContextBuilder {
         return { online: true, details: 'ContextBuilder multi-file substrate active.' };
     }
 }
+

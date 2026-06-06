@@ -100,3 +100,4 @@ export class ByteReader {
         return this.offset;
     }
 }
+

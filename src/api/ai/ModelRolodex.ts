@@ -959,6 +959,42 @@ export class ModelRolodex {
         return lines.join('');
     }
 
+    /**
+     * Selects the top N healthy models for a consensus run.
+     * Maps the domain to task capabilities (e.g., vision vs text) and sorts by reputation.
+     */
+    public selectForConsensus(domain: string, count: number): string[] {
+        const isVision = /vision|image/i.test(domain);
+        const candidates = this.getAllModels()
+            .filter(m => {
+                // Ensure model is healthy
+                const providerHealthy = this.state.providers[m.provider]?.authenticated;
+                if (!providerHealthy) return false;
+                
+                // Match task type / capability
+                if (isVision) {
+                    return m.isVision === true || m.taskType === 'vision';
+                } else {
+                    return m.isText === true || m.taskType === 'text';
+                }
+            })
+            .sort((a, b) => b.reputation - a.reputation);
+
+        const selected = candidates.slice(0, count).map(m => `${m.provider}:${m.id}`);
+        
+        // Fallback if not enough candidates
+        if (selected.length < count) {
+            const extra = this.getAllModels()
+                .filter(m => !selected.includes(`${m.provider}:${m.id}`) && this.state.providers[m.provider]?.authenticated)
+                .sort((a, b) => b.reputation - a.reputation)
+                .slice(0, count - selected.length)
+                .map(m => `${m.provider}:${m.id}`);
+            selected.push(...extra);
+        }
+
+        return selected;
+    }
+
     /** ðŸ§¬ Reputation Decay - Exponential Convergence toward baseline 1.0 */
     public applyReputationDecay(decayRate: number): void {
         const count = Object.keys(this.state.models).length;

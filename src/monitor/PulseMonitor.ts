@@ -382,3 +382,4 @@ export class PulseMonitor extends EventEmitter {
         };
     }
 }
+

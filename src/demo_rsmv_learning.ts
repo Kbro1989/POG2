@@ -1,4 +1,4 @@
-﻿import { PedagogyLimb } from './limbs/technical/PedagogyLimb.js';
+import { PedagogyLimb } from './limbs/technical/PedagogyLimb.js';
 import { ForgeEngine, SynthesisTarget } from './engines/ForgeEngine.js';
 import { YaoState } from './core/models.js';
 import { createLogger } from './utils/logger.js';
@@ -70,3 +70,4 @@ async function runDemo() {
 runDemo().catch(err => {
     console.error('Demo failed:', err);
 });
+

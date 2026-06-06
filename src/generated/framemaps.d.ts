@@ -18,3 +18,4 @@ export type framemaps = {
 	}[],
 	activebones: Uint8Array,
 };
+

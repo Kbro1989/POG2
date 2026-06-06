@@ -22,3 +22,4 @@ export type spotanims = {
 	unk2c?: number | null
 	unk2e?: true | null
 };
+

@@ -96,3 +96,4 @@ export class GhostSplatHitmarkRegistry {
         return Array.from(this.hitmarkMap.values()).filter(h => h.type === type);
     }
 }
+

@@ -1,4 +1,4 @@
-﻿import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('SpaceRegistry');
 
@@ -95,3 +95,4 @@ export class SpaceRegistry {
         return ((x >> 6) << 8) | (y >> 6);
     }
 }
+

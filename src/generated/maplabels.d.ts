@@ -74,3 +74,4 @@ export type maplabels = {
 		stringvalue: string | null,
 	}[] | null
 };
+

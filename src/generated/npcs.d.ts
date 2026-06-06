@@ -153,3 +153,4 @@ export type npcs = {
 	}[] | null
 	unknown_FD?: number | null
 };
+

@@ -57,3 +57,4 @@ export type mapsquare_tiles_nxt = {
 		} | null,
 	}[] | null
 };
+

@@ -31,18 +31,16 @@ const SOVEREIGN_HOME_ROOT = join(homedir(), '.pog2-sovereign');
  *           3. OS-aware default (Home directory)
  */
 function getEffectiveSovereignLair(): string {
-    const envRoot = process.env['POG_SOVEREIGN_ROOT'];
+    const envRoot = process.env['POG_SOVEREIGN_ROOT'] || process.env['SOVEREIGN_STORAGE_ROOT'];
     if (envRoot) return envRoot;
 
     // Direct redirection to the Sovereign substrate drive
     if (process.platform === 'win32') {
         const primaryD = 'D:\\D-sovereign-';
-        const fallbackD = 'D:\\sovereign';
 
         if (existsSync(primaryD)) return primaryD;
-        if (existsSync(fallbackD)) return fallbackD;
 
-        // If neither exists, attempt to create the primary one
+        // If it doesn't exist, attempt to create it
         try {
             mkdirSync(primaryD, { recursive: true });
             return primaryD;
@@ -643,3 +641,4 @@ export const SovereignPaths = {
     get MEMORY() { return resolveSovereignPath('memory'); },
     get LEARNING() { return getVectorDbPath(); }
 } as const;
+

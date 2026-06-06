@@ -19,3 +19,4 @@ export type mapsquare_overlays = {
 	unknown_0x0F?: number | null
 	unknown_0x10?: number | null
 };
+

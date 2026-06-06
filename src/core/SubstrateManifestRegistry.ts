@@ -26,3 +26,4 @@ export const SubstrateManifestRegistry = {
 
 
 export type EntityType = keyof typeof SubstrateManifestRegistry;
+

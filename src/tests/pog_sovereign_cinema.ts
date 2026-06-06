@@ -112,3 +112,4 @@ testPOGSovereign().catch(e => {
     logger.error({ err: e }, 'POG Sovereign Test crashed.');
     process.exit(1);
 });
+

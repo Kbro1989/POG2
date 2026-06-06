@@ -1,41 +1,48 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "outDir": "./dist",
-    "rootDir": "./",
-    "baseUrl": "./",
-    "strict": true,
-    "noImplicitAny": false,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "jsx": "react-jsx",
-    "lib": [
-      "ESNext",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "paths": {
-      "*": ["src/*"],
-      "rsmv/*": ["src/rsmv/*"]
-    }
-  },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "resources",
-    "logs",
-    "src/scripts/**/*",
-    "src/scripts_backup/**/*",
-    "src/tests/**/*",
-    "src/tests_backup/**/*",
-    "../src_rsmv/**/*",
-    "D:/src_rsmv/**/*"
-  ]
-}
+         "target": "ESNext",
+         "module": "ESNext",
+         "moduleResolution": "bundler",
+         "outDir": "./dist",
+         "rootDir": "./",
+         "baseUrl": "./",
+         "strict": false,
+         "strictNullChecks": true,
+         "strictBindCallApply": true,
+         "noImplicitAny": false,
+         "noUnusedLocals": false,
+         "noUnusedParameters": false,
+         "strictFunctionTypes": false,
+         "esModuleInterop": true,
+         "skipLibCheck": true,
+         "forceConsistentCasingInFileNames": true,
+         "declaration": true,
+         "jsx": "react-jsx",
+         "lib": [
+           "ESNext",
+           "DOM",
+           "DOM.Iterable"
+         ],
+         "paths": {
+          "*": ["src/*"],
+          "rsmv/*": ["src/rsmv/*"]
+         }
+       },
+       "include": [
+         "src/**/*"
+       ],
+       "exclude": [
+         "node_modules",
+         "dist",
+         "resources",
+         "logs",
+         "rsmv_inspector",
+         "scratch",
+         "src/scripts/**/*",
+         "src/scripts_backup/**/*",
+         "src/tests/**/*",
+         "src/tests_backup/**/*",
+         "../src_rsmv/**/*",
+         "D:/src_rsmv/**/*"
+       ]
+     }

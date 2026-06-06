@@ -65,3 +65,4 @@ async function testAbsoluteAuthority() {
 }
 
 testAbsoluteAuthority().catch(console.error);
+

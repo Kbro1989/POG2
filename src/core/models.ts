@@ -48,6 +48,12 @@ export interface Coord {
 
 export interface RoutingDecision {
     model: string;
+    tier: 'Master' | 'Executive' | 'Reactive';
+    // NEW: multi-model consensus
+    models?: string[];
+    strategy?: 'consensus' | 'vote' | 'cascade';
+    severity: number;
+    yaoState?: YaoState; // for audit/traceability
     metadata: {
         source: string;
         latencyMs: number;
@@ -1337,6 +1343,7 @@ export interface ModelCallParams {
     yaoState?: YaoState;
     signal?: AbortSignal;
     isSystemPulse?: boolean;
+    domain?: string;
 }
 
 export interface ModelExecutor {
@@ -1344,9 +1351,17 @@ export interface ModelExecutor {
     embed?(text: string): Promise<Result<Float32Array>>;
 }
 
+export interface ModelResponse {
+    response: string;
+    model?: string;
+    tokensUsed?: number;
+    latency?: number;
+    metadata?: Record<string, any>;
+}
+
 export interface ModelCallResult {
     ok: boolean;
-    value: { response: string };
+    value: ModelResponse;
     error?: Error;
 }
 
@@ -1635,3 +1650,4 @@ export interface QueryResponse {
     readonly evidenceSummary: string;
     readonly counterEvidence?: readonly string[]; // IDs of events that contradict the target
 }
+

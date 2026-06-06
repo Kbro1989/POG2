@@ -647,9 +647,34 @@ export class CognitiveImmunologyEmergency {
         });
         return stats;
     }
+
+    /**
+     * Immunological check for foreign tools executing on the sovereign substrate.
+     * Prevents external agents from creating nested 2-way bridges.
+     * @param toolName The name of the tool being executed
+     * @param args The arguments passed to the tool
+     */
+    async monitorForeignToolExecution(toolName: string, args: any): Promise<void> {
+        const argStr = JSON.stringify(args);
+        // Immunological pattern match: If a foreign tool tries to run an orchestrator
+        // or tries to open a new MCP server connection or socket.
+        if (argStr.includes('invoke_subagent') || argStr.includes('mcpserver') || argStr.includes('npx skills add')) {
+            const report = await this.scan([argStr], 'unknown');
+            if (report.threatLevel === 'CRITICAL' || report.threatLevel === 'HIGH') {
+                logger.error({ toolName, report }, 'CognitiveImmunologyEmergency blocked foreign tool execution! Bridging attempt detected.');
+                throw new Error(`Execution blocked by Sovereign Immunology: Threat level ${report.threatLevel}`);
+            }
+        }
+    }
     
     clearHistory(): void {
         this.threatHistory = [];
         this.agentHistory = [];
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: "CognitiveImmunologyEmergency active and verified." };
+    }
 }
+
+

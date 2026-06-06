@@ -1,4 +1,4 @@
-﻿// src/utils/rsmvExtractor.ts
+// src/utils/rsmvExtractor.ts
 // Utility to parse rsmv model definitions and map them to Biological Constraints
 
 import { Result, ok, err, EmotionalState } from '../core/models.js';
@@ -207,3 +207,4 @@ export class rsmvExtractor {
         return packets;
     }
 }
+

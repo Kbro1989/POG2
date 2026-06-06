@@ -86,3 +86,4 @@ export class SovereignIgnoreManager {
         return [...this.IGNORE_EXTENSIONS];
     }
 }
+

@@ -1,4 +1,4 @@
-﻿export interface DiskSubstrate {
+export interface DiskSubstrate {
     readonly totalBytes: bigint;
     readonly freeBytes: bigint;
     readonly volumeLabel: string;
@@ -31,3 +31,4 @@ export interface TSCError {
 export type DiagnosticResult<T> =
     | { success: true; data: T; timestamp: Date; }
     | { success: false; error: Win32Error | TSCError; timestamp: Date; };
+
