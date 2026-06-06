@@ -320,7 +320,7 @@ export class PlayerAgent {
         if (trace) {
             // Log to Ledger
             const event = {
-                id: 'combat-intent-' + Date.now() + '-' + ctx.currentTick,
+                id: 'combat-intent-' + CanonicalClock.getInstance().simulatedNow() + '-' + ctx.currentTick,
                 tick: ctx.currentTick,
                 action: rotation?.action || 'idle',
                 source: 'AI',

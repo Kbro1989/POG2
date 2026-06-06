@@ -18,6 +18,7 @@ import { TernaryRouter } from "./routing/TernaryRouter.js";
 import { Renderer } from "./ui/Renderer.js";
 import { OrchestrateEngine } from "./engines/OrchestrateEngine.js";
 import { HexagramManager } from "./routing/HexagramManager.js";
+import { getPackageRoot } from "./utils/SovereignPathResolver.js";
 import { join } from "path";
 import { homedir } from "os";
 
@@ -32,15 +33,14 @@ const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 const logger = createLogger('MCPBridge');
 const config = loadConfig(CONFIG_FILE);
 
-// HexagramManager must be instantiated before TernaryRouter,
-// whose constructor calls HexagramManager.getInstance().
-const hexagram = new HexagramManager(null, process.cwd());
+// HexagramManager must be instantiated and initialized inside main()
+// because TernaryRouter constructor requires it to be fully initialized.
 
-const router = new TernaryRouter(config);
-const renderer = new Renderer();
-const engine = new OrchestrateEngine(config, router, renderer);
-const registry = engine.getRegistry();
-const modelClient = new ModelClient(config, router);
+let router: TernaryRouter;
+let renderer: Renderer;
+let engine: OrchestrateEngine;
+let registry: ToolRegistry;
+let modelClient: ModelClient;
 const training = TrainingCollector.getInstance();
 const compressor = CompressionEngine.getInstance();
 
@@ -50,6 +50,15 @@ const compressor = CompressionEngine.getInstance();
  * execute POG2 internal tools and leverage local Ollama model selection.
  */
 async function main() {
+  const hexagram = new HexagramManager(null, getPackageRoot());
+  await hexagram.initialize();
+
+  router = new TernaryRouter(config);
+  renderer = new Renderer();
+  engine = new OrchestrateEngine(config, router, renderer);
+  registry = engine.getRegistry();
+  modelClient = new ModelClient(config, router);
+
   const server = new Server(
     {
       name: "pog2-sovereign-bridge",

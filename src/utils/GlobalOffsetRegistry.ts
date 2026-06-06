@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createLogger } from './logger.js';
 import { Result, ok, err } from '../core/models.js';
+import { CanonicalClock } from './CanonicalClock.js';
 
 const logger = createLogger('GlobalOffsetRegistry');
 const OFFSET_STORAGE_PATH = path.join(process.cwd(), 'memory', 'global_offset.json');
@@ -43,7 +44,7 @@ export class GlobalOffsetRegistry {
             dy,
             dz,
             heightPx: 120, // Authoritative Beta Height for Bone 8
-            timestamp: Date.now()
+            timestamp: CanonicalClock.getInstance().simulatedNow()
         };
 
         this.currentOffset = newOffset;
@@ -88,7 +89,7 @@ export class GlobalOffsetRegistry {
      * reset - Simulates a total loss of grounding (e.g., world hop or cache corruption).
      */
     public reset(): void {
-        this.currentOffset = { dx: 0, dy: 0, dz: 0, heightPx: 120, timestamp: Date.now() };
+        this.currentOffset = { dx: 0, dy: 0, dz: 0, heightPx: 120, timestamp: CanonicalClock.getInstance().simulatedNow() };
         this.regionOffsets.clear();
         logger.warn('[OFFSET] Grounding state purged. Adversarial reset initiated.');
     }
@@ -122,7 +123,7 @@ export class GlobalOffsetRegistry {
                 if (targetPlane !== -1) {
                     this.currentOffset.dz = targetPlane - currentPlane;
                     logger.info({ targetPlane, dz: this.currentOffset.dz }, '[OFFSET] Vertical Pop Snapped to Walkable Surface.');
-                    this.currentOffset.timestamp = Date.now();
+                    this.currentOffset.timestamp = CanonicalClock.getInstance().simulatedNow();
                     this.saveState();
                     return ok({ newZ: this.currentOffset.dz, offsetChange: this.currentOffset.dz - oldZ });
                 }
@@ -133,7 +134,7 @@ export class GlobalOffsetRegistry {
 
         // Blind Fallback: Force a floor jump
         this.currentOffset.dz += 1.0;
-        this.currentOffset.timestamp = Date.now();
+        this.currentOffset.timestamp = CanonicalClock.getInstance().simulatedNow();
         logger.warn({ newZ: this.currentOffset.dz }, '[OFFSET] Vertical Pop Triggered (Blind Increment).');
         this.saveState();
         return ok({ newZ: this.currentOffset.dz, offsetChange: 1.0 });
@@ -143,7 +144,7 @@ export class GlobalOffsetRegistry {
      * setManualOffset - Direct override for forensic grounding calibration.
      */
     public setManualOffset(dx: number, dy: number, dz: number): void {
-        this.currentOffset = { dx, dy, dz, heightPx: 120, timestamp: Date.now() };
+        this.currentOffset = { dx, dy, dz, heightPx: 120, timestamp: CanonicalClock.getInstance().simulatedNow() };
         logger.info({ dx, dy, dz }, '[OFFSET] Manual Forensic Anchor Set.');
         this.saveState();
     }

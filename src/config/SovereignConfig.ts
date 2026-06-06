@@ -116,7 +116,7 @@ const DEFAULT_CONFIG: SovereignConfig = {
     metabolicCostScale: 1.0,
     planningModel: 'kimi-k2.6:cloud',
     codingModel: 'deepseek-r1:8b', // Upgraded to thinking model
-    orchestratorModel: 'kimi-k2.6:cloud',
+    orchestratorModel: 'deepseek-r1:8b', // Downgraded to 8b to fit VHD memory limit
     visionModel: 'moondream:latest',
     voiceModel: 'gemma4:26b',
     codingHeavyModel: 'deepseek-r1:8b',

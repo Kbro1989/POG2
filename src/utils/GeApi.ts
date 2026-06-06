@@ -9,6 +9,7 @@
  */
 
 import { ApiThrottle } from './ApiThrottle.js';
+import { CanonicalClock } from './CanonicalClock.js';
 import { createLogger } from './logger.js';
 
 const logger = createLogger('GeApi');
@@ -76,7 +77,7 @@ export class GeApi {
                     return {
                         itemId: item.id || itemId,
                         price: item.price,
-                        timestamp: Date.now(),
+                        timestamp: CanonicalClock.getInstance().simulatedNow(),
                         source: 'weirdgloop'
                     };
                 }
@@ -88,7 +89,7 @@ export class GeApi {
                         return {
                             itemId,
                             price: wrappedItem.price,
-                            timestamp: Date.now(),
+                            timestamp: CanonicalClock.getInstance().simulatedNow(),
                             source: 'weirdgloop'
                         };
                     }
@@ -113,7 +114,7 @@ export class GeApi {
                     return {
                         itemId,
                         price: this.parsePrice(data.item.current.price),
-                        timestamp: Date.now(),
+                        timestamp: CanonicalClock.getInstance().simulatedNow(),
                         source: 'jagex'
                     };
                 }

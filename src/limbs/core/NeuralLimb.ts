@@ -5,6 +5,7 @@
 import type { ModelClient as ModelExecutor } from '../../clients/ModelClient.js';
 // ToolingSpine removed
 import type { Result, Intent, Execution, TernaryDecision } from '../../core/models.js';
+import type { ToolDefinition } from '../../ToolRegistry.js';
 
 export type { Result, Intent, Execution, TernaryDecision };
 
@@ -20,6 +21,7 @@ export interface NeuralLimb {
     id: string;
     type: 'creative' | 'analytical' | 'maintenance' | 'memory' | 'cloud' | 'action' | 'experimental' | 'sensory' | 'metabolic' | 'psychic' | 'metaphysical' | 'system' | 'social';
     capabilities: string[];
+    getToolCapabilities?(): ToolDefinition[];
     readonly spine?: any;
 
     /**

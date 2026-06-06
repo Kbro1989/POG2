@@ -307,7 +307,7 @@ export class SkillsLimb implements NeuralLimb {
             name: skill.name,
             description: skill.description || `Assimilated skill: ${skill.name}`,
             domain: SovereignDomain.SYSTEM,
-            category: 'mcp',
+            category: 'core',
             parameters: {
                 instruction: { type: 'string', description: 'What to do with this skill.' },
                 query: { type: 'string', description: 'Optional: query a specific reference doc or script by filename.' },

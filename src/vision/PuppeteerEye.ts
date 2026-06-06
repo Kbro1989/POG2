@@ -1,4 +1,5 @@
 import { SovereignEye, type CaptureSource, type CaptureResult } from '../utils/SovereignEye.js';
+import { CanonicalClock } from '../utils/CanonicalClock.js';
 import { createLogger } from '../utils/logger.js';
 import type { Result, YaoState } from '../core/models.js';
 import puppeteer, { type Browser, type Page } from 'puppeteer';
@@ -123,7 +124,7 @@ export class PuppeteerEye extends SovereignEye {
                 }));
             });
 
-            const timestamp = Date.now();
+            const timestamp = Date.now(); // EXTERNAL domain: filesystem path
             const screenshotPath = `${captureDir}/inspect_${timestamp}.png`;
             await page.screenshot({ path: screenshotPath });
             
@@ -169,7 +170,7 @@ export class PuppeteerEye extends SovereignEye {
 
             try {
                 const screenshot = await page.screenshot({ encoding: 'base64' });
-                if (callback) callback({ screenshot, timestamp: Date.now() });
+                if (callback) callback({ screenshot, timestamp: Date.now() }); // EXTERNAL: frame metadata
             } catch (err) {
                 logger.error({ err, streamId }, 'Stream loop encountered error');
             }

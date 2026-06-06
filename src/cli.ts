@@ -14,7 +14,15 @@ import { createRequire } from 'module';
 import { GameCacheLoader } from 'rsmv/cache/sqlite.js';
 import { cacheMajors, cacheConfigPages } from 'rsmv/constants.js';
 import { parse } from 'rsmv/opdecoder.js';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 const require = createRequire(import.meta.url);
+
+// Get the directory where this CLI script is located
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+// Project root is two levels up from src/cli.ts
+const projectRoot = join(__dirname, '..', '..');
 if (typeof (globalThis as any).__non_webpack_require__ === 'undefined') {
     (globalThis as any).__non_webpack_require__ = require;
 }
@@ -49,7 +57,7 @@ import pino from 'pino';
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import * as fs from 'fs';
 import * as path from 'path';
-import { resolve, join, dirname, sep } from 'path';
+import { resolve, sep } from 'path';
 import { homedir } from 'os';
 import * as readline from 'readline/promises';
 import { StateManager } from './state/StateManager.js';
@@ -84,7 +92,7 @@ import { OfficialApiLimb } from './limbs/spatial/OfficialApiLimb.js';
 import { SpatialMetricEngine } from './engines/SpatialMetricEngine.js';
 import { WikiEnricher } from './utils/WikiEnricher.js';
 import { MinigameForensicsLimb } from './limbs/spatial/MinigameForensicsLimb.js';
-import { getSovereignRoot, getrsmvCachePath, getCachePedagogyPath, getPipelineRootPath, getGodHeadRoot, getGutenbergPath, setProjectRoot as setSovereignRoot } from './utils/SovereignPathResolver.js';
+import { getSovereignRoot, getrsmvCachePath, getCachePedagogyPath, getPipelineRootPath, getGodHeadRoot, getGutenbergPath, setProjectRoot as setSovereignRoot, getPackageRoot } from './utils/SovereignPathResolver.js';
 import { CacheForensicsLimb } from './limbs/spatial/CacheForensicsLimb.js';
 import { SystemTaxonomyLimb } from './limbs/spatial/SystemTaxonomyLimb.js';
 import { MaterialLimb } from './limbs/spatial/MaterialLimb.js';
@@ -258,6 +266,8 @@ async function checkSubstrate(renderer: Renderer, config: SovereignConfig, clien
 }
 
 export async function main(): Promise<void> {
+    // Phase 0.1: Initialize Temporal Origin BEFORE any subsystems boot
+    CanonicalClock.bootstrap(42);
     const config = loadConfig(CONFIG_FILE);
     const state = StateManager.getInstance();
     const renderer = new Renderer();
@@ -267,10 +277,9 @@ export async function main(): Promise<void> {
 
     // Phase 0: Initialize the Thought Processor (HexagramManager singleton)
     // Must happen BEFORE TernaryRouter construction Ã¢â‚¬â€ the router calls getInstance()
-    // Phase 0.1: Initialize Temporal Origin
-    CanonicalClock.bootstrap(42);
+    
 
-    const hexagram = new HexagramManager(null, process.cwd());
+    const hexagram = new HexagramManager(null, getPackageRoot());
     await hexagram.initialize();
 
     const router = new TernaryRouter(config);
@@ -282,8 +291,8 @@ export async function main(): Promise<void> {
     router.setRolodex(rolodex);
     client.setRolodex(rolodex);
     // Phase 16: Initialize Path Normalizer & Resolver
-    PathNormalizer.setProjectRoot(process.cwd());
-    setSovereignRoot(process.cwd());
+    PathNormalizer.setProjectRoot(getPackageRoot());
+    setSovereignRoot(getPackageRoot());
 
     // Phase 49: Automate Workspace Bootstrapping
     bootstrapWorkspace(renderer);

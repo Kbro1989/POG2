@@ -1,4 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
+import { CanonicalClock } from './CanonicalClock.js';
 import { createServer } from 'http';
 import { existsSync, mkdirSync, appendFileSync, readFileSync } from 'fs';
 import { join, extname } from 'path';
@@ -38,7 +39,7 @@ export class CombatHUDBridge {
     private static instance: CombatHUDBridge;
     private wss: WebSocketServer | null = null;
     private clients: Set<WebSocket> = new Set();
-    private startTime: number = Date.now();
+    private startTime: number = CanonicalClock.getInstance().simulatedNow();
     private lastTickReceived: number = 0;
     private traceBuffer: any[] = []; // Simple buffer for the dashboard to pull from
 
@@ -61,7 +62,7 @@ export class CombatHUDBridge {
                     res.end(JSON.stringify({ 
                         status: 'alive', 
                         port: 8080, 
-                        uptimeMs: Date.now() - this.startTime,
+                        uptimeMs: CanonicalClock.getInstance().simulatedNow() - this.startTime,
                         clientsConnected: this.clients.size,
                         lastTickReceived: this.lastTickReceived,
                         causalTracesBuffered: this.traceBuffer.length
@@ -256,7 +257,7 @@ export class CombatHUDBridge {
     }
 
     public updateState(adrenaline: number, archetype: string, lastAction?: string, activeRotation?: string, nextAbility?: string, combatStyle?: string, activePhase?: string, targetHp?: number, kernelPhase?: string, learningTrace?: any) {
-        this.lastTickReceived = Date.now();
+        this.lastTickReceived = CanonicalClock.getInstance().simulatedNow();
         const payload: HUDStateUpdate = {
             type: 'STATE_UPDATE',
             adrenaline,

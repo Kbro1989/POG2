@@ -11,6 +11,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { createLogger } from "./logger.js";
+import { CanonicalClock } from "./CanonicalClock.js";
 
 const logger = createLogger('KeyVault');
 
@@ -55,7 +56,7 @@ export class KeyVault {
         this.keys.set(name, {
             name,
             key,
-            addedAt: Date.now(),
+            addedAt: CanonicalClock.getInstance().simulatedNow(),
             failCount: 0
         });
 
@@ -93,7 +94,7 @@ export class KeyVault {
         if (!entry) return null;
 
         // Update last used timestamp
-        entry.lastUsed = Date.now();
+        entry.lastUsed = CanonicalClock.getInstance().simulatedNow();
         return entry.key;
     }
 

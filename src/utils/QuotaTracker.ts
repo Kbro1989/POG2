@@ -1,4 +1,5 @@
 import { createLogger } from "./logger.js";
+import { CanonicalClock } from "./CanonicalClock.js";
 
 const logger = createLogger('QuotaTracker');
 
@@ -65,7 +66,7 @@ export class QuotaTracker {
     }
 
     private createDefaultQuotas(): Record<QuotaProvider, ProviderQuota> {
-        const now = Date.now();
+        const now = CanonicalClock.getInstance().simulatedNow();
         const resetAt = this.getNextMidnightUTC();
 
         const result: Partial<Record<QuotaProvider, ProviderQuota>> = {};
@@ -193,7 +194,7 @@ export class QuotaTracker {
      * Reset counters if we've passed UTC midnight.
      */
     resetIfNewDay(): void {
-        const now = Date.now();
+        const now = CanonicalClock.getInstance().simulatedNow();
         for (const quota of Object.values(this.quotas)) {
             if (now >= quota.resetAtEpoch) {
                 logger.info({ provider: quota.provider }, '🔄 Daily quota reset (UTC midnight)');
@@ -212,7 +213,7 @@ export class QuotaTracker {
     serialize(): QuotaState {
         return {
             quotas: JSON.parse(JSON.stringify(this.quotas)),
-            lastUpdated: Date.now()
+            lastUpdated: CanonicalClock.getInstance().simulatedNow()
         };
     }
 

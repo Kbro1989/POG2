@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { Result, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, YaoState, Lesson, ContextCard, GenerativeAesthetics, ok, EmotionalState, type CognitivePermissionMatrix, LearningMode, CognitivePolarity, InterpretationContract, ChaosPhase } from '../core/models.js';
+import { Result, BuildStatus, HealthStatus, ResourcePressure, UserEngagement, YaoState, Lesson, ContextCard, GenerativeAesthetics, ok, EmotionalState, LearningMode, CognitivePolarity, InterpretationContract, ChaosPhase, type CognitivePermissionFlags } from '../core/models.js';
 import { EpistemicTransitionKernel } from '../engines/core/EpistemicTransitionKernel.js';
 import { HEXAGRAM_REGISTRY, DEFAULT_HEXAGRAM, HexagramDefinition } from '../core/HexagramDefinitions.js';
 import { ModelClient } from '../clients/ModelClient.js';
@@ -9,6 +9,7 @@ import type { EntityGhost } from '../core/EntityGhost.js';
 import type { TransitionalVector } from '../engines/core/WaitDecisionMaker.js';
 import type { MovingLine } from '../core/models.js';
 import { CanonicalClock } from '../utils/CanonicalClock.js';
+import { CognitivePermissionMatrix } from '../limbs/cognitive/CognitivePermissionMatrix.js';
 
 export interface KernelDiagnostics {
     phase: ChaosPhase;
@@ -598,12 +599,12 @@ Respond in JSON ONLY:
         return parseInt(sorted[0][0], 10) as YaoState;
     }
 
-    private getPermissions(): CognitivePermissionMatrix {
+    private getPermissions(): CognitivePermissionFlags {
         const state = this.getYaoState();
         
         // Phase 230: The Shadow Learning Paradigm
         // We no longer strictly disable learning. We shift its MODE.
-        const matrix: CognitivePermissionMatrix = {
+        const matrix: CognitivePermissionFlags = {
             mode: LearningMode.SHADOW, // Default to Shadow (Anomalies only)
             allowPedagogy: false,
             allowPatternExtraction: false,
@@ -836,45 +837,21 @@ Respond in JSON ONLY:
      * in the current hexagram state. Combines brainstem defaults, permission-gated
      * limb groups, and hexagram-specific engine focus overrides.
      */
+    private static readonly permissionMatrix = new CognitivePermissionMatrix();
+
+    /**
+     * getActiveLimbSet — Delegates to CognitivePermissionMatrix for the
+     * canonical list of limbs permitted in the current hexagram + YaoState.
+     * Also merges hexagram-specific engineFocus from gameplay context.
+     */
     public getActiveLimbSet(): string[] {
-        const permissions = this.getPermissions();
+        const yaoState = this.getYaoState();
+        const hexagramId = this.getNumericId();
         const interpretation = this.getInterpretation();
 
-        // Brainstem limbs — always active regardless of hexagram state
-        const active: string[] = [
-            'OrchestrateEngine',
-            'TernaryRouter',
-            'CanonicalClock',
-            'HexagramManager',
-            'MetabolicEngine',
-            'ShadowEngine',
-            'CognitiveImmunology'
-        ];
+        const active = HexagramManager.permissionMatrix.getAllowedLimbs(hexagramId, yaoState);
 
-        // Permission-gated limb groups
-        if (permissions.allowForensics) {
-            active.push('CacheForensicsLimb', 'WorldForensicsLimb');
-        }
-        if (permissions.allowPedagogy) {
-            active.push('GutenbergLimb', 'StoryboardLimbV2', 'PedagogyLimb');
-        }
-        if (permissions.allowPatternExtraction) {
-            active.push('GhostSplatEngine', 'DiscoveryEngine', 'SpatialRadarEngine');
-        }
-        if (permissions.allowMemoryConsolidation) {
-            active.push('MemoryConsolidationEngine', 'RelicLimb', 'VectorDB');
-        }
-        if (permissions.allowClinicalAudit) {
-            active.push('BioIntelligenceLimb', 'NodeTester', 'PulseMonitor');
-        }
-        if (permissions.allowSubstrateIngestion) {
-            active.push('CacheLearningLimb', 'SovereignIngestionEngine');
-        }
-        if (permissions.allowInvariantCompilation) {
-            active.push('InvariantCompiler', 'EpistemicVerification');
-        }
-
-        // Hexagram-specific additions from gameplay context
+        // Merge hexagram gameplay engineFocus (trigram-derived engine activations)
         if (interpretation.gameplay?.engineFocus) {
             for (const engine of interpretation.gameplay.engineFocus) {
                 active.push(engine);
@@ -882,7 +859,7 @@ Respond in JSON ONLY:
         }
 
         // Deduplicate
-        return [...new Set(active)];
+        return [...new Set(active)] as string[];
     }
 
     private calculateHexagramId(cards: ContextCard[], future: boolean): string {

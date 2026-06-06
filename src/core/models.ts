@@ -524,7 +524,7 @@ export enum CognitivePolarity {
 export interface InterpretationContract {
     polarity: CognitivePolarity;
     mode: LearningMode;
-    permissions: CognitivePermissionMatrix;
+    permissions: CognitivePermissionFlags;
     aesthetics: GenerativeAesthetics;
     behavioralBias: {
         riskTolerance: number;      // 0.0 to 1.0
@@ -543,7 +543,7 @@ export interface InterpretationContract {
     phaseGateMultiplier?: number; // 0.0–1.0 continuous gate from EpistemicTransitionKernel
 }
 
-export interface CognitivePermissionMatrix {
+export interface CognitivePermissionFlags {
     mode: LearningMode;
     allowPedagogy: boolean;
     allowPatternExtraction: boolean;

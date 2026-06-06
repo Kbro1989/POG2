@@ -17,6 +17,7 @@
  */
 
 import { createLogger } from './logger.js';
+import { CanonicalClock } from './CanonicalClock.js';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { QueryClassifier, QueryType } from './QueryClassifier.js';
@@ -206,7 +207,7 @@ export class WikiEquipmentEnricher {
             const cached = JSON.parse(raw);
 
             // TTL check
-            if (cached._cachedAt && (Date.now() - cached._cachedAt) > this.CACHE_TTL_MS) {
+            if (cached._cachedAt && (CanonicalClock.getInstance().simulatedNow() - cached._cachedAt) > this.CACHE_TTL_MS) {
                 logger.debug({ key }, 'Cache expired, will re-fetch.');
                 return null;
             }
@@ -220,7 +221,7 @@ export class WikiEquipmentEnricher {
     private writeCache(subdir: string, key: string, data: any): void {
         const filePath = join(this.CACHE_DIR, subdir, `${this.sanitizeFilename(key)}.json`);
         try {
-            writeFileSync(filePath, JSON.stringify({ ...data, _cachedAt: Date.now() }, null, 2), 'utf8');
+            writeFileSync(filePath, JSON.stringify({ ...data, _cachedAt: CanonicalClock.getInstance().simulatedNow() }, null, 2), 'utf8');
         } catch (err) {
             logger.warn({ key, err }, 'Failed to write cache.');
         }
@@ -229,13 +230,13 @@ export class WikiEquipmentEnricher {
     // ── Rate Limiter ───────────────────────────────────────
 
     private async throttle(): Promise<void> {
-        const now = Date.now();
+        const now = CanonicalClock.getInstance().simulatedNow();
         const elapsed = now - this.lastRequestTime;
         if (elapsed < this.RATE_LIMIT_MS) {
             const delay = this.RATE_LIMIT_MS - elapsed;
             await new Promise(resolve => setTimeout(resolve, delay));
         }
-        this.lastRequestTime = Date.now();
+        this.lastRequestTime = CanonicalClock.getInstance().simulatedNow();
         this.requestCount++;
     }
 
@@ -854,7 +855,7 @@ export class WikiEquipmentEnricher {
 
         const result: WikiPageData = {
             title: pageTitle,
-            fetchedAt: Date.now(),
+            fetchedAt: CanonicalClock.getInstance().simulatedNow(),
             entityType: 'unknown', // Set appropriately based on detection if possible
             bonuses: null,
             itemMeta: null,
@@ -912,7 +913,7 @@ export class WikiEquipmentEnricher {
 
         const result: WikiPageData = {
             title: name,
-            fetchedAt: Date.now(),
+            fetchedAt: CanonicalClock.getInstance().simulatedNow(),
             entityType: 'item',
             bonuses,
             itemMeta,
@@ -964,7 +965,7 @@ export class WikiEquipmentEnricher {
 
         const result: WikiPageData = {
             title: name,
-            fetchedAt: Date.now(),
+            fetchedAt: CanonicalClock.getInstance().simulatedNow(),
             entityType: 'npc',
             monsterMeta,
             dropTables,

@@ -1,5 +1,4 @@
-import { RouteDecision } from '../core/models.js';
-import { TernaryRouter } from './TernaryRouter.js';
+import { TernaryRouter, type RouteDecision } from './TernaryRouter.js';
 import { createLogger } from '../utils/logger.js';
 import { CanonicalClock } from '../utils/CanonicalClock.js';
 
@@ -34,7 +33,8 @@ export class AttentionRouter {
   }
 
   public async routeWithSalience(input: SalienceInput): Promise<RouteDecision & { salienceScore?: number }> {
-    const baseDecision = await this.ternaryRouter.route(input.prompt, input.domain);
+    const complexity = await this.ternaryRouter.classify(input.prompt);
+    const baseDecision = await this.ternaryRouter.route(complexity, input.domain, input.prompt);
     
     // Accumulate salience: a sustained anomaly grows the score
     const currentSpike = this.computeSalience(input);
@@ -52,7 +52,7 @@ export class AttentionRouter {
         ...baseDecision,
         tier: 'Master',
         model: this.getMasterModelForDomain(input.domain),
-        reason: 'salience_escalation',
+        reasoning: 'salience_escalation',
         salienceScore: effectiveSalience
       };
     }

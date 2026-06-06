@@ -21,6 +21,8 @@ export interface GameplayContext {
     engineFocus: string[];   // ['CombatRotationEngine', 'LootResolutionEngine'] etc.
 }
 
+export type LimbCategory = 'motor' | 'forge' | 'core';
+
 export interface HexagramDefinition {
     id: number;
     binary: string;
@@ -34,11 +36,13 @@ export interface HexagramDefinition {
     emotion: EmotionalState;
     aesthetics: GenerativeAesthetics;
     gameplay?: GameplayContext;
+    /** Active limb categories — controls which tool categories OrchestrateEngine exposes to the LLM under this hexagram. */
+    activeLimbs?: LimbCategory[];
 }
 
 // Helper to reduce boilerplate while maintaining full type safety
-function hex(id: number, binary: string, name: string, description: string, strategy: string, judgment: string, emotion: EmotionalState, vf: string, tv: number, sc: 'Grand' | 'Intimate' | 'Abstract', pal: string[], p: { chaos: number, whimsy: number, darkTone: number, coherence: number }): HexagramDefinition {
-    return { id, binary, name, description, strategy, judgment, emotion, aesthetics: { visualFilter: vf, thermalVariance: tv, scale: sc, palette: pal, prosody: p } };
+function hex(id: number, binary: string, name: string, description: string, strategy: string, judgment: string, emotion: EmotionalState, vf: string, tv: number, sc: 'Grand' | 'Intimate' | 'Abstract', pal: string[], p: { chaos: number, whimsy: number, darkTone: number, coherence: number }, limbs?: LimbCategory[]): HexagramDefinition {
+    return { id, binary, name, description, strategy, judgment, emotion, aesthetics: { visualFilter: vf, thermalVariance: tv, scale: sc, palette: pal, prosody: p }, activeLimbs: limbs || ['motor', 'forge', 'core'] };
 }
 
 export const HEXAGRAM_REGISTRY: Record<string, HexagramDefinition> = {

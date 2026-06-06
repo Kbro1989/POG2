@@ -1,4 +1,5 @@
 import { createRequire } from 'module';
+import { CanonicalClock } from '../utils/CanonicalClock.js';
 const require = createRequire(import.meta.url);
 import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
@@ -117,7 +118,7 @@ export class TransientObserver {
 
         // 1. Live Vision Loop — reuse singleton eye, throttle captures
         let activePath = imagePath;
-        const now = Date.now();
+        const now = Date.now(); // EXTERNAL domain: throttle cadence against wall clock
         if (imagePath === 'latest_frame.png') {
             // Throttle: skip capture if within cadence window and we have a cached result
             if (this.lastCaptureResult && (now - this.lastCaptureTime) < TransientObserver.CAPTURE_THROTTLE_MS) {
@@ -158,7 +159,7 @@ export class TransientObserver {
                 imagePath: activePath,
                 wikiLore: wikiRes.ok ? wikiRes.value.intent : 'Unknown',
                 expectedPalette,
-                timestamp: Date.now()
+                timestamp: Date.now() // EXTERNAL domain: observation metadata
             }
         };
     }

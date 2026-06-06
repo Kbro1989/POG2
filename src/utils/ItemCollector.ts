@@ -8,6 +8,7 @@
  */
 
 import { createLogger } from './logger.js';
+import { CanonicalClock } from './CanonicalClock.js';
 import { GeApi } from './GeApi.js';
 import { WikiEquipmentEnricher, WikiItemMeta, WikiEquipmentBonuses } from './WikiEquipmentEnricher.js';
 import { CacheForensicsLimb } from '../limbs/spatial/CacheForensicsLimb.js';
@@ -64,7 +65,7 @@ export class ItemCollector {
             name: meta?.name || name,
             meta,
             bonuses,
-            fetchedAt: Date.now()
+            fetchedAt: CanonicalClock.getInstance().simulatedNow()
         };
 
         // 3. Publish to training pipeline
@@ -73,7 +74,7 @@ export class ItemCollector {
             source: 'ItemCollector',
             payload: {
                 tick: -1,
-                timestamp: Date.now(),
+                timestamp: CanonicalClock.getInstance().simulatedNow(),
                 fidelity: LearningFidelity.PEDAGOGY,
                 resolution: data,
                 tags: ['item_enrichment', 'ge_verified']

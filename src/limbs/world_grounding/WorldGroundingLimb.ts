@@ -405,18 +405,28 @@ export class WorldGroundingLimb implements GroundingHydrator {
             const x = spawn.worldX ?? spawn.coord?.x;
             const z = spawn.worldZ ?? spawn.coord?.z ?? spawn.coord?.y;
             const plane = spawn.plane ?? spawn.coord?.plane ?? 0;
-            const npcId = spawn.npcId ?? spawn.entityId;
-            const npcName = spawn.npcName ?? spawn.title ?? `Entity ${npcId}`;
+            
+            // Determine type to prevent dumping Enums/Objects into NPC logic
+            const isNpc = spawn.npcId !== undefined || (spawn.id && spawn.id.includes('npc'));
+            const typePrefix = isNpc ? 'npc' : 'obj';
+            
+            const coreId = spawn.npcId ?? spawn.entityId ?? spawn.objectId ?? spawn.id ?? 'unknown';
+            const entityName = spawn.npcName ?? spawn.title ?? `${typePrefix.toUpperCase()} ${coreId}`;
 
-            const entId = `npc_${npcId}_${x}_${z}`;
+            const entId = `${typePrefix}_${coreId}_${x}_${z}`;
             if (this.manifest.entities[entId]) continue;
-            tx.set(entId, {
+            
+            const payload: any = {
                 id: entId,
-                npcId: npcId,
-                name: npcName,
+                name: entityName,
                 spatial: { x: x, y: z, z: spatial.getAltitude(plane, x, z), plane: plane },
                 behavior: 'STATIC_FORENSIC'
-            });
+            };
+            
+            if (isNpc) payload.npcId = coreId;
+            else payload.objectId = coreId;
+            
+            tx.set(entId, payload);
         }
         await this.commitTick(tx);
     }

@@ -7,6 +7,7 @@
  */
 
 import { createLogger } from './logger.js';
+import { CanonicalClock } from './CanonicalClock.js';
 
 const logger = createLogger('ApiThrottle');
 
@@ -24,12 +25,15 @@ class TokenBucket {
         this.capacity = capacity;
         this.refillRate = capacity / refillPeriodMs;
         this.tokens = capacity;
-        this.lastRefill = Date.now();
+        this.lastRefill = -1; // Deferred until first consume
     }
 
     async consume(amount: number = 1): Promise<void> {
         while (true) {
-            const now = Date.now();
+            const now = CanonicalClock.getInstance().simulatedNow();
+            if (this.lastRefill === -1) {
+                this.lastRefill = now;
+            }
 
             // Check for active Retry-After block
             if (now < this.retryAfterUntil) {
@@ -56,7 +60,7 @@ class TokenBucket {
     }
 
     public setRetryAfter(seconds: number): void {
-        this.retryAfterUntil = Date.now() + (seconds * 1000);
+        this.retryAfterUntil = CanonicalClock.getInstance().simulatedNow() + (seconds * 1000);
     }
 }
 

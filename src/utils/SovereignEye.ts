@@ -1,4 +1,5 @@
 import { exec } from 'child_process';
+import { CanonicalClock } from './CanonicalClock.js';
 import { promisify } from 'util';
 import { existsSync, mkdirSync, readFileSync, promises as fsPromises } from 'fs';
 import { join, resolve } from 'path';
@@ -118,7 +119,7 @@ export class SovereignEye extends EventEmitter {
      * Capture a URL target (localhost, wrangler dev, deployed page).
      */
     private async captureUrl(url: string, viewport: ViewportConfig): Promise<Result<CaptureResult>> {
-        const timestamp = Date.now();
+        const timestamp = Date.now(); // EXTERNAL domain: filesystem path, not simulation state
         const screenshotPath = join(this.captureDir, `url_${timestamp}.png`);
 
         try {
@@ -202,7 +203,7 @@ export class SovereignEye extends EventEmitter {
             return { ok: false, error: new Error(`HTML file not found: ${absPath}`) };
         }
 
-        const timestamp = Date.now();
+        const timestamp = Date.now(); // EXTERNAL domain: filesystem path
         const screenshotPath = join(this.captureDir, `html_${timestamp}.png`);
 
         try {
@@ -246,7 +247,7 @@ export class SovereignEye extends EventEmitter {
                 textContent: '[RSC State] Use play-rsc command or RSCLimb.getWorldState() for real-time game perception.',
                 sourceType: 'rsc',
                 metadata: { protocol: 'tcp', port: 43594 },
-                timestamp: Date.now()
+                timestamp: Date.now() // EXTERNAL domain: capture metadata
             }
         };
     }
@@ -255,7 +256,7 @@ export class SovereignEye extends EventEmitter {
      * Capture an OS window by title match.
      */
     private async captureWindow(windowTitle: string): Promise<Result<CaptureResult>> {
-        const timestamp = Date.now();
+        const timestamp = Date.now(); // EXTERNAL domain: filesystem path
         const screenshotPath = join(this.captureDir, `window_${timestamp}.png`);
         const currentPlatform = platform();
 
@@ -335,7 +336,7 @@ $bitmap.Dispose()
                 textContent: null,
                 sourceType: 'file',
                 metadata: { originalPath: absPath },
-                timestamp: Date.now()
+                timestamp: CanonicalClock.getInstance().simulatedNow()
             }
         };
     }

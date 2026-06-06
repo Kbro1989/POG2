@@ -13,6 +13,60 @@
 import { existsSync, mkdirSync, statSync, writeFileSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { homedir } from 'os';
+import { fileURLToPath } from 'url';
+
+// ─── PACKAGE ROOT RESOLUTION ───
+// Resolves the POG2 *installation* directory (where package.json lives).
+// Distinct from getSovereignRoot() which resolves *data storage* paths.
+// Required for global installs where process.cwd() !== package directory.
+
+let _packageRoot: string | null = null;
+
+/**
+ * Returns the POG2 package installation root directory.
+ * Priority: 1. SOVEREIGN_ROOT env var (explicit override)
+ *           2. Walk up from this module's location to find package.json
+ *           3. process.cwd() (fallback for dev environments)
+ */
+export function getPackageRoot(): string {
+    if (_packageRoot) return _packageRoot;
+
+    // 1. Explicit environment override
+    if (process.env['SOVEREIGN_ROOT']) {
+        _packageRoot = process.env['SOVEREIGN_ROOT'];
+        return _packageRoot;
+    }
+
+    // 2. Module-relative resolution (works for both global and local installs)
+    try {
+        const modulePath = fileURLToPath(import.meta.url);
+        let dir = dirname(modulePath);
+        // Walk up from dist/src/utils/ or src/utils/ to find package.json
+        for (let i = 0; i < 6; i++) {
+            if (existsSync(join(dir, 'package.json'))) {
+                _packageRoot = dir;
+                return _packageRoot;
+            }
+            const parent = dirname(dir);
+            if (parent === dir) break; // reached filesystem root
+            dir = parent;
+        }
+    } catch {
+        // fileURLToPath may fail in edge cases
+    }
+
+    // 3. Fallback to CWD
+    _packageRoot = process.cwd();
+    return _packageRoot;
+}
+
+/**
+ * Resolves a path relative to the POG2 package installation directory.
+ * Use for templates, dist/resources, tsconfig.json, .git, etc.
+ */
+export function resolvePackagePath(...segments: string[]): string {
+    return join(getPackageRoot(), ...segments);
+}
 
 // Ternary Path Tiers
 export const enum PathTier {
@@ -563,11 +617,15 @@ export function getCliTsConfigPath(): string {
         if (existsSync(p)) return p;
     }
 
-    // Priority 2: CWD (works when run from project root)
+    // Priority 2: Package install directory (works for global installs)
+    const pkgPath = join(getPackageRoot(), 'tsconfig.json');
+    if (existsSync(pkgPath)) return pkgPath;
+
+    // Priority 3: CWD (works when run from project root in dev)
     const cwdPath = join(process.cwd(), 'tsconfig.json');
     if (existsSync(cwdPath)) return cwdPath;
 
-    // Priority 3: Give up â€” return empty so callers can handle gracefully
+    // Priority 4: Give up — return empty so callers can handle gracefully
     return '';
 }
 

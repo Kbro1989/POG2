@@ -5,6 +5,7 @@ import { ModelClient as ModelExecutor } from '../clients/ModelClient.js';
 import { ArchitectureDigest } from '../core/ArchitectureDigest.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { basename, join } from 'path';
+import { getPackageRoot } from '../utils/SovereignPathResolver.js';
 import * as fs from 'fs';
 
 // Biological Limbs for Holistic Immunology
@@ -243,7 +244,7 @@ export class SelfHealingEngine {
         // 4. Code-level Healing (Physical TS file fix)
         // Ensure path exists and is a .ts file (avoids trying to run CodeEngine on virtual nodes or directories)
         if (this.codeEngine && nodeHealth.path && nodeHealth.path.endsWith('.ts')) {
-            const absolutePath = join(process.cwd(), nodeHealth.path);
+            const absolutePath = join(getPackageRoot(), nodeHealth.path);
             if (fs.existsSync(absolutePath)) {
                 logger.info({ file: absolutePath }, 'Routing degraded node to CodeEngine.fix()');
                 const fixRes = await this.codeEngine.fix({ filePath: absolutePath, dryRun: false });

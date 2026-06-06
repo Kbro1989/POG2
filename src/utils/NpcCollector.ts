@@ -8,6 +8,7 @@
  */
 
 import { createLogger } from './logger.js';
+import { CanonicalClock } from './CanonicalClock.js';
 import { BestiaryApi, BestiaryBeastData } from './BestiaryApi.js';
 import { WikiEquipmentEnricher, WikiMonsterMeta, WikiDropTable } from './WikiEquipmentEnricher.js';
 import { EventBus } from '../events/EventBus.js';
@@ -60,7 +61,7 @@ export class NpcCollector {
             beastData,
             dropTables,
             cacheData,
-            fetchedAt: Date.now()
+            fetchedAt: CanonicalClock.getInstance().simulatedNow()
         };
 
         // 3. Publish to training pipeline
@@ -69,7 +70,7 @@ export class NpcCollector {
             source: 'NpcCollector',
             payload: {
                 tick: -1, 
-                timestamp: Date.now(),
+                timestamp: CanonicalClock.getInstance().simulatedNow(),
                 fidelity: LearningFidelity.PEDAGOGY,
                 resolution: data,
                 tags: ['npc_enrichment', 'bestiary_verified', 'substrate_forensic']

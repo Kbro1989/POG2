@@ -11,7 +11,7 @@ export const ollamaTierBridge: ToolDefinition = {
     jargonDescription: 'Spawns a child process invoking the ollama_bridge.mjs script, mapping the payload to hardware-specific tiers.',
     idealYaoState: YaoState.OldYin,
     domain: SovereignDomain.RESEARCH,
-    category: 'ai',
+    category: 'core',
     parameters: {
         tier: {
             type: 'string',

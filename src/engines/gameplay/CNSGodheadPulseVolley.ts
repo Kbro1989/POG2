@@ -624,14 +624,15 @@ export class CNSGodheadPulseVolley {
         }, '⚡ Action committed');
 
         // Export to Sovereign renderer for observer window
-        const ui = require('../../ui/Renderer.js').Renderer.getInstance();
-        ui.exportActionOutcome({
-            tickId,
-            commands,
-            prediction,
-            vector: transitionalVector,
-            timestamp: CanonicalClock.getInstance().simulatedNow()
-        });
+        // const { Renderer } = await import('../../ui/Renderer.js');
+        // const ui = Renderer.getInstance();
+        // ui.exportActionOutcome({
+        //     tickId,
+        //     commands,
+        //     prediction,
+        //     vector: transitionalVector,
+        //     timestamp: CanonicalClock.getInstance().simulatedNow()
+        // });
 
         // Phase 11: Action Pipeline Feedback
         kernel.recordAction('PULSE_COMMIT', prediction.confidence);

@@ -73,7 +73,7 @@ export class GhostSplatEngine {
      * project - Generates a GhostSplatField for a given number of ticks into the future.
      */
     public project(state: GameState, tickDepth: number = 2, playerAgent?: PlayerAgent): GhostSplatField | null {
-        const start = performance.now();
+        const start = CanonicalClock.getInstance().realNow();
         
         try {
             const field: GhostSplatField = {
@@ -100,7 +100,7 @@ export class GhostSplatEngine {
 
             this.generateGaussianTensor(field);
 
-            const duration = performance.now() - start;
+            const duration = CanonicalClock.getInstance().realNow() - start;
             if (duration > this.MAX_COMPUTE_MS) {
                 logger.warn({ duration, limit: this.MAX_COMPUTE_MS }, 
                     'Ghost Splat Engine threshold exceeded - Predictive logic too heavy'
@@ -638,7 +638,7 @@ export const GhostSplatEngineContract: EngineContract = {
   name: 'GhostSplatEngine',
   validate: (ctx) => (ctx.payload?.activeEntities?.npcs?.length || 0) > 0 || (ctx.payload?.activeEntities?.players?.length || 0) > 0,
   execute: async (ctx): Promise<ContractResult> => {
-    const start = performance.now();
+    const start = CanonicalClock.getInstance().realNow();
     const engine = GhostSplatEngine.getInstance();
     
     const state: any = ctx.payload?.state || {
@@ -670,7 +670,7 @@ export const GhostSplatEngineContract: EngineContract = {
          },
          fullField: field 
       },
-      durationMs: performance.now() - start
+      durationMs: CanonicalClock.getInstance().realNow() - start
     };
   },
   fallback: async (ctx): Promise<ContractResult> => {

@@ -97,7 +97,7 @@ import { ASTWatcher } from './ASTWatcher.js';
 import { ChromaLimb } from '../limbs/spatial/ChromaLimb.js';
 import { VideoAssemblerLimb } from '../limbs/creative/VideoAssemblerLimb.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
-import { getSovereignRoot, getGodHeadRoot, getLearningDbPath, getPipelineRootPath, getrsmvCachePath, resolveSovereignPath } from '../utils/SovereignPathResolver.js';
+import { getSovereignRoot, getGodHeadRoot, getLearningDbPath, getPipelineRootPath, getrsmvCachePath, resolveSovereignPath, getPackageRoot } from '../utils/SovereignPathResolver.js';
 import { IntentVerifier } from './IntentVerifier.js';
 import { NpcCollector } from '../utils/NpcCollector.js';
 import { ItemCollector } from '../utils/ItemCollector.js';
@@ -128,6 +128,7 @@ import { SovereignSandboxLimb } from '../limbs/technical/SovereignSandboxLimb.js
 import { ObjectiveLimb } from '../limbs/technical/ObjectiveLimb.js';
 
 import { createLogger } from "../utils/logger.js";
+import { CanonicalClock } from '../utils/CanonicalClock.js';
 
 const logger = createLogger('OrchestrateEngine');
 
@@ -566,6 +567,32 @@ export class OrchestrateEngine {
             }
         }
 
+        // ─── HEXAGRAM PERMISSION GATE ───
+        const backingLimb = this.registry.getBackingLimb(toolName);
+        if (backingLimb) {
+            try {
+                // We use dynamic import or direct call to get HexagramManager instance safely
+                // because OrchestrateEngine runs within the substrate where HexagramManager is active
+                const { HexagramManager } = await import('../routing/HexagramManager.js');
+                const hexManager = HexagramManager.getInstance();
+                const activeLimbs = hexManager.getActiveLimbSet();
+                
+                // Orchestrator limbs are inherently allowed by the gating logic
+                if (!activeLimbs.includes(backingLimb)) {
+                    logger.warn({ tool: toolName, backingLimb, activeLimbs }, 'Hexagram Gate BLOCKED execution');
+                    return err({
+                        name: 'Error',
+                        message: `HEXAGRAM BLOCKED: Tool '${toolName}' requires '${backingLimb}', which is not currently active in this I Ching hexagram state.`,
+                        code: 'HEXAGRAM_BLOCKED'
+                    } as any);
+                }
+            } catch (error) {
+                // If HexagramManager fails to initialize, default to open to avoid catastrophic lock
+                logger.debug({ error }, 'HexagramManager unavailable during gating.');
+            }
+        }
+
+
         
         // ─── COGNITIVE IMMUNOLOGY PRE-SCAN ───
         const context = [
@@ -590,7 +617,7 @@ export class OrchestrateEngine {
                 agent: sourceAgent,
                 file: args['filePath'] as string,
                 lines: [0, 0], // Will be updated post-execution if file modified
-                timestamp: Date.now(),
+                timestamp: CanonicalClock.getInstance().simulatedNow(),
                 description: `Tool: ${toolName}`
             });
         }
@@ -936,11 +963,11 @@ export class OrchestrateEngine {
             primaryGoal: 'Sovereign Autonomy (NO MOCKS)'
         };
 
-        const watcher = new ASTWatcher(getGodHeadRoot() ?? process.cwd());
+        const watcher = new ASTWatcher(getPackageRoot());
         watcher.initialize();
 
         const selfHealingEngine = new SelfHealingEngine(
-            process.cwd(),
+            getPackageRoot(),
             this.client,
             this.router.getHexagram(),
             this.config.masterLocalModel,
@@ -1195,7 +1222,7 @@ export class OrchestrateEngine {
             name: 'sovereign_eye_capture',
             description: 'Panoramic system-wide visual snapshot (SovereignEye).',
             domain: SovereignDomain.VISION,
-            category: 'sensory',
+            category: 'core',
             parameters: { target: { type: 'string', description: 'Window name or file path' } },
             execute: async (args) => {
                 const target = args.target as string;
@@ -1208,7 +1235,7 @@ export class OrchestrateEngine {
             name: 'puppeteer_eye_capture',
             description: 'Foveal high-acuity UI/3D focus capture (PuppeteerEye).',
             domain: SovereignDomain.VISION,
-            category: 'sensory',
+            category: 'core',
             parameters: { url: { type: 'string', description: 'URL to target' } },
             execute: async (args) => {
                 const url = args.url as string;
@@ -1452,7 +1479,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Executes topology-aware structural epistemology to filter out tutorial interfaces and isolate SPRITE_OVERLAY, SETTINGS_PANEL, or RIBBON candidates based on ratio scoring. Maps to Hex 20 (Observation), Hex 23 (Splitting/Filtering), and Hex 27 (Nourishment/Heuristics).',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.OBSERVE,
-            category: 'sensory',
+            category: 'core',
             parameters: {
                 query: { type: 'string', description: 'Search term for text labels (optional)' },
                 atlasPath: { type: 'string', description: 'Path to atlas directory containing decomposed JSONs', default: 'D:/D-sovereign-/cache_pedagogy/atlas/interfaces' }
@@ -1567,7 +1594,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Queries the SpatialSovereigntyLimb for 0x100 (Object) and 0x200000 (Terrain) collision masks at specific world coordinates.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.OBSERVE,
-            category: 'sensory',
+            category: 'core',
             parameters: {
                 x: { type: 'number', description: 'World X coordinate' },
                 y: { type: 'number', description: 'World Y coordinate' },
@@ -1608,7 +1635,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Queries the MechanicalSovereigntyLimb for spawning rules, state transitions, and loot conditions based on regional logic artifacts.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.OBSERVE,
-            category: 'sensory',
+            category: 'core',
             parameters: {
                 region: { type: 'string', description: 'Region name (e.g., "barrows")', default: 'barrows' },
                 objectId: { type: 'number', description: 'Optional Object ID to query spawning rules' },
@@ -1706,7 +1733,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Spawns a VS Code process to open a specific file system path, attempting to reuse the current window substrate.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.MOTOR,
-            category: 'vscode',
+            category: 'motor',
             parameters: { filePath: 'string' },
             execute: async (args) => {
                 const params = args as { filePath: string };
@@ -1721,7 +1748,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Leverages the VS Code file substrate to read UTF-8 content directly into the cognitive engine buffer.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.OBSERVE,
-            category: 'vscode',
+            category: 'motor',
             parameters: { filePath: 'string' },
             execute: async (args) => {
                 const params = args as { filePath: string };
@@ -1736,7 +1763,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Executes a targeted file patch or replacement via the VS Code engine, supporting line/column coordinates.',
             idealYaoState: YaoState.OldYang,
             domain: SovereignDomain.MOTOR,
-            category: 'vscode',
+            category: 'motor',
             parameters: {
                 filePath: 'string',
                 content: 'string',
@@ -1762,7 +1789,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Enforces an editor focus shift and cursor repositioning at specific coordinates via the VS Code --goto substrate.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.MOTOR,
-            category: 'vscode',
+            category: 'motor',
             parameters: {
                 filePath: 'string',
                 line: 'number',
@@ -1786,7 +1813,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Probes the VS Code environment to detect active editor metadata, workspace folders, and file system adjacency state.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.OBSERVE,
-            category: 'vscode',
+            category: 'motor',
             parameters: {},
             execute: async () => {
                 return this.vscode.execute({ action: 'getWorkspace' });
@@ -2055,7 +2082,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Interfaces with the Cloudflare Wrangler CLI substrate to manage workers, KV, and D1 resources.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.SYSTEM,
-            category: 'mcp',
+            category: 'core',
             parameters: { command: 'string' },
             execute: (args) => lib.wrangler(args as { command: string })
         });
@@ -2067,7 +2094,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Queries the local Git substrate for the current working tree status and index state.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.SYSTEM,
-            category: 'filesystem',
+            category: 'motor',
             parameters: {},
             execute: () => lib.gitStatus()
         });
@@ -2079,7 +2106,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Dispatches commands to the Google Cloud CLI substrate using the existing global auth context.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.SYSTEM,
-            category: 'mcp',
+            category: 'core',
             parameters: { command: 'string' },
             execute: (args) => shell.execute({ command: `gcloud ${args.command}`, cwd: process.cwd() })
         });
@@ -2091,7 +2118,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Integrates with the InstantDB CLI for real-time substrate synchronization and state management.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.SYSTEM,
-            category: 'mcp',
+            category: 'core',
             parameters: { command: 'string' },
             execute: (args) => shell.execute({ command: `npx instantdb ${args.command}`, cwd: process.cwd() })
         });
@@ -2103,7 +2130,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Performs Git operations within the local substrate.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.SYSTEM,
-            category: 'mcp',
+            category: 'core',
             parameters: { command: 'string' },
             execute: (args) => lib.git(args as { command: string })
         });
@@ -2115,7 +2142,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Dispatches a wrangler deploy task.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.SYSTEM,
-            category: 'mcp',
+            category: 'core',
             parameters: { scriptName: 'string' },
             execute: (args) => lib.wranglerDeploy(args as { scriptName: string })
         });
@@ -2127,7 +2154,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Enumerates KV namespace identifiers.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.SYSTEM,
-            category: 'mcp',
+            category: 'core',
             parameters: {},
             execute: () => lib.wranglerKvList()
         });
@@ -2139,7 +2166,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Enumerates object storage buckets.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.SYSTEM,
-            category: 'mcp',
+            category: 'core',
             parameters: {},
             execute: () => lib.wranglerR2List()
         });
@@ -2151,7 +2178,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Enumerates Ollama model registry.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.SYSTEM,
-            category: 'mcp',
+            category: 'core',
             parameters: {},
             execute: () => lib.ollamaModelList()
         });
@@ -2163,7 +2190,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Dispatches inference generation.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.SYSTEM,
-            category: 'mcp',
+            category: 'core',
             parameters: { model: 'string', prompt: 'string' },
             execute: (args) => lib.ollamaRun(args as { model: string; prompt: string })
         });
@@ -2175,7 +2202,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Reports health of MCP substrates.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.SYSTEM,
-            category: 'mcp',
+            category: 'core',
             parameters: {},
             execute: () => lib.mcpClientStatus()
         });
@@ -2187,7 +2214,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Aggregates status across neurological substrates.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.SYSTEM,
-            category: 'mcp',
+            category: 'core',
             parameters: {},
             execute: () => lib.serviceStatus()
         });
@@ -2298,7 +2325,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Captures and analyzes the primary display substrate via the Sovereign Vision Engine\'s observation logic.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.VISION,
-            category: 'sensory',
+            category: 'core',
             parameters: { target: 'string?', prompt: 'string?' },
             execute: (args) => {
                 const params = args as { target?: string, prompt?: string, model?: string };
@@ -2313,7 +2340,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Executes a multi-modal sensory capture of target substrates (file, URL, window) for analysis via the ChromaLimb.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.VISION,
-            category: 'sensory',
+            category: 'core',
             parameters: { sourceType: 'string', target: 'string', prompt: 'string?' },
             execute: (args) => {
                 const params = args as { sourceType: 'file' | 'url' | 'html' | 'window', target: string, prompt?: string, model?: string };
@@ -2328,7 +2355,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Executes a generative creative pipeline: synthesizes a visual substrate via ChromaLimb, captures it, and decompiles it via the Vision Engine.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.VISION,
-            category: 'sensory',
+            category: 'core',
             parameters: { prompt: 'string', analysisPrompt: 'string?' },
             execute: async (args) => {
                 const prompt = (args as { prompt: string; analysisPrompt?: string }).prompt;
@@ -2360,7 +2387,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Queries the global web substrate via the WebSearchEngine to retrieve external knowledge fragments.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'network',
+            category: 'core',
             parameters: { query: 'string' },
             execute: (args) => this.discovery.search(args as unknown as WebSearchParams)
         });
@@ -2372,7 +2399,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Fetches and parses the DOM content of a target URL substrate into a clinical markdown representation via the search engine.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'network',
+            category: 'core',
             parameters: { url: 'string' },
             execute: (args) => this.discovery.fetchUrl((args as { url: string }).url)
         });
@@ -2384,7 +2411,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Leverages the rsmvExtractor substrate to derive SpeciesAnatomy and KineticProfile from target 3D model JSON definitions.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'sensory',
+            category: 'core',
             parameters: { modelData: 'object' },
             execute: async (args) => {
                 const { modelData } = args as { modelData: any };
@@ -2435,7 +2462,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Orchestrates a 3D spatial projection via the ModelViewerLimb, applying deconstructed GLSL PBR fragments to the target model substrate.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.VISION,
-            category: 'sensory',
+            category: 'core',
             parameters: { modelId: 'number', materialId: 'number?' },
             execute: async (args) => {
                 const { modelId, materialId } = args as { modelId: number, materialId?: number };
@@ -2452,7 +2479,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Maps a Chromanumber classification to a specific 3D mesh fragment, establishing a semantic link between 2D vision and 3D spatial substrates.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.VISION,
-            category: 'sensory',
+            category: 'core',
             parameters: { modelId: 'number', colorIntent: 'string' },
             execute: async (args) => {
                 const { modelId, colorIntent } = args as { modelId: number, colorIntent: string };
@@ -2469,7 +2496,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Performs a volatility probe on the main_file_cache.dat2 substrate to detect external Jagex modifications.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'sensory',
+            category: 'core',
             parameters: {},
             execute: async () => {
                 const res = await this.cacheForensics.checkCacheVolatility();
@@ -2489,7 +2516,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Executes a sovereign extraction of raw JS5 substrate data (NPC, Item, Obj) via the CacheLearningLimb.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'sensory',
+            category: 'core',
             parameters: { entityId: 'number', type: 'string' },
             execute: async (args) => {
                 const { entityId, type } = args as { entityId: number; type: string };
@@ -2509,7 +2536,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Spawns an rsmv instructor process to render a specific model substrate for visual verification.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.VISION,
-            category: 'sensory',
+            category: 'core',
             parameters: { modelId: 'string', colors: 'object?', materials: 'object?' },
             execute: async (args) => {
                 const { modelId, colors, materials } = args as { modelId: string; colors?: any; materials?: any };
@@ -2526,7 +2553,7 @@ export class OrchestrateEngine {
             jargonDescription: 'Invokes the SpatialVisionEngine to perform a technical and aesthetic audit of a target visual substrate, returning a 0-10 score.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.VISION,
-            category: 'sensory',
+            category: 'core',
             parameters: { targetPath: 'string', intent: 'string?', threshold: 'number?' },
             execute: async (args) => {
                 const { targetPath, intent = 'ui_analysis', threshold = 8 } = args as { targetPath: string; intent?: string; threshold?: number };
@@ -2596,7 +2623,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Executes a dynamic query across preserved JSON taxonomy layers via the CacheForensicsLimb.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'sensory',
+            category: 'core',
             parameters: { layer: 'string', term: 'string', queryType: 'string?' },
             execute: async (args) => {
                 const params = args as { layer: 'npcs' | 'items' | 'objects' | 'quests', term: string, queryType?: 'exact' | 'partial' | 'regex' };
@@ -2621,7 +2648,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Performs a Layer 3 deep cross-reference of a target entity to its internal JS5 Model ID mappings.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'sensory',
+            category: 'core',
             parameters: { name: 'string' },
             execute: async (args) => {
                 const { name } = args as { name: string };
@@ -2705,7 +2732,7 @@ OUTPUT FORMAT:
             name: 'ingest_book',
             description: 'Ingest a book from Project Gutenberg (by ID) or local text into the Sovereign Library.',
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: { id: 'number', title: 'string', author: 'string', domain: 'string', content: 'string?' },
             execute: async (args) => {
                 const params = args as { id: number, title: string, author: string, domain: string, content?: string };
@@ -2725,7 +2752,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Extracts high-level stylistic metrics (ARI, tone, richness) from target literary substrates within the Sovereign Library.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: { bookId: 'number' },
             execute: async (args) => {
                 const params = args as { bookId: number };
@@ -2750,7 +2777,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Retrieves the structural index of all ingested literary substrates within the Sovereign Library.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: {},
             execute: async () => {
                 const books = this.gutenberg.getLibrary();
@@ -2767,7 +2794,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Executes a recursive study mission on a target literary substrate, reflecting on and synthesizing wisdom into the memory substrate.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: { bookId: 'number' },
             execute: async (args) => {
                 const params = args as { bookId: number };
@@ -2785,7 +2812,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Queries the external Project Gutenberg metadata substrate for books matching target criteria (topic, title, author).',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: { query: 'string' },
             execute: async (args) => {
                 const params = args as { query: string };
@@ -2811,7 +2838,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Synthesizes high-fidelity narrative scenes and visual prompts derived from the stylistic profile of a target literary substrate.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.VISION,
-            category: 'creative',
+            category: 'forge',
             parameters: { bookId: 'number', sceneCount: 'number?' },
             execute: async (args): Promise<Result<EngineOutput>> => {
                 const { bookId, sceneCount = 5 } = args as { bookId: number; sceneCount?: number };
@@ -2883,7 +2910,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Aggregates and summarizes active cognitive archetypes and weightings from the memory substrate.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: {},
             execute: async () => {
                 const res = await this.cognitive.getPersonalityCore();
@@ -2900,7 +2927,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Activates high-affinity wisdom fragments from a target literary substrate into the current metabolic thinking context.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: { bookId: 'number' },
             execute: async (args) => {
                 const params = args as { bookId: number };
@@ -2917,7 +2944,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Manually assigns a metabolic ContextCard with a specific archetype title to a hexagram slot, enforcing a static bias in the expansion substrate.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: { archetype: 'string' },
             execute: async (args) => {
                 const { archetype } = args as { archetype: string };
@@ -2933,7 +2960,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Extracts the StyleProfile from a target BookMetadata substrate and overwrites the active Hexagram Sage Seat to bias all downstream generation via the inferred literary tone.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: { bookId: 'number' },
             execute: async (args): Promise<Result<EngineOutput>> => {
                 const { bookId } = args as { bookId: number };
@@ -2964,7 +2991,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Retrieves the complete BookMetadata array from the local Gutenberg limb substrate.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: {},
             execute: async () => {
                 const books = this.gutenberg.getLibrary();
@@ -2980,7 +3007,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Leverages the Gutendex API substrate to search the global Gutenberg catalog via partial string match.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: { query: 'string' },
             execute: async (args) => {
                 const res = await this.gutenberg.searchCatalog(args.query as string);
@@ -2997,7 +3024,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Executes an atomic fetch-and-store operation from the Gutenberg cache substrate, generating RAG embeddings and metadata records.',
             idealYaoState: YaoState.OldYang,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: {
                 id: 'number',
                 title: 'string',
@@ -3019,7 +3046,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Executes a recursive chunk-wise analysis on a target book substrate, extracting philosophical insights and persistent memory lessons.',
             idealYaoState: YaoState.OldYang,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: { bookId: 'number' },
             execute: async (args) => {
                 const res = await this.gutenberg.readBook(args.bookId as number);
@@ -3035,7 +3062,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Initiates a recursive file system crawl of the primary Sovereign substrate to heal metadata drift and eliminate records of lost/moved items.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: {},
             execute: async () => {
                 const res = this.gutenberg.syncLibrary();
@@ -3051,7 +3078,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Prompts Kimi-k2.6 to execute zero-shot classification on the opening byte-chunks of the uncategorized corpus, re-mapping physical paths recursively.',
             idealYaoState: YaoState.OldYang,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: {},
             execute: async () => {
                 const res = await this.gutenberg.organizeLibrary();
@@ -3068,7 +3095,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Executes the PipelineController autonomous orchestration loop: StoryboardLimb ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ChromanumberEngine ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ VoiceLimb ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ VideoAssemblerLimb ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ manifest assembly.',
             idealYaoState: YaoState.OldYang,
             domain: SovereignDomain.FORGE,
-            category: 'creative',
+            category: 'forge',
             parameters: { bookId: 'number', sceneCount: 'number?', personality: 'string?', voiceGeneration: 'string?', videoAssembly: 'string?', feedbackLoop: 'string?' },
             execute: async (args): Promise<Result<EngineOutput>> => {
                 const request: PipelineRequest = {
@@ -3092,7 +3119,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Executes a global library crawl, dispatching independent PipelineController sessions for every discovered literary substrate.',
             idealYaoState: YaoState.OldYang,
             domain: SovereignDomain.FORGE,
-            category: 'creative',
+            category: 'forge',
             parameters: { sceneCount: 'number?', personality: 'string?', voiceGeneration: 'string?', videoAssembly: 'string?' },
             execute: async (args): Promise<Result<EngineOutput>> => {
                 const request: Omit<PipelineRequest, 'bookId'> = {
@@ -3115,7 +3142,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Invokes VoiceLimb.narrate() directly for freeform neural TTS with emotional prosody hooks.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.MOTOR,
-            category: 'creative',
+            category: 'forge',
             parameters: {
                 text: { type: 'string', description: 'The text to speak' },
                 personality: { type: 'string', description: 'Vocal personality', default: '' },
@@ -3145,7 +3172,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Invokes StoryboardLimb.generateFromPrompt() for freeform scene generation through the ternary cognitive substrate.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.VISION,
-            category: 'creative',
+            category: 'forge',
             parameters: {
                 prompt: { type: 'string', description: 'Creative prompt' },
                 sceneCount: { type: 'number', description: 'Number of scenes', default: 5 },
@@ -3170,7 +3197,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Invokes VideoAssemblerLimb.assembleFromAssets() for universal video composition with cognitive filters.',
             idealYaoState: YaoState.OldYang,
             domain: SovereignDomain.MOTOR,
-            category: 'creative',
+            category: 'forge',
             parameters: {
                 assets: { type: 'string', description: 'JSON array of { imagePath, audioPath?, durationSec? }' },
                 outputPath: { type: 'string', description: 'Output video file path' }
@@ -3245,7 +3272,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Synthesizes a procedural audio score via the SoundtrackLimb, mapping narrative prosody to ffmpeg DSP parameters.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.MOTOR,
-            category: 'creative',
+            category: 'forge',
             parameters: { prompt: 'string', duration: 'number?' },
             execute: async (args) => {
                 const prompt = args.prompt as string;
@@ -3267,7 +3294,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Forges a visual substrate via the ChromanumberEngine, prioritizing Flux professional generation with HTML fallback.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.VISION,
-            category: 'creative',
+            category: 'forge',
             parameters: { prompt: 'string', modelOverride: 'string?' },
             execute: async (args) => {
                 const res = await this.chroma.generateVisualSubstrate({ prompt: args.prompt as string });
@@ -3327,7 +3354,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Spawns an immune response via EndpointHealer to diagnose and attempt auto-repair of failed provider substrates.',
             idealYaoState: YaoState.OldYang,
             domain: SovereignDomain.SYSTEM,
-            category: 'mcp',
+            category: 'core',
             parameters: { provider: 'string', error: 'string', model: 'string?' },
             execute: async (args): Promise<Result<EngineOutput>> => {
                 const res = await this.client.getHealer().diagnoseAndHeal((args as any).provider, (args as any).error, (args as any).model);
@@ -3342,7 +3369,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Invokes WebSensoryLimb for high-fidelity spatial awareness of target URL substrates.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.VISION,
-            category: 'sensory',
+            category: 'core',
             parameters: { url: 'string' },
             execute: async () => ok({ output: 'WebSensory substrate initialized and observing.' })
         });
@@ -3354,7 +3381,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Invokes NeuralForgeLimb.forge() to synthesize complex conceptual blueprints from raw creative intent.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.CODE,
-            category: 'creative',
+            category: 'forge',
             parameters: { prompt: 'string' },
             execute: async () => ok({ output: 'NeuralForge concept substrate active.' })
         });
@@ -3390,7 +3417,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Dispatches gameplay packets via the RSCLimb bridge to the OpenRSC server substrate.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.SYSTEM,
-            category: 'sensory',
+            category: 'core',
             parameters: { action: 'string', params: 'object' },
             execute: async (args): Promise<Result<EngineOutput>> => {
                 const p = args as { action: string, params: any };
@@ -3475,7 +3502,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Executes a procedural synthesis turn via SoundtrackLimb, mapping current Hexagram/Yao density to ffmpeg oscillators.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.MOTOR,
-            category: 'creative',
+            category: 'forge',
             parameters: { duration: 'number?' },
             execute: async (args): Promise<Result<EngineOutput>> => {
                 const duration = (args as any).duration || 5;
@@ -3501,7 +3528,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Iterates through D:\\sovereign\\pipelines, verifying manifest integrity and asset health via PipelineController.verifyWork.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.SYSTEM,
-            category: 'filesystem',
+            category: 'motor',
             parameters: { bookId: 'number?' },
             execute: async (args): Promise<Result<EngineOutput>> => {
                 const results: string[] = [];
@@ -3593,7 +3620,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Invokes RelicLimb.fetchHistoricalContext() to bridge modern intent with documented historical precedents.',
             idealYaoState: YaoState.YoungYin,
             domain: SovereignDomain.RESEARCH,
-            category: 'literary',
+            category: 'forge',
             parameters: { query: 'string' },
             execute: async (args) => {
                 const res = await this.relic.fetchHistoricalContext((args as any).query);
@@ -3624,7 +3651,7 @@ OUTPUT FORMAT:
             jargonDescription: 'Invokes RSCLimb.connectWithKnock() for TCP bridge exposure after successful TernaryRouter validation.',
             idealYaoState: YaoState.YoungYang,
             domain: SovereignDomain.SYSTEM,
-            category: 'sensory',
+            category: 'core',
             parameters: { knock: 'object' },
             execute: async (args) => {
                 const res = await this.rscLimb.connectWithKnock((args as any).knock);
@@ -3678,8 +3705,9 @@ OUTPUT FORMAT:
             cascadeOrder: ['ollama', 'huggingface', 'cloudflare', 'gemini']
         }).catch(() => { /* non-blocking */ });
 
-        // Phase 20: Abolished strict DomainLocker. Brain sees all available capabilities
-        const capabilities = this.registry.getFormattedDefinitions();
+        // Phase 20: Brain sees capabilities scoped by Hexagram's active limbs
+        const interpretation = this.router.getHexagram().getInterpretation();
+        const capabilities = this.registry.getFormattedDefinitionsForCategories(interpretation.activeLimbs || ['motor', 'forge', 'core']);
 
         // Phase 20: Inject Sovereign Vector Memory
         let memoryInjection = memoryContext;
@@ -4199,6 +4227,14 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
         }
 
         // --- Cognitive ISA Governance Check (Phase 220) ---
+        const hexInterpretation = this.router.getHexagram().getInterpretation();
+        const activeLimbs = hexInterpretation.activeLimbs || ['motor', 'forge', 'core']; // Fallback
+        
+        if (tool.category && !activeLimbs.includes(tool.category)) {
+            this.renderer.error(`[Hexagram Blocked] Tool category "${tool.category}" is suppressed under current hexagram state (${hexInterpretation.name}).`);
+            return { ok: false, error: new Error(`[Hexagram Blocked] Tool category "${tool.category}" is suppressed under current hexagram state (${hexInterpretation.name}). Active limbs: ${activeLimbs.join(', ')}`) };
+        }
+
         const contract = this.router.getHexagram().getContract();
         const permissions = contract.permissions;
         const toolDomain = tool.domain;
@@ -4217,7 +4253,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
         }
 
         // Phase 260: Just-in-Time (JIT) Limb Activation
-        if (tool?.category === 'literary' && this.gutenberg) {
+        if (tool?.category === 'forge' && this.gutenberg) {
             this.gutenberg.enable();
             logger.info({ tool: plan.tool }, 'GutenbergLimb JIT-enabled for literary task.');
         }
@@ -4258,6 +4294,8 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
             }
         }
 
+        // --- Triad Execution Stamp: Hexagram gated ✓, Clock stamped ✓, Call executing ---
+        const executionTick = CanonicalClock.getInstance().simulatedNow();
         const result = await tool.execute({ ...(plan.parameters || {}), model: modelId } as any);
 
         // Metabolic Feedback Loop - Drive hexagram from outcomes
@@ -4310,7 +4348,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
         // Phase 55: Persistent Training Loop - Record Consequence
         if (plan.timestamp) {
             this.trainingCollector.recordConsequence({
-                decisionId: String(plan.timestamp),
+                decisionId: String(plan.timestamp ?? executionTick),
                 tool: plan.tool || 'unknown_tool',
                 args: plan.parameters || {},
                 output: finalResult.ok ? finalResult.value.output : (finalResult.error?.message || 'Unknown Error'),

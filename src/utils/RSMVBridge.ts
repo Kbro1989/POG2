@@ -11,6 +11,7 @@
  */
 
 import { spawn } from 'child_process';
+import { CanonicalClock } from './CanonicalClock.js';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createLogger } from './logger.js';
@@ -26,15 +27,14 @@ export function getLastIOLatencyMs(): number {
     return _lastLatencyMs;
 }
 
-// Absolute path to the bridge script (Phase 45: Location-independent resolution)
-const BRIDGE_SCRIPT = join(__dirname, 'rsmv_bridge.ts')
-    .replace(join('dist', 'src'), 'src')
-    .replace(/\.js$/, '.ts');
+import { getPackageRoot } from './SovereignPathResolver.js';
+
+const BRIDGE_SCRIPT = join(getPackageRoot(), 'src', 'utils', 'rsmv_bridge.ts');
 
 const TIMEOUT_MS = 60000; // Increased to 60s for substrate stability during cold starts
 
 async function callBridge<T>(operation: string, ...args: string[]): Promise<Result<T>> {
-    const start = Date.now();
+    const start = CanonicalClock.getInstance().simulatedNow();
     return new Promise((resolve) => {
         const cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
         const childArgs = ['tsx', BRIDGE_SCRIPT, operation, ...args];
@@ -78,7 +78,7 @@ async function callBridge<T>(operation: string, ...args: string[]): Promise<Resu
 
         child.on('close', (code) => {
             clearTimeout(timer);
-            _lastLatencyMs = Date.now() - start;
+            _lastLatencyMs = CanonicalClock.getInstance().simulatedNow() - start;
 
             if (code !== 0) {
                 const msg = stderr.trim() || `Exit code ${code}`;
@@ -212,7 +212,7 @@ export class RSMVBridge {
 
     /** Probe the live cache. Result is cached for 30s to prevent audit spam. */
     public async healthCheck(): Promise<Result<BridgeHealthResult>> {
-        const now = Date.now();
+        const now = CanonicalClock.getInstance().simulatedNow();
         if (this._lastHealthCheckResult && (now - this._lastHealthCheckTime < 30000)) {
             return this._lastHealthCheckResult;
         }

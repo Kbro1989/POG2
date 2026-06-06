@@ -6,9 +6,9 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "pog2": "./dist/src/cli.js"
+    "pog2": "./dist/cli.js"
   },
-  "main": "./dist/src/cli.js",
+  "main": "./dist/cli.js",
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/cli.ts",
@@ -17,7 +17,7 @@
     "radar-live": "tsx src/tests/live_radar_experience.ts",
     "combat-demo": "tsx src/tests/combat_grounding_demo.ts",
     "necro-demo": "tsx src/tests/necromancer_ai_demo.ts",
-    "start": "node dist/src/cli.js",
+    "start": "node dist/cli.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "learn-rsmv": "tsx src/demo_rsmv_learning.ts",

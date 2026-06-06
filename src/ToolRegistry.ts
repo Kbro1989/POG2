@@ -19,7 +19,7 @@ export interface ToolDefinition {
     readonly jargonDescription?: string;     // Technical, low-level explanation
     readonly idealYaoState?: YaoState;       // Preferred metabolic state for execution
     readonly domain: SovereignDomain;
-    readonly category?: 'core' | 'filesystem' | 'network' | 'ai' | 'mcp' | 'sensory' | 'forge' | 'literary' | 'creative' | 'vscode';
+    readonly category?: 'motor' | 'forge' | 'core';
     readonly isForeign?: boolean;            // Flag indicating this is an assimilated skill from an external source
     readonly minTier?: 'Master' | 'Executive' | 'Reactive'; // Minimum tier required
     readonly requiresConsensus?: boolean;    // Force multi-model for this tool
@@ -171,6 +171,19 @@ export class ToolRegistry {
     }
 
     /**
+     * Get formatted definitions filtered by limb categories (motor/forge/core).
+     * Used by OrchestrateEngine to scope tool visibility based on active hexagram state.
+     * @param categories The active limb categories from the current HexagramDefinition.
+     * @returns A string containing a newline-separated list of formatted tool descriptions.
+     */
+    public getFormattedDefinitionsForCategories(categories: ReadonlyArray<'motor' | 'forge' | 'core'>): string {
+        return this.getDefinitions()
+            .filter((t: ToolDefinition) => !t.category || categories.includes(t.category))
+            .map((t: ToolDefinition) => `- ${t.name} [${t.domain}:${t.category || 'uncategorized'}]: ${t.description}`)
+            .join('\n');
+    }
+
+    /**
      * Get the domain for a specific tool.
      * @param toolName The name of the tool.
      * @returns The SovereignDomain of the tool if found, otherwise undefined.
@@ -180,11 +193,21 @@ export class ToolRegistry {
     }
 
     /**
-     * Get the backing limb for a tool, either explicit or undefined.
+     * Get the backing limb for a tool, either explicit or inferred.
      */
     public getBackingLimb(toolName: string): string | undefined {
         const tool = this.getTool(toolName);
-        return tool?.backingLimb;
+        if (tool?.backingLimb) {
+            return tool.backingLimb;
+        }
+        
+        // Infer backingLimb from MCP namespaces (e.g., 'gitkraken/git_blame' -> 'GitkrakenLimb')
+        if (toolName.includes('/')) {
+            const namespace = toolName.split('/')[0];
+            return namespace.charAt(0).toUpperCase() + namespace.slice(1) + 'Limb';
+        }
+
+        return undefined;
     }
 
     /**

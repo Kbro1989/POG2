@@ -4,6 +4,7 @@ import { getLearningDbPath } from './SovereignPathResolver.js';
 import * as fs from 'fs';
 import { join, dirname } from 'path';
 import { createLogger } from "./logger.js";
+import { CanonicalClock } from "./CanonicalClock.js";
 
 const logger = createLogger('DBMaintenance');
 
@@ -96,7 +97,7 @@ export class DBMaintenance {
             const db = new sqlite3.Database(this.dbPath, (err) => {
                 if (err) return resolve({ ok: false, error: err });
 
-                const cutoff = Date.now() - (daysToKeep * 24 * 60 * 60 * 1000);
+                const cutoff = CanonicalClock.getInstance().simulatedNow() - (daysToKeep * 24 * 60 * 60 * 1000);
 
                 db.serialize(() => {
                     db.run('DELETE FROM lessons WHERE createdAt < ?', [cutoff], function (this: any, dErr) {
