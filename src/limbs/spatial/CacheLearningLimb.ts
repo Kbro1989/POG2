@@ -13,7 +13,7 @@ const rsmv = getrsmvSubstratePath();
 try { ({ GameCacheLoader } = require(path.join(rsmv, 'src', 'cache', 'sqlite.js'))); } catch { /* rsmv substrate not linked */ }
 try { ({ EngineCache, ThreejsSceneCache } = require(path.join(rsmv, 'src', '3d', 'modeltothree.js'))); } catch { /* rsmv 3D substrate not linked */ }
 try { ({ renderAppearance } = require(path.join(rsmv, 'src', 'headless', 'api.js'))); } catch { /* rsmv headless substrate not linked */ }
-try { ({ SpatialMetricEngine } = require("../../engines/SpatialMetricEngine.js")); } catch { /* SpatialMetricEngine not available */ }
+try { ({ SpatialMetricEngine } = require("./SpatialMetricEngine.js")); } catch { /* SpatialMetricEngine not available */ }
 
 import { type Result, type DataType, type CacheData, err, ok } from '../../core/models.js';
 import { createLogger } from '../../utils/logger.js';

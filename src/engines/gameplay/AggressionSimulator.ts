@@ -131,12 +131,22 @@ export const AggressionSimulatorContract: EngineContract = {
     let decisionAction: 'wander' | 'flee' | 'attack' | 'call_help' = 'wander';
     let newState = 'idle';
 
+    // Verification: NPC must have the 'attack' action assigned in the cache to be aggressive or hit-able
+    const actions = [
+        ctx.payload?.npc?.actions_0,
+        ctx.payload?.npc?.actions_1,
+        ctx.payload?.npc?.actions_2,
+        ctx.payload?.npc?.actions_3,
+        ctx.payload?.npc?.actions_4
+    ].filter(Boolean).join(' ').toLowerCase();
+    const canAttack = actions.includes('attack');
+
     // Tolerant Retaliation
     if (isTolerant && lastAttackerId === 'player') {
-        wouldAggro = true; // Retaliate even if tolerant
+        wouldAggro = canAttack; // Retaliate even if tolerant, only if capable of attack
     }
 
-    if (wouldAggro && !isTolerant) {
+    if (wouldAggro && !isTolerant && canAttack) {
         decisionAction = 'attack';
         newState = 'aggressive';
     }
@@ -145,13 +155,13 @@ export const AggressionSimulatorContract: EngineContract = {
     const hpPercent = npcHp / Math.max(1, npcMaxHp);
 
     // Ripper demon enrage (<35% HP)
-    if (npcName.includes('ripper demon') && hpPercent < (0.35 * escalationFactor)) {
+    if (canAttack && npcName.includes('ripper demon') && hpPercent < (0.35 * escalationFactor)) {
         decisionAction = 'attack';
         newState = 'enraged';
     }
 
     // Feline akh call help (<50% HP)
-    if (npcName.includes('feline akh') && hpPercent < (0.5 * escalationFactor)) {
+    if (canAttack && npcName.includes('feline akh') && hpPercent < (0.5 * escalationFactor)) {
         decisionAction = 'call_help';
         newState = 'aggressive';
     }

@@ -16,7 +16,7 @@ if (enum711Keys.length === 0) {
     console.warn('No model IDs provided via CLI. Using default subset: [31149, 12428, 37641]');
     enum711Keys.push(31149, 12428, 37641);
 }
-const CACHE_PATH = 'C:/ProgramData/Jagex/RuneScape-BETA';
+const CACHE_PATH = 'C:/ProgramData/Jagex/RuneScape';
 
 async function extractModel(cache: any, modelId: number): Promise<Buffer | null> {
     try {

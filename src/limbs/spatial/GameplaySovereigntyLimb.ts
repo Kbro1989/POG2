@@ -15,10 +15,11 @@ import { WorldGroundingLimb } from '../world_grounding/WorldGroundingLimb.js';
 import { HexagramManager } from '../../routing/HexagramManager.js';
 import { AIDispatcher } from '../../api/ai/Dispatcher.js';
 import { ModelClient } from '../../clients/ModelClient.js';
-import { SovereignConfig } from '../../config/SovereignConfig.js';
+import { SovereignConfig, getDefaultSovereignConfig } from '../../config/SovereignConfig.js';
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
 import { Renderer } from '../../ui/Renderer.js';
 import { CombatLimb } from './CombatLimb.js';
+import { SoundtrackLimb } from '../creative/SoundtrackLimb.js';
 import { BankLimb } from './BankLimb.js';
 import { ItemLifecycleLimb } from './ItemLifecycleLimb.js';
 import { AvatarStateLimb } from './AvatarStateLimb.js';
@@ -79,7 +80,13 @@ export class GameplaySovereigntyLimb {
         this.bankLimb = BankLimb.getInstance();
         this.avatarState = AvatarStateLimb.getInstance();
         this.avatarState.bindEntity(this.avatar as SovereignAvatarEntity);
-        
+
+        // Initialize SoundtrackLimb and inject into Combat
+        const config = getDefaultSovereignConfig();
+        const soundtrack = new SoundtrackLimb(config);
+        this.combat.injectSoundtrack(soundtrack);
+        logger.info('SoundtrackLimb initialized and injected into CombatLimb.');
+
         // --- PHASE 72: GROUNDING THE PLAYER TEMPLATE ---
         const templatePath = path.join(process.cwd(), 'public', 'sovereign_entity_player.json');
         if (fs.existsSync(templatePath)) {

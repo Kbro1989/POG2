@@ -6,6 +6,7 @@ import type { SovereignConfig } from '../../config/SovereignConfig.js';
 
 import { HexagramManager } from '../../routing/HexagramManager.js';
 import { createLogger } from "../../utils/logger.js";
+import { SoundEventResolver as SoundResolver, SoundEvent } from './sound/SoundEventResolver.js';
 
 const logger = createLogger('SoundtrackLimb');
 
@@ -21,6 +22,7 @@ export interface SoundtrackParams {
     keyframes?: AudioCue[];
     channels?: number;
     outputPath?: string;
+    sourcePath?: string; // Path to actual cache-resolved audio asset (e.g. .wav)
 }
 
 export interface SoundtrackResult {
@@ -42,7 +44,11 @@ export class SoundtrackLimb {
     constructor(
         config: SovereignConfig,
         private readonly hexagram: HexagramManager = HexagramManager.getInstance()
-    ) { }
+    ) {
+        this.resolver = new SoundResolver(config.cacheDir || 'C:\\ProgramData\\Jagex\\RuneScape');
+    }
+
+    private resolver: SoundResolver;
 
     /**
      * generateScore - Composes a background track based on emotional state.
@@ -58,13 +64,49 @@ export class SoundtrackLimb {
     }
 
     /**
+     * resolveAndGenerate - Resolves a game event to a sound and generates modulated audio.
+     */
+    public async resolveAndGenerate(
+        event: SoundEvent,
+        duration: number,
+        keyframes: AudioCue[] = [],
+        outputPath?: string
+    ): Promise<Result<SoundtrackResult>> {
+        const resolution = await this.resolver.resolve(event);
+        if (!resolution.ok || !resolution.value) {
+            return { ok: false, error: new Error(`Could not resolve sound for event: ${JSON.stringify(event)}`) };
+        }
+
+        const metadata = resolution.value;
+        const tempSource = join(process.cwd(), 'audit_output', `temp_cache_${Date.now()}.wav`);
+
+        try {
+            writeFileSync(tempSource, metadata.rawBuffer);
+
+            const params: SoundtrackParams = {
+                prompt: `Event: ${event.type}, ID: ${event.entityId}`,
+                duration,
+                keyframes,
+                outputPath,
+                sourcePath: tempSource
+            };
+
+            return await this.generate(params);
+        } finally {
+            if (existsSync(tempSource)) {
+                // In a real app, we'd use a temp file library, but for now we just write to audit_output
+            }
+        }
+    }
+
+    /**
      * generate - Unified multi-modal synthesis entry point.
      * Supports kinematic keyframes for synchronized effects (like KBD roars).
      */
     public async generate(params: SoundtrackParams): Promise<Result<SoundtrackResult>> {
-        const { duration, keyframes = [], outputPath = join(process.cwd(), 'audit_output', 'kbd_roar.wav') } = params;
-        
-        logger.info({ duration, keyframeCount: keyframes.length }, 'Initiating Kinematic Audio Synthesis');
+        const { duration, keyframes = [], outputPath = join(process.cwd(), 'audit_output', 'kbd_roar.wav'), sourcePath } = params;
+
+        logger.info({ duration, keyframeCount: keyframes.length, sourcePath }, 'Initiating Kinematic Audio Synthesis');
 
         // Logic to translate keyframes into volume modulation for ffmpeg
         // We'll create a volume filter based on the timings
@@ -78,12 +120,18 @@ export class SoundtrackLimb {
         const channels = params.channels === 5.1 ? 6 : 1;
 
         try {
-            // Reusing basic procedural synth but adding the keyframe volume modulation
-            const baseGraph = `aevalsrc='0.1*sin(2*PI*440*t)':s=44100:d=${cappedDuration}`;
-            const cmd = `ffmpeg -y -f lavfi -i "${baseGraph}" -af "${volFilter}" -ac ${channels} "${outputPath}"`;
+            let cmd;
+            if (sourcePath && existsSync(sourcePath)) {
+                // Use the actual cache-assigned sound asset and modulate it
+                cmd = `ffmpeg -y -i "${sourcePath}" -af "${volFilter}" -ac ${channels} -t ${cappedDuration} "${outputPath}"`;
+            } else {
+                // Fallback to procedural synthesis if no asset path provided
+                const baseGraph = `aevalsrc='0.1*sin(2*PI*440*t)':s=44100:d=${cappedDuration}`;
+                cmd = `ffmpeg -y -f lavfi -i "${baseGraph}" -af "${volFilter}" -ac ${channels} "${outputPath}"`;
+            }
 
             execSync(cmd, { timeout: 30_000, stdio: 'pipe', windowsHide: true });
-            
+
             return ok({
                 path: outputPath,
                 duration: cappedDuration,

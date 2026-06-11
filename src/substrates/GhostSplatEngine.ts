@@ -313,6 +313,8 @@ export class GhostSplatEngine {
             // Pull attack range from live NPC state (populated by CacheForensicsLimb
             // entity records). Falls back to 2 only when metadata is absent.
             let aggroRange = 2;
+            let tileWidth = 1;
+            let tileDepth = 1;
             if (state) {
                 const npcIdStr = entityId.replace('npc_', '');
                 const npcId = parseInt(npcIdStr, 10);
@@ -323,6 +325,10 @@ export class GhostSplatEngine {
                         aggroRange = cacheRange;
                     } else {
                         logger.debug({ entityId }, '[GhostSplat] attackRange not in cache — using default 2');
+                    }
+                    if ((npc as any)?.size) {
+                        tileWidth = (npc as any).size;
+                        tileDepth = (npc as any).size;
                     }
                 }
             }
@@ -346,8 +352,13 @@ export class GhostSplatEngine {
                 return; // Skip this NPC in heatmap
             }
 
-            for (let dx = -aggroRange; dx <= aggroRange; dx++) {
-                for (let dy = -aggroRange; dy <= aggroRange; dy++) {
+            const minDx = -aggroRange - Math.floor(tileWidth / 2);
+            const maxDx = aggroRange + Math.ceil(tileWidth / 2) - 1;
+            const minDy = -aggroRange - Math.floor(tileDepth / 2);
+            const maxDy = aggroRange + Math.ceil(tileDepth / 2) - 1;
+
+            for (let dx = minDx; dx <= maxDx; dx++) {
+                for (let dy = minDy; dy <= maxDy; dy++) {
                     const nx = localX + dx;
                     const ny = localY + dy;
                     if (nx >= PADDING && nx < PADDING + INNER_SIZE && ny >= PADDING && ny < PADDING + INNER_SIZE) {

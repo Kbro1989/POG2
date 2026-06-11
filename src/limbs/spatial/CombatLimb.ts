@@ -1,5 +1,9 @@
 import { createLogger } from '../../utils/logger.js';
 import { GameState, NPC } from '../../core/models.js';
+import { SoundtrackLimb } from '../creative/SoundtrackLimb.js';
+import { SoundEvent } from '../creative/sound/SoundEventResolver.js';
+
+const logger = createLogger('CombatLimb');
 
 const logger = createLogger('CombatLimb');
 
@@ -20,6 +24,7 @@ export interface AbilityDefinition {
 export class CombatLimb {
     private static instance: CombatLimb;
     private abilityRegistry: Map<string, AbilityDefinition> = new Map();
+    private soundtrack: SoundtrackLimb | null = null;
 
     private constructor() {
         this.registerDefaultAbilities();
@@ -30,6 +35,11 @@ export class CombatLimb {
             CombatLimb.instance = new CombatLimb();
         }
         return CombatLimb.instance;
+    }
+
+    public injectSoundtrack(limb: SoundtrackLimb) {
+        this.soundtrack = limb;
+        logger.info('SoundtrackLimb injected into CombatLimb.');
     }
 
     private registerDefaultAbilities() {
@@ -128,12 +138,25 @@ export class CombatLimb {
         if (ability.damageRange) {
             const [min, max] = ability.damageRange;
             const damage = Math.floor(Math.random() * (max - min + 1)) + min;
-            
+
             const wasDead = (target as any).isDead;
             if ((target as any).applyDamage) {
                 (target as any).applyDamage(damage);
                 logger.info(`DAMAGE: ${damage} applied to ${target.name}. New HP: ${(target as any).currentHp}`);
             }
+
+            // Trigger Cache-Native Sound for Attack
+            if (this.soundtrack) {
+                this.soundtrack.resolveAndGenerate({
+                    type: 'COMBAT',
+                    entityId: castor.id,
+                    trigger: 'attack',
+                    context: { targetId: target.id, abilityId }
+                }, 1.5).catch(e => logger.error({ e }, 'Sound synthesis failed during combat execute'));
+            }
+
+            // 4. Single-shot Death Check
+            if ((target as any).isDead && !wasDead) {
 
             // 4. Single-shot Death Check
             if ((target as any).isDead && !wasDead) {

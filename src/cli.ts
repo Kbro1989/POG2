@@ -89,7 +89,7 @@ import { RSMVController } from './vision/RSMVController.js';
 import { HUDForensicsLimb } from './limbs/spatial/HUDForensicsLimb.js';
 import { CacheLearningLimb } from './limbs/spatial/CacheLearningLimb.js';
 import { OfficialApiLimb } from './limbs/spatial/OfficialApiLimb.js';
-import { SpatialMetricEngine } from './engines/SpatialMetricEngine.js';
+import { SpatialMetricEngine } from './limbs/spatial/SpatialMetricEngine.js';
 import { WikiEnricher } from './utils/WikiEnricher.js';
 import { MinigameForensicsLimb } from './limbs/spatial/MinigameForensicsLimb.js';
 import { getSovereignRoot, getrsmvCachePath, getCachePedagogyPath, getPipelineRootPath, getGodHeadRoot, getGutenbergPath, setProjectRoot as setSovereignRoot, getPackageRoot } from './utils/SovereignPathResolver.js';

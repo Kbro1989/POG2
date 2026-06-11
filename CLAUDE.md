@@ -41,6 +41,14 @@ The project operates as a "Living Organism" with persistent physical anchors:
 - **`D:\sovereign`**: The authoritative storage root.
 - **`D:\sovereign\learning\sovereign-learning.db`**: The vector database for pedagogical memory.
 - **`D:\rsmv_inspector`**: The operational hub for 3D substrate forensics.
+- **Workspaces**:
+  - `D:\POG2`: Primary project root.
+  - `D:\alt1-ai`: Alternative AI workspace.
+  - `D:\rsmv_clone`: RSMV clone.
+  - `D:\tmp_rsmv_inspect`: Temporary inspection workspace.
+- **Environment Configuration**:
+  - `.env` files are located in `D:\POG2` (including `.env`, `.env.local`, `.env.ollama`, and `.env.example`).
+  - Other `.env` files may exist in `D:\MHD-Propulsion-Controller-Simulator-main` and `D:\openrsc_vanilla`.
 
 ## 📡 Networking
 - **Viewer WebSocket**: Transitioning from `ws://localhost:8789` (Local Bridge) to `wss://rsmv.kristain33rs.workers.dev/ws` (RSMVServerDO).
