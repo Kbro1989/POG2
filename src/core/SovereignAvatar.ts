@@ -1,6 +1,9 @@
 import { Coord, NPC, CombatantState, Item, Skill, SkillId, Wallet, Equipment, EquipmentSlot, GameState, SovereignAvatar as ISovereignAvatar } from './models.js';
 import { DirectionalPathfinder } from '../limbs/spatial/DirectionalPathfinder.js';
 import { AdrenalineStateMachine } from '../limbs/combat/AdrenalineStateMachine.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('SovereignAvatar');
 
 export enum SkillRelevance {
     COMBAT_DIRECT = 'combat_direct',     // Affects rotation/damage

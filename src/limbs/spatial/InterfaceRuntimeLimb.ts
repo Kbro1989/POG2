@@ -95,6 +95,15 @@ export type AgentEvent =
 export type AgentEventHandler = (event: AgentEvent) => void;
 
 export class InterfaceRuntimeLimb {
+    private static instance: InterfaceRuntimeLimb | null = null;
+
+    public static getInstance(): InterfaceRuntimeLimb {
+        if (!this.instance) {
+            this.instance = new InterfaceRuntimeLimb();
+        }
+        return this.instance;
+    }
+
     private interpreter: any = null;
     private nativeRegistry: SovereignCs2NativeRegistry;
     private overlay: HUDOverlayLimb;
@@ -248,6 +257,15 @@ export class InterfaceRuntimeLimb {
         return rendered;
     }
     
+    /**
+     * runScript - Public entry point to execute a script without a specific UI context.
+     * Defaults to interface 0 and component 0.
+     */
+    public async runScript(scriptId: number, args: (number | string)[] = []): Promise<void> {
+        logger.info(`Executing global script ${scriptId} with args: ${JSON.stringify(args)}`);
+        await this.executeScript(scriptId, args, 0, 0);
+    }
+
     private async executeScript(
         scriptId: number, 
         args: (number | string)[], 

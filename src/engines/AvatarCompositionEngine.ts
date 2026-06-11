@@ -20,6 +20,10 @@ import { Result } from '../core/models.js';
 import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
 import { slotNames, slotToKitMale, slotToKitFemale, avatarToModel, writeAvatar, avatarStringToBytes, bytesToAvatarString } from 'rsmv/3d/avatar.js';
 import type { EquipSlot } from 'rsmv/3d/avatar.js';
+import { createLogger } from '../utils/logger.js';
+import { InterfaceRuntimeLimb } from '../limbs/spatial/InterfaceRuntimeLimb.js';
+
+const logger = createLogger('AvatarCompositionEngine');
 export type SimpleModelDef = {
     modelid: number;
     mods: any;
@@ -150,6 +154,38 @@ export class AvatarCompositionEngine {
             ok: true,
             value: `AvatarCompositionEngine: cache=${cacheStatus}, slots=${slotNames.length}`
         };
+    }
+
+    /**
+     * Trigger an appearance la-Sovereign refresh based on the Live Chain (7115 -> 11195).
+     * This ensures the 3D manifestation is synchronized with the authoritative script commit.
+     */
+    public async triggerSovereignRefresh(avatar: SovereignAvatarEntity): Promise<void> {
+        logger.info('[AvatarCompositionEngine] Triggering appearance refresh chain: 7115 -> 11195');
+
+        try {
+            const runtime = InterfaceRuntimeLimb.getInstance();
+            if (!runtime) {
+                throw new Error('InterfaceRuntimeLimb singleton not available');
+            }
+
+            // Step 1: Run validation gate (7115)
+            logger.info('[AvatarCompositionEngine] Executing validation gate (Script 7115)...');
+            await runtime.runScript(7115);
+
+            // Step 2: Execute the finalizer (11195)
+            logger.info('[AvatarCompositionEngine] Executing finalizer (Script 11195)...');
+            await runtime.runScript(11195);
+
+            // Step 3: Verify broadcast via Varbit 19712
+            const newValue = avatar.getVarbit(19712);
+            avatar.emit('avatar:refresh', newValue);
+
+            logger.info(`[AvatarCompositionEngine] Appearance change committed. Varbit 19712 updated to ${newValue}`);
+        } catch (error: any) {
+            logger.error(`[AvatarCompositionEngine] Refresh chain failed: ${error.message}`);
+            throw error;
+        }
     }
 }
 

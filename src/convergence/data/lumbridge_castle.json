@@ -1,0 +1,19 @@
+{
+    "portals": [
+        {
+            "id": "lumbridge_castle_ladder",
+            "rscId": 59,
+            "rs3Id": 134845,
+            "triggerType": "COMMAND",
+            "destination": {
+                "world": "RS3",
+                "x": 3229,
+                "y": 3224,
+                "plane": 1,
+                "region": "Lumbridge Castle"
+            },
+            "validationScript": 7115,
+            "semanticLabel": "Climb up"
+        }
+    ]
+}

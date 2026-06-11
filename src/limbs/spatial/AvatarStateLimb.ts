@@ -219,6 +219,14 @@ export class AvatarStateLimb implements CacheInvalidationListener {
   private hudForensics: HUDForensicsLimb;
   private state: AvatarConfiguration;
   private varbitCache = new Map<number, { varid: number; base: number; size: number } | null>();
+
+  public static getInstance(): AvatarStateLimb {
+    if (!AvatarStateLimb.instance) {
+      AvatarStateLimb.instance = new AvatarStateLimb();
+    }
+    return AvatarStateLimb.instance;
+  }
+
   
   constructor() {
     this.cache = CacheForensicsLimb.getInstance();
@@ -281,11 +289,46 @@ export class AvatarStateLimb implements CacheInvalidationListener {
     logger.info(`AvatarStateLimb bound to entity: ${entity.username}`);
   }
 
-  public static getInstance(): AvatarStateLimb {
-    if (!AvatarStateLimb.instance) {
-      AvatarStateLimb.instance = new AvatarStateLimb();
-    }
-    return AvatarStateLimb.instance;
+  // Authoritative Broadcast Varbit
+  private static readonly BROADCAST_VARBIT = 19712;
+
+  // Mirror Buffers
+  private static readonly MIRROR_MALE_START = 12781;
+  private static readonly MIRROR_MALE_END = 12805;
+  private static readonly MIRROR_FEMALE_START = 16604;
+  private static readonly MIRROR_FEMALE_END = 16629;
+
+  /**
+   * Simulation of Script 11195 (Avatar Refresh Finalizer).
+   * Packs the current mirrored state into the 7-bit broadcast index.
+   */
+  public getBroadcastIndex(): number {
+    if (!this.entity) return 0;
+
+    const bodyType = this.state.morphology.bodyType;
+    const bufferStart = bodyType === 'refresh_female' ?
+        AvatarStateLimb.MIRROR_FEMALE_START : AvatarStateLimb.MIRROR_MALE_START;
+    const bufferEnd = bodyType === 'refresh_female' ?
+        AvatarStateLimb.MIRROR_FEMALE_END : AvatarStateLimb.MIRROR_MALE_END;
+
+    // Simulate the packing logic:
+    // In the real bytecode, this is a series of reads and a hash/index mapping.
+    // For the simulation, we'll implement the semantic pack:
+    // (BodyBase << 4) | (HeadIndex & 0x0F) as a plausible 7-bit compression.
+    const bodyBase = this.readVarBit(VARP_5745.BODY_BASE);
+    const headIdx = this.state.morphology.categoryIndices.head;
+
+    return ((bodyBase << 3) | (headIdx & 0x07)) & 0x7F;
+  }
+
+  /**
+   * Commit the current state to the Broadcast Signal (Varbit 19712).
+   * This implements the 'Actuator' phase of the pipeline.
+   */
+  public commitBroadcastSignal(): void {
+    const index = this.getBroadcastIndex();
+    this.writeVarBit(AvatarStateLimb.BROADCAST_VARBIT, index);
+    logger.info({ index }, 'Broadcast signal committed to varbit 19712');
   }
   
   private getDefaultState(): AvatarConfiguration {
@@ -317,24 +360,62 @@ export class AvatarStateLimb implements CacheInvalidationListener {
   
   private getVarbitMeta(varbitId: number): { varid: number; base: number; size: number } | null {
     if (this.varbitCache.has(varbitId)) return this.varbitCache.get(varbitId)!;
-    
+
     const filePath = `D:/sovereign/memory/pedagogy/varbits_json/varbits-${varbitId}.json`;
     try {
-        if (!fs.existsSync(filePath)) { this.varbitCache.set(varbitId, null); return null; }
+        if (!fs.existsSync(filePath)) {
+            // Fallback to internal constant map if possible
+            const fallback = this.getFallbackMeta(varbitId);
+            if (fallback) {
+                this.varbitCache.set(varbitId, fallback);
+                return fallback;
+            }
+            this.varbitCache.set(varbitId, null);
+            return null;
+        }
         const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         if (data.varid == null || data.bits == null) { this.varbitCache.set(varbitId, null); return null; }
-        
-        const meta = { 
-            varid: data.varid, 
-            base: data.bits[0], 
-            size: data.bits[1] 
+
+        const meta = {
+            varid: data.varid,
+            base: data.bits[0],
+            size: data.bits[1]
         };
         this.varbitCache.set(varbitId, meta);
         return meta;
-    } catch { 
-        this.varbitCache.set(varbitId, null); 
-        return null; 
+    } catch {
+        this.varbitCache.set(varbitId, null);
+        return null;
     }
+  }
+
+  private getFallbackMeta(varbitId: number): { varid: number; base: number; size: number } | null {
+    // Map the constants to their known metadata
+    // Varp 5745 range
+    if (varbitId === VARP_5745.BODY_BASE) return { varid: 5745, base: 0, size: 2 };
+    if (varbitId === VARP_5745.TORSO_LEGS) return { varid: 5745, base: 3, size: 5 };
+    if (varbitId === VARP_5745.BODY_TYPE_GENDER) return { varid: 5745, base: 6, size: 8 };
+    if (varbitId === VARP_5745.GAME_MODE) return { varid: 5745, base: 9, size: 11 };
+    if (varbitId === VARP_5745.OLD_HEAD_FALLBACK) return { varid: 5745, base: 12, size: 12 };
+    if (varbitId === VARP_5745.TORSO_OVERRIDE) return { varid: 5745, base: 13, size: 13 };
+
+    // Varp 5746 range
+    if (varbitId === VARP_5746.HEAD) return { varid: 5746, base: 0, size: 7 };
+    if (varbitId === VARP_5746.TORSO) return { varid: 5746, base: 8, size: 15 };
+    if (varbitId === VARP_5746.LEGS) return { varid: 5746, base: 16, size: 23 };
+    if (varbitId === VARP_5746.SHOES) return { varid: 5746, base: 24, size: 31 };
+    if (varbitId === VARP_5746.BEARD) return { varid: 5746, base: 32, size: 39 };
+    if (varbitId === VARP_5746.SKIN_MAT) return { varid: 5746, base: 40, size: 47 };
+    if (varbitId === VARP_5746.HAIR_MAT) return { varid: 5746, base: 48, size: 55 };
+
+    // Varp 524476 range
+    if (varbitId === VARP_524476.SKIN_COLOR) return { varid: 524476, base: 0, size: 7 };
+    if (varbitId === VARP_524476.HAIR_COLOR) return { varid: 524476, base: 8, size: 15 };
+    if (varbitId === VARP_524476.TORSO_COLOR) return { varid: 524476, base: 16, size: 23 };
+    if (varbitId === VARP_524476.RANDOM_SEED) return { varid: 524476, base: 24, size: 31 };
+    if (varbitId === VARP_524476.SHOE_COLOR) return { varid: 524476, base: 32, size: 39 };
+
+    return null;
   }
   
   // VarBit read/write — the core state machine operation
@@ -379,16 +460,33 @@ export class AvatarStateLimb implements CacheInvalidationListener {
   // Avatar Refresh - Part 1 specific mappings
   setBodyType(type: MorphologyState['bodyType']): void {
     this.state.morphology.bodyType = type;
-    
+
     // Sync to varp 5745 (varbit 28556)
     let vbValue = 0;
     if (type === 'refresh_male') vbValue = 0; // Assuming 0 is male
     if (type === 'refresh_female') vbValue = 1; // Assuming 1 is female
     this.writeVarBit(VARP_5745.BODY_TYPE_GENDER, vbValue);
-    
+
     logger.debug({ bodyType: type, varbitValue: vbValue }, 'Avatar body type updated and synced to 28556');
   }
-  
+
+  setBodyBase(value: number): void {
+    this.state.morphology.bodyBase = value;
+    this.writeVarBit(VARP_5745.BODY_BASE, value);
+  }
+
+  setCategoryIndex(category: keyof MorphologyState['categoryIndices'], value: number): void {
+    this.state.morphology.categoryIndices[category] = value;
+    const varbitId = VARP_5746[category.toUpperCase() as keyof typeof VARP_5746];
+    if (varbitId) this.writeVarBit(varbitId, value);
+  }
+
+  setAppearanceIndex(index: keyof MorphologyState['appearanceIndices'], value: number): void {
+    this.state.morphology.appearanceIndices[index] = value;
+    const varbitId = VARP_524476[index.toUpperCase() as keyof typeof VARP_524476];
+    if (varbitId) this.writeVarBit(varbitId, value);
+  }
+
   setGameMode(mode: number): void {
     this.state.morphology.gameMode = mode;
     this.writeVarBit(VARP_5745.GAME_MODE, mode);
