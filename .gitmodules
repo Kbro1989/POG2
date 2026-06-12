@@ -1,0 +1,8 @@
+
+[submodule "multiplayer-globe-template"]
+    path = multiplayer-globe-template
+    url = git@github.com:Kbro1989/multiplayer-globe-template.git
+
+[submodule "rsmv"]
+    path = rsmv
+    url = git@github.com:Kbro1989/rsmv.git

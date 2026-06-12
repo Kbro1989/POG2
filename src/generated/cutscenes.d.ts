@@ -43,7 +43,7 @@ export type cutscenes = {
 		subtitle: string | null,
 		unkbyte: number | null,
 		soundid: number | null,
-		extraflags: (number|0),
+		extraflags: (number | 0),
 		extra_01: {
 			start: number,
 			end: number,
@@ -51,3 +51,4 @@ export type cutscenes = {
 	}[],
 	paddingbytes: Uint8Array,
 };
+

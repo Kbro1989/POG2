@@ -24,7 +24,7 @@ export class SovereignVocabularyLimb {
         if (!rawAction) return '';
         
         // Lowercase, trim, replace hyphens with spaces
-        let normalized = rawAction.toLowerCase().trim().replace(/-/g, ' ');
+        const normalized = rawAction.toLowerCase().trim().replace(/-/g, ' ');
 
         return normalized;
     }
@@ -59,3 +59,4 @@ export class SovereignVocabularyLimb {
         return this.categorize(action) === InteractionCategory.TRANSVERSAL;
     }
 }
+

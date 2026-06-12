@@ -1,9 +1,12 @@
 import { exec } from 'child_process';
+import { CanonicalClock } from './CanonicalClock.js';
 import { promisify } from 'util';
-import { existsSync, mkdirSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, promises as fsPromises } from 'fs';
 import { join, resolve } from 'path';
 import { EventEmitter } from 'events';
 import { fetch as undiciFetch } from 'undici';
+import { pathToFileURL } from 'url';
+import { platform } from 'os';
 import type { Result } from '../core/models.js';
 import { getDashboardPath } from './SovereignPathResolver.js';
 import { createLogger } from "./logger.js";
@@ -64,23 +67,51 @@ export class SovereignEye extends EventEmitter {
 
     /**
      * Universal capture entry point.
+     * @param options.autoCleanup If true (default), deletes the image file after processing is complete.
      */
-    async capture(source: CaptureSource, viewport: ViewportConfig = DEFAULT_VIEWPORT): Promise<Result<CaptureResult>> {
+    async capture(source: CaptureSource, viewport: ViewportConfig = DEFAULT_VIEWPORT, options: { autoCleanup?: boolean } = { autoCleanup: true }): Promise<Result<CaptureResult>> {
         logger.info({ sourceType: source.type, target: source.target }, 'Sovereign Eye capturing');
 
+        let result: Result<CaptureResult>;
         switch (source.type) {
             case 'url':
-                return this.captureUrl(source.target, viewport);
+                result = await this.captureUrl(source.target, viewport);
+                break;
             case 'html':
-                return this.captureHtmlFile(source.target, viewport);
+                result = await this.captureHtmlFile(source.target, viewport);
+                break;
             case 'rsc':
-                return this.captureRSC();
+                result = await this.captureRSC();
+                break;
             case 'window':
-                return this.captureWindow(source.target);
+                result = await this.captureWindow(source.target);
+                break;
             case 'file':
-                return this.captureFile(source.target);
+                result = await this.captureFile(source.target);
+                break;
             default:
                 return { ok: false, error: new Error(`Unknown capture source type`) };
+        }
+
+        if (result.ok && options.autoCleanup && result.value.imagePath) {
+            await this.cleanup(result.value.imagePath);
+            return { ok: true, value: { ...result.value, imagePath: null } };
+        }
+
+        return result;
+    }
+
+    /**
+     * Cleanup a specific capture artifact.
+     */
+    async cleanup(filePath: string): Promise<void> {
+        try {
+            if (existsSync(filePath)) {
+                await fsPromises.unlink(filePath);
+                logger.info({ filePath }, 'SovereignEye artifact purged.');
+            }
+        } catch (err) {
+            logger.error({ err, filePath }, 'Failed to purge SovereignEye artifact.');
         }
     }
 
@@ -88,7 +119,7 @@ export class SovereignEye extends EventEmitter {
      * Capture a URL target (localhost, wrangler dev, deployed page).
      */
     private async captureUrl(url: string, viewport: ViewportConfig): Promise<Result<CaptureResult>> {
-        const timestamp = Date.now();
+        const timestamp = Date.now(); // EXTERNAL domain: filesystem path, not simulation state
         const screenshotPath = join(this.captureDir, `url_${timestamp}.png`);
 
         try {
@@ -97,23 +128,43 @@ export class SovereignEye extends EventEmitter {
 
             // 2. Always fetch text content as fallback/supplement
             let textContent: string | null = null;
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // Reduced to 5s
-                
-                const response = await undiciFetch(url, { 
-                    signal: controller.signal,
-                    headers: { 'User-Agent': 'SovereignEye/2.0' }
-                });
-                clearTimeout(timeoutId);
-                
-                textContent = await response.text();
-                // Trim for AI context
-                if (textContent.length > 10000) {
-                    textContent = textContent.substring(0, 10000) + '\n... [truncated]';
+            let attempts = 0;
+            const maxAttempts = 3;
+
+            while (attempts < maxAttempts && !textContent) {
+                attempts++;
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); // Extended to 15s
+                    
+                    const response = await undiciFetch(url, { 
+                        signal: controller.signal,
+                        headers: { 'User-Agent': 'SovereignEye/2.0' }
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if (response.ok) {
+                        textContent = await response.text();
+                        // Trim for AI context
+                        if (textContent.length > 10000) {
+                            textContent = textContent.substring(0, 10000) + '\n... [truncated]';
+                        }
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                } catch (fetchErr: any) {
+                    const isTimeout = fetchErr.name === 'AbortError' || fetchErr.message?.includes('Timeout');
+                    if (attempts < maxAttempts) {
+                        logger.warn({ url, attempt: attempts, isTimeout }, 'Text fetch failed, retrying...');
+                        await new Promise(res => setTimeout(res, 2000 * attempts)); // Exponential backoff
+                    } else {
+                        if (isTimeout) {
+                            logger.warn({ url }, 'Text fetch timed out (15s) after 3 attempts, screenshot-only mode');
+                        } else {
+                            logger.warn({ err: fetchErr.message, url }, 'Text fetch failed after 3 attempts, screenshot-only mode');
+                        }
+                    }
                 }
-            } catch (fetchErr) {
-                logger.warn({ err: fetchErr, url }, 'Text fetch failed, screenshot-only mode');
             }
 
             if (!screenshotResult.ok && !textContent) {
@@ -127,6 +178,10 @@ export class SovereignEye extends EventEmitter {
                 metadata: { url, viewport, hasScreenshot: screenshotResult.ok },
                 timestamp
             };
+
+            if (screenshotResult.ok) {
+                await this.cleanupOldCaptures();
+            }
 
             this.emit('capture', result);
 
@@ -148,12 +203,12 @@ export class SovereignEye extends EventEmitter {
             return { ok: false, error: new Error(`HTML file not found: ${absPath}`) };
         }
 
-        const timestamp = Date.now();
+        const timestamp = Date.now(); // EXTERNAL domain: filesystem path
         const screenshotPath = join(this.captureDir, `html_${timestamp}.png`);
 
         try {
             const textContent = readFileSync(absPath, 'utf8');
-            const fileUrl = `file:///${absPath.replace(/\\/g, '/')}`;
+            const fileUrl = pathToFileURL(absPath).href;
             const screenshotResult = await this.headlessScreenshot(fileUrl, screenshotPath, viewport);
 
             const result: CaptureResult = {
@@ -165,6 +220,10 @@ export class SovereignEye extends EventEmitter {
                 metadata: { filePath: absPath, hasScreenshot: screenshotResult.ok },
                 timestamp
             };
+
+            if (screenshotResult.ok) {
+                await this.cleanupOldCaptures();
+            }
 
             this.emit('capture', result);
 
@@ -188,7 +247,7 @@ export class SovereignEye extends EventEmitter {
                 textContent: '[RSC State] Use play-rsc command or RSCLimb.getWorldState() for real-time game perception.',
                 sourceType: 'rsc',
                 metadata: { protocol: 'tcp', port: 43594 },
-                timestamp: Date.now()
+                timestamp: Date.now() // EXTERNAL domain: capture metadata
             }
         };
     }
@@ -197,11 +256,13 @@ export class SovereignEye extends EventEmitter {
      * Capture an OS window by title match.
      */
     private async captureWindow(windowTitle: string): Promise<Result<CaptureResult>> {
-        const timestamp = Date.now();
+        const timestamp = Date.now(); // EXTERNAL domain: filesystem path
         const screenshotPath = join(this.captureDir, `window_${timestamp}.png`);
+        const currentPlatform = platform();
 
         try {
-            const psScript = `
+            if (currentPlatform === 'win32') {
+                const psScript = `
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms
 $procs = Get-Process | Where-Object { $_.MainWindowTitle -like "*${windowTitle.replace(/"/g, '`"')}*" } | Select-Object -First 1
@@ -229,16 +290,25 @@ $bitmap.Save("${screenshotPath.replace(/\\/g, '\\\\')}")
 $graphics.Dispose()
 $bitmap.Dispose()
 `;
-            await execAsync(`powershell -NoProfile -Command "${psScript.replace(/\n/g, '; ').replace(/"/g, '\\"')}"`, { timeout: 10000 });
+                await execAsync(`powershell -NoProfile -Command "${psScript.replace(/\n/g, '; ').replace(/"/g, '\\"')}"`, { timeout: 10000 });
+            } else if (currentPlatform === 'darwin') {
+                // macOS: Capture full screen as a fallback, identifying window by title is complex.
+                await execAsync(`screencapture -x "${screenshotPath}"`, { timeout: 10000 });
+            } else {
+                throw new Error(`Window capture not supported on ${currentPlatform}`);
+            }
+
+            if (!existsSync(screenshotPath)) throw new Error('Capture artifact not created.');
 
             const result: CaptureResult = {
                 imagePath: screenshotPath,
-                textContent: `Window capture: "${windowTitle}"`,
+                textContent: `Window capture: "${windowTitle}" (Mode: ${currentPlatform})`,
                 sourceType: 'window',
-                metadata: { windowTitle },
+                metadata: { windowTitle, platform: currentPlatform },
                 timestamp
             };
 
+            await this.cleanupOldCaptures();
             this.emit('capture', result);
 
             return {
@@ -266,7 +336,7 @@ $bitmap.Dispose()
                 textContent: null,
                 sourceType: 'file',
                 metadata: { originalPath: absPath },
-                timestamp: Date.now()
+                timestamp: CanonicalClock.getInstance().simulatedNow()
             }
         };
     }
@@ -279,12 +349,27 @@ $bitmap.Dispose()
         outputPath: string,
         viewport: ViewportConfig
     ): Promise<Result<{ path: string }>> {
-        const browsers = [
+        const currentPlatform = platform();
+        const browsers = currentPlatform === 'win32' 
+        ? [
             'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
             'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
             'msedge',
             'chrome'
-        ];
+        ]
+        : currentPlatform === 'darwin'
+            ? [
+                '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+                'msedge',
+                'chrome'
+            ]
+            : [
+                'microsoft-edge',
+                'google-chrome',
+                'chromium-browser',
+                'chromium'
+            ];
 
         for (const browser of browsers) {
             try {
@@ -303,18 +388,49 @@ $bitmap.Dispose()
         return { ok: false, error: new Error('No headless browser available.') };
     }
 
+    protected async cleanupOldCaptures(maxFiles: number = 5): Promise<void> {
+        try {
+            const entries = await fsPromises.readdir(this.captureDir);
+            const imageFiles = entries.filter(name => /\.(png|jpg|jpeg|webp|gif)$/i.test(name));
+
+            if (imageFiles.length <= maxFiles) {
+                return;
+            }
+
+            const imageStats = await Promise.all(imageFiles.map(async (name) => {
+                const fullPath = join(this.captureDir, name);
+                const stat = await fsPromises.stat(fullPath);
+                return { name, path: fullPath, mtimeMs: stat.mtimeMs };
+            }));
+
+            imageStats.sort((a, b) => a.mtimeMs - b.mtimeMs);
+            const deleteCount = imageStats.length - maxFiles;
+
+            for (let i = 0; i < deleteCount; i += 1) {
+                const filePath = imageStats[i].path;
+                if (/pipelines|icons/i.test(filePath)) continue;
+                await fsPromises.unlink(filePath);
+            }
+
+            logger.info({ deleted: deleteCount, keep: maxFiles }, 'SovereignEye pruned old capture artifacts');
+        } catch (err) {
+            logger.warn({ err }, 'Failed to prune old SovereignEye capture artifacts');
+        }
+    }
+
     getCaptureDir(): string {
         return this.captureDir;
     }
 
     /**
      * healthCheck — Diagnostic probe for NodeTester.
-     * Reports whether the Win32 screen-capture substrate is nominally available.
+     * Reports whether the screen-capture substrate is nominally available.
      */
     public healthCheck(): { online: boolean; details: string } {
         return {
             online: true,
-            details: 'SovereignEye nominal; Win32 capture substrate available.'
+            details: `SovereignEye nominal; ${platform()} capture substrate available.`
         };
     }
 }
+

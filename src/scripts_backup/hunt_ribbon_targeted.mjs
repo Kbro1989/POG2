@@ -12,9 +12,9 @@ async function extractRecentRibbonHUD() {
     console.log("Locating recent RS3 Interface data for the Ribbon...");
     const cache = new GameCacheLoader('D:\\sovereign');
     cache.buildnr = 940; // Force recent RS3 build logic
-    
+
     const limb = new HUDForensicsLimb();
-    
+
     // The Ribbon is Interface 1430 to 1433 in modern RS3 typically.
     // Let's specifically parse these.
     const targetInterfaces = [1430, 1431, 1432, 1433, 1448];
@@ -24,7 +24,7 @@ async function extractRecentRibbonHUD() {
         try {
             const rawBuffer = await cache.getFile(3, id);
             if (!rawBuffer) continue;
-            
+
             const state = {
                 isWrite: false,
                 buffer: rawBuffer,
@@ -34,7 +34,7 @@ async function extractRecentRibbonHUD() {
                 endoffset: rawBuffer.byteLength,
                 args: { ...cache.getDecodeArgs(), clientVersion: 940 }
             };
-            
+
             let compId = 0;
             while (state.scan < state.endoffset) {
                 try {
@@ -51,11 +51,11 @@ async function extractRecentRibbonHUD() {
                         }
                     }
                     compId++;
-                } catch(e) { break; }
+                } catch (e) { break; }
             }
-        } catch {}
+        } catch { }
     }
-    
+
     if (extractedData.length > 0) {
         console.log("HUD Forensics extracted the following Ribbon/Interface Sprite Nodes:");
         console.table(extractedData.filter(d => d.text && d.text.trim().length > 0));

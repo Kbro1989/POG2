@@ -31,9 +31,10 @@ export function resetAllSingletons(): void {
     CNSCausalityLedger.resetInstance();
 
     // Re-initialize critical static substrates for test environment
-    HexagramManager.initializeMock();
-    
+    HexagramManager.initializeSimulation();
+
     const mockConfig = { visionModel: 'test-vision' } as any;
-    const mockRenderer = { info: () => {}, error: () => {}, warn: () => {}, debug: () => {} } as any;
+    const mockRenderer = { info: () => { }, error: () => { }, warn: () => { }, debug: () => { } } as any;
     SpatialVisionEngine.getInstance(mockConfig, mockRenderer);
 }
+

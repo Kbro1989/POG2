@@ -1,4 +1,4 @@
-﻿import { type Result, ok, err } from '../../core/models.js';
+import { type Result, ok, err } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { CognitiveEngine } from '../../engines/CognitiveEngine.js';
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
@@ -55,7 +55,7 @@ When given a task, you do not executeâ€”you ORCHESTRATE across limbs, enfor
         logger.info({ domain: request.domain, task: request.task }, 'Sovereign Orchestration Commencing...');
 
         // Query the CognitiveEngine for generative wisdom to ground the decision.
-        const wisdomRes = await this.cognitive.getGenerativeWisdom(request.task);
+        const wisdomRes = await this.cognitive.getActiveWisdom(request.task);
         const wisdom = wisdomRes.ok ? wisdomRes.value : 'No specific generative wisdom activated.';
         
         const response = await this.client.execute({
@@ -96,3 +96,4 @@ When given a task, you do not executeâ€”you ORCHESTRATE across limbs, enfor
         };
     }
 }
+

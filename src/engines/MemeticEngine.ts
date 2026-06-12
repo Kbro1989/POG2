@@ -1,4 +1,4 @@
-﻿import Database from 'better-sqlite3';
+import Database from 'better-sqlite3';
 import { copyFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -38,7 +38,9 @@ export class MemeticEngine {
                 mkdirSync(this.profilePath, { recursive: true });
                 logger.info({ path: this.profilePath }, 'Initialized missing guest browser profile substrate.');
             } catch (e) {
-                logger.error({ err: (e as Error).message }, 'Failed to initialize guest browser profile.');
+                const err = `Critical failure: Could not initialize browser profile substrate at ${this.profilePath}. Error: ${(e as Error).message}`;
+                logger.error({ err: (e as Error).message }, err);
+                throw new Error(err);
             }
         }
     }
@@ -78,7 +80,11 @@ export class MemeticEngine {
         } catch (e) {
             return err(new Error(`Failed to ingest history: ${(e as Error).message}`));
         } finally {
-            try { if (existsSync(tempHistory)) unlinkSync(tempHistory); } catch (e) { }
+            try { 
+                if (existsSync(tempHistory)) unlinkSync(tempHistory); 
+            } catch (e) { 
+                logger.warn({ path: tempHistory, err: (e as Error).message }, 'Failed to cleanup temporary history substrate. Potential resource leak.');
+            }
         }
     }
 
@@ -117,7 +123,11 @@ export class MemeticEngine {
         } catch (e) {
             return err(new Error(`Failed to search memetics: ${(e as Error).message}`));
         } finally {
-            try { if (existsSync(tempHistory)) unlinkSync(tempHistory); } catch (e) { }
+            try { 
+                if (existsSync(tempHistory)) unlinkSync(tempHistory); 
+            } catch (e) { 
+                logger.warn({ path: tempHistory, err: (e as Error).message }, 'Failed to cleanup temporary search substrate. Potential resource leak.');
+            }
         }
     }
 
@@ -165,3 +175,4 @@ export class MemeticEngine {
         };
     }
 }
+

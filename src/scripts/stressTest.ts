@@ -1,4 +1,4 @@
-﻿import { createRequire } from 'module';
+import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 import { createLogger } from '../utils/logger.js';
 import { ModelRolodex } from '../api/ai/ModelRolodex.js';
@@ -77,7 +77,7 @@ async function runStressTest() {
     logger.info('ðŸ”„ Discovering real substrate providers...');
     await rolodex.refreshAll();
     const providers = rolodex.getAllProviderStatuses();
-    const okProviders = providers.filter((p: any) => p.authenticated && !p.error).map((p: any) => p.provider);
+    const okProviders = Object.values(providers).filter((p: any) => p.authenticated && !p.error).map((p: any) => p.provider);
     logger.info({ okProviders }, 'Discovery complete.');
 
     // 1ï¸âƒ£ Fix: Task Prompt Mismatch (Synchronized Generation)
@@ -117,7 +117,7 @@ async function runStressTest() {
         vision: 'YinYang',
         embedding: 'Yin'
     };
-    
+
     function nextTask() {
         const i = index;
         index++;
@@ -149,8 +149,8 @@ async function runStressTest() {
                 const isEmbeddingTask = task.type === 'embedding';
                 const isTextTask = task.type === 'text' || task.type === 'coding';
 
-                if ((isVisionTask && modelMetadata.isVision) || 
-                    (isEmbeddingTask && modelMetadata.isEmbedding) || 
+                if ((isVisionTask && modelMetadata.isVision) ||
+                    (isEmbeddingTask && modelMetadata.isEmbedding) ||
                     (isTextTask && modelMetadata.isText)) {
                     triageHits++;
                 }
@@ -185,17 +185,17 @@ async function runStressTest() {
                     TASK_TIMEOUT_MS
                 );
             } catch (err: any) {
-                logger.error({ 
-                    taskId: task.id, 
-                    model: decision.model, 
-                    error: err.message 
+                logger.error({
+                    taskId: task.id,
+                    model: decision.model,
+                    error: err.message
                 }, 'Provider Substrate Trap (Guaranteed Timeout)');
                 callResult = { ok: false, error: err };
             }
 
             const latencyMs = Date.now() - executionStart;
             const success = callResult.ok;
-            
+
             latencies.push(latencyMs);
             if (!success) {
                 providerFailures[selectedProvider] = (providerFailures[selectedProvider] || 0) + 1;
@@ -235,7 +235,7 @@ async function runStressTest() {
             }, 'Routing decision telemetry');
 
             if (completed % 5 === 0) {
-                logger.info({ completed, total: tasks.length, successRate: `${Math.round((successCount/completed)*100)}%` }, 'ðŸ“Š Progress Update');
+                logger.info({ completed, total: tasks.length, successRate: `${Math.round((successCount / completed) * 100)}%` }, 'ðŸ“Š Progress Update');
             }
         }
     }
@@ -243,8 +243,8 @@ async function runStressTest() {
     await Promise.all(Array.from({ length: CONCURRENCY }).map((_, i) => worker(i)));
 
     // 5ï¸âƒ£ Upgrades: Latency Distribution and Efficiency
-    latencies.sort((a,b) => a - b);
-    routingLatencies.sort((a,b) => a - b);
+    latencies.sort((a, b) => a - b);
+    routingLatencies.sort((a, b) => a - b);
     const p50 = latencies[Math.floor(latencies.length * 0.5)];
     const p95 = latencies[Math.floor(latencies.length * 0.95)];
     const rp50 = routingLatencies[Math.floor(routingLatencies.length * 0.5)];
@@ -291,16 +291,17 @@ async function runStressTest() {
         const initial = initialReputation.get(m.id) || 1.0;
         const delta = m.reputation - initial;
         const deltaStr = delta === 0 ? 'Â±0' : (delta > 0 ? '+' : '') + delta.toFixed(4);
-        logger.info({ 
-            model: m.id, 
-            reputation: m.reputation.toFixed(4), 
+        logger.info({
+            model: m.id,
+            reputation: m.reputation.toFixed(4),
             delta: deltaStr,
-            success: m.successCount, 
-            tokens: m.totalTokensUsed, 
-            avgLat: Math.round(m.avgLatencyMs) 
+            success: m.successCount,
+            tokens: m.totalTokensUsed,
+            avgLat: Math.round(m.avgLatencyMs)
         });
     }
 }
 
 runStressTest().catch(console.error);
+
 

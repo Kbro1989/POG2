@@ -10,10 +10,10 @@ const OUTPUT_FILE = "D:\\sovereign\\atlas\\spatial\\system_taxonomy\\inventory_d
 async function run() {
     console.log("🚀 Sovereign Inventory Extraction — Major 2, Minor 5");
     const source = new GameCacheLoader(CACHE_DIR);
-    
+
     // In many RS3 caches, Major 2 / Minor 5 = Inventories
     const INV_MINOR = 5;
-    
+
     try {
         const arch = await source.getArchiveById(cacheMajors.config, INV_MINOR);
         console.log(`📊 Found ${arch.length} Inventory Definitions.`);
@@ -30,7 +30,7 @@ async function run() {
                     size: buf.length,
                     hex: buf.toString('hex')
                 };
-            } catch {}
+            } catch { }
         }
 
         if (!fs.existsSync(path.dirname(OUTPUT_FILE))) fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
@@ -42,3 +42,4 @@ async function run() {
 }
 
 run().catch(console.error);
+

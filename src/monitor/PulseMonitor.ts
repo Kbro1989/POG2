@@ -1,3 +1,4 @@
+import { GameplaySovereigntyLimb } from '../limbs/spatial/GameplaySovereigntyLimb.js';
 import { spawn, type ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import { join, resolve } from 'path';
@@ -67,6 +68,14 @@ export class PulseMonitor extends EventEmitter {
 
     private async pulse(): Promise<void> {
         const yao = this.hexagramManager.getYaoState?.();
+
+        // Gameplay Override: If the player agent is active, the GameplaySovereigntyLimb
+        // handles the cognitive pulse at a higher frequency (600ms).
+        const gameplay = GameplaySovereigntyLimb.getInstance();
+        if (gameplay.playerAgent) {
+            logger.debug('PulseMonitor: Suspending system pulse; GameplaySovereigntyLimb is currently authoritative.');
+            return;
+        }
 
         // Cognitive Immunology Restraint: Suspend heartbeat/telemetry during chaotic shifts or deep dormancy
         if (yao === YaoState.OldYin || yao === YaoState.OldMixed) {
@@ -373,3 +382,4 @@ export class PulseMonitor extends EventEmitter {
         };
     }
 }
+

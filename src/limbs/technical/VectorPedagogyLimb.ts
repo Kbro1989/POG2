@@ -1,8 +1,8 @@
-﻿import { Result, ok, err, YaoState } from '../../core/models.js';
+import { Result, ok, err, YaoState } from '../../core/models.js';
 import type { PedagogyProfile } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-import { VectorDB } from "../../utils/VectorDB.js";
 import { ModelClient } from "../../clients/ModelClient.js";
+import { TrainingCollector } from "../../utils/TrainingCollector.js";
 import { createHash } from 'crypto';
 
 const logger = createLogger('VectorPedagogyLimb');
@@ -12,16 +12,9 @@ const logger = createLogger('VectorPedagogyLimb');
  * Converts 3D PedagogyProfiles into Vector Lessons for semantic search.
  */
 export class VectorPedagogyLimb {
-    private vectorDb: VectorDB;
 
     constructor(private client: ModelClient) {
-        this.vectorDb = new VectorDB({ client });
-        const initRes = this.vectorDb.initialize();
-        if (!initRes.ok) {
-            logger.error({ error: initRes.error.message }, 'Failed to initialize VectorDB Substrate.');
-        } else {
-            logger.info('VectorPedagogyLimb initialized. Memory substrate online.');
-        }
+        logger.info('VectorPedagogyLimb initialized. Writing via TrainingCollector.');
     }
 
     public async ingestProfile(profile: PedagogyProfile): Promise<Result<void>> {
@@ -60,8 +53,8 @@ Return ONLY a concise, profound generative principle (1-3 sentences) on how this
             const embedRes = await this.client.embed(finalText);
             if (!embedRes.ok) return err(new Error(`Embedding failed for profile ${profile.id}: ${embedRes.error.message}`));
 
-            // 4. Store as a Master Generative Lesson in D:\sovereign
-            const lessonRes = this.vectorDb.addLesson({
+            // 4. Store as a Master Generative Lesson in D:\sovereign (via TrainingCollector)
+            await TrainingCollector.getInstance().recordLesson({
                 id: `pedagogy-${profile.type}-${profile.id}-${Date.now()}`,
                 text: finalText,
                 embedding: embedRes.value,
@@ -72,8 +65,6 @@ Return ONLY a concise, profound generative principle (1-3 sentences) on how this
                 hash: hash,
                 type: 'generative_design_principle' // Evolved from standard 'pedagogy_profile'
             });
-
-            if (!lessonRes.ok) return lessonRes;
 
             logger.info({ id: profile.id }, 'Successfully vectorized sovereign generative logic.');
             return ok(undefined);
@@ -110,6 +101,7 @@ Return ONLY a concise, profound generative principle (1-3 sentences) on how this
     }
 
     public close(): void {
-        this.vectorDb.close();
+        // TrainingCollector manages the VectorDB lifecycle.
     }
 }
+

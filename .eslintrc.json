@@ -25,5 +25,6 @@
             }
         ],
         "no-constant-condition": "warn"
-    }
+    },
+    "ignorePatterns": ["**/rsmv*/**", "**/rsmv_inspector/**", "**/scratch/**", "**/scripts/**"]
 }

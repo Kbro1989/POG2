@@ -79,7 +79,7 @@ function extractHierarchy() {
             for (const epId of endpointIds) {
                 const epRow = nodeMap.get(epId);
                 let epName = `Endpoint_${epId}`;
-                let requirements: any[] = [];
+                const requirements: any[] = [];
                 
                 if (epRow) {
                     epName = getColumnValue(epRow, 0, 36)?.[0] || epName;
@@ -124,3 +124,4 @@ function extractHierarchy() {
 }
 
 extractHierarchy();
+

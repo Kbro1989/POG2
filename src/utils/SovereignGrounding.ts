@@ -1,4 +1,4 @@
-﻿// src/utils/SovereignGrounding.ts
+// src/utils/SovereignGrounding.ts
 // Ported from D:\sovereign\cache_pedagogy\rsmv_inspector\src\map\grounding_logic.ts
 // Integrated into POG2 Sovereign Core
 
@@ -39,8 +39,8 @@ export class SovereignGrounding {
     private synthesis: Record<number, { npcs: number[], objects: number[] }> = {};
 
     constructor(
-        varbits: Record<number, VarbitDefinition> = {}, 
-        mapzones: Record<number, MapZoneDefinition> = {}, 
+        varbits: Record<number, VarbitDefinition> = {},
+        mapzones: Record<number, MapZoneDefinition> = {},
         synthesis: Record<number, { npcs: number[], objects: number[] }> = {}
     ) {
         this.varbits = varbits;
@@ -70,7 +70,7 @@ export class SovereignGrounding {
     public getRegionMetadata(x: number, z: number, plane: number = 0) {
         const zone = this.findMapZone(x, z, plane);
         if (!zone) return { id: -1, name: "Unknown Territory", archetype: "Wilderness" };
-        
+
         return {
             id: zone.center,
             name: zone.name,
@@ -104,18 +104,20 @@ export class SovereignGrounding {
      */
     public static async loadDefault(): Promise<SovereignGrounding> {
         const pedagogyDir = getPedagogyPath();
-        
+
         const load = (file: string) => {
             const p = join(pedagogyDir, file);
             if (!existsSync(p)) {
-                logger.warn({ path: p }, `Pedagogical substrate file missing: ${file}`);
-                return {};
+                const err = `Pedagogical substrate file missing: ${file} at ${p}`;
+                logger.error({ path: p }, err);
+                throw new Error(err);
             }
             try {
                 return JSON.parse(readFileSync(p, "utf-8"));
             } catch (e) {
-                logger.error({ path: p, error: (e as Error).message }, `Failed to parse pedagogical file: ${file}`);
-                return {};
+                const err = `Failed to parse pedagogical file: ${file}. Error: ${(e as Error).message}`;
+                logger.error({ path: p, error: (e as Error).message }, err);
+                throw new Error(err);
             }
         };
 
@@ -137,3 +139,4 @@ export class SovereignGrounding {
         };
     }
 }
+

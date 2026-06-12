@@ -15,12 +15,14 @@ import { WorldGroundingLimb } from '../world_grounding/WorldGroundingLimb.js';
 import { HexagramManager } from '../../routing/HexagramManager.js';
 import { AIDispatcher } from '../../api/ai/Dispatcher.js';
 import { ModelClient } from '../../clients/ModelClient.js';
-import { SovereignConfig } from '../../config/SovereignConfig.js';
+import { SovereignConfig, getDefaultSovereignConfig } from '../../config/SovereignConfig.js';
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
 import { Renderer } from '../../ui/Renderer.js';
 import { CombatLimb } from './CombatLimb.js';
+import { SoundtrackLimb } from '../creative/SoundtrackLimb.js';
 import { BankLimb } from './BankLimb.js';
 import { ItemLifecycleLimb } from './ItemLifecycleLimb.js';
+import { AvatarStateLimb } from './AvatarStateLimb.js';
 
 const logger = createLogger('GameplaySovereigntyLimb');
 
@@ -44,7 +46,8 @@ export class GameplaySovereigntyLimb {
     public combat: CombatLimb;
     public items: ItemLifecycleLimb;
     public bankLimb: BankLimb;
-    private playerAgent: any; // PlayerAgent (typed as any to avoid circularity if needed)
+    public avatarState: AvatarStateLimb;
+    public playerAgent: any; // PlayerAgent brain
     
     public globalState: GameState = {
         plane: 0,
@@ -75,13 +78,55 @@ export class GameplaySovereigntyLimb {
         this.combat = CombatLimb.getInstance();
         this.items = ItemLifecycleLimb.getInstance();
         this.bankLimb = BankLimb.getInstance();
+        this.avatarState = AvatarStateLimb.getInstance();
+        this.avatarState.bindEntity(this.avatar as SovereignAvatarEntity);
+
+        // Initialize SoundtrackLimb and inject into Combat
+        const config = getDefaultSovereignConfig();
+        const soundtrack = new SoundtrackLimb(config);
+        this.combat.injectSoundtrack(soundtrack);
+        logger.info('SoundtrackLimb initialized and injected into CombatLimb.');
+
+        // --- PHASE 72: GROUNDING THE PLAYER TEMPLATE ---
+        const templatePath = path.join(process.cwd(), 'public', 'sovereign_entity_player.json');
+        if (fs.existsSync(templatePath)) {
+            try {
+                const template = JSON.parse(fs.readFileSync(templatePath, 'utf8'));
+                (this.avatar as SovereignAvatarEntity).hydrate(template);
+                logger.info({ npcId: template.entity?.npcId }, 'Avatar grounded in public player template.');
+            } catch (err) {
+                logger.error({ err }, 'Failed to ground avatar in player template.');
+            }
+        }
         
-        // Initialize Cognitive Agent
-        const { PlayerAgent } = require('../../engines/gameplay/PlayerAgent.js');
-        this.playerAgent = new PlayerAgent(this.avatar as SovereignAvatarEntity);
+        this.playerAgent = null; // Lazy loaded via engagePlayerHarness()
         
         this.loadSovereignState();
+
+        // Phase 112: Hook state changes to Switchboard for real-time viewport sync
+        (this.avatar as SovereignAvatarEntity).onStateChange = (type, delta) => {
+            if (this.switchboard) {
+                this.switchboard.broadcast({
+                    type: 'AVATAR_STATE_CHANGE',
+                    payload: {
+                        type,
+                        delta,
+                        username: this.avatar.username,
+                        timestamp: Date.now()
+                    }
+                });
+            }
+        };
+
         logger.info('GameplaySovereigntyLimb booted as a CNS-authoritative node.');
+    }
+
+    public engagePlayerHarness() {
+        if (!this.playerAgent) {
+            const { PlayerAgent } = require('../../engines/gameplay/PlayerAgent.js');
+            this.playerAgent = new PlayerAgent(this.avatar as SovereignAvatarEntity);
+            logger.info("Player Harness Engaged via explicit VOLITION (pog2 play or chat command).");
+        }
     }
 
     public static getInstance(): GameplaySovereigntyLimb {
@@ -117,7 +162,14 @@ export class GameplaySovereigntyLimb {
                     this.avatar.coord.x = data.origin.x;
                     this.avatar.coord.y = data.origin.z; 
                     this.avatar.coord.plane = data.origin.plane;
+                } else if (data.x !== undefined && data.y !== undefined) {
+                    // [LEGACY MIGRATION] Support old RSC Save Format
+                    this.avatar.coord.x = data.x;
+                    this.avatar.coord.y = data.y;
+                    this.avatar.coord.plane = 0; // RSC default
+                    logger.info({ x: data.x, y: data.y }, '[SOVEREIGN PERSISTENCE] Legacy RSC origin coordinates ingested.');
                 }
+
                 if (data.inventory) {
                     this.avatar.inventory = data.inventory;
                 }
@@ -127,13 +179,61 @@ export class GameplaySovereigntyLimb {
                 if (data.wallet) {
                     this.avatar.wallet = data.wallet;
                 }
+
                 if (data.skills) {
-                    Object.entries(data.skills).forEach(([id, skill]: [string, any]) => {
-                        this.avatar.skills[parseInt(id)] = skill;
-                    });
+                    // Detect legacy named skills object vs POG2 ID-based object
+                    if (data.skills.attack && typeof data.skills.attack.experience === 'number') {
+                        // [LEGACY MIGRATION] Map RSC string keys to RS3 IDs
+                        const rscSkillMap: Record<string, number> = {
+                            attack: 1, defense: 5, strength: 2, hits: 6, ranged: 3, prayer: 7, magic: 4,
+                            cooking: 16, woodcutting: 18, fletching: 19, fishing: 15, firemaking: 17,
+                            crafting: 11, smithing: 14, mining: 13, herblaw: 9, agility: 8, thieving: 10
+                        };
+                        for (const [rscName, skillData] of Object.entries(data.skills)) {
+                            const rs3Id = rscSkillMap[rscName];
+                            if (rs3Id) {
+                                const s = skillData as any;
+                                this.avatar.skills[rs3Id] = {
+                                    id: rs3Id,
+                                    name: rscName.toUpperCase(),
+                                    level: s.base || s.current || 1,
+                                    xp: s.experience || 0
+                                };
+                            }
+                        }
+                        logger.info('[SOVEREIGN PERSISTENCE] Legacy RSC skills migrated to RS3 IDs.');
+                    } else {
+                        Object.entries(data.skills).forEach(([id, skill]: [string, any]) => {
+                            this.avatar.skills[parseInt(id)] = skill;
+                        });
+                    }
                 }
+
                 if (data.quests) {
                     this.avatar.quests = data.quests;
+                } else if (data.questStages) {
+                    // Legacy RSC Quest Stage mapping
+                    this.avatar.quests = {
+                        points: data.questPoints || 0,
+                        completedCount: Object.keys(data.questStages).length,
+                        quests: data.questStages
+                    };
+                }
+
+                if (data.varps) {
+                    for (const [id, value] of Object.entries(data.varps)) {
+                        this.globalState.varps.set(parseInt(id), value as number);
+                    }
+                }
+                if (data.varbits) {
+                    for (const [id, value] of Object.entries(data.varbits)) {
+                        this.globalState.varbits.set(parseInt(id), value as number);
+                    }
+                }
+                
+                // Legacy custom RSC cache mapped to modern metadata
+                if (data.cache) {
+                    this.avatar.metadata = { ...this.avatar.metadata, legacyCache: data.cache };
                 }
                 logger.info({ origin: data.origin }, 'Loaded Sovereign Save State.');
             } catch (err) {
@@ -155,6 +255,8 @@ export class GameplaySovereigntyLimb {
             wallet: this.avatar.wallet,
             skills: this.avatar.skills,
             quests: this.avatar.quests,
+            varps: Object.fromEntries(this.globalState.varps),
+            varbits: Object.fromEntries(this.globalState.varbits),
             timestamp: new Date().toISOString()
         };
         fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
@@ -244,9 +346,13 @@ export class GameplaySovereigntyLimb {
     }
 
     /**
-     * Executes a single mechanical tick manually.
+     * Executes a single mechanical tick manually, gated by the CanonicalClock only if simulation is running.
      */
     public async forceTick(): Promise<string | null> {
+        if (this.isRunning && !require('../../utils/CanonicalClock.js').clock.isTickingPermitted()) {
+            logger.warn('[Sovereign] forceTick() blocked by active cognitive window.');
+            return '[Engine] Simulation locked: Cognitive window active.';
+        }
         return await this.processTick();
     }
 
@@ -282,100 +388,72 @@ export class GameplaySovereigntyLimb {
     }
 
     /**
-     * processTick - Authoritative State Advancement.
-     * Called by CNSGodheadPulseVolley every 600ms.
+     * processTick - Authoritative State Advancement, structured by temporal lattice.
      */
-    public async processTick(): Promise<string | null> {
+    public async processTick(isGameTick: boolean = true): Promise<string | null> {
         this.tickCount++;
         this.globalState.tickNumber = this.tickCount;
 
-        // 0. Vitality Check (Player Death Transition)
+        // Vitality Check
         if (this.avatar.isDead && this.avatar.metadata?.deathEvent) {
              this.handlePlayerDeath();
         }
 
-        // 0.5 Cognitive Loop (NPC Brains Think Second)
-        for (const npc of this.globalState.npcMap.values()) {
-            if (npc.brain) {
-                npc.brain.think(this.tickCount, this.globalState, this.avatar);
-            }
-        }
+        // --- T3: Optional Cognitive Layer (Always evaluate) ---
+        if (this.playerAgent) {
+            const ghostSplat = (require('../../substrates/GhostSplatEngine.js')).GhostSplatEngine.getInstance();
+            const field = ghostSplat.getLatestField();
+            if (field) {
+                const hex = HexagramManager.getInstance().getInterpretation();
+                const strategy = hex.strategy || '';
+                
+                if (strategy.includes('EXPANSION') || strategy.includes('ACCELERATION')) this.avatar.metadata.combatArchetype = 'aggressive';
+                else if (strategy.includes('STABILIZATION') || strategy.includes('CAUTION')) this.avatar.metadata.combatArchetype = 'methodical';
+                else if (strategy.includes('RETREAT') || strategy.includes('PAUSE')) this.avatar.metadata.combatArchetype = 'cowardly';
 
-        // 0.55 Follower Logic: Assign leader if not already set (Phase 46)
-        if (!this.avatar.metadata?.leaderId) {
-            for (const [id, player] of this.globalState.players) {
-                if (player.username !== (this.avatar as any).username) {
-                    if (!this.avatar.metadata) this.avatar.metadata = {};
-                    this.avatar.metadata.leaderId = id;
-                    this.playerAgent.setLeader(id);
-                    logger.info({ leader: id }, 'Sovereign promoted to Follower â€” establishing cooperative link.');
-                    break;
+                this.playerAgent.evaluateTacticalPosition(field);
+                if (this.avatar.metadata?.tacticalState !== 'evading' && !this.avatar.isBusy()) {
+                    const rotation = this.playerAgent.evaluateCombatRotation(field, this.tickCount);
+                    if (rotation) this.avatar.intent = rotation;
                 }
             }
         }
 
-        // Advance Cognitive Agent (Cooldowns / Adrenaline)
-        this.playerAgent.advanceTick(600);
+        // --- T2: Player Reflex Pulse (300ms) ---
+        if (this.playerAgent) {
+            this.playerAgent.advanceTick(300);
+        }
 
-        // 0.75 Cognitive Intelligence (Phase 45: Solo Gameplay Integration)
-        const ghostSplat = (require('../../substrates/GhostSplatEngine.js')).GhostSplatEngine.getInstance();
-        const field = ghostSplat.getLatestField();
-        if (field) {
-            // Apply Strategic Archetype from Hexagram thinking layer
-            const hex = HexagramManager.getInstance().getInterpretation();
-            const strategy = hex.strategy || '';
+        // --- T1: Game Truth Boundary (600ms) ---
+        if (isGameTick) {
+            // T1 Metabolic Pulse (Sync every 6s)
+            if (this.tickCount % 10 === 0 && this.playerAgent) {
+                HexagramManager.getInstance().updateState({ buildPass: true, userActive: true, noRecentErrors: true, substrateHealthy: !this.avatar.isDead, authorityLocal: true, auditSync: true });
+            }
             
-            if (strategy.includes('EXPANSION') || strategy.includes('ACCELERATION')) {
-                this.avatar.metadata.combatArchetype = 'aggressive';
-            } else if (strategy.includes('STABILIZATION') || strategy.includes('CAUTION')) {
-                this.avatar.metadata.combatArchetype = 'methodical';
-            } else if (strategy.includes('RETREAT') || strategy.includes('PAUSE')) {
-                this.avatar.metadata.combatArchetype = 'cowardly';
-            }
-
-            // 2. Tactical Evaluation (Evasion / Cooperation)
-            this.playerAgent.evaluateTacticalPosition(field);
-
-            // 3. Combat Rotation (Intent Generation)
-            if (this.avatar.metadata?.tacticalState !== 'evading' && !this.avatar.isBusy()) {
-                const rotation = this.playerAgent.evaluateCombatRotation(field, this.tickCount);
-                if (rotation) {
-                    this.avatar.intent = rotation;
+            // NPC World Pulse
+            for (const npc of this.globalState.npcMap.values()) {
+                if (npc.brain) npc.brain.think(this.tickCount, this.globalState, this.avatar);
+                if (npc.interactionState === 'MOVING' && npc.target && typeof npc.target !== 'number') {
+                    npc.x += Math.sign(npc.target.x - npc.x);
+                    npc.y += Math.sign(npc.target.y - npc.y);
                 }
             }
+            
+            // Deterministic Harness Sync
+            if (this.harness) await this.harness.processTick(this.tickCount, this.globalState, this.avatar);
+
+            // Persistence
+            if (this.stateDirty && this.tickCount % 10 === 0) this.saveSovereignState();
         }
 
-        // 1. Process Combat Intent (Prioritized before movement)
+        // Finalize Mechanics (T1/T2 shared)
         this.processCombatTick();
-
-        // 2. Process Avatar (Movement / Pathing)
         this.avatar.processTick();
 
-        // 2.5 Process NPC Movement (Authoritative translation)
-        for (const npc of this.globalState.npcMap.values()) {
-            if (npc.interactionState === 'MOVING' && npc.target && typeof npc.target !== 'number') {
-                // If it's a coord target, move one step towards it
-                const dx = Math.sign(npc.target.x - npc.x);
-                const dy = Math.sign(npc.target.y - npc.y);
-                npc.x += dx;
-                npc.y += dy;
-            }
-        }
-
-        // 3. Delegate to Simulation Harness (Deterministic Logic)
-        if (this.harness) {
-            await this.harness.processTick(this.tickCount, this.globalState, this.avatar);
-        }
-
-        // 3. Autosave every 10 ticks (6 seconds) — only write if state changed
-        if (this.stateDirty && this.tickCount % 10 === 0) {
-            this.saveSovereignState();
-        }
-
+        // Finalize Sync
         let moduleResult: string | null = null;
-        if (this.activeModule) {
-            moduleResult = await this.activeModule.onTick(this.tickCount, this.globalState, this.avatar);
-        }
+        if (this.activeModule) moduleResult = await this.activeModule.onTick(this.tickCount, this.globalState, this.avatar);
 
         if (this.switchboard) {
             this.switchboard.syncGameState({
@@ -392,7 +470,6 @@ export class GameplaySovereigntyLimb {
                     quests: this.avatar.quests,
                     isBusy: this.avatar.isBusy()
                 },
-
                 activeModule: this.activeModule?.name || 'idle'
             });
         }
@@ -573,10 +650,11 @@ export class GameplaySovereigntyLimb {
                  if (item) {
                      // Move to inv then bank or direct? Direct for shortcut.
                      this.bankLimb.deposit(this.avatar as any, -1, item.amount); // -1 triggers direct equip depo in logic
-                     this.avatar.equipment[slot] = null;
+                     this.avatar.setEquipmentSlot(slot as any, null);
                  }
              });
         }
     }
 }
+
 

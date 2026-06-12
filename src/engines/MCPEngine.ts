@@ -75,6 +75,15 @@ export class MCPEngine {
             const toolsRes = await client.listTools();
             const tools = toolsRes.tools || [];
 
+            // Add the hello callback trigger
+            const helloCallback = (config as any).helloCallback;
+            if (helloCallback) {
+                logger.info({ server: name, callback: helloCallback }, 'Invoking MCP Handshake...');
+                await client.callTool({ name: helloCallback, arguments: {} }).catch((e) => {
+                     logger.warn({ server: name, callback: helloCallback, error: e.message }, 'Handshake triggered, ignoring lack of tool support.');
+                });
+            }
+
             for (const t of tools) {
                 this.registry.register({
                     name: `mcp_${name}_${t.name}`,
@@ -132,3 +141,4 @@ export class MCPEngine {
         };
     }
 }
+

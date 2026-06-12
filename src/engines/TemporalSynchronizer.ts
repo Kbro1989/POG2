@@ -1,4 +1,4 @@
-﻿import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 export interface KinematicFrame {
@@ -33,14 +33,13 @@ export class JagexTemporalEngine {
   private readonly ANIM_TICK_MS = 20;
   private readonly RATIO = 30; // GAME_TICK / ANIM_TICK
 
-  // KBD-specific metadata
-  private kbd = {
-    npcId: 50,
-    combatLevel: 276,
-    size: 5, // 5x5 tiles
-    standSequence: 17769,
-    modelIds: [17360, 17361, 17362, 17363],
-    aggression: 'HIGH'
+  // Sovereign-specific metadata (Defaults to POG Sovereign avatar)
+  private sovereign = {
+    entityId: 'pog2_sovereign',
+    type: 'SOVEREIGN_AVATAR',
+    size: 1, 
+    modelIds: [17360, 17361, 17362, 17363], // Default high-poly substrate models
+    state: 'SYNCHRONIZED'
   };
 
   /**
@@ -80,7 +79,7 @@ export class JagexTemporalEngine {
       frameCount: frames.length,
       serverTicks: Math.ceil(frames.length / this.RATIO),
       frames,
-      entity: this.kbd
+      entity: this.sovereign
     };
   }
 
@@ -124,3 +123,4 @@ export class JagexTemporalEngine {
       }));
   }
 }
+

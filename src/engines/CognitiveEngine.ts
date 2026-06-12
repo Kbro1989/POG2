@@ -1,4 +1,4 @@
-﻿import { type Result, type Lesson, ok, YaoState } from '../core/models.js';
+import { type Result, type Lesson, ok, err } from '../core/models.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { ModelClient } from '../clients/ModelClient.js';
 import { createLogger } from "../utils/logger.js";
@@ -13,8 +13,26 @@ export interface PersonalityArchetype {
 }
 
 /**
+ * Defines the expected structure for metadata of 'literary_wisdom' lessons.
+ */
+interface LiteraryWisdomMetadata {
+    title?: string;
+    author?: string;
+    reflection?: string;
+    [key: string]: unknown;
+}
+
+/**
+ * Defines the expected row structure returned by the SQL query in getPersonalityCore.
+ */
+interface PersonalityRow {
+    author: string | null;
+    weight: number;
+}
+
+/**
  * CognitiveEngine
- * 
+ *
  * Manages the activation of literary wisdom into POG2's personality and thoughts.
  * Bridges the gap between passive memory (VectorDB) and active metabolism (MetabolicEngine).
  */
@@ -24,8 +42,12 @@ export class CognitiveEngine {
         private readonly client: ModelClient
     ) { }
 
+    /**
+     * Performs a health check on the CognitiveEngine's dependencies.
+     * @returns A promise resolving to an object indicating online status and details.
+     */
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
-        const vCheck = this.vectorDB.healthCheck();
+        const vCheck = (this.vectorDB as any).healthCheck();
         const cCheck = await this.client.healthCheck();
         const isOnline = vCheck.online && cCheck.online;
         return {
@@ -36,76 +58,78 @@ export class CognitiveEngine {
 
     /**
      * getActiveWisdom - Retrieves wisdom fragments relevant to a specific task.
+     * @param task The task for which to synthesize wisdom.
+     * @param limit The maximum number of wisdom fragments to retrieve.
+     * @returns A Result containing the synthesized wisdom string or an error.
      */
     public async getActiveWisdom(task: string, limit = 3): Promise<Result<string>> {
         logger.info({ task }, 'Synthesizing literary wisdom for task-specific cognition');
 
         // 1. Generate embedding for the specific task
         const embedRes = await this.client.embed(task);
-        if (!embedRes.ok) return embedRes as any;
+        if (!embedRes.ok) {
+            return err(embedRes.error);
+        }
 
-        // 2. Search VectorDB for "literary_wisdom" types in the 'literary' domain
-        const searchRes = await this.vectorDB.searchSimilar(embedRes.value, limit, (this.vectorDB as any).projectId || 'global', 'literary');
-        if (!searchRes.ok) return searchRes as any;
+        // 2. Search VectorDB for relevant wisdom
+        const projectId = (this.vectorDB as any).projectId || 'literary';
+        const searchRes = await (this.vectorDB as any).searchSimilar(embedRes.value, limit, projectId);
+        if (!searchRes.ok) {
+            return err(searchRes.error);
+        }
 
-        const wisdom = searchRes.value
-            .filter(l => l.type === 'literary_wisdom')
-            .map(l => {
-                const meta = l.metadata as any;
-                return `[From "${meta.title}" by ${meta.author}]: ${l.text}\nREFLECTION: ${meta.reflection || 'N/A'}`;
-            })
-            .join('\n\n');
+        const lessons: Lesson[] = searchRes.value;
+        if (lessons.length === 0) {
+            return ok('No relevant wisdom fragments found in literary substrate.');
+        }
 
-        return ok(wisdom || 'No specific literary wisdom activated for this substrate query.');
+        // 3. Synthesize into a readable wisdom string
+        const wisdomFragments = lessons.map((lesson: Lesson, i: number) => {
+            const meta = (lesson.metadata || {}) as LiteraryWisdomMetadata;
+            const source = meta.title
+                ? `"${meta.title}"${meta.author ? ` by ${meta.author}` : ''}`
+                : 'Unknown Source';
+            return `[${i + 1}] ${source}: ${lesson.text}`;
+        });
+
+        return ok(wisdomFragments.join('\n\n'));
     }
 
     /**
-     * getGenerativeWisdom - Retrieves profound Game/Cinematic Design principles extracted from session exhaust and topological pedagogy.
-     */
-    public async getGenerativeWisdom(task: string, limit = 5): Promise<Result<string>> {
-        logger.info({ task }, 'Synthesizing generative Game/Cinematic Design principles for architecture cognition');
-
-        const embedRes = await this.client.embed(task);
-        if (!embedRes.ok) return embedRes as any;
-
-        // Search VectorDB for generative paradigms across the sovereign substrate
-        const searchRes = await this.vectorDB.searchSimilar(embedRes.value, limit, 'global-generative-engine', 'game-design-pedagogy');
-        if (!searchRes.ok) return searchRes as any;
-
-        const wisdom = searchRes.value
-            .filter(l => l.type === 'generative_design_principle' || l.type === 'condensed_lesson')
-            .map(l => {
-                return `[GENERATIVE VECTOR]: ${l.text}`;
-            })
-            .join('\n\n');
-
-        return ok(wisdom || 'No generative design paradigms actively synthesized yet.');
-    }
-
-    /**
-     * getPersonalityCore - Summarizes the AI's current "personality" based on ingested influences.
+     * getPersonalityCore - Derives the dominant personality archetypes from absorbed wisdom.
+     * @returns A Result containing an array of PersonalityArchetype objects or an error.
      */
     public async getPersonalityCore(): Promise<Result<PersonalityArchetype[]>> {
-        // Query the database for a summary of influencers
-        // This is a simplified implementation; in a full version, this would be a metadata aggregation.
-        const res = await (this.vectorDB as any).db.prepare(`
-            SELECT 
-                json_extract(metadata, '$.author') as author,
-                COUNT(*) as weight
-            FROM lessons 
-            WHERE type = 'literary_wisdom'
-            GROUP BY author
-            ORDER BY weight DESC
-            LIMIT 5
-        `).all();
+        logger.info('Deriving personality archetypes from literary substrate');
 
-        const archetypes: PersonalityArchetype[] = res.map((r: any) => ({
-            name: r.author || 'Anonymous',
-            weight: r.weight,
-            description: `A systematic influence derived from ${r.weight} absorbed fragments.`,
-            influence: 'DIRECT'
-        }));
+        try {
+            const db = (this.vectorDB as any).db;
+            if (!db) {
+                return err(new Error('VectorDB has no db instance for personality query'));
+            }
 
-        return ok(archetypes);
+            const rows: PersonalityRow[] = db.prepare(`
+                SELECT metadata->>'$.author' as author, COUNT(*) as weight
+                FROM lessons
+                WHERE type = 'literary_wisdom'
+                GROUP BY author
+                ORDER BY weight DESC
+                LIMIT 5
+            `).all();
+
+            const archetypes: PersonalityArchetype[] = rows
+                .filter((r: PersonalityRow) => r.author)
+                .map((r: PersonalityRow) => ({
+                    name: r.author!,
+                    weight: r.weight,
+                    description: `Dominant literary influence from ${r.author}`,
+                    influence: `${r.weight} absorbed passages`
+                }));
+
+            return ok(archetypes);
+        } catch (e) {
+            return err(e instanceof Error ? e : new Error(String(e)));
+        }
     }
 }
+

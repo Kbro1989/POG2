@@ -54,3 +54,4 @@ export class ByteStream {
         this.offset += n;
     }
 }
+

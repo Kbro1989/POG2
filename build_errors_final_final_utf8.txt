@@ -1,0 +1,12 @@
+﻿
+> pog2-cli@1.1.0 build
+> tsc
+
+src/rsmv/cache/sqlitewasm.ts(52,5): error TS2739: Type '{ major: 255; minor: number; crc: number; size: number; subindexcount: number; subindices: number[]; version: number; uncompressed_crc: number; uncompressed_size: number; }' is missing the following properties from type 'CacheIndex': subnames, name
+src/rsmv/clicommands.ts(89,15): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ framemaps: JsonBasedFile; items: JsonBasedFile; enums: JsonBasedFile; npcs: JsonBasedFile; soundjson: JsonBasedFile; ... 43 more ...; clientscriptops: JsonBasedFile; }'.
+  No index signature with a parameter of type 'string' was found on type '{ framemaps: JsonBasedFile; items: JsonBasedFile; enums: JsonBasedFile; npcs: JsonBasedFile; soundjson: JsonBasedFile; ... 43 more ...; clientscriptops: JsonBasedFile; }'.
+src/rsmv/cliparser.ts(45,14): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'typeof globalThis'.
+  No index signature with a parameter of type 'string' was found on type 'typeof globalThis'.
+src/rsmv/scripts/gameinterfaces.ts(86,33): error TS7015: Element implicitly has an 'any' type because index expression is not of type 'number'.
+src/rsmv/viewer/scriptsui.tsx(398,37): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ console: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ console: string; }'.

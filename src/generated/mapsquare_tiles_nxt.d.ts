@@ -6,9 +6,9 @@ export type mapsquare_tiles_nxt = {
 	magic?: number | null
 	level0?: {
 		flags: number,
-		height: (number|number),
+		height: (number | number),
 		rest: {
-			waterheight: (number|number) | null,
+			waterheight: (number | number) | null,
 			underlay: number,
 			underlaycolor: number | null,
 			overlay: number,
@@ -19,9 +19,9 @@ export type mapsquare_tiles_nxt = {
 	}[] | null
 	level1?: {
 		flags: number,
-		height: (number|number),
+		height: (number | number),
 		rest: {
-			waterheight: (number|number) | null,
+			waterheight: (number | number) | null,
 			underlay: number,
 			underlaycolor: number | null,
 			overlay: number,
@@ -32,9 +32,9 @@ export type mapsquare_tiles_nxt = {
 	}[] | null
 	level2?: {
 		flags: number,
-		height: (number|number),
+		height: (number | number),
 		rest: {
-			waterheight: (number|number) | null,
+			waterheight: (number | number) | null,
 			underlay: number,
 			underlaycolor: number | null,
 			overlay: number,
@@ -45,9 +45,9 @@ export type mapsquare_tiles_nxt = {
 	}[] | null
 	level3?: {
 		flags: number,
-		height: (number|number),
+		height: (number | number),
 		rest: {
-			waterheight: (number|number) | null,
+			waterheight: (number | number) | null,
 			underlay: number,
 			underlaycolor: number | null,
 			overlay: number,
@@ -57,3 +57,4 @@ export type mapsquare_tiles_nxt = {
 		} | null,
 	}[] | null
 };
+

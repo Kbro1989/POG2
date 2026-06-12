@@ -1,4 +1,4 @@
-﻿import { Project, SyntaxKind, type VariableDeclaration } from 'ts-morph';
+import { Project, SyntaxKind, type VariableDeclaration } from 'ts-morph';
 import { createLogger } from '../utils/logger.js';
 import type { Result, ActuationResult } from '../core/models.js';
 import path from 'path';
@@ -7,13 +7,13 @@ import { existsSync, readFileSync, writeFileSync, copyFileSync } from 'fs';
 
 const logger = createLogger('ShaderInjector');
 
-// â•â•â• MUTATION CONTRACT SYSTEM â•â•â•
+// ═══ MUTATION CONTRACT SYSTEM ═══
 
 /**
- * Mutation Tier â€” Controls what level of change is permitted.
- *   Tier 1: Scalar â€” colors, numbers, booleans, short strings (SAFE, auto-approved)
- *   Tier 2: Structural â€” functions, arrays, objects (CONTROLLED, logged)
- *   Tier 3: FileRewrite â€” full file replacement (LOCKED, requires explicit flag)
+ * Mutation Tier — Controls what level of change is permitted.
+ *   Tier 1: Scalar — colors, numbers, booleans, short strings (SAFE, auto-approved)
+ *   Tier 2: Structural — functions, arrays, objects (CONTROLLED, logged)
+ *   Tier 3: FileRewrite — full file replacement (LOCKED, requires explicit flag)
  */
 export const enum MutationTier {
     Scalar = 1,
@@ -41,7 +41,7 @@ const STRUCTURAL_KINDS = new Set([
 
 /**
  * Validate that a payload is safe to inject as a scalar initializer.
- * Rejects multi-line payloads, imports, exports, class definitions â€” 
+ * Rejects multi-line payloads, imports, exports, class definitions — 
  * anything that would turn a value slot into a program.
  */
 function isSafeScalarPayload(value: string): { safe: boolean; reason?: string } {
@@ -49,13 +49,13 @@ function isSafeScalarPayload(value: string): { safe: boolean; reason?: string } 
         return { safe: false, reason: `Payload too large (${value.length} chars, max 200)` };
     }
     if (value.includes('\n') || value.includes('\r')) {
-        return { safe: false, reason: 'Payload contains newlines â€” not a scalar value' };
+        return { safe: false, reason: 'Payload contains newlines — not a scalar value' };
     }
     if (/\b(import|export|class|function\s+\w+|interface|type\s+\w+)\b/.test(value)) {
-        return { safe: false, reason: 'Payload contains structural keywords (import/export/class/function) â€” not a scalar' };
+        return { safe: false, reason: 'Payload contains structural keywords (import/export/class/function) — not a scalar' };
     }
     if (value.includes('```')) {
-        return { safe: false, reason: 'Payload contains markdown code fences â€” likely raw AI output, not a value' };
+        return { safe: false, reason: 'Payload contains markdown code fences — likely raw AI output, not a value' };
     }
     return { safe: true };
 }
@@ -97,7 +97,7 @@ function extractHexColor(input: string): string | null {
     return null;
 }
 
-// â•â•â• PATH RESOLUTION â•â•â•
+// ═══ PATH RESOLUTION ═══
 
 /**
  * Resolve `tsconfig.json` from the package root using `import.meta.url`,
@@ -130,10 +130,10 @@ function resolveProjectTsConfig(): string {
     return '';
 }
 
-// â•â•â• SHADER INJECTOR â•â•â•
+// ═══ SHADER INJECTOR ═══
 
 /**
- * ShaderInjector â€” AST-safe mutation engine for 3D materials.
+ * ShaderInjector — AST-safe mutation engine for 3D materials.
  * Uses ts-morph to safely modify shaders and procedural textures.
  * 
  * Mutation Contract:
@@ -159,7 +159,7 @@ export class ShaderInjector {
     /**
      * Inject a color modification into a procedural texture file.
      * Finds VariableDeclarations with names like 'DEFAULT_COLOR' or 'PRIMARY_COLOR'
-     * and mutates their initializer â€” but ONLY if the mutation is safe.
+     * and mutates their initializer — but ONLY if the mutation is safe.
      * 
      * Mutation Contract enforced:
      *   1. Extracts a clean hex color from the payload (rejects raw AI output)
@@ -171,7 +171,7 @@ export class ShaderInjector {
     public async injectColor(filePath: string, hexCode: string): Promise<Result<ActuationResult>> {
         logger.info({ filePath, hexCode: hexCode.substring(0, 50) }, 'Engaging AST injection for color mutation');
 
-        // â•â•â• STEP 1: Intent Alignment â€” Extract the actual color value â•â•â•
+        // ═══ STEP 1: Intent Alignment — Extract the actual color value ═══
         const cleanColor = extractHexColor(hexCode);
         if (!cleanColor) {
             const reason = `Payload is not a recognizable color value. Got: "${hexCode.substring(0, 80)}..."`;
@@ -179,14 +179,14 @@ export class ShaderInjector {
             return { ok: false, error: new Error(`MUTATION REJECTED (Intent Mismatch): ${reason}`) };
         }
 
-        // â•â•â• STEP 2: Payload Gate â€” Validate the cleaned value â•â•â•
+        // ═══ STEP 2: Payload Gate — Validate the cleaned value ═══
         const safeCheck = isSafeScalarPayload(cleanColor);
         if (!safeCheck.safe) {
             logger.error({ cleanColor, reason: safeCheck.reason }, 'MUTATION REJECTED: Payload failed safety gate');
             return { ok: false, error: new Error(`MUTATION REJECTED (Payload Gate): ${safeCheck.reason}`) };
         }
 
-        // â•â•â• STEP 3: Backup â€” Create pre-mutation snapshot â•â•â•
+        // ═══ STEP 3: Backup — Create pre-mutation snapshot ═══
         const backupPath = `${filePath}.pog2-backup`;
         try {
             if (existsSync(filePath)) {
@@ -203,13 +203,13 @@ export class ShaderInjector {
             // Look for color constants
             const varDecls = sourceFile.getVariableDeclarations();
             let mutated = false;
-            let mutationLog: string[] = [];
+            const mutationLog: string[] = [];
 
             for (const decl of varDecls) {
                 const name = decl.getName();
                 if (name.includes('COLOR') || name.includes('STYLE')) {
 
-                    // â•â•â• STEP 4: Type-Locked Mutation â€” Check initializer kind â•â•â•
+                    // ═══ STEP 4: Type-Locked Mutation — Check initializer kind ═══
                     const initKind = decl.getInitializer()?.getKindName() || 'NoInitializer';
                     const requiredTier = detectMutationTier(initKind);
 
@@ -223,7 +223,7 @@ export class ShaderInjector {
                         continue;
                     }
 
-                    // â•â•â• STEP 5: Safe Mutation â€” Replace scalar value â•â•â•
+                    // ═══ STEP 5: Safe Mutation — Replace scalar value ═══
                     const oldValue = decl.getInitializer()?.getText() || 'undefined';
                     decl.setInitializer(`'${cleanColor}'`);
                     mutated = true;
@@ -240,7 +240,7 @@ export class ShaderInjector {
 
             if (!mutated) {
                 logger.warn({ filePath, mutations: mutationLog }, 'No eligible color constants found for scalar mutation.');
-                // Don't append raw comments â€” clean rejection
+                // Don't append raw comments — clean rejection
                 return {
                     ok: true,
                     value: {
@@ -253,7 +253,7 @@ export class ShaderInjector {
 
             await sourceFile.save();
 
-            // â•â•â• STEP 6: Post-Mutation Verification â•â•â•
+            // ═══ STEP 6: Post-Mutation Verification ═══
             // If the saved file has syntax errors, rollback
             const diagnostics = sourceFile.getPreEmitDiagnostics();
             const hasErrors = diagnostics.some(d => d.getCategory() === 0); // 0 = Error
@@ -275,8 +275,8 @@ export class ShaderInjector {
                 }
             };
         } catch (err) {
-            // â•â•â• EMERGENCY ROLLBACK â•â•â•
-            logger.error({ err }, 'AST Injection failed â€” attempting rollback');
+            // ═══ EMERGENCY ROLLBACK ═══
+            logger.error({ err }, 'AST Injection failed — attempting rollback');
             this.rollbackFromBackup(filePath, backupPath);
             return { ok: false, error: err as Error };
         }
@@ -289,7 +289,7 @@ export class ShaderInjector {
         try {
             if (existsSync(backupPath)) {
                 copyFileSync(backupPath, filePath);
-                logger.info({ filePath, backupPath }, 'ðŸ”„ Rollback complete â€” backup restored.');
+                logger.info({ filePath, backupPath }, '🔄 Rollback complete — backup restored.');
             } else {
                 logger.error({ filePath }, 'ROLLBACK FAILED: No backup file found.');
             }
@@ -311,7 +311,7 @@ export class ShaderInjector {
 
         try {
             copyFileSync(backupPath, filePath);
-            logger.info({ filePath }, 'ðŸ”„ File reverted to pre-mutation state.');
+            logger.info({ filePath }, '🔄 File reverted to pre-mutation state.');
             return { ok: true, value: { success: true, details: `Reverted ${path.basename(filePath)} from backup` } };
         } catch (err) {
             logger.error({ err }, 'Revert failed');
@@ -319,3 +319,4 @@ export class ShaderInjector {
         }
     }
 }
+

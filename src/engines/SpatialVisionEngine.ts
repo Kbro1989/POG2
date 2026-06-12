@@ -3,7 +3,7 @@ import { ShellEngine } from './ShellEngine.js';
 import { Renderer } from '../ui/Renderer.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import { type Result, type EngineOutput, type YaoState, ok, err } from '../core/models.js';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { createLogger } from "../utils/logger.js";
@@ -86,7 +86,7 @@ export class SpatialVisionEngine {
                     state: 'DORMANT',
                     healthCheck: () => ({ online: false, details: 'SpatialVisionEngine: DORMANT (Waiting for config/renderer)' }),
                     observe: async () => ({ ok: false, error: new Error('SpatialVisionEngine not initialized') }),
-                    sampleFrame: async () => {},
+                    sampleFrame: async () => { },
                     verifySpatialAnchor: async () => ({ ok: false, error: new Error('SpatialVisionEngine not initialized') })
                 } as any;
             }
@@ -132,7 +132,7 @@ export class SpatialVisionEngine {
             includeScreenshot: true
         });
         if (!res.ok) return err(res.error as Error);
-        
+
         // In full impl, this would parse the spatialMap and check if the expected 
         // entity/coordinate markers are present.
         return ok(true);
@@ -143,116 +143,119 @@ export class SpatialVisionEngine {
             return { ok: false, error: new Error('SpatialVisionEngine is already performing an observation. Pulse collision avoided.') };
         }
         this.isObserving = true;
+        let imagePath = params.target && existsSync(params.target) ? params.target : '';
         try {
-            let imagePath = params.target && existsSync(params.target) ? params.target : '';
+            // 1. Capture screen
+            if (params.includeScreenshot !== false && !imagePath) {
+                this.renderer.info('👁️   Spatial capture initiated...');
 
-        // 1. Capture screen
-        if (params.includeScreenshot !== false && !imagePath) {
-            this.renderer.info('👁️   Spatial capture initiated...');
-            
-            // Phase 14: Dynamic port discovery via Switchboard singleton.
-            const ports = [
-                SwitchboardLimb.getInstance().getActivePort() || 8788,
-                8787, // Wrangler Dev / Worker
-                8081  // RSMV Inspector Dev
-            ];
-            
-            let lastErr: Error | null = null;
-            for (const port of ports) {
-                const targets = [
-                    `http://localhost:${port}/edge_radar.html`,
-                    `http://localhost:${port}/globe`
+                // Phase 14: Dynamic port discovery via Switchboard singleton.
+                const ports = [
+                    SwitchboardLimb.getInstance().getActivePort() || 8788,
+                    8787, // Wrangler Dev / Worker
+                    8081  // rsmv Inspector Dev
                 ];
-                
-                for (const targetUrl of targets) {
-                    const captureRes = await this.eye.capture({ type: 'url', target: targetUrl });
-                    
-                    if (captureRes.ok && captureRes.value.imagePath) {
-                        imagePath = captureRes.value.imagePath;
-                        break;
+
+                let lastErr: Error | null = null;
+                for (const port of ports) {
+                    const targets = [
+                        `http://localhost:${port}/edge_radar.html`,
+                        `http://localhost:${port}/globe`
+                    ];
+
+                    for (const targetUrl of targets) {
+                        const captureRes = await this.eye.capture({ type: 'url', target: targetUrl });
+
+                        if (captureRes.ok && captureRes.value.imagePath) {
+                            imagePath = captureRes.value.imagePath;
+                            break;
+                        }
+                        lastErr = captureRes.ok ? new Error(`Port ${port} path ${targetUrl} active but no screenshot produced`) : (captureRes.error as Error);
                     }
-                    lastErr = captureRes.ok ? new Error(`Port ${port} path ${targetUrl} active but no screenshot produced`) : (captureRes.error as Error);
+                    if (imagePath) break;
                 }
-                if (imagePath) break;
+
+                if (!imagePath) return { ok: false, error: lastErr || new Error('All vision dashboard ports (8788, 8787, 8081) failed to produce a capture.') };
             }
-            
-            if (!imagePath) return { ok: false, error: lastErr || new Error('All vision dashboard ports (8788, 8787, 8081) failed to produce a capture.') };
-        }
 
-        if (!imagePath || !existsSync(imagePath)) {
-            return { ok: false, error: new Error(`Image not found for spatial analysis: ${imagePath}`) };
-        }
-
-        // 2. Analyze based on intent
-        const base64Image = readFileSync(imagePath).toString('base64');
-        const modelPrompt = this.buildSpatialPrompt(params);
-
-        const result = await this.client.call({
-            model: this.config.visionModel,
-            prompt: modelPrompt,
-            images: [base64Image],
-            yaoState: params.yaoState
-        });
-
-        if (!result.ok) {
-            return { ok: false, error: result.error as any };
-        }
-
-        // 3. Parse spatial map if chroma/spatial intent
-        let spatialMap: SpatialMap | undefined;
-        if (params.intent === 'chroma' || params.intent === 'spatial_map' || params.intent === 'ui_analysis') {
-            spatialMap = this.parseSpatialMap(result.value.response);
-        }
-
-        // 4. Chroma augmentation â€” perception layer only.
-        //    Fix 4 (Cache-Priority Guard): if the caller already resolved this
-        //    entity from cache (CacheForensicsLimb / locToModel / npcToModel),
-        //    do NOT let pixel sampling override that ground truth.
-        //    Perception is advisory only â€” it appends to colorPalette, never replaces.
-        if (params.intent === 'chroma') {
-            const deterministicColors = await this.getDeterministicColors(imagePath);
-            if (deterministicColors.ok) {
-                spatialMap = spatialMap || { regions: [], lines: [], colorPalette: [] };
-                spatialMap.colorPalette = [
-                    ...spatialMap.colorPalette,
-                    ...deterministicColors.value.colors.map(c => ({
-                        hex: c.hex,
-                        usage: `Detected via pixel frequency analysis (freq: ${(c.frequency * 100).toFixed(1)}%)`,
-                        locations: ['Global Substrate']
-                    }))
-                ];
+            if (!imagePath || !existsSync(imagePath)) {
+                return { ok: false, error: new Error(`Image not found for spatial analysis: ${imagePath}`) };
             }
-        }
 
-        // 5. Persist sensory probe metadata (Phase 112 Resilience)
-        const captureId = uuidv4();
-        SovereignKnowledgeDB.getInstance().recordCapture(
-            captureId,
-            Date.now(),
-            'spatial_vision',
-            imagePath,
-            imagePath,
-            { response: result.value.response, spatialMap },
-            params
-        );
+            // 2. Analyze based on intent
+            const base64Image = readFileSync(imagePath).toString('base64');
+            const modelPrompt = this.buildSpatialPrompt(params);
 
-        return {
-            ok: true,
-            value: {
-                output: result.value.response,
-                data: {
-                    intent: params.intent,
-                    spatialMap,
-                    model: this.config.visionModel,
-                    source: imagePath,
-                    captureId
+            const result = await this.client.call({
+                model: this.config.visionModel,
+                prompt: modelPrompt,
+                images: [base64Image],
+                yaoState: params.yaoState
+            });
+
+            if (!result.ok) {
+                return { ok: false, error: result.error as any };
+            }
+
+            // 3. Parse spatial map if chroma/spatial intent
+            let spatialMap: SpatialMap | undefined;
+            if (params.intent === 'chroma' || params.intent === 'spatial_map' || params.intent === 'ui_analysis') {
+                spatialMap = this.parseSpatialMap(result.value.response);
+            }
+
+            // 4. Chroma augmentation
+            if (params.intent === 'chroma') {
+                const deterministicColors = await this.getDeterministicColors(imagePath);
+                if (deterministicColors.ok) {
+                    spatialMap = spatialMap || { regions: [], lines: [], colorPalette: [] };
+                    spatialMap.colorPalette = [
+                        ...spatialMap.colorPalette,
+                        ...deterministicColors.value.colors.map(c => ({
+                            hex: c.hex,
+                            usage: `Detected via pixel frequency analysis (freq: ${(c.frequency * 100).toFixed(1)}%)`,
+                            locations: ['Global Substrate']
+                        }))
+                    ];
                 }
             }
-        };
-    } finally {
-        this.isObserving = false;
+
+            // 5. Persist sensory probe metadata (Phase 112 Resilience)
+            const captureId = uuidv4();
+            SovereignKnowledgeDB.getInstance().recordCapture(
+                captureId,
+                Date.now(),
+                'spatial_vision',
+                imagePath,
+                imagePath,
+                { response: result.value.response, spatialMap },
+                params
+            );
+
+            return {
+                ok: true,
+                value: {
+                    output: result.value.response,
+                    data: {
+                        intent: params.intent,
+                        spatialMap,
+                        model: this.config.visionModel,
+                        source: imagePath,
+                        captureId
+                    }
+                }
+            };
+        } finally {
+            if (imagePath && existsSync(imagePath) && !(params.target && params.target === imagePath)) {
+                try {
+                    unlinkSync(imagePath);
+                    this.renderer.info(`🧹 Cleaned up temporary vision artifact: ${imagePath}`);
+                } catch (e) {
+                    this.renderer.warn(`Failed to clean up vision artifact: ${imagePath}`);
+                }
+            }
+            this.isObserving = false;
+        }
     }
-}
 
     /**
      * Get dominant colors â€” delegates to ChromaCore.
@@ -429,13 +432,21 @@ OUTPUT FORMAT:
         }) as any;
     }
 
+    private avatar: any = null;
+
+    public setAvatar(avatar: any): void {
+        this.avatar = avatar;
+    }
+
     /**
      * Diagnostic probe for NodeTester.
      */
-    public healthCheck(): { online: boolean; details: string } {
+    public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' } {
         return {
             online: true,
+            status: 'ONLINE',
             details: 'SpatialVisionEngine nominal; line/color decomposition substrate active.'
         };
     }
 }
+

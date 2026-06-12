@@ -4,47 +4,48 @@
 
 export type mapsquare_tiles_66 = {
 	magic: ([
-			number,
-			number,
-		]|number),
+		number,
+		number,
+	] | number),
 	level0: {
 		flags: number,
-		height: (number|number),
+		height: (number | number),
 		rest: {
-			waterheight: (number|number) | null,
-			underlay: (number|number),
-			overlay: (number|number),
+			waterheight: (number | number) | null,
+			underlay: (number | number),
+			overlay: (number | number),
 			shape: number,
 		} | null,
 	}[],
 	level1: {
 		flags: number,
-		height: (number|number),
+		height: (number | number),
 		rest: {
-			waterheight: (number|number) | null,
-			underlay: (number|number),
-			overlay: (number|number),
+			waterheight: (number | number) | null,
+			underlay: (number | number),
+			overlay: (number | number),
 			shape: number,
 		} | null,
 	}[],
 	level2: {
 		flags: number,
-		height: (number|number),
+		height: (number | number),
 		rest: {
-			waterheight: (number|number) | null,
-			underlay: (number|number),
-			overlay: (number|number),
+			waterheight: (number | number) | null,
+			underlay: (number | number),
+			overlay: (number | number),
 			shape: number,
 		} | null,
 	}[],
 	level3: {
 		flags: number,
-		height: (number|number),
+		height: (number | number),
 		rest: {
-			waterheight: (number|number) | null,
-			underlay: (number|number),
-			overlay: (number|number),
+			waterheight: (number | number) | null,
+			underlay: (number | number),
+			overlay: (number | number),
 			shape: number,
 		} | null,
 	}[],
 };
+

@@ -5,6 +5,7 @@ import { SovereignAvatar, YaoState, EmotionalState, type SovereignRecord, type O
 import type { HexagramManager } from '../routing/HexagramManager.js';
 import { SovereignDomain } from '../types/SovereignDomain.js';
 import type { NodeHealth } from '../monitor/NodeTester.js';
+import { RealityDomain } from '../core/RealityGate.js';
 
 /**
  * Renderer â€” POG2 Sovereign CLI UI output.
@@ -13,7 +14,7 @@ import type { NodeHealth } from '../monitor/NodeTester.js';
 export class Renderer {
     private rl?: readline.Interface;
     private isSilent = false;
-    private listeners: ((payload: { message: string, type: string, data?: any }) => void)[] = [];
+    private listeners: ((payload: { message: string, type: string, data?: any, domain?: RealityDomain }) => void)[] = [];
 
     constructor() { }
 
@@ -25,13 +26,13 @@ export class Renderer {
         this.isSilent = silent;
     }
 
-    public onOutput(callback: (payload: { message: string, type: string, data?: any }) => void): void {
+    public onOutput(callback: (payload: { message: string, type: string, data?: any, domain?: RealityDomain }) => void): void {
         this.listeners.push(callback);
     }
 
-    private dispatch(message: string, type: string, data?: any): void {
+    private dispatch(message: string, type: string, data?: any, domain: RealityDomain = RealityDomain.POG2): void {
         const normalized = data?.skipNormalization ? message : PathNormalizer.normalizeString(message);
-        this.listeners.forEach(cb => cb({ message: normalized, type, data }));
+        this.listeners.forEach(cb => cb({ message: normalized, type, data, domain }));
     }
 
     public showBanner(): void {
@@ -339,4 +340,10 @@ export class Renderer {
         return { online: true, details: 'Renderer is synchronized with the CLI substrate.' };
     }
 }
+
+
+
+
+
+
 

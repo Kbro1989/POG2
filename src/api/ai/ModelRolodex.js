@@ -330,7 +330,7 @@ export class ModelRolodex {
         }
         try {
             // Identity check via wrangler whoami (direct execution)
-            const { stdout: whoami } = await $ `wrangler whoami 2>&1`;
+            const { stdout: whoami } = await $`wrangler whoami 2>&1`;
             const accountMatch = whoami.match(/Account ID:\s*(\S+)/i) || whoami.match(/(\w{32})/);
             const emailMatch = whoami.match(/Email:\s*(\S+)/i) || whoami.match(/[\w.-]+@[\w.-]+\.\w+/);
             providerState.authenticated = whoami.toLowerCase().includes('logged in') || !!accountMatch;
@@ -795,7 +795,7 @@ export class ModelRolodex {
         const rsmvOnline = this.state.providers.rsmv?.authenticated ? 'Aligned' : 'Disconnected';
         return {
             online: totalModels > 0 || this.state.providers.rsmv?.authenticated,
-            details: `Rolodex: ${totalModels} models across ${onlineProviders}/7 providers. [RSMV: ${rsmvOnline}]. Last refresh: ${this.state.lastRefresh ? new Date(this.state.lastRefresh).toLocaleTimeString() : 'Never'}`
+            details: `Rolodex: ${totalModels} models across ${onlineProviders}/7 providers. [rsmv: ${rsmvOnline}]. Last refresh: ${this.state.lastRefresh ? new Date(this.state.lastRefresh).toLocaleTimeString() : 'Never'}`
         };
     }
 }

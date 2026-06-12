@@ -166,3 +166,4 @@ export class JagexCacheReader {
         this.databases.clear();
     }
 }
+

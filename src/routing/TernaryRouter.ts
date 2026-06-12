@@ -1,7 +1,7 @@
-﻿import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/logger.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { type Ternary, type Result, YaoState, type DecisionAuditRecord, type RoutingComplexity, type ContextCard, EmotionalState, type AIServiceType, type ActuationResult } from '../core/models.js';
+import { type Ternary, type Result, YaoState, type DecisionAuditRecord, type RoutingComplexity, type ContextCard, EmotionalState, type AIServiceType, type ActuationResult, CognitivePolarity, InterpretationContract } from '../core/models.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import { HexagramManager } from './HexagramManager.js';
 import type { ModelClient } from '../clients/ModelClient.js';
@@ -40,6 +40,9 @@ export interface RouteDecision {
     directive?: string;
     metadata?: Record<string, any>;
     timestamp?: number;
+    models?: string[];
+    strategy?: 'consensus' | 'vote' | 'cascade';
+    severity?: number;
 }
 
 const COMPLEXITY_KEYWORDS: Record<string, RegExp> = {
@@ -78,16 +81,24 @@ export class TernaryRouter {
     private strategyAdvisor?: StrategyAdvisor;
     private proposedMutations: StrategyMutation[] = [];
     
+    private assessSeverity(prompt: string, domain: string): number {
+        const highSeverityKeywords = /\b(critical|destabilize|destruct|emergency|security|vulnerable|auth|system|root|sudo)\b/i;
+        return highSeverityKeywords.test(prompt) ? 95 : 50;
+    }
+
     // Phase 7: Temporal Routing Gates
     public get temporalState(): 'PAST' | 'PRESENT' | 'FUTURE' {
+        const contract = this.hexagram.getContract();
         const hex = this.hexagram.getInterpretation();
-        if (hex.name.includes('Arriving') || hex.name.includes('Return') || this.hexagram.isYin()) {
+        const polarity = contract.polarity;
+        
+        if (hex.name.includes('Arriving') || hex.name.includes('Return') || polarity === CognitivePolarity.YIN) {
             return 'PAST'; // Stable, historical, or retrieval-focused
         }
-        if (this.hexagram.isYang()) {
+        if (polarity === CognitivePolarity.YANG) {
             return 'FUTURE'; // Expansion, creative, or generative
         }
-        return 'PRESENT'; // Mixed, transformation, or hybrid
+        return 'PRESENT'; // Mixed, transformation, or hybrid (YINYANG)
     }
 
     // Cooldown tracking for Kimi endpoints (Ollama vs HF 61-min alternating)
@@ -418,6 +429,7 @@ export class TernaryRouter {
      */
     async route(complexity: RoutingComplexity, taskType?: string, prompt?: string): Promise<RouteDecision> {
         const routeStartTime = Date.now();
+        const domain = taskType || 'general';
 
         // === PHASE 6: SOVEREIGN OVERRIDE (Cloud-Down Detection) ===
         if (this.rolodex?.isAllCloudDown() && this.rolodex.isOllamaAlive()) {
@@ -438,6 +450,31 @@ export class TernaryRouter {
 
         // === FAST PATH OPTIMIZATION ===
         const fastPath = prompt ? this.isFastPath(prompt) : false;
+
+        // NEW: Multi-model activation gate
+        const severity = this.assessSeverity(prompt || '', domain);
+        const SEVERITY_THRESHOLD = 90;
+        const isHighSeverity = severity >= SEVERITY_THRESHOLD;
+        // Need to calculate currentYao/intentYao to determine if OldYang
+        const currentHexLines = this.hexagram.getLines();
+        const currentYao = this.deriveOrganismState(currentHexLines);
+        const isOldYang = currentYao === YaoState.OldYang;
+
+        if (isHighSeverity && isOldYang && this.rolodex) {
+            const candidates = this.rolodex.selectForConsensus(domain, 3);
+            return {
+                model: candidates[0],
+                complexity,
+                tier: 'Master',
+                reasoning: 'Multi-model consensus triggered: High severity and OldYang state.',
+                yaoState: currentYao,
+                models: candidates,
+                strategy: 'consensus',
+                severity,
+                fallbackUsed: false,
+                timestamp: routeStartTime
+            };
+        }
 
         // === NERVOUS SYSTEM V2: DYNAMIC TRIAGE ===
         // If we have a prompt and it's NOT a guaranteed fast path, do a cheap triage 
@@ -484,9 +521,7 @@ export class TernaryRouter {
             }
         }
 
-        // 2. Derive organism state from hexagram lines
-        const currentHexLines = this.hexagram.getLines();
-        const currentYao = this.deriveOrganismState(currentHexLines);
+        // 2. Derive organism state from hexagram lines (already derived above)
 
         // 3. Derive intent state from ternary signals
         const localAvailability = this.availableLocalModels.size > 0 ? YaoState.YoungYang : YaoState.OldYin;
@@ -497,21 +532,22 @@ export class TernaryRouter {
         // 4. Consult hexagram decision matrix
         const directive = this.hexagram.decide(currentYao, intentYao);
 
-        let decision: RouteDecision;
+        const contract = this.hexagram.getContract();
+        const ternary = contract.polarity;
+        const organicYao = ternary === CognitivePolarity.YINYANG ? YaoState.YoungMixed : (ternary === CognitivePolarity.YIN ? YaoState.YoungYin : YaoState.YoungYang);
 
-        // Organic Polarized Routing for Specialized Substrates
-        const organicYao = this.hexagram.isYin() ? YaoState.YoungYin : YaoState.YoungYang;
+        let decision: RouteDecision;
 
         // 1. Specialized Substrate Routing
         if (complexity === 'Chromanumber') {
-            decision = { model: this.config.imageGenModel, complexity: 'Chromanumber', tier: 'Reactive', reasoning: 'Stage 2 (Local) - Chromanumber substrate: Visual metabolic mapping', yaoState: YaoState.YoungYin, fallbackUsed: false, timestamp: routeStartTime };
+            decision = { model: this.config.imageGenModel, complexity: 'Chromanumber', tier: 'Reactive', reasoning: `Stage 2 (Local) - Chromanumber substrate: Visual metabolic mapping. Directive: [${directive}]`, yaoState: YaoState.YoungYin, fallbackUsed: false, timestamp: routeStartTime };
         } else if (complexity === 'SovereignEye') {
-            decision = { model: this.config.visionModel, complexity: 'SovereignEye', tier: 'Executive', reasoning: 'Stage 3 (Structural) - SovereignEye substrate: Sensory proprioception', yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
+            decision = { model: this.config.visionModel, complexity: 'SovereignEye', tier: 'Executive', reasoning: `Stage 3 (Structural) - SovereignEye substrate: Sensory proprioception. Directive: [${directive}]`, yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
         } else if (complexity === 'Vision') {
             const model = this.findWorkingModel(this.config.visionModel, ['moondream', 'llava'], 'vision');
-            decision = { model, complexity: 'Vision', tier: 'Executive', reasoning: 'Stage 3 (Structural) - Visual task routed via Sensory limb', yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
+            decision = { model, complexity: 'Vision', tier: 'Executive', reasoning: `Stage 3 (Structural) - Visual task routed via Sensory limb. Directive: [${directive}]`, yaoState: organicYao, fallbackUsed: false, timestamp: routeStartTime };
         } else if (complexity === 'Voice') {
-            decision = { model: this.config.voiceModel, complexity: 'Voice', tier: 'Reactive', reasoning: 'Stage 2 (Local) - Audio task routed via Motor limb', yaoState: YaoState.YoungYin, fallbackUsed: false, timestamp: routeStartTime };
+            decision = { model: this.config.voiceModel, complexity: 'Voice', tier: 'Reactive', reasoning: `Stage 2 (Local) - Audio task routed via Motor limb. Directive: [${directive}]`, yaoState: YaoState.YoungYin, fallbackUsed: false, timestamp: routeStartTime };
         }
 
         // 2. Orchestration Routing (Kimi)
@@ -562,8 +598,8 @@ export class TernaryRouter {
 
             if (complexity === 'Yang') {
                 const model = this.findWorkingModel(
-                    this.config.deepPathModel, // Phase 78: Deep Path (Sovereignty)
-                    [this.config.masterLocalModel, 'deepseek-coder:33b', 'deepseek-r1:8b', this.config.localFallbackModel],
+                    this.config.deepPathModel,
+                    [this.config.masterLocalModel, 'deepseek-r1:32b', 'deepseek-r1:8b', this.config.localFallbackModel],
                     finalTaskType
                 );
                 decision = {
@@ -587,7 +623,7 @@ export class TernaryRouter {
                     timestamp: routeStartTime
                 };
             } else {
-                const model = this.findWorkingModel(this.config.fastPathModel, ['moondream:1.8b', 'deepseek-r1:8b', this.config.reactiveAgentModel], finalTaskType);
+                const model = this.findWorkingModel(this.config.fastPathModel, ['moondream:latest', 'deepseek-r1:8b', this.config.reactiveAgentModel], finalTaskType);
                 decision = {
                     model,
                     complexity: 'Yin',
@@ -1074,4 +1110,10 @@ export class TernaryRouter {
     getDecisionHistory(): ReadonlyArray<DecisionAuditRecord> {
         return this.decisionHistory;
     }
+
+    public healthCheck(): { online: boolean; details: string } {
+        return { online: true, details: "TernaryRouter active and verified." };
+    }
 }
+
+

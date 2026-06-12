@@ -298,4 +298,19 @@ export class RegistryB implements GroundingHydrator {
         const entry = this.examineAuthority[type]?.[sid];
         return entry?.intent || null;
     }
+
+    /**
+     * isActionAuthorized - Authorization authority for simulation opcodes.
+     */
+    public isActionAuthorized(action: string): boolean {
+        // Authoritative enforcement: UNAUTHORIZED_OPCODE_TEST always fails
+        if (action === "UNAUTHORIZED_OPCODE_TEST") return false;
+
+        // Baseline: Standard Sovereign opcodes are authorized
+        const whitelist = ['MOVE', 'SPAWN', 'TELEPORT', 'WALK_TO', 'EXAMINE', 'ATTACK', 'INTERACT', 'USE'];
+        if (whitelist.includes(action.toUpperCase())) return true;
+
+        return false;
+    }
 }
+

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GhostSplat Visualizer — Predictive Spatial Intel</title>
 <style>
   :root {
@@ -33,6 +34,7 @@
     font-weight: 700;
     background: linear-gradient(to right, var(--accent), #a0ffff);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 8px;
   }
@@ -140,6 +142,37 @@
     transition: all 0.2s;
   }
   button:hover { background: #2a2a35; border-color: var(--accent); }
+  
+  /* Extracted classes */
+  .live-indicator { margin-top: 10px; font-size: 10px; color: #555; font-weight: bold; letter-spacing: 1px; }
+  .kd-phase-default { color: var(--accent); }
+  
+  .topo-container { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 10px; }
+  .topo-primary-box { flex: 1; text-align: center; border: 1px solid #333; padding: 10px; border-radius: 8px; }
+  .topo-label { font-size: 10px; color: #888; margin-bottom: 5px; }
+  .topo-primary-val { font-size: 18px; font-weight: bold; color: var(--accent); }
+  
+  .topo-nuclear-box { flex: 1; text-align: center; border: 1px dashed #444; padding: 10px; border-radius: 8px; }
+  .topo-nuclear-val { font-size: 14px; font-weight: bold; color: #aaa; }
+  
+  .section-label { font-size: 11px; color: #666; margin-bottom: 4px; }
+  .section-label-mt { font-size: 11px; color: #666; margin-top: 10px; margin-bottom: 4px; }
+  
+  .moving-lines-box { display: flex; flex-direction: column; gap: 4px; min-height: 40px; }
+  .no-transitions { color: #444; font-style: italic; }
+  
+  .hysteresis-box { display: flex; gap: 4px; height: 20px; margin-bottom: 10px; align-items: center; border: 1px solid #222; padding: 2px; border-radius: 4px; background: #000; }
+  .awaiting-data { color: #444; font-size: 10px; margin-left: 5px; }
+  
+  .queue-state-box { font-size: 12px; color: #aaa; background: #111; padding: 8px; border-radius: 4px; border-left: 2px solid #555; margin-bottom: 10px; }
+  .confidence-box { height: 30px; background: #000; border-radius: 4px; overflow: hidden; border: 1px solid #222; }
+  
+  .dot-accent { background: var(--accent); }
+  .dot-threat { background: var(--threat); }
+  .dot-safe { background: var(--safe); }
+  .dot-blocked { background: #222; border: 1px solid #444; }
+  
+  .stats-val { font-family: monospace; font-size: 14px; color: var(--accent); }
 </style>
 </head>
 <body>
@@ -158,7 +191,7 @@
       <button onclick="toggleHeatmap()">Heatmap</button>
       <button onclick="toggleSafespots()">Safespots</button>
     </div>
-    <div id="live-indicator" style="margin-top:10px; font-size:10px; color:#555; font-weight:bold; letter-spacing:1px;">LIVE MODE: OFF</div>
+    <div id="live-indicator" class="live-indicator">LIVE MODE: OFF</div>
   </div>
 
   <div class="sidebar">
@@ -184,19 +217,81 @@
       </div>
     </div>
 
+    <div class="card" id="kernel-diagnostics-card">
+      <h2>KERNEL DIAGNOSTICS</h2>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="stat-label">Phase</div>
+          <div id="kd-phase" class="stat-value kd-phase-default">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Gate Multiplier</div>
+          <div id="kd-gate" class="stat-value">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Volatility EMA</div>
+          <div id="kd-volatility" class="stat-value">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Stability EMA</div>
+          <div id="kd-stability" class="stat-value">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Prediction Acc.</div>
+          <div id="kd-accuracy" class="stat-value">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Transitions</div>
+          <div id="kd-transitions" class="stat-value">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="topology-card">
+      <h2>TRANSITIONAL TOPOLOGY</h2>
+      <div class="topo-container">
+        <div class="topo-primary-box">
+          <div class="topo-label">PRIMARY (BEN GUA)</div>
+          <div id="hex-primary" class="topo-primary-val">—</div>
+        </div>
+        <div class="topo-nuclear-box">
+          <div class="topo-label">NUCLEAR (HU GUA)</div>
+          <div id="hex-nuclear" class="topo-nuclear-val">—</div>
+        </div>
+      </div>
+      <div class="section-label">ACTIVE MOVING LINES</div>
+      <div id="moving-lines-container" class="moving-lines-box">
+        <span class="no-transitions">No active transitions</span>
+      </div>
+    </div>
+
+    <!-- Hysteresis State Card -->
+    <div class="card" id="hysteresis-card">
+      <h2>⏳ HYSTERESIS STATE</h2>
+      <div class="section-label">DECISION TIMELINE (LAST 10)</div>
+      <div class="hysteresis-timeline hysteresis-box" id="hysteresis-timeline">
+        <span class="awaiting-data">Awaiting data...</span>
+      </div>
+      <div class="moving-lines-radar" id="moving-lines-radar"></div>
+      <div class="section-label-mt">QUEUE STATE</div>
+      <div class="queue-state queue-state-box" id="queue-state">No ability queued</div>
+      <div class="section-label">CONFIDENCE TREND</div>
+      <div id="confidence-sparkline" class="confidence-box"></div>
+    </div>
+
     <div class="card">
       <h2>LEGEND</h2>
       <div class="legend">
-        <div class="legend-item"><div class="dot" style="background: var(--accent)"></div> Player Ghost</div>
-        <div class="legend-item"><div class="dot" style="background: var(--threat)"></div> NPC Projection</div>
-        <div class="legend-item"><div class="dot" style="background: var(--safe)"></div> Tactical Safespot</div>
-        <div class="legend-item"><div class="dot" style="background: #222; border: 1px solid #444;"></div> Blocked Tile</div>
+        <div class="legend-item"><div class="dot dot-accent"></div> Player Ghost (Trail: dashed)</div>
+        <div class="legend-item"><div class="dot dot-threat"></div> NPC Projection</div>
+        <div class="legend-item"><div class="dot dot-safe"></div> Tactical Safespot</div>
+        <div class="legend-item"><div class="dot dot-blocked"></div> Blocked Tile</div>
       </div>
     </div>
 
     <div class="card">
       <h2>COORDINATE FOCUS</h2>
-      <div id="focus-coords" class="stat-value" style="font-family: monospace; font-size: 14px; color: var(--accent);">—</div>
+      <div id="stats" class="stat-value stats-val">—</div>
     </div>
   </div>
 </div>
@@ -258,6 +353,10 @@
                 currentData = msg.payload;
                 updateUI();
                 render();
+            } else if (msg.type === 'kernel_diagnostics') {
+                updateKernelDiagnosticsUI(msg.payload);
+            } else if (msg.type === 'hysteresis_state') {
+                updateHysteresisStateUI(msg.payload);
             }
         } catch (e) { console.error('WS Error:', e); }
     };
@@ -282,6 +381,112 @@
       `CENTER: [${currentData.center.x}, ${currentData.center.y}] PLANE: ${currentData.center.plane}`;
   }
 
+  function updateKernelDiagnosticsUI(data) {
+    const phaseEl = document.getElementById('kd-phase');
+    phaseEl.textContent = data.phase;
+    
+    // Color code the phase
+    if (data.phase === 'STABLE') phaseEl.style.color = 'var(--safe)';
+    else if (data.phase === 'DEGRADING') phaseEl.style.color = 'var(--threat)';
+    else if (data.phase === 'FALSE_STABILITY') phaseEl.style.color = '#ffa500';
+    else phaseEl.style.color = 'var(--accent)';
+
+    document.getElementById('kd-gate').textContent = data.phaseGateMultiplier.toFixed(2) + 'x';
+    document.getElementById('kd-volatility').textContent = data.volatilityEMA.toFixed(3);
+    document.getElementById('kd-stability').textContent = data.stabilityTrendEMA.toFixed(3);
+    document.getElementById('kd-accuracy').textContent = (data.predictionAccuracyEMA * 100).toFixed(1) + '%';
+    document.getElementById('kd-transitions').textContent = data.transitionCount;
+
+    // Update Transitional Topology
+    const primaryEl = document.getElementById('hex-primary');
+    const nuclearEl = document.getElementById('hex-nuclear');
+    const linesContainer = document.getElementById('moving-lines-container');
+
+    primaryEl.textContent = data.yaoState || 'STABLE';
+    
+    if (data.phase === 'FALSE_STABILITY') {
+      nuclearEl.textContent = 'CHURNING';
+      nuclearEl.style.color = '#ffa500';
+    } else {
+      nuclearEl.textContent = 'ALIGNED';
+      nuclearEl.style.color = 'var(--safe)';
+    }
+
+    if (data.movingLines && data.movingLines.length > 0) {
+      linesContainer.innerHTML = '';
+      data.movingLines.forEach(line => {
+        const lineDiv = document.createElement('div');
+        lineDiv.style.fontSize = '11px';
+        lineDiv.style.background = '#111';
+        lineDiv.style.padding = '4px 8px';
+        lineDiv.style.borderRadius = '4px';
+        lineDiv.style.borderLeft = `2px solid ${line.fromState === 'YANG' ? '#ff4d4d' : '#51ffff'}`;
+        lineDiv.innerHTML = `<b>Line ${line.position}:</b> ${line.fromState} &rarr; ${line.toState} <span style="color:#666;float:right;">(${line.source})</span>`;
+        linesContainer.appendChild(lineDiv);
+      });
+    } else {
+      linesContainer.innerHTML = '<span style="color: #444; font-style: italic;">No active transitions</span>';
+    }
+  }
+
+  let hysteresisDecisions = [];
+  function updateHysteresisStateUI(data) {
+    hysteresisDecisions.push({ state: data.decision, tickId: data.tickId });
+    if (hysteresisDecisions.length > 20) hysteresisDecisions.shift();
+
+    const timeline = document.getElementById('hysteresis-timeline');
+    timeline.innerHTML = hysteresisDecisions.map(d => {
+      const color = d.state === 'COMMIT' ? 'var(--safe)' 
+                  : d.state === 'PREPARE' ? '#ffa500' 
+                  : 'var(--threat)';
+      const opacity = d.state === 'WAIT' ? 0.3 : 1.0;
+      return `<div style="flex: 1; height: 100%; background:${color}; border-radius: 2px; opacity: ${opacity};" 
+                   title="${d.state} @ ${d.tickId}"></div>`;
+    }).join('');
+
+    const queueEl = document.getElementById('queue-state');
+    if (data.abilityQueue && data.abilityQueue.length > 0) {
+      queueEl.style.borderLeftColor = 'var(--accent)';
+      const first = data.abilityQueue[0];
+      queueEl.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <b>Queued:</b> ${first.actionType}
+          <span style="font-size:10px; color:var(--accent);">${(first.confidence * 100).toFixed(0)}% Conf</span>
+        </div>
+        <div style="font-size:10px; color:#666; margin-top:2px;">${data.abilityQueue.length} actions in pipeline</div>
+      `;
+    } else {
+      queueEl.style.borderLeftColor = '#555';
+      queueEl.textContent = 'No ability queued';
+    }
+  }
+
+  function renderConfidenceSparkline() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 200;
+    canvas.height = 30;
+    const sctx = canvas.getContext('2d');
+    
+    sctx.strokeStyle = 'var(--accent)';
+    sctx.lineWidth = 2;
+    sctx.beginPath();
+    
+    const step = canvas.width / 30;
+    confidenceHistory.forEach((c, i) => {
+        const x = i * step;
+        const y = canvas.height - (c * canvas.height);
+        if (i === 0) sctx.moveTo(x, y);
+        else sctx.lineTo(x, y);
+    });
+    sctx.stroke();
+    
+    const container = document.getElementById('confidence-sparkline');
+    if (container) {
+        container.innerHTML = '';
+        container.appendChild(canvas);
+    }
+  }
+
   function toggleHeatmap() { showHeatmap = !showHeatmap; render(); }
   function toggleSafespots() { showSafespots = !showSafespots; render(); }
 
@@ -290,9 +495,8 @@
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const { heatmap, projections, safespots, center } = currentData;
+    const { heatmap, projections, safespots } = currentData;
 
-    // 1. Render Heatmap
     if (showHeatmap) {
       for (let y = 0; y < PADDED_SIZE; y++) {
         for (let x = 0; x < PADDED_SIZE; x++) {
@@ -301,14 +505,12 @@
           if (heat > 0) {
             const intensity = Math.min(1.0, heat / 10);
             ctx.fillStyle = `rgba(255, 77, 77, ${intensity * 0.5})`;
-            // Flip Y for visual consistency with map
             ctx.fillRect(x * SCALE, (PADDED_SIZE - 1 - y) * SCALE, SCALE, SCALE);
           }
         }
       }
     }
 
-    // 2. Render Safespots
     if (showSafespots) {
       for (const spot of safespots) {
         const lx = (spot.x % PADDED_SIZE);
@@ -320,30 +522,97 @@
       }
     }
 
-    // 3. Render Projections
     projections.forEach(([id, ghost]) => {
       const lx = ghost.projectedCoord.x % PADDED_SIZE;
       const ly = ghost.projectedCoord.y % PADDED_SIZE;
       const isPlayer = id.startsWith('player_');
 
-      ctx.fillStyle = isPlayer ? '#51ffff' : '#ff4d4d';
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = ctx.fillStyle;
-      
-      ctx.beginPath();
-      ctx.arc(lx * SCALE + SCALE/2, (PADDED_SIZE - 1 - ly) * SCALE + SCALE/2, SCALE/2, 0, Math.PI * 2);
-      ctx.fill();
-      
-      ctx.shadowBlur = 0;
+      const history = projectionHistory.get(id);
+      if (history && history.length > 1) {
+        ctx.beginPath();
+        ctx.setLineDash([2, 2]);
+        ctx.strokeStyle = isPlayer ? 'rgba(81, 255, 255, 0.4)' : 'rgba(255, 77, 77, 0.4)';
+        ctx.lineWidth = 1;
+        history.forEach((pos, i) => {
+            const hx = pos.x * SCALE + SCALE/2;
+            const hy = (PADDED_SIZE - 1 - pos.y) * SCALE + SCALE/2;
+            if (i === 0) ctx.moveTo(hx, hy);
+            else ctx.lineTo(hx, hy);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
 
       if (isPlayer) {
+        ctx.fillStyle = '#51ffff';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = ctx.fillStyle;
+
+        ctx.beginPath();
+        ctx.arc(lx * SCALE + SCALE/2, (PADDED_SIZE - 1 - ly) * SCALE + SCALE/2, SCALE / 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.shadowBlur = 0;
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 1;
         ctx.stroke();
+      } else {
+        // ── Elevated Selection Ring for NPCs ─────────────────────────────────────
+        const tileX = Math.floor(lx);
+        const tileY = Math.floor(ly);
+        
+        let tileSize = 1;
+        if (ghost.metrics && ghost.metrics.radius) {
+            tileSize = Math.max(1, Math.ceil(ghost.metrics.radius * 2));
+        }
+        
+        const halfSize = Math.floor(tileSize / 2);
+        const centerTileX = tileX;
+        const centerTileY = tileY;
+        
+        // Calculate bottom-left corner of the occupied tile block
+        const blockX = centerTileX - halfSize;
+        const blockY = centerTileY - halfSize;
+        
+        const pixelSize = tileSize * SCALE;
+        const px = blockX * SCALE;
+        const py = (PADDED_SIZE - 1 - blockY - (tileSize - 1)) * SCALE; // Adjust for block origin
+        
+        // Outer ring: dark red, slightly offset (simulating elevation shadow)
+        ctx.strokeStyle = 'rgba(139, 0, 0, 0.8)'; // Dark red
+        ctx.lineWidth = 3;
+        ctx.strokeRect(px - 1, py - 1, pixelSize + 2, pixelSize + 2);
+        
+        // Inner ring: bright red, precise tile boundary
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px, py, pixelSize, pixelSize);
+        
+        // "Above ground" glow: subtle offset to simulate z-lift
+        ctx.shadowColor = 'rgba(255, 0, 0, 0.4)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetY = -2; // Lifted slightly (negative Y in canvas = up)
+        ctx.strokeRect(px, py, pixelSize, pixelSize);
+        ctx.shadowColor = 'transparent'; // Reset
+        
+        // Corner accents (the "+" feel of tile corners in RS3)
+        const cornerSize = 4;
+        ctx.fillStyle = '#ff3333';
+        // Top-left
+        ctx.fillRect(px, py, cornerSize, 2);
+        ctx.fillRect(px, py, 2, cornerSize);
+        // Top-right
+        ctx.fillRect(px + pixelSize - cornerSize, py, cornerSize, 2);
+        ctx.fillRect(px + pixelSize - 2, py, 2, cornerSize);
+        // Bottom-left
+        ctx.fillRect(px, py + pixelSize - 2, cornerSize, 2);
+        ctx.fillRect(px, py + pixelSize - cornerSize, 2, cornerSize);
+        // Bottom-right
+        ctx.fillRect(px + pixelSize - cornerSize, py + pixelSize - 2, cornerSize, 2);
+        ctx.fillRect(px + pixelSize - 2, py + pixelSize - cornerSize, 2, cornerSize);
       }
     });
 
-    // 4. Draw Grid lines
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
     ctx.lineWidth = 0.5;
     for (let i = 0; i <= PADDED_SIZE; i++) {

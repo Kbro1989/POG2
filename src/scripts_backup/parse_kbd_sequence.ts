@@ -1,4 +1,4 @@
-﻿// src/scripts/parse_kbd_sequence.ts
+// src/scripts/parse_kbd_sequence.ts
 // Temporal Heartbeat Parser - RS3 Sequence Metadata Deconstructor
 
 import { readFileSync } from 'fs';
@@ -7,7 +7,7 @@ import { join } from 'path';
 const SEQ_PATH = join(process.cwd(), 'audit_output', 'kbd_cinema', 'seq_17769_metadata.bin');
 
 function parseSequence() {
-    console.log('ðŸ’“ Deconstructing KBD Temporal Heartbeat (Sequence 17769)...');
+    console.log('💓 Deconstructing KBD Temporal Heartbeat (Sequence 17769)...');
     
     const buffer = readFileSync(SEQ_PATH);
     let offset = 0;
@@ -83,7 +83,7 @@ function parseSequence() {
         const msPerTick = 20; // Jagex standard: 1 delay unit = 20ms
         const totalDurationMs = totalDelay * msPerTick;
         
-        console.log('\nðŸ“Š Temporal Metrics Extracted:');
+        console.log('\n📊 Temporal Metrics Extracted:');
         console.log(`   - Sequence ID: 17769`);
         console.log(`   - Frame Count: ${frameCount}`);
         console.log(`   - Cumulative Delay Units: ${totalDelay}`);
@@ -91,10 +91,11 @@ function parseSequence() {
         console.log(`   - RS3 Standard Tickrate: 1 unit = 20ms (50Hz)`);
         console.log(`   - Total Sequence Duration: ${(totalDurationMs / 1000).toFixed(2)} seconds`);
         
-        console.log('\nðŸ§¬ [Substrate Synchronization] Complete.');
+        console.log('\n🧬 [Substrate Synchronization] Complete.');
     } else {
-        console.error('âŒ Failed to parse sequence opcodes. Substrate may be obfuscated.');
+        console.error('❌ Failed to parse sequence opcodes. Substrate may be obfuscated.');
     }
 }
 
 parseSequence();
+

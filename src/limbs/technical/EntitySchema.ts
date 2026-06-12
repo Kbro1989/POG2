@@ -1,4 +1,4 @@
-﻿/**
+/**
  * EntitySchema.ts - SQLite Schema for Sovereign Actor Persistence
  * Optimized for fast writes and simple joins without ORM overhead.
  */
@@ -38,4 +38,14 @@ CREATE TABLE IF NOT EXISTS vibe_state (
 
 CREATE INDEX IF NOT EXISTS idx_memories_entity 
 ON memories(entity_id, timestamp DESC);
+
+CREATE TABLE IF NOT EXISTS cognitive_anomalies (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tick INTEGER NOT NULL,
+  event_id TEXT,
+  anomaly_type TEXT NOT NULL,
+  data_json TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
 `;
+

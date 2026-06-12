@@ -13,7 +13,9 @@ This document is the **Primary Substrate Manual**. It defines the learning expec
 ---
 
 ## 🔬 AI Peer Review & Clinical Research
+
 The POG2 organism is informed by the following cognitive and clinical research targets:
+
 - [Distributed Orchestration Cognition (DOC) Meta-Logic](https://arxiv.org/html/2405.10239v1) - *Foundational DOC theory.*
 - [Ternary Cognitive Architectures](https://philosophyofai.org/ternary-logic) - *I Ching-aligned decision gates.*
 - [Metabolic Cost of LLM Inference](https://energy-efficient-ai.org) - *Scale metrics for POG2 metabolic tracking.*
@@ -24,6 +26,7 @@ The POG2 organism is informed by the following cognitive and clinical research t
 ---
 
 ## 📜 Sovereign Laws (MANDATORY)
+
 1. **NO MOCKS**: Real APIs only. Use `ShellEngine` for live substrate interaction.
 2. **NO PLACEHOLDERS**: No `TODO`, `stubs`, or `throw new Error('not implemented')`.
 3. **ZERO GAPS**: In Cinematic/Sequential modes, every character of source text MUST be accounted for.
@@ -35,11 +38,13 @@ The POG2 organism is informed by the following cognitive and clinical research t
 ## ⚙️ Engine Differentiation: Learning vs. Production
 
 ### 🧠 [MemoryConsolidationEngine.ts](src/engines/MemoryConsolidationEngine.ts) (Learning)
+
 - **Domain**: Persistent Abstraction.
 - **Role**: Synthesizes long-term session memories into core wisdom kernels. Eliminates redundant error pathways.
 - **Substrate**: Global VectorDB.
 
 ### 📽️ [PipelineController.ts](src/engines/PipelineController.ts) (Production)
+
 - **Domain**: Transient Output.
 - **Role**: Orchestrates high-throughput generative tasks (Video/Image/Audio). Manages production manifests and idempotent checkpoints.
 - **Substrate**: Local Filesystem / `manifest.json`.
@@ -49,6 +54,7 @@ The POG2 organism is informed by the following cognitive and clinical research t
 ## 🗺️ Global Directory Map (`\files`)
 
 ### 📁 Root Configuration
+
 - `package.json`: Accounts for all structural folders (.agent, .agents, scripts, substrate-v2).
 - `tsconfig.json`: Inclusion scope includes `src/` and `scripts/` with generalized `rootDir`.
 - `.rules.md`: Clinical rules for code and system behavior.
@@ -56,7 +62,9 @@ The POG2 organism is informed by the following cognitive and clinical research t
 - `.env`: Operational secrets and dynamic Neural Model endpoints.
 
 ### 📁 `src/` (Substrate Core & Utilities)
+
 *The fundamental nervous system connecting the engines and limbs.*
+
 - `cli.ts`: Primary sovereign command-line interface.
 - `ToolRegistry.ts`: Central registry for tools/MCP actions.
 - `api/`: Model routing & multi-modal capability mapping (`ModelRolodex.ts`, `Dispatcher.ts`, `CloudflareModelRegistry.ts`, `StaticModelRegistry.ts`, `IntentMap.ts`, `CapabilityRegistry.ts`).
@@ -72,10 +80,12 @@ The POG2 organism is informed by the following cognitive and clinical research t
 - `state/`: Persistent and active memory representation (`NeurologicalMap.ts`, `StateManager.ts`).
 - `types/`: Type definitions boundary (`SovereignDomain.ts`, `diagnostic.ts`, `pipeline.ts`, `result_test.ts`).
 - `ui/`: Terminal rendering layers (`Renderer.ts`).
-- `utils/`: Operational support functions (`VectorDB.ts`, `SmartEdit.ts`, `EndpointHealer.ts`, `ClinicalAuditTool.ts`, `PathNormalizer.ts`, `SovereignIgnoreManager.ts`, `RSMVExtractor.ts`, etc.).
+- `utils/`: Operational support functions (`VectorDB.ts`, `SmartEdit.ts`, `EndpointHealer.ts`, `ClinicalAuditTool.ts`, `PathNormalizer.ts`, `SovereignIgnoreManager.ts`, `rsmvExtractor.ts`, etc.).
 
 ### 📁 `src/engines/` (Cognitive Substrate)
+
 *30 specialized engines powering the sovereign intelligence.*
+
 - `ASTWatcher.ts`, `ArchitecturalValidator.ts`: Structural & syntax integrity.
 - `ChromanumberEngine.ts`: SDXL image generation substrate.
 - `CodeEngine.ts`, `CompletionEngine.ts`, `GenerateEngine.ts`: Source creation suite.
@@ -92,9 +102,11 @@ The POG2 organism is informed by the following cognitive and clinical research t
 - *Also features*: `DiscoveryEngine.ts`, `MultiModelExecutor.ts`, `ShadowEngine.ts`, `SyntropyEngine.ts`, `TodoEngine.ts`, `WebSearchEngine.ts`.
 
 ### 📁 `src/limbs/` (22 Sovereign Limbs)
+
 *The 5-Core Anatomical Structure of the POG2 Substrate.*
 
 **Creative Core (9 Limbs) - `src/limbs/creative/`**
+
 - `GutenbergLimb.ts`: Literary ingestion & style analysis.
 - `MediaForgeLimb.ts`: Asset generation coordination.
 - `NeuralForgeLimb.ts`: Substrate self-reflection and prompt alchemy.
@@ -106,24 +118,28 @@ The POG2 organism is informed by the following cognitive and clinical research t
 - `YouTubeLimb.ts`: Publishing and distribution.
 
 **Spatial Core (4 Limbs) - `src/limbs/spatial/`**
+
 - `BioIntelligenceLimb.ts`: Anatomical proofs and heuristic feedback loops.
 - `ChromaLimb.ts`: Spatial/Visual Chromanumber Intelligence (Sequence generation).
 - `RSCLimb.ts`: RSC Bridge and TCP connectivity endpoint.
 - `WebSensoryLimb.ts`: Browser-based perception context loop.
 
 **Metaphysical Core (4 Limbs) - `src/limbs/metaphysical/`**
+
 - `GhostLimb.ts`: The Observer Mind. Assumes control in catatonic state (48hr airgap resilience). Dynamic Local Thinker fallback (DeepSeek-R1).
 - `OmegaLimb.ts`: Terminal objective verification.
 - `QuantumLimb.ts`: Probabilistic execution / multi-path collapse.
 - `RelicLimb.ts`: Archival / legacy integration (30s TCP key rotation persistence).
 
 **Technical Core (4 Limbs) - `src/limbs/technical/`**
+
 - `AILimb.ts`: Low-level ModelClient encapsulation interface.
 - `ControlPlaneLimb.ts`: Sovereign CLI and shell task delegation interface.
 - `EntityLimb.ts`: NPC intelligence and identity persistence formatting.
 - `EnvironmentLimb.ts`: Weather, state, and room awareness generation.
 
 **Core (1 Limb) - `src/limbs/core/`**
+
 - `NeuralLimb.ts`: The abstract base limb class that enforces cognitive uniformity across all branches.
 
 ---
@@ -152,6 +168,7 @@ The POG2 organism is informed by the following cognitive and clinical research t
 The `NodeTester` performs a **deep clinical neurological audit** on every boot cycle:
 
 **🟢 ONLINE (Active Substrates)**
+
 - `OrchestrateEngine.ts` — Brain: ACTIVE
 - `SpatialSovereigntyLimb.ts` — 1 mapped region (Prifddinas)
 - `MechanicalSovereigntyLimb.ts` — 2 regions (Barrows + Global)
@@ -163,9 +180,11 @@ The `NodeTester` performs a **deep clinical neurological audit** on every boot c
 - `VectorDB.ts` — 7,628 federated lessons
 
 **🔴 OFFLINE (1 node)**
+
 - `src/vision/StructuralAnalyzer.ts` — "Substrate missing"
 
 **🟡 DEGRADED (33 nodes)**
+
 - `TernaryRouter.ts` — "Ollama responsive with 0 models" (no local GPU models loaded)
 - `CognitiveEngine.ts` — "DEGRADED (Local: 0 models | Cloud: Gemini, HuggingFace, Cloudflare)"
 - `GlobeStateLimb.ts` — "Globe Substrate Offline: Connection failed or closed" (intentionally detached — DO throttling)
@@ -195,6 +214,7 @@ T+18637ms GhostLimb → "[WATCHING] Primary consciousness is nominal."
 ### 🔄 Background Cycles (During Idle)
 
 While waiting at `Kimi >` prompt, the organism maintains:
+
 - **GhostLimb** — Consciousness monitoring every ~18 seconds
 - **BioIntelligenceLimb** — Anatomical proof validation (133 limbs, integrity=10)
 - **OmegaLimb** — Terminal objective verification (goal: "existence")
@@ -238,7 +258,7 @@ src/limbs/
 
 ```
 Phase 0: Literature → Cinema Pipeline     (Gutenberg — 33 books, 7 genres)
-Phase 1: Cache Deconstruction              (RSMV — 232 files, 49 opcode schemas)
+Phase 1: Cache Deconstruction              (rsmv — 232 files, 49 opcode schemas)
 Phase 2: Game Simulation                   (600ms tick, varbits, 3 interpreters)
 Phase 3: AI Swarm Management              (428 models, 6 providers, reputation tracking)
 Phase 4: Edge Synchronization              (Cloudflare DO — detached, pending reactive fix)
@@ -250,4 +270,3 @@ Phase ∞: Autonomous Game Intelligence      (Works for Jagex)
 
 ---
 *Original audit: 2026-03-13. Live telemetry addendum: 2026-03-30.*
-

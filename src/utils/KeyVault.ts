@@ -1,4 +1,4 @@
-﻿/**
+/**
  * KeyVault - Secure storage and rotation for Google API keys
  * Features:
  * - AES-256 encryption at rest
@@ -11,6 +11,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { createLogger } from "./logger.js";
+import { CanonicalClock } from "./CanonicalClock.js";
 
 const logger = createLogger('KeyVault');
 
@@ -55,7 +56,7 @@ export class KeyVault {
         this.keys.set(name, {
             name,
             key,
-            addedAt: Date.now(),
+            addedAt: CanonicalClock.getInstance().simulatedNow(),
             failCount: 0
         });
 
@@ -93,7 +94,7 @@ export class KeyVault {
         if (!entry) return null;
 
         // Update last used timestamp
-        entry.lastUsed = Date.now();
+        entry.lastUsed = CanonicalClock.getInstance().simulatedNow();
         return entry.key;
     }
 
@@ -168,9 +169,9 @@ export class KeyVault {
         }
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ══════════════════════════════════════════════════════════
     // Private: Encryption/Persistence
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ══════════════════════════════════════════════════════════
 
     private maskKey(key: string): string {
         if (key.length < 12) return '****';
@@ -251,3 +252,4 @@ export class KeyVault {
         }
     }
 }
+

@@ -4,6 +4,7 @@ import { WikiEquipmentEnricher, WikiDropTable } from '../../utils/WikiEquipmentE
 import { ServerLogicRegistry } from './ServerLogicRegistry.js';
 import { WikiEnricher } from '../../utils/WikiEnricher.js';
 import { SwitchboardLimb } from '../../monitor/SwitchboardLimb.js';
+import { CanonicalClock } from '../../utils/CanonicalClock.js';
 
 const logger = createLogger('LootResolutionEngine');
 
@@ -285,8 +286,36 @@ export class LootResolutionEngine {
         // Pick one (or zero) rng drop if table triggered heavily
         if (rngDrops.length > 0) {
             // Shuffle and pick 1 just to mimic RS standard table (1 main drop per kill)
-            alwaysDrops.push(rngDrops[Math.floor(Math.random() * rngDrops.length)]);
+            alwaysDrops.push(rngDrops[CanonicalClock.getInstance().rng().range(0, rngDrops.length - 1)]);
         }
         return alwaysDrops;
     }
 }
+
+
+import type { EngineContract, ExecutionContext } from '../../core/HexagramNetworkBridge.js';
+export const LootResolutionEngineContract: EngineContract = {
+  name: 'LootResolutionEngine',
+  validate: (ctx) => true,
+  execute: async (ctx) => {
+    return {
+      success: true,
+      engineName: 'LootResolutionEngine',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: { action: 'stub' },
+      durationMs: 0
+    };
+  },
+  fallback: async (ctx) => {
+    return {
+      success: true,
+      engineName: 'LootResolutionEngine',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: { action: 'idle', reason: 'fallback' },
+      durationMs: 0
+    };
+  }
+};
+

@@ -1,4 +1,4 @@
-﻿import { Result, ok, err, Coord, DirectionalCollision } from '../../core/models.js';
+import { Result, ok, err, Coord, DirectionalCollision } from '../../core/models.js';
 import { WorldForensicsLimb, WorldObservation } from '../../limbs/spatial/WorldForensicsLimb.js';
 import { SovereignGrounding } from '../../utils/SovereignGrounding.js';
 import { createLogger } from '../../utils/logger.js';
@@ -60,10 +60,21 @@ export class ObservationEngine {
     ): Promise<Result<ObservationReport>> {
         if (!this.grounding) return err(new Error('Engine not initialized'));
 
-        const senseRes = await this.limb.senseLocalArea(x, z, plane);
-        if (!senseRes.ok) return err(senseRes.error);
+        const minMX = (x - radius) >> 6;
+        const maxMX = (x + radius) >> 6;
+        const minMZ = (z - radius) >> 6;
+        const maxMZ = (z + radius) >> 6;
 
-        const observations = senseRes.value;
+        const observations: WorldObservation[] = [];
+        for (let mx = minMX; mx <= maxMX; mx++) {
+            for (let mz = minMZ; mz <= maxMZ; mz++) {
+                const senseRes = await this.limb.senseLocalArea(mx << 6, mz << 6, plane);
+                if (senseRes.ok) {
+                    observations.push(...senseRes.value);
+                }
+            }
+        }
+
         const metadata = this.grounding.getRegionMetadata(x, z, plane);
         
         const report: ObservationReport = {
@@ -138,3 +149,4 @@ export class ObservationEngine {
         this.limb.close();
     }
 }
+

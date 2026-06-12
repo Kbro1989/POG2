@@ -39,9 +39,12 @@ export class SovereignInteractionLimb {
     }
 
     /**
-     * Core Simulation Tick: Drives probe decision logic.
+     * Core Simulation Tick: Drives probe decision logic, gated by CanonicalClock.
      */
     public onTick() {
+        if (!require('../../utils/CanonicalClock.js').clock.isTickingPermitted()) {
+            return;
+        }
         for (const [id, probe] of this.activeProbes) {
             this.processProbeLogic(probe);
         }
@@ -110,3 +113,4 @@ export class SovereignInteractionLimb {
         }
     }
 }
+

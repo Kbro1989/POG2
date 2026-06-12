@@ -2,7 +2,7 @@
 #define POG2_PACK_UTILS_GLSL
 
 // High-fidelity packing/unpacking for depth and normals
-// Ported from RSMV WebViewer core logic
+// Ported from rsmv WebViewer core logic
 
 highp float UnpackRGBAToFloat(highp vec4 rgba) {
     const highp vec4 bitShifts = vec4(1.0 / (256.0 * 256.0 * 256.0), 1.0 / (256.0 * 256.0), 1.0 / 256.0, 1.0);

@@ -25,10 +25,10 @@ export class PhotoBoothHandler {
      * takeSnapshot - Captures the full 3D and statistical identity of a player.
      * Mirrors the RS3 "Photo Booth" interaction.
      */
-    public async takeSnapshot(playerName: string): Promise<Result<{ 
-        id: string, 
-        stats: StatsSnapshot, 
-        modelPath: string 
+    public async takeSnapshot(playerName: string): Promise<Result<{
+        id: string,
+        stats: StatsSnapshot,
+        modelPath: string
     }>> {
         logger.info({ playerName }, 'Initiating Clinical Snapshot Sequence...');
 
@@ -78,7 +78,7 @@ export class PhotoBoothHandler {
             });
 
             logger.info({ entityId }, 'Clinical Snapshot successful.');
-            
+
             return ok({
                 id: entityId,
                 stats,
@@ -91,3 +91,4 @@ export class PhotoBoothHandler {
         }
     }
 }
+

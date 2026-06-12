@@ -1,4 +1,4 @@
-﻿import { join, basename } from 'path';
+import { join, basename } from 'path';
 import { existsSync, mkdirSync, writeFileSync, statSync, renameSync, readFileSync } from 'fs';
 import { Result, ok } from '../../core/models.js';
 import { ShellEngine } from '../../engines/ShellEngine.js';
@@ -113,7 +113,7 @@ export class VideoAssemblerLimb {
         let masterConcatContent = '';
         let validScenes = 0;
 
-        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STAGE 3.5: Process Per-Scene Audio (Narration + Adaptive Score) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+        // â”€â”€â”€ STAGE 3.5: Process Per-Scene Audio (Narration + Adaptive Score) â”€â”€â”€
         for (const artifact of manifest.scenes) {
             let finalSceneAudio: string | null = null;
 
@@ -257,7 +257,7 @@ export class VideoAssemblerLimb {
 
     /**
      * assembleFromAssets - Universal video assembly from arbitrary assets.
-     * No PipelineManifest needed. Give it images + optional audio â†’ video.
+     * No PipelineManifest needed. Give it images + optional audio → video.
      * The organism's hands, freed from the book pipeline.
      */
     public async assembleFromAssets(
@@ -328,3 +328,4 @@ export class VideoAssemblerLimb {
         }
     }
 }
+

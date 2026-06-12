@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "GitKraken": {
+    "pog2-GitKraken": {
       "command": "npx",
       "args": [
         "-y",
@@ -8,7 +8,7 @@
         "mcp"
       ]
     },
-    "Cloudflare": {
+    "pog2-Cloudflare": {
       "command": "npx",
       "args": [
         "-y",
@@ -17,8 +17,26 @@
       ],
       "env": {
         "CLOUDFLARE_ACCOUNT_ID": "6872653edcee9c787c1b783173793",
-        "CLOUDFLARE_API_TOKEN": "BKPBdQcDbG4PQLnNo7nsZdYTdzC2CzROmWJCIYks"
+        "CLOUDFLARE_API_TOKEN": "${CLOUDFLARE_API_TOKEN}"
       }
+    },
+    "pog2-github": {
+      "command": "node",
+      "args": [
+        "C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/github/.mcp.json"
+      ]
+    },
+    "pog2-linear": {
+      "command": "node",
+      "args": [
+        "C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/linear/.mcp.json"
+      ]
+    },
+    "pog2-terraform": {
+      "command": "node",
+      "args": [
+        "C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/terraform/.mcp.json"
+      ]
     }
   }
 }

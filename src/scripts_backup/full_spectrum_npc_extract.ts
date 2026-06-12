@@ -16,9 +16,9 @@ function unpackCoord(packed: number): { x: number, z: number, plane: number } {
 async function run() {
     console.log("🚀 Sovereign Full-Spectrum NPC Extraction");
     const source = new GameCacheLoader(CACHE_DIR);
-    
+
     // We scan ALL DBRows in Major 41
-    const index = await source.getCacheIndex(41); 
+    const index = await source.getCacheIndex(41);
     console.log(`📊 Scanning ${index.length} archives for NPC patterns...`);
 
     const spawns: any[] = [];
@@ -42,17 +42,17 @@ async function run() {
                     if (plane < 4 && x > 0 && x < 16384 && z > 0 && z < 16384 && potentialId > 0 && potentialId < 30000) {
                         spawns.push({ id: potentialId, x, z, plane });
                         // Skip ahead to avoid overlapping detections
-                        i += 7; 
+                        i += 7;
                     }
                 }
             }
             processed++;
             if (processed % 100 === 0) console.log(`  Scanned ${processed}/${index.length}... Found ${spawns.length} potential spawns`);
-        } catch {}
+        } catch { }
     }
 
     console.log(`✅ Extraction Complete. Found ${spawns.length} potential spawns.`);
-    
+
     const msPartition: Record<string, any[]> = {};
     for (const s of spawns) {
         const mx = Math.floor(s.x / 64);
@@ -67,3 +67,4 @@ async function run() {
 }
 
 run().catch(console.error);
+

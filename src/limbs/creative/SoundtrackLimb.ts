@@ -1,11 +1,12 @@
-﻿import { writeFileSync, existsSync } from 'fs';
+import { writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
-import { type Result, ok, type ProsodyVector } from '../../core/models.js';
+import { type Result, ok, type ProsodyVector, CognitivePolarity } from '../../core/models.js';
 import type { SovereignConfig } from '../../config/SovereignConfig.js';
 
 import { HexagramManager } from '../../routing/HexagramManager.js';
 import { createLogger } from "../../utils/logger.js";
+import { SoundEventResolver as SoundResolver, SoundEvent } from './sound/SoundEventResolver.js';
 
 const logger = createLogger('SoundtrackLimb');
 
@@ -21,6 +22,7 @@ export interface SoundtrackParams {
     keyframes?: AudioCue[];
     channels?: number;
     outputPath?: string;
+    sourcePath?: string; // Path to actual cache-resolved audio asset (e.g. .wav)
 }
 
 export interface SoundtrackResult {
@@ -42,7 +44,11 @@ export class SoundtrackLimb {
     constructor(
         config: SovereignConfig,
         private readonly hexagram: HexagramManager = HexagramManager.getInstance()
-    ) { }
+    ) {
+        this.resolver = new SoundResolver(config.cacheDir || 'C:\\ProgramData\\Jagex\\RuneScape');
+    }
+
+    private resolver: SoundResolver;
 
     /**
      * generateScore - Composes a background track based on emotional state.
@@ -58,13 +64,49 @@ export class SoundtrackLimb {
     }
 
     /**
+     * resolveAndGenerate - Resolves a game event to a sound and generates modulated audio.
+     */
+    public async resolveAndGenerate(
+        event: SoundEvent,
+        duration: number,
+        keyframes: AudioCue[] = [],
+        outputPath?: string
+    ): Promise<Result<SoundtrackResult>> {
+        const resolution = await this.resolver.resolve(event);
+        if (!resolution.ok || !resolution.value) {
+            return { ok: false, error: new Error(`Could not resolve sound for event: ${JSON.stringify(event)}`) };
+        }
+
+        const metadata = resolution.value;
+        const tempSource = join(process.cwd(), 'audit_output', `temp_cache_${Date.now()}.wav`);
+
+        try {
+            writeFileSync(tempSource, metadata.rawBuffer);
+
+            const params: SoundtrackParams = {
+                prompt: `Event: ${event.type}, ID: ${event.entityId}`,
+                duration,
+                keyframes,
+                outputPath,
+                sourcePath: tempSource
+            };
+
+            return await this.generate(params);
+        } finally {
+            if (existsSync(tempSource)) {
+                // In a real app, we'd use a temp file library, but for now we just write to audit_output
+            }
+        }
+    }
+
+    /**
      * generate - Unified multi-modal synthesis entry point.
      * Supports kinematic keyframes for synchronized effects (like KBD roars).
      */
     public async generate(params: SoundtrackParams): Promise<Result<SoundtrackResult>> {
-        const { duration, keyframes = [], outputPath = join(process.cwd(), 'audit_output', 'kbd_roar.wav') } = params;
-        
-        logger.info({ duration, keyframeCount: keyframes.length }, 'Initiating Kinematic Audio Synthesis');
+        const { duration, keyframes = [], outputPath = join(process.cwd(), 'audit_output', 'kbd_roar.wav'), sourcePath } = params;
+
+        logger.info({ duration, keyframeCount: keyframes.length, sourcePath }, 'Initiating Kinematic Audio Synthesis');
 
         // Logic to translate keyframes into volume modulation for ffmpeg
         // We'll create a volume filter based on the timings
@@ -78,12 +120,18 @@ export class SoundtrackLimb {
         const channels = params.channels === 5.1 ? 6 : 1;
 
         try {
-            // Reusing basic procedural synth but adding the keyframe volume modulation
-            const baseGraph = `aevalsrc='0.1*sin(2*PI*440*t)':s=44100:d=${cappedDuration}`;
-            const cmd = `ffmpeg -y -f lavfi -i "${baseGraph}" -af "${volFilter}" -ac ${channels} "${outputPath}"`;
+            let cmd;
+            if (sourcePath && existsSync(sourcePath)) {
+                // Use the actual cache-assigned sound asset and modulate it
+                cmd = `ffmpeg -y -i "${sourcePath}" -af "${volFilter}" -ac ${channels} -t ${cappedDuration} "${outputPath}"`;
+            } else {
+                // Fallback to procedural synthesis if no asset path provided
+                const baseGraph = `aevalsrc='0.1*sin(2*PI*440*t)':s=44100:d=${cappedDuration}`;
+                cmd = `ffmpeg -y -f lavfi -i "${baseGraph}" -af "${volFilter}" -ac ${channels} "${outputPath}"`;
+            }
 
             execSync(cmd, { timeout: 30_000, stdio: 'pipe', windowsHide: true });
-            
+
             return ok({
                 path: outputPath,
                 duration: cappedDuration,
@@ -186,11 +234,9 @@ export class SoundtrackLimb {
         const lightWeight = prosody.whimsy * (1 - prosody.darkTone);
 
         // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ 1. Derive I-Ching States + Real-time Biasing Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-        const interpretation = this.hexagram.getInterpretation();
+        const contract = this.hexagram.getContract();
+        const ternary = contract.polarity;
         const currentYao = this.hexagram.getYaoState();
-        const isYin = this.hexagram.isYin();
-
-        const ternary: 'Yang' | 'Yin' | 'YinYang' = isYin ? 'Yin' : 'Yang';
 
         // Mix local prosody chaos with global Yao density
         let yaoIdx = 1;
@@ -212,7 +258,7 @@ export class SoundtrackLimb {
 
         // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ 2. Derive Audio Parameters Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         // Base Freq: Yin=Low (minor/dark), Yang=High (major/bright)
-        const baseFreq = ternary === 'Yin' ? 55 : ternary === 'Yang' ? 110 : 73.42; // A1, A2, D2
+        const baseFreq = ternary === CognitivePolarity.YIN ? 55 : ternary === CognitivePolarity.YANG ? 110 : 73.42; // A1, A2, D2
 
         // BPM / Sequence Rate based on Yao
         const bps = yaoState === 0 ? 8 : yaoState === 2 ? 4 : yaoState === 3 ? 1 : 2; // Beats per second
@@ -237,7 +283,7 @@ export class SoundtrackLimb {
         // Convert the 6-bit hexagram into a mathematical step sequence.
         // E.g., '101100' -> arr[mod(trunc(t*bps), 6)] -> yields base multipliers
         const stepMultipliers = hexagram.split('').map((bit: string) =>
-            bit === '1' ? (ternary === 'Yin' ? 1.5 : 2.0) : (ternary === 'Yin' ? 1.2 : 1.0)
+            bit === '1' ? (ternary === CognitivePolarity.YIN ? 1.5 : 2.0) : (ternary === CognitivePolarity.YIN ? 1.2 : 1.0)
         );
 
         // 1. Voice Definitions
@@ -247,7 +293,7 @@ export class SoundtrackLimb {
         // Arp / Lead (Sequenced by Hexagram)
         // We use trunc(t*BPS) % 6 to index the step. 
         // aevalsrc doesn't have arrays, so we use nested if() or multiple eq() gates.
-        let seqExpr = stepMultipliers.map((m: number, i: number) => `eq(mod(floor(t*${bps}),6),${i})*${m}`).join('+');
+        const seqExpr = stepMultipliers.map((m: number, i: number) => `eq(mod(floor(t*${bps}),6),${i})*${m}`).join('+');
         const arpExpr = `0.4*sin(2*PI*(${baseFreq})*(${seqExpr})*t)*(1-mod(t*${bps},1))`; // Plucky envelope
 
         // Noise / Texture (Chaos driven)
@@ -285,7 +331,7 @@ export class SoundtrackLimb {
 }
 
 interface SynthParams {
-    ternary: 'Yang' | 'Yin' | 'YinYang';
+    ternary: CognitivePolarity;
     yaoState: number;
     hexagram: string;
     baseFreq: number;
@@ -296,3 +342,4 @@ interface SynthParams {
     whimsy: number;
     coherence: number;
 }
+

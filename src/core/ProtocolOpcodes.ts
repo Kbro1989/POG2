@@ -24,3 +24,4 @@ export enum ClientOpcode {
     PLAYER_MOVE = 4,
     MAP_REGION_LOADED = 12
 }
+

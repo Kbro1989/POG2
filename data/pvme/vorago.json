@@ -1,0 +1,616 @@
+{
+  "boss": "Vorago",
+  "lastUpdated": "2026-05-16T11:42:55.067Z",
+  "bestiary": {
+    "hard": "y",
+    "text1": "Monster",
+    "item1": "{{Infobox Monster",
+    "name": "Hydrix bolt tips",
+    "image": "[[File:Vorago.png",
+    "release": "[[19 December]] [[2016]]",
+    "update": "Vorago: High-Level Boss Fight",
+    "members": "Yes",
+    "options": "Talk to",
+    "examine": "A powerful entity that is one with the earth.",
+    "level": "10000",
+    "lifepoints": "250,000",
+    "aggressive": "Yes",
+    "poisonous": "No",
+    "max_melee": "3000",
+    "max_ranged": "5000",
+    "max_magic": "5000",
+    "max_spec": "11000",
+    "style": "Melee, Magic",
+    "primarystyle": "melee",
+    "speed": "4",
+    "attack": "90",
+    "ranged": "90",
+    "magic": "90",
+    "necromancy": "1",
+    "max_necromancy": "0",
+    "acc_necromancy": "0",
+    "acc_melee": "2458",
+    "acc_ranged": "2458",
+    "acc_magic": "2458",
+    "abilities": "Dismember",
+    "armour": "2178",
+    "defence": "90",
+    "weakness": "None",
+    "aff_weakness": "40",
+    "aff_melee": "40",
+    "aff_ranged": "40",
+    "aff_magic": "40",
+    "immune_to_poison": "Yes",
+    "immune_to_deflect": "Yes",
+    "immune_to_stun": "Yes",
+    "immune_to_drain": "Yes",
+    "dropversion": "Normal mode,Hard mode",
+    "id": "14416",
+    "text2": "NPC",
+    "item2": "{{Infobox NPC",
+    "race": "Anima being",
+    "quest": "[[Sliske's Endgame]]",
+    "location": "[[Heart of Gielinor]] camp",
+    "gender": "Male",
+    "map": "No",
+    "title": "Top 20 Boss Killers by Monster (Data: 13th December 2018)",
+    "author": "Mod Shauny",
+    "forum": "Existing Game Content",
+    "postdate": "3 November 2017",
+    "url": "https://www.reddit.com/r/runescape/comments/adugze/top_20_boss_killers_by_monster_data_13th_december/",
+    "archivedate": "28 February 2020",
+    "archiveurl": "http://archive.is/ycOt4",
+    "t": "the Defeater",
+    "c": "#A6F9FD",
+    "loc": "s",
+    "lvls": "N/A",
+    "mem": "No",
+    "mapID": "-1",
+    "boss": "{{chatl",
+    "access": "[[Cave entrance (Vorago)",
+    "x": "2972",
+    "y": "3433",
+    "text": "North of Falador",
+    "mtype": "pin",
+    "cost_coins": "1000000",
+    "cost_reduced": "750000",
+    "grave": "Inside the Borehole graveyard",
+    "timer": "7",
+    "notes": "Mod Shauny: \"A threshold of 1,000 has been added to the Ancient Summoning Stone drop from Vorago.\"",
+    "bg": "yes",
+    "class": "\"wikitable sortable sticky-header\"",
+    "pic": "Omens gloves",
+    "txt": "Maul of Omens",
+    "jagex": "yes",
+    "version": "Hard mode",
+    "quantity": "5",
+    "rarity": "1/11",
+    "gemw": "no",
+    "alch": "no",
+    "raritynotes": "{{DropNote",
+    "citations": "{{CiteTwitter",
+    "accessdate": "19 May 2024",
+    "altrarity": "10/2500",
+    "altraritydash": "yes",
+    "quote": "[link to a spreadsheet]",
+    "date": "8 January 2019",
+    "gold": "79/1000",
+    "green": "39.5/1000",
+    "crimson": "632/1000",
+    "blue": "15.8/1000",
+    "type": "update",
+    "timestamp": "6:49",
+    "color": "red"
+  },
+  "rotations": [
+    {
+      "section": "TL5",
+      "label": "Rotation",
+      "abilities": [
+        "Air Surge",
+        "Wild Magic",
+        "Asphyxiate",
+        "Corruption Blast",
+        "Air Surge",
+        "Concentrated Blast",
+        "Dragon Breath",
+        "Air Surge",
+        "Sonic Wave"
+      ]
+    },
+    {
+      "section": "TL5",
+      "label": "Rotation",
+      "abilities": [
+        "Air Surge",
+        "Wild Magic",
+        "Corruption Blast",
+        "Air Surge",
+        "Asphyxiate",
+        "Dragon Breath",
+        "Air Surge",
+        "Concentrated Blast",
+        "Shatter"
+      ]
+    },
+    {
+      "section": "Phase 3",
+      "label": "Rotation",
+      "abilities": [
+        "Stand south of L rock",
+        "Asphyxiate",
+        "Wild Magic",
+        "Dragon Breath",
+        "Sonic Wave",
+        "Off for reflects",
+        "Defensives",
+        "Detonate",
+        "Release with Auto Deto Dragon Breath",
+        "Asphyxiate",
+        "Sonic Wave",
+        "Replenishment potion (6)",
+        "Onslaught"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "Target Vorago",
+        "Asphyxiate",
+        "Wild Magic",
+        "Guthix staff, Weapon Special attack",
+        "Build on reflect",
+        "Disruption Shield",
+        "Detonate",
+        "Release with Auto Deto Dragon Breath",
+        "Build with Basics",
+        "Get near Vorago",
+        "Onslaught"
+      ]
+    },
+    {
+      "section": "Trio or larger",
+      "label": "Rotation",
+      "abilities": [
+        "Stand East or West at Max Cast",
+        "Disruption Shield",
+        "Asphyxiate",
+        "Wild Magic",
+        "Dragon Breath",
+        "Sonic Wave",
+        "Off for Reflects",
+        "Build with Defensives",
+        "{{Ability clickpic",
+        "Resonance"
+      ]
+    },
+    {
+      "section": "Trio or larger",
+      "label": "Rotation",
+      "abilities": [
+        "Devotion",
+        "Replenishment potion (6)",
+        "Onslaught",
+        "Basics to phase"
+      ]
+    },
+    {
+      "section": "Trio or larger",
+      "label": "Rotation",
+      "abilities": [
+        "Metamorphosis",
+        "Replenishment potion (6)",
+        "Thresholds and Optionally {{Ability clickpic",
+        "Reprisal"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "Ingenuity of the Humans,Statius's warhammer, Weapon Special attack",
+        "Wild Magic",
+        "Guthix staff, Weapon Special attack",
+        "Build on reflect",
+        "Detonate",
+        "Release",
+        "Disruption Shield",
+        "Enhanced Excalibur",
+        "Thresholds",
+        "{{Ability clickpic",
+        "Reprisal"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "Stand 2-3 squares West of L rock",
+        "Sunshine",
+        "Vulnerability",
+        "Replenishment potion (6)",
+        "Enhanced Excalibur",
+        "Full sunshine rotation"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "{{Ability clickpic",
+        "Sunshine"
+      ]
+    },
+    {
+      "section": "Trio or larger",
+      "label": "Rotation",
+      "abilities": [
+        "Stand in the South West quadrant",
+        "Sunshine",
+        "Wait until the Base or the TL5 tag the Scop",
+        "Vulnerability",
+        "Replenishment potion (6)",
+        "Enhanced Excalibur",
+        "Wild Magic",
+        "Resonance",
+        "Asphyxiate",
+        "DPS until end of phase"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "{{Ability clickpic",
+        "Sunshine"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "Stand north east of MD",
+        "Sunshine",
+        "Replenishment potion (6)",
+        "Enhanced Excalibur",
+        "Dragon Breath",
+        "Concentrated Blast",
+        "Wild Magic",
+        "Guthix staff, Weapon special attack",
+        "Off for reflects",
+        "Defensives to build adren",
+        "Detonate",
+        "Release with Auto Deto Dbreath",
+        "Thresholds to finish the phase"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "Stand on L rock, beside the Bomb Tank",
+        "Sunshine",
+        "Replenishment potion (6)",
+        "Enhanced Excalibur",
+        "Dragon Breath",
+        "Concentrated Blast",
+        "Wild Magic",
+        "Guthix staff, Weapon special attack",
+        "Off for reflects",
+        "Defensives to build adren",
+        "Detonate",
+        "Air Surge, Detonate, Dragon Breath",
+        "Freedom the 4th bleed",
+        "Thresholds until sunshine is over",
+        "Build to 100 adren, count auto attacks and off for reflects",
+        "Devotion, Intercept",
+        "Devo cept the Bomb Tank & prayer flick",
+        "Barricade, Intercept",
+        "Provoke Vorago after the 4th bleed",
+        "Freedom the 5th bleed",
+        "Repeat until Vorago reaches 0 hp"
+      ]
+    },
+    {
+      "section": "Trio or larger",
+      "label": "Rotation",
+      "abilities": [
+        "Stand in the South quadrant",
+        "Sunshine",
+        "Dragon Breath",
+        "Concentrated Blast",
+        "Wild Magic",
+        "Guthix staff, Weapon special attack",
+        "Off for reflects",
+        "Resonance",
+        "Detonate",
+        "Air Surge, Detonate, Dragon Breath",
+        "Thresholds to finish the phase"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "Stand on L rock, beside the Base",
+        "Enhanced Excalibur",
+        "Wild Magic",
+        "Asphyxiate",
+        "Dragon Breath",
+        "Sonic Wave",
+        "Off for reflects",
+        "Devotion, Intercept",
+        "cept your partner and prayer flick",
+        "Defensives to build",
+        "Wild Magic",
+        "Build to 100 before bleeds",
+        "Barricade, Intercept",
+        "Provoke after the 4th bleed",
+        "Freedom the 5th bleed",
+        "Build to Sunshine",
+        "Sunshine",
+        "Thresholds, count auto attacks until reflects",
+        "Detonate",
+        "Air Surge, Detonate, Dragon Breath",
+        "Freedom the 4th bleed",
+        "Repeat until Vorago reaches 0 hp"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "Stand in the west quadrant",
+        "Form a square among 4 people",
+        "Onslaught"
+      ]
+    },
+    {
+      "section": "Bomb",
+      "label": "Rotation",
+      "abilities": [
+        "Stand in the south quadrant",
+        "Devotion",
+        "Replenishment potion (6)",
+        "Onslaught"
+      ]
+    },
+    {
+      "section": "Bomb",
+      "label": "Rotation",
+      "abilities": [
+        "Sunshine",
+        "Replenishment potion (6)",
+        "Dragon Breath",
+        "Concentrated Blast",
+        "Wild Magic",
+        "Guthix staff, Weapon Special attack",
+        "Off for reflects",
+        "Detonate",
+        "Air Surge, Detonate, Dragon Breath",
+        "Thresholds till phase is over"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "{{Ability clickpic",
+        "Sunshine"
+      ]
+    },
+    {
+      "section": "Trio or larger",
+      "label": "Rotation",
+      "abilities": [
+        "{{Ability clickpic",
+        "Sunshine"
+      ]
+    },
+    {
+      "section": "Trio or larger",
+      "label": "Rotation",
+      "abilities": [
+        "If the Green Bomb is on you, the base will {{Ability clickpic",
+        "Devotion"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "{{Ability clickpic",
+        "Sunshine"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "Stand near L rock",
+        "Stall",
+        "Go to first TS",
+        "Wild Magic",
+        "Dragon Breath",
+        "Asphyxiate",
+        "Sonic Wave",
+        "Build",
+        "Detonate",
+        "Release on 3rd blue",
+        "Go to second TS",
+        "Build",
+        "Wild Magic",
+        "Dragon Breath",
+        "Replenishment potion (6)",
+        "Onslaught",
+        "Cancel at 3k",
+        "Basics to phase"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "Ingenuity of the Humans, Statius's warhammer, Weapon Special attack",
+        "Combust",
+        "Provoke",
+        "Walk bleed",
+        "Air Surge, Sonic Wave",
+        "Dragon Breath",
+        "Switch to Staff",
+        "Air Surge, Wild Magic",
+        "Detonate",
+        "Release after reflect",
+        "Reprisal",
+        "Eat",
+        "Replenishment potion (6)",
+        "Onslaught"
+      ]
+    },
+    {
+      "section": "With dummy",
+      "label": "Rotation",
+      "abilities": [
+        "Ingenuity of the Humans, Statius's warhammer, Weapon Special attack",
+        "Combust",
+        "Air Surge, Asphyxiate",
+        "Switch to Staff",
+        "Wild Magic",
+        "Detonate",
+        "Release after reflect",
+        "Reprisal",
+        "Threshold to phase"
+      ]
+    },
+    {
+      "section": "Trio or larger",
+      "label": "Rotation",
+      "abilities": [
+        "Stand near L rock",
+        "Stall",
+        "Go to first TS",
+        "Disruption Shield",
+        "Wild Magic",
+        "Dragon Breath",
+        "Asphyxiate",
+        "Sonic Wave",
+        "Build",
+        "Detonate",
+        "Release on 3rd blue",
+        "Go to second TS",
+        "Build"
+      ]
+    },
+    {
+      "section": "Trio or larger",
+      "label": "Rotation",
+      "abilities": [
+        "Wild Magic",
+        "Corruption Blast",
+        "Devotion",
+        "Replenishment potion (6)",
+        "Onslaught",
+        "Enhanced Excalibur",
+        "Cancel at 3-4k",
+        "Basics to phase"
+      ]
+    },
+    {
+      "section": "Trio or larger",
+      "label": "Rotation",
+      "abilities": [
+        "Metamorphosis",
+        "Replenishment potion (6)",
+        "Thresohlds",
+        "Reprisal"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "Sunshine",
+        "Replenishment potion (6)",
+        "End of TS",
+        "Limitless",
+        "Wild Magic",
+        "Asphyxiate",
+        "Build",
+        "Detonate",
+        "Release after reflect",
+        "Reprisal",
+        "Disruption Shield",
+        "Excalibur",
+        "{{Ability clickpic",
+        "Onslaught"
+      ]
+    },
+    {
+      "section": "with dummy",
+      "label": "Rotation",
+      "abilities": [
+        "Air Surge,Guthix staff, Weapon Special attack",
+        "Wild Magic",
+        "Air Surge, Asphyxiate",
+        "Dragon Breath",
+        "Detonate",
+        "Release after Reflect",
+        "Reprisal",
+        "Thresholds to phase"
+      ]
+    },
+    {
+      "section": "with dummy",
+      "label": "Rotation",
+      "abilities": [
+        "Stand near L on drop",
+        "Get into quadrant Vorago points to",
+        "Asphyxiate",
+        "Wild Magic",
+        "Dragon Breath",
+        "Sonic Wave",
+        "Glitch out ASAP",
+        "{{Ability clickpic",
+        "Sunshine"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "Wild Magic",
+        "Asphyxiate",
+        "Ingenuity of the Humans, Statius's warhammer, Weapon Special attack",
+        "{{Ability clickpic",
+        "Sunshine"
+      ]
+    },
+    {
+      "section": "Trio or larger",
+      "label": "Rotation",
+      "abilities": [
+        "Stand near L on drop",
+        "Get into quadrant Vorago points to",
+        "Asphyxiate",
+        "Wild Magic",
+        "Dragon Breath",
+        "Sonic Wave",
+        "Stay inside quadrants until second to last quadrant",
+        "{{Ability clickpic",
+        "Sunshine"
+      ]
+    },
+    {
+      "section": "Duo",
+      "label": "Rotation",
+      "abilities": [
+        "Wild Magic",
+        "Asphyxiate",
+        "Guthix staff, Weapon Special attack",
+        "{{Ability clickpic",
+        "Devotion"
+      ]
+    }
+  ]
+}

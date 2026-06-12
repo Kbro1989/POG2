@@ -1,4 +1,4 @@
-﻿import { type Result } from '../core/models.js';
+import { type Result } from '../core/models.js';
 
 const logger = createLogger('GoogleServices');
 
@@ -143,7 +143,7 @@ export class GoogleServices {
                 // Active Gemini Routing paths used in ModelClient and embedding substrates
                 models.push(
                     process.env.GEMINI_FLASH_MODEL || 'gemini-1.5-flash',
-                    process.env.GEMINI_PRO_MODEL || 'gemini-1.5-pro',
+                    process.env.GEMINI_PRO_MODEL || 'gemini-3.0-pro',
                     'gemini-1.5-flash-001', // Explicit fallback in resilient routes
                     process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004'
                 );
@@ -182,3 +182,4 @@ export class GoogleServices {
         }
     }
 }
+

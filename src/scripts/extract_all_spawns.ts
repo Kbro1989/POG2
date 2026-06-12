@@ -1,6 +1,6 @@
-import { cacheMajors } from "../rsmv/constants.js";
-import { GameCacheLoader } from "../rsmv/cache/sqlite.js";
-import { parse } from "../rsmv/opdecoder.js";
+import { cacheMajors } from "rsmv/constants";
+import { GameCacheLoader } from "rsmv/cache/sqlite";
+import { parse } from "rsmv/opdecoder";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -17,11 +17,11 @@ function unpackCoord(packed: number): { x: number, z: number, plane: number } {
 async function run() {
     console.log("🚀 Sovereign Total Spawn Extraction (Plane-Aware)");
     const source = new GameCacheLoader(CACHE_DIR);
-    
+
     // We target Major 41 (DBRows)
     // In RS3, Major 40 = DBTable Defs, Major 41 = DBRow Data
-    const DB_ROWS_MAJOR = 41; 
-    
+    const DB_ROWS_MAJOR = 41;
+
     const index = await source.getCacheIndex(DB_ROWS_MAJOR);
     console.log(`📊 Scanning ${index.length} archives in Major ${DB_ROWS_MAJOR}...`);
 
@@ -36,7 +36,7 @@ async function run() {
                 try {
                     const row = parse.dbrows.read(file.buffer, source) as any;
                     const tableId = row.table ?? -1;
-                    
+
                     // Table 39 is the standard NPC Spawn table in RS3 God Cache
                     if (tableId !== 39) continue;
 
@@ -63,19 +63,25 @@ async function run() {
                             rowId: file.fileid
                         });
                     }
-                } catch {}
+                } catch (_error) {
+                    // [SILENT NECROSIS LOGGER]
+                    console.warn("[SILENT NECROSIS] Caught in extract_all_spawns: ", _error);
+                }
             }
             processed++;
             if (processed % 100 === 0) {
                 console.log(`  Progress: ${processed}/${index.length} archives scanned... Found ${allSpawns.length} spawns`);
             }
-        } catch {}
+        } catch (_error) {
+            // [SILENT NECROSIS LOGGER]
+            console.warn("[SILENT NECROSIS] Caught in extract_all_spawns: ", _error);
+        }
     }
 
     // Partition by mapsquare
     console.log(`✅ Extraction Complete. Total spawns: ${allSpawns.length}`);
     console.log("📂 Partitioning data by mapsquare...");
-    
+
     const msPartition: Record<string, any[]> = {};
     for (const s of allSpawns) {
         const mx = Math.floor(s.x / 64);
@@ -90,3 +96,4 @@ async function run() {
 }
 
 run().catch(console.error);
+

@@ -21,7 +21,7 @@ export interface TopologicalProfile {
  * Deconstructs raw RS3 3D models into learning heuristics for the Pedagogy Engine.
  */
 export class TopologyLimb {
-    constructor() {}
+    constructor() { }
 
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
         const res = await rsmvBridge.healthCheck();
@@ -54,5 +54,6 @@ export class TopologyLimb {
         });
     }
 
-    public close() {}
+    public close() { }
 }
+

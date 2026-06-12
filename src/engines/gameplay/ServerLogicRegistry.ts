@@ -1,5 +1,7 @@
 import { createLogger } from '../../utils/logger.js';
 import { LogicalSignature, Provenance } from '../../core/models.js';
+import { CanonicalClock } from '../../utils/CanonicalClock.js';
+import { ClockAuthorityRegistry, ClockDomain } from '../../utils/ClockAuthorityRegistry.js';
 
 export { LogicalSignature };
 
@@ -80,7 +82,7 @@ export class ServerLogicRegistry {
                 source: 'RS3_CACHE',
                 major,
                 recordId: archive,
-                timestamp: Date.now()
+                timestamp: 0 // Epoch marker for static registries
             }
         });
     }
@@ -96,7 +98,7 @@ export class ServerLogicRegistry {
             major: 0,
             minor: 0,
             recordId: filename,
-            timestamp: Date.now(),
+            timestamp: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'ServerLogicRegistry'),
             path: `${this.PEDAGOGY_SUBSTRATE}${filename}`
         };
     }
@@ -121,7 +123,7 @@ export class ServerLogicRegistry {
             major,
             minor: map.minor,
             recordId: id,
-            timestamp: Date.now(),
+            timestamp: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'ServerLogicRegistry'),
             path: major > 0 
                 ? `C:\\ProgramData\\Jagex\\RuneScape\\js5-${major}.jcache` 
                 : 'C:\\ProgramData\\Jagex\\RuneScape\\GlobalSettings.jcache'
@@ -138,4 +140,32 @@ export class ServerLogicRegistry {
         return this.registry.get(`${major}:${archive}`)?.signature;
     }
 }
+
+
+
+import type { EngineContract, ExecutionContext } from '../../core/HexagramNetworkBridge.js';
+export const ServerLogicRegistryContract: EngineContract = {
+  name: 'ServerLogicRegistry',
+  validate: (ctx) => true,
+  execute: async (ctx) => {
+    return {
+      success: true,
+      engineName: 'ServerLogicRegistry',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: { action: 'stub' },
+      durationMs: 0
+    };
+  },
+  fallback: async (ctx) => {
+    return {
+      success: true,
+      engineName: 'ServerLogicRegistry',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: { action: 'idle', reason: 'fallback' },
+      durationMs: 0
+    };
+  }
+};
 

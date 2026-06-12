@@ -11,6 +11,7 @@
  */
 
 import { spawn } from 'child_process';
+import { CanonicalClock } from './CanonicalClock.js';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createLogger } from './logger.js';
@@ -26,31 +27,30 @@ export function getLastIOLatencyMs(): number {
     return _lastLatencyMs;
 }
 
-// Absolute path to the bridge script (Phase 45: Location-independent resolution)
-const BRIDGE_SCRIPT = join(__dirname, 'rsmv_bridge.ts')
-    .replace(join('dist', 'src'), 'src')
-    .replace(/\.js$/, '.ts');
+import { getPackageRoot } from './SovereignPathResolver.js';
+
+const BRIDGE_SCRIPT = join(getPackageRoot(), 'src', 'utils', 'rsmv_bridge.ts');
 
 const TIMEOUT_MS = 60000; // Increased to 60s for substrate stability during cold starts
 
 async function callBridge<T>(operation: string, ...args: string[]): Promise<Result<T>> {
-    const start = Date.now();
+    const start = CanonicalClock.getInstance().simulatedNow();
     return new Promise((resolve) => {
         const cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
         const childArgs = ['tsx', BRIDGE_SCRIPT, operation, ...args];
-        
-        const child = spawn(cmd, childArgs, { 
+
+        const child = spawn(cmd, childArgs, {
             shell: process.platform === 'win32',
-            stdio: ['ignore', 'pipe', 'pipe'] 
+            stdio: ['ignore', 'pipe', 'pipe']
         });
 
         let stdout = '';
         let stderr = '';
 
-        child.stdout.on('data', (data) => { 
+        child.stdout.on('data', (data) => {
             const chunk = data.toString();
             stdout += chunk;
-            
+
             // Phase 9: Real-time Substrate Visibility
             // If the chunk doesn't look like part of a JSON blob, it might be a log from the sub-tool
             if (!chunk.trim().startsWith('{') && !chunk.trim().startsWith('[')) {
@@ -61,7 +61,7 @@ async function callBridge<T>(operation: string, ...args: string[]): Promise<Resu
             }
         });
 
-        child.stderr.on('data', (data) => { 
+        child.stderr.on('data', (data) => {
             const chunk = data.toString();
             stderr += chunk;
             const lines = chunk.split('\n').filter((l: string) => l.trim());
@@ -78,8 +78,8 @@ async function callBridge<T>(operation: string, ...args: string[]): Promise<Resu
 
         child.on('close', (code) => {
             clearTimeout(timer);
-            _lastLatencyMs = Date.now() - start;
-            
+            _lastLatencyMs = CanonicalClock.getInstance().simulatedNow() - start;
+
             if (code !== 0) {
                 const msg = stderr.trim() || `Exit code ${code}`;
                 logger.error({ operation, args, msg }, 'RSMVBridge subprocess failed');
@@ -186,6 +186,16 @@ export interface BridgeHealthResult {
     cacheVersion?: number;
 }
 
+export interface BridgeVarbitResult {
+    id: number;
+    varid: number;       // Parent Varp ID
+    bitcount: number;    // Total bits consumed
+    lsb?: number;        // Least significant bit position (alias: bits[0])
+    msb?: number;        // Most significant bit position (alias: bits[1])
+    bits?: [number, number]; // [lsb, msb] pair from rsmv parser
+    [key: string]: any;  // Additional parser fields
+}
+
 // â”€â”€ RSMVBridge Singleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export class RSMVBridge {
@@ -202,16 +212,25 @@ export class RSMVBridge {
 
     /** Probe the live cache. Result is cached for 30s to prevent audit spam. */
     public async healthCheck(): Promise<Result<BridgeHealthResult>> {
-        const now = Date.now();
+        const now = CanonicalClock.getInstance().simulatedNow();
         if (this._lastHealthCheckResult && (now - this._lastHealthCheckTime < 30000)) {
             return this._lastHealthCheckResult;
         }
 
-        const result = await callBridge<BridgeHealthResult>('health');
-        this._healthy = result.ok && result.value.online;
-        this._lastHealthCheckTime = now;
-        this._lastHealthCheckResult = result;
-        return result;
+        try {
+            const result = await callBridge<BridgeHealthResult>('health');
+            this._healthy = result.ok && result.value.online;
+            this._lastHealthCheckTime = now;
+            this._lastHealthCheckResult = result;
+            return result;
+        } catch (e) {
+            logger.warn({ err: e }, '[RSMVBridge] Health check failed, defaulting to DEGRADED mode to prevent boot stall.');
+            const degraded = ok({ online: false, reason: 'Substrate diagnostic timeout: ESM resolution conflict.' });
+            this._healthy = false;
+            this._lastHealthCheckTime = now;
+            this._lastHealthCheckResult = degraded;
+            return degraded;
+        }
     }
 
     /** Returns true if the last healthCheck confirmed the cache is live. */
@@ -253,20 +272,33 @@ export class RSMVBridge {
         return await callBridge<any>('dbtables');
     }
 
-    public async getDBRows(): Promise<Result<any>> {
-        return await callBridge<any>('dbrows');
+    public async getDBRows(tableId?: number): Promise<Result<any>> {
+        const params = tableId !== undefined ? [tableId.toString()] : [];
+        return await callBridge<any>('dbrows', ...params);
     }
 
     public async getVarps(): Promise<Result<any>> {
         return await callBridge<any>('varplayer');
     }
 
+    public async getVarbit(id: number): Promise<Result<BridgeVarbitResult>> {
+        return await callBridge<BridgeVarbitResult>('varbit', String(id));
+    }
+
     public async getVarbits(): Promise<Result<any>> {
         return await callBridge<any>('varbits');
     }
 
+    public async getEnum(id: number): Promise<Result<any>> {
+        return await callBridge<any>('enum', String(id));
+    }
+
     public async getCollision(x: number, z: number, plane: number, xsize = 64, zsize = 64): Promise<Result<BridgeCollisionResult>> {
         return await callBridge<BridgeCollisionResult>('collision', String(x), String(z), String(plane), String(xsize), String(zsize));
+    }
+
+    public async getMapsquareTiles(chunkX: number, chunkZ: number): Promise<Result<{ chunkX: number, chunkZ: number, tiles: { x: number, z: number, plane: number, collision: number, height: number | null }[] }>> {
+        return await callBridge<any>('mapsquare_tiles', String(chunkX), String(chunkZ));
     }
 }
 

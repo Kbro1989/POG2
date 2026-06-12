@@ -1,11 +1,11 @@
 /**
- * RSMV BRIDGE â€” ESM Subprocess Bridge
+ * rsmv BRIDGE â€” ESM Subprocess Bridge
  * 
  * Called as a subprocess by CacheForensicsLimb, TopologyLimb, and KinematicsLimb.
  * Bridges the ESM/CommonJS boundary by running inside tsx (full ESM support)
  * and returning JSON to stdout.
  * 
- * Usage (called internally by RSMVBridge.ts):
+ * Usage (called internally by rsmvBridge.ts):
  *   npx tsx src/utils/rsmv_bridge.ts <operation> <arg1> [arg2]
  * 
  * Operations:
@@ -26,72 +26,57 @@ const __dirname = dirname(__filename);
 
 // â”€â”€ Substrate Discovery Logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-function findRSMVSubstrate(): string {
-    // 1. Explicit Environment Override
-    if (process.env['POG_RSMV_SUBSTRATE_PATH']) {
-        return process.env['POG_RSMV_SUBSTRATE_PATH'];
-    }
+function findrsmvSubstrate(): string {
+    // 1. Operational External Substrate (Verified Working)
+    const externalPath = 'D:\\pog2\\rsmv_inspector';
+    if (existsSync(externalPath)) return externalPath;
 
-    // 2. Local Workspace Sibling (Development Mode)
-    const siblingPath = resolve(__dirname, '..', '..', '..', 'rsmv_inspector');
-    if (existsSync(siblingPath)) return siblingPath;
+    // 2. Local Workspace Fallback
+    const localWorkspace = resolve(__dirname, '..', '..', 'rsmv_inspector');
+    if (existsSync(localWorkspace)) return localWorkspace;
 
-    // 3. Absolute POG2 Path (Internal Substrate)
-    const internalPath = resolve(__dirname, '..', '..', 'rsmv_inspector');
-    if (existsSync(internalPath)) return internalPath;
-
-    // 4. Sovereign Substrate Standard Location (D-sovereign- variation)
-    const sovereignPathDash = 'D:\\D-sovereign-\\cache_pedagogy\\rsmv_inspector';
-    if (existsSync(sovereignPathDash)) return sovereignPathDash;
-
-    const sovereignPath = 'D:\\sovereign\\cache_pedagogy\\rsmv_inspector';
-    if (existsSync(sovereignPath)) return sovereignPath;
-
-    // 5. User Home Directory (Global fallback)
-    const homeSubstrate = join(process.env['USERPROFILE'] || '', '.pog2', 'substrates', 'rsmv_inspector');
-    if (existsSync(homeSubstrate)) return homeSubstrate;
-
-    // Fallback to the most likely development path
-    return sovereignPathDash;
+    return externalPath;
 }
 
-const RSMV_PATH = findRSMVSubstrate();
-const CACHE_PATH = process.env['POG_RSMV_CACHE_DIR'] || 'C:\\ProgramData\\Jagex\\RuneScape';
+const rsmv_PATH = findrsmvSubstrate();
+const CACHE_PATH = process.env['POG_rsmv_CACHE_DIR'] || 'C:\\ProgramData\\Jagex\\RuneScape';
 
-async function loadRSMV() {
+const subFolder = existsSync(join(rsmv_PATH, 'src')) ? 'src' : '';
+
+async function loadrsmv() {
     // Check for source files in detected path
-    const sqlitePath = pathToFileURL(join(RSMV_PATH, 'src', 'cache', 'sqlite.ts')).href;
-    const opdecoderPath = pathToFileURL(join(RSMV_PATH, 'src', 'opdecoder.ts')).href;
-    const constantsPath = pathToFileURL(join(RSMV_PATH, 'src', 'constants.ts')).href;
-    
+    const sqlitePath = pathToFileURL(join(rsmv_PATH, subFolder, 'cache', 'sqlite.ts')).href;
+    const opdecoderPath = pathToFileURL(join(rsmv_PATH, subFolder, 'opdecoder.ts')).href;
+    const constantsPath = pathToFileURL(join(rsmv_PATH, subFolder, 'constants.ts')).href;
+
     try {
-        if (!existsSync(join(RSMV_PATH, 'src', 'cache', 'sqlite.ts'))) {
-            throw new Error(`RSMV Substrate not found at ${RSMV_PATH}`);
+        if (!existsSync(join(rsmv_PATH, subFolder, 'cache', 'sqlite.ts'))) {
+            throw new Error(`rsmv Substrate not found at ${rsmv_PATH}`);
         }
         const { GameCacheLoader } = await import(sqlitePath);
         const { parse } = await import(opdecoderPath);
-        const { cacheMajors, cacheConfigPages } = await import(constantsPath);
-        
-        return { GameCacheLoader, parse, cacheMajors, cacheConfigPages };
+        const { cacheMajors, cacheConfigPages, cacheMapFiles } = await import(constantsPath);
+
+        return { GameCacheLoader, parse, cacheMajors, cacheConfigPages, cacheMapFiles };
     } catch (e: any) {
-        console.error(`RSMVBridge import failed: ${e.message}`);
+        console.error(`rsmvBridge import failed: ${e.message}`);
         return null;
     }
 }
 
 async function getCacheLoader() {
-    const mods = await loadRSMV();
+    const mods = await loadrsmv();
     if (!mods) return null;
     try {
         const loader = new mods.GameCacheLoader(CACHE_PATH);
         loader.buildnr = 940;
-        return { loader, parse: mods.parse, cacheMajors: mods.cacheMajors, cacheConfigPages: mods.cacheConfigPages };
+        return { loader, parse: mods.parse, cacheMajors: mods.cacheMajors, cacheConfigPages: mods.cacheConfigPages, cacheMapFiles: mods.cacheMapFiles };
     } catch {
         return null;
     }
 }
 
-const [,, operation, ...args] = process.argv;
+const [, , operation, ...args] = process.argv;
 
 async function main() {
     if (operation === 'health') {
@@ -103,16 +88,16 @@ async function main() {
         try {
             // Try reading a known object to confirm cache is live
             const buf = await cs.loader.getFileById(cs.cacheMajors.objects || 16, 1);
-            
+
             // Check for Authoritative Master Index (255)
             const rootIndexExists = cs.loader.opentables.has(255);
             const status = rootIndexExists ? 'ONLINE (Authoritative)' : 'ONLINE (Standalone)';
-            
-            console.log(JSON.stringify({ 
-                online: !!buf, 
+
+            console.log(JSON.stringify({
+                online: !!buf,
                 status,
                 substrate: 'NXT_JCACHE',
-                cacheVersion: cs.loader.buildnr 
+                cacheVersion: cs.loader.buildnr
             }));
         } catch (e: any) {
             console.log(JSON.stringify({ online: false, reason: e.message }));
@@ -230,14 +215,16 @@ async function main() {
         try {
             const buffer = await cs.loader.getFileById(cs.cacheMajors.models || 47, id);
             if (!buffer) { console.log(JSON.stringify({ error: `Model ${id} not found` })); process.exit(1); }
-            
+
             // Try parseOb3Model from rsmv
             let modelData: any = null;
             try {
-                const rt7Path = pathToFileURL(join(RSMV_PATH, 'src', '3d', 'rt7model.js')).href;
+                const rt7Path = pathToFileURL(join(rsmv_PATH, subFolder, '3d', existsSync(join(rsmv_PATH, subFolder, '3d', 'rt7model.ts')) ? 'rt7model.ts' : 'rt7model.js')).href;
                 const { parseOb3Model } = await import(rt7Path);
                 modelData = parseOb3Model(buffer, cs.loader);
-            } catch {}
+            } catch (err) {
+                console.error('Failed to parse model:', err);
+            }
 
             if (modelData) {
                 let vertexCount = 0, triangleCount = 0;
@@ -316,17 +303,19 @@ async function main() {
         try {
             const MAJOR = 2; // Config major
             const MINOR = operation === 'dbtables' ? 40 : 41;
+            const tableIdFilter = args[0] ? parseInt(args[0]) : null;
             const archive = await cs.loader.getArchiveById(MAJOR, MINOR);
             const results: any[] = [];
             for (const file of archive) {
                 try {
                     const parsed = cs.parse[operation].read(file.buffer, cs.loader);
-                    results.push({ id: file.fileid, data: parsed });
+                    if (tableIdFilter !== null && parsed.tableId !== tableIdFilter) continue;
+                    results.push({ id: file.fileid, tableId: parsed.tableId, data: parsed });
                 } catch (e) {
                     // Skip malformed
                 }
             }
-            console.log(JSON.stringify({ operation, count: results.length, results }));
+            console.log(JSON.stringify({ operation, filter: tableIdFilter, count: results.length, results }));
         } catch (e: any) {
             console.log(JSON.stringify({ error: e.message }));
             process.exit(1);
@@ -354,6 +343,27 @@ async function main() {
                 }
             }
             console.log(JSON.stringify({ operation, count: results.length, results }));
+        } catch (e: any) {
+            console.log(JSON.stringify({ error: e.message }));
+            process.exit(1);
+        }
+        cs.loader.close?.();
+        process.exit(0);
+    }
+
+    if (operation === 'varbit') {
+        const id = parseInt(args[0]);
+        if (isNaN(id)) { console.log(JSON.stringify({ error: 'varbit requires a numeric id' })); process.exit(1); }
+        const cs = await getCacheLoader();
+        if (!cs) { console.log(JSON.stringify({ error: 'no_cache' })); process.exit(1); }
+        try {
+            const MAJOR = 2; // Config
+            const MINOR = cs.cacheConfigPages.varbits || 69;
+            const archive = await cs.loader.getArchiveById(MAJOR, MINOR);
+            const file = archive.find((f: any) => f.fileid === id);
+            if (!file) { console.log(JSON.stringify({ error: `Varbit ${id} not found in config archive` })); process.exit(1); }
+            const parsed = cs.parse.varbits.read(file.buffer, cs.loader);
+            console.log(JSON.stringify({ id, ...parsed }));
         } catch (e: any) {
             console.log(JSON.stringify({ error: e.message }));
             process.exit(1);
@@ -406,6 +416,24 @@ async function main() {
         process.exit(0);
     }
 
+    if (operation === 'enum') {
+        const id = parseInt(args[0]);
+        const cs = await getCacheLoader();
+        if (!cs) { console.log(JSON.stringify({ error: 'no_cache' })); process.exit(1); }
+        try {
+            const MAJOR = 17; // Archive 17: Enums
+            const buffer = await cs.loader.getFileById(MAJOR, id);
+            if (!buffer) { console.log(JSON.stringify({ error: `Enum ${id} not found` })); process.exit(1); }
+            const raw = cs.parse.enums.read(buffer, cs.loader);
+            console.log(JSON.stringify({ id, raw }));
+        } catch (e: any) {
+            console.log(JSON.stringify({ error: e.message }));
+            process.exit(1);
+        }
+        cs.loader.close?.();
+        process.exit(0);
+    }
+
     if (operation === 'collision') {
         const x = parseInt(args[0]);
         const z = parseInt(args[1]);
@@ -416,23 +444,88 @@ async function main() {
         const cs = await getCacheLoader();
         if (!cs) { console.log(JSON.stringify({ error: 'no_cache' })); process.exit(1); }
         try {
-            const mapsquarePath = pathToFileURL(join(RSMV_PATH, 'src', '3d', 'mapsquare.ts')).href;
+            const mapsquarePath = pathToFileURL(join(rsmv_PATH, subFolder, '3d', existsSync(join(rsmv_PATH, subFolder, '3d', 'mapsquare.ts')) ? 'mapsquare.ts' : 'mapsquare.js')).href;
             const { parseMapsquare } = await import(mapsquarePath);
-            
+
             // We need a padded area to ensure blending works at the edges
             const rect = { x: (x >> 6), z: (z >> 6), xsize: 1, zsize: 1 };
             const chunk = await parseMapsquare(cs.loader, rect.x, rect.z, { collision: true });
-            
+
             if (!chunk || !chunk.grid) {
                 throw new Error(`Failed to parse mapsquare [${rect.x}, ${rect.z}]`);
             }
 
             const collisionFile = chunk.grid.getHeightCollisionFile(x, z, plane, xsize, zsize, true);
-            
+
             console.log(JSON.stringify({
                 x, z, plane, xsize, zsize,
                 data: Array.from(collisionFile)
             }));
+        } catch (e: any) {
+            console.log(JSON.stringify({ error: e.message }));
+            process.exit(1);
+        }
+        cs.loader.close?.();
+        process.exit(0);
+    }
+
+    if (operation === 'mapsquare_tiles') {
+        const chunkX = parseInt(args[0]);
+        const chunkZ = parseInt(args[1]);
+
+        const cs = await getCacheLoader();
+        if (!cs) { console.log(JSON.stringify({ error: 'no_cache' })); process.exit(1); }
+        try {
+            const WORLD_STRIDE = 128;
+            const sqIndex = chunkX + chunkZ * WORLD_STRIDE;
+            const index = await cs.loader.getCacheIndex(cs.cacheMajors.mapsquares);
+            const sq = index.find((p: any) => p && p.minor === sqIndex);
+            
+            if (!sq) {
+                throw new Error(`Mapsquare index ${sqIndex} not found in cache index`);
+            }
+
+            const chunkArch = await cs.loader.getFileArchive(sq);
+            const nxtTilesSubIdx = sq.subindices.indexOf(cs.cacheMapFiles.square_nxt);
+            const legacyTilesSubIdx = sq.subindices.indexOf(cs.cacheMapFiles.squares);
+
+            const tiles: { x: number, z: number, plane: number, collision: number, height: number | null }[] = [];
+
+            if (nxtTilesSubIdx !== -1 && chunkArch[nxtTilesSubIdx]) {
+                const tilesNxt = cs.parse.mapsquareTilesNxt.read(chunkArch[nxtTilesSubIdx].buffer, cs.loader) as any;
+                if (tilesNxt) {
+                    for (let plane = 0; plane < 4; plane++) {
+                        const levelArray = tilesNxt[`level${plane}`];
+                        if (!levelArray) continue;
+                        for (let i = 0; i < levelArray.length; i++) {
+                            const tile = levelArray[i];
+                            if (!tile) continue;
+                            tiles.push({
+                                x: Math.floor(i / 66),
+                                z: i % 66,
+                                plane: plane,
+                                collision: tile.flags ?? 0,
+                                height: (tile.flags & 16 ? tile.rest?.waterheight : tile.height) ?? null
+                            });
+                        }
+                    }
+                }
+            } else if (legacyTilesSubIdx !== -1 && chunkArch[legacyTilesSubIdx]) {
+                const legacyTiles = cs.parse.mapsquareTiles.read(chunkArch[legacyTilesSubIdx].buffer, cs.loader) as any;
+                if (legacyTiles && legacyTiles.tiles) {
+                    for (const tile of legacyTiles.tiles) {
+                        tiles.push({
+                            x: tile.x ?? 0,
+                            z: tile.z ?? 0,
+                            plane: tile.plane ?? 0,
+                            collision: tile.flags ?? 0,
+                            height: tile.height ?? null
+                        });
+                    }
+                }
+            }
+
+            console.log(JSON.stringify({ chunkX, chunkZ, tiles }));
         } catch (e: any) {
             console.log(JSON.stringify({ error: e.message }));
             process.exit(1);
@@ -446,3 +539,4 @@ async function main() {
 }
 
 main();
+

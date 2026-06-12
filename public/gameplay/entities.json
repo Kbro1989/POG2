@@ -1,0 +1,67 @@
+{
+  "lastUpdated": 1779671607517,
+  "tick": 29,
+  "npcs": [
+    {
+      "entityKey": "npc_undefined_3232_3216",
+      "id": null,
+      "name": "Enum 207 Node 3",
+      "coord": {
+        "x": 3232,
+        "y": 3216,
+        "plane": 0
+      }
+    },
+    {
+      "entityKey": "npc_undefined_3210_3205",
+      "id": null,
+      "name": "Enum 1588 Node 369",
+      "coord": {
+        "x": 3210,
+        "y": 3205,
+        "plane": 0
+      }
+    },
+    {
+      "entityKey": "npc_undefined_3263_3253",
+      "id": null,
+      "name": "Enum 1588 Node 370",
+      "coord": {
+        "x": 3263,
+        "y": 3253,
+        "plane": 0
+      }
+    },
+    {
+      "entityKey": "npc_undefined_3233_3222",
+      "id": null,
+      "name": "Enum 1825 Node 51",
+      "coord": {
+        "x": 3233,
+        "y": 3222,
+        "plane": 0
+      }
+    },
+    {
+      "entityKey": "npc_undefined_3222_3219",
+      "id": null,
+      "name": "Enum 3832 Node 1",
+      "coord": {
+        "x": 3222,
+        "y": 3219,
+        "plane": 0
+      }
+    },
+    {
+      "entityKey": "npc_undefined_3233_3221",
+      "id": null,
+      "name": "Enum 4457 Node 2",
+      "coord": {
+        "x": 3233,
+        "y": 3221,
+        "plane": 0
+      }
+    }
+  ],
+  "groundItems": []
+}

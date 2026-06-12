@@ -45,7 +45,7 @@ for (const file of checkFiles) {
     const lines = content.split('\n');
     for (let i = 0; i < lines.length; i++) {
         if (lines[i].match(/:\s*any\s+(of|in)\b/)) {
-            console.log(`REMAINING in ${file} line ${i+1}: ${lines[i].trim()}`);
+            console.log(`REMAINING in ${file} line ${i + 1}: ${lines[i].trim()}`);
         }
     }
 }

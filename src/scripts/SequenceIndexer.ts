@@ -30,9 +30,9 @@ async function index() {
     const stream = fs.createReadStream(SEQUENCES_PATH, { encoding: 'utf8' });
     const rl = readline.createInterface({ input: stream, terminal: false });
 
-    let count = 0;
-    let currentObject: any = null;
-    let isParsing = false;
+    const count = 0;
+    const currentObject: any = null;
+    const isParsing = false;
 
     db.transaction(() => {
         // This won't work with async streaming inside a transaction easily
@@ -61,3 +61,4 @@ async function index() {
 index().catch(err => {
     logger.error({ err }, 'Kinematic Indexing failed.');
 });
+

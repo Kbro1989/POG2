@@ -1,4 +1,4 @@
-﻿import { DumpRefiller } from '../utils/DumpRefiller.js';
+import { DumpRefiller } from '../utils/DumpRefiller.js';
 import { createLogger } from '../utils/logger.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -36,26 +36,26 @@ async function runValidation() {
     const decompExits = fs.existsSync(decompPath);
 
     if (spatialSuccess && decompSuccess && spatialExits && decompExits) {
-        logger.info('âœ… REFILL VALIDATION PASSED: Multi-node re-hydration successful.');
+        logger.info('✅ REFILL VALIDATION PASSED: Multi-node re-hydration successful.');
         
         // 4. Sample check for semantic mapping
         const spatialContent = fs.readFileSync(spatialPath, 'utf8');
         if (spatialContent.includes('export const UnpackRGBAToIntegerFloat')) {
-            logger.info('âœ… Semantic Mapping Verified for module-7244.');
+            logger.info('✅ Semantic Mapping Verified for module-7244.');
         } else {
-            logger.error('âŒ Semantic Mapping mismatch in module-7244.');
+            logger.error('❌ Semantic Mapping mismatch in module-7244.');
         }
 
         const decompContent = fs.readFileSync(decompPath, 'utf8');
         if (decompContent.includes('export const decompressCacheBlock')) {
-            logger.info('âœ… Semantic Mapping Verified for module-1447.');
+            logger.info('✅ Semantic Mapping Verified for module-1447.');
         } else {
-            logger.error('âŒ Semantic Mapping mismatch in module-1447.');
+            logger.error('❌ Semantic Mapping mismatch in module-1447.');
         }
 
         console.log(`\n[PHASE D CHECKPOINT] Master Node Refill: COMPLETE\n`);
     } else {
-        logger.error('âŒ REFILL VALIDATION FAILED: Node persistence or re-hydration error.');
+        logger.error('❌ REFILL VALIDATION FAILED: Node persistence or re-hydration error.');
         process.exit(1);
     }
 }
@@ -64,3 +64,4 @@ runValidation().catch(err => {
     logger.error({ err }, 'Validation process crashed.');
     process.exit(1);
 });
+

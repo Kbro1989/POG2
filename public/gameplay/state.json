@@ -1,0 +1,20 @@
+{
+  "timestamp": 1779671604490,
+  "tick": 25,
+  "avatar": {
+    "coord": {
+      "x": 3222,
+      "y": 3217,
+      "plane": 0
+    },
+    "hp": 1000,
+    "maxHp": 1000,
+    "adrenaline": 880,
+    "bloodlustStacks": 0,
+    "intent": null,
+    "lockTicks": 0
+  },
+  "activeModule": "none",
+  "npcCount": 6,
+  "groundItemCount": 0
+}

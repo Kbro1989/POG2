@@ -1,5 +1,5 @@
-﻿
-import { type Result, type ProsodyVector, ok, YaoState } from '../../core/models.js'
+
+import { type Result, type ProsodyVector, ok, YaoState, CognitivePolarity } from '../../core/models.js'
 import { ModelClient } from '../../clients/ModelClient.js';
 import { GutenbergLimb } from './GutenbergLimb.js';
 import { NarrativeSegment } from '../../utils/NarrativeExtractor.js';
@@ -55,7 +55,9 @@ export class StoryboardLimbV2 {
         private readonly kinematics: KinematicsLimb,
         private readonly forensics: CacheForensicsLimb,
         private readonly modelName: string = 'deepseek-r1:8b'
-    ) { }
+    ) {
+        this.gutenberg.enable();
+    }
 
     /**
      * analyzeGlobalContext - "Reads the story before making scenes".
@@ -152,11 +154,13 @@ Respond strictly in this JSON format:
         outputPath?: string,
         personality?: string
     ): Promise<Result<StoryboardScene[]>> {
-        // Retrieve current YaoState/Hexagram context
+        // Neurological Context
+        const contract = this.hexagram.getContract();
         const yaostate = this.hexagram.getYaoState();
-        const interpretation = this.hexagram.getInterpretation();
         const emotionalPool = this.hexagram.getEmotionalPool();
-        const yinYang = this.hexagram.isYin() ? 'Yin (Static/Receptive)' : 'Yang (Active/Projective)';
+        const interpretation = this.hexagram.getInterpretation();
+        const ternary = contract.polarity;
+        const yinYang = ternary === CognitivePolarity.YINYANG ? 'YinYang (Equilibrium/Integration)' : (ternary === CognitivePolarity.YIN ? 'Yin (Static/Receptive)' : 'Yang (Active/Projective)');
         const aesthetics = this.hexagram.getGenerativeAesthetics();
 
         const prompt = `
@@ -416,6 +420,31 @@ Vary prosody based on narrative tension and ${yaostate} influence.
     }
 
     /**
+     * generateQuestDerivative - Generates a full quest structure based on a literary source.
+     * Uses GutenbergLimb's authoritative gameplay substrate.
+     */
+    public async generateQuestDerivative(bookId: number, sceneCount: number = 5): Promise<Result<any>> {
+        const scenesRes = await this.generateScenes(bookId, sceneCount);
+        if (!scenesRes.ok) return scenesRes;
+
+        const narrativeBeats = scenesRes.value.map(s => s.description);
+        const questStructure = this.gutenberg.deriveQuestStructure(narrativeBeats);
+
+        // Enhance with authoritative pedagogy references
+        questStructure.stages = questStructure.stages.map((stage: any, i: number) => {
+            const scene = scenesRes.value[i];
+            const npcPedagogy = scene.modelId ? this.gutenberg.getAuthoritativePedagogy('dbrow', scene.modelId) : null;
+            return {
+                ...stage,
+                grounding: npcPedagogy ? { npcId: scene.modelId, pedagogy: npcPedagogy } : null
+            };
+        });
+
+        logger.info({ bookId, sceneCount }, 'Quest Derivative generated from narrative substrate.');
+        return ok(questStructure);
+    }
+
+    /**
      * performForensicCasting - Maps characters torsmv IDs using affective resonance.
      */
     public async performForensicCasting(scenes: StoryboardScene | StoryboardScene[]): Promise<Result<StoryboardScene[]>> {
@@ -474,7 +503,7 @@ Vary prosody based on narrative tension and ${yaostate} influence.
             // STAGE 1: SUBSTRATE FORENSICS â€” High-Fidelity Match
             // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             if (speaker && speaker !== 'narrator' && speaker !== 'pov' && speaker !== 'player') {
-                const searchRes = this.forensics.searchByName(speaker, 'npc');
+                const searchRes = await this.forensics.search(speaker, 'npc');
                 if (searchRes.ok && searchRes.value.length > 0) {
                     const bestMatch = searchRes.value[0];
                     if (bestMatch.matchScore === 1.0) { // Exact match
@@ -489,6 +518,15 @@ Vary prosody based on narrative tension and ${yaostate} influence.
                             };
                             logger.info({ scene: scene.index, name: bestMatch.name, npcId: bestMatch.id }, 'Forensic Casting: Exact Substrate Match Resolved.');
                         }
+                    }
+                }
+
+                // Stage 1.5: Authoritative Pedagogy Check (Atlas System)
+                if (!scene.modelId) {
+                    const pedagogy = this.gutenberg.getAuthoritativePedagogy('dbrow', speaker);
+                    if (pedagogy) {
+                        scene.modelId = pedagogy.id;
+                        logger.info({ scene: scene.index, speaker, npcId: pedagogy.id }, 'Forensic Casting: Authoritative Pedagogy Match Found.');
                     }
                 }
             }
@@ -713,3 +751,4 @@ Respond JSON ONLY: {"race":"string","role":"string","combatLevel":number,"boneCo
         };
     }
 }
+

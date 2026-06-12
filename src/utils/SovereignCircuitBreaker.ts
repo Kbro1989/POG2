@@ -1,5 +1,6 @@
-﻿import { createLogger } from './logger.js';
+import { createLogger } from './logger.js';
 import { CircuitState } from '../core/models.js';
+import { ClockAuthorityRegistry, ClockDomain } from './ClockAuthorityRegistry.js';
 
 const logger = createLogger('SovereignCircuitBreaker');
 
@@ -57,7 +58,7 @@ export class SovereignCircuitBreaker {
 
     private onFailure(error: Error): void {
         this.failureCount++;
-        this.lastFailureTime = Date.now();
+        this.lastFailureTime = ClockAuthorityRegistry.resolveTime(ClockDomain.EXTERNAL, 'SovereignCircuitBreaker');
         
         logger.error({ 
             name: this.options.name, 
@@ -77,7 +78,7 @@ export class SovereignCircuitBreaker {
 
     private checkReset(): void {
         if (this.state === CircuitState.Open && this.lastFailureTime) {
-            const elapsed = Date.now() - this.lastFailureTime;
+            const elapsed = ClockAuthorityRegistry.resolveTime(ClockDomain.EXTERNAL, 'SovereignCircuitBreaker') - this.lastFailureTime;
             if (elapsed >= this.options.resetTimeoutMs) {
                 this.state = CircuitState.HalfOpen;
                 logger.info({ name: this.options.name }, 'Circuit entering HALF_OPEN (Testing Substrate).');
@@ -85,3 +86,4 @@ export class SovereignCircuitBreaker {
         }
     }
 }
+

@@ -1,10 +1,11 @@
-﻿import { exec } from 'child_process';
+import { exec } from 'child_process';
 import { promisify } from 'util';
-import { type TSCError, CognitiveChoice, YaoState, BuildStatus, HealthStatus, type ExecutionPlan } from '../core/models.js';
+import { type TSCError, CognitiveChoice, YaoState, BuildStatus, HealthStatus, type ExecutionPlan, CognitivePolarity } from '../core/models.js';
 import { ModelClient as ModelExecutor } from '../clients/ModelClient.js';
 import { ArchitectureDigest } from '../core/ArchitectureDigest.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import { basename, join } from 'path';
+import { getPackageRoot } from '../utils/SovereignPathResolver.js';
 import * as fs from 'fs';
 
 // Biological Limbs for Holistic Immunology
@@ -25,8 +26,10 @@ const logger = createLogger('SelfHealingEngine');
 export class SelfHealingEngine {
     private readonly architectureDigest: ArchitectureDigest;
 
+    private lastGcTime: number = 0;
+
     constructor(
-        projectRoot: string,
+        private readonly projectRoot: string,
         private readonly executor: ModelExecutor,
         private readonly hexagramManager: HexagramManager,
         private readonly correctionModel: string = 'deepseek-r1:8b',
@@ -38,17 +41,48 @@ export class SelfHealingEngine {
         private readonly shellEngine?: ShellEngine
     ) {
         this.architectureDigest = new ArchitectureDigest(projectRoot);
+        
+        // Register metabolic heartbeat for Branch GC
+        import('../utils/CanonicalClock.js').then(({ CanonicalClock }) => {
+            CanonicalClock.getInstance().registerPulse({
+                domain: 'metabolic',
+                name: 'SelfHealingEngine.heartbeat',
+                priority: 10,
+                callback: () => this.heartbeat()
+            });
+        }).catch(err => logger.error({ err }, 'Failed to register SelfHealingEngine heartbeat'));
+    }
+
+    private async heartbeat(): Promise<void> {
+        const now = Date.now();
+        
+        // Daily GC (24h = 86400000ms)
+        // Set to 86400000 in production, maybe lower for testing
+        if (now - this.lastGcTime > 86400000) {
+            try {
+                await this.selfClean({
+                    branchMaxAgeDays: 14,
+                    dryRun: true, // Start dry, flip after 1 week of clean logs
+                    protectPatterns: ['release/*', 'hotfix/*']
+                });
+            } catch (err: any) {
+                logger.error({ err: err.message }, 'Scheduled Branch GC failed');
+            }
+            this.lastGcTime = now;
+        }
     }
 
     async diagnose(error: TSCError, plan?: ExecutionPlan): Promise<{ decision: CognitiveChoice; reasoning: string }> {
         const filePath = error.file;
+        const contract = this.hexagramManager.getContract();
         const yao = this.hexagramManager.getYaoState?.() || YaoState.YoungYang;
-        const isYin = this.hexagramManager.isYin?.() || false;
+        const ternary = contract.polarity;
+        const riskTolerance = contract.behavioralBias.riskTolerance;
         
-        logger.info({ code: error.code, file: filePath, yao, isYin }, 'Diagnosing error with Cognitive Immunology rules');
+        logger.info({ code: error.code, file: filePath, yao, ternary, riskTolerance }, 'Diagnosing error with Cognitive Immunology rules');
 
         // Cognitive Immunology Phase 1: Chaos Constraint
-        if (yao === YaoState.OldMixed) {
+        if (!contract.gates.allowStructuralRepair) {
             await this.hexagramManager.pinCard(4, 'Immunology Restraint', `Refusing algorithmic auto-repair of [${filePath || error.code}] due to chaotic OldMixed emotional state.`, yao);
             return {
                 decision: CognitiveChoice.META,
@@ -76,11 +110,11 @@ export class SelfHealingEngine {
             await this.hexagramManager.pinCard(1, 'Structural Breach', `Critical fault in ${filePath}: ${senseCheck.analysis}`, YaoState.OldYin);
             
             // Cognitive Immunology Phase 2: Meditative Constraints
-            if (isYin) {
-                 logger.info('System is highly Yin (Receptive). Downgrading critical auto-repair severity to observational.');
+            if (ternary === CognitivePolarity.YIN || riskTolerance < 0.3) {
+                 logger.info({ ternary, riskTolerance }, 'System is highly Yin or risk-averse. Downgrading critical auto-repair severity to observational.');
                  return {
                      decision: CognitiveChoice.META,
-                     reasoning: `Observational Restraint: Critical structural break in [${filePath}], but system is highly Yin. Prioritizing manual developer observation or Read-Only Shell diagnostics over aggressive auto-patching.`
+                     reasoning: `Observational Restraint: Critical structural break in [${filePath}], but system is in ${ternary} mode (Risk: ${riskTolerance}). Prioritizing manual developer observation.`
                  };
             }
             
@@ -92,7 +126,7 @@ export class SelfHealingEngine {
 
         // Cognitive Immunology Phase 3: Holistic Visual Diagnostic for UI
         const isUI = filePath?.toLowerCase().includes('renderer') || filePath?.toLowerCase().includes('ui') || filePath?.toLowerCase().includes('dashboard');
-        if (isUI && !isYin && (this.visionEngine || this.spatialVisionEngine) && this.chromaEngine) {
+        if (isUI && ternary === CognitivePolarity.YANG && (this.visionEngine || this.spatialVisionEngine) && this.chromaEngine) {
              logger.info('UI fault detected during assertive Yang state. Invoking Visual/Spatial Sensory array.');
              await this.hexagramManager.pinCard(3, 'Visual Diagnostic', `Deploying Chromanumber and SpatialVision to physically inspect failure in ${filePath}`, yao);
              // We do not await full vision execution here, we just shape the decision heuristic to request physical inspection
@@ -210,7 +244,7 @@ export class SelfHealingEngine {
         // 4. Code-level Healing (Physical TS file fix)
         // Ensure path exists and is a .ts file (avoids trying to run CodeEngine on virtual nodes or directories)
         if (this.codeEngine && nodeHealth.path && nodeHealth.path.endsWith('.ts')) {
-            const absolutePath = join(process.cwd(), nodeHealth.path);
+            const absolutePath = join(getPackageRoot(), nodeHealth.path);
             if (fs.existsSync(absolutePath)) {
                 logger.info({ file: absolutePath }, 'Routing degraded node to CodeEngine.fix()');
                 const fixRes = await this.codeEngine.fix({ filePath: absolutePath, dryRun: false });
@@ -228,6 +262,75 @@ export class SelfHealingEngine {
         };
     }
 
+    /**
+     * Git Hygiene (Branch GC): Scan local branches and delete those exceeding age thresholds.
+     * Running daily on metabolic heartbeat.
+     */
+    async selfClean(opts: { 
+        branchMaxAgeDays: number; 
+        dryRun: boolean;
+        protectPatterns?: string[]; // e.g., ['main', 'master', 'release/*']
+    }): Promise<{ prunedBranches: string[]; protectedBranches: string[] }> {
+        // Dynamic import to avoid early startup cost or assuming simpleGit is strictly required for boot
+        const { default: simpleGit } = await import('simple-git');
+        const git = simpleGit(this.projectRoot);
+        const branches = await git.branchLocal();
+        const now = Date.now();
+        const pruned: string[] = [];
+        const protected_: string[] = [];
+        
+        const protect = new Set([
+            'main', 'master', 'dev', 'develop',
+            ...(opts.protectPatterns || [])
+        ]);
+
+        for (const branch of branches.all) {
+            // Very simple pattern match check (e.g. release/* matches release/1.0)
+            const isProtectedPattern = Array.from(protect).some(pattern => {
+                if (pattern.endsWith('/*')) {
+                    const base = pattern.slice(0, -2);
+                    return branch.startsWith(base + '/');
+                }
+                return branch === pattern;
+            });
+
+            if (isProtectedPattern || branch === branches.current) {
+                protected_.push(branch);
+                continue;
+            }
+
+            const log = await git.log({ from: branch, to: 'HEAD', maxCount: 1 });
+            const lastCommit = log.latest?.date 
+                ? new Date(log.latest.date).getTime() 
+                : 0;
+            const ageDays = (now - lastCommit) / (1000 * 60 * 60 * 24);
+
+            if (ageDays > opts.branchMaxAgeDays) {
+                if (!opts.dryRun) {
+                    try {
+                        await git.deleteLocalBranch(branch, true);
+                        pruned.push(branch);
+                    } catch (err: any) {
+                        logger.error({ branch, err: err.message }, 'Failed to delete branch');
+                    }
+                } else {
+                    logger.info(`[GC DryRun] Would delete branch: ${branch} (age: ${Math.round(ageDays)} days)`);
+                    pruned.push(branch);
+                }
+            } else {
+                protected_.push(`${branch} (Within age limit)`);
+            }
+        }
+
+        logger.info({
+            pruned: pruned.length,
+            protected: protected_.length,
+            dryRun: opts.dryRun
+        }, 'SelfHealingEngine: branch GC complete');
+
+        return { prunedBranches: pruned, protectedBranches: protected_ };
+    }
+
     public healthCheck(): { online: boolean; details: string } {
         const digOk = !!this.architectureDigest;
         const hexOk = !!this.hexagramManager;
@@ -237,3 +340,4 @@ export class SelfHealingEngine {
         };
     }
 }
+

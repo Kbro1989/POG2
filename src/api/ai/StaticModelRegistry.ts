@@ -1,4 +1,4 @@
-﻿import { type AICapability, type AITaskType } from '../../core/models.js';
+import { type AICapability, type AITaskType } from '../../core/models.js';
 
 export const CatalogMetadata = {
     tasks: {
@@ -74,26 +74,26 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Gemini 1.5 Pro',
         serviceType: 'GEMINI',
         taskType: 'TEXT',
-        modelId: 'gemini-1.5-pro',
+        modelId: 'gemini-3.0-pro',
         description: 'Google Gemini 1.5 Pro - High reasoning capability.',
         passthroughEnabled: true
     },
     'gold_huggingface_kimi': {
         id: 'gold_huggingface_kimi',
-        name: 'Kimi K2.5 Thinking (HuggingFace)',
+        name: 'Kimi K2.6 Thinking (HuggingFace)',
         serviceType: 'HUGGINGFACE',
         taskType: 'TEXT',
-        modelId: 'kimi-k2.5-think',
-        description: 'TOP-TIER REASONING: Kimi K2.5 thinking model via HuggingFace.',
+        modelId: 'kimi-k2.6-think',
+        description: 'TOP-TIER REASONING: Kimi K2.6 thinking model via HuggingFace.',
         passthroughEnabled: true,
         fallback: 'gold_ollama_kimi'
     },
     'gold_ollama_kimi': {
         id: 'gold_ollama_kimi',
-        name: 'Kimi K2.5 Thinking (Local)',
+        name: 'Kimi K2.6 Thinking (Local)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'kimi-k2.5-think',
+        modelId: 'kimi-k2.6:cloud',
         description: 'Local instance of Kimi Thinking.',
         passthroughEnabled: true
     },
@@ -102,7 +102,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Qwen 2.5 Coder 7B (Local)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'deepseek-r1:8b',
+        modelId: 'qwen2.5-coder:7b-instruct-q4_K_M',
         description: 'Standard local coding workhorse.',
         passthroughEnabled: true
     },
@@ -111,7 +111,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Qwen 2.5 Coder 14B (Local)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'deepseek-r1:8b',
+        modelId: 'deepseek-r1:32b',
         description: 'Complex local coding tasks.',
         passthroughEnabled: true
     },
@@ -129,7 +129,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Sovereign Thinker (Local)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'deepseek-r1:8b',
+        modelId: 'deepseek-r1:32b',
         description: 'DEEP THOUGHT: local Coder/Thinker for orchestration.',
         passthroughEnabled: true,
         fallback: 'gold_qwen_2_5_coder_7b'
@@ -139,7 +139,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Sovereign Core (Local)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'deepseek-r1:8b',
+        modelId: 'gemma4:26b',
         description: 'PRIMARY REASONING: Local 14B planning and architectural core.',
         passthroughEnabled: true,
         fallback: 'gold_qwen_2_5_coder_7b'
@@ -169,7 +169,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Sovereign Master (Local DeepSeek)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'deepseek-coder:33b-instruct-q4_K_M',
+        modelId: 'deepseek-r1:32b',
         description: 'LOCAL MASTER: 19GB 33B local coder for peak sovereign reasoning.',
         passthroughEnabled: true,
         fallback: 'gold_qwen_2_5_coder_14b'
@@ -189,7 +189,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'Yi-Coder 9B',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'yi-coder:9b-chat-q5_K_M',
+        modelId: 'gemma4:26b',
         description: 'LOCAL TIER: Balanced local chat and snapshotting.',
         passthroughEnabled: true,
         fallback: 'gold_qwen_2_5_coder_7b'
@@ -199,7 +199,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'DeepSeek Coder 6.7B',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'deepseek-coder:6.7b-instruct-q4_K_M',
+        modelId: 'deepseek-r1:32b',
         description: 'LOCAL TIER: High-fidelity code critique and validation.',
         passthroughEnabled: true,
         fallback: 'gold_qwen_2_5_coder_7b'
@@ -209,7 +209,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'TinyLlama 1.1B (Monitor)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'tinyllama:latest',
+        modelId: 'gemma4:26b',
         description: 'MONITOR TIER: Ultra-fast local monitoring and intent classification.',
         passthroughEnabled: true
     },
@@ -246,7 +246,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'LLaVA (Local Vision)',
         serviceType: 'OLLAMA',
         taskType: 'VISION',
-        modelId: 'llava:latest',
+        modelId: 'llava-phi3:latest',
         description: 'LOCAL VISION: Image understanding and analysis.',
         passthroughEnabled: true
     },
@@ -255,7 +255,7 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         name: 'DeepSeek Coder (Monitor)',
         serviceType: 'OLLAMA',
         taskType: 'TEXT',
-        modelId: 'deepseek-coder:latest',
+        modelId: 'deepseek-r1:8b',
         description: 'SIDE TIER: Rapid follower brain for real-time interaction and instant reactions.',
         passthroughEnabled: true
     },
@@ -287,3 +287,4 @@ export const StaticModelRegistry: Record<string, AICapability> = {
         passthroughEnabled: true
     }
 };
+

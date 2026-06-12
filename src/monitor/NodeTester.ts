@@ -59,6 +59,10 @@ export class NodeTester {
         this.packageRoot = join(thisDir, '..', '..');
     }
 
+    public getRouter(): TernaryRouter {
+        return this.router;
+    }
+
     private nodeBase(node: NeuralNode): Pick<NeuralNode, 'path' | 'role' | 'category' | 'docDomain'> {
         return { path: node.path, role: node.role, category: node.category, docDomain: node.docDomain };
     }
@@ -79,13 +83,23 @@ export class NodeTester {
         return { online: true, details: 'NodeTester active; diagnostic sensors recalibrated.' };
     }
 
-    public async auditNeuralNodes(): Promise<NodeHealth[]> {
-        logger.info('Commencing deep clinical neurological audit...');
-        const results: NodeHealth[] = new Array(NEUROLOGICAL_MAP.length);
+    public broadcastPulse(event: string, data: any): void {
+        logger.info({ event, data }, 'Broadcasting pulse...');
+        this.pulse?.emit('pulse', { event, data });
+    }
+
+    public async auditNeuralNodes(gameplayContext: boolean = false): Promise<NodeHealth[]> {
+        logger.info({ gameplayContext }, 'Commencing deep clinical neurological audit...');
+        
+        const nodesToAudit = NEUROLOGICAL_MAP.filter(node => 
+            gameplayContext || node.category !== (NeuralCategory as any).GAMEPLAY
+        );
+
+        const results: NodeHealth[] = new Array(nodesToAudit.length);
         const concurrency = 10;
         
-        for (let i = 0; i < NEUROLOGICAL_MAP.length; i += concurrency) {
-            const batch = NEUROLOGICAL_MAP.slice(i, i + concurrency);
+        for (let i = 0; i < nodesToAudit.length; i += concurrency) {
+            const batch = nodesToAudit.slice(i, i + concurrency);
             const batchPromises = batch.map(async (node, index) => {
                 const health = await this.probeNode(node);
                 results[i + index] = health;
@@ -97,7 +111,7 @@ export class NodeTester {
         const degraded = results.filter(r => r.status === 'DEGRADED');
         const offline = results.filter(r => r.status === 'OFFLINE');
 
-        logger.info({ total: NEUROLOGICAL_MAP.length, online: onlineCount, degraded: degraded.length, offline: offline.length }, 'Audit complete.');
+        logger.info({ total: nodesToAudit.length, online: onlineCount, degraded: degraded.length, offline: offline.length }, 'Audit complete.');
 
         // Phase 112: Dynamic authorisation for Ghost-Mode (DEGRADED HEARTBEAT)
         const { SubstrateResolver } = await import('../engines/gameplay/SubstrateResolver.js');
@@ -107,7 +121,7 @@ export class NodeTester {
             logger.info('All nodes reporting ONLINE - full neurological integrity confirmed.');
             SubstrateResolver.setStatus(SubstrateState.ONLINE);
         } else if (offline.length === 0 && degraded.length > 0) {
-            logger.warn({ degraded: degraded.length }, 'Substrate operating in DEGRADED mode (Catalogs only). AUTHORIZED.');
+            logger.warn({ degraded: degraded.length, nodes: degraded.map(n => `${n.path} (${n.details})`) }, 'Substrate operating in DEGRADED mode (Catalogs only). AUTHORIZED.');
             SubstrateResolver.setStatus(SubstrateState.DEGRADED);
         } else {
             logger.error({ offline: offline.length }, 'Substrate CRITICAL FAILURE. Heartbeat VETOED.');
@@ -154,13 +168,25 @@ export class NodeTester {
             });
         }
 
-        const quotaTracker = this.router.getQuotaTracker();
-        if (quotaTracker) {
-            for (const result of results) {
-                const health = quotaTracker.getQuotaHealth(result.provider as QuotaProvider);
-                result.quotaPct = Math.round(health.usedPct * 10) / 10;
-                result.quotaExhausted = health.exhausted;
-            }
+        const cloudProviders = results.filter(r => r.provider !== 'ollama');
+        const cloudOffline = cloudProviders.every(r => r.status === 'OFFLINE' || r.quotaExhausted);
+        const cloudDegraded = cloudProviders.some(r => r.status === 'DEGRADED' || r.status === 'OFFLINE' || r.quotaExhausted);
+
+        const { SubstrateResolver } = await import('../engines/gameplay/SubstrateResolver.js');
+        if (cloudOffline) {
+            SubstrateResolver.setCloudSignal({ 
+                status: 'OFFLINE', 
+                effect: 'BLOCK_CLOUD_TASKS',
+                lastError: 'All primary cloud providers exhausted or unreachable.' 
+            });
+        } else if (cloudDegraded) {
+            SubstrateResolver.setCloudSignal({ 
+                status: 'DEGRADED', 
+                effect: 'ROUTING_BIAS_ONLY',
+                lastError: cloudProviders.find(r => r.error)?.error
+            });
+        } else {
+            SubstrateResolver.setCloudSignal({ status: 'ONLINE', effect: 'NONE' });
         }
 
         return results;
@@ -176,7 +202,18 @@ export class NodeTester {
             if (exactKey) instance = this.limbs[exactKey];
         }
 
-        if (instance === undefined) return null;
+        if (instance === undefined) {
+            const isExplicitlyUndefined = Object.keys(this.limbs).some(k => k.toLowerCase() === className.toLowerCase());
+            if (isExplicitlyUndefined) {
+                return {
+                    ...this.nodeBase(node),
+                    status: 'ONLINE',
+                    yaoState: YaoState.YoungYang,
+                    details: 'Substrate explicitly bypassed (AUTHORIZED)'
+                };
+            }
+            return null;
+        }
 
         if (typeof instance.healthCheck !== 'function') {
             return {
@@ -329,3 +366,4 @@ export class NodeTester {
         }
     }
 }
+

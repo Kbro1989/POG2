@@ -1,15 +1,15 @@
-﻿import fs from 'fs';
+import fs from 'fs';
 import path from 'path';
 
 /**
- * ðŸ§¬ SovereignSandboxLimb
+ * 🧬 SovereignSandboxLimb
  * The 'Lua-inspired Editor' for POG2 Sandbox Game Nodes.
  * Mirrors the Morrowind MWSE-Lua 'writeGameStateFile' pattern.
  */
 export class SovereignSandboxLimb {
   private sandboxPath = 'D:\\sovereign\\memory\\pedagogy\\sandbox_synthesis.json';
 
-  constructor() {}
+  constructor() { }
 
   /**
    * POG2 Editorial: Sculpt the sandbox node.
@@ -39,7 +39,7 @@ export class SovereignSandboxLimb {
           z: z,
           plane: 0,
           rotation: 0,
-          modelIds: [] // RSMV MeshLoader will resolve these from cache at runtime
+          modelIds: [] // rsmv MeshLoader will resolve these from cache at runtime
         });
         break;
       }
@@ -76,3 +76,4 @@ export class SovereignSandboxLimb {
     return `Success: ${action} manifest in Sandbox Hub.`;
   }
 }
+

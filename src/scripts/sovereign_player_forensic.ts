@@ -42,11 +42,12 @@ async function run() {
         try {
             const buf = await source.getFileById(cacheMajors.npcs, id);
             const npc = parse.npc.read(buf, source);
-            
-            if (npc.name && replicaKeywords.some(k => npc.name.includes(k))) {
+
+            const npcName = npc.name || "Unknown";
+            if (npcName && replicaKeywords.some(k => npcName.includes(k))) {
                 const entry: any = {
                     id,
-                    name: npc.name,
+                    name: npcName,
                     combat: npc.combat || 0,
                     models: npc.models || [],
                     headModels: npc.headModels || [],
@@ -64,7 +65,10 @@ async function run() {
                 playerNPCs.push(entry);
                 console.log(`   🎯 NPC ${id}: "${npc.name}" combat=${entry.combat} models=${entry.models.length}`);
             }
-        } catch (e) {}
+        } catch (_error) {
+            // [SILENT NECROSIS LOGGER]
+            console.warn("[SILENT NECROSIS] Caught in sovereign_player_forensic: ", _error);
+        }
         if (id % 10000 === 0) console.log(`   NPC scan: ${id}...`);
     }
     console.log(`✅ Found ${playerNPCs.length} Player-like NPCs`);
@@ -74,8 +78,8 @@ async function run() {
     // ═══════════════════════════════════════════════════════
     console.log("\n📡 PHASE 2: Player Rank/Status Enum Scan (getFileById)");
     const rankKeywords = ["player mod", "pmod", "jmod", "admin", "ironman", "hardcore",
-                          "group iron", "ultimate iron", "moderator", "player status",
-                          "crown", "rank", "privilege", "staff", "iron"];
+        "group iron", "ultimate iron", "moderator", "player status",
+        "crown", "rank", "privilege", "staff", "iron"];
     const rankEnums: any[] = [];
 
     for (let id = 0; id < 20000; id++) {
@@ -83,7 +87,7 @@ async function run() {
             const buf = await source.getFileById(cacheMajors.enums, id);
             const str = buf.toString('utf8').toLowerCase();
             const matches = rankKeywords.filter(k => str.includes(k));
-            
+
             if (matches.length > 0) {
                 try {
                     const enumData = parse.enums.read(buf, source);
@@ -95,7 +99,10 @@ async function run() {
                     console.log(`   🎯 Enum ${id} (raw strings): ${matches.join(", ")}`);
                 }
             }
-        } catch (e) {}
+        } catch (_error) {
+            // [SILENT NECROSIS LOGGER]
+            console.warn("[SILENT NECROSIS] Caught in sovereign_player_forensic: ", _error);
+        }
         if (id % 5000 === 0) console.log(`   Enum scan: ${id}...`);
     }
     console.log(`✅ Found ${rankEnums.length} Rank/Status Enums`);
@@ -135,7 +142,10 @@ async function run() {
             if (cmdStrings.length > 0) {
                 console.log(`   🎯 Script ${id}: ${cmdStrings.length} admin strings -> ${cmdStrings.slice(0, 5).join(", ")}`);
             }
-        } catch (e) {}
+        } catch (_error) {
+            // [SILENT NECROSIS LOGGER]
+            console.warn("[SILENT NECROSIS] Caught in sovereign_player_forensic: ", _error);
+        }
     }
     console.log(`✅ Analyzed ${adminLogic.length} Admin Command Scripts`);
 
@@ -144,7 +154,7 @@ async function run() {
     // ═══════════════════════════════════════════════════════
     console.log("\n📡 PHASE 4: Player Rights Varbit Scan (ClientScripts)");
     const rightsKeywords = ["rights", "staffmod", "privilege", "modlevel", "crowns",
-                            "playerstatus", "playertype", "ironmode"];
+        "playerstatus", "playertype", "ironmode"];
     const rightsHits: any[] = [];
 
     for (let id = 0; id < 25000; id++) {
@@ -158,7 +168,10 @@ async function run() {
                 rightsHits.push({ scriptId: id, matches, strings: strings.slice(0, 20) });
                 console.log(`   🎯 Rights in Script ${id}: ${matches.join(", ")}`);
             }
-        } catch (e) {}
+        } catch (_error) {
+            // [SILENT NECROSIS LOGGER]
+            console.warn("[SILENT NECROSIS] Caught in sovereign_player_forensic: ", _error);
+        }
         if (id % 5000 === 0) console.log(`   Rights scan: ${id}...`);
     }
     console.log(`✅ Found ${rightsHits.length} Player Rights Scripts`);
@@ -194,3 +207,4 @@ async function run() {
 }
 
 run().catch(console.error);
+

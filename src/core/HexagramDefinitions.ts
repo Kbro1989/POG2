@@ -12,6 +12,17 @@
 
 import { EmotionalState, GenerativeAesthetics } from './models.js';
 
+
+export interface GameplayContext {
+    cacheTables: string[];   // dbtables, dbrows, enums, structs, params, mapsquare_*
+    entities: string[];      // npcs, items, objects, locations
+    variables: string[];     // varps, varbits, varclients, varclans, clientscript, clientscriptdata
+    assets: string[];        // interfaces, audio, identitykit, models, sequences, spotanims, fontmetrics
+    engineFocus: string[];   // ['CombatRotationEngine', 'LootResolutionEngine'] etc.
+}
+
+export type LimbCategory = 'motor' | 'forge' | 'core';
+
 export interface HexagramDefinition {
     id: number;
     binary: string;
@@ -24,11 +35,14 @@ export interface HexagramDefinition {
     symbol?: string;
     emotion: EmotionalState;
     aesthetics: GenerativeAesthetics;
+    gameplay?: GameplayContext;
+    /** Active limb categories — controls which tool categories OrchestrateEngine exposes to the LLM under this hexagram. */
+    activeLimbs?: LimbCategory[];
 }
 
 // Helper to reduce boilerplate while maintaining full type safety
-function hex(id: number, binary: string, name: string, description: string, strategy: string, judgment: string, emotion: EmotionalState, vf: string, tv: number, sc: 'Grand' | 'Intimate' | 'Abstract', pal: string[], p: { chaos: number, whimsy: number, darkTone: number, coherence: number }): HexagramDefinition {
-    return { id, binary, name, description, strategy, judgment, emotion, aesthetics: { visualFilter: vf, thermalVariance: tv, scale: sc, palette: pal, prosody: p } };
+function hex(id: number, binary: string, name: string, description: string, strategy: string, judgment: string, emotion: EmotionalState, vf: string, tv: number, sc: 'Grand' | 'Intimate' | 'Abstract', pal: string[], p: { chaos: number, whimsy: number, darkTone: number, coherence: number }, limbs?: LimbCategory[]): HexagramDefinition {
+    return { id, binary, name, description, strategy, judgment, emotion, aesthetics: { visualFilter: vf, thermalVariance: tv, scale: sc, palette: pal, prosody: p }, activeLimbs: limbs || ['motor', 'forge', 'core'] };
 }
 
 export const HEXAGRAM_REGISTRY: Record<string, HexagramDefinition> = {
@@ -134,7 +148,7 @@ export const HEXAGRAM_REGISTRY: Record<string, HexagramDefinition> = {
     '110110': {
         id: 58, binary: '110110', name: 'The Joyous (Dui)',
         description: 'Lake. Communication and exchange.',
-        strategy: 'UI/UX & PLAYABILITY: Focus on user interaction, CLI improvements, interactive REPLs, and sandbox testing.',
+        strategy: 'UI/UX & VISUAL FORGING: Focus on user interaction and sandbox testing. Enable 3D substrate mutation and shader injection for real-time aesthetic evolution.',
         judgment: 'The joyous: success. Perseverance is favorable.',
         emotion: EmotionalState.Inspired,
         aesthetics: { visualFilter: 'festive glowing', thermalVariance: 0.7, scale: 'Intimate', palette: ['#FF69B4', '#FFB6C1', '#FFFFFF'], prosody: { chaos: 0.5, whimsy: 0.9, darkTone: 0.1, coherence: 0.8 } }
@@ -150,7 +164,7 @@ export const HEXAGRAM_REGISTRY: Record<string, HexagramDefinition> = {
     '101101': {
         id: 30, binary: '101101', name: 'The Clinging (Li)',
         description: 'Fire. Clarity and vision.',
-        strategy: 'OBSERVABILITY: Improve logging, monitoring, and debugging output.',
+        strategy: 'OBSERVABILITY & CHROMATIC AUDIT: Improve logging, monitoring, and debugging output. Perform guided chromatic audits against pedagogical registries to verify visual substrate reality.',
         judgment: 'The clinging. Perseverance furthers. Care of the cow brings good fortune.',
         emotion: EmotionalState.Decisive,
         aesthetics: { visualFilter: 'firelight clear', thermalVariance: 0.9, scale: 'Grand', palette: ['#FF4500', '#FF8C00', '#FFFFFF'], prosody: { chaos: 0.6, whimsy: 0.4, darkTone: 0.2, coherence: 0.9 } }
@@ -168,14 +182,14 @@ export const HEXAGRAM_REGISTRY: Record<string, HexagramDefinition> = {
     '100110': hex(17, '100110', 'Following (Sui)', 'Lake over thunder: joyful movement.', 'ALIGNMENT: Follow the data. Let substrate results guide the next action rather than assumptions.', 'Following has supreme success. Perseverance furthers. No blame.', EmotionalState.Steady, 'twilight gradient', 0.4, 'Intimate', ['#6A5ACD', '#DDA0DD', '#FFFFFF'], { chaos: 0.2, whimsy: 0.5, darkTone: 0.2, coherence: 0.8 }),
     '011001': hex(18, '011001', 'Work on Decayed (Gu)', 'Wind below mountain: corruption.', 'TECH_DEBT: Address rot at the foundation. Fix deprecated APIs, update dependencies, clean dead code.', 'Work on what has been spoiled has supreme success. Cross the great water.', EmotionalState.Decisive, 'weathered patina', 0.3, 'Intimate', ['#8B4513', '#D2691E', '#000000'], { chaos: 0.3, whimsy: 0.2, darkTone: 0.5, coherence: 0.7 }),
     '110000': hex(19, '110000', 'Approach (Lin)', 'Earth over lake: approach.', 'ONBOARDING: Systems are ready to receive new data or users. Focus on ingestion pipelines and substrate loading.', 'Approach has supreme success. Perseverance furthers.', EmotionalState.Curious, 'dawn horizon', 0.4, 'Grand', ['#FFE4B5', '#FF8C00', '#FFFFFF'], { chaos: 0.2, whimsy: 0.4, darkTone: 0.1, coherence: 0.9 }),
-    '000011': hex(20, '000011', 'Contemplation (Guan)', 'Wind over earth: viewing.', 'OBSERVABILITY & SIMULATION: Observe full system state. Monitor spatial REPL Sandbox avatars and 600ms engine tick streams before injecting logic.', 'Contemplation. The wind blows over the earth.', EmotionalState.Pensive, 'satellite view', 0.2, 'Grand', ['#4169E1', '#B0C4DE', '#FFFFFF'], { chaos: 0.1, whimsy: 0.3, darkTone: 0.2, coherence: 0.9 }),
+    '000011': hex(20, '000011', 'Contemplation (Guan)', 'Wind over earth: viewing.', 'OBSERVABILITY & SEMANTIC RECONCILIATION: Observe full system state. Perform pedagogical observations and reconcile visual captures with Wiki-sourced lore and metadata.', 'Contemplation. The wind blows over the earth.', EmotionalState.Pensive, 'satellite view', 0.2, 'Grand', ['#4169E1', '#B0C4DE', '#FFFFFF'], { chaos: 0.1, whimsy: 0.3, darkTone: 0.2, coherence: 0.9 }),
     '100101': hex(21, '100101', 'Biting Through (Shi He)', 'Fire and thunder: enforcement.', 'ENFORCEMENT: Apply strict validation. Reject malformed data, enforce schema contracts, break on assertion failures.', 'Biting through has success. It is favorable to let justice be administered.', EmotionalState.Decisive, 'laser precision', 0.7, 'Abstract', ['#DC143C', '#FFD700', '#000000'], { chaos: 0.5, whimsy: 0.2, darkTone: 0.4, coherence: 0.8 }),
     '101001': hex(22, '101001', 'Grace (Bi)', 'Fire at foot of mountain: beauty.', 'POLISH: Focus on aesthetics, documentation, and user-facing presentation. Make the output shine.', 'Grace has success. In small matters it is favorable to undertake something.', EmotionalState.Inspired, 'renaissance oil', 0.5, 'Intimate', ['#DAA520', '#CD853F', '#FFFFF0'], { chaos: 0.3, whimsy: 0.7, darkTone: 0.1, coherence: 0.9 }),
     '000001': hex(23, '000001', 'Splitting Apart (Bo)', 'Mountain over earth: erosion.', 'DECOMPOSE: Break monolithic components into smaller, testable units. Controlled demolition of legacy.', 'Splitting apart. It does not further one to go anywhere.', EmotionalState.Quiet, 'stripped minimal', 0.2, 'Abstract', ['#A0522D', '#DEB887', '#000000'], { chaos: 0.2, whimsy: 0.1, darkTone: 0.5, coherence: 0.6 }),
     '100000': hex(24, '100000', 'Return (Fu)', 'Thunder below earth: renewal.', 'REVISIT: Return to fundamentals. Re-read core models, re-verify base assumptions, restart with clarity.', 'Return. Success. Going out and coming in without error.', EmotionalState.Steady, 'first light', 0.3, 'Grand', ['#228B22', '#32CD32', '#FFFFFF'], { chaos: 0.2, whimsy: 0.3, darkTone: 0.1, coherence: 0.9 }),
     '100111': hex(25, '100111', 'Innocence (Wu Wang)', 'Heaven with thunder: the unexpected.', 'CLEAN_SLATE: Approach the problem without preconceptions. Reset caches, clear state, start fresh.', 'Innocence. Supreme success. Perseverance furthers.', EmotionalState.Curious, 'blank canvas', 0.4, 'Grand', ['#F0F8FF', '#E6E6FA', '#FFFFFF'], { chaos: 0.3, whimsy: 0.6, darkTone: 0.0, coherence: 0.9 }),
     '111001': hex(26, '111001', 'Great Taming (Da Chu)', 'Mountain over heaven: containment.', 'ARCHITECTURE: Contain and structure great power. Design the system boundaries before releasing energy.', 'Great taming. Perseverance furthers. Not eating at home brings good fortune.', EmotionalState.Decisive, 'cathedral interior', 0.3, 'Grand', ['#4B0082', '#9400D3', '#FFFFFF'], { chaos: 0.2, whimsy: 0.3, darkTone: 0.3, coherence: 1.0 }),
-    '100001': hex(27, '100001', 'Nourishment (Yi)', 'Mountain over thunder: jaws.', 'AUTHORITATIVE_INGESTION: Feed the substrate directly from the 11GB Live Cache. Prioritize NPC (Major 18), Object (Major 16), and Item (Major 19) genomic extraction via Goldrush Register.', 'Nourishment. Perseverance brings good fortune. Pay heed to the providing of nourishment.', EmotionalState.Steady, 'organic growth', 0.3, 'Intimate', ['#556B2F', '#6B8E23', '#FFFFFF'], { chaos: 0.1, whimsy: 0.4, darkTone: 0.1, coherence: 0.9 }),
+    '100001': hex(27, '100001', 'Nourishment (Yi)', 'Mountain over thunder: jaws.', 'AUTHORITATIVE_INGESTION: Feed the substrate directly from the 11GB Live Cache. Prioritize Pedagogy Population (NPC, Object, Item genomic extraction) via WikiReconciliationLimb and Goldrush Register.', 'Nourishment. Perseverance brings good fortune. Pay heed to the providing of nourishment.', EmotionalState.Steady, 'organic growth', 0.3, 'Intimate', ['#556B2F', '#6B8E23', '#FFFFFF'], { chaos: 0.1, whimsy: 0.4, darkTone: 0.1, coherence: 0.9 }),
     '011110': hex(28, '011110', 'Great Preponderance (Da Guo)', 'Lake over wind: excess weight.', 'OVERCOMMIT_CHECK: The system is overloaded. Reduce active tasks, defer non-critical operations, shed weight.', 'The ridgepole sags. It furthers one to have somewhere to go.', EmotionalState.Agitated, 'stress fracture', 0.8, 'Abstract', ['#B22222', '#CD5C5C', '#000000'], { chaos: 0.7, whimsy: 0.2, darkTone: 0.7, coherence: 0.4 }),
     '001110': hex(31, '001110', 'Influence (Xian)', 'Lake over mountain: attraction.', 'COLLABORATION: Open channels between previously isolated components. Enable cross-limb communication.', 'Influence. Success. Perseverance furthers. To take a maiden to wife brings good fortune.', EmotionalState.Curious, 'magnetic field', 0.5, 'Intimate', ['#FF1493', '#C71585', '#FFFFFF'], { chaos: 0.4, whimsy: 0.6, darkTone: 0.1, coherence: 0.8 }),
     '011100': hex(32, '011100', 'Duration (Heng)', 'Thunder over wind: endurance.', 'PERSISTENCE: Stay the course. Long-running operations (training, rendering, ingestion) must complete. Do not interrupt.', 'Duration. Success. No blame. Perseverance furthers.', EmotionalState.Steady, 'ancient stone', 0.2, 'Grand', ['#2F4F4F', '#708090', '#FFFFFF'], { chaos: 0.1, whimsy: 0.2, darkTone: 0.2, coherence: 1.0 }),
@@ -203,7 +217,7 @@ export const HEXAGRAM_REGISTRY: Record<string, HexagramDefinition> = {
     '001101': hex(56, '001101', 'The Wanderer (LÃ¼)', 'Fire over mountain: travel.', 'EXPLORATION: Venture into uncharted substrate territory. Probe new cache majors, test new model endpoints, map unknown data.', 'The wanderer. Success through smallness. Perseverance brings good fortune to the wanderer.', EmotionalState.Curious, 'desert caravan', 0.5, 'Abstract', ['#DEB887', '#D2B48C', '#000000'], { chaos: 0.4, whimsy: 0.5, darkTone: 0.3, coherence: 0.6 }),
     '011011': hex(57, '011011', 'The Gentle (Xun)', 'Wind over wind: penetration.', 'GRADUAL_CHANGE: Apply subtle, persistent pressure. Small config changes that accumulate into large behavioral shifts.', 'The gentle. Success through small things. It furthers one to have somewhere to go.', EmotionalState.Zen, 'breeze ripple', 0.2, 'Intimate', ['#87CEEB', '#B0E0E6', '#FFFFFF'], { chaos: 0.1, whimsy: 0.4, darkTone: 0.0, coherence: 1.0 }),
     '010011': hex(59, '010011', 'Dispersion (Huan)', 'Wind over water: dissolution.', 'DISTRIBUTION: Scatter concentrated resources across multiple nodes. Distribute knowledge across all DB substrates.', 'Dispersion. Success. The king approaches his temple. It furthers one to cross the great water.', EmotionalState.Pensive, 'river delta', 0.4, 'Grand', ['#4682B4', '#87CEFA', '#FFFFFF'], { chaos: 0.3, whimsy: 0.4, darkTone: 0.2, coherence: 0.7 }),
-    '110010': hex(60, '110010', 'Limitation (Jie)', 'Water over lake: boundaries.', 'CONSTRAINT & SPATIAL LIMITS: Enforce hard boundaries. Apply spatial collision logic, clip out-of-bounds coordinates, enforce maximum timeouts.', 'Limitation. Success. Galling limitation must not be persevered in.', EmotionalState.Decisive, 'ice crystal', 0.2, 'Intimate', ['#00BFFF', '#E0FFFF', '#000000'], { chaos: 0.1, whimsy: 0.2, darkTone: 0.2, coherence: 1.0 }),
+    '110010': hex(60, '110010', 'Limitation (Jie)', 'Water over lake: boundaries.', 'CONSTRAINT & SPATIAL LIMITS: Enforce hard boundaries. Apply spatial collision logic and 3D structural analysis (geometric boundary detection) to prevent substrate drift.', 'Limitation. Success. Galling limitation must not be persevered in.', EmotionalState.Decisive, 'ice crystal', 0.2, 'Intimate', ['#00BFFF', '#E0FFFF', '#000000'], { chaos: 0.1, whimsy: 0.2, darkTone: 0.2, coherence: 1.0 }),
     '110011': hex(61, '110011', 'Inner Truth (Zhong Fu)', 'Wind over lake: sincerity.', 'FORENSIC_VALIDATION: Deep verification of system correctness via the 1:1 Authoritative Forensic Bridge. Confirm simulation fidelity against live Jagex opcodes.', 'Inner truth. Pigs and fishes. Good fortune. It furthers one to cross the great water.', EmotionalState.Zen, 'crystal clarity', 0.3, 'Intimate', ['#E0FFFF', '#AFEEEE', '#FFFFFF'], { chaos: 0.1, whimsy: 0.3, darkTone: 0.0, coherence: 1.0 }),
     '001100': hex(62, '001100', 'Small Preponderance (Xiao Guo)', 'Thunder over mountain: small excess.', 'FINE_TUNING: Make small but important adjustments. Tweak thresholds, adjust weights, calibrate confidence scores.', 'Small preponderance. Success. Perseverance furthers.', EmotionalState.Steady, 'precision lens', 0.3, 'Intimate', ['#708090', '#C0C0C0', '#FFFFFF'], { chaos: 0.2, whimsy: 0.3, darkTone: 0.2, coherence: 0.9 }),
     '101010': hex(63, '101010', 'After Completion (Ji Ji)', 'Water over fire: order achieved.', 'MAINTENANCE: The system is complete and functioning. Focus on monitoring, health checks, and preventing regression.', 'After completion. Success in small matters. Perseverance furthers. Good fortune in the beginning, disorder at the end.', EmotionalState.Steady, 'sunset calm', 0.2, 'Grand', ['#FFA07A', '#FA8072', '#FFFFFF'], { chaos: 0.1, whimsy: 0.3, darkTone: 0.2, coherence: 1.0 }),
@@ -279,5 +293,88 @@ export const INGESTION_TRIGGERS: Record<number, HexagramIngestionProfile> = {
         recursionDepth: 0,
         targetLayers: ['GhostLimb', 'R2_ColdStorage'],
         description: 'Emergency brake. Dump to cold storage, clear buffers.'
+    },
+    58: {
+        name: 'The Joyous',
+        chinese: 'Dui',
+        trigrams: ['Lake', 'Lake'],
+        ingestionMode: 'structural',
+        breathCycle: 400,
+        maxConcurrent: 5,
+        recursionDepth: 2,
+        targetLayers: ['Gutenberg', 'Storyboard', 'QuestSubstrate'],
+        description: 'Gameplay and Narrative synthesis. Feeding literary derivatives into the quest engine.'
     }
 };
+
+
+// ── Gameplay Context Population (RS3 Cache & Engine Mapping) ──
+Object.values(HEXAGRAM_REGISTRY).forEach(hex => {
+    const bottomTrigram = hex.binary.substring(0, 3);
+    const topTrigram = hex.binary.substring(3, 6);
+
+    let context: GameplayContext = {
+        cacheTables: [],
+        entities: [],
+        variables: [],
+        assets: [],
+        engineFocus: []
+    };
+
+    const hasEarth = bottomTrigram === '000' || topTrigram === '000';
+    const hasWater = bottomTrigram === '010' || topTrigram === '010';
+    const hasThunder = bottomTrigram === '100' || topTrigram === '100';
+    const hasLake = bottomTrigram === '110' || topTrigram === '110';
+    const hasMountain = bottomTrigram === '001' || topTrigram === '001';
+    const hasFire = bottomTrigram === '101' || topTrigram === '101';
+    const hasWind = bottomTrigram === '011' || topTrigram === '011';
+    const hasHeaven = bottomTrigram === '111' || topTrigram === '111';
+
+    // Scoring system to determine engine focus and cache tables
+    const scores: Record<string, number> = {
+        'SimulationHarness': (hasEarth ? 1 : 0) + (hasWater ? 1 : 0),
+        'ServerLogicRegistry': (hasEarth ? 1 : 0) + (hasThunder ? 1 : 0),
+        'InteractionGateway': (hasLake ? 2 : 0) + (hasFire ? 0.5 : 0) + (hasWind ? 0.5 : 0),
+        'CombatRotationEngine': (hasThunder ? 2 : 0),
+        'AggressionSimulator': (hasThunder ? 1 : 0) + (hasWater ? 1 : 0),
+        'SovereignCollisionEngine': (hasMountain ? 1 : 0) + (hasFire ? 0.5 : 0),
+        'OrchestrateEngine': (hasHeaven ? 2 : 0),
+        'GhostSplatEngine': (hasHeaven ? 1 : 0) + (hasThunder ? 0.5 : 0)
+    };
+
+    // Pick top engines (score > 0, sorted by highest)
+    const sortedEngines = Object.entries(scores)
+        .filter(([_, score]) => score > 0)
+        .sort((a, b) => b[1] - a[1]);
+    
+    // Take top 2 engines
+    context.engineFocus = sortedEngines.slice(0, 2).map(e => e[0]);
+
+    // Assign cache tables based on dominant traits
+    if (hasHeaven) {
+        context.cacheTables.push('dbtables', 'dbrows', 'enums', 'structs', 'params', 
+            'mapsquare_underlays', 'mapsquare_overlays', 'mapsquare_locs', 'mapsquare_terrain',
+            'mapsquare_npcs', 'mapsquare_objs', 'mapsquare_items');
+    } else {
+        if (hasEarth || hasWater) context.cacheTables.push('mapsquare_underlays', 'mapsquare_overlays', 'mapsquare_locs', 'mapsquare_terrain');
+        if (hasThunder || hasEarth) context.cacheTables.push('dbtables', 'dbrows', 'enums', 'structs', 'params');
+    }
+
+    if (hasThunder || hasFire) context.entities.push('npcs', 'items');
+    if (hasMountain || hasFire || hasEarth) context.entities.push('objects', 'locations');
+
+    if (hasLake || hasWind) context.assets.push('interfaces', 'audio', 'fontmetrics');
+    if (hasThunder || hasFire) context.assets.push('sequences', 'spotanims');
+
+    if (hasThunder || hasWater || hasWind) context.variables.push('varps', 'varbits', 'varclients', 'varclans');
+    if (hasLake) context.variables.push('clientscript', 'clientscriptdata');
+
+    // Deduplicate
+    context.cacheTables = [...new Set(context.cacheTables)];
+    context.entities = [...new Set(context.entities)];
+    context.assets = [...new Set(context.assets)];
+    context.variables = [...new Set(context.variables)];
+
+    hex.gameplay = context;
+});
+

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>POG2 - Sovereign Unified Combat Substrate</title>
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #05070a;
+        color: #e0e6ed;
+        font-family: 'Inter', sans-serif;
+      }
+
+      #renderCanvas {
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+        outline: none;
+      }
+
+      .ui-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 40px;
+        box-sizing: border-box;
+      }
+
+      .ui-overlay > * {
+        pointer-events: auto;
+      }
+
+      /* Reuse existing styles from style.css */
+    </style>
+    <link rel="stylesheet" href="/src/style.css">
+  </head>
+  <body>
+    <canvas id="renderCanvas"></canvas>
+
+    <div class="ui-overlay">
+      <div class="top-row" style="display: flex; justify-content: space-between; width: 100%;">
+        <div class="status-panel" style="position: static;">
+          <div class="status-item">
+            <div class="indicator" id="engine-status"></div>
+            <span>Combat Engine: <strong>ACTIVE</strong></span>
+          </div>
+          <div class="status-item">
+            <div class="indicator" style="background: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue);"></div>
+            <span>Archetype: <strong id="archetype-name">AGGRESSIVE</strong></span>
+          </div>
+        </div>
+
+        <div class="volition-log" id="log" style="position: static;">
+          <!-- Logs injected here -->
+        </div>
+      </div>
+
+      <div class="middle-row" style="display: flex; flex-direction: column; gap: 12px; width: 100%; flex: 1; justify-content: center;">
+        <!-- Row 1: Hexagram + Engine Status + Target -->
+        <div class="middle-panels">
+          <div class="hexagram-panel" id="hexagram-panel">
+            <div class="hexagram-title">Hexagram</div>
+            <div class="hexagram-glyph" id="hex-glyph">☰</div>
+            <div class="hexagram-name" id="hex-name">—</div>
+            <div class="hexagram-meaning" id="hex-meaning">awaiting signal</div>
+          </div>
+
+          <div class="engine-grid" id="engine-grid">
+            <div class="engine-cell">
+              <span class="engine-cell-label">Combat Style</span>
+              <span class="engine-cell-value style" id="eng-style">—</span>
+            </div>
+            <div class="engine-cell">
+              <span class="engine-cell-label">Active Phase</span>
+              <span class="engine-cell-value phase" id="eng-phase">—</span>
+            </div>
+            <div class="engine-cell">
+              <span class="engine-cell-label">Rotation</span>
+              <span class="engine-cell-value rotation" id="eng-rotation">—</span>
+            </div>
+            <div class="engine-cell">
+              <span class="engine-cell-label">Next Ability</span>
+              <span class="engine-cell-value rotation" id="eng-next">—</span>
+            </div>
+            <div class="engine-cell">
+              <span class="engine-cell-label">Kernel Phase</span>
+              <span class="engine-cell-value phase" id="eng-kernel">—</span>
+            </div>
+            <div class="engine-cell">
+              <span class="engine-cell-label">Last Action</span>
+              <span class="engine-cell-value" id="eng-last-action">—</span>
+            </div>
+          </div>
+
+          <div class="target-panel" id="target-panel">
+            <div class="target-name" id="target-name">No Target</div>
+            <div class="target-hp-track">
+              <div class="target-hp-fill" id="target-hp-fill" style="width: 0%"></div>
+            </div>
+            <div class="target-hp-text" id="target-hp-text">—</div>
+          </div>
+        </div>
+
+        <!-- Row 2: GhostSplat + Rotation Stream + Aggression -->
+        <div class="middle-panels">
+          <div class="ghostsplat-panel" id="ghostsplat-panel">
+            <div class="ghostsplat-title">GhostSplat Heatmap</div>
+            <canvas class="ghostsplat-canvas" id="ghostsplat-canvas" width="160" height="120"></canvas>
+            <div class="ghostsplat-legend">
+              <span class="safe">● Safe</span>
+              <span class="danger">● Danger</span>
+            </div>
+          </div>
+
+          <div class="rotation-panel" id="rotation-panel">
+            <div class="rotation-title">Rotation Stream</div>
+            <div class="rotation-sequence" id="rotation-sequence">
+              <span class="rotation-step past">—</span>
+            </div>
+          </div>
+
+          <div class="aggression-panel" id="aggression-panel">
+            <div class="aggression-title">Aggression Monitor</div>
+            <div class="aggression-bar-container">
+              <div class="aggression-bar-row">
+                <span class="aggression-bar-label">Threat</span>
+                <div class="aggression-bar-track">
+                  <div class="aggression-bar-fill threat" id="agg-threat" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="aggression-bar-row">
+                <span class="aggression-bar-label">Leash</span>
+                <div class="aggression-bar-track">
+                  <div class="aggression-bar-fill leash" id="agg-leash" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="aggression-bar-row">
+                <span class="aggression-bar-label">Wander</span>
+                <div class="aggression-bar-track">
+                  <div class="aggression-bar-fill wander" id="agg-wander" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="aggression-state idle" id="agg-state">IDLE</div>
+          </div>
+        </div>
+
+        <!-- Row 3: Causal Chain -->
+        <div class="middle-panels">
+          <div id="causality-panel" class="causality-panel">
+            <!-- Causal nodes injected here -->
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-row" style="display: flex; justify-content: center; width: 100%;">
+        <div id="app" style="position: static;">
+          <div class="hud-container">
+            <div class="adrenaline-track">
+              <div class="adrenaline-fill" id="adrenaline-fill"></div>
+            </div>
+            <div class="action-bar" id="action-bar">
+              <!-- Slots injected here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

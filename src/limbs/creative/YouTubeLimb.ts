@@ -1,6 +1,6 @@
-﻿// @ts-ignore Ã¢â‚¬â€ googleapis types are bundled but TS can lag on resolution
+// @ts-ignore â€” googleapis types are bundled but TS can lag on resolution
 import { google, youtube_v3 } from 'googleapis';
-import { OAuth2Client } from 'google-auth-library';
+// OAuth2Client type derived from googleapis bundle to avoid dual-version conflict
 import { createReadStream, existsSync, readFileSync, writeFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { type Result, ok } from '../../core/models.js';
@@ -11,7 +11,7 @@ import { createLogger } from "../../utils/logger.js";
 
 const logger = createLogger('YouTubeLimb');
 
-// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â YouTube Upload Config Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+// â•â•â• YouTube Upload Config â•â•â•
 const SCOPES = ['https://www.googleapis.com/auth/youtube.upload'];
 const REDIRECT_URI = 'https://chromanumber-auth.kristain33rs.workers.dev/youtube/callback';
 const DEFAULT_TOKEN_PATH = process.env.YOUTUBE_TOKEN_PATH || join(getSovereignRoot(), 'youtube_token.json');
@@ -36,22 +36,36 @@ export interface YouTubeUploadResult {
 }
 
 export class YouTubeLimb {
-    private oauth2Client: OAuth2Client;
+    private clientId!: string;
+    private clientSecret!: string;
+    private apiKey!: string;
+    private oauth2Client: InstanceType<typeof google.auth.OAuth2>;
     private youtube: youtube_v3.Youtube | null = null;
 
     private readonly tokenPath: string;
 
     constructor(
-        private readonly clientId: string,
-        private readonly clientSecret: string,
-        private readonly apiKey: string,
+        clientId?: string,
+        clientSecret?: string,
+        apiKey?: string,
         private readonly accessToken?: string,
         tokenPath?: string
     ) {
+        const cId = clientId || process.env.YOUTUBE_CLIENT_ID;
+        const cSecret = clientSecret || process.env.YOUTUBE_CLIENT_SECRET;
+        const aKey = apiKey || process.env.YOUTUBE_API_KEY;
+
+        if (!cId || !cSecret || !aKey) {
+            throw new Error('YouTube credentials missing. Provide them via constructor or environment variables.');
+        }
+
+        this.clientId = cId;
+        this.clientSecret = cSecret;
+        this.apiKey = aKey;
         this.tokenPath = tokenPath || DEFAULT_TOKEN_PATH;
         this.oauth2Client = new google.auth.OAuth2(
-            clientId,
-            clientSecret,
+            this.clientId,
+            this.clientSecret,
             REDIRECT_URI
         );
 
@@ -134,11 +148,11 @@ export class YouTubeLimb {
         });
 
         logger.info({ authUrl }, 'YouTube: Visit this URL to authenticate.');
-        console.log('\nÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â');
+        console.log('\nâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•');
         console.log('  YouTube Authentication Required');
         console.log('  Visit this URL in your browser:');
         console.log(`  ${authUrl}`);
-        console.log('Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â\n');
+        console.log('â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n');
 
         // Try to open in browser automatically
         try {
@@ -309,7 +323,7 @@ export class YouTubeLimb {
                 requestBody: {
                     snippet: {
                         title,
-                        description: `Auto-generated playlist for ${title} Ã¢â‚¬â€ POG2 Sovereign Pipeline`
+                        description: `Auto-generated playlist for ${title} â€” POG2 Sovereign Pipeline`
                     },
                     status: { privacyStatus: 'unlisted' }
                 }
@@ -332,3 +346,4 @@ export class YouTubeLimb {
         }
     }
 }
+

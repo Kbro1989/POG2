@@ -37,7 +37,7 @@ export PRIMARY_CLOUD_API_KEY=YOUR_KEY
 pog2 config get
 
 # Override models
-pog2 config set planningModel kimi-k2.5:cloud
+pog2 config set planningModel kimi-k2.6:cloud
 pog2 config set codingModel qwen2.5-coder:14b-instruct-q5_K_M
 ```
 
@@ -47,7 +47,7 @@ The router classifies every task into one of three tiers:
 
 | Tier | Score | Model | Use Case |
 |------|-------|-------|----------|
-| **Yang** | ≥4 | Cloud (Kimi K2.5) | Architecture, complex refactors |
+| **Yang** | ≥4 | Cloud (Kimi K2.6) | Architecture, complex refactors |
 | **YinYang** | 1–3 | Flash / Strong Local | Feature impl, review |
 | **Yin** | <1 | Local (Ollama) | Explanations, formatting |
 

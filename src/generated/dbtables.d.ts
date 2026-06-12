@@ -11,7 +11,7 @@ export type dbtables = {
 			columns: {
 				type: number,
 				unk: number | null,
-				default: (string|number) | null,
+				default: (string | number) | null,
 			}[],
 		}[],
 	} | null
@@ -33,3 +33,4 @@ export type dbtables = {
 		}[],
 	} | null
 };
+

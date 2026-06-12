@@ -7,6 +7,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Root (`src/`)
+
 *Entry points, CLI spine, and standalone scripts.*
 
 - [cli.ts](https://github.com/Kbro1989/POG2/blob/main/src/cli.ts): **Sovereign CLI entry point** — 3100+ line nerve center connecting all limbs and engines to user commands.
@@ -15,6 +16,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 AI Instruction Substrate (`.agent/`, `.agents/`)
+
 *Hidden neurological workflows and sovereign rules.*
 
 - [.agent/rules/](https://github.com/Kbro1989/POG2/tree/main/.agent/rules)
@@ -25,6 +27,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Resources & Deconstructed Assets (`resources/`)
+
 *Deconstructed webviewer modules and reconstruction reports.*
 
 - [webviewer-deconstructed/](https://github.com/Kbro1989/POG2/tree/main/resources/webviewer-deconstructed)
@@ -33,6 +36,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 API & AI Layer (`src/api/ai/`)
+
 *Model discovery, capability mapping, and dispatch substrate.*
 
 - [CapabilityRegistry.ts](https://github.com/Kbro1989/POG2/blob/main/src/api/ai/CapabilityRegistry.ts)
@@ -45,6 +49,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Clients (`src/clients/`)
+
 *Direct neural substrate callers. Real `fetch` calls only.*
 
 - [ModelClient.ts](https://github.com/Kbro1989/POG2/blob/main/src/clients/ModelClient.ts)
@@ -52,6 +57,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Configuration (`src/config/`)
+
 *Sovereign configuration and environment variable mapping.*
 
 - [SovereignConfig.ts](https://github.com/Kbro1989/POG2/blob/main/src/config/SovereignConfig.ts)
@@ -59,6 +65,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Constants (`src/constants/`)
+
 *Immutable registries for anatomy, kinetics, and model catalogs.*
 
 - [AnatomyRegistry.ts](https://github.com/Kbro1989/POG2/blob/main/src/constants/AnatomyRegistry.ts)
@@ -68,6 +75,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Core Types & Definitions (`src/core/`)
+
 *Foundational types, hexagram definitions, avatar substrate, and architectural digests.*
 
 - [ArchitectureDigest.ts](https://github.com/Kbro1989/POG2/blob/main/src/core/ArchitectureDigest.ts)
@@ -80,6 +88,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Cognitive Engines (`src/engines/`)
+
 *The 30 specialized processing centers of the Sovereign Mind.*
 
 <details>
@@ -116,6 +125,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 - [WebSearchEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/WebSearchEngine.ts)
 
 #### Gameplay Sub-Engines (`src/engines/gameplay/`)
+
 - [CNSGodheadPulseVolley.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/CNSGodheadPulseVolley.ts): 600ms deterministic heartbeat kernel.
 - [SimulationHarness.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/SimulationHarness.ts): Central CNS node for dual-tick deterministic simulation.
 - [ServerLogicRegistry.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/ServerLogicRegistry.ts): Cache-authoritative server logic mapping.
@@ -129,6 +139,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 - [NecromancyInterfaces.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/NecromancyInterfaces.ts): Necromancy ability/GFX definitions.
 
 #### Spatial Sub-Engines (`src/engines/spatial/`)
+
 - [ObservationEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/spatial/ObservationEngine.ts): Live spatial observation lens.
 
 </details>
@@ -136,6 +147,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Vision & Pedagogy (`src/vision/`)
+
 *Transient observation, RSMV controller, and analysis of high-fidelity substrates.*
 
 - [RSMVController.ts](https://github.com/Kbro1989/POG2/blob/main/src/vision/RSMVController.ts): CNS Bridge for active 3D modification and GLTF export.
@@ -145,12 +157,15 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Sovereign Limbs (`src/limbs/`)
+
 *The 23 limbs connecting thought to substrate action.*
 
 ### 🧬 Base Substrate (`core/`)
+
 - [NeuralLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/core/NeuralLimb.ts)
 
 ### 🎨 Creative Core (`creative/`)
+
 - [GutenbergLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/GutenbergLimb.ts)
 - [MediaForgeLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/MediaForgeLimb.ts)
 - [NeuralForgeLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/NeuralForgeLimb.ts)
@@ -162,12 +177,14 @@ This registry provides absolute GitHub links to all neurological substrates with
 - [YouTubeLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/YouTubeLimb.ts)
 
 ### 🌌 Metaphysical Core (`metaphysical/`)
+
 - [GhostLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/metaphysical/GhostLimb.ts)
 - [OmegaLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/metaphysical/OmegaLimb.ts)
 - [QuantumLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/metaphysical/QuantumLimb.ts)
 - [RelicLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/metaphysical/RelicLimb.ts)
 
 ### 🧿 Spatial Core (`spatial/`)
+
 - [ArchaeologyEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/ArchaeologyEngine.ts): Sovereign pathing archaeology audit.
 - [BankLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/BankLimb.ts): Bank deposit/withdraw logic.
 - [BioIntelligenceLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/BioIntelligenceLimb.ts)
@@ -195,6 +212,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 - [WorldForensicsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/WorldForensicsLimb.ts): Object definition & morphism resolution.
 
 ### 🧠 Logical Core (`logical/`)
+
 - [ClueLogicLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/ClueLogicLimb.ts): Treasure trail spot verification.
 - [ExtrasOracle.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/ExtrasOracle.ts): Logical context & handler resolution.
 - [InteractionGateway.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/InteractionGateway.ts): Deterministic interaction pipeline.
@@ -203,9 +221,11 @@ This registry provides absolute GitHub links to all neurological substrates with
 - [AdminCommandProcessor.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/world/AdminCommandProcessor.ts): Tick-synchronized admin command execution.
 
 ### 🌐 World Grounding (`world_grounding/`)
+
 - [WorldGroundingLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/world_grounding/WorldGroundingLimb.ts): Proximity entity manifestation.
 
 ### ⚙️ Technical Core (`technical/`)
+
 - [AILimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/AILimb.ts)
 - [ControlPlaneLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/ControlPlaneLimb.ts)
 - [EntityLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/EntityLimb.ts)
@@ -218,9 +238,11 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Routing (`src/routing/`)
+
 *Ternary decision-making, hexagram state, and evolutionary feedback.*
 
 ### Core
+
 - [DomainLocker.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/DomainLocker.ts)
 - [HexagramManager.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/HexagramManager.ts)
 - [TaskScheduler.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/TaskScheduler.ts)
@@ -229,10 +251,12 @@ This registry provides absolute GitHub links to all neurological substrates with
 - [WorkforceManifest.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/WorkforceManifest.ts)
 
 ### 🧬 Evolution (`evolution/`)
+
 - [OutcomeScorer.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/evolution/OutcomeScorer.ts)
 - [StrategyAdvisor.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/evolution/StrategyAdvisor.ts)
 
 ### 🎯 Strategies (`strategies/`)
+
 - [AnalyticalStrategy.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/strategies/AnalyticalStrategy.ts)
 - [CompositeStrategy.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/strategies/CompositeStrategy.ts)
 - [DefaultStrategy.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/strategies/DefaultStrategy.ts)
@@ -243,6 +267,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Monitor (`src/monitor/`)
+
 *Biological heartbeat, clinical logging, and node testing.*
 
 - [ClinicalLogger.ts](https://github.com/Kbro1989/POG2/blob/main/src/monitor/ClinicalLogger.ts)
@@ -253,6 +278,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Prompts (`src/prompts/`)
+
 *System prompt templates for sovereign law enforcement.*
 
 - [SystemPrompts.ts](https://github.com/Kbro1989/POG2/blob/main/src/prompts/SystemPrompts.ts)
@@ -260,6 +286,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Scripts (`src/scripts/`)
+
 *Diagnostic probes and stress testing utilities.*
 
 - [cascadeDiagnostic.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/cascadeDiagnostic.ts)
@@ -272,6 +299,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Services (`src/services/`)
+
 *Cloud provider integrations.*
 
 - [CloudflareServices.ts](https://github.com/Kbro1989/POG2/blob/main/src/services/CloudflareServices.ts)
@@ -280,6 +308,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 State (`src/state/`)
+
 *Neurological map and state management.*
 
 - [NeurologicalMap.ts](https://github.com/Kbro1989/POG2/blob/main/src/state/NeurologicalMap.ts)
@@ -288,6 +317,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Types (`src/types/`)
+
 *Type definitions and domain contracts.*
 
 - [diagnostic.ts](https://github.com/Kbro1989/POG2/blob/main/src/types/diagnostic.ts)
@@ -298,6 +328,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 UI (`src/ui/`)
+
 *Terminal rendering and interactive output.*
 
 - [Renderer.ts](https://github.com/Kbro1989/POG2/blob/main/src/ui/Renderer.ts)
@@ -305,6 +336,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 Utilities (`src/utils/`)
+
 *Critical substrate utilities for extraction, memory, path resolution, and grounding.*
 
 <details>
@@ -342,6 +374,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 📂 External Core Substrates (`tmp/`)
+
 *Local repository clones and critical external dependencies woven into the cognitive runtime.*
 
 - [Kbro1989/rsmv](rsmv/) (RuneScape 3 Model Viewer + Cache Subsystem)
@@ -349,40 +382,50 @@ This registry provides absolute GitHub links to all neurological substrates with
 ---
 
 ## 🪐 The Sovereign Substrate (`D:\sovereign\`)
+
 *The physical, persistent data body of the organism, deeply managed by `SovereignPathResolver.ts`.*
 
 ### 🗺️ Spatial & Logic Matrices (`atlas/`)
+
 * Ground truth definitions and logic bounds for Phase 15+.
+
 - `atlas/spatial/` *(Authoritative Mapsquare Logic)*
 - `atlas/logic/` *(System / Regional Rules)*
 - `atlas/system/` *(Active Gameplay Sandbox / Minigame Systems)*
 
 ### 🧠 Persistence & Epistemology (`memory/`, `learning/`)
+
 * Long-term memory storage, vector embeddings, and pedagogical dumps.
+
 - `learning/sovereign-learning.db` *(Vector Storage Bank)*
 - `memory/pedagogy/` *(The enriched Sovereign knowledge base)*
 - `memory/sovereign_state.json` *(The global world save state)*
 - `memory/sovereign-performance.json` *(Neurological operational limits)*
 
 ### 🔍 Phenomenological Digs (`cache_pedagogy/`)
+
 * Deep cache data extraction and visual forensic reconstruction instances.
-- `cache_pedagogy/rsmv_inspector/` *(The operational 3D runtime hub)*
+
+- `cache_pedagogy/rsmv/` *(The operational 3D runtime hub)*
 - `cache_pedagogy/json_dumps/` *(Raw forensic extrusions from the visual bridge)*
 
 ### ⚙️ Autonomous Creation Pipelines (`training/`, `pipelines/`)
+
 * AI automation pipelines, generative storage, and automated training data.
+
 - `training/` *(Includes `interactions`, `decisions`, `thinking`, `consequences`, `error_fixes`)*
 - `pipelines/` & `generations/` & `snapshots/` *(Workflow snapshots and generated media)*
 - `pog-gutenberg/` *(Literature and historical texts)*
 - `rsc-data/` *(RuneScape Classic archaeological data)*
 
-
 ---
 
 # 🧠 System Awareness Layer (The Living Organism)
+
 *Functional topography and cognitive flow dynamics.*
 
 ## 🧬 Cognitive Flow Map (Meridians)
+
 The following map visualizes how energy and intent move from User Input through the Internal Kernel to External Actuators.
 
 ```mermaid
@@ -405,21 +448,27 @@ graph TD
 ## 🏗️ Functional Hierarchy
 
 ### 1. Internal Kernel (The Core Spine)
+
 *Central nervous system and routing logic. Responsible for "Self" awareness and intent triage.*
+
 - **[TernaryRouter.ts](src/routing/TernaryRouter.ts)**: Cognitive Load Balancer & ε-greedy model discovery.
 - **[HexagramManager.ts](src/routing/HexagramManager.ts)**: Probabilistic state machine / I Ching abstraction layer.
 - **[OrchestrateEngine.ts](src/engines/OrchestrateEngine.ts)**: Central spine coordinating all limbs and specialized processing.
 - **[ModelRolodex.ts](src/api/ai/ModelRolodex.ts)**: Living model catalog with reputation-based selection.
 
 ### 2. Cognitive Processing (The Cortex)
+
 *Deep thought and analysis subsystems.*
+
 - **[CognitiveEngine.ts](src/engines/CognitiveEngine.ts)**: Reasoning & context synthesis.
 - **[CodeEngine.ts](src/engines/CodeEngine.ts)**: Structural analysis and code generation.
 - **[DiscoveryEngine.ts](src/engines/DiscoveryEngine.ts)**: Knowledgebase exploration and pattern recognition.
 - **[MetabolicEngine.ts](src/engines/MetabolicEngine.ts)**: System health and resource management.
 
 ### 3. External Actuation (The Limbs)
+
 *The actuation surface where thoughts become reality actions.*
+
 - **[AILimb.ts](src/limbs/technical/AILimb.ts)**: Primary generative and creative interface.
 - **[BlenderRenderer.ts](src/engines/BlenderRenderer.ts)**: Visual and 3D reconstruction actuator.
 - **[PipelineController.ts](src/engines/PipelineController.ts)**: Orchestrating multi-step execution sequences.
@@ -427,14 +476,18 @@ graph TD
 - **[RSMVExtractor.ts](src/utils/RSMVExtractor.ts)**: Real-world substrate hook for RS model extraction.
 
 ### 4. Sensory & Memory (Proprioception)
+
 *Input probes and persistent context substrates.*
+
 - **[PulseMonitor.ts](src/monitor/PulseMonitor.ts)**: Real-time system heartbeat and file-system awareness.
 - **[WebSensoryLimb.ts](src/limbs/spatial/WebSensoryLimb.ts)**: External world information gathering.
 - **[VectorDB.ts](src/utils/VectorDB.ts)**: High-dimensional associative memory.
 - **[MemoryConsolidationEngine.ts](src/engines/MemoryConsolidationEngine.ts)**: Context gating and long-term memory stratification.
 
 ## 🛠️ Tool Execution Surface
+
 The POG2 organism exposes **92+ nodes** (tools) across the following surfaces:
+
 - **Spatial Nodes**: Cache extraction (`cache_learn_extract`), pixel forensic (`cache_forensics_scan`), chromatic soul validation.
 - **Motor Nodes**: Code generation, renderer actuation, file modification, 3D export (`rsmv_export`).
 - **Sensory Nodes**: Vision detection (`rsmv_view`), audio transcription, web scraping.

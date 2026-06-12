@@ -1,6 +1,7 @@
 import { type Result, YaoState } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { VectorDB } from '../../utils/VectorDB.js';
+import { TrainingCollector } from '../../utils/TrainingCollector.js';
 import { StyleAnalyzer, type StyleProfile } from '../../utils/StyleAnalyzer.js';
 import { getGutenbergPath } from '../../utils/SovereignPathResolver.js';
 import { NarrativeExtractor, type NarrativeSegment } from '../../utils/NarrativeExtractor.js';
@@ -36,9 +37,20 @@ export interface GutenbergBook {
     download_count: number;
 }
 
+export interface GameplaySubstrate {
+    dbTables: Map<number, any>;
+    varps: Map<number, any>;
+    varbits: Map<number, any>;
+    dbRows: Map<number, any>;
+    dbColumns: Map<number, any>;
+    kinetics: Map<string, any>;
+}
+
 export class GutenbergLimb {
     private readonly cachePath: string;
     private readonly metadataPath: string;
+    private substrate: GameplaySubstrate;
+    private bypassed: boolean = true;
 
     constructor(
         private readonly client: ModelClient,
@@ -50,6 +62,35 @@ export class GutenbergLimb {
         if (!existsSync(this.cachePath)) {
             mkdirSync(this.cachePath, { recursive: true });
         }
+
+        if (process.env.GUTENBERG_ENABLED === 'true') {
+            this.enable();
+        }
+
+        // Initialize empty substrate in case it stays bypassed
+        this.substrate = {
+            dbTables: new Map(),
+            varps: new Map(),
+            varbits: new Map(),
+            dbRows: new Map(),
+            dbColumns: new Map(),
+            kinetics: new Map()
+        };
+    }
+
+    /**
+     * enable - Explicitly activates the Gutenberg substrate.
+     * Required for StoryboardLimbV2 and video pipelines.
+     */
+    public enable(): void {
+        if (!this.bypassed) return;
+        this.bypassed = false;
+        logger.info('Gutenberg Limb Enabled. Synchronizing gameplay substrate...');
+        this.syncGameplayData();
+    }
+
+    public isBypassed(): boolean {
+        return this.bypassed;
     }
 
     private loadMetadata(): BookMetadata[] {
@@ -79,6 +120,7 @@ export class GutenbergLimb {
     }
 
     public async analyzeStyle(bookId: number): Promise<Result<{ profile: StyleProfile; book: BookMetadata }>> {
+        if (this.bypassed) return { ok: false, error: new Error('Gutenberg is bypassed. Call enable() to activate literary substrates.') };
         const books = this.loadMetadata();
         const book = books.find(b => b.id === bookId);
 
@@ -116,6 +158,7 @@ export class GutenbergLimb {
      * getSequencedSegments - Uses NarrativeExtractor to get specific beats from a book.
      */
     public async getSequencedSegments(bookId: number, count: number): Promise<Result<NarrativeSegment[]>> {
+        if (this.bypassed) return { ok: false, error: new Error('Gutenberg is bypassed.') };
         const books = this.loadMetadata();
         const book = books.find(b => b.id === bookId);
         if (!book) return { ok: false, error: new Error(`Book ${bookId} not found in library.`) };
@@ -152,6 +195,7 @@ export class GutenbergLimb {
     }
 
     public async ingestBook(id: number, title: string, author: string, domain: string, content?: string): Promise<Result<BookMetadata>> {
+        if (this.bypassed) return { ok: false, error: new Error('Gutenberg is bypassed.') };
         if (!this.cachePath) return { ok: false, error: new Error('Gutenberg cache path not initialized.') };
 
         const existingBooks = this.getLibrary();
@@ -209,7 +253,7 @@ export class GutenbergLimb {
             books.push(metadata);
             this.saveMetadata(books);
 
-            await this.vectorDB.addLesson({
+            await TrainingCollector.getInstance().recordLesson({
                 id: `gutenberg-${id}`,
                 text: bookContent!.slice(0, 10000),
                 embedding: new Float32Array(0),
@@ -232,6 +276,7 @@ export class GutenbergLimb {
     }
 
     public async searchCatalog(query: string): Promise<Result<GutenbergBook[]>> {
+        if (this.bypassed) return { ok: false, error: new Error('Gutenberg is bypassed.') };
         // Redirect to Local Gutendex instance (Django default port)
         const url = `http://localhost:8000/books/?search=${encodeURIComponent(query)}`;
         try {
@@ -289,8 +334,11 @@ export class GutenbergLimb {
             const validMetadata: BookMetadata[] = [];
             let updatedCount = 0;
             let removedCount = 0;
+            let addedCount = 0;
             const seenIds = new Set<number>();
+            const seenPaths = new Set<string>();
 
+            // 1. Validate existing metadata
             for (const book of currentMetadata) {
                 if (seenIds.has(book.id)) {
                     removedCount++;
@@ -320,10 +368,61 @@ export class GutenbergLimb {
 
                 validMetadata.push(book);
                 seenIds.add(book.id);
+                seenPaths.add(book.path);
+            }
+
+            // 2. Discover untracked books on disk
+            for (const filePath of activeFiles) {
+                if (seenPaths.has(filePath)) continue;
+
+                // Extract metadata from filename (format: Title_Author_ID.txt or pgID.txt)
+                const fileName = filePath.split(/[\\/]/).pop() || '';
+                let id = Math.floor(Math.random() * 1000000); // Fallback
+                let title = 'Untitled';
+                let author = 'Unknown';
+                let domain = 'unsorted';
+
+                // Path contains domains subfolder
+                const pathParts = filePath.split(/[\\/]/);
+                const domainIndex = pathParts.indexOf('domains');
+                if (domainIndex !== -1 && domainIndex < pathParts.length - 2) {
+                    domain = pathParts[domainIndex + 1];
+                }
+
+                const pgMatch = fileName.match(/pg(\d+)\.txt$/i);
+                const tripleMatch = fileName.match(/(.*)_(.*)_(\d+)\.txt$/i);
+
+                if (pgMatch) {
+                    id = parseInt(pgMatch[1]);
+                    title = `Gutenberg Book ${id}`;
+                } else if (tripleMatch) {
+                    title = tripleMatch[1].replace(/_/g, ' ');
+                    author = tripleMatch[2].replace(/_/g, ' ');
+                    id = parseInt(tripleMatch[3]);
+                }
+
+                if (seenIds.has(id)) {
+                    id = id + 1000000; // Collision avoidance for manual imports
+                }
+
+                const content = readFileSync(filePath, 'utf8');
+                const checksum = createHash('sha256').update(content).digest('hex');
+
+                validMetadata.push({
+                    id,
+                    gutendex_id: pgMatch ? id : undefined,
+                    title,
+                    author,
+                    domain,
+                    path: filePath,
+                    checksum
+                });
+                seenIds.add(id);
+                addedCount++;
             }
 
             this.saveMetadata(validMetadata);
-            const msg = `Library Synced. ${validMetadata.length} books healthy. Substrate paths aligned: ${updatedCount}.`;
+            const msg = `Library Synced. ${validMetadata.length} books healthy (Added: ${addedCount}, Aligned: ${updatedCount}, Removed: ${removedCount}).`;
             logger.info(msg);
             return { ok: true, value: msg };
         } catch (err) {
@@ -380,6 +479,7 @@ export class GutenbergLimb {
 
 
     public async readBook(bookId: number, personality?: string, emotion?: string): Promise<Result<void>> {
+        if (this.bypassed) return { ok: false, error: new Error('Gutenberg is bypassed.') };
         const books = this.loadMetadata();
         const book = books.find(b => b.id === bookId);
         if (!book) return { ok: false, error: new Error(`Book ${bookId} not found.`) };
@@ -428,7 +528,7 @@ export class GutenbergLimb {
                 }
                 const response = await this.client.call({ model: this.client.config.soulIngestionModel, prompt, temperature: 0.7 });
                 if (response.ok) {
-                    await this.vectorDB.addLesson({
+                    await TrainingCollector.getInstance().recordLesson({
                         id: `lesson-${bookId}-${i}-${Date.now()}`,
                         text: response.value.response,
                         embedding: new Float32Array(0),
@@ -455,6 +555,7 @@ export class GutenbergLimb {
     }
 
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
+        if (this.bypassed) return { online: true, details: 'Gutenberg: BYPASSED (Dormant substrate)' };
         const books = this.getLibrary();
         const exists = existsSync(this.cachePath);
         const metadataExists = existsSync(this.metadataPath);
@@ -479,6 +580,7 @@ export class GutenbergLimb {
         return { online: true, details };
     }
     public getCacheSize(): Result<{ totalBytes: number; bookCount: number; formatted: string }> {
+        if (this.bypassed) return { ok: false, error: new Error('Gutenberg is bypassed.') };
         try {
             const books = this.loadMetadata();
             let total = 0;
@@ -538,4 +640,85 @@ export class GutenbergLimb {
         this.saveMetadata(healthy);
         return { ok: true, value: { removed, healthy: healthy.length } };
     }
+
+    /**
+     * deriveQuestStructure - Uses the authoritative gameplay substrate to draft a quest logic block.
+     * Maps Gutenberg narrative beats to Varps and DBRows.
+     */
+    public deriveQuestStructure(narrativeBeats: string[]): any {
+        const substrate = this.substrate;
+        // Search for relevant varps/varbits that might track quest progress
+        const questVarbits = Array.from(substrate.varbits.values())
+            .filter(v => v.name?.toLowerCase().includes('quest') || v.id > 10000); // Heuristic
+
+        return {
+            type: 'QUEST_DERIVATIVE',
+            timestamp: Date.now(),
+            stages: narrativeBeats.map((beat, i) => ({
+                id: i,
+                description: beat,
+                objectiveVarp: substrate.varps.get(i) || null, // Mapping heuristic
+                requirements: Array.from(substrate.dbTables.get(1)?.rows || []).slice(0, 1) // Table 1 is usually generic
+            })),
+            authoritativeAnchors: {
+                dbRows: Array.from(substrate.dbRows.keys()).slice(0, 5),
+                varbits: questVarbits.slice(0, 5).map(v => v.id)
+            }
+        };
+    }
+    /**
+     * syncGameplayData - Align the Gutenberg Limb with the authoritative gameplay substrate (Atlas/System).
+     * This provides the "pedagogical structure" for quest and gameplay generation.
+     */
+    public syncGameplayData(): void {
+        const atlasSystem = join(getGutenbergPath(), '..', 'atlas', 'system');
+        const pedagogyPath = join(getGutenbergPath(), '..', 'memory', 'pedagogy');
+
+        logger.info({ atlasSystem, pedagogyPath }, 'Syncing Gameplay Substrate Data...');
+
+        const loadMap = (path: string, targetMap: Map<any, any>, keyField: string = 'id') => {
+            if (existsSync(path)) {
+                try {
+                    const data = JSON.parse(readFileSync(path, 'utf8'));
+                    const items = Array.isArray(data) ? data : (data.entities || data.rows || []);
+                    items.forEach((item: any) => {
+                        const key = item[keyField];
+                        if (key !== undefined) targetMap.set(key, item);
+                    });
+                    logger.debug({ path, count: items.length }, 'Gameplay data fragment indexed.');
+                } catch (err) {
+                    logger.warn({ path, err }, 'Failed to load gameplay data fragment.');
+                }
+            }
+        };
+
+        loadMap(join(atlasSystem, 'dbtables.json'), this.substrate.dbTables);
+        loadMap(join(atlasSystem, 'varps.json'), this.substrate.varps);
+        loadMap(join(atlasSystem, 'varbits.json'), this.substrate.varbits);
+        loadMap(join(atlasSystem, 'dbrows.json'), this.substrate.dbRows);
+        loadMap(join(atlasSystem, 'dbcolumns.json'), this.substrate.dbColumns);
+        loadMap(join(pedagogyPath, 'kinematics.json'), this.substrate.kinetics, 'id');
+
+        logger.info('Gameplay Substrate Alignment Complete.');
+    }
+
+    public getGameplaySubstrate(): GameplaySubstrate {
+        return this.substrate;
+    }
+
+    /**
+     * getAuthoritativePedagogy - Returns the structured reference for a specific entity type
+     * to guide the StoryboardLimbV2 in creating valid gameplay derivatives.
+     */
+    public getAuthoritativePedagogy(type: 'dbtable' | 'varp' | 'varbit' | 'dbrow' | 'kinematic', id: any): any {
+        switch (type) {
+            case 'dbtable': return this.substrate.dbTables.get(Number(id));
+            case 'varp': return this.substrate.varps.get(Number(id));
+            case 'varbit': return this.substrate.varbits.get(Number(id));
+            case 'dbrow': return this.substrate.dbRows.get(Number(id));
+            case 'kinematic': return this.substrate.kinetics.get(id.toString());
+            default: return null;
+        }
+    }
 }
+

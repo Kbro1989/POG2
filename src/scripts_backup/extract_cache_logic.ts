@@ -1,4 +1,4 @@
-﻿import { createRequire } from 'module';
+import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const { GameCacheLoader } = require("../../tmp_rsmv_inspect/src/cache/sqlite.js");
 import * as fs from 'fs';
@@ -21,7 +21,7 @@ async function main() {
     ];
     const searchBuffers = keywords.map(k => Buffer.from(k, 'utf8'));
 
-    console.log(`ðŸš€ Starting Deep Categorized Authoritative Cache Scan of ${cachePath}...`);
+    console.log(`🚀 Starting Deep Categorized Authoritative Cache Scan of ${cachePath}...`);
 
     // Major 2 Sub-Archive Mapping (Categorization within Config Major)
     const configMap: Record<number, string> = {
@@ -55,7 +55,7 @@ async function main() {
     for (const major of scanMajors) {
         try {
             const indices = await cache.getCacheIndex(major);
-            console.log(`ðŸ” Scanning Major ${major} (${indices.length} archives)...`);
+            console.log(`🔍 Scanning Major ${major} (${indices.length} archives)...`);
 
             for (const index of indices) {
                 if (!index) continue;
@@ -79,7 +79,7 @@ async function main() {
                         if (file.includes(searchBuffers[i])) {
                             const offset = file.indexOf(searchBuffers[i]);
                             const context = file.slice(Math.max(0, offset - 40), Math.min(file.length, offset + 80)).toString('utf8').replace(/[\r\n\t]/g, ' ');
-                            
+
                             findings[category].push({
                                 major,
                                 archive: index.minor,
@@ -94,7 +94,7 @@ async function main() {
                 }
             }
         } catch (e) {
-            console.error(`âš ï¸ Failed to read Major ${major}`);
+            console.error(`⚠️ Failed to read Major ${major}`);
         }
     }
 
@@ -103,8 +103,9 @@ async function main() {
     if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
     fs.writeFileSync(outputPath, JSON.stringify(findings, null, 2));
-    console.log(`\nðŸ Deep Categorized Scan complete. ${totalMatchCount} total nodes crystallized to ${outputPath}.`);
+    console.log(`\n🏁 Deep Categorized Scan complete. ${totalMatchCount} total nodes crystallized to ${outputPath}.`);
     cache.close();
 }
 
 main().catch(console.error);
+

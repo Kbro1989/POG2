@@ -1,4 +1,4 @@
-﻿import Database from 'better-sqlite3';
+import Database from 'better-sqlite3';
 import { getLearningDbPath, hasSovereignDrive } from './utils/SovereignPathResolver.js';
 import { existsSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
@@ -36,3 +36,4 @@ async function test() {
 test().catch(err => {
     console.error('UNHANDLED DB TEST ERROR:', err);
 });
+

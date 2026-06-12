@@ -1,0 +1,1880 @@
+{
+  "boss": "Nex",
+  "lastUpdated": "2026-05-16T11:58:12.299Z",
+  "bestiary": {
+    "def": "no",
+    "text1": "Monster",
+    "item1": "{{Infobox Monster",
+    "version1": "Normal",
+    "version2": "Gower Quest",
+    "version3": "Battle of the Monolith (minigame)",
+    "version4": "Senntisten",
+    "image1": "[[File:Nex.png",
+    "image2": "[[File:Nex (melee).png",
+    "image3": "[[File:Nex (ranged).png",
+    "image4": "[[File:Nex, Angel of Death.png",
+    "release": "[[10 January]] [[2011]]",
+    "update": "God Wars Dungeon - The Ancient Prison",
+    "members": "Yes",
+    "options": "Attack",
+    "race": "Nihil",
+    "examine": "Even the gods fear it.",
+    "level": "1001",
+    "lifepoints": "200,000",
+    "aggressive": "Yes",
+    "poisonous": "360",
+    "max_melee": "1,250",
+    "max_ranged": "1,250",
+    "max_magic": "1,250",
+    "max_necromancy": "0",
+    "max_spec": "8,000",
+    "style": "melee, magic, ranged",
+    "primarystyle": "melee",
+    "speed": "4",
+    "attack": "80",
+    "ranged": "80",
+    "magic": "80",
+    "necromancy": "1",
+    "acc_melee": "2,023",
+    "acc_ranged": "2,023",
+    "acc_magic": "2,023",
+    "acc_necromancy": "0",
+    "prayers": "Deflect Melee, Deflect Missiles, Deflect Magic, Soul Split, Turmoil, Wrath",
+    "armour": "1,924",
+    "defence": "80",
+    "weakness": "Nothing",
+    "aff_weakness": "40",
+    "aff_melee": "40",
+    "aff_ranged": "40",
+    "aff_magic": "40",
+    "immune_to_poison": "Yes",
+    "immune_to_deflect": "Yes",
+    "immune_to_stun": "Yes",
+    "immune_to_drain": "Yes",
+    "voice": "Yes",
+    "id1": "16967, 19162, 27930",
+    "id2": "22849",
+    "id3": "27885",
+    "id4": "28090",
+    "text2": "NPC",
+    "item2": "{{Infobox NPC",
+    "version5": "Extinction",
+    "version6": "Aftermath",
+    "name": "Nex",
+    "image": "[[File:Nex (2012).png",
+    "image5": "[[File:Nex, Angel of Death.png",
+    "image6": "[[File:Nex, Angel of Death.png",
+    "release1": "[[4 March]] [[2013]]",
+    "release2": "[[20 June]] [[2016]]",
+    "release3": "[[31 May]] [[2021]]",
+    "release4": "[[26 July]] [[2021]]",
+    "release5": "[[4 April]] [[2022]]",
+    "release6": "[[4 July]] [[2022]]",
+    "update1": "The World Wakes",
+    "update2": "Gower Quest - Get Ready For Telos",
+    "update3": "This Week In RuneScape: Battle of the Monolith & Guardian's Gift",
+    "update4": "This Week In RuneScape: Elder God Wars Dungeon - The Nodon Front",
+    "update5": "Extinction Grandmaster Quest - This Week In RuneScape",
+    "update6": "Zamorak, Lord of Chaos - This Week In RuneScape",
+    "members2": "No",
+    "quest1": "[[The World Wakes]], [[Fate of the Gods]], [[Battle of the Monolith]]",
+    "quest2": "[[Gower Quest]]",
+    "quest3": "[[Battle of the Monolith]]",
+    "quest4": "No",
+    "quest5": "[[Extinction]]",
+    "quest6": "[[Aftermath]]",
+    "location1": "[[Guthix's Cave]], [[Archaeology Campus]]",
+    "location2": "[[Behind the Scenes (location)",
+    "location3": "[[Archaeology Campus]]",
+    "location4": "[[Nodon Front]]",
+    "location5": "[[Nodon Front]]",
+    "location6": "[[Kharid-et Dig Site]]",
+    "gender": "Female",
+    "options1": "Talk to, Examine",
+    "options2": "Talk to, Examine",
+    "options3": "Move, Target settings, Examine",
+    "options4": "Talk to, Battlefield ability, Examine",
+    "options5": "Talk to, Examine",
+    "options6": "Talk to, Examine",
+    "examine1": "Even the gods fear it.",
+    "examine2": "Even the gods fear it.",
+    "examine3": "Even the gods fear her.",
+    "examine4": "She strikes fear into all. Even the gods.",
+    "examine5": "She strikes fear into all. Even the gods.",
+    "examine6": "She strikes fear into all. Even the gods.",
+    "map2": "{{NPC map",
+    "npcname": "Nex",
+    "npcid": "28090",
+    "mapID": "15",
+    "plane": "0",
+    "type": "update",
+    "map4": "{{NPC map",
+    "map5": "",
+    "map6": "",
+    "id5": "28833",
+    "id6": "29319",
+    "t": "Tenacity of Zarytes",
+    "c": "#AA44AA",
+    "loc": "Gower Quest",
+    "lvls": "1,001",
+    "mem": "yes",
+    "requirements": "* {{plink",
+    "boss": "{{Chatl",
+    "access": "[[Prison Barrier]] ({{Maplink",
+    "x": "2910",
+    "y": "5201",
+    "text": "Damaged letter",
+    "mtype": "pin",
+    "cost_coins": "800000",
+    "cost_reduced": "600000",
+    "grave": "Inside the Ancient Prison's lobby (requires 40 Zarosian kills or a set of [[ancient ceremonial robes]])",
+    "timer": "3",
+    "notes": "[[Ashuelot Reis]] is present in the lobby inside the encounter for using the bank, but will only appear when Nex has spawned when entering a private encounter. Lobbying in an encounter will result in the player having to re-enter the room (or open an Angel of Death instance via hidden door to the south) to use the barrier again. Nex will always start off with the [[Deflect Magic]] curse in a private encounter.",
+    "jagex": "yes",
+    "quantity": "20",
+    "rarity": "1/2000",
+    "raritynotes": "{{DropNote",
+    "gemw": "no",
+    "citations": "{{NamedRef",
+    "namenotes": "<ref name=\"potions\" group=\"d\"/>",
+    "author": "Mod Shauny",
+    "url": "https://www.reddit.com/r/runescape/comments/adugze/top_20_boss_killers_by_monster_data_13th_december/",
+    "title": "Top 20 Boss Killers by Monster (Data: 13th December 2018)",
+    "blogdate": "13 October 2017",
+    "archivedate": "28 February 2020",
+    "archiveurl": "http://archive.is/ycOt4",
+    "rolls": "2",
+    "alch": "no",
+    "altrarity": "10/2000",
+    "altraritydash": "yes",
+    "gold": "26.874/1000",
+    "green": "13.437/1000",
+    "crimson": "48.372/1000",
+    "blue": "239.176/1000",
+    "quote": "[link to a spreadsheet]",
+    "npc": "Nex",
+    "align": "right",
+    "filename": "Nex.ogg",
+    "subject": "NPCs",
+    "date": "8 January 2019",
+    "img": "Nex.png"
+  },
+  "rotations": [
+    {
+      "section": "Before the fight",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag Fumus"
+        },
+        {
+          "name": "Surge"
+        },
+        {
+          "name": "Retag Fumus"
+        },
+        {
+          "name": "Resonance"
+        },
+        {
+          "name": "Preparation"
+        },
+        {
+          "name": "Replenishment potion (6)"
+        },
+        {
+          "name": "Freedom"
+        },
+        {
+          "name": "Anticipation"
+        },
+        {
+          "name": "Equip your main weapon"
+        }
+      ]
+    },
+    {
+      "section": "Smoke Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Shadow Tendrils"
+        },
+        {
+          "name": "Snap Shot"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        }
+      ]
+    },
+    {
+      "section": "Fumus",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Umbra",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Needle Strike"
+        }
+      ]
+    },
+    {
+      "section": "Blood Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Snap Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Cruor",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Ice Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Glacies",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Needle Strike"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Before the fight",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag Fumus"
+        },
+        {
+          "name": "Surge"
+        },
+        {
+          "name": "Retag Fumus"
+        },
+        {
+          "name": "Resonance"
+        },
+        {
+          "name": "Preparation"
+        },
+        {
+          "name": "Replenishment potion (6)"
+        },
+        {
+          "name": "Freedom"
+        },
+        {
+          "name": "Anticipation"
+        },
+        {
+          "name": "Equip your main weapon"
+        }
+      ]
+    },
+    {
+      "section": "Smoke Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Shadow Tendrils"
+        },
+        {
+          "name": "Snap Shot"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        }
+      ]
+    },
+    {
+      "section": "Fumus",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Needle Strike"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Umbra",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Blood Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Snap Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Cruor",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Needle Strike"
+        }
+      ]
+    },
+    {
+      "section": "Ice Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Glacies",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Before the fight",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag Fumus"
+        },
+        {
+          "name": "Surge"
+        },
+        {
+          "name": "Retag Fumus"
+        },
+        {
+          "name": "Resonance"
+        },
+        {
+          "name": "Preparation"
+        },
+        {
+          "name": "Enhanced replenishment potion (6)"
+        },
+        {
+          "name": "Freedom"
+        },
+        {
+          "name": "Anticipation"
+        },
+        {
+          "name": "Augmented Eldritch crossbow"
+        }
+      ]
+    },
+    {
+      "section": "Smoke Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "File:Augmented_Eldritch_crossbow.png"
+        },
+        {
+          "name": "Shadow Tendrils"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Fumus",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Rout"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Umbra",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Needle Strike"
+        }
+      ]
+    },
+    {
+      "section": "Blood Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "File:Augmented Blightbound crossbow.png"
+        },
+        {
+          "name": "Snap Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Cruor",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Ice Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Ice Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Glacies",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Needle Strike"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Before the fight",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag Fumus"
+        },
+        {
+          "name": "Surge"
+        },
+        {
+          "name": "Retag Fumus"
+        },
+        {
+          "name": "Resonance"
+        },
+        {
+          "name": "Preparation"
+        },
+        {
+          "name": "Freedom"
+        },
+        {
+          "name": "Anticipation"
+        },
+        {
+          "name": "Augmented Eldritch crossbow"
+        }
+      ]
+    },
+    {
+      "section": "Smoke Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Limitless"
+        },
+        {
+          "name": "File:Augmented_Eldritch_crossbow.png"
+        },
+        {
+          "name": "Shadow Tendrils"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Fumus",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Needle Strike"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Rout"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Umbra",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Blood Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "File:Augmented Blightbound crossbow.png"
+        },
+        {
+          "name": "Snap Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Cruor",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Needle Strike"
+        }
+      ]
+    },
+    {
+      "section": "Ice Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Ice Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Glacies",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Before the fight",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Combat dummy MKII"
+        },
+        {
+          "name": "Build adrenaline"
+        },
+        {
+          "name": "Needle Strike"
+        },
+        {
+          "name": "Augmented Eldritch crossbow, Weapon Special attack"
+        },
+        {
+          "name": "Anticipation"
+        }
+      ]
+    },
+    {
+      "section": "Smoke Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "File:Augmented_Eldritch_crossbow.png"
+        },
+        {
+          "name": "Shadow Tendrils"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Smoke Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Fumus",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Tuska's Wrath"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Umbra",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Needle Strike"
+        }
+      ]
+    },
+    {
+      "section": "Blood Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Blood Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Rout"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Cruor",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Ice Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Ice Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Glacies",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Augmented Eldritch crossbow, Weapon Special attack"
+        }
+      ]
+    },
+    {
+      "section": "Glacies",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Sacrifice"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Enhanced replenishment potion (6)"
+        },
+        {
+          "name": "Deadshot"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "Limitless"
+        },
+        {
+          "name": "Rapid Fire"
+        },
+        {
+          "name": "Tuska's Wrath"
+        }
+      ]
+    },
+    {
+      "section": "Before the fight",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Combat dummy MKII"
+        },
+        {
+          "name": "Build adrenaline"
+        },
+        {
+          "name": "Needle Strike"
+        },
+        {
+          "name": "Anticipation"
+        },
+        {
+          "name": "Augmented Eldritch crossbow, Weapon Special attack"
+        }
+      ]
+    },
+    {
+      "section": "Smoke Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "File:Augmented_Eldritch_crossbow.png"
+        },
+        {
+          "name": "Shadow Tendrils"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Smoke Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Fumus",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Fragmentation Shot"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Tuska's Wrath"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Umbra",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Blood Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Blood Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Tuska's Wrath"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Cruor",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Augmented Eldritch crossbow, Weapon Special attack"
+        }
+      ]
+    },
+    {
+      "section": "Ice Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Ice Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Glacies",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Hydrix bakriminel bolts"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "Tuska's Wrath"
+        },
+        {
+          "name": "Augmented Eldritch crossbow, Weapon Special attack"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Rapid Fire"
+        },
+        {
+          "name": "Salt the Wound"
+        },
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Tuska's Wrath"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Before the fight",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag Fumus"
+        },
+        {
+          "name": "Surge"
+        },
+        {
+          "name": "Retag Fumus"
+        },
+        {
+          "name": "Resonance"
+        },
+        {
+          "name": "Preparation"
+        },
+        {
+          "name": "Replenishment potion (6)"
+        },
+        {
+          "name": "Freedom"
+        },
+        {
+          "name": "Anticipation"
+        }
+      ]
+    },
+    {
+      "section": "Smoke Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Shadow Tendrils"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "Walk backwards"
+        },
+        {
+          "name": "File:Augmented ascension crossbow.png"
+        },
+        {
+          "name": "Rapid Fire"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "If you proc a ruby bolt special during {{Ability link"
+        },
+        {
+          "name": "Rapid Fire"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Blood Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag ASAP to prevent bleed"
+        },
+        {
+          "name": "Vulnerability"
+        },
+        {
+          "name": "Snipe"
+        },
+        {
+          "name": "File:Augmented ascension crossbow.png"
+        },
+        {
+          "name": "Rapid Fire"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Blood Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Snipe"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Contain First",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with any basic"
+        },
+        {
+          "name": "Shadow Tendrils"
+        },
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Snipe"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Prison First",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Run to max attack distance, tag with {{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Rapid Fire"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Deadshot"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "Needle Strike"
+        },
+        {
+          "name": "Tuska's Wrath"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "Needle Strike"
+        },
+        {
+          "name": "5 tick Auto"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Before the fight",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Vulnerability bomb"
+        },
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Anticipation"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Smoke Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Augmented Eldritch crossbow, Weapon Special attack"
+        },
+        {
+          "name": "Auto attack"
+        },
+        {
+          "name": "Snap Shot"
+        },
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Blood Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Blood Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Ice Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with any fast hitting ability"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "Augmented Eldritch crossbow, Weapon Special attack"
+        },
+        {
+          "name": "File:Adrenaline renewal potion (4).png"
+        },
+        {
+          "name": "Rapid Fire"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Before the fight",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Vulnerability bomb"
+        },
+        {
+          "name": "{{Ability link"
+        },
+        {
+          "name": "Anticipation"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Smoke Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Ful arrow"
+        },
+        {
+          "name": "Auto attack"
+        },
+        {
+          "name": "Augmented Bow of the Last Guardian, Weapon Special attack"
+        },
+        {
+          "name": "Rapid Fire"
+        }
+      ]
+    },
+    {
+      "section": "Shadow Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Wen arrow"
+        },
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Blood Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Wen arrow"
+        },
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Ice Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Tag with {{Ability link"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "n"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Casual",
+      "abilities": [
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "Tuska's Wrath"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "Tuska's Wrath"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "Tuska's Wrath"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Fragmentation Shot"
+        },
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Tuska's Wrath"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Advanced",
+      "abilities": [
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "Tuska's Wrath"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "Tuska's Wrath"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "Tuska's Wrath"
+        }
+      ]
+    },
+    {
+      "section": "Zaros Phase",
+      "label": "Rotation",
+      "abilities": [
+        {
+          "name": "Corruption Shot"
+        },
+        {
+          "name": "Greater Dazing Shot"
+        },
+        {
+          "name": "Tuska's Wrath"
+        }
+      ]
+    }
+  ]
+}

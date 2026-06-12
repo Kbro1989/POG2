@@ -1,4 +1,4 @@
-﻿import { PedagogyLimb } from './limbs/technical/PedagogyLimb.js';
+import { PedagogyLimb } from './limbs/technical/PedagogyLimb.js';
 import { ForgeEngine, SynthesisTarget } from './engines/ForgeEngine.js';
 import { YaoState } from './core/models.js';
 import { createLogger } from './utils/logger.js';
@@ -7,7 +7,7 @@ import { VectorDB } from './utils/VectorDB.js';
 import { loadConfig } from './config/SovereignConfig.js';
 import { ModelClient } from './clients/ModelClient.js';
 
-const logger = createLogger('DemoRSMV');
+const logger = createLogger('Demorsmv');
 
 /**
  * Demo:rsmv Learning Substrate Loop
@@ -70,3 +70,4 @@ async function runDemo() {
 runDemo().catch(err => {
     console.error('Demo failed:', err);
 });
+

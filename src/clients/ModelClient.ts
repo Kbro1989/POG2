@@ -1,16 +1,43 @@
 import { exec } from 'child_process';
+
+export type AITaskType =
+    | "general"
+    | "code"
+    | "creative"
+    | "pedagogy"
+    | "combat_rotation"
+    | "spatial_analysis";
+
+// Define missing contract structure locally to clear downstream usage
+export interface ModelResponse {
+    response: string;
+    model: string;
+    latency: number;
+    tokensUsed?: number;
+    metadata?: {
+        model: string;
+        latency: number;
+    };
+}
+
+export interface Pog2PedagogyRequest {
+    beastId?: number;
+    entityId?: number;
+    query: string;
+    requireVerified: boolean;
+    limbDomain: string;
+}
+
 import { promisify } from 'util';
 import { Agent, fetch as undiciFetch } from 'undici';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import {
     type Result,
     type ModelCallParams,
-    type ModelResponse,
     type ModelExecutor,
     type ModelCallResult,
     ok,
     type AICapability,
-    type AITaskType,
     type AIServiceType,
     YaoState
 } from '../core/models.js';
@@ -22,6 +49,9 @@ import { ModelRolodex } from '../api/ai/ModelRolodex.js';
 import type { QuotaTracker, QuotaProvider } from '../utils/QuotaTracker.js';
 
 import { ArchitectureDigest } from '../core/ArchitectureDigest.js';
+import { SovereignKnowledgeDB } from '../utils/SovereignKnowledgeDB.js';
+import { DomainLocker, DomainViolationError } from '../routing/DomainLocker.js';
+import { v4 as uuidv4 } from 'uuid';
 import { createLogger } from "../utils/logger.js";
 
 const execAsync = promisify(exec);
@@ -38,6 +68,18 @@ export class ModelClient implements ModelExecutor {
     private readonly customAgent: Agent;
     private rolodex?: ModelRolodex;
     private quotaTracker?: QuotaTracker;
+    private domainLocker?: DomainLocker;
+
+    public setDomainLocker(dl: DomainLocker): void {
+        this.domainLocker = dl;
+    }
+
+    private inferTierFromModel(modelId: string): 'Master' | 'Executive' | 'Reactive' {
+        const lower = modelId.toLowerCase();
+        if (lower.includes('deepseek') || lower.includes('gemma') || lower.includes('gemini') || lower.includes('master')) return 'Master';
+        if (lower.includes('qwen') || lower.includes('llava') || lower.includes('executive')) return 'Executive';
+        return 'Reactive';
+    }
 
     public async execute(params: ModelCallParams): Promise<Result<string>> {
         const result = await this.call(params);
@@ -89,34 +131,40 @@ export class ModelClient implements ModelExecutor {
 
     /** Check if the Ollama substrate is online */
     async checkHealth(): Promise<{ online: boolean; version: string }> {
-        try {
-            const resp = await undiciFetch(`${this.config.ollamaBaseUrl}/api/version`, {
-                signal: AbortSignal.timeout(5000)
-            });
-            if (resp.ok) {
-                const data = await resp.json() as { version?: string };
-                return { online: true, version: data.version || 'unknown' };
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                const resp = await undiciFetch(`${this.config.ollamaBaseUrl}/api/version`, {
+                    signal: AbortSignal.timeout(15000)
+                });
+                if (resp.ok) {
+                    const data = await resp.json() as { version?: string };
+                    return { online: true, version: data.version || 'unknown' };
+                }
+            } catch {
+                if (attempt === 3) return { online: false, version: 'unreachable' };
+                await new Promise(res => setTimeout(res, 2000 * attempt));
             }
-            return { online: false, version: 'offline' };
-        } catch {
-            return { online: false, version: 'unreachable' };
         }
+        return { online: false, version: 'offline' };
     }
 
     /** List locally available Ollama models */
     async listModels(): Promise<string[]> {
-        try {
-            const resp = await undiciFetch(`${this.config.ollamaBaseUrl}/api/tags`, {
-                signal: AbortSignal.timeout(5000)
-            });
-            if (resp.ok) {
-                const data = await resp.json() as { models?: Array<{ name: string }> };
-                return (data.models || []).map(m => m.name);
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                const resp = await undiciFetch(`${this.config.ollamaBaseUrl}/api/tags`, {
+                    signal: AbortSignal.timeout(15000)
+                });
+                if (resp.ok) {
+                    const data = await resp.json() as { models?: Array<{ name: string }> };
+                    return (data.models || []).map(m => m.name);
+                }
+            } catch {
+                if (attempt === 3) return [];
+                await new Promise(res => setTimeout(res, 2000 * attempt));
             }
-            return [];
-        } catch {
-            return [];
         }
+        return [];
     }
 
 
@@ -132,6 +180,21 @@ export class ModelClient implements ModelExecutor {
     }
 
     async call(params: ModelCallParams): Promise<Result<ModelResponse>> {
+        const domain = params.domain || 'GENERAL';
+        const tier = params.tier || this.inferTierFromModel(params.model);
+
+        if (this.domainLocker) {
+            try {
+                this.domainLocker.check(params.model, domain, tier);
+            } catch (err) {
+                if (err instanceof DomainViolationError) {
+                    logger.warn({ modelId: params.model, domain }, 'ModelClient: domain blocked');
+                    return { ok: false, error: err };
+                }
+                throw err;
+            }
+        }
+
         const startTime = Date.now();
         let provider: 'ollama' | 'huggingface' | 'gemini' | 'cloudflare' | 'fireworks' | 'openrouter' | 'unknown' = 'ollama';
 
@@ -180,12 +243,15 @@ export class ModelClient implements ModelExecutor {
         // Record interaction to D:\ training substrate (Skip for System Pulse)
         const latency = Date.now() - startTime;
         if (!enforcedParams.isSystemPulse) {
+            const validCategories = ['coding', 'gutenberg', 'chromanumber', 'vision', 'voice', 'orchestration', 'diagnostic', 'error_fix', 'search', 'general'];
+            const safeCategory = (enforcedParams.category && validCategories.includes(enforcedParams.category)) ? enforcedParams.category : 'general';
+            
             this.trainingCollector.recordInteraction({
                 model: enforcedParams.model,
                 provider,
-                category: enforcedParams.category as any,
-                prompt: enforcedParams.prompt.substring(0, 2000),
-                response: result.ok ? result.value.response.substring(0, 2000) : '',
+                category: safeCategory as 'coding' | 'gutenberg' | 'chromanumber' | 'vision' | 'voice' | 'orchestration' | 'diagnostic' | 'error_fix' | 'search' | 'general',
+                prompt: enforcedParams.prompt,
+                response: result.ok ? result.value.response : '',
                 latencyMs: latency,
                 tokenCount: result.ok ? result.value.tokensUsed : undefined,
                 success: result.ok,
@@ -199,6 +265,24 @@ export class ModelClient implements ModelExecutor {
                 success: result.ok,
                 tokenCount: result.ok ? result.value.tokensUsed : undefined
             }).catch(() => { /* non-blocking */ });
+
+            // PARASITIC DISTILLATION: Metabolize external intelligence
+            if (provider !== 'ollama' && result.ok) {
+                const anatomyDomain = safeCategory; // e.g., 'coding', 'vision', 'gameplay' mapped to category
+                SovereignKnowledgeDB.getInstance().recordMetabolism(
+                    uuidv4(),
+                    Date.now(),
+                    anatomyDomain,
+                    enforcedParams.model,
+                    enforcedParams.prompt,
+                    result.value.response,
+                    {
+                        provider,
+                        latencyMs: latency,
+                        tokens: result.value.tokensUsed
+                    }
+                );
+            }
         }
 
         // Phase 6: Update ModelRolodex with call metrics (Skip for System Pulse)
@@ -335,6 +419,20 @@ export class ModelClient implements ModelExecutor {
 
     async embed(text: string, modelOverride?: string): Promise<Result<Float32Array>> {
         const model = modelOverride || this.config.embeddingModel || 'qwen3-embedding:latest';
+        const domain = 'EMBEDDING';
+        const tier = 'Reactive';
+
+        if (this.domainLocker) {
+            try {
+                this.domainLocker.check(model, domain, tier);
+            } catch (err) {
+                if (err instanceof DomainViolationError) {
+                    logger.warn({ modelId: model, domain }, 'ModelClient: embedding domain blocked');
+                    return { ok: false, error: err };
+                }
+                throw err;
+            }
+        }
 
         let result: Result<Float32Array>;
         if (model && model.startsWith('gemini:')) {
@@ -469,7 +567,11 @@ export class ModelClient implements ModelExecutor {
                         response: text,
                         model: `gemini:${modelId}`,
                         latency,
-                        tokensUsed: data.usageMetadata?.totalTokenCount
+                        tokensUsed: data.usageMetadata?.totalTokenCount,
+                        metadata: {
+                            model: `gemini:${modelId}`,
+                            latency
+                        }
                     }
                 };
             } catch (err) {
@@ -537,9 +639,9 @@ export class ModelClient implements ModelExecutor {
                     const errorText = await response.text();
                     logger.error({ status: response.status, model: params.model }, 'Ollama API error');
 
-                    // Activate cooldown on 429 rate limit responses
-                    if (response.status === 429) {
-                        logger.warn({ model: params.model }, 'Ollama 429 rate limit Ã¢â‚¬â€ activating HuggingFace fallback');
+                    // Activate cooldown on 429 rate limit responses or 500 server errors
+                    if (response.status === 429 || response.status === 500) {
+                        logger.warn({ model: params.model, status: response.status }, 'Ollama substrate degraded Ã¢â‚¬â€ activating fallback');
                         this.router?.activateOllamaCooldown();
                     }
 
@@ -593,7 +695,7 @@ export class ModelClient implements ModelExecutor {
             return { ok: false, error: new Error('PRIMARY_CLOUD_API_KEY not set Ã¢â‚¬â€ cannot call primary cloud substrate') };
         }
 
-        // Format: huggingface:provider/model-name (e.g., huggingface:openai-compat/kimi-k2.5-thinking)
+        // Format: huggingface:provider/model-name (e.g., huggingface:openai-compat/kimi-k2.6-thinking)
         // HF Router API: model goes in the request body, NOT the URL path
         const modelPath = params.model.replace('huggingface:', '');
         const url = `https://router.huggingface.co/v1/chat/completions`;
@@ -1179,15 +1281,23 @@ export class ModelClient implements ModelExecutor {
         const ollamaBase = this.config.ollamaBaseUrl || 'http://localhost:11434';
         let ollamaOnline = false;
         let modelCount = 0;
-        try {
-            const response = await undiciFetch(`${ollamaBase}/api/tags`, { signal: AbortSignal.timeout(5000) });
-            if (response.ok) {
-                const data = await response.json() as { models?: any[] };
-                modelCount = data.models?.length || 0;
-                ollamaOnline = true;
+        
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                const response = await undiciFetch(`${ollamaBase}/api/tags`, { signal: AbortSignal.timeout(15000) });
+                if (response.ok) {
+                    const data = await response.json() as { models?: any[] };
+                    modelCount = data.models?.length || 0;
+                    ollamaOnline = true;
+                    break;
+                }
+            } catch (e) {
+                if (attempt === 3) {
+                    ollamaOnline = false;
+                } else {
+                    await new Promise(res => setTimeout(res, 2000 * attempt));
+                }
             }
-        } catch (e) {
-            ollamaOnline = false;
         }
 
         const cloudKeys = [
@@ -1203,3 +1313,4 @@ export class ModelClient implements ModelExecutor {
         };
     }
 }
+

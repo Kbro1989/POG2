@@ -14,3 +14,4 @@ export type quickchatcategories = {
 	}[] | null
 	nonsearchable?: true | null
 };
+

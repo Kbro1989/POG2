@@ -3,6 +3,7 @@ import { Coord, Direction, DirectionalCollision, GameState } from '../../core/mo
 import { createLogger } from '../../utils/logger.js';
 import { SpatialSovereigntyLimb } from './SpatialSovereigntyLimb.js';
 import { PlaneTransitionRegistry } from './PlaneTransitionRegistry.js';
+import { SpatialMetricEngine, SpatialEntity } from './SpatialMetricEngine.js';
 
 const logger = createLogger('DirectionalPathfinder');
 
@@ -54,7 +55,8 @@ export class DirectionalPathfinder {
         end: Coord,
         gameState?: GameState,
         isPlayer = true,
-        debug = false
+        debug = false,
+        entity?: SpatialEntity
     ): Coord[] {
         const npcIndex = gameState?.npcSpatialIndex;
         const openSet = new BinaryHeap<PathNode>();
@@ -92,7 +94,7 @@ export class DirectionalPathfinder {
                 if (closedSet.has(nKey)) continue;
 
                 // THE SOVEREIGN RULE: Verify Directional Collision
-                const canMove = this.canMove(current.toCoord(), next, direction, npcIndex, isPlayer);
+                const canMove = this.canMove(current.toCoord(), next, direction, npcIndex, isPlayer, entity);
                 if (!canMove) continue;
 
                 const tentativeG = current.gScore + 1;
@@ -127,7 +129,8 @@ export class DirectionalPathfinder {
         to: Coord,
         direction: Direction,
         npcIndex?: Map<string, any[]>,
-        isPlayer = true
+        isPlayer = true,
+        entity?: SpatialEntity
     ): boolean {
         // Target tile must be structurally walkable
         // Exception: 'up' / 'down' are portal transitions — bypass collision entirely
@@ -140,8 +143,15 @@ export class DirectionalPathfinder {
                    link.to.plane === to.plane;
         }
 
-        if (!this.isWalkable(to.plane, to.x, to.y)) {
-            return false;
+        if (entity && SpatialMetricEngine.getInstance().getMode() === 'AABB_TILE_ALIGNED') {
+            const checkEntity = { ...entity, x: to.x, y: to.y, plane: to.plane };
+            if (!SpatialMetricEngine.getInstance().canMoveTo(checkEntity, to, direction)) {
+                return false;
+            }
+        } else {
+            if (!this.isWalkable(to.plane, to.x, to.y)) {
+                return false;
+            }
         }
 
         // --- DYNAMIC OBSTACLE CHECK (Phase 43) ---
@@ -304,5 +314,11 @@ export class DirectionalPathfinder {
         }
         return path;
     }
+
+    public handleMinimapClick(start: Coord, end: Coord, state: GameState): Coord[] {
+        logger.info({ start, end }, '[DirectionalPathfinder] Minimap click handler invoked.');
+        return this.findPath(start, end, state);
+    }
 }
+
 

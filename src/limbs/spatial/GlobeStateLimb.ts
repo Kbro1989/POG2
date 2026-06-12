@@ -20,24 +20,46 @@ export interface GlobeState {
  * globally accessible, durable substrate (PartyKit/Partyserver).
  */
 export class GlobeStateLimb {
+    private static instance?: GlobeStateLimb;
+
+    public static getInstance(): GlobeStateLimb | undefined {
+        return GlobeStateLimb.instance;
+    }
+
     private ws: WebSocket | null = null;
     private state: GlobeState = {
         id: 'pog2-sovereign',
         nodes: {},
         lastSync: Date.now()
     };
-    private endpoint: string = 'ws://localhost:8787/party/globe';
+    private endpoint: string = process.env.POG2_GLOBE_ENDPOINT || 'wss://multiplayer-globe-pog2.kristain33rs.workers.dev/parties/globe/pog2-sovereign';
     private subscribers: Map<string, Array<(data: any) => void>> = new Map();
     private connectPromise: Promise<Result<boolean>> | null = null;
 
     private enabled: boolean = false;
 
     constructor(config?: SovereignConfig) {
+        GlobeStateLimb.instance = this;
         if (config) {
             this.enabled = config.globeEnabled ?? false;
             if (config.globeEndpoint) {
                 this.endpoint = config.globeEndpoint;
             }
+        }
+
+        // Ensure the endpoint includes the full room path if it doesn't already
+        if (this.endpoint && !this.endpoint.includes('/parties/')) {
+            const base = this.endpoint.endsWith('/') ? this.endpoint.slice(0, -1) : this.endpoint;
+            this.endpoint = `${base}/parties/globe/pog2-sovereign`;
+        }
+
+        // Apply environment-level isolation override ONLY if a real remote wss:// endpoint is NOT specified
+        const isLocalOverride = process.env.POG2_GLOBE_ISOLATION === 'true' || process.env.POG_USE_LOCAL === 'true';
+        if (isLocalOverride) {
+            this.endpoint = 'ws://127.0.0.1:8787/parties/globe/pog2-sovereign';
+            logger.info({ endpoint: this.endpoint }, 'Sovereign local mode active: routing GlobeStateLimb to local wrangler dev server.');
+        } else if (process.env.POG2_GLOBE_ISOLATION === 'true' && !this.endpoint.startsWith('wss://')) {
+            this.endpoint = 'ws://127.0.0.1:8787/parties/globe/pog2-sovereign';
         }
 
         // Tap into the cognitive stream
@@ -102,9 +124,29 @@ export class GlobeStateLimb {
             try {
                 this.ws = new WebSocket(this.endpoint);
 
+                let pingInterval: NodeJS.Timeout;
+
                 this.ws.on('open', () => {
                     logger.info({ endpoint: this.endpoint }, 'Connected to Multiplayer Globe Substrate');
+                    
+                    // Phase 22: Keep-alive interval to prevent Cloudflare 100s idle timeout
+                    pingInterval = setInterval(() => {
+                        if (this.ws?.readyState === WebSocket.OPEN) {
+                            this.ws.ping();
+                            // Also send an application-level ping just in case
+                            this.ws.send(JSON.stringify({ type: 'ping', timestamp: Date.now() }));
+                        }
+                    }, 30000);
+
                     resolve(ok(true));
+                });
+
+                this.ws.on('close', () => {
+                    if (pingInterval) clearInterval(pingInterval);
+                    logger.warn('Globe connection closed. Attempting reconnect in 5 seconds...');
+                    setTimeout(() => {
+                        if (this.enabled) this.connect();
+                    }, 5000);
                 });
 
                 this.ws.on('message', (data: string) => {
@@ -123,6 +165,15 @@ export class GlobeStateLimb {
                                     });
                                 }
                             }
+                        } else if (msg.type === 'human_intervention' || msg.type === 'volitional_request') {
+                            logger.info({ payload: msg }, '🧠 Received volition/intervention from Globe, routing to SwitchboardLimb admin queue');
+                            // Dynamically import to avoid circular dependencies if needed
+                            import('../../monitor/SwitchboardLimb.js').then(({ SwitchboardLimb }) => {
+                                SwitchboardLimb.getInstance().pushAdminCommand({
+                                    type: msg.action || msg.intent || 'human_intervention',
+                                    metadata: { ...msg, timestamp: Date.now() }
+                                });
+                            });
                         }
                     } catch (err) {
                         logger.warn({ err }, 'Failed to parse Globe message');
@@ -145,6 +196,36 @@ export class GlobeStateLimb {
      * Push a node's state to the global substrate.
      */
     public async pushNodeState(nodeId: string, data: any): Promise<Result<boolean>> {
+        // Enforce active visual state for POG2 telemetry nodes if properties are missing
+        if (data && typeof data === 'object') {
+            if (data.score === undefined) {
+                if (nodeId === 'routing_event') {
+                    const complexityScores: Record<string, number> = { low: 0.2, medium: 0.5, high: 0.8, extreme: 1.0 };
+                    data.score = complexityScores[data.classifiedComplexity?.toLowerCase()] ?? 0.5;
+                } else if (nodeId === 'thinking_event') {
+                    data.score = data.curiosity !== undefined ? data.curiosity : 0.95;
+                } else {
+                    data.score = 1.00;
+                }
+            }
+            if (data.status === undefined) {
+                data.status = 'active';
+            }
+            if (data.lastActivity === undefined) {
+                if (nodeId === 'routing_event' && data.chosenModel) {
+                    data.lastActivity = `Route: ${data.chosenModel} (${data.classifiedComplexity || 'low'})`;
+                } else if (nodeId === 'thinking_event' && data.reflection) {
+                    data.lastActivity = data.reflection.length > 35 ? data.reflection.substring(0, 35) + '...' : data.reflection;
+                } else if (nodeId === 'fprag_event') {
+                    data.lastActivity = data.directive 
+                        ? (data.directive.length > 30 ? `Directive: ${data.directive.substring(0, 30)}...` : `Directive: ${data.directive}`)
+                        : (data.task?.length > 30 ? `Audit: ${data.task.substring(0, 30)}...` : `Audit: ${data.task || 'Active'}`);
+                } else {
+                    data.lastActivity = 'monitoring';
+                }
+            }
+        }
+
         this.state.nodes[nodeId] = data;
         this.state.lastSync = Date.now();
 
@@ -159,6 +240,18 @@ export class GlobeStateLimb {
         }
 
         return { ok: false, error: new Error('Globe substrate offline') };
+    }
+
+    /**
+     * Push a batch of spatial perception entities to the global substrate.
+     */
+    public pushBatchPerception(entities: any[]): void {
+        if (this.ws?.readyState === WebSocket.OPEN && entities.length > 0) {
+            this.ws.send(JSON.stringify({
+                type: 'batch_perception',
+                payload: { entities }
+            }));
+        }
     }
 
     /**
@@ -207,3 +300,4 @@ export class GlobeStateLimb {
         };
     }
 }
+

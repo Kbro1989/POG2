@@ -1,5 +1,6 @@
-﻿import { appendFileSync, existsSync, mkdirSync, statSync, renameSync } from 'fs';
+import { appendFileSync, existsSync, mkdirSync, statSync, renameSync } from 'fs';
 import { join } from 'path';
+import { getPackageRoot } from '../utils/SovereignPathResolver.js';
 
 export type DiagnosticLevel = 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
 
@@ -17,8 +18,9 @@ export class ClinicalLogger {
     private readonly logPath: string;
     private readonly MAX_LOG_SIZE = 100 * 1024 * 1024; // 100MB
 
-    constructor(projectRoot: string) {
-        this.logDir = join(projectRoot, 'logs');
+    constructor(_ignoredRoot?: string) {
+        // Ignore the passed root to prevent relative path CWD injection (e.g. system32)
+        this.logDir = join(getPackageRoot(), 'logs');
         this.logPath = join(this.logDir, 'neurological_audit.log');
         this.ensureLogFile();
     }
@@ -53,3 +55,4 @@ export class ClinicalLogger {
         appendFileSync(this.logPath, jsonLine, { encoding: 'utf-8' });
     }
 }
+

@@ -79,7 +79,7 @@ export class ByteReader {
     }
 
     public readString(): string {
-        let start = this.offset;
+        const start = this.offset;
         while (this.buffer[this.offset] !== 0 && this.offset < this.buffer.length) {
             this.offset++;
         }
@@ -100,3 +100,4 @@ export class ByteReader {
         return this.offset;
     }
 }
+

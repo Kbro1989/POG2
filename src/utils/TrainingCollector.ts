@@ -1,4 +1,4 @@
-﻿import { appendFile, readFile } from 'fs/promises';
+import { appendFile, readFile } from 'fs/promises';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import {
@@ -11,11 +11,22 @@ import {
     getTrainingErrorFixesPath,
     getTrainingConsequencesPath
 } from './SovereignPathResolver.js';
-import { type ThinkingNexus, type DecisionAuditRecord, YaoState } from '../core/models.js';
+import { type ThinkingNexus, type DecisionAuditRecord, YaoState, type LearningEvent, LearningFidelity, LearningMode, type Lesson, TruthClass } from '../core/models.js';
 import { EventBus } from '../events/EventBus.js';
 import { createLogger } from "./logger.js";
+import { HexagramManager } from '../routing/HexagramManager.js';
+import type { VectorDB } from './VectorDB.js';
 
 const logger = createLogger('TrainingCollector');
+
+/**
+ * Memory Arbitration Kernel - Logic-only classification outcomes.
+ */
+type ArbitrationOutcome = {
+    target: TruthClass | 'IGNORE';
+    type?: string;
+    data?: any;
+};
 
 // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Training Data Interfaces Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
@@ -149,12 +160,131 @@ export class TrainingCollector {
     private errorCount = 0;
     private globeStateLimb?: any; // Avoid circular deep import, functionally typed
     private hexagramManager?: any;
+    private vectorDB?: VectorDB;
 
     private static instance: TrainingCollector;
 
     private constructor(sessionId?: string) {
         this.sessionId = sessionId || this.generateSessionId();
         logger.info({ sessionId: this.sessionId }, 'Training collector initialized');
+
+        // Phase 220: Cognitive Subscriptions (Event-Sourced Learning)
+        EventBus.getInstance().subscribe('cognitive.learning', (event) => {
+            this.recordLearningEvent(event.payload);
+        });
+    }
+
+    /**
+     * STAGE 1: Intake (Entry points)
+     */
+
+    public async recordLearningEvent(event: LearningEvent): Promise<void> {
+        const contract = HexagramManager.getInstance().getContract();
+        const permissions = contract.permissions;
+        const outcome = this.arbitrateEvent(event, permissions);
+        await this.executeEmission(outcome, event);
+    }
+
+    public async recordLesson(lesson: Lesson & { projectId: string; domainNamespace?: string; hash?: string; type?: string }): Promise<void> {
+        const contract = HexagramManager.getInstance().getContract();
+        const permissions = contract.permissions;
+        const outcome = this.arbitrateLesson(lesson, permissions);
+        await this.executeEmission(outcome, lesson);
+    }
+
+    public async recordAnomaly(tick: number, eventId: string | null, type: string, data: any): Promise<void> {
+        // Direct anomaly recording (forensic intake)
+        await this.persistToAnomalies(tick, eventId, type, data);
+        await this.archiveToForensicLog(tick, eventId, type, data);
+    }
+
+    /**
+     * STAGE 2: Arbitration (Policy Logic)
+     * Decisions on where interpretation is allowed to happen.
+     */
+
+    private arbitrateEvent(event: LearningEvent, permissions: any): ArbitrationOutcome {
+        // 1. Shadow Mode check
+        if (permissions.mode === LearningMode.SHADOW) {
+            return { target: TruthClass.ANOMALY, type: 'SHADOW_LEARNING_GATED', data: { fidelity: event.fidelity } };
+        }
+
+        // 2. Fidelity Gating
+        if (event.fidelity === LearningFidelity.RAW || event.fidelity === LearningFidelity.CAUSAL) {
+            return { target: TruthClass.EXECUTION };
+        }
+
+        if (event.fidelity === LearningFidelity.PATTERN && !permissions.allowPatternExtraction) return { target: TruthClass.POLICY_DENIED, type: 'GATED_PATTERN_EXTRACTION' };
+        if (event.fidelity === LearningFidelity.INVARIANT && !permissions.allowInvariantCompilation) return { target: TruthClass.POLICY_DENIED, type: 'GATED_INVARIANT_COMPILATION' };
+        if (event.fidelity === LearningFidelity.PEDAGOGY && !permissions.allowPedagogy) return { target: TruthClass.POLICY_DENIED, type: 'GATED_PEDAGOGY' };
+
+        return { target: event.fidelity === LearningFidelity.INVARIANT ? TruthClass.INVARIANT : TruthClass.INTERPRETATION };
+    }
+
+    private arbitrateLesson(lesson: Lesson, permissions: any): ArbitrationOutcome {
+        if (permissions.mode === LearningMode.SHADOW) {
+            return { target: TruthClass.ANOMALY, type: 'SHADOW_LESSON_SUPPRESSED', data: { text: lesson.text, type: lesson.type } };
+        }
+        return { target: TruthClass.INTERPRETATION };
+    }
+
+    /**
+     * STAGE 3: Emission (Persistence Execution)
+     * Dumb routing to physical substrates.
+     */
+
+    private async executeEmission(outcome: ArbitrationOutcome, payload: any): Promise<void> {
+        switch (outcome.target) {
+            case TruthClass.EXECUTION:
+                await this.archiveTruth(payload);
+                break;
+            case TruthClass.INTERPRETATION:
+            case TruthClass.INVARIANT:
+                if (outcome.target === TruthClass.INVARIANT || (outcome.target === TruthClass.INTERPRETATION && payload.projectId)) {
+                    // It's a Lesson or Invariant
+                    if (this.vectorDB) await this.vectorDB.addLesson(payload);
+                    await this.archiveKnowledge({
+                        tick: -1,
+                        fidelity: LearningFidelity.PEDAGOGY,
+                        patterns: payload.type === 'pattern' ? [payload] : [],
+                        invariants: payload.type === 'invariant' ? [payload] : []
+                    } as any);
+                } else {
+                    // It's a LearningEvent
+                    await this.archiveKnowledge(payload);
+                }
+                break;
+            case TruthClass.ANOMALY:
+            case TruthClass.POLICY_DENIED:
+                await this.recordAnomaly(
+                    payload.tick || -1,
+                    payload.id || payload.trace?.eventId || null,
+                    outcome.type || (outcome.target === TruthClass.POLICY_DENIED ? 'POLICY_VIOLATION' : 'UNKNOWN_ANOMALY'),
+                    outcome.data || payload
+                );
+                break;
+            case 'IGNORE':
+                // Do nothing
+                break;
+        }
+    }
+
+    private async persistToAnomalies(tick: number, eventId: string | null, type: string, data: any): Promise<void> {
+        if (this.vectorDB) {
+            this.vectorDB.addAnomaly(tick, eventId, type, data);
+        }
+    }
+
+    private async archiveToForensicLog(tick: number, eventId: string | null, type: string, data: any): Promise<void> {
+        const path = getTrainingHistoryPath();
+        const record = {
+            timestamp: new Date().toISOString(),
+            tick,
+            fidelity: 'SHADOW',
+            type: 'ANOMALY_CAPTURE',
+            data: { eventId, anomalyType: type, payload: data }
+        };
+        await appendFile(path, JSON.stringify(record) + '\n');
     }
 
     public static getInstance(sessionId?: string): TrainingCollector {
@@ -193,13 +323,20 @@ export class TrainingCollector {
         this.hexagramManager = hex;
     }
 
+    /**
+     * Single Write Authority: Attach VectorDB for persistent memory formation.
+     */
+    public setVectorDB(db: VectorDB): void {
+        this.vectorDB = db;
+    }
+
     private shouldBroadcast(eventType: string): boolean {
         if (!this.hexagramManager) return true; // Default to allow if immune system offline
 
-        const yao = this.hexagramManager.getYaoState?.();
-        // If the node is in complete chaos (OldMixed), do not broadcast panic to the Swarm,
+        const contract = this.hexagramManager.getContract();
+        // If the node is in complete chaos (Contract structural restraint), do not broadcast panic to the Swarm,
         // EXCEPT for error fixes which might be a desperate survival mechanism.
-        if (yao === YaoState.OldMixed && eventType !== 'error_fix_event') {
+        if (!contract.gates.allowStructuralRepair && eventType !== 'error_fix_event') {
             logger.warn({ eventType }, 'Cognitive Immunology: Blocked outbound broadcast due to local OldMixed chaotic state.');
             return false;
         }
@@ -269,7 +406,14 @@ export class TrainingCollector {
 
         // Broadcast high-level routing evolution to the swarm
         if (this.globeStateLimb && this.shouldBroadcast('routing_event')) {
-            this.globeStateLimb.pushNodeState('routing_event', full).catch((err: any) => {
+            const complexityScores: Record<string, number> = { low: 0.2, medium: 0.5, high: 0.8, extreme: 1.0 };
+            const score = complexityScores[record.classifiedComplexity?.toLowerCase()] ?? 0.5;
+            this.globeStateLimb.pushNodeState('routing_event', {
+                ...full,
+                score,
+                status: 'active',
+                lastActivity: `Route: ${record.chosenModel} (${record.classifiedComplexity || 'low'})`
+            }).catch((err: any) => {
                 logger.debug({ err: err.message }, 'Globe broadcast failed for routing_event');
             });
         }
@@ -326,7 +470,16 @@ export class TrainingCollector {
 
         // Broadcast deep thinking chains to the swarm
         if (this.globeStateLimb && this.shouldBroadcast('thinking_event')) {
-            this.globeStateLimb.pushNodeState('thinking_event', full).catch((err: any) => {
+            const score = nexus.curiosity !== undefined ? nexus.curiosity : 0.95;
+            const lastActivity = nexus.reflection 
+                ? (nexus.reflection.length > 35 ? nexus.reflection.substring(0, 35) + '...' : nexus.reflection)
+                : 'Nominal cogitation';
+            this.globeStateLimb.pushNodeState('thinking_event', {
+                ...full,
+                score,
+                status: 'active',
+                lastActivity
+            }).catch((err: any) => {
                 logger.debug({ err: err.message }, 'Globe broadcast failed for thinking_event');
             });
         }
@@ -349,7 +502,15 @@ export class TrainingCollector {
 
         // Broadcast ethical/directive validations to the swarm
         if (this.globeStateLimb && this.shouldBroadcast('fprag_event')) {
-            this.globeStateLimb.pushNodeState('fprag_event', full).catch((err: any) => {
+            const lastActivity = audit.directive 
+                ? (audit.directive.length > 30 ? `Directive: ${audit.directive.substring(0, 30)}...` : `Directive: ${audit.directive}`)
+                : (audit.task.length > 30 ? `Audit: ${audit.task.substring(0, 30)}...` : `Audit: ${audit.task}`);
+            this.globeStateLimb.pushNodeState('fprag_event', {
+                ...full,
+                score: 1.0,
+                status: 'active',
+                lastActivity
+            }).catch((err: any) => {
                 logger.debug({ err: err.message }, 'Globe broadcast failed for fprag_event');
             });
         }
@@ -414,7 +575,31 @@ export class TrainingCollector {
 
     // Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Internal Helpers Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
+    private async archiveTruth(event: LearningEvent): Promise<void> {
+        const path = getTrainingConsequencesPath(); // Using consequences as a proxy for truth
+        const record = {
+            timestamp: new Date().toISOString(),
+            tick: event.tick,
+            fidelity: 'HIGH',
+            trace: event.trace,
+            resolution: event.resolution
+        };
+        await appendFile(path, JSON.stringify(record) + '\n');
+    }
+
+    private async archiveKnowledge(event: LearningEvent): Promise<void> {
+        const path = getTrainingFPRAGPath(); // Using FPRAG for abstracted knowledge
+        const record = {
+            timestamp: new Date().toISOString(),
+            tick: event.tick,
+            fidelity: event.fidelity === LearningFidelity.PATTERN ? 'PATTERN' : 'KNOWLEDGE',
+            data: event.patterns || event.invariants
+        };
+        await appendFile(path, JSON.stringify(record) + '\n');
+    }
+
     private getDatePrefix(): string {
         return new Date().toISOString().split('T')[0]!;
     }
 }
+

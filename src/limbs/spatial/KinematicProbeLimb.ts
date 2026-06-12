@@ -1,5 +1,6 @@
 import { InteractionPair, isTransversal, getInteractionResult } from '../../forensics/ObjectBinaryStore.js';
 import { SovereignInteractionLimb } from './SovereignInteractionLimb.js';
+import { SpatialMetricEngine, FOLLOWER_CONFIGS, type SpatialEntity } from './SpatialMetricEngine.js';
 
 export interface KinematicProbe {
     id: number;
@@ -7,6 +8,10 @@ export interface KinematicProbe {
     coords: { x: number, z: number, plane: number };
     velocity: { dx: number, dz: number };
     isWoundUp: boolean;
+    /** Optional follow target for compass orientation and follower snap. */
+    target?: { x: number, z: number, plane: number };
+    /** Last computed bearing in radians (atan2, updated every tick). */
+    orientation?: number;
 }
 
 /**
@@ -37,7 +42,27 @@ export class KinematicProbeLimb {
      * Updates the position of all active probes.
      */
     public update(deltaTime: number) {
+        const sme = SpatialMetricEngine.getInstance();
         for (const [id, probe] of this.probes) {
+            // ── Compass Orientation (always, regardless of plane or wind-up state) ──
+            // Models live-client notepad/compass bug: orientation is decoupled from movement.
+            if (probe.target) {
+                const src: SpatialEntity = { x: probe.coords.x, y: probe.coords.z, plane: probe.coords.plane };
+                const tgt: SpatialEntity = { x: probe.target.x, y: probe.target.z, plane: probe.target.plane };
+                probe.orientation = sme.getOrientation(src, tgt);
+
+                // ── PLATYPUS: Follower catch-up snap at 20-30 tile threshold ──
+                if (probe.type === 'PLATYPUS') {
+                    const snap = sme.snapFollowerToPlayer(src, tgt, FOLLOWER_CONFIGS.PET);
+                    if (snap && snap.behavior === 'SNAP') {
+                        probe.coords.x = snap.tile.x;
+                        probe.coords.z = snap.tile.y;
+                        probe.coords.plane = snap.tile.plane;
+                        continue; // Skip normal movement this tick
+                    }
+                }
+            }
+
             this.processMovement(probe, deltaTime);
         }
     }
@@ -166,3 +191,4 @@ export class KinematicProbeLimb {
         });
     }
 }
+

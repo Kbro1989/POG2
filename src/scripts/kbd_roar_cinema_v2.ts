@@ -3,7 +3,7 @@
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { SoundtrackLimb } from '../limbs/spatial/SoundtrackLimb.js';
+import { SoundtrackLimb } from '../limbs/creative/SoundtrackLimb.js';
 import { ChromaValidator } from '../limbs/vision/ChromaValidator.js';
 
 export interface GLTFAsset {
@@ -37,7 +37,7 @@ export class KBDRoarCinemaV2 {
   private timeline: any;
 
   constructor() {
-    this.soundtrack = new SoundtrackLimb();
+    this.soundtrack = new SoundtrackLimb({} as any);
     this.chroma = new ChromaValidator();
   }
 
@@ -243,3 +243,4 @@ export class KBDRoarCinemaV2 {
 
 const cinema = new KBDRoarCinemaV2();
 cinema.executeFullPipeline().catch(console.error);
+

@@ -1,4 +1,4 @@
-﻿import { type AICapability, type AITaskType, type AIServiceType, type Result } from '../../core/models.js';
+import { type AICapability, type AITaskType, type AIServiceType, type Result } from '../../core/models.js';
 import { StaticModelRegistry, CatalogMetadata } from './StaticModelRegistry.js';
 import { CloudflareModelRegistry } from './CloudflareModelRegistry.js';
 
@@ -11,6 +11,7 @@ export const CapabilityRegistry: Record<string, AICapability> = {
         name: 'Vision API Face Detection',
         serviceType: 'CLOUD_VISION',
         taskType: 'IMAGE',
+        taskClass: 'VISION',
         description: 'Detect faces and landmark features in images.',
         passthroughEnabled: true
     },
@@ -74,6 +75,7 @@ export const CapabilityRegistry: Record<string, AICapability> = {
         name: 'Scaffold Web App',
         serviceType: 'GEMINI',
         taskType: 'TEXT',
+        taskClass: 'COMPLETION',
         description: 'Create full-stack project structures (React, Next.js, etc) with boilerplate.',
         passthroughEnabled: true
     },
@@ -155,6 +157,7 @@ export const CapabilityRegistry: Record<string, AICapability> = {
         name: 'Project Gutenberg Search',
         serviceType: 'GUTENBERG',
         taskType: 'TEXT',
+        taskClass: 'RETRIEVAL',
         description: 'Search or retrieve 60k+ books by domain, author, or topic.',
         passthroughEnabled: true
     },
@@ -204,7 +207,8 @@ export const CapabilityRegistry: Record<string, AICapability> = {
         name: 'Esoteric Reasoning Forge',
         serviceType: 'HUGGINGFACE',
         taskType: 'TEXT',
-        modelId: 'moonshotai/Kimi-K2.5:novita',
+        taskClass: 'AGENTIC_REASONING',
+        modelId: 'huggingface:moonshotai/Kimi-K2.6:novita',
         description: 'ULTIMATE TIER: High-intelligence reasoning forge for complex mental models.',
         passthroughEnabled: true,
         fallback: 'gold_gemini_2_5_pro'
@@ -252,3 +256,4 @@ export function registerCapability(cap: AICapability): void {
     }
     CapabilityRegistry[cap.id] = cap;
 }
+

@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign Unified Diagnostic - POG2</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@300;400;700&display=swap');
+
+        :root {
+            --glass-bg: rgba(15, 20, 30, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --neon-blue: #00d2ff;
+            --neon-purple: #9d50bb;
+            --adrenaline-orange: #ff9d00;
+            --accent-glow: 0 0 20px rgba(0, 210, 255, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #05070a;
+            color: #e0e6ed;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            background: radial-gradient(circle at 50% 100%, rgba(157, 80, 187, 0.05) 0%, transparent 50%);
+        }
+
+        /* Dashboard Overlays */
+        #dashboard {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            padding: 30px;
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--glass-bg);
+            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            pointer-events: all;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Left Panel: Telemetry */
+        #telemetry-panel {
+            grid-column: 1;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* Right Panel: Combat Log */
+        #log-panel {
+            grid-column: 3;
+        }
+
+        #log-container {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-family: 'Inter', monospace;
+            font-size: 12px;
+            padding-right: 10px;
+        }
+
+        .log-entry {
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid var(--neon-blue);
+            border-radius: 4px;
+        }
+
+        .log-entry.damage {
+            border-color: #ff4444;
+            color: #ff8888;
+        }
+
+        .log-entry.crit {
+            border-color: var(--adrenaline-orange);
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .log-entry.system {
+            border-color: #44aaff;
+            color: #88ccff;
+        }
+
+        #ws-status {
+            transition: color 0.3s ease;
+        }
+
+        #ws-status.disconnected {
+            color: #ff4444;
+        }
+
+        #ws-status.connected {
+            color: #34d399;
+        }
+
+        #causality-panel {
+            grid-column: 2;
+            align-self: start;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        #kernel-sparkline {
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+        }
+
+        #causality-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Bottom: Action Bar & Adrenaline */
+        #bottom-hud {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            pointer-events: all;
+        }
+
+        #adrenaline-orb-container {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--glass-border);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(255, 157, 0, 0.2);
+        }
+
+        #adrenaline-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, #ff6600, #ffaa00);
+            transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 -5px 15px rgba(255, 157, 0, 0.5);
+            height: 0%;
+        }
+
+        #adrenaline-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 2;
+        }
+
+        #action-bar {
+            display: flex;
+            gap: 8px;
+            background: var(--glass-bg);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .ability-slot {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .ability-slot:hover {
+            border-color: var(--neon-blue);
+            transform: translateY(-3px);
+            box-shadow: var(--accent-glow);
+        }
+
+        .ability-slot .keybind {
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-size: 9px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+        }
+
+        .ability-slot .cooldown-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #fff;
+            font-size: 16px;
+            z-index: 5;
+        }
+
+        .ability-slot.predicted {
+            border-color: var(--adrenaline-orange);
+            box-shadow: 0 0 15px rgba(255, 157, 0, 0.6);
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            from {
+                box-shadow: 0 0 10px rgba(255, 157, 0, 0.4);
+            }
+
+            to {
+                box-shadow: 0 0 25px rgba(255, 157, 0, 0.8);
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        /* Enriched Who-What-Where-Why styles */
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+
+        .search-title {
+            color: var(--neon-blue);
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .search-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .search-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            padding: 6px;
+            color: #fff;
+            font-size: 11px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .search-select {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            padding: 6px;
+            color: #fff;
+            font-size: 11px;
+            cursor: pointer;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .search-button {
+            background: linear-gradient(135deg, var(--neon-blue), #00aaff);
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            color: #05070a;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .search-button:hover {
+            box-shadow: var(--accent-glow);
+            transform: translateY(-1px);
+        }
+
+        .enrich-card {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(0, 210, 255, 0.05);
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            border-radius: 8px;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .enrich-header {
+            color: var(--neon-blue);
+            font-weight: bold;
+            border-bottom: 1px solid rgba(0, 210, 255, 0.1);
+            padding-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .enrich-wiki-link {
+            color: var(--neon-blue);
+            text-decoration: none;
+            font-size: 10px;
+            text-align: right;
+            margin-top: 4px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+
+    <div id="dashboard">
+        <div id="telemetry-panel" class="panel">
+            <h2>Telemetry</h2>
+            <div class="search-container">
+                <div class="search-title">Search Cache/Wiki Target</div>
+                <div class="search-controls">
+                    <input type="text" id="target-search-input" placeholder="Name or ID..." class="search-input" />
+                    <select id="target-type-select" class="search-select" title="Target Type">
+                        <option value="npc">NPC</option>
+                        <option value="item">Item</option>
+                        <option value="object">Object</option>
+                    </select>
+                    <button id="search-btn" onclick="searchTarget()" class="search-button">Go</button>
+                </div>
+            </div>
+            <div id="stats">
+                <div class="stat-row"><span class="stat-label">Target</span><span class="stat-value"
+                        id="target-name">Nex</span></div>
+                <div class="stat-row"><span class="stat-label">Phase</span><span class="stat-value"
+                        id="phase-display">—</span></div>
+                <div class="stat-row"><span class="stat-label">Tick</span><span class="stat-value"
+                        id="tick-counter">0</span></div>
+                <div class="stat-row"><span class="stat-label">Style</span><span class="stat-value"
+                        id="style-display">Ranged</span></div>
+                <div class="stat-row"><span class="stat-label">Archetype</span><span class="stat-value"
+                        id="archetype-display">aggressive</span></div>
+                <div class="stat-row"><span class="stat-label">Rotation</span><span class="stat-value"
+                        id="rotation-display">—</span></div>
+                <div class="stat-row"><span class="stat-label">Kernel Phase</span><span class="stat-value"
+                        id="kernel-phase">—</span></div>
+                <div class="stat-row"><span class="stat-label">Target HP</span><span class="stat-value"
+                        id="target-hp">—</span></div>
+                <div class="stat-row"><span class="stat-label">WS</span><span class="stat-value disconnected"
+                        id="ws-status">DISCONNECTED</span></div>
+            </div>
+            <div id="enriched-card-container"></div>
+        </div>
+
+        <div id="causality-panel" class="panel">
+            <h2>Causality Trace</h2>
+            <canvas id="kernel-sparkline" width="300" height="40"></canvas>
+            <div id="causality-container">
+                <!-- Traces will be injected here -->
+            </div>
+        </div>
+
+        <div id="log-panel" class="panel">
+            <h2>Combat Log</h2>
+            <div id="log-container">
+                <div class="log-entry system">Sovereign Unified Substrate Ready.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bottom-hud">
+        <div id="adrenaline-orb-container">
+            <div id="adrenaline-fill" style="height: 0%"></div>
+            <div id="adrenaline-text">0%</div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+            <div id="style-selector" style="display: flex; gap: 8px; background: var(--glass-bg); padding: 5px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                <button class="style-btn" onclick="setStyle('MELEE')" style="background: rgba(255,68,68,0.2); border: 1px solid #ff4444; color: #fff; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 10px; text-transform: uppercase; font-weight: bold;">Melee</button>
+                <button class="style-btn" onclick="setStyle('MAGIC')" style="background: rgba(68,170,255,0.2); border: 1px solid #44aaff; color: #fff; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 10px; text-transform: uppercase; font-weight: bold;">Magic</button>
+                <button class="style-btn" onclick="setStyle('RANGED')" style="background: rgba(68,255,68,0.2); border: 1px solid #44ff44; color: #fff; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 10px; text-transform: uppercase; font-weight: bold;">Ranged</button>
+            </div>
+            <div id="action-bar"></div>
+        </div>
+    </div>
+
+    <script>
+        // ─── Constants & State ──────────────────────────────────────────
+        // Ranged action bar — synchronized with PVME Nex pull (March 2026)
+        const ABILITIES = {
+            'GALESHOT': { name: 'Galeshot', key: '1', cd: 12, adren: 0, tier: 'basic', style: 'ranged' },
+            'RICOCHET': { name: 'Ricochet', key: '2', cd: 17, adren: 0, tier: 'basic', style: 'ranged' },
+            'PIERCING': { name: 'Piercing Shot', key: '3', cd: 5, adren: 0, tier: 'basic', style: 'ranged' },
+            'SNIPE': { name: 'Snipe', key: '4', cd: 17, adren: 0, tier: 'basic', style: 'ranged' },
+            'CORR_SHOT': { name: 'Corruption Shot', key: '5', cd: 25, adren: 2000, tier: 'enhanced', style: 'ranged' },
+            'SNAP_SHOT': { name: 'Snap Shot', key: '6', cd: 34, adren: 1500, tier: 'enhanced', style: 'ranged' },
+            'RAPID_FIRE': { name: 'Rapid Fire', key: '7', cd: 34, adren: 1500, tier: 'enhanced', style: 'ranged' },
+            'S_TENDRILS': { name: 'Shadow Tendrils', key: 'Q', cd: 75, adren: 1500, tier: 'enhanced', style: 'ranged' },
+            'BOMBARDMENT': { name: 'Bombardment', key: 'W', cd: 50, adren: 1500, tier: 'enhanced', style: 'ranged' },
+            'DEATHS_SWIFT': { name: "Death's Swift", key: 'E', cd: 100, adren: 10000, tier: 'ultimate', style: 'ranged' },
+            'DEADSHOT': { name: 'Deadshot', key: 'R', cd: 100, adren: 10000, tier: 'ultimate', style: 'ranged' },
+            'IMBUE_SHADOW': { name: 'Imbue Shadows', key: 'F', cd: 100, adren: 10000, tier: 'ultimate', style: 'ranged' },
+        };
+        const LAYOUT = ['GALESHOT', 'RICOCHET', 'PIERCING', 'SNIPE', 'CORR_SHOT', 'SNAP_SHOT', 'RAPID_FIRE', 'S_TENDRILS', 'BOMBARDMENT', 'DEATHS_SWIFT', 'DEADSHOT', 'IMBUE_SHADOW'];
+
+        const PHASE_COLORS = {
+            'Smoke Phase': '#888',
+            'Shadow Phase': '#9d50bb',
+            'Blood Phase': '#ff4444',
+            'Ice Phase': '#44aaff',
+            'Zaros Phase': '#ffaa00'
+        };
+
+        const state = {
+            tick: 0,
+            adrenaline: 0,
+            cooldowns: {},
+            lastActionTick: 0,
+            nextAbility: null,
+            wsConnected: false,
+            volatilityHistory: []
+        };
+
+        // ─── Initialization ─────────────────────────────────────────────
+        const actionBar = document.getElementById('action-bar');
+        const logContainer = document.getElementById('log-container');
+        const adrenalineFill = document.getElementById('adrenaline-fill');
+        const adrenalineText = document.getElementById('adrenaline-text');
+        const tickCounter = document.getElementById('tick-counter');
+
+        let activeSlots = [];
+        let currentStyle = 'RANGED';
+
+        function setStyle(style) {
+            currentStyle = style;
+            loadActionBar();
+        }
+
+        function renderStaticActionBar() {
+            actionBar.innerHTML = '';
+            LAYOUT.forEach(id => {
+                const ab = ABILITIES[id];
+                if (!ab) return;
+                const slot = document.createElement('div');
+                const iconName = ab.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                slot.className = 'ability-slot';
+                slot.id = `slot-${id}`;
+                slot.style.backgroundImage = `url('icons/${iconName}.png')`;
+                slot.style.backgroundSize = 'cover';
+                slot.style.backgroundPosition = 'center';
+                slot.innerHTML = `
+                    <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.8));"></div>
+                    <span class="keybind" style="z-index: 2;">${ab.key}</span>
+                    <span style="position: absolute; bottom: 2px; width: 100%; font-size: 8px; color: #ccc; text-align: center; z-index: 2; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px;">${ab.name}</span>
+                `;
+                slot.onclick = () => useAbility(id);
+                actionBar.appendChild(slot);
+                state.cooldowns[id] = 0;
+            });
+        }
+
+        async function loadActionBar() {
+            try {
+                const res = await fetch('/api/actionbar?style=' + currentStyle);
+                if (!res.ok) throw new Error('Failed to fetch action bar');
+                const data = await res.json();
+
+                activeSlots = data.slots || [];
+                if (activeSlots.length === 0) {
+                    renderStaticActionBar();
+                    return;
+                }
+
+                actionBar.innerHTML = '';
+                const keybinds = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Q', 'W'];
+
+                activeSlots.forEach((slotData, i) => {
+                    const slot = document.createElement('div');
+                    slot.className = 'ability-slot';
+                    slot.id = `slot-index-${i}`;
+
+                    if (slotData.abilityId) {
+                        const abilityId = slotData.abilityId;
+                        const iconName = slotData.abilityName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                        slot.style.backgroundImage = `url('icons/${iconName}.png')`;
+                        slot.style.backgroundSize = 'cover';
+                        slot.style.backgroundPosition = 'center';
+
+                        const key = keybinds[i] || '';
+
+                        slot.innerHTML = `
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.8));"></div>
+                            <span class="keybind" style="z-index: 2;">${key}</span>
+                            <span style="position: absolute; bottom: 2px; width: 100%; font-size: 8px; color: #ccc; text-align: center; z-index: 2; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px;">${slotData.abilityName}</span>
+                        `;
+                        slot.onclick = () => executeSlotAbility(i);
+
+                        if (state.cooldowns[abilityId] === undefined) {
+                            state.cooldowns[abilityId] = 0;
+                        }
+                    } else {
+                        slot.classList.add('empty-slot');
+                        slot.style.opacity = '0.2';
+                        slot.style.background = 'rgba(255,255,255,0.03)';
+                        slot.style.border = '1px dashed rgba(255,255,255,0.1)';
+                        slot.innerHTML = `
+                            <span style="font-size: 8px; color: #555;">Empty</span>
+                        `;
+                    }
+                    actionBar.appendChild(slot);
+                });
+
+                updateUI();
+            } catch (err) {
+                console.warn('Error loading dynamic action bar, falling back to static Ranged bar:', err);
+                renderStaticActionBar();
+            }
+        }
+
+        loadActionBar();
+
+        const COLORS = {
+            melee: '#ff4444',
+            magic: '#44aaff',
+            ranged: '#44ff44',
+            system: '#ffffff'
+        };
+
+        function log(msg, tier = '', style = 'system') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${tier}`;
+            entry.style.color = COLORS[style] || '#fff';
+            entry.textContent = `> [${new Date().toLocaleTimeString()}] ${msg}`;
+            logContainer.prepend(entry);
+            if (logContainer.children.length > 25) logContainer.lastChild.remove();
+        }
+
+        function updateUI() {
+            tickCounter.textContent = state.tick;
+            const adrenPct = (state.adrenaline / 10);
+            adrenalineFill.style.height = `${adrenPct}%`;
+            adrenalineText.textContent = `${Math.floor(adrenPct)}%`;
+
+            if (activeSlots.length > 0) {
+                activeSlots.forEach((slotData, i) => {
+                    const slot = document.getElementById(`slot-index-${i}`);
+                    if (!slot || !slotData.abilityId) return;
+
+                    const abilityId = slotData.abilityId;
+                    const cd = state.cooldowns[abilityId] || 0;
+
+                    if (state.nextAbility && abilityId.toUpperCase() === state.nextAbility.toUpperCase()) {
+                        slot.classList.add('predicted');
+                    } else {
+                        slot.classList.remove('predicted');
+                    }
+
+                    const oldCd = slot.querySelector('.cooldown-overlay');
+                    if (oldCd) oldCd.remove();
+
+                    if (cd > 0) {
+                        const overlay = document.createElement('div');
+                        overlay.className = 'cooldown-overlay';
+                        overlay.textContent = cd;
+                        slot.appendChild(overlay);
+                    }
+                });
+            } else {
+                LAYOUT.forEach(id => {
+                    const slot = document.getElementById(`slot-${id}`);
+                    if (!slot) return;
+                    const ab = ABILITIES[id];
+                    const cd = state.cooldowns[id];
+
+                    if (state.nextAbility && ab.name.toUpperCase() === state.nextAbility.toUpperCase()) {
+                        slot.classList.add('predicted');
+                    } else {
+                        slot.classList.remove('predicted');
+                    }
+
+                    const oldCd = slot.querySelector('.cooldown-overlay');
+                    if (oldCd) oldCd.remove();
+
+                    if (cd > 0) {
+                        const overlay = document.createElement('div');
+                        overlay.className = 'cooldown-overlay';
+                        overlay.textContent = cd;
+                        slot.appendChild(overlay);
+                    }
+                });
+            }
+        }
+
+        let currentPCS = null;
+
+        async function searchTarget() {
+            const input = document.getElementById('target-search-input').value.trim();
+            const type = document.getElementById('target-type-select').value;
+            if (!input) return;
+
+            log(`Enriching target context for: "${input}" (${type.toUpperCase()})...`, 'system');
+
+            try {
+                let url = `/api/enrich?type=${type}`;
+                if (/^\d+$/.test(input)) {
+                    url += `&id=${input}`;
+                } else {
+                    url += `&name=${encodeURIComponent(input)}`;
+                }
+
+                const resp = await fetch(url);
+                if (!resp.ok) {
+                    throw new Error(`Enrich API failed: ${resp.status}`);
+                }
+                const data = await resp.json();
+
+                // Update Telemetry target
+                document.getElementById('target-name').textContent = data.name || data.queryName || input;
+                if (data.cacheData) {
+                    document.getElementById('target-hp').textContent = data.cacheData.hp ? data.cacheData.hp.toLocaleString() : 'N/A';
+                    if (data.cacheData.id) {
+                        log(`Loaded Cache ID: ${data.cacheData.id} for "${data.name}"`, 'system');
+                        loadModelForId(data.cacheData.id);
+                    }
+                }
+
+                // Render WHO WHAT WHERE WHY Card!
+                renderEnrichedCard(data, type);
+            } catch (e) {
+                log(`Enrichment failed: ${e.message}`, 'system');
+                console.error(e);
+            }
+        }
+
+        function renderEnrichedCard(data, type) {
+            const cardContainer = document.getElementById('enriched-card-container');
+            if (!cardContainer) return;
+
+            const isItem = type === 'item' || data.role === 'ITEM';
+            const labelWho = isItem ? 'WHAT' : 'WHO';
+            const labelWhat = isItem ? 'DETAIL' : 'WHAT';
+            const labelWhere = isItem ? 'SOURCE' : 'WHERE';
+            const labelWhy = isItem ? 'USAGE' : 'WHY';
+
+            const who = data.name || 'Unknown Entity';
+            const role = data.role || type.toUpperCase();
+            let what = data.extract || data.description || 'No descriptive context recorded in local RuneScape cache.';
+            const where = data.location || (data.cacheData && data.cacheData.location) || 'Fringe Substrate / Coordinates Unresolved';
+            let why = data.strategy || data.combatRotation || 'Standard behavioral routing. Proceed with typical PvME capability rotations.';
+
+            if (isItem && data.cacheData) {
+                const itemData = data.cacheData;
+                const raw = itemData.raw || {};
+                
+                let details = [];
+                if (raw.value !== undefined) details.push(`Value: ${raw.value.toLocaleString()} gp`);
+                if (itemData.isEquippable) details.push(`Equippable (Slot: ${itemData.equipSlotId})`);
+                if (raw.category) details.push(`Category: ${raw.category}`);
+                
+                if (details.length > 0) {
+                    what = details.join(' | ') + '<br>' + what;
+                }
+
+                if (itemData.actions && itemData.actions.length > 0) {
+                    why = `Actions: ${itemData.actions.filter(a => a).join(', ')}`;
+                }
+            }
+
+            cardContainer.innerHTML = `
+                <div class="enrich-card">
+                    <div class="enrich-header">
+                        ℹ️ ${labelWho}, ${labelWhat}, ${labelWhere}, ${labelWhy}
+                    </div>
+                    <div><strong>${labelWho}:</strong> <span>${who}</span> (${role})</div>
+                    <div><strong>${labelWhat}:</strong> <span style="color: #ccc; font-style: italic;">${what}</span></div>
+                    <div><strong>${labelWhere}:</strong> <span>${where}</span></div>
+                    <div><strong>${labelWhy}:</strong> <span style="color: var(--adrenaline-orange);">${why}</span></div>
+                    ${data.url ? `<a href="${data.url}" target="_blank" class="enrich-wiki-link">Open Wiki Page ↗</a>` : ''}
+                </div>
+            `;
+        }
+
+        async function loadModelForId(id) {
+            if (!scene) return;
+            try {
+                const res = await fetch(`/models/kit_${id}.json`);
+                if (!res.ok) {
+                    console.log(`Model for kit_${id}.json not found. Keeping/loading default point cloud model.`);
+                    return;
+                }
+                const md = await res.json();
+
+                // Dispose previous points cloud system if exists
+                if (currentPCS) {
+                    currentPCS.dispose();
+                }
+
+                const pcs = new BABYLON.PointsCloudSystem("pcs", 1, scene);
+                const pos = md.positions;
+                pcs.addPoints(pos.length / 3, (p, i) => {
+                    p.position = new BABYLON.Vector3(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]);
+                    p.color = new BABYLON.Color4(0.0, 0.8, 1.0, 1);
+                });
+                await pcs.buildMeshAsync();
+
+                const camera = scene.activeCamera;
+                if (camera) {
+                    camera.target = pcs.mesh.getBoundingInfo().boundingBox.center;
+                }
+                currentPCS = pcs;
+                log(`Successfully rendered 3D Point Cloud for Cache Model ID ${id}`, 'system');
+            } catch (e) {
+                console.warn(`Model render failed for kit_${id}.json:`, e);
+            }
+        }
+
+        function useAbility(id) {
+            const ab = ABILITIES[id];
+            if (state.cooldowns[id] > 0) return;
+            if (state.adrenaline < ab.adren) {
+                log(`Insufficient Adrenaline for ${ab.name}`, 'system');
+                return;
+            }
+
+            state.adrenaline -= ab.adren;
+            state.cooldowns[id] = ab.cd;
+            log(`Executed: ${ab.name}`, ab.tier, ab.style);
+            emitGhostSplat(ab.tier === 'ultimate' ? 'crit' : 'damage', Math.floor(Math.random() * 500) + 100, ab.tier, ab.style);
+            updateUI();
+        }
+
+        function executeSlotAbility(index) {
+            const slotData = activeSlots[index];
+            if (!slotData || !slotData.abilityId) return;
+
+            const abilityId = slotData.abilityId;
+            const cd = state.cooldowns[abilityId] || 0;
+            if (cd > 0) return;
+
+            const adrenCost = slotData.adrenalineCost || 0;
+            const adrenReq = slotData.adrenalineThreshold || 0;
+            if (state.adrenaline < adrenReq) {
+                log(`Insufficient Adrenaline for ${slotData.abilityName}`, 'system');
+                return;
+            }
+
+            state.adrenaline = Math.max(0, state.adrenaline - adrenCost);
+            state.cooldowns[abilityId] = slotData.cooldownTotal || 3;
+
+            const tier = slotData.tier || 'basic';
+            const style = slotData.style || 'melee';
+
+            log(`Executed: ${slotData.abilityName}`, tier, style);
+            emitGhostSplat(tier === 'ultimate' ? 'crit' : 'damage', Math.floor(Math.random() * 500) + 100, tier, style);
+            updateUI();
+        }
+
+        // ─── Babylon.js Scene ───────────────────────────────────────────
+        const canvas = document.getElementById('renderCanvas');
+        const engine = new BABYLON.Engine(canvas, true);
+        let scene;
+
+        async function initScene() {
+            scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color4(0.02, 0.02, 0.03, 1);
+
+            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 250, BABYLON.Vector3.Zero(), scene);
+            camera.attachControl(canvas, true);
+            camera.wheelPrecision = 20;
+
+            const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+            light.intensity = 0.8;
+
+            // Load Model (Kit 31149)
+            try {
+                const res = await fetch('/models/kit_31149.json');
+                const md = await res.json();
+                const pcs = new BABYLON.PointsCloudSystem("pcs", 1, scene);
+                const pos = md.positions;
+                pcs.addPoints(pos.length / 3, (p, i) => {
+                    p.position = new BABYLON.Vector3(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]);
+                    p.color = new BABYLON.Color4(0.3, 0.6, 0.9, 1);
+                });
+                await pcs.buildMeshAsync();
+                camera.target = pcs.mesh.getBoundingInfo().boundingBox.center;
+                currentPCS = pcs;
+            } catch (e) { console.warn("Model fetch failed, using fallback."); }
+
+            return scene;
+        }
+
+        // ─── Ghost Splats ───────────────────────────────────────────────
+        function emitGhostSplat(type, value, tier, style = 'ranged') {
+            const id = `splat_${Date.now()}`;
+            const size = tier === 'ultimate' ? 60 : tier === 'enhanced' ? 45 : 30;
+            const color = tier === 'ultimate' ? '#ffaa00' : COLORS[style] || '#44ff44';
+
+            const plane = BABYLON.MeshBuilder.CreatePlane(id, { size }, scene);
+            plane.position = new BABYLON.Vector3((Math.random() - 0.5) * 80, 130 + Math.random() * 40, -20);
+            plane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+
+            const tex = new BABYLON.DynamicTexture(`tex_${id}`, { width: 256, height: 128 }, scene, false);
+            tex.hasAlpha = true;
+            const ctx = tex.getContext();
+            ctx.clearRect(0, 0, 256, 128);
+            ctx.font = `bold ${tier === 'ultimate' ? 80 : 64}px Inter`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.lineWidth = 6; ctx.strokeStyle = '#000';
+            ctx.strokeText(value, 128, 64);
+            ctx.fillStyle = color;
+            ctx.fillText(value, 128, 64);
+            tex.update();
+
+            const mat = new BABYLON.StandardMaterial(`mat_${id}`, scene);
+            mat.diffuseTexture = tex;
+            mat.disableLighting = true;
+            mat.useAlphaFromDiffuseTexture = true;
+            plane.material = mat;
+
+            const animate = () => {
+                plane.position.y += 0.8;
+                mat.alpha -= 0.015;
+                if (mat.alpha <= 0) { plane.dispose(); return; }
+                requestAnimationFrame(animate);
+            };
+            requestAnimationFrame(animate);
+        }
+
+        // ─── WebSocket Consumer ──────────────────────────────────────────
+        let ws = null;
+        let wsReconnectTimer = null;
+
+        function connectWS() {
+            try {
+                ws = new WebSocket('ws://localhost:8080');
+
+                ws.onopen = () => {
+                    state.wsConnected = true;
+                    document.getElementById('ws-status').textContent = 'CONNECTED';
+                    document.getElementById('ws-status').style.color = '#34d399';
+                    log('WebSocket connected to CombatHUDBridge', 'system');
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const payload = JSON.parse(event.data);
+
+                        if (payload.type === 'STATE_UPDATE') {
+                            // Adrenaline
+                            state.adrenaline = payload.adrenaline || 0;
+                            const adrenPct = (state.adrenaline / 10);
+                            adrenalineFill.style.height = `${adrenPct}%`;
+                            adrenalineText.textContent = `${Math.floor(adrenPct)}%`;
+
+                            // Phase
+                            if (payload.activePhase) {
+                                const phaseEl = document.getElementById('phase-display');
+                                phaseEl.textContent = payload.activePhase;
+                                phaseEl.style.color = PHASE_COLORS[payload.activePhase] || '#fff';
+                            }
+
+                            // Style
+                            if (payload.combatStyle) {
+                                document.getElementById('style-display').textContent = payload.combatStyle.charAt(0).toUpperCase() + payload.combatStyle.slice(1);
+                            }
+
+                            // Archetype
+                            if (payload.activeArchetype) {
+                                document.getElementById('archetype-display').textContent = payload.activeArchetype;
+                            }
+
+                            // Rotation label
+                            if (payload.activeRotation) {
+                                document.getElementById('rotation-display').textContent = payload.activeRotation;
+                            }
+
+                            // Target HP
+                            if (payload.targetHp !== undefined) {
+                                document.getElementById('target-hp').textContent = payload.targetHp.toLocaleString();
+                            }
+
+                            // Kernel Phase
+                            if (payload.kernelPhase) {
+                                document.getElementById('kernel-phase').textContent = payload.kernelPhase;
+
+                                // Volatility mapping
+                                const valMap = { 'STABLE': 0, 'EXPLORING': 1, 'FALSE_STABILITY': 2, 'ANOMALY': 3 };
+                                const val = valMap[payload.kernelPhase] !== undefined ? valMap[payload.kernelPhase] : 0;
+                                state.volatilityHistory.push(val);
+                                if (state.volatilityHistory.length > 50) state.volatilityHistory.shift();
+
+                                const canvas = document.getElementById('kernel-sparkline');
+                                if (canvas && canvas.getContext) {
+                                    const ctx = canvas.getContext('2d');
+                                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                    ctx.beginPath();
+                                    const step = canvas.width / 50;
+                                    ctx.strokeStyle = 'var(--neon-purple)';
+                                    ctx.lineWidth = 2;
+                                    ctx.lineJoin = 'round';
+                                    for (let i = 0; i < state.volatilityHistory.length; i++) {
+                                        const x = i * step;
+                                        // height max is 3, canvas height is 40. pad by 5.
+                                        const y = 35 - (state.volatilityHistory[i] * 10);
+                                        if (i === 0) ctx.moveTo(x, y);
+                                        else ctx.lineTo(x, y);
+                                    }
+                                    ctx.stroke();
+
+                                    // Add glow
+                                    ctx.shadowBlur = 10;
+                                    ctx.shadowColor = 'var(--neon-purple)';
+                                    ctx.stroke();
+                                    ctx.shadowBlur = 0;
+                                }
+                            }
+
+                            // Causality Trace
+                            if (payload.learningTrace) {
+                                const trace = payload.learningTrace;
+                                const container = document.getElementById('causality-container');
+                                const traceEl = document.createElement('div');
+                                traceEl.style.background = 'rgba(255, 255, 255, 0.03)';
+                                traceEl.style.borderLeft = '3px solid var(--neon-purple)';
+                                traceEl.style.padding = '10px';
+                                traceEl.style.borderRadius = '4px';
+                                traceEl.style.fontSize = '12px';
+
+                                const summaryHTML = `<strong>${trace.summary || 'Trace'}</strong>`;
+                                const driversHTML = (trace.primaryDrivers || []).map(d => `<span style="background: rgba(157, 80, 187, 0.3); padding: 2px 6px; border-radius: 4px; margin-right: 4px; font-size: 10px;">${d}</span>`).join('');
+                                const chainHTML = (trace.causalChain || []).map(c => `<div style="color: #aaa; margin-top: 4px; border-left: 1px solid #555; padding-left: 6px;">${c}</div>`).join('');
+
+                                traceEl.innerHTML = `
+                                    <div style="margin-bottom: 6px;">${summaryHTML}</div>
+                                    <div style="margin-bottom: 6px;">${driversHTML}</div>
+                                    <details>
+                                        <summary style="cursor: pointer; color: var(--neon-blue); user-select: none;">Causal Chain</summary>
+                                        <div style="margin-top: 6px; font-family: monospace; font-size: 10px;">${chainHTML}</div>
+                                    </details>
+                                `;
+
+                                container.appendChild(traceEl);
+                                if (container.children.length > 10) {
+                                    container.removeChild(container.firstChild);
+                                }
+                                container.parentElement.scrollTop = container.parentElement.scrollHeight;
+                            }
+
+                            // Next Ability Prediction Glow
+                            state.nextAbility = payload.nextAbility || null;
+                            if (activeSlots.length > 0) {
+                                activeSlots.forEach((slotData, i) => {
+                                    const slot = document.getElementById(`slot-index-${i}`);
+                                    if (!slot || !slotData.abilityId) return;
+                                    if (state.nextAbility && slotData.abilityName.toUpperCase() === state.nextAbility.toUpperCase()) {
+                                        slot.classList.add('predicted');
+                                    } else {
+                                        slot.classList.remove('predicted');
+                                    }
+                                });
+                            } else {
+                                LAYOUT.forEach(id => {
+                                    const slot = document.getElementById(`slot-${id}`);
+                                    const ab = ABILITIES[id];
+                                    if (state.nextAbility && ab.name.toUpperCase() === state.nextAbility.toUpperCase()) {
+                                        slot.classList.add('predicted');
+                                    } else {
+                                        slot.classList.remove('predicted');
+                                    }
+                                });
+                            }
+
+                            // Last Action highlight
+                            if (payload.lastAction) {
+                                log(`Agent → ${payload.lastAction}`, 'action', 'ranged');
+                            }
+                        }
+
+                        if (payload.type === 'LOG_UPDATE') {
+                            log(payload.message, payload.level === 'action' ? 'damage' : 'system');
+                        }
+
+                        if (payload.type === 'HITSPLAT' && scene) {
+                            const kind = payload.kind || 'DAMAGE';
+                            const tier = kind === 'CRIT' ? 'enhanced' : 'basic';
+                            emitGhostSplat(kind.toLowerCase(), payload.value, tier, 'ranged');
+                        }
+                    } catch (e) {
+                        console.warn('WS parse error:', e);
+                    }
+                };
+
+                ws.onclose = () => {
+                    state.wsConnected = false;
+                    document.getElementById('ws-status').textContent = 'DISCONNECTED';
+                    document.getElementById('ws-status').style.color = '#ff4444';
+                    // Reconnect after 3s
+                    wsReconnectTimer = setTimeout(connectWS, 3000);
+                };
+
+                ws.onerror = () => {
+                    ws.close();
+                };
+            } catch (e) {
+                console.warn('WS connection failed, retrying...');
+                wsReconnectTimer = setTimeout(connectWS, 3000);
+            }
+        }
+
+        connectWS(); // Initialize WS connection
+
+        // ─── Main Loop ──────────────────────────────────────────────────
+        initScene().then(s => {
+            engine.runRenderLoop(() => s.render());
+
+            // Local tick clock (fallback when no WS, also drives cooldowns)
+            setInterval(() => {
+                state.tick++;
+                tickCounter.textContent = state.tick;
+
+                // Only run local simulation if WS is not driving state
+                if (!state.wsConnected) {
+                    state.adrenaline = Math.min(1000, state.adrenaline + 80);
+                    const adrenPct = (state.adrenaline / 10);
+                    adrenalineFill.style.height = `${adrenPct}%`;
+                    adrenalineText.textContent = `${Math.floor(adrenPct)}%`;
+                }
+
+                // Cooldowns always tick locally
+                for (const id in state.cooldowns) {
+                    if (state.cooldowns[id] > 0) state.cooldowns[id]--;
+                }
+
+                // Cleanup cooldown overlays
+                if (activeSlots.length > 0) {
+                    activeSlots.forEach((slotData, i) => {
+                        const slot = document.getElementById(`slot-index-${i}`);
+                        if (!slot || !slotData.abilityId) return;
+
+                        const abilityId = slotData.abilityId;
+                        const oldCd = slot.querySelector('.cooldown-overlay');
+                        if (oldCd) oldCd.remove();
+
+                        const cd = state.cooldowns[abilityId] || 0;
+                        if (cd > 0) {
+                            const overlay = document.createElement('div');
+                            overlay.className = 'cooldown-overlay';
+                            overlay.textContent = cd;
+                            slot.appendChild(overlay);
+                        }
+                    });
+                } else {
+                    LAYOUT.forEach(id => {
+                        const slot = document.getElementById(`slot-${id}`);
+                        if (!slot) return;
+                        const oldCd = slot.querySelector('.cooldown-overlay');
+                        if (oldCd) oldCd.remove();
+                        if (state.cooldowns[id] > 0) {
+                            const overlay = document.createElement('div');
+                            overlay.className = 'cooldown-overlay';
+                            overlay.textContent = state.cooldowns[id];
+                            slot.appendChild(overlay);
+                        }
+                    });
+                }
+
+                // Ambient auto-attack splat (visual feel)
+                if (!state.wsConnected && state.tick % 4 === 0 && scene) {
+                    emitGhostSplat('damage', Math.floor(Math.random() * 80) + 20, 'basic', 'ranged');
+                }
+            }, 600);
+        });
+
+        window.addEventListener('resize', () => engine.resize());
+    </script>
+</body>
+
+</html>

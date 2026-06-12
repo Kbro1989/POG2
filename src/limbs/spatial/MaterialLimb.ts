@@ -1,4 +1,4 @@
-﻿import { createRequire } from 'module';
+import { createRequire } from 'module';
 import * as path from 'path';
 const require = createRequire(import.meta.url);
 let GameCacheLoader: any = null;
@@ -6,12 +6,12 @@ let parse: any = null;
 
 import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-import { getRSMVCachePath, getCachePedagogyPath, getRSMVSubstratePath } from '../../utils/SovereignPathResolver.js';
+import { getrsmvCachePath, getCachePedagogyPath, getrsmvSubstratePath } from '../../utils/SovereignPathResolver.js';
 import * as fs from 'fs';
 
-const RSMV = getRSMVSubstratePath();
-try { ({ GameCacheLoader } = require(path.join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch {}
-try { ({ parse } = require(path.join(RSMV, 'src', 'opdecoder.js'))); } catch {}
+const rsmv = getrsmvSubstratePath();
+try { ({ GameCacheLoader } = require(path.join(rsmv, 'src', 'cache', 'sqlite.js'))); } catch { }
+try { ({ parse } = require(path.join(rsmv, 'src', 'opdecoder.js'))); } catch { }
 
 const logger = createLogger('MaterialLimb');
 
@@ -21,10 +21,10 @@ const logger = createLogger('MaterialLimb');
  * and visual components into the Sovereign Atlas. 
  */
 export class MaterialLimb {
-    private readonly cachePath = getRSMVCachePath();
+    private readonly cachePath = getrsmvCachePath();
     private readonly outDir = getCachePedagogyPath();
     private cache: any | null = null;
-    
+
     constructor() {
         try {
             if (GameCacheLoader) {
@@ -67,7 +67,7 @@ export class MaterialLimb {
                         materials[matId] = decoded;
                         count++;
                     } catch (e) {
-                         // Some files might fail parsing if they are corrupt or unexpected version
+                        logger.warn({ archive: archiveInfo.minor, file: f.fileid, error: (e as Error).message }, 'Failed to decode material substrate entry. Skipping corrupt file.');
                     }
                 }
             }
@@ -94,7 +94,7 @@ export class MaterialLimb {
     public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' } {
         const cacheExists = this.cache !== null;
         let status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' = 'ONLINE';
-        let details = `Material: ${cacheExists ? 'NOMINAL' : 'OFFLINE'}`;
+        const details = `Material: ${cacheExists ? 'NOMINAL' : 'OFFLINE'}`;
 
         if (!cacheExists) {
             status = 'OFFLINE';
@@ -108,7 +108,10 @@ export class MaterialLimb {
                 this.cache.close();
                 this.cache = null;
                 logger.info('MaterialLimb cache connection closed.');
-            } catch (e) {}
+            } catch (e) {
+                logger.error({ error: (e as Error).message }, 'Failed to gracefully close MaterialLimb cache connection.');
+            }
         }
     }
 }
+

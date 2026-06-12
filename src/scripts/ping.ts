@@ -1,1 +1,2 @@
-﻿console.log('tsx heartbeat: active');
+console.log('tsx heartbeat: active');
+

@@ -1,4 +1,4 @@
-﻿import { type Result, ok, type SovereignKnock } from '../../core/models.js';
+import { type Result, ok, type SovereignKnock } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
 import { join } from 'path';
@@ -19,8 +19,17 @@ export class GhostLimb {
     private watchInterval: NodeJS.Timeout | null = null;
     private isObserving: boolean = false;
     private awarenessScore: number = 1.0;
+    private mirrorBuffer: any[] = [];
 
     constructor(private readonly config: SovereignConfig) { }
+
+    /**
+     * mirrorState - Mirrors the ingestion output buffer to the GhostLimb for state preservation.
+     */
+    public mirrorState(buffer: any[]): void {
+        this.mirrorBuffer = [...buffer];
+        logger.debug(`[GHOST_VOICE] Mirrored ${buffer.length} items to internal observer cache.`);
+    }
 
     /**
      * awaken - Activates the observer cycle.
@@ -116,20 +125,14 @@ export class GhostLimb {
     }
 
     /**
-     * verifyLocalKnock - Verifies a SovereignKnock offline using local Ollama model (airgap survival)
+     * getOfflineModel - Resolves the best available local Ollama model for any task type.
+     * GhostLimb uses this to ensure survival for text, vision, and embedding tasks when offline.
      */
-    public async verifyLocalKnock(knock: SovereignKnock, client: ModelClient): Promise<Result<boolean>> {
-        logger.warn('[GHOST_VOICE][OFFLINE_KNOCK] Validating sequence locally without cloud dependencies...');
-        this.awaken();
-        this.awarenessScore = 0.9;
-
-        let targetModel = this.config.masterLocalModel || 'deepseek-r1:8b'; // Default to config
+    public getOfflineModel(taskType: 'text' | 'vision' | 'embedding' | 'audio' | 'image', client: ModelClient): string {
         const rolodex = client.getRolodex();
-        
         if (rolodex) {
-            // Find all healthy local Ollama text models
-            const healthyText = rolodex.getHealthyModelsByTaskType('text');
-            const localModels = healthyText.filter(m => 
+            const healthy = rolodex.getHealthyModelsByTaskType(taskType);
+            const localModels = healthy.filter(m => 
                 !m.startsWith('huggingface:') && 
                 !m.startsWith('@cf/') && 
                 !m.includes('cloudflare') && 
@@ -137,21 +140,38 @@ export class GhostLimb {
                 !m.startsWith('fireworks:') && 
                 !m.startsWith('openrouter:')
             );
-            
-            // Prefer the configured Master Local Model if it's a thinker
-            const isConfigThinker = targetModel.includes('think') || targetModel.includes('r1') || targetModel.includes('reason');
-            
-            if (!isConfigThinker) {
-                // If config isn't a thinker, search local list for one
-                const thinker = localModels.find(m => m.includes('think') || m.includes('r1') || m.includes('reason'));
-                if (thinker) {
-                    targetModel = thinker;
-                    logger.info({ targetModel }, '[GHOST_VOICE][OFFLINE_KNOCK] Located better local offline thinker than configured default.');
+
+            if (taskType === 'text') {
+                const isConfigThinker = (this.config.masterLocalModel || '').includes('think') || (this.config.masterLocalModel || '').includes('r1') || (this.config.masterLocalModel || '').includes('reason');
+                if (!isConfigThinker) {
+                    const thinker = localModels.find(m => m.includes('think') || m.includes('r1') || m.includes('reason'));
+                    if (thinker) return thinker.replace('ollama:', '');
                 }
-            } else {
-                logger.info({ targetModel }, '[GHOST_VOICE][OFFLINE_KNOCK] Using configured local thinker.');
+            }
+
+            if (localModels.length > 0) {
+                return localModels[0].replace('ollama:', '');
             }
         }
+
+        // Hardcoded emergency defaults based on typical POG2 Ollama list
+        switch (taskType) {
+            case 'vision': return 'gemma4:26b';
+            case 'embedding': return 'nomic-embed-text:latest';
+            default: return this.config.masterLocalModel || 'deepseek-r1:8b';
+        }
+    }
+
+    /**
+     * verifyLocalKnock - Verifies a SovereignKnock offline using local Ollama model (airgap survival)
+     */
+    public async verifyLocalKnock(knock: SovereignKnock, client: ModelClient): Promise<Result<boolean>> {
+        logger.warn('[GHOST_VOICE][OFFLINE_KNOCK] Validating sequence locally without cloud dependencies...');
+        this.awaken();
+        this.awarenessScore = 0.9;
+
+        const targetModel = this.getOfflineModel('text', client);
+        logger.info({ targetModel }, '[GHOST_VOICE][OFFLINE_KNOCK] Using offline model.');
 
         const prompt = `Validate hexagram sequence structural integrity: ${JSON.stringify(knock.iChingSequence)}
 Is this a valid 6-part I Ching sequence? Respond ONLY with "VALID" or "INVALID".`;
@@ -178,3 +198,4 @@ Is this a valid 6-part I Ching sequence? Respond ONLY with "VALID" or "INVALID".
         return ok(isValid);
     }
 }
+

@@ -1,32 +1,48 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "outDir": "./dist",
-    "rootDir": "./",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "jsx": "react-jsx"
-  },
-  "include": [
-    "src/**/*",
-    "cache_*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "resources",
-    "logs",
-    "src/rsmv",
-    "src/rsmv/**",
-    "src/scripts_backup",
-    "src/tests_backup"
-  ],
-  "references": [
-    { "path": "./src/rsmv" }
-  ]
-}
+         "target": "ESNext",
+         "module": "ESNext",
+         "moduleResolution": "bundler",
+         "outDir": "./dist",
+         "rootDir": "./src",
+         "baseUrl": "./",
+         "strict": false,
+         "strictNullChecks": true,
+         "strictBindCallApply": true,
+         "noImplicitAny": false,
+         "noUnusedLocals": false,
+         "noUnusedParameters": false,
+         "strictFunctionTypes": false,
+         "esModuleInterop": true,
+         "skipLibCheck": true,
+         "forceConsistentCasingInFileNames": true,
+         "declaration": true,
+         "jsx": "react-jsx",
+         "lib": [
+           "ESNext",
+           "DOM",
+           "DOM.Iterable"
+         ],
+         "paths": {
+          "*": ["src/*"],
+          "rsmv/*": ["src/rsmv/*"]
+         }
+       },
+       "include": [
+         "src/**/*"
+       ],
+       "exclude": [
+         "node_modules",
+         "dist",
+         "resources",
+         "logs",
+         "rsmv_inspector",
+         "scratch",
+         "src/scripts/**/*",
+         "src/scripts_backup/**/*",
+         "src/tests/**/*",
+         "src/tests_backup/**/*",
+         "../src_rsmv/**/*",
+         "D:/src_rsmv/**/*"
+       ]
+     }

@@ -1,0 +1,27 @@
+﻿
+> pog2-cli@1.1.0 build
+> tsc
+
+src/rsmv/cache/downloader.ts(82,4): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'string | Record<string, any>'.
+  No index signature with a parameter of type 'string' was found on type 'string | Record<string, any>'.
+src/rsmv/cache/sqlitewasm.ts(52,12): error TS7015: Element implicitly has an 'any' type because index expression is not of type 'number'.
+src/rsmv/cache/sqlitewasmworker.ts(10,11): error TS7010: 'postMessage', which lacks return-type annotation, implicitly has an 'any' return type.
+src/rsmv/classicloader.ts(112,50): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'CacheVersion'.
+  No index signature with a parameter of type 'string' was found on type 'CacheVersion'.
+src/rsmv/classicloader.ts(114,88): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'CacheVersion'.
+  No index signature with a parameter of type 'string' was found on type 'CacheVersion'.
+src/rsmv/classicloader.ts(161,23): error TS7053: Element implicitly has an 'any' type because expression of type '"filter" | "models" | "textures" | "entity" | "maps" | "land" | "jagex" | "media" | "sounds" | "config"' can't be used to index type 'CacheVersion'.
+  Property 'jagex' does not exist on type 'CacheVersion'.
+src/rsmv/clicommands.ts(89,15): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ framemaps: JsonBasedFile; items: JsonBasedFile; enums: JsonBasedFile; npcs: JsonBasedFile; soundjson: JsonBasedFile; ... 43 more ...; clientscriptops: JsonBasedFile; }'.
+  No index signature with a parameter of type 'string' was found on type '{ framemaps: JsonBasedFile; items: JsonBasedFile; enums: JsonBasedFile; npcs: JsonBasedFile; soundjson: JsonBasedFile; ... 43 more ...; clientscriptops: JsonBasedFile; }'.
+src/rsmv/cliparser.ts(45,14): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'typeof globalThis'.
+  No index signature with a parameter of type 'string' was found on type 'typeof globalThis'.
+src/rsmv/scripts/dump_42103.ts(20,25): error TS2531: Object is possibly 'null'.
+src/rsmv/scripts/gameinterfaces.ts(86,33): error TS7015: Element implicitly has an 'any' type because index expression is not of type 'number'.
+src/rsmv/scripts/testdecode.ts(164,6): error TS2322: Type 'unknown' is not assignable to type 'Error | null'.
+src/rsmv/scripts/testdecode.ts(271,3): error TS2322: Type 'unknown' is not assignable to type 'Error | null'.
+src/rsmv/viewer/jsonsearch.tsx(173,25): error TS7015: Element implicitly has an 'any' type because index expression is not of type 'number'.
+src/rsmv/viewer/scenenodes.tsx(769,128): error TS7015: Element implicitly has an 'any' type because index expression is not of type 'number'.
+src/rsmv/viewer/scenenodes.tsx(1168,106): error TS7015: Element implicitly has an 'any' type because index expression is not of type 'number'.
+src/rsmv/viewer/scriptsui.tsx(398,37): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ console: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ console: string; }'.

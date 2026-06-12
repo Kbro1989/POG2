@@ -114,3 +114,4 @@ export class ExtrasOracle {
         return typeof hook === 'string' ? hook : null;
     }
 }
+

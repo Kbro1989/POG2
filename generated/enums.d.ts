@@ -1,0 +1,1 @@
+export type enums = any;

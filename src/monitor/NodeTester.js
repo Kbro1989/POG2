@@ -415,7 +415,7 @@ export class NodeTester {
                             const questPoints = avatar?.quests?.points || 0;
                             const questCount = avatar?.quests?.completedCount || 0;
                             const coinBalance = avatar?.wallet?.[22159] || 0;
-                            
+
                             const ok = invCount === 28 && skillCount >= 29;
                             return {
                                 ...gameplaySig,

@@ -1,4 +1,4 @@
-import { GameCacheLoader } from "../rsmv/cache/sqlite.js";
+import { GameCacheLoader } from "rsmv/cache/sqlite";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -8,7 +8,7 @@ const OUTPUT_FILE = "D:\\sovereign\\atlas\\spatial\\system_taxonomy\\npc_handler
 async function run() {
     console.log("🚀 Sovereign NPC Handler Extraction — Major 18 Param Scrutiny");
     const source = new GameCacheLoader(CACHE_DIR);
-    
+
     const npcIndex = await source.getCacheIndex(18);
     const handlerLinks: Record<number, any> = {};
 
@@ -18,7 +18,7 @@ async function run() {
         for (const file of arch) {
             const buf = file.buffer;
             const npcId = group.minor * 128 + file.fileid;
-            
+
             // Forensic Opcode Scan for Param Map (Opcode 249)
             // Format: [Opcode 249 (byte)] [Count (byte)] [ {ParamID (24-bit), ValueType (byte), Value (var)} ... ]
             // We'll search for the byte 0xF9 (249)
@@ -35,3 +35,4 @@ async function run() {
 }
 
 run().catch(console.error);
+

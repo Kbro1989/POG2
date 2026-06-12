@@ -1,4 +1,4 @@
-﻿import { createRequire } from 'module';
+import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 import { createLogger } from '../utils/logger.js';
 import { ModelRolodex } from '../api/ai/ModelRolodex.js';
@@ -13,7 +13,7 @@ import { TaskScheduler } from '../routing/TaskScheduler.js';
 
 const logger = createLogger('NSv2StressTest');
 
-// â•â•â• LIVE RESEARCH CONFIG â€” Real calls, real telemetry â•â•â•
+// ═══ LIVE RESEARCH CONFIG — Real calls, real telemetry ═══
 const TOTAL_TASKS = 30;
 const CONCURRENCY = 3;
 const TASK_TIMEOUT_MS = 60000; // 60s hard timeout per diagnostic task
@@ -56,7 +56,7 @@ function generatePrompt(type: 'text' | 'coding' | 'vision' | 'embedding'): strin
 }
 
 async function runStressTest() {
-    logger.info('ðŸš€ Initializing RESEARCH-GRADE CNS Diagnostic Probe â€” NO MOCKS');
+    logger.info('🚀 Initializing RESEARCH-GRADE CNS Diagnostic Probe — NO MOCKS');
 
     const configPath = join(homedir(), '.POG2-cli', 'config.json');
     const config = loadConfig(configPath);
@@ -74,13 +74,13 @@ async function runStressTest() {
     router.setQuotaTracker(quotaTracker);
     client.setRolodex(rolodex);
 
-    logger.info('ðŸ”„ Discovering real substrate providers...');
+    logger.info('🔄 Discovering real substrate providers...');
     await rolodex.refreshAll();
     const providers = rolodex.getAllProviderStatuses();
     const okProviders = providers.filter((p: any) => p.authenticated && !p.error).map((p: any) => p.provider);
     logger.info({ okProviders }, 'Discovery complete.');
 
-    // 1ï¸âƒ£ Fix: Task Prompt Mismatch (Synchronized Generation)
+    // 1️⃣ Fix: Task Prompt Mismatch (Synchronized Generation)
     const tasks = Array.from({ length: TOTAL_TASKS }).map((_, i) => {
         const type = pickTaskType();
         return {
@@ -90,9 +90,9 @@ async function runStressTest() {
         };
     });
 
-    logger.info(`ðŸŽ¯ Executing ${TOTAL_TASKS} synchronized diagnostic tasks...`);
+    logger.info(`🎯 Executing ${TOTAL_TASKS} synchronized diagnostic tasks...`);
 
-    // 10ï¸âƒ£ Reputation Delta Tracking: Capture start state
+    // 10️⃣ Reputation Delta Tracking: Capture start state
     const initialReputation = new Map<string, number>();
     for (const m of rolodex.getAllModels()) {
         initialReputation.set(m.id, m.reputation);
@@ -117,7 +117,7 @@ async function runStressTest() {
         vision: 'YinYang',
         embedding: 'Yin'
     };
-    
+
     function nextTask() {
         const i = index;
         index++;
@@ -128,7 +128,7 @@ async function runStressTest() {
         let task;
         while ((task = nextTask())) {
             const start = Date.now();
-            // 1ï¸âƒ£ Split Routing Latency
+            // 1️⃣ Split Routing Latency
             const routingStart = Date.now();
             const complexity = await router.classify(task.prompt);
             const decision = await router.route(
@@ -142,21 +142,21 @@ async function runStressTest() {
             const selectedProvider = ModelRolodex.toRolodexProvider(decision.model);
             const modelName = decision.model.split(':')[1] || decision.model;
 
-            // 5ï¸âƒ£ Triage Accuracy Metric: Modality Match (Real failure detection)
+            // 5️⃣ Triage Accuracy Metric: Modality Match (Real failure detection)
             const modelMetadata = rolodex.getAllModels().find(m => m.id === decision.model || `${m.provider}:${m.id}` === decision.model);
             if (modelMetadata) {
                 const isVisionTask = task.type === 'vision';
                 const isEmbeddingTask = task.type === 'embedding';
                 const isTextTask = task.type === 'text' || task.type === 'coding';
 
-                if ((isVisionTask && modelMetadata.isVision) || 
-                    (isEmbeddingTask && modelMetadata.isEmbedding) || 
+                if ((isVisionTask && modelMetadata.isVision) ||
+                    (isEmbeddingTask && modelMetadata.isEmbedding) ||
                     (isTextTask && modelMetadata.isText)) {
                     triageHits++;
                 }
             }
 
-            // 3ï¸âƒ£ Orchestration: The scheduler handles gating and priority
+            // 3️⃣ Orchestration: The scheduler handles gating and priority
             // No manual backpressure loop required anymore.
 
             if (decision.fallbackUsed) {
@@ -164,14 +164,14 @@ async function runStressTest() {
                 fallbackMetrics[selectedProvider] = (fallbackMetrics[selectedProvider] || 0) + 1;
             }
 
-            // 4ï¸âƒ£ Efficiency Metric: Cheap model hit rate (normalized check)
+            // 4️⃣ Efficiency Metric: Cheap model hit rate (normalized check)
             const normalized = modelName.toLowerCase();
             const cheapKeywords = CHEAP_MODELS.map(m => m.split(':')[0].toLowerCase());
             if (cheapKeywords.some(kw => normalized.startsWith(kw))) {
                 cheapHits++;
             }
 
-            // 2ï¸âƒ£ Provider Call with Guaranteed Timeout (Promise.race)
+            // 2️⃣ Provider Call with Guaranteed Timeout (Promise.race)
             providerCalls[selectedProvider] = (providerCalls[selectedProvider] || 0) + 1;
             const executionStart = Date.now();
             let callResult;
@@ -185,17 +185,17 @@ async function runStressTest() {
                     TASK_TIMEOUT_MS
                 );
             } catch (err: any) {
-                logger.error({ 
-                    taskId: task.id, 
-                    model: decision.model, 
-                    error: err.message 
+                logger.error({
+                    taskId: task.id,
+                    model: decision.model,
+                    error: err.message
                 }, 'Provider Substrate Trap (Guaranteed Timeout)');
                 callResult = { ok: false, error: err };
             }
 
             const latencyMs = Date.now() - executionStart;
             const success = callResult.ok;
-            
+
             latencies.push(latencyMs);
             if (!success) {
                 providerFailures[selectedProvider] = (providerFailures[selectedProvider] || 0) + 1;
@@ -235,21 +235,21 @@ async function runStressTest() {
             }, 'Routing decision telemetry');
 
             if (completed % 5 === 0) {
-                logger.info({ completed, total: tasks.length, successRate: `${Math.round((successCount/completed)*100)}%` }, 'ðŸ“Š Progress Update');
+                logger.info({ completed, total: tasks.length, successRate: `${Math.round((successCount / completed) * 100)}%` }, '📊 Progress Update');
             }
         }
     }
 
     await Promise.all(Array.from({ length: CONCURRENCY }).map((_, i) => worker(i)));
 
-    // 5ï¸âƒ£ Upgrades: Latency Distribution and Efficiency
-    latencies.sort((a,b) => a - b);
-    routingLatencies.sort((a,b) => a - b);
+    // 5️⃣ Upgrades: Latency Distribution and Efficiency
+    latencies.sort((a, b) => a - b);
+    routingLatencies.sort((a, b) => a - b);
     const p50 = latencies[Math.floor(latencies.length * 0.5)];
     const p95 = latencies[Math.floor(latencies.length * 0.95)];
     const rp50 = routingLatencies[Math.floor(routingLatencies.length * 0.5)];
 
-    logger.info('â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• FINAL CNS DIAGNOSTIC REPORT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•');
+    logger.info('═══════════════ FINAL CNS DIAGNOSTIC REPORT ═══════════════');
     const stabilitySummary: Record<string, string> = {};
     for (const p of Object.keys(providerCalls)) {
         const calls = providerCalls[p];
@@ -273,7 +273,7 @@ async function runStressTest() {
             effectiveThroughput: schedulerStatus.effectiveThroughput,
             avgWaitTimesMs: schedulerStatus.avgWaitTimesMs
         }
-    }, 'ðŸ“Š Final CNS Metrics');
+    }, '📊 Final CNS Metrics');
 
     const quotas = quotaTracker.getAllQuotaHealth();
     for (const q of quotas) {
@@ -286,21 +286,22 @@ async function runStressTest() {
         .sort((a: any, b: any) => b.reputation - a.reputation)
         .slice(0, 5);
 
-    logger.info('ðŸ† Leading Substrate Nodes (Reputation Board)');
+    logger.info('🏆 Leading Substrate Nodes (Reputation Board)');
     for (const m of topModels) {
         const initial = initialReputation.get(m.id) || 1.0;
         const delta = m.reputation - initial;
-        const deltaStr = delta === 0 ? 'Â±0' : (delta > 0 ? '+' : '') + delta.toFixed(4);
-        logger.info({ 
-            model: m.id, 
-            reputation: m.reputation.toFixed(4), 
+        const deltaStr = delta === 0 ? '±0' : (delta > 0 ? '+' : '') + delta.toFixed(4);
+        logger.info({
+            model: m.id,
+            reputation: m.reputation.toFixed(4),
             delta: deltaStr,
-            success: m.successCount, 
-            tokens: m.totalTokensUsed, 
-            avgLat: Math.round(m.avgLatencyMs) 
+            success: m.successCount,
+            tokens: m.totalTokensUsed,
+            avgLat: Math.round(m.avgLatencyMs)
         });
     }
 }
 
 runStressTest().catch(console.error);
+
 

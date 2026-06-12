@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sovereign Edge Radar — Movement Truth Visualizer</title>
 <link rel="icon" href="data:,">
 <style>
@@ -57,6 +58,38 @@
   .edge-label { font-family: monospace; font-size: 10px; }
   .stat-row { display:flex; gap:20px; margin-top:10px; font-size:11px; color:#888; }
   .stat-row b { color: #51ffff; }
+
+  /* Extracted inline styles */
+  .control-input { width: 55px; }
+  .edge-overlay-label { color: #51ffff; }
+  .entities-label { color: #ffaa33; }
+  .ghosts-label { color: #ff51ff; }
+  .heatmap-label { color: #ff3333; }
+  #trackBtn {
+    background: linear-gradient(135deg, #1a4a6b, #0f324a);
+    border: 1px solid #2a6a8a;
+    color: #e0f0ff;
+    padding: 7px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px rgba(42, 106, 138, 0.2);
+  }
+  #trackBtn.tracking-active {
+    background: linear-gradient(135deg, #156b3e, #0f4a27) !important;
+    border-color: #51ff78 !important;
+    color: #e0ffe8 !important;
+    text-shadow: 0 0 8px rgba(81, 255, 120, 0.6);
+    box-shadow: 0 0 15px rgba(81, 255, 120, 0.4);
+    animation: tracking-pulse 2s infinite ease-in-out;
+  }
+  @keyframes tracking-pulse {
+    0% { box-shadow: 0 0 10px rgba(81, 255, 120, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(81, 255, 120, 0.6); }
+    100% { box-shadow: 0 0 10px rgba(81, 255, 120, 0.3); }
+  }
 </style>
 </head>
 <body>
@@ -65,19 +98,19 @@
 <div class="subtitle">Phase B3 Movement Truth — canStand(tile) + canTransit(edge) + diagonalRule</div>
 
 <div class="controls">
-  <label>Region X: <input type="number" id="rx" value="50" min="0" max="127" style="width:55px"></label>
-  <label>Region Y: <input type="number" id="ry" value="50" min="0" max="200" style="width:55px"></label>
+  <label>Region X: <input type="number" id="rx" value="50" min="0" max="127" class="control-input"></label>
+  <label>Region Y: <input type="number" id="ry" value="50" min="0" max="200" class="control-input"></label>
   <label>Scale: <select id="scale">
     <option value="8">8x</option>
     <option value="12" selected>12x</option>
     <option value="16">16x</option>
   </select></label>
-  <label style="color:#51ffff"><input type="checkbox" id="showEdges" checked onchange="redraw()"> Edge Overlay</label>
-  <label style="color:#ffaa33"><input type="checkbox" id="showEntities" checked onchange="redraw()"> Entities</label>
-  <label style="color:#ff51ff"><input type="checkbox" id="showGhosts" checked onchange="redraw()"> Ghost Splats</label>
-  <label style="color:#ff3333"><input type="checkbox" id="showHeatmap" onchange="redraw()"> Heatmap Overlay</label>
-  <button onclick="loadRegion()">Load Region</button>
-  <input type="file" id="filePicker" accept=".json" style="display:none">
+  <label class="edge-overlay-label"><input type="checkbox" id="showEdges" checked onchange="redraw()"> Edge Overlay</label>
+  <label class="entities-label"><input type="checkbox" id="showEntities" checked onchange="redraw()"> Entities</label>
+  <label class="ghosts-label"><input type="checkbox" id="showGhosts" checked onchange="redraw()"> Ghost Splats</label>
+  <label class="heatmap-label"><input type="checkbox" id="showHeatmap" onchange="redraw()"> Heatmap Overlay</label>
+  <button id="trackBtn" class="tracking-active" onclick="toggleTracking()">⚡ Tracking Player: ON</button>
+  <input type="file" id="filePicker" accept=".json" class="file-picker" title="Choose a JSON map file to load">
   <button onclick="document.getElementById('filePicker').click()">Load File</button>
 </div>
 
@@ -88,14 +121,14 @@
 </div>
 
 <div class="legend">
-  <div class="legend-item"><div class="legend-swatch" style="background:#0f1a12"></div> Walkable</div>
-  <div class="legend-item"><div class="legend-swatch" style="background:#dc322f"></div> Blocked (solid)</div>
-  <div class="legend-item"><div class="legend-swatch" style="background:#1a4a6b"></div> Water</div>
-  <div class="legend-item"><div class="legend-swatch" style="background:#6b4a1a"></div> Bridge</div>
-  <div class="legend-item"><div class="legend-swatch" style="background:#ff3030; border:2px solid #ff3030"></div> Wall Edge (blocked)</div>
-  <div class="legend-item"><div class="legend-swatch" style="background:#51ffff"></div> NPC Spawn</div>
-  <div class="legend-item"><div class="legend-swatch" style="background:rgba(0,255,200,0.7); border-color:#00ffc8"></div> Safespot (+)</div>
-  <div class="legend-item"><div class="legend-swatch" style="background:linear-gradient(to right,#550000,#ff0000,#ff6600,#ffff00,#fff)"></div> Threat Heatmap</div>
+  <div class="legend-item"><div class="legend-swatch swatch-walkable"></div> Walkable</div>
+  <div class="legend-item"><div class="legend-swatch swatch-blocked"></div> Blocked (solid)</div>
+  <div class="legend-item"><div class="legend-swatch swatch-water"></div> Water</div>
+  <div class="legend-item"><div class="legend-swatch swatch-bridge"></div> Bridge</div>
+  <div class="legend-item"><div class="legend-swatch swatch-wall"></div> Wall Edge (blocked)</div>
+  <div class="legend-item"><div class="legend-swatch swatch-npc"></div> NPC Spawn</div>
+  <div class="legend-item"><div class="legend-swatch swatch-safespot"></div> Safespot (+)</div>
+  <div class="legend-item"><div class="legend-swatch swatch-threat"></div> Threat Heatmap</div>
 </div>
 
 <div class="stat-row" id="stats"></div>
@@ -115,6 +148,39 @@ let ghostHeatmap = null;
 let ghostSafespots = []; // Received via WebSocket — zero-heat predicted safe tiles
 let worldOriginX = 0, worldOriginY = 0;
 let ws = null;
+let trackPlayer = true;
+let playerX = null;
+let playerY = null;
+
+function toggleTracking() {
+  trackPlayer = !trackPlayer;
+  const btn = document.getElementById('trackBtn');
+  if (trackPlayer) {
+    btn.classList.add('tracking-active');
+    btn.innerHTML = '⚡ Tracking Player: ON';
+    if (playerX !== null && playerY !== null) {
+      updateLocationFromPlayer();
+    }
+  } else {
+    btn.classList.remove('tracking-active');
+    btn.innerHTML = 'Track Player Location';
+  }
+}
+
+function updateLocationFromPlayer() {
+  if (playerX === null || playerY === null) return;
+  const rx = Math.floor(playerX / 64);
+  const ry = Math.floor(playerY / 64);
+  
+  const currentRx = parseInt(document.getElementById('rx').value);
+  const currentRy = parseInt(document.getElementById('ry').value);
+  
+  if (rx !== currentRx || ry !== currentRy || !regionData) {
+    document.getElementById('rx').value = rx;
+    document.getElementById('ry').value = ry;
+    loadRegion();
+  }
+}
 
 function connectWS() {
   const wsUrl = `ws://${window.location.hostname}:${window.location.port}`;
@@ -126,6 +192,15 @@ function connectWS() {
       ghostHeatmap = data.payload.heatmap || null;
       ghostSafespots = data.payload.safespots || [];
       if (document.getElementById('showGhosts').checked || document.getElementById('showHeatmap').checked) redraw();
+    } else if (data.type === 'GAME_STATE') {
+      const avatar = data.payload.avatar;
+      if (avatar) {
+        playerX = avatar.x;
+        playerY = avatar.y;
+        if (trackPlayer) {
+          updateLocationFromPlayer();
+        }
+      }
     }
   };
   ws.onclose = () => setTimeout(connectWS, 2000);
@@ -251,6 +326,39 @@ function redraw() {
         ctx.textAlign = 'center';
         ctx.fillText(ent.name, px, py - scale / 2.2);
       }
+    }
+  }
+  
+  // Pass 3.1: Player pulsing marker
+  if (playerX !== null && playerY !== null) {
+    const lx = playerX - worldOriginX;
+    const ly = playerY - worldOriginY;
+    if (lx >= 0 && lx < size && ly >= 0 && ly < size) {
+      const px = lx * scale + scale / 2;
+      const py = (size - 1 - ly) * scale + scale / 2;
+
+      // Pulsing glow circle
+      const pulse = (Date.now() % 1000) / 1000;
+      ctx.beginPath();
+      ctx.arc(px, py, scale / 2 + pulse * scale / 4, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(81, 255, 120, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Main player circle
+      ctx.beginPath();
+      ctx.arc(px, py, scale / 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#51ff78'; // Bright green for player
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      
+      // Label "Sovereign"
+      ctx.fillStyle = '#51ff78';
+      ctx.font = `bold ${Math.min(10, scale / 1.2)}px Segoe UI`;
+      ctx.textAlign = 'center';
+      ctx.fillText('Sovereign', px, py - scale / 2.2);
     }
   }
   
@@ -422,9 +530,10 @@ async function loadRegion() {
   document.getElementById('status').textContent = `Loading ${filename}...`;
 
   try {
-    const resp = await fetch(`${window.location.origin}/${filename}`);
+    const url = `${window.location.origin}/world/${filename}`;
+    const resp = await fetch(url);
     if (!resp.ok) {
-      document.getElementById('status').textContent = `${filename} not found (${resp.status})`;
+      document.getElementById('status').textContent = `${filename} not found in /world/ (${resp.status})`;
       return;
     }
     const data = await resp.json();
@@ -522,6 +631,9 @@ document.body.addEventListener('drop', e => {
   };
   reader.readAsText(file);
 });
+
+// Periodic redraw loop for smooth pulsing animation and updates
+setInterval(redraw, 150);
 </script>
 </body>
 </html>

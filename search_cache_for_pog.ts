@@ -1,10 +1,10 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { EngineCache  } = require("./tmp_rsmv_inspect/src/3d/modeltothree.js");
-const { GameCacheLoader  } = require("./tmp_rsmv_inspect/src/cache/sqlite.js");
-const { cacheMajors  } = require("./tmp_rsmv_inspect/src/constants.js");
-const { parse  } = require("./tmp_rsmv_inspect/src/opdecoder.js");
-import { createRequire } from "module";
+const RSMV_DIST = 'D:/sovereign/cache_pedagogy/rsmv_inspector/dist';
+const { EngineCache  } = require(`${RSMV_DIST}/3d/modeltothree.js`);
+const { GameCacheLoader  } = require(`${RSMV_DIST}/cache/sqlite.js`);
+const { cacheMajors  } = require(`${RSMV_DIST}/constants.js`);
+const { parse  } = require(`${RSMV_DIST}/opdecoder.js`);
 
 if (typeof (globalThis as any).__non_webpack_require__ === "undefined") {
     (globalThis as any).__non_webpack_require__ = require;

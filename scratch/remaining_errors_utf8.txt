@@ -1,0 +1,204 @@
+﻿src/engines/SpatialVisionEngine.ts(250,21): error TS2304: Cannot find name 'unlinkSync'.
+src/rsmv/3d/jmat.ts(4,38): error TS2307: Cannot find module 'cache' or its corresponding type declarations.
+src/rsmv/3d/mapsquare.ts(1510,11): error TS18046: 'tex.image' is of type 'unknown'.
+src/rsmv/3d/mapsquare.ts(1511,11): error TS18046: 'tex.image' is of type 'unknown'.
+src/rsmv/3d/webglleaktest.ts(71,28): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+src/rsmv/cache/fscache.ts(16,20): error TS2304: Cannot find name '__non_webpack_require__'.
+src/rsmv/cache/fscache.ts(18,13): error TS2304: Cannot find name '__non_webpack_require__'.
+src/rsmv/cache/openrs2loader.ts(43,2): error TS2322: Type 'Promise<unknown>' is not assignable to type 'Promise<Openrs2CacheMeta[]>'.
+src/rsmv/cache/openrs2loader.ts(89,23): error TS18047: 'allcaches' is possibly 'null'.
+src/rsmv/cache/openrs2loader.ts(113,14): error TS18047: 'caches' is possibly 'null'.
+src/rsmv/cache/openrs2loader.ts(145,9): error TS2322: Type 'unknown' is not assignable to type 'Openrs2XteaKey[]'.
+src/rsmv/cache/sqlitewasmworker.ts(47,28): error TS18046: 'e' is of type 'unknown'.
+src/rsmv/clientscript/ast.ts(570,34): error TS2488: Type '{ value: number; jump: number; }[] | { value: number; jump: number; }' must have a '[Symbol.iterator]()' method that returns an iterator.
+src/rsmv/clientscript/ast.ts(687,68): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/ast_nodes.ts(309,27): error TS2488: Type '{ value: number; jump: number; }' must have a '[Symbol.iterator]()' method that returns an iterator.
+src/rsmv/clientscript/callibrator.ts(471,71): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/callibrator.ts(492,101): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/callibrator.ts(632,25): error TS2339: Property 'instructioncount' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(637,31): error TS2339: Property 'opcodedata' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(638,41): error TS2339: Property 'instructioncount' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(680,20): error TS2339: Property 'opcodedata' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(681,27): error TS2339: Property 'opcodedata' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(696,39): error TS2339: Property 'opcodedata' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(722,40): error TS2339: Property 'instructioncount' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(722,68): error TS2339: Property 'instructioncount' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(722,97): error TS2339: Property 'opcodedata' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(722,126): error TS2339: Property 'opcodedata' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(732,73): error TS2339: Property 'instructioncount' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(743,69): error TS2339: Property 'opcodedata' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(751,69): error TS2339: Property 'opcodedata' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(790,25): error TS2322: Type 'ImmediateType | undefined' is not assignable to type '"unknown" | ImmediateType'.
+src/rsmv/clientscript/callibrator.ts(808,33): error TS2339: Property 'instructioncount' does not exist on type 'clientscriptdata'.
+src/rsmv/clientscript/callibrator.ts(919,80): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/codeparser.ts(847,22): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/codeparser.ts(860,96): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/definitions.ts(1047,22): error TS2339: Property 'intargcount' does not exist on type 'clientscriptdata | clientscript'.
+src/rsmv/clientscript/definitions.ts(1048,23): error TS2339: Property 'longargcount' does not exist on type 'clientscriptdata | clientscript'.
+src/rsmv/clientscript/definitions.ts(1049,25): error TS2339: Property 'stringargcount' does not exist on type 'clientscriptdata | clientscript'.
+src/rsmv/clientscript/index.ts(75,31): error TS2339: Property 'intargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/index.ts(76,31): error TS2339: Property 'longargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/index.ts(77,31): error TS2339: Property 'stringargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/index.ts(79,31): error TS2339: Property 'localintcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/index.ts(80,31): error TS2339: Property 'locallongcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/index.ts(81,31): error TS2339: Property 'localstringcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/index.ts(83,31): error TS2339: Property 'instructioncount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/index.ts(84,27): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/index.ts(96,32): error TS2339: Property 'length' does not exist on type '{ value: number; jump: number; }'.
+src/rsmv/clientscript/index.ts(97,28): error TS2488: Type '{ value: number; jump: number; }' must have a '[Symbol.iterator]()' method that returns an iterator.
+src/rsmv/clientscript/interpreter.ts(84,25): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/interpreter.ts(85,13): error TS2322: Type '{ value: number; jump: number; }[]' is not assignable to type 'SwitchJumpTable[]'.
+src/rsmv/clientscript/interpreter.ts(86,41): error TS2339: Property 'localintcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/interpreter.ts(87,42): error TS2339: Property 'locallongcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/interpreter.ts(88,44): error TS2339: Property 'localstringcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/interpreter.ts(90,29): error TS2339: Property 'intargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/interpreter.ts(90,61): error TS2531: Object is possibly 'null'.
+src/rsmv/clientscript/interpreter.ts(91,29): error TS2339: Property 'longargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/interpreter.ts(91,62): error TS2531: Object is possibly 'null'.
+src/rsmv/clientscript/interpreter.ts(92,29): error TS2339: Property 'stringargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/interpreter.ts(92,64): error TS2531: Object is possibly 'null'.
+src/rsmv/clientscript/interpreter.ts(93,30): error TS2345: Argument of type 'ScriptScope | null' is not assignable to parameter of type 'ScriptScope'.
+src/rsmv/clientscript/jsonwriter.ts(529,9): error TS2353: Object literal may only specify known properties, and 'longargcount' does not exist in type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(536,44): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(547,47): error TS2345: Argument of type 'SwitchJumpTable' is not assignable to parameter of type '{ value: number; jump: number; }'.
+src/rsmv/clientscript/jsonwriter.ts(580,40): error TS2345: Argument of type '{ value: number; jump: number; }[]' is not assignable to parameter of type 'SwitchJumpTable[]'.
+src/rsmv/clientscript/jsonwriter.ts(582,253): error TS2339: Property 'length' does not exist on type '{ value: number; jump: number; }'.
+src/rsmv/clientscript/jsonwriter.ts(584,16): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(585,143): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(592,17): error TS2339: Property 'intargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(592,40): error TS2339: Property 'intargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(593,17): error TS2339: Property 'longargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(593,41): error TS2339: Property 'longargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(594,17): error TS2339: Property 'stringargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(594,43): error TS2339: Property 'stringargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(598,31): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(603,65): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(604,20): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(605,20): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(610,9): error TS2353: Object literal may only specify known properties, and 'intargcount' does not exist in type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(610,30): error TS2339: Property 'intargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(611,31): error TS2339: Property 'longargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(612,33): error TS2339: Property 'stringargcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(614,41): error TS2339: Property 'localintcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(615,42): error TS2339: Property 'locallongcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(616,44): error TS2339: Property 'localstringcount' does not exist on type 'clientscript'.
+src/rsmv/clientscript/jsonwriter.ts(619,36): error TS2345: Argument of type '{ value: number; jump: number; }[]' is not assignable to parameter of type 'SwitchJumpTable[]'.
+src/rsmv/clientscript/subtypedetector.ts(245,80): error TS2339: Property 'opcodedata' does not exist on type 'clientscript'.
+src/rsmv/clientscript/util.ts(42,44): error TS2339: Property 'prop' does not exist on type '{ type: number; key: number; intvalue: number | null; stringvalue: string | null; }'.
+src/rsmv/clientscript/util.ts(52,44): error TS2339: Property 'prop' does not exist on type '{ type: number; key: number; intvalue: number | null; stringvalue: string | null; }'.
+src/rsmv/components/ModelViewer.tsx(3,31): error TS2307: Cannot find module 'three/examples/jsm/controls/OrbitControls' or its corresponding type declarations.
+src/rsmv/components/ModelViewer.tsx(4,30): error TS2307: Cannot find module 'three/examples/jsm/exporters/GLTFExporter' or its corresponding type declarations.
+src/rsmv/components/ModelViewer.tsx(5,29): error TS2307: Cannot find module 'three/examples/jsm/exporters/OBJExporter' or its corresponding type declarations.
+src/rsmv/headless/api.ts(120,10): error TS2304: Cannot find name '__non_webpack_require__'.
+src/rsmv/headless/api.ts(126,10): error TS2304: Cannot find name '__non_webpack_require__'.
+src/rsmv/map/chunksummary.ts(81,4): error TS2322: Type 'import("D:/POG2/src/generated/objects").objects' is not assignable to type 'import("D:/POG2/src/rsmv/generated/objects").objects'.
+src/rsmv/map/chunksummary.ts(82,30): error TS2345: Argument of type 'objects | undefined' is not assignable to parameter of type 'objects'.
+src/rsmv/map/chunksummary.ts(84,8): error TS18048: 'loc' is possibly 'undefined'.
+src/rsmv/map/index.ts(167,4): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(168,4): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(171,4): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(172,4): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(173,4): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(174,4): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(175,4): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(176,4): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(177,4): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(178,4): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(179,4): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(180,4): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(181,4): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(183,12): error TS18048: 'mask' is possibly 'undefined'.
+src/rsmv/map/index.ts(483,20): error TS18046: 'e' is of type 'unknown'.
+src/rsmv/map/index.ts(484,17): error TS18046: 'e' is of type 'unknown'.
+src/rsmv/scripts/dump_42103.ts(20,25): error TS2531: Object is possibly 'null'.
+src/rsmv/scripts/extractfiles.ts(57,6): error TS2322: Type 'unknown' is not assignable to type 'Error | null'.
+src/rsmv/scripts/goldrush_scanner.ts(4,28): error TS2307: Cannot find module '../../tmp_rsmv_inspect/src/cache/compression.js' or its corresponding type declarations.
+src/rsmv/scripts/indexoverview.ts(3,33): error TS2307: Cannot find module 'cache' or its corresponding type declarations.
+src/rsmv/scripts/musictrack.ts(29,45): error TS18046: 'q' is of type 'unknown'.
+src/rsmv/scripts/musictrack.ts(29,81): error TS18046: 'q' is of type 'unknown'.
+src/rsmv/scripts/musictrack.ts(56,17): error TS2740: Type 'Uint8Array<ArrayBuffer>' is missing the following properties from type 'Buffer<ArrayBufferLike>': write, toJSON, equals, compare, and 66 more.
+src/rsmv/scripts/probe_clue_items.ts(34,53): error TS2345: Argument of type '{ id: number; name: any; extra: any; }' is not assignable to parameter of type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(36,46): error TS2345: Argument of type '{ id: number; name: any; extra: any; }' is not assignable to parameter of type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(38,44): error TS2345: Argument of type '{ id: number; name: any; extra: any; }' is not assignable to parameter of type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(48,63): error TS2339: Property 'id' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(48,70): error TS2339: Property 'id' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(49,40): error TS2339: Property 'id' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(49,52): error TS2339: Property 'name' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(50,22): error TS2339: Property 'extra' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(50,48): error TS2339: Property 'extra' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(51,49): error TS2339: Property 'extra' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(58,54): error TS2339: Property 'id' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(58,61): error TS2339: Property 'id' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(59,40): error TS2339: Property 'id' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(59,52): error TS2339: Property 'name' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(60,22): error TS2339: Property 'extra' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(60,48): error TS2339: Property 'extra' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(61,49): error TS2339: Property 'extra' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(68,40): error TS2339: Property 'id' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(68,52): error TS2339: Property 'name' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(69,22): error TS2339: Property 'extra' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(69,48): error TS2339: Property 'extra' does not exist on type 'never'.
+src/rsmv/scripts/probe_clue_items.ts(70,49): error TS2339: Property 'extra' does not exist on type 'never'.
+src/rsmv/scripts/sqlite_fast_search.ts(26,51): error TS18046: 'row' is of type 'unknown'.
+src/rsmv/scripts/sqlite_fast_search.ts(29,77): error TS18046: 'row' is of type 'unknown'.
+src/rsmv/scripts/sqlite_fast_search.ts(30,26): error TS2339: Property 'DATA' does not exist on type '{}'.
+src/rsmv/scripts/sqlite_fast_search.ts(31,31): error TS2339: Property 'DATA' does not exist on type '{}'.
+src/rsmv/scripts/sqlite_fast_search_all.ts(22,89): error TS18046: 'row' is of type 'unknown'.
+src/rsmv/scripts/sqlite_fast_search_all.ts(23,38): error TS2339: Property 'DATA' does not exist on type '{}'.
+src/rsmv/scripts/sqlite_fast_search_all.ts(24,43): error TS2339: Property 'DATA' does not exist on type '{}'.
+src/rsmv/scripts/sqlite_fast_search_all.ts(28,49): error TS18046: 'row' is of type 'unknown'.
+src/rsmv/scripts/testdecode.ts(164,6): error TS2322: Type 'unknown' is not assignable to type 'Error | null'.
+src/rsmv/scripts/testdecode.ts(271,3): error TS2322: Type 'unknown' is not assignable to type 'Error | null'.
+src/rsmv/scripts/verify_grounding.ts(11,41): error TS18046: 'count' is of type 'unknown'.
+src/rsmv/tools/kinematic_surgery.ts(18,46): error TS18046: 'e' is of type 'unknown'.
+src/rsmv/tools/kinematic_surgery.ts(30,49): error TS18046: 'e' is of type 'unknown'.
+src/rsmv/tools/kinematic_surgery.ts(42,51): error TS18046: 'e' is of type 'unknown'.
+src/rsmv/viewer/commoncontrols.tsx(2,10): error TS2305: Module '"autobind-decorator"' has no exported member 'boundMethod'.
+src/rsmv/viewer/commoncontrols.tsx(2,29): error TS2497: This module can only be referenced with ECMAScript imports/exports by turning on the 'allowSyntheticDefaultImports' flag and referencing its default export.
+src/rsmv/viewer/scenenodes.tsx(38,10): error TS2305: Module '"autobind-decorator"' has no exported member 'boundMethod'.
+src/rsmv/viewer/scenenodes.tsx(38,29): error TS2497: This module can only be referenced with ECMAScript imports/exports by turning on the 'allowSyntheticDefaultImports' flag and referencing its default export.
+src/rsmv/viewer/scenenodes.tsx(516,65): error TS2345: Argument of type 'string[]' is not assignable to parameter of type 'number[]'.
+src/rsmv/viewer/scenenodes.tsx(979,7): error TS2345: Argument of type '{ color: null; flag2: null; material: null; model: null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; color: null; material: null; model: null; } | ... 14 more ... | { ...; }' is not assignable to parameter of type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'.
+src/rsmv/viewer/scenenodes.tsx(981,30): error TS2345: Argument of type '{ color: null; flag2: null; material: null; model: null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; color: null; material: null; model: null; } | ... 14 more ... | { ...; }' is not assignable to parameter of type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null'.
+src/rsmv/viewer/scenenodes.tsx(998,14): error TS2339: Property 'color' does not exist on type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 13 more ... | { ...; }'.
+src/rsmv/viewer/scenenodes.tsx(998,36): error TS2339: Property 'color' does not exist on type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 13 more ... | { ...; }'.
+src/rsmv/viewer/scenenodes.tsx(999,135): error TS2339: Property 'color' does not exist on type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'.
+src/rsmv/viewer/scenenodes.tsx(1001,14): error TS2339: Property 'color' does not exist on type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 13 more ... | { ...; }'.
+src/rsmv/viewer/scenenodes.tsx(1001,36): error TS2339: Property 'color' does not exist on type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 13 more ... | { ...; }'.
+src/rsmv/viewer/scenenodes.tsx(1002,120): error TS2339: Property 'color' does not exist on type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'.
+src/rsmv/viewer/scenenodes.tsx(1004,14): error TS2339: Property 'material' does not exist on type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 13 more ... | { ...; }'.
+src/rsmv/viewer/scenenodes.tsx(1005,142): error TS2339: Property 'material' does not exist on type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'.
+src/rsmv/viewer/scenenodes.tsx(1007,14): error TS2551: Property 'model' does not exist on type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 13 more ... | { ...; }'. Did you mean 'models'?
+src/rsmv/viewer/scenenodes.tsx(1008,111): error TS2551: Property 'model' does not exist on type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'. Did you mean 'models'?
+src/rsmv/viewer/scenenodes.tsx(1022,19): error TS2339: Property 'color' does not exist on type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 13 more ... | { ...; }'.
+src/rsmv/viewer/scenenodes.tsx(1025,64): error TS2339: Property 'color' does not exist on type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 13 more ... | { ...; }'.
+src/rsmv/viewer/scenenodes.tsx(1025,113): error TS2339: Property 'color' does not exist on type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'.
+src/rsmv/viewer/scenenodes.tsx(1027,87): error TS2339: Property 'color' does not exist on type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'.
+src/rsmv/viewer/scenenodes.tsx(1030,19): error TS2339: Property 'color' does not exist on type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 13 more ... | { ...; }'.
+src/rsmv/viewer/scenenodes.tsx(1032,12): error TS2339: Property 'color' does not exist on type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 13 more ... | { ...; }'.
+src/rsmv/viewer/scenenodes.tsx(1034,82): error TS2339: Property 'color' does not exist on type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'.
+src/rsmv/viewer/scenenodes.tsx(1035,88): error TS2339: Property 'color' does not exist on type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'.
+src/rsmv/viewer/scenenodes.tsx(1038,119): error TS2339: Property 'color' does not exist on type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'.
+src/rsmv/viewer/scenenodes.tsx(1041,19): error TS2339: Property 'material' does not exist on type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 13 more ... | { ...; }'.
+src/rsmv/viewer/scenenodes.tsx(1044,57): error TS2339: Property 'material' does not exist on type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 13 more ... | { ...; }'.
+src/rsmv/viewer/scenenodes.tsx(1044,113): error TS2339: Property 'material' does not exist on type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'.
+src/rsmv/viewer/scenenodes.tsx(1046,87): error TS2339: Property 'material' does not exist on type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'.
+src/rsmv/viewer/scenenodes.tsx(1049,19): error TS2551: Property 'model' does not exist on type '{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 13 more ... | { ...; }'. Did you mean 'models'?
+src/rsmv/viewer/scenenodes.tsx(1052,92): error TS2551: Property 'model' does not exist on type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'. Did you mean 'models'?
+src/rsmv/viewer/scenenodes.tsx(1054,87): error TS2551: Property 'model' does not exist on type 'NonNullable<{ type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { header: number; materials: number[]; } | null; } | { type: number; models: number[]; flag2: { coltype: number; colors: number[]; } | null; col4: { ...; } | null; } | ... 14 more ... | null>'. Did you mean 'models'?
+src/rsmv/viewer/scenenodes.tsx(1928,17): error TS2503: Cannot find namespace 'JSX'.
+src/rsmv/viewer/scenenodes.tsx(1977,166): error TS2322: Type '(v: HTMLInputElement | null) => boolean | null' is not assignable to type 'Ref<HTMLInputElement> | undefined'.
+src/rsmv/viewer/scenenodes.tsx(2036,2): error TS2612: Property 'props' will overwrite the base property in 'Component<{ addArea?: ((x: number, z: number) => void) | undefined; chunks: RSMapChunk[]; gridsize: number; mapscenes: boolean; }, Map2dState, any>'. If this is intentional, add an initializer. Otherwise, add a 'declare' modifier or remove the redundant declaration.
+src/rsmv/viewer/scenenodes.tsx(2058,17): error TS2503: Cannot find namespace 'JSX'.
+src/rsmv/viewer/SovereignGroundingStream.ts(316,70): error TS18048: 'normalized.objects' is possibly 'undefined'.
+src/rsmv/viewer/threejsrender.ts(3,31): error TS2307: Cannot find module 'three/examples/jsm/controls/OrbitControls' or its corresponding type declarations.
+src/rsmv/viewer/threejsrender.ts(4,35): error TS2307: Cannot find module 'three/examples/jsm/controls/TransformControls' or its corresponding type declarations.
+src/rsmv/viewer/threejsrender.ts(7,30): error TS2307: Cannot find module 'three/examples/jsm/exporters/GLTFExporter' or its corresponding type declarations.
+src/rsmv/viewer/threejsrender.ts(8,29): error TS2307: Cannot find module 'three/examples/jsm/exporters/STLExporter' or its corresponding type declarations.
+src/rsmv/viewer/threejsrender.ts(16,1): error TS2740: Type 'typeof import("D:/POG2/src/rsmv/node_modules/@types/three/build/three.module")' is missing the following properties from type 'typeof import("D:/POG2/node_modules/@types/three/index")': TwoPassDoubleSide, LuminanceFormat, LuminanceAlphaFormat, _SRGBAFormat, and 48 more.
+src/rsmv/viewer/threejsrender.ts(105,31): error TS2551: Property 'floatVertexTextures' does not exist on type 'WebGLCapabilities'. Did you mean 'maxVertexTextures'?
+src/rsmv/viewer/threejsrender.ts(360,31): error TS2551: Property 'floatVertexTextures' does not exist on type 'WebGLCapabilities'. Did you mean 'maxVertexTextures'?
+src/rsmv/viewer/threejsrender.ts(599,5): error TS2322: Type 'string' is not assignable to type 'ColorSpace | undefined'.
+src/rsmv/viewer/threejsrender.ts(766,9): error TS18047: 'clickindex' is possibly 'null'.
+src/rsmv/viewer/vr360camera.ts(1,132): error TS2305: Module '"three"' has no exported member 'Renderer'.
+src/rsmv/viewer/vr360camera.ts(50,4): error TS2322: Type 'string' is not assignable to type 'ColorSpace | undefined'.

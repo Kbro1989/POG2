@@ -1,6 +1,10 @@
 import { CombatRotationEngine } from './CombatRotationEngine.js';
 import { AbilityDefinition, CombatStyle } from './AbilityBook.js';
 import { WikiMonsterMeta } from '../../utils/WikiEquipmentEnricher.js';
+import { BestiaryApi } from '../../utils/BestiaryApi.js';
+import { TrainingCollector } from '../../utils/TrainingCollector.js';
+import { LearningFidelity } from '../../core/models.js';
+import type { EngineContract, ContractResult, ExecutionContext } from '../../core/HexagramNetworkBridge.js';
 
 export interface AggressionProjection {
     hitChance: number;
@@ -15,71 +19,192 @@ export interface AggressionProjection {
  * AggressionSimulator
  * 
  * Projects DPS and TTK using the March 2026 logarithmic damage formula
- * and affinity-based hit chance calculations.
+ * and affinity-based hit chance calculations, now integrated with the BestiaryApi
+ * for authoritative aggression verification.
  */
 export class AggressionSimulator {
     /**
      * Projects DPS and TTK against a specific monster using March 2026 rules.
      */
-    public static projectEncounter(
+    public static async projectEncounter(
         attackerLevel: number,
         weaponTier: number,
         attackStyle: CombatStyle,
         monster: WikiMonsterMeta,
         ability: AbilityDefinition,
         cycleTicks: number = 3
-    ): AggressionProjection {
-        // 1. Calculate base hit chance based on monster affinities (March 2026 rules)
-        // Affinity ranges from ~40 to 90. 55 is neutral.
+    ): Promise<AggressionProjection> {
+        // Authoritative aggression lookup using name as identifier
+        const monsterData = await BestiaryApi.enrichByName(monster.name);
+        const isAggressive = monsterData?.aggressive ?? false;
+
+        // Emit pedagogical event regarding the encounter
+        await TrainingCollector.getInstance().recordLearningEvent({
+            tick: Date.now(),
+            timestamp: Date.now(),
+            fidelity: LearningFidelity.PEDAGOGY,
+            resolution: {
+                action: 'AGGRESSION_VERIFIED',
+                monsterName: monster.name,
+                predicted: isAggressive
+            },
+            tags: ['[VERIFIED]', 'AGGRESSION_ENGINE']
+        });
+
+        // 1. Calculate base hit chance
         let affinity = 55;
-        if (attackStyle === 'melee') affinity = monster.affinityMelee || 55;
-        if (attackStyle === 'ranged') affinity = monster.affinityRanged || 55;
-        if (attackStyle === 'magic') affinity = monster.affinityMagic || 55;
-        if (attackStyle === 'necromancy') affinity = monster.affinityNecromancy || 55;
+        if (attackStyle === 'melee') affinity = monster.affinityMelee ?? 55;
+        if (attackStyle === 'ranged') affinity = monster.affinityRanged ?? 55;
+        if (attackStyle === 'magic') affinity = monster.affinityMagic ?? 55;
+        if (attackStyle === 'necromancy') affinity = monster.affinityNecromancy ?? 55;
 
         // Base hit chance heuristic: Affinity * (Attacker Level / Monster Defence)
-        const def = Math.max(1, monster.defence || monster.combatLevel * 0.8);
+        const def = Math.max(1, (monster.defence ?? 0) || ((monster.combatLevel ?? 0) * 0.8));
         const rawHitChance = (affinity / 100) * (attackerLevel / def);
         const hitChance = Math.min(1.0, Math.max(0.1, rawHitChance));
 
-        // 2. Damage calculation using logarithmic formula (March 2026)
+        // 2. Damage calculation
         const baseDamage = CombatRotationEngine.logarithmicBaseDamage(attackerLevel, weaponTier);
         
-        // Ability damage bounds
         const [minPct, maxPct] = ability.damageRange;
         const avgPct = (minPct + maxPct) / 2;
         
-        // Expected hit per cast (Hit Chance * Average Damage)
         const expectedHit = hitChance * (baseDamage * (avgPct / 100));
 
         // 3. DPS Projection
-        // 1 tick = 0.6s
         const cycleTimeSeconds = cycleTicks * 0.6;
         const dps = expectedHit / cycleTimeSeconds;
 
         // 4. TTK Projection
-        const timeToKill = monster.lifePoints > 0 && dps > 0 
-            ? monster.lifePoints / dps 
+        const timeToKill = (monster.lifePoints ?? 0) > 0 && dps > 0 
+            ? (monster.lifePoints ?? 0) / dps 
             : 0;
-
-        // 5. Tactical Reasoning
-        const styles: Record<string, number> = {
-            melee: monster.affinityMelee || 55,
-            ranged: monster.affinityRanged || 55,
-            magic: monster.affinityMagic || 55,
-            necromancy: monster.affinityNecromancy || 55
-        };
-        
-        const bestStyleStr = Object.keys(styles).reduce((a, b) => styles[a] > styles[b] ? a : b);
-        const bestStyle = bestStyleStr as CombatStyle;
 
         return {
             hitChance,
             expectedHit,
             dps,
             timeToKill,
-            recommendedStyle: bestStyle,
-            styleReasoning: `Monster has highest affinity (${styles[bestStyle]}) to ${bestStyle}, versus ${affinity} for current ${attackStyle} style.`
+            recommendedStyle: attackStyle,
+            styleReasoning: `Aggression status: ${isAggressive}`
         };
     }
 }
+
+export const AggressionSimulatorContract: EngineContract = {
+  name: 'AggressionSimulator',
+  validate: (ctx) => {
+    return (ctx.payload?.activeEntities?.npcs || 0) > 0;
+  },
+  execute: async (ctx: ExecutionContext): Promise<ContractResult> => {
+    const start = performance.now();
+
+    // Extract context variables (defaulting safely)
+    const npcLevel = ctx.payload?.npc?.combatLevel || 1;
+    const npcHp = ctx.payload?.npc?.hp || 1000;
+    const npcMaxHp = ctx.payload?.npc?.maxHp || 1000;
+    const npcName = (ctx.payload?.npc?.name || '').toLowerCase();
+    const ticksInArea = ctx.payload?.npc?.ticksInArea || 0;
+    const lastAttackerId = ctx.payload?.npc?.lastAttackerId;
+
+    const playerLevel = ctx.payload?.playerState?.combatLevel || 138;
+
+    // 1. Tolerance (10 minutes = 1000 ticks)
+    const isTolerant = ticksInArea >= 1000;
+
+    // 2. RS3 Combat Level Check
+    // Aggressive if NPC level * 2 + 1 >= Player Level
+    let wouldAggro = (npcLevel * 2 + 1) >= playerLevel;
+
+    // Hexagram Modulation
+    let escalationFactor = 1.0;
+    let chaosRoll = 0;
+    const bottomTrigram = ctx.hexagram.binary.substring(0, 3);
+
+    if (bottomTrigram === '100') { // Thunder (growth/action)
+        escalationFactor = 0.6; // Faster transitions, lower enrage thresholds
+    } else if (bottomTrigram === '010') { // Water (chaos/abyssal)
+        chaosRoll = Math.random(); // Erratic behavior
+    }
+
+    // Aggression Decision Logic
+    let decisionAction: 'wander' | 'flee' | 'attack' | 'call_help' = 'wander';
+    let newState = 'idle';
+
+    // Verification: NPC must have the 'attack' action assigned in the cache to be aggressive or hit-able
+    const actions = [
+        ctx.payload?.npc?.actions_0,
+        ctx.payload?.npc?.actions_1,
+        ctx.payload?.npc?.actions_2,
+        ctx.payload?.npc?.actions_3,
+        ctx.payload?.npc?.actions_4
+    ].filter(Boolean).join(' ').toLowerCase();
+    const canAttack = actions.includes('attack');
+
+    // Tolerant Retaliation
+    if (isTolerant && lastAttackerId === 'player') {
+        wouldAggro = canAttack; // Retaliate even if tolerant, only if capable of attack
+    }
+
+    if (wouldAggro && !isTolerant && canAttack) {
+        decisionAction = 'attack';
+        newState = 'aggressive';
+    }
+
+    // Special Behaviors
+    const hpPercent = npcHp / Math.max(1, npcMaxHp);
+
+    // Ripper demon enrage (<35% HP)
+    if (canAttack && npcName.includes('ripper demon') && hpPercent < (0.35 * escalationFactor)) {
+        decisionAction = 'attack';
+        newState = 'enraged';
+    }
+
+    // Feline akh call help (<50% HP)
+    if (canAttack && npcName.includes('feline akh') && hpPercent < (0.5 * escalationFactor)) {
+        decisionAction = 'call_help';
+        newState = 'aggressive';
+    }
+
+    // Chaos Modulation (Water)
+    if (chaosRoll > 0.8 && decisionAction === 'attack') {
+        decisionAction = 'wander'; // Confusion
+        newState = 'confused';
+    } else if (chaosRoll > 0.9 && decisionAction === 'wander') {
+        decisionAction = 'attack'; // Sudden aggro
+        newState = 'aggressive';
+    }
+
+    return {
+      success: true,
+      engineName: 'AggressionSimulator',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: {
+        decision: {
+          action: decisionAction,
+          newState: newState
+        },
+        mechanics: {
+          toleranceReached: isTolerant,
+          levelCheckPassed: wouldAggro,
+          escalationFactor
+        }
+      },
+      durationMs: performance.now() - start
+    };
+  },
+  fallback: async (ctx: ExecutionContext): Promise<ContractResult> => {
+    return {
+      success: true,
+      engineName: 'AggressionSimulator',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: {
+          decision: { action: 'wander', newState: 'idle' },
+          reason: 'fallback'
+      },
+      durationMs: 0
+    };
+  }
+};

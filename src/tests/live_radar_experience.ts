@@ -15,7 +15,7 @@ async function runDemo() {
     logger.info('🔱 INITIATING LIVE RADAR EXPERIENCE');
 
     // 1. Setup Minimal Engine Substrate
-    HexagramManager.initializeMock(); // Required for TernaryRouter
+    HexagramManager.initializeSimulation(); // Required for TernaryRouter
     
     const config: any = {
         mode: 'hybrid',
@@ -23,7 +23,7 @@ async function runDemo() {
         visionModel: 'moondream:latest',
         codingModel: 'deepseek-r1:8b',
         planningModel: 'deepseek-r1:8b',
-        voiceModel: 'tinyllama:latest',
+        voiceModel: 'gemma4:26b',
         masterLocalModel: 'deepseek-r1:8b',
         ollamaBaseUrl: 'http://127.0.0.1:11434',
         projectRoot: process.cwd(),
@@ -86,3 +86,4 @@ runDemo().catch(err => {
     logger.error({ err }, 'Live Radar Experience CRASHED.');
     process.exit(1);
 });
+

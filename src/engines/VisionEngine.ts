@@ -60,18 +60,23 @@ export class VisionEngine extends EventEmitter {
     }
 
     async observe(params: VisionParams): Promise<Result<EngineOutput>> {
-        const screenshotPath = join(tmpdir(), `POG2_obs_${Date.now()}.png`);
+        let imagePath = '';
 
         // 1. Capture State (SoverignEye)
         if (params.intent === 'eye' || params.intent === 'chroma') {
             this.renderer.info('Capturing system state via SoverignEye...');
             const captureRes = await this.eye.capture({ type: 'window', target: params.target || 'POG2' });
             if (!captureRes.ok) return captureRes as any;
+            if (captureRes.value && captureRes.value.imagePath) {
+                imagePath = captureRes.value.imagePath;
+            }
         }
 
-        const imagePath = params.target && existsSync(params.target)
-            ? params.target
-            : screenshotPath;
+        if (!imagePath) {
+            imagePath = params.target && existsSync(params.target)
+                ? params.target
+                : join(tmpdir(), `POG2_obs_${Date.now()}.png`);
+        }
 
         if (!existsSync(imagePath)) {
             return { ok: false, error: new Error(`Image not found for vision analysis: ${imagePath}`) };
@@ -139,12 +144,14 @@ TASKS:
     /**
      * Diagnostic probe for NodeTester.
      */
-    public async healthCheck(): Promise<{ online: boolean; details: string }> {
+    public async healthCheck(): Promise<{ online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' }> {
         const capture = await this.eye.capture({ type: 'window', target: 'POG2' });
         const online = capture.ok;
         return {
             online,
+            status: online ? 'ONLINE' : 'DEGRADED',
             details: `Vision Substrate: ${online ? 'ONLINE' : 'OFFLINE'} (SoverignEye Win32 capture: ${online ? 'SUCCESS' : 'FAILED'})`
         };
     }
 }
+

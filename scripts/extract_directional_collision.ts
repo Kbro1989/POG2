@@ -4,30 +4,30 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
 
-// Resolve paths to RSMV substrate (Sovereign Inspector)
+// Resolve paths to rsmv substrate (Sovereign Inspector)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const RSMV_ROOT = 'D:\\sovereign\\cache_pedagogy\\rsmv_inspector';
+const rsmv_ROOT = 'D:\\sovereign\\cache_pedagogy\\rsmv_inspector';
 const POG_ROOT = path.resolve(__dirname, '..');
 
-// Import RSMV logic from the Sovereign substrate
-const { GameCacheLoader } = require(path.join(RSMV_ROOT, 'dist/cache/sqlite.js'));
-const { parse } = require(path.join(RSMV_ROOT, 'dist/opdecoder.js'));
+// Import rsmv logic from the Sovereign substrate
+const { GameCacheLoader } = require(path.join(rsmv_ROOT, 'dist/cache/sqlite.js'));
+const { parse } = require(path.join(rsmv_ROOT, 'dist/opdecoder.js'));
 
 async function extractDirectionalCollision(regionId: number) {
     const cachePath = "C:\\ProgramData\\Jagex\\RuneScape";
     const loader = new GameCacheLoader(cachePath);
-    
+
     // 1. Resolve coordinates from region ID
     const x = (regionId >> 8) & 0xFF;
     const y = regionId & 0xFF;
     const mapIndex = 5; // Maps index
-    
+
     // 2. Locate map files (js5-5)
     // In RS3, Map squares are sub-files in Index 5
     // Format: m[x]_[y] for terrain, l[x]_[y] for locations
     const terrainFileId = await loader.getFileId(mapIndex, `m${x}_${y}`);
     const locationFileId = await loader.getFileId(mapIndex, `l${x}_${y}`);
-    
+
     if (!terrainFileId || !locationFileId) {
         console.error(`Could not find map files for region ${regionId}`);
         return;
@@ -35,7 +35,7 @@ async function extractDirectionalCollision(regionId: number) {
 
     const terrainData = await loader.getFile(mapIndex, terrainFileId);
     const locationData = await loader.getFile(mapIndex, locationFileId);
-    
+
     const terrain = parse.mapsquareTiles.read(terrainData, loader);
     const locations = parse.mapsquareLocations.read(locationData, loader);
 
@@ -48,7 +48,7 @@ async function extractDirectionalCollision(regionId: number) {
         const tx = i % 64;
         const ty = Math.floor(i / 64) % 64;
         const plane = Math.floor(i / 4096);
-        
+
         const key = `${plane}_${tx}_${ty}`;
         matrix[key] = {
             north: true, south: true, east: true, west: true,
@@ -65,7 +65,7 @@ async function extractDirectionalCollision(regionId: number) {
     for (const locGroup of locations.locations) {
         const objId = locGroup.id;
         const objDef = await getObjectDef(loader, objId);
-        
+
         if (!objDef.maybe_blocks_movement) continue;
 
         for (const use of locGroup.uses) {
@@ -81,7 +81,7 @@ async function extractDirectionalCollision(regionId: number) {
                 if (rotation === 1) matrix[key].north = false;
                 if (rotation === 2) matrix[key].east = false;
                 if (rotation === 3) matrix[key].south = false;
-            } 
+            }
             // Type 10: Standard Object (Full Block)
             else if (type === 10) {
                 matrix[key].north = matrix[key].south = matrix[key].east = matrix[key].west = false;

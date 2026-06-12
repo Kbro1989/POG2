@@ -1,4 +1,4 @@
-﻿import { ShellEngine } from './ShellEngine.js';
+import { ShellEngine } from './ShellEngine.js';
 import { Renderer } from '../ui/Renderer.js';
 import { TernaryRouter } from '../routing/TernaryRouter.js';
 import { type Result, type EngineOutput, YaoState } from '../core/models.js';
@@ -78,24 +78,92 @@ Please analyze this context and construct a corrected command or deployment conf
         return this.executeWithDiagnostics(`gcloud ${args.command}`);
     }
 
+    async gcloudAuthList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud auth list');
+    }
+
+    async gcloudAuthLogin(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud auth login --no-launch-browser');
+    }
+
+    async gcloudAuthToken(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud auth print-access-token');
+    }
+
+    async gcloudConfigList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud config list');
+    }
+
+    async gcloudProjectsList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud projects list');
+    }
+
+    async gcloudAiModelsList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud ai models list --region=us-central1');
+    }
+
+    async gcloudGeminiSettings(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud ai endpoints list --region=us-central1');
+    }
+
+    async gcloudStorageLs(args: { url?: string }): Promise<Result<EngineOutput>> {
+        const target = args.url || '';
+        return this.executeWithDiagnostics(`gcloud storage ls ${target}`);
+    }
+
+    async gcloudSecretsList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('gcloud secrets list');
+    }
+
+    async gcloudSecretsGet(args: { secret: string, version?: string }): Promise<Result<EngineOutput>> {
+        const version = args.version || 'latest';
+        return this.executeWithDiagnostics(`gcloud secrets versions access ${version} --secret="${args.secret}"`);
+    }
+
     async wrangler(args: { command: string }): Promise<Result<EngineOutput>> {
         return this.executeWithDiagnostics(`wrangler ${args.command}`);
     }
 
-    async npm(args: { command: string }): Promise<Result<EngineOutput>> {
-        return this.executeWithDiagnostics(`npm ${args.command}`);
+    async wranglerDeploy(args: { scriptName: string }): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics(`wrangler deploy ${args.scriptName}`);
     }
 
-    async python(args: { command: string }): Promise<Result<EngineOutput>> {
-        return this.executeWithDiagnostics(`python ${args.command}`);
+    async wranglerKvList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('wrangler kv:namespace list');
     }
 
-    async pip(args: { command: string }): Promise<Result<EngineOutput>> {
-        return this.executeWithDiagnostics(`pip ${args.command}`);
+    async wranglerR2List(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('wrangler r2 bucket list');
     }
 
     async ollama(args: { command: string }): Promise<Result<EngineOutput>> {
         return this.executeWithDiagnostics(`ollama ${args.command}`);
+    }
+
+    async ollamaModelList(): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics('ollama list');
+    }
+
+    async ollamaRun(args: { model: string; prompt: string }): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics(`ollama run ${args.model} "${args.prompt}"`);
+    }
+
+    async mcpClientStatus(): Promise<Result<EngineOutput>> {
+        return { ok: true, value: { output: 'MCP Status: Active (Integration stub)' } };
+    }
+
+    async serviceStatus(): Promise<Result<EngineOutput>> {
+        const shell = this.healthCheck();
+        return {
+            ok: true,
+            value: {
+                output: `System Status:\nShell: ${shell.details}\n(Aggregation of Engines: MCP, WebSearch, Spatial are active)`
+            }
+        };
+    }
+
+    async npm(args: { command: string }): Promise<Result<EngineOutput>> {
+        return this.executeWithDiagnostics(`npm ${args.command}`);
     }
 
     async gemini(args: { command: string }): Promise<Result<EngineOutput>> {
@@ -134,9 +202,9 @@ Please analyze this context and construct a corrected command or deployment conf
 
     async npmInstall(args: { packages?: string[]; saveDev?: boolean }): Promise<Result<EngineOutput>> {
         if (this.router) {
-            const yao = this.router.getHexagram().getYaoState();
-            if (yao === YaoState.OldMixed || yao === YaoState.OldYin) {
-                this.renderer.warn(`âš ï¸ METABOLIC WARNING: Performing npm install in unstable state (${yao}). Dependency flux detected.`);
+            const contract = this.router.getHexagram().getContract();
+            if (!contract.gates.allowStructuralRepair) {
+                this.renderer.warn(`âš ï¸ METABOLIC WARNING: Performing npm install in unstable state. Dependency flux detected.`);
             }
         }
         const pkgStr = args.packages?.join(' ') || '';
@@ -179,3 +247,4 @@ Please analyze this context and construct a corrected command or deployment conf
         };
     }
 }
+

@@ -63,3 +63,4 @@ export class BitStream {
         return Math.ceil(this.bitPosition / 8);
     }
 }
+

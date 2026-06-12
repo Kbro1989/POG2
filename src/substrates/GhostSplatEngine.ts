@@ -1,12 +1,18 @@
-import { GameState, Coord, NPC } from '../core/models.js';
+import { GameState, Coord, NPC, ChaosPhase, YaoState } from '../core/models.js';
 import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
 import { EntityGhost } from '../core/EntityGhost.js';
 import { PlayerAgent } from '../engines/gameplay/PlayerAgent.js';
+import type { TacticalArchetype } from '../engines/gameplay/CombatRotationEngine.js';
 import { PADDED_SIZE, SpatialSovereigntyLimb } from '../limbs/spatial/SpatialSovereigntyLimb.js';
+import { NecromancerBrain, type NTXBuffer, type SpatialGaussian } from '../engines/core/NecromancerBrain.js';
 import { createLogger } from '../utils/logger.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
+import { EpistemicTransitionKernel, PredictionRegistry } from '../engines/core/EpistemicTransitionKernel.js';
 import { performance } from 'perf_hooks';
 import { SwitchboardLimb } from '../monitor/SwitchboardLimb.js';
+import { SpatialMetricsRegistry } from '../limbs/spatial/SpatialMetricsRegistry.js';
+import { CanonicalClock } from '../utils/CanonicalClock.js';
+import { GhostSplatHitmarkRegistry, type HitmarkTelemetry } from './GhostSplatHitmarkRegistry.js';
 
 const logger = createLogger('GhostSplatEngine');
 
@@ -20,6 +26,13 @@ export interface GhostSplatField {
     gaussians?: Float32Array; // Packed [N, 13]: pos(3), cov(6), color(3), opacity(1)
 }
 
+export interface ThreatModulation {
+    intent: TacticalArchetype;
+    multiplier: number; // Range scaling
+    safespotWeight: number; // How much to value safespots
+    targetFocus: number; // How much to ignore non-primary NPCs
+}
+
 /**
  * GhostSplatEngine
  * 
@@ -30,8 +43,14 @@ export class GhostSplatEngine {
     private static instance: GhostSplatEngine;
     private readonly MAX_COMPUTE_MS = 50;
     private latestField: GhostSplatField | null = null;
+    private spatialRegistry: SpatialMetricsRegistry;
 
-    private constructor() {}
+    private persistentHeat: Uint8Array = new Uint8Array(PADDED_SIZE * PADDED_SIZE);
+    private throttleMs: number = 0;
+
+    private constructor() {
+        this.spatialRegistry = SpatialMetricsRegistry.getInstance();
+    }
 
     public static getInstance(): GhostSplatEngine {
         if (!GhostSplatEngine.instance) {
@@ -40,11 +59,21 @@ export class GhostSplatEngine {
         return GhostSplatEngine.instance;
     }
 
+    public purgePersistentHeat(): void {
+        logger.info('[GhostSplatEngine] Purging persistent red-splat heat memory.');
+        this.persistentHeat.fill(0);
+    }
+
+    public setThrottle(ms: number): void {
+        logger.info({ throttleMs: ms }, '[GhostSplatEngine] Setting predictive compute throttle.');
+        this.throttleMs = ms;
+    }
+
     /**
      * project - Generates a GhostSplatField for a given number of ticks into the future.
      */
     public project(state: GameState, tickDepth: number = 2, playerAgent?: PlayerAgent): GhostSplatField | null {
-        const start = performance.now();
+        const start = CanonicalClock.getInstance().realNow();
         
         try {
             const field: GhostSplatField = {
@@ -59,11 +88,19 @@ export class GhostSplatEngine {
             // Calculate entity projections
             this.projectNpcMovement(state, field);
             this.projectPlayer(playerAgent, field);
-            this.calculateThreatHeatmap(field, state); // Pass state for cache-derived aggro ranges
+            this.calculateThreatHeatmap(field, state, playerAgent); // Pass state and playerAgent for modulation
             this.identifySafespots(playerAgent, field);
+
+            // Weight entity confidence by historical prediction accuracy
+            const registry = PredictionRegistry.getInstance();
+            const limbAccuracy = registry.getLimbAccuracy('GhostSplatEngine', 10);
+            field.projections.forEach(ghost => {
+                ghost.confidence *= limbAccuracy; // downweight if we've been wrong
+            });
+
             this.generateGaussianTensor(field);
 
-            const duration = performance.now() - start;
+            const duration = CanonicalClock.getInstance().realNow() - start;
             if (duration > this.MAX_COMPUTE_MS) {
                 logger.warn({ duration, limit: this.MAX_COMPUTE_MS }, 
                     'Ghost Splat Engine threshold exceeded - Predictive logic too heavy'
@@ -71,6 +108,9 @@ export class GhostSplatEngine {
             }
 
             this.latestField = field;
+
+            // ── Kernel Integration: Feed spatial volatility into predictive controller ──
+            this.feedKernelSpatialSignal(field, duration);
 
             // Broadcast to Switchboard if connected
             const switchboard = SwitchboardLimb.getInstance();
@@ -89,7 +129,23 @@ export class GhostSplatEngine {
         return {
             tickDepth: field.tickDepth,
             heatmap: Array.from(field.heatmap),
-            projections: Array.from(field.projections.entries()),
+            projections: Array.from(field.projections.entries()).map(([id, ghost]) => {
+                // Enrich projections with cache-derived metrics
+                let metrics: any = null;
+                if (id.startsWith('npc_')) {
+                    const npcId = parseInt(id.replace('npc_', ''), 10);
+                    metrics = this.spatialRegistry.getMetrics(npcId);
+                }
+                return [id, {
+                    ...ghost,
+                    metrics: metrics ? {
+                        radius: metrics.tileScale.radius,
+                        height: metrics.tileScale.height,
+                        volume: metrics.tileScale.volume
+                    } : null
+                }];
+            }),
+            gaussians: field.gaussians ? Array.from(field.gaussians) : null,
             safespots: field.safespots,
             center: (() => {
                 if (!state) return { x: 0, y: 0, plane: 0 };
@@ -103,6 +159,15 @@ export class GhostSplatEngine {
 
     public getLatestField(): GhostSplatField | null {
         return this.latestField;
+    }
+
+    /**
+     * resolveHitmark — Maps a wiki hitmark sprite ID to a combat volition signal.
+     * This provides the feedback loop from the visual hitsplat to the
+     * predictive combat state.
+     */
+    public resolveHitmark(spriteId: string): HitmarkTelemetry | null {
+        return GhostSplatHitmarkRegistry.getInstance().resolveHitmark(spriteId);
     }
 
     public healthCheck(): { online: boolean; details: string; status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' } {
@@ -127,17 +192,50 @@ export class GhostSplatEngine {
                 projectedCoord,
                 ticksAhead: field.tickDepth,
                 confidence: source === 'path_queue' ? 1.0 : source === 'extrapolation' ? 0.8 : 0.5,
+                originType: 'rsmv',
                 source
             };
             
             field.projections.set(ghost.entityId, ghost);
             
+            // Log prediction
+            const clock = CanonicalClock.getInstance();
+            const currentTick = clock.simulatedNow();
+            const metrics = this.spatialRegistry.getMetrics(npc.id);
+            const contextStr = JSON.stringify({
+                name: npc.name || `NPC ${npc.id}`,
+                radius: metrics?.tileScale?.radius || 1,
+                source: source,
+                pathLength: npc.path?.length || 0,
+                targetCoord: npc.metadata?.targetCoord,
+                tickDepth: field.tickDepth
+            });
+            
+            PredictionRegistry.getInstance().logSpatialPrediction({
+                tick: currentTick + field.tickDepth,
+                entityId: ghost.entityId,
+                predictedCoord: projectedCoord,
+                confidence: ghost.confidence,
+                context: contextStr
+            });
+            
             // Splat the projection onto the heatmap
             if (projectedCoord) {
-                const localX = projectedCoord.x % PADDED_SIZE;
-                const localY = projectedCoord.y % PADDED_SIZE;
-                
-                if (localX >= 0 && localX < PADDED_SIZE && localY >= 0 && localY < PADDED_SIZE) {
+                // Map world coords to inner 64x64 grid (indices 1-64), padding at 0 and 65
+                const INNER_SIZE = 64;
+                const PADDING = 1;
+
+                // Euclidean modulo: handles negative world coords correctly
+                const innerX = ((projectedCoord.x % INNER_SIZE) + INNER_SIZE) % INNER_SIZE;
+                const innerY = ((projectedCoord.y % INNER_SIZE) + INNER_SIZE) % INNER_SIZE;
+
+                // Offset by padding to place in 1-64 range
+                const localX = innerX + PADDING;
+                const localY = innerY + PADDING;
+
+                // Only splat on inner tiles, never on sentinel padding
+                if (localX >= PADDING && localX < PADDING + INNER_SIZE && 
+                    localY >= PADDING && localY < PADDING + INNER_SIZE) {
                     const idx = localY * PADDED_SIZE + localX;
                     field.heatmap[idx] += 1; // Increase combined threat weight
                     if (field.entityHeat) field.entityHeat[idx] += 1; // Factional weighting
@@ -185,19 +283,38 @@ export class GhostSplatEngine {
         return npc.coord;
     }
 
-    private calculateThreatHeatmap(field: GhostSplatField, state?: GameState): void {
+    private getThreatModulation(playerAgent?: PlayerAgent): ThreatModulation {
+        const intent = playerAgent?.getCombatIntent() || 'aggressive';
+        switch (intent) {
+            case 'cowardly': return { intent, multiplier: 1.5, safespotWeight: 2.0, targetFocus: 0.3 };
+            case 'aggressive': return { intent, multiplier: 0.7, safespotWeight: 0.5, targetFocus: 1.5 };
+            case 'predator': return { intent, multiplier: 0.4, safespotWeight: 0.1, targetFocus: 2.0 };
+            case 'methodical': return { intent, multiplier: 1.0, safespotWeight: 1.0, targetFocus: 1.0 };
+            default: return { intent, multiplier: 1.0, safespotWeight: 1.0, targetFocus: 1.0 };
+        }
+    }
+
+    private calculateThreatHeatmap(field: GhostSplatField, state?: GameState, playerAgent?: PlayerAgent): void {
         const tempHeatmap = new Uint8Array(PADDED_SIZE * PADDED_SIZE);
+        const mod = this.getThreatModulation(playerAgent);
         
         field.projections.forEach((ghost, entityId) => {
             if (entityId.startsWith('player_')) return;
 
-            const localX = ghost.projectedCoord.x % PADDED_SIZE;
-            const localY = ghost.projectedCoord.y % PADDED_SIZE;
+            const INNER_SIZE = 64;
+            const PADDING = 1;
+
+            const innerX = ((ghost.projectedCoord.x % INNER_SIZE) + INNER_SIZE) % INNER_SIZE;
+            const innerY = ((ghost.projectedCoord.y % INNER_SIZE) + INNER_SIZE) % INNER_SIZE;
+            const localX = innerX + PADDING;
+            const localY = innerY + PADDING;
             
             // ── Cache-Derived Attack Range ─────────────────────────────────────
             // Pull attack range from live NPC state (populated by CacheForensicsLimb
             // entity records). Falls back to 2 only when metadata is absent.
             let aggroRange = 2;
+            let tileWidth = 1;
+            let tileDepth = 1;
             if (state) {
                 const npcIdStr = entityId.replace('npc_', '');
                 const npcId = parseInt(npcIdStr, 10);
@@ -208,6 +325,10 @@ export class GhostSplatEngine {
                         aggroRange = cacheRange;
                     } else {
                         logger.debug({ entityId }, '[GhostSplat] attackRange not in cache — using default 2');
+                    }
+                    if ((npc as any)?.size) {
+                        tileWidth = (npc as any).size;
+                        tileDepth = (npc as any).size;
                     }
                 }
             }
@@ -222,11 +343,25 @@ export class GhostSplatEngine {
                 // Fallback to base aggroRange
             }
 
-            for (let dx = -aggroRange; dx <= aggroRange; dx++) {
-                for (let dy = -aggroRange; dy <= aggroRange; dy++) {
+            // Apply combat intent modulation
+            aggroRange = Math.max(1, Math.round(aggroRange * mod.multiplier));
+
+            // Target focus check: ignore minor NPCs if focus is high
+            const primaryTargetId = (playerAgent as any)?.avatar?.metadata?.currentTargetId;
+            if (mod.targetFocus > 1.0 && primaryTargetId && entityId !== primaryTargetId && aggroRange > 2) {
+                return; // Skip this NPC in heatmap
+            }
+
+            const minDx = -aggroRange - Math.floor(tileWidth / 2);
+            const maxDx = aggroRange + Math.ceil(tileWidth / 2) - 1;
+            const minDy = -aggroRange - Math.floor(tileDepth / 2);
+            const maxDy = aggroRange + Math.ceil(tileDepth / 2) - 1;
+
+            for (let dx = minDx; dx <= maxDx; dx++) {
+                for (let dy = minDy; dy <= maxDy; dy++) {
                     const nx = localX + dx;
                     const ny = localY + dy;
-                    if (nx >= 0 && nx < PADDED_SIZE && ny >= 0 && ny < PADDED_SIZE) {
+                    if (nx >= PADDING && nx < PADDING + INNER_SIZE && ny >= PADDING && ny < PADDING + INNER_SIZE) {
                         tempHeatmap[ny * PADDED_SIZE + nx] += 1;
                     }
                 }
@@ -263,14 +398,119 @@ export class GhostSplatEngine {
     }
 
     private generateGaussianTensor(field: GhostSplatField): void {
-        const count = field.projections.size;
-        const tensor = new Float32Array(count * 13);
-        let offset = 0;
+        const entityCount = field.projections.size;
+        const tileCount = PADDED_SIZE * PADDED_SIZE;
+        const totalCount = entityCount + tileCount;
 
+        // ── Phase-Aware Compute Scaling ──
+        // During DEGRADING, the kernel restricts resources. Scale gaussian
+        // resolution by the phase multiplier to shed load gracefully.
+        let effectiveCount = totalCount;
+        let downscaleFactor = 1.0;
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const multiplier = kernel.getPhaseGateMultiplier();
+            downscaleFactor = multiplier;
+            if (multiplier < 1.0) {
+                effectiveCount = Math.max(1, Math.floor(totalCount * multiplier));
+                if (effectiveCount < totalCount) {
+                    logger.debug({ original: totalCount, effective: effectiveCount, phase: kernel.getCurrentPhase() },
+                        'Gaussian tensor downscaled by kernel phase gate');
+                }
+            }
+        } catch {
+            // Kernel not yet initialized
+        }
+
+        const tensor = new Float32Array(effectiveCount * 13);
+        let offset = 0;
+        let processed = 0;
+
+        // ── 1. NTX 66x66 Environment Splats (The Echo Buffer) ──
+        // We only generate the background if we have enough compute budget
+        if (effectiveCount > entityCount) {
+            const center = this.getCenterCoord(field);
+            const spatial = SpatialSovereigntyLimb.getInstance();
+            const brain = NecromancerBrain.getInstance();
+            
+            const startX = center.x - Math.floor(PADDED_SIZE / 2);
+            const startY = center.y - Math.floor(PADDED_SIZE / 2);
+            const plane = center.plane;
+
+            // Extract NTXBuffer
+            const ntxBuffer: NTXBuffer = new Array(PADDED_SIZE);
+            const baseSH = new Float32Array([
+                0.5, 0.5, 0.5, 
+                0.5, 0.5, 0.5, 
+                0.5, 0.5, 0.5
+            ]);
+
+            for (let x = 0; x < PADDED_SIZE; x++) {
+                ntxBuffer[x] = new Array(PADDED_SIZE);
+                for (let y = 0; y < PADDED_SIZE; y++) {
+                    const wx = startX + x;
+                    const wy = startY + y;
+                    const height = spatial.getAltitude(plane, wx, wy) / 32;
+                    const flags = spatial.getLegacyMask(plane, wx, wy);
+                    ntxBuffer[x][y] = {
+                        mu: [wx, height, wy],
+                        sigma: [[0.5, 0, 0], [0, 0.1, 0], [0, 0, 0.5]],
+                        opacity: 1.0,
+                        sh_coeffs: baseSH,
+                        tile_flags: flags
+                    };
+                }
+            }
+
+            // Apply predictive lighting (Spherical Harmonics)
+            const litBuffer = brain.predictLighting(ntxBuffer, field.tickDepth);
+
+            // Serialize into tensor (skipping based on downscale to maintain spread)
+            const skipStep = Math.max(1, Math.floor(1 / downscaleFactor));
+            
+            for (let x = 0; x < PADDED_SIZE; x += skipStep) {
+                for (let y = 0; y < PADDED_SIZE; y += skipStep) {
+                    if (processed >= effectiveCount - entityCount) break;
+                    
+                    const g = litBuffer[x][y];
+                    if (!g) continue;
+
+                    // Position (relative to center)
+                    tensor[offset + 0] = g.mu[0] - center.x;
+                    tensor[offset + 1] = g.mu[1]; // height
+                    tensor[offset + 2] = g.mu[2] - center.y;
+
+                    // Covariance (Diag approx)
+                    tensor[offset + 3] = 0.5;
+                    tensor[offset + 4] = 0;
+                    tensor[offset + 5] = 0;
+                    tensor[offset + 6] = 0.1;
+                    tensor[offset + 7] = 0;
+                    tensor[offset + 8] = 0.5;
+
+                    // Color (extract SH degree 0)
+                    tensor[offset + 9]  = g.sh_coeffs[0];
+                    tensor[offset + 10] = g.sh_coeffs[1];
+                    tensor[offset + 11] = g.sh_coeffs[2];
+
+                    // Opacity
+                    tensor[offset + 12] = g.opacity;
+
+                    offset += 13;
+                    processed++;
+                }
+            }
+        }
+
+        // ── 2. Dynamic Entity Splats ──
         field.projections.forEach((ghost, id) => {
+            if (processed >= effectiveCount) return;
+            processed++;
+
             // 1. Position (Relative to local 66x66 center)
-            const lx = (ghost.projectedCoord.x % PADDED_SIZE) - (PADDED_SIZE / 2);
-            const ly = (ghost.projectedCoord.y % PADDED_SIZE) - (PADDED_SIZE / 2);
+            const center = this.getCenterCoord(field);
+            const lx = ghost.projectedCoord.x - center.x;
+            const ly = ghost.projectedCoord.y - center.y;
             const lz = (ghost.projectedCoord.plane || 0) * 2; // Vertical separation
 
             tensor[offset + 0] = lx;
@@ -280,13 +520,33 @@ export class GhostSplatEngine {
             // 2. Covariance (Approximated as a sphere/ellipsoid)
             // [s11, s12, s13, s22, s23, s33]
             const isNpc = id.startsWith('npc_');
-            const scale = isNpc ? 0.8 : 0.5;
-            tensor[offset + 3] = scale; // s11
+            let scale = isNpc ? 0.8 : 0.5; // Fallback default
+
+            if (isNpc) {
+                const npcId = parseInt(id.replace('npc_', ''), 10);
+                if (!isNaN(npcId)) {
+                    const metrics = this.spatialRegistry.getMetrics(npcId);
+                    if (metrics) {
+                        // Cache-derived physical presence shapes the Gaussian
+                        scale = metrics.tileScale.radius;
+                        
+                        // Optional: Shape the ellipsoid based on actual proportions
+                        // If height > radius*2, stretch vertically (flying/crawling entities)
+                        const heightScale = metrics.tileScale.height / (metrics.tileScale.radius * 2);
+                        if (heightScale > 1.5) {
+                            // Tall entity — stretch Y (s33 in Y-up convention)
+                            tensor[offset + 8] = scale * Math.min(heightScale, 3.0); // Cap at 3x
+                        }
+                    }
+                }
+            }
+
+            tensor[offset + 3] = scale; // s11 (X)
             tensor[offset + 4] = 0;     // s12
             tensor[offset + 5] = 0;     // s13
-            tensor[offset + 6] = scale; // s22
+            tensor[offset + 6] = scale; // s22 (Z, horizontal)
             tensor[offset + 7] = 0;     // s23
-            tensor[offset + 8] = scale; // s33
+            tensor[offset + 8] = isNpc && tensor[offset + 8] > scale ? tensor[offset + 8] : scale; // s33 (Y, vertical)
 
             // 3. Color (SH Level 0 - RGB)
             if (isNpc) {
@@ -309,4 +569,130 @@ export class GhostSplatEngine {
 
         field.gaussians = tensor;
     }
+
+    private getCenterCoord(field: GhostSplatField): Coord {
+        const playerGhost = field.projections.get('player_sovereign');
+        if (playerGhost) return playerGhost.projectedCoord;
+        
+        // Fallback if no player
+        if (field.projections.size > 0) {
+            const firstProjection = field.projections.values().next().value;
+            if (firstProjection) {
+                return firstProjection.projectedCoord;
+            }
+        }
+        return { x: 3200, y: 3200, plane: 0 };
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  KERNEL INTEGRATION: Spatial Volatility Signal Feed
+    // ══════════════════════════════════════════════════════════════
+
+    /**
+     * feedKernelSpatialSignal — Converts the GhostSplat heatmap into a
+     * causal confidence value for the EpistemicTransitionKernel.
+     *
+     * High threat density + low prediction confidence = high spatial volatility.
+     * This signal feeds into the kernel's EMA, allowing the phase classifier
+     * to distinguish between genuine spatial chaos and background noise.
+     */
+    private feedKernelSpatialSignal(field: GhostSplatField, computeMs: number): void {
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const hexManager = HexagramManager.getInstance();
+            const currentYao = hexManager.getYaoState();
+
+            // 1. Spatial threat density: ratio of hot tiles to total tiles
+            let hotTiles = 0;
+            for (let i = 0; i < field.heatmap.length; i++) {
+                if (field.heatmap[i] > 0) hotTiles++;
+            }
+            const threatDensity = hotTiles / (PADDED_SIZE * PADDED_SIZE);
+
+            // 2. Average projection confidence
+            let totalConfidence = 0;
+            let projCount = 0;
+            field.projections.forEach(ghost => {
+                totalConfidence += ghost.confidence;
+                projCount++;
+            });
+            const avgConfidence = projCount > 0 ? totalConfidence / projCount : 1.0;
+
+            // 3. Compute budget pressure: how close to the limit
+            const computePressure = Math.min(1.0, computeMs / this.MAX_COMPUTE_MS);
+
+            // 4. Synthesize causal confidence:
+            //    High confidence + low threat + low compute pressure = high causal confidence (stable)
+            //    Low confidence + high threat + high compute pressure = low causal confidence (volatile)
+            const causalConfidence = Math.max(0.1, avgConfidence * (1 - threatDensity * 0.5) * (1 - computePressure * 0.3));
+
+            // 5. Feed into kernel observation loop
+            kernel.observeTransition(currentYao, causalConfidence);
+
+            logger.debug({
+                threatDensity: threatDensity.toFixed(4),
+                avgConfidence: avgConfidence.toFixed(3),
+                computePressure: computePressure.toFixed(3),
+                causalConfidence: causalConfidence.toFixed(3),
+                kernelPhase: kernel.getCurrentPhase()
+            }, '🔮 GhostSplat → Kernel: Spatial volatility signal emitted.');
+
+        } catch {
+            // Kernel or HexagramManager not yet initialized — silently skip
+        }
+    }
 }
+
+
+import type { EngineContract, ExecutionContext, ContractResult } from '../core/HexagramNetworkBridge.js';
+export const GhostSplatEngineContract: EngineContract = {
+  name: 'GhostSplatEngine',
+  validate: (ctx) => (ctx.payload?.activeEntities?.npcs?.length || 0) > 0 || (ctx.payload?.activeEntities?.players?.length || 0) > 0,
+  execute: async (ctx): Promise<ContractResult> => {
+    const start = CanonicalClock.getInstance().realNow();
+    const engine = GhostSplatEngine.getInstance();
+    
+    const state: any = ctx.payload?.state || {
+        plane: 0,
+        npcMap: new Map(),
+        npcSpatialIndex: new Map(),
+        players: new Map()
+    };
+
+    if (ctx.payload?.activeEntities?.npcs) {
+        for (const npc of ctx.payload.activeEntities.npcs) {
+            state.npcMap.set(npc.id, npc);
+        }
+    }
+
+    const field = engine.project(state as any, 2, ctx.payload?.playerAgent);
+    
+    return {
+      success: true,
+      engineName: 'GhostSplatEngine',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: {
+         fieldSummary: {
+            entityHeatMax: field && field.entityHeat ? field.entityHeat.reduce((a, b) => Math.max(a, b), 0) : 0,
+            avatarHeatMax: field && field.avatarHeat ? field.avatarHeat.reduce((a, b) => Math.max(a, b), 0) : 0,
+            projectionCount: field?.projections.size || 0,
+            safespotCount: field?.safespots.length || 0
+         },
+         fullField: field 
+      },
+      durationMs: CanonicalClock.getInstance().realNow() - start
+    };
+  },
+  fallback: async (ctx): Promise<ContractResult> => {
+    return {
+      success: true,
+      engineName: 'GhostSplatEngine',
+      hexagramId: ctx.hexagram.id,
+      tick: ctx.tick,
+      data: { fallbackUsed: true },
+      durationMs: 0
+    };
+  }
+};
+

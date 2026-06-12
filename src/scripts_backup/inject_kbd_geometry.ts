@@ -1,17 +1,17 @@
-﻿// src/scripts/inject_kbd_geometry.ts
+// src/scripts/inject_kbd_geometry.ts
 // Phase 6: Raw Geometry Injection - Jagex Arv47 -> GLTF 2.0
 
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 import { join } from 'path';
-import { getRSMVSubstratePath } from '../utils/SovereignPathResolver.js';
+import { getrsmvSubstratePath } from '../utils/SovereignPathResolver.js';
 let parseOb3Model: any = null;
 let buildAttributeBuffer: any = null;
 let GameCacheLoader: any = null;
-const RSMV = getRSMVSubstratePath();
-try { ({ parseOb3Model } = require(join(RSMV, 'src', '3d', 'rt7model.js'))); } catch {}
-try { ({ buildAttributeBuffer } = require(join(RSMV, 'src', '3d', 'gltfutil.js'))); } catch {}
-try { ({ GameCacheLoader } = require(join(RSMV, 'src', 'cache', 'sqlite.js'))); } catch {}
+const rsmv = getrsmvSubstratePath();
+try { ({ parseOb3Model } = require(join(rsmv, 'src', '3d', 'rt7model.js'))); } catch { }
+try { ({ buildAttributeBuffer } = require(join(rsmv, 'src', '3d', 'gltfutil.js'))); } catch { }
+try { ({ GameCacheLoader } = require(join(rsmv, 'src', 'cache', 'sqlite.js'))); } catch { }
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 // @ts-ignore - Importing from sibling project substrate
 
@@ -34,10 +34,10 @@ const MANIFEST_PATH = join(ASSET_DIR, 'manifest.json');
 const CACHE_DIR = 'C:\\ProgramData\\Jagex\\RuneScape';
 
 async function executeInjection() {
-    console.log('ðŸ“ Phase 6: Sovereign Geometry Injection\n');
+    console.log('📐 Phase 6: Sovereign Geometry Injection\n');
 
     if (!GameCacheLoader || !parseOb3Model || !buildAttributeBuffer) {
-        console.error('âŒ RSMV headless substrate not available. Ensure rsmv modules are built.');
+        console.error('❌ rsmv headless substrate not available. Ensure rsmv modules are built.');
         return;
     }
 
@@ -47,7 +47,7 @@ async function executeInjection() {
 
     try {
         if (!existsSync(MANIFEST_PATH)) {
-            console.error('âŒ Manifest not found. Run extraction first.');
+            console.error('❌ Manifest not found. Run extraction first.');
             return;
         }
 
@@ -56,7 +56,7 @@ async function executeInjection() {
         const binPath = join(OUTPUT_DIR, 'kbd_geometry.bin');
 
         if (!existsSync(gltfPath)) {
-            console.error('âŒ GLTF shell not found. Run Phase 5 orchestrator first.');
+            console.error('❌ GLTF shell not found. Run Phase 5 orchestrator first.');
             return;
         }
 
@@ -64,7 +64,7 @@ async function executeInjection() {
         const allBuffers: Buffer[] = [];
         let bufferOffset = 0;
 
-        console.log(`ðŸ“¦ Processing ${manifest.modelIds.length} model parts...`);
+        console.log(`📦 Processing ${manifest.modelIds.length} model parts...`);
 
         // Clear existing accessors and bufferViews for clean injection
         gltf.accessors = [];
@@ -75,24 +75,24 @@ async function executeInjection() {
             const modelId = manifest.modelIds[i];
 
             try {
-                console.log(`  ðŸ“ Fetching Model ${modelId} from JS5 Archive 47 (fallback 52)...`);
+                console.log(`  📐 Fetching Model ${modelId} from JS5 Archive 47 (fallback 52)...`);
 
                 let rawBuffer: Buffer | null = null;
                 try {
                     rawBuffer = await cache.getFile(47, modelId);
                 } catch (e) {
-                    console.log(`    âš ï¸ Archive 47 failed, attempting Archive 52...`);
+                    console.log(`    ⚠️ Archive 47 failed, attempting Archive 52...`);
                     rawBuffer = await cache.getFile(52, modelId);
                 }
 
                 if (!rawBuffer) {
-                    console.error(`    âŒ Model ${modelId} not found in cache.`);
+                    console.error(`    ❌ Model ${modelId} not found in cache.`);
                     continue;
                 }
 
                 const modelData = parseOb3Model(rawBuffer, cache);
 
-                console.log(`    ðŸ§¬ Part ${modelId}: ${modelData.meshes.length} meshes found (${rawBuffer.length} bytes)`);
+                console.log(`    🧬 Part ${modelId}: ${modelData.meshes.length} meshes found (${rawBuffer.length} bytes)`);
 
                 const gltfMesh: any = { name: `part_${modelId}`, primitives: [] };
 
@@ -173,7 +173,7 @@ async function executeInjection() {
                 }
                 gltf.meshes.push(gltfMesh);
             } catch (err) {
-                console.error(`  âŒ Error processing part ${modelId}: ${(err as Error).message}`);
+                console.error(`  ❌ Error processing part ${modelId}: ${(err as Error).message}`);
             }
         }
 
@@ -194,12 +194,13 @@ async function executeInjection() {
         writeFileSync(binPath, Buffer.concat(allBuffers));
         writeFileSync(gltfPath, JSON.stringify(gltf, null, 2));
 
-        console.log(`\nðŸ† Injection Complete!`);
-        console.log(`  ðŸ’¾ Geometry: ${binPath} (${(bufferOffset / 1024).toFixed(2)} KB)`);
-        console.log(`  ðŸ’¾ GLTF: ${gltfPath}`);
+        console.log(`\n🏆 Injection Complete!`);
+        console.log(`  💾 Geometry: ${binPath} (${(bufferOffset / 1024).toFixed(2)} KB)`);
+        console.log(`  💾 GLTF: ${gltfPath}`);
     } finally {
         cache.close();
     }
 }
 
 executeInjection().catch(console.error);
+

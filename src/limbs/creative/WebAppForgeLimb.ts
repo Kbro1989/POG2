@@ -1,14 +1,13 @@
-﻿import { type Result, type Lesson, ok, err } from '../../core/models.js';
+import { type Result, type Lesson, ok, err } from '../../core/models.js';
 import { ModelClient } from '../../clients/ModelClient.js';
 import { GHOST_LIMB_APP_TSX, SOVEREIGN_TAILWIND_CONFIG, SOVEREIGN_MAIN_CSS } from '../../utils/SovereignUI.js';
 import { existsSync, mkdirSync, writeFileSync, readdirSync, lstatSync, copyFileSync, readFileSync } from 'fs';
 import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { HexagramManager } from '../../routing/HexagramManager.js';
+import { resolvePackagePath } from '../../utils/SovereignPathResolver.js';
 
 const logger = createLogger('WebAppForgeLimb');
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 import { SOVEREIGN_COMPONENTS } from '../../utils/SovereignLibrary.js';
 import { createLogger } from "../../utils/logger.js";
@@ -28,8 +27,8 @@ export class WebAppForgeLimb {
         private readonly client: ModelClient,
         private readonly hexagram: HexagramManager = HexagramManager.getInstance()
     ) {
-        // Resources are 3 levels up from src/limbs/creative
-        this.templatesPath = resolve(__dirname, '../../../resources/cloudflare-templates');
+        // Resources are stored in dist/resources relative to the package root
+        this.templatesPath = resolvePackagePath('dist', 'resources', 'cloudflare-templates');
     }
 
     public listAvailableTemplates(): string[] {
@@ -264,3 +263,4 @@ Respond in JSON ONLY:
         };
     }
 }
+

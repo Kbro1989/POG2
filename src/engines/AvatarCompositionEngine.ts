@@ -2,7 +2,7 @@
  * AvatarCompositionEngine.ts
  * 
  * Bridges the SovereignAvatarEntity to the RSMV cache-grounded avatar pipeline.
- * Uses the real 16-slot avatar encoding from rsmv/3d/avatar.ts, identity kit
+ * Uses the real 16-slot avatar encoding from RSMV/3d/avatar.ts, identity kit
  * definitions, and Jagex's HSL color replacement system.
  * 
  * This engine does NOT fabricate schemas — it consumes the cache substrate directly
@@ -18,10 +18,18 @@
 
 import { Result } from '../core/models.js';
 import { SovereignAvatarEntity } from '../core/SovereignAvatar.js';
-import { slotNames, slotToKitMale, slotToKitFemale, avatarToModel, writeAvatar, avatarStringToBytes, bytesToAvatarString } from '../rsmv/3d/avatar.js';
-import type { EquipSlot } from '../rsmv/3d/avatar.js';
-import type { SimpleModelDef } from '../rsmv/3d/modelnodes.js';
-import type { EngineCache } from '../rsmv/3d/modeltothree.js';
+import { slotNames, slotToKitMale, slotToKitFemale, avatarToModel, writeAvatar, avatarStringToBytes, bytesToAvatarString } from 'rsmv/3d/avatar.js';
+import type { EquipSlot } from 'rsmv/3d/avatar.js';
+import { createLogger } from '../utils/logger.js';
+import { InterfaceRuntimeLimb } from '../limbs/spatial/InterfaceRuntimeLimb.js';
+
+const logger = createLogger('AvatarCompositionEngine');
+export type SimpleModelDef = {
+    modelid: number;
+    mods: any;
+    injectedModelData?: any;
+}[];
+export type EngineCache = any;
 import type { avataroverrides } from '../generated/avataroverrides.js';
 
 // ═══════════════════════════════════════════════════════
@@ -36,6 +44,7 @@ export interface ComposedAvatarResult {
     gender: number;
     /** Base64-encoded avatar string for network sync */
     avatarString: string;
+    mode?: string;
 }
 
 /** Minimal avatar identity for GlobeState sync */
@@ -44,6 +53,7 @@ export interface AvatarIdentitySync {
     gender: number;
     isNpc: boolean;
     npcId?: number;
+    mode?: string;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -55,7 +65,7 @@ export class AvatarCompositionEngine {
 
     /**
      * Bind to a live EngineCache instance. Required before any composition calls.
-     * This is the real RSMV cache substrate, not a mock.
+     * This is the real rsmv cache substrate, not a mock.
      */
     public bindCache(cache: EngineCache): void {
         this.engineCache = cache;
@@ -63,20 +73,21 @@ export class AvatarCompositionEngine {
 
     /**
      * Compose a full avatar model from a raw avatar buffer (from cache or network).
-     * Delegates entirely to the RSMV avatarToModel parser which handles:
+     * Delegates entirely to the rsmv avatarToModel parser which handles:
      *   - 16-slot equipment/kit tree search
      *   - Identity kit body part resolution
      *   - HSL color replacement (skin, hair, clothes, boots)
      *   - Animation group resolution via struct prop 2954
      *   - NPC appearance override (0xFFFF npc buzz)
      */
-    public async composeFromBuffer(buffer: Buffer, head: boolean = false): Promise<Result<ComposedAvatarResult>> {
+    public async composeFromBuffer(buffer: Buffer, head: boolean = false, mode?: string): Promise<Result<ComposedAvatarResult>> {
         if (!this.engineCache) {
             return { ok: false, error: new Error('EngineCache not bound. Call bindCache() first.') };
         }
 
         try {
-            const result = await avatarToModel(this.engineCache, buffer, head);
+            // Pass the mode flag down to the RSMV renderer so it respects the template's era (e.g., 'classic', 'beta')
+            const result = await avatarToModel(this.engineCache, buffer, head, mode as any);
             return {
                 ok: true,
                 value: {
@@ -85,6 +96,7 @@ export class AvatarCompositionEngine {
                     avatar: result.info?.avatar ?? null,
                     gender: result.info?.gender ?? 0,
                     avatarString: bytesToAvatarString(buffer),
+                    mode
                 }
             };
         } catch (error) {
@@ -96,10 +108,10 @@ export class AvatarCompositionEngine {
      * Compose from a base64 avatar string (the format used by Jagex's avatar endpoint
      * and the GlobeState sync protocol).
      */
-    public async composeFromAvatarString(avatarStr: string, head: boolean = false): Promise<Result<ComposedAvatarResult>> {
+    public async composeFromAvatarString(avatarStr: string, head: boolean = false, mode?: string): Promise<Result<ComposedAvatarResult>> {
         try {
             const buffer = avatarStringToBytes(avatarStr);
-            return this.composeFromBuffer(buffer, head);
+            return this.composeFromBuffer(buffer, head, mode);
         } catch (error) {
             return { ok: false, error: error instanceof Error ? error : new Error(String(error)) };
         }
@@ -114,8 +126,9 @@ export class AvatarCompositionEngine {
         // If no appearance data exists, return a default identity.
         return {
             avatarString: '', // Populated when avatar has been composed from cache
-            gender: avatar.appearance?.gender === 'female' ? 1 : 0,
+            gender: avatar.appearance?.gender === 'classic' ? 2 : (avatar.appearance?.gender === 'female' ? 1 : 0),
             isNpc: false,
+            mode: avatar.appearance?.mode || 'beta', // Ensure template mode is passed through to renderer
         };
     }
 
@@ -131,7 +144,7 @@ export class AvatarCompositionEngine {
      * Get the kit-to-slot mapping for a given gender.
      * Returns the cache-accurate body part → slot index mapping.
      */
-    public getKitMapping(gender: 'male' | 'female'): Record<number, number> {
+    public getKitMapping(gender: 'male' | 'female' | 'classic'): Record<number, number> {
         return gender === 'female' ? { ...slotToKitFemale } : { ...slotToKitMale };
     }
 
@@ -142,4 +155,37 @@ export class AvatarCompositionEngine {
             value: `AvatarCompositionEngine: cache=${cacheStatus}, slots=${slotNames.length}`
         };
     }
+
+    /**
+     * Trigger an appearance la-Sovereign refresh based on the Live Chain (7115 -> 11195).
+     * This ensures the 3D manifestation is synchronized with the authoritative script commit.
+     */
+    public async triggerSovereignRefresh(avatar: SovereignAvatarEntity): Promise<void> {
+        logger.info('[AvatarCompositionEngine] Triggering appearance refresh chain: 7115 -> 11195');
+
+        try {
+            const runtime = InterfaceRuntimeLimb.getInstance();
+            if (!runtime) {
+                throw new Error('InterfaceRuntimeLimb singleton not available');
+            }
+
+            // Step 1: Run validation gate (7115)
+            logger.info('[AvatarCompositionEngine] Executing validation gate (Script 7115)...');
+            await runtime.runScript(7115);
+
+            // Step 2: Execute the finalizer (11195)
+            logger.info('[AvatarCompositionEngine] Executing finalizer (Script 11195)...');
+            await runtime.runScript(11195);
+
+            // Step 3: Verify broadcast via Varbit 19712
+            const newValue = avatar.getVarbit(19712);
+            avatar.emit('avatar:refresh', newValue);
+
+            logger.info(`[AvatarCompositionEngine] Appearance change committed. Varbit 19712 updated to ${newValue}`);
+        } catch (error: any) {
+            logger.error(`[AvatarCompositionEngine] Refresh chain failed: ${error.message}`);
+            throw error;
+        }
+    }
 }
+

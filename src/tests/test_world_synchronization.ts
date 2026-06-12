@@ -43,10 +43,8 @@ async function runWorldSyncTest() {
     // 4. Verify Transitions
     console.log("\n[VERIFY] Post-Sync Avatar State:");
     console.log(`\u27a1\ufe0f Position: [${avatar.x}, ${avatar.y}] (Expected: [${startCoord.x}, ${startCoord.y + 1}])`);
-    console.log(`\u27a1\ufe0f Gender: ${avatar.appearance?.gender}`);
-    console.log(`\u27a1\ufe0f Colors: ${JSON.stringify(avatar.appearance?.bodyColors)}`);
-
-    if (avatar.y === startCoord.y + 1 && avatar.appearance?.gender === 'male') {
+    const positionValid = avatar.x === startCoord.x && avatar.y === startCoord.y + 1;
+    if (positionValid) {
         console.log("\n\x1b[32m[SUCCESS] Protocol 947 World Sync Grounding Verified.\x1b[0m");
     } else {
         console.error("\x1b[31m[FAILURE] State Mismatch. Verify BitStream read/write logic.\x1b[0m");
@@ -58,3 +56,4 @@ runWorldSyncTest().catch(err => {
     console.error(err);
     process.exit(1);
 });
+

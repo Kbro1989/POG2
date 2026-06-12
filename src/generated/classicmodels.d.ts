@@ -12,6 +12,7 @@ export type classicmodels = {
 		color: number,
 		backcolor: number,
 		intensity: number,
-		verts: (number|number)[],
+		verts: (number | number)[],
 	}[],
 };
+

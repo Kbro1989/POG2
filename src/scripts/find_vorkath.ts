@@ -10,7 +10,7 @@ async function searchNPC(id: number) {
         if (data.name && data.name.toLowerCase().includes('vorkath')) {
             return data;
         }
-    } catch {}
+    } catch { }
     return null;
 }
 
@@ -18,12 +18,13 @@ async function main() {
     console.log("Searching for Vorkath in NPC index...");
     // Check in reasonable ranges
     for (let i = 28000; i < 35000; i++) {
-         const found = await searchNPC(i);
-         if (found) {
-             console.log(`FOUND Vorkath at ID: ${i} (${found.name})`);
-         }
-         if (i % 500 === 0) console.log(`Searching... up to ${i}`);
+        const found = await searchNPC(i);
+        if (found) {
+            console.log(`FOUND Vorkath at ID: ${i} (${found.name})`);
+        }
+        if (i % 500 === 0) console.log(`Searching... up to ${i}`);
     }
 }
 
 main();
+

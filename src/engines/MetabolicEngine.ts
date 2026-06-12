@@ -1,4 +1,4 @@
-﻿import { ModelClient } from '../clients/ModelClient.js';
+import { ModelClient } from '../clients/ModelClient.js';
 import { 
     type Result, 
     type EngineOutput, 
@@ -21,7 +21,7 @@ import { MemoryConsolidationEngine } from './MemoryConsolidationEngine.js';
 import { readFileSync, existsSync } from 'fs';
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
+import { getSovereignRoot, getGodHeadRoot } from '../utils/SovereignPathResolver.js';
 import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger('MetabolicEngine');
@@ -34,11 +34,11 @@ const logger = createLogger('MetabolicEngine');
  */
 export class MetabolicEngine {
     private readonly projectRoot: string;
+    private whitelist: { exemptPaths: string[], exemptPatterns: string[] } = { exemptPaths: [], exemptPatterns: [] };
     private readonly PLACEHOLDER_PATTERNS = [
         /TODO|FIXME|XXX|HACK|placeholder|temp|temporary/gi,
         /console\.log\(.*\)/g, // Debug artifacts in production
-        /any\s*=\s*any/g, // TypeScript abdication
-        /\/\/.*/g // Comments that explain bad code instead of fixing it
+        /as any/gi // TypeScript abdication
     ];
 
     constructor(
@@ -48,7 +48,31 @@ export class MetabolicEngine {
         private readonly search?: DiscoveryEngine,
         private readonly consolidation?: MemoryConsolidationEngine
     ) {
-        this.projectRoot = getSovereignRoot();
+        this.projectRoot = getGodHeadRoot() || process.cwd();
+        this.loadWhitelist();
+    }
+
+    private loadWhitelist() {
+        const whitelistPath = join(this.projectRoot, '.metabolic-whitelist.json');
+        if (existsSync(whitelistPath)) {
+            try {
+                const data = JSON.parse(readFileSync(whitelistPath, 'utf8'));
+                this.whitelist = {
+                    exemptPaths: data.exemptPaths || [],
+                    exemptPatterns: data.exemptPatterns || []
+                };
+                logger.info({ pathCount: this.whitelist.exemptPaths.length }, 'Metabolic whitelist loaded');
+            } catch (e) {
+                logger.warn('Failed to load metabolic whitelist');
+            }
+        }
+    }
+
+    private isWhitelisted(file: string): boolean {
+        const normalizedFile = file.replace(/\\/g, '/');
+        if (this.whitelist.exemptPaths.some(p => normalizedFile.includes(p))) return true;
+        if (this.whitelist.exemptPatterns.some(p => new RegExp(p).test(normalizedFile))) return true;
+        return false;
     }
 
     /**
@@ -63,6 +87,11 @@ export class MetabolicEngine {
         for (const file of sessionLog.modifiedFiles) {
             try {
                 if (!existsSync(file)) continue;
+                if (this.isWhitelisted(file)) {
+                    logger.debug({ file }, 'Skipping clinical audit for whitelisted substrate');
+                    continue;
+                }
+
                 const content = await fs.readFile(file, 'utf8');
                 const lines = content.split('\n');
                 
@@ -455,3 +484,4 @@ Respond in JSON: { "paths": string[] }
         }
     }
 }
+

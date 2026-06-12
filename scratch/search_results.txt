@@ -1,0 +1,34 @@
+
+=== Matches for: setSovereignRoot ===
+Line 86: import { getSovereignRoot, getrsmvCachePath, getCachePedagogyPath, getPipelineRootPath, getGodHeadRoot, getGutenbergPath, setProjectRoot as setSovereignRoot } from './utils/SovereignPathResolver.js';
+Line 285: setSovereignRoot(process.cwd());
+
+=== Matches for: setProjectRoot ===
+Line 86: import { getSovereignRoot, getrsmvCachePath, getCachePedagogyPath, getPipelineRootPath, getGodHeadRoot, getGutenbergPath, setProjectRoot as setSovereignRoot } from './utils/SovereignPathResolver.js';
+Line 284: PathNormalizer.setProjectRoot(process.cwd());
+
+=== Matches for: .command('play' ===
+Line 2440: .command('play')
+
+=== Matches for: .command('atlas' ===
+Line 616: const atlas = program.command('atlas').description('Sovereign Atlas Forensic Substrate commands');
+
+=== Matches for: .command('player' ===
+Line 2094: const player = program.command('player').description('Player (POG2) Cognitive Substrate management');
+
+=== Matches for: .command('learn' ===
+
+=== Matches for: .command('play ===
+Line 353: .command('play <minigame>')
+Line 949: .command('play <minigame>')
+Line 2094: const player = program.command('player').description('Player (POG2) Cognitive Substrate management');
+Line 2440: .command('play')
+
+=== Matches for: .command('atlas ===
+Line 616: const atlas = program.command('atlas').description('Sovereign Atlas Forensic Substrate commands');
+
+=== Matches for: .command('player ===
+Line 2094: const player = program.command('player').description('Player (POG2) Cognitive Substrate management');
+
+=== Matches for: .command('learn ===
+Line 1222: .command('learn <type> <idOrName>')

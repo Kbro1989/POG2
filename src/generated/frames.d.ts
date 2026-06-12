@@ -8,3 +8,4 @@ export type frames = {
 	flags: number[],
 	animdata: Uint8Array,
 };
+

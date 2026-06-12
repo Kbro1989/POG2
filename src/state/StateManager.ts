@@ -1,7 +1,8 @@
-﻿/**
- * StateManager â€” Sovereign process state tracking.
+/**
+ * StateManager — Sovereign process state tracking.
  * Persistent metrics and session-level state for the ternary engine.
  */
+import { CanonicalClock } from '../utils/CanonicalClock.js';
 
 export interface Metrics {
     turnCount: number;
@@ -25,7 +26,7 @@ export class StateManager {
     private constructor() {
         this.state = {
             mode: 'hybrid',
-            sessionId: `session-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            sessionId: '',
             metrics: {
                 turnCount: 0,
                 tokensTotal: 0,
@@ -47,6 +48,9 @@ export class StateManager {
     }
 
     public getSessionId(): string {
+        if (!this.state.sessionId) {
+            this.state.sessionId = `session-${CanonicalClock.getInstance().simulatedNow()}-${Math.random().toString(36).substring(7)}`;
+        }
         return this.state.sessionId;
     }
 
@@ -66,3 +70,4 @@ export class StateManager {
         this.state.selectedWorkspace = path;
     }
 }
+

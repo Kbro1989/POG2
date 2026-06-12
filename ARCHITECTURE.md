@@ -9,6 +9,7 @@ This document maps the cognitive and structural layers of the POG2 organism. It 
 The POG2 substrate is organized like a biological nervous system, where **Limbs** act as executors and **Engines** act as processing centers, all tied together by the DOC loop.
 
 ### 🔄 Orchestration & Ghost Hand-off
+
 The DOC substrate manages the transition from abstract thought to concrete action.
 
 ```mermaid
@@ -30,6 +31,7 @@ sequenceDiagram
 ```
 
 ### 🎬 Sovereign Cinema Pipeline
+
 Mapping the creative data flow from wisdom to media.
 
 ```mermaid
@@ -48,10 +50,11 @@ graph LR
 
 **DOC** is the meta-logic layer that bridges disparate AI models (Kimi, Qwen, DeepSeek) with local substrate interaction. It ensures that "thinking" is distributed where most efficient, while "orchestration" remains strictly sovereign.
 
-### 🔑 Core DOC Principles:
-1.  **Distributed Reasoning**: Offloading complex planning to Yang-tier cloud models while retaining Yin-tier local execution.
-2.  **Autonomous Orchestration**: The system must be capable of re-planning intermediate steps if a limb reports a substrate failure.
-3.  **Clinical Cognition**: Every cognitive state must be traceable through the `ClinicalLogger` and mapped to a Hexagram archetype.
+### 🔑 Core DOC Principles
+
+1. **Distributed Reasoning**: Offloading complex planning to Yang-tier cloud models while retaining Yin-tier local execution.
+2. **Autonomous Orchestration**: The system must be capable of re-planning intermediate steps if a limb reports a substrate failure.
+3. **Clinical Cognition**: Every cognitive state must be traceable through the `ClinicalLogger` and mapped to a Hexagram archetype.
 
 ---
 
@@ -68,6 +71,7 @@ POG2 operates on a **5-Stage Metabolic Cascade**. This architecture ensures that
 | **Stage 4** | **Cloud Escalation** | Kimi, Gemini, GPT (External APIs) | 3-15s / Token Cost |
 
 ### 🛠️ The Operational Reality
+
 - **Target Efficiency**: 80-90% of tasks are handled by **Stages 0-3**.
 - **The "Doc Loop"**: The TernaryRouter evaluates the "uncertainty" of a task. If Stage 2 fails or provides low-confidence results, the system cascades to Stage 3 and then Stage 4 only as a last resort.
 - **Economic Intelligence**: This cascade enables a **60% reduction in API operational costs** without sacrificing reasoning quality.
@@ -79,6 +83,7 @@ POG2 operates on a **5-Stage Metabolic Cascade**. This architecture ensures that
 The POG2 CNS is now a **closed-loop learning system**. It does not just execute; it learns from its own metabolisms through an autopoietic feedback circuit.
 
 ### 🔄 The Evolution Loop (Limb-to-Reputation)
+
 1. **Outcome Scoring**: `OutcomeScorer.ts` audits every response for syntax integrity (brace balance, JSON validity) and semantic alignment.
 2. **Drift Detection**: `StrategyAdvisor.ts` analyzes historical interactions in the `TrainingCollector`. If a model's performance (score/success rate) drops below baseline, a **Strategy Mutation** is proposed.
 3. **Sovereign Approval**: Mutations (tactical demotions or weight adjustments) are held in an **Approval Gate** for human oversight before being applied to the `ModelRolodex`.
@@ -98,18 +103,23 @@ The POG2 CNS is now a **closed-loop learning system**. It does not just execute;
 > DO NOT violate the following rules. They are the crystalline structure of the Sovereign Organism.
 
 ### 1. Hexagram Integrity
+
 Every high-level decision must be routed through `HexagramManager.ts`. A hexagram represents a situational archetype. Developers must ensure that:
+
 - The context mapped to a hexagram is philosophically aligned.
 - Transitions between Yin/Yang states are meaningful and logged for autopoietic learning.
 - **NEVER** hardcode a hexagram response; let the manager derive it from the substrate's current state.
 
 ### 2. Ternary Decision Gates
+
 Never implement a simple boolean `if/else` for core tool executions. Every path must account for:
+
 - **EXECUTE**: Direct action.
 - **MODIFY**: Adjustment based on feedback (The path of the Ghost).
 - **DEFER**: Alternative strategy selection (Meta-Cognitive rollback).
 
 ### 3. Metabolic Cost Tracking
+
 Every limb invocation must log its "cost" (latency, compute tokens, or energy). This allows the Thalamus (TernaryRouter) to optimize pathways during economic slowdowns.
 
 ---
@@ -147,6 +157,7 @@ POG2 operates in real substrates. To prevent cognitive fragmentation or "infinit
 The organism gained **eyes** — the ability to perceive and decode Jagex's RS3 game engine.
 
 #### New Limbs (Spatial Expansion: 4 → 26 limbs)
+
 | Limb | Size | Purpose |
 |------|------|---------|
 | `CacheForensicsLimb.ts` | 22KB | Deep binary cache analysis via opcode schemas |
@@ -171,6 +182,7 @@ The organism gained **eyes** — the ability to perceive and decode Jagex's RS3 
 | `TodoCloudLimb.ts` | 2.4KB | Cloud task synchronization |
 
 #### New Technical Limbs (4 → 14)
+
 | Limb | Size | Purpose |
 |------|------|---------|
 | `PedagogyLimb.ts` | **30KB** | Cognitive curation — the largest limb |
@@ -185,6 +197,7 @@ The organism gained **eyes** — the ability to perceive and decode Jagex's RS3 
 | `EntitySchema.ts` | 1KB | Type definitions for entity systems |
 
 #### New Engines
+
 | Engine | Size | Purpose |
 |--------|------|---------|
 | `BlenderRenderer.ts` | 20KB | 3D Blender bridge for heavy-lift rendering |
@@ -193,6 +206,7 @@ The organism gained **eyes** — the ability to perceive and decode Jagex's RS3 
 | `SpatialVisionEngine.ts` | 12KB | Spatial visual analysis |
 
 #### Game Interpreters (New Subdirectory)
+
 ```
 engines/gameplay/
 ├── PrifddinasInterpreter.ts   ← Voice of Seren rotation via varbit 19147
@@ -203,6 +217,7 @@ engines/gameplay/
 ```
 
 #### Spatial Exploration Engines
+
 ```
 engines/spatial/
 ├── ExplorationEngine.ts (6.9KB)  ← World traversal simulation
@@ -211,7 +226,7 @@ engines/spatial/
 
 ---
 
-### 🗄️ The RSMV Inspector Substrate (External — `D:\sovereign\cache_pedagogy\rsmv_inspector`)
+### 🗄️ The RSMV Inspector Substrate (External — `D:\sovereign\cache_pedagogy\rsmv`)
 
 A **232-file** reverse-engineering laboratory wired into POG2 as its primary sensory organ:
 

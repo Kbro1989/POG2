@@ -1,0 +1,31 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Substrate",
+            "type": "npm",
+            "script": "build",
+            "group": "build",
+            "problemMatcher": ["$tsc"]
+        },
+        {
+            "label": "Typecheck Substrate",
+            "type": "npm",
+            "script": "typecheck",
+            "group": "build",
+            "problemMatcher": ["$tsc"]
+        },
+        {
+            "label": "Service Health Status",
+            "type": "shell",
+            "command": "npm run dev -- service_status",
+            "group": "none"
+        },
+        {
+            "label": "Deploy Worker",
+            "type": "shell",
+            "command": "npm run dev -- wrangler_deploy",
+            "group": "none"
+        }
+    ]
+}

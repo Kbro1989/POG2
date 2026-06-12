@@ -52,9 +52,14 @@ export class InteractionGateway {
         // 1. Resolve Target
         const isItem = targetId.startsWith('item_');
         const isObject = targetId.startsWith('obj_');
+        const isUI = targetId.startsWith('ui_') || targetId.includes(':');
         
         let target: any = null;
         let numericId = 0;
+
+        if (isUI && (action.toUpperCase() === 'SEARCH' || action.toUpperCase() === 'TYPESTRING')) {
+            return this.evaluateSearchIntent(source, targetId, action, state);
+        }
 
         if (isItem) {
             // Expected format: item_<x>_<y>_<id>
@@ -179,31 +184,49 @@ export class InteractionGateway {
             }
         }
 
-        // 6.5 FORENSIC OBJECT INTERACTION (Phase 44)
-        const forensicPair = getInteractionResult(activeId);
-        if (forensicPair) {
-            if (forensicPair.type === 'DOOR') {
-                // Morph the object in the global state to its "Open" version
-                // In a real server, this would be a world-state mutation broadcasted to all players.
-                const manifestedDef = await WorldForensicsLimb.getInstance().getObjectDefinition(forensicPair.resultId);
-                state.objectMap.set(numericId, { 
-                    ...target, 
-                    id: forensicPair.resultId, 
-                    name: manifestedDef.name,
-                    actions: manifestedDef.actions 
-                });
-                events.push(`[InteractionGateway] Door opened: ${target.name} (ID ${activeId}) -> ${manifestedDef.name} (ID ${forensicPair.resultId})`);
-            } else if (forensicPair.type === 'LADDER' || forensicPair.type === 'CAVE' || forensicPair.type === 'PORTAL') {
-                // Plane Transition Logic
-                const isUp = forensicPair.action.toLowerCase().includes('up');
-                const isDown = forensicPair.action.toLowerCase().includes('down') || forensicPair.type === 'CAVE';
-                
-                if (isUp) {
-                    source.coord.plane = Math.min(3, source.coord.plane + 1);
-                    events.push(`[InteractionGateway] Climbing UP to plane ${source.coord.plane}.`);
-                } else if (isDown) {
-                    source.coord.plane = Math.max(0, source.coord.plane - 1);
-                    events.push(`[InteractionGateway] Climbing DOWN to plane ${source.coord.plane}.`);
+        // 6.5 FORENSIC OBJECT INTERACTION & AUTHORITATIVE MORPHISM
+        const rootDef = await WorldForensicsLimb.getInstance().getObjectDefinition(numericId);
+        const varbitLimb = VarbitSovereigntyLimb.getInstance();
+
+        if (rootDef.varbitId !== undefined && rootDef.varbitId !== -1 && rootDef.transforms) {
+            // Authoritative Cache-driven Varbit Toggle
+            const currentVal = varbitLimb.resolveVarbitValue(rootDef.varbitId, state);
+            let nextVal = (currentVal + 1) % rootDef.transforms.length;
+            
+            // Skip invalid transforms (-1)
+            let safeCounter = 0;
+            while (rootDef.transforms[nextVal] === -1 && safeCounter < rootDef.transforms.length) {
+                nextVal = (nextVal + 1) % rootDef.transforms.length;
+                safeCounter++;
+            }
+
+            await varbitLimb.setVarbit(rootDef.varbitId, nextVal, state);
+            events.push(`[InteractionGateway] 🧬 Genome Morph: Toggled Varbit ${rootDef.varbitId} from ${currentVal} to ${nextVal} for ${target.name}.`);
+        } else {
+            // Fallback to legacy forensic mappings for non-varbit transitions
+            const forensicPair = getInteractionResult(activeId);
+            if (forensicPair) {
+                if (forensicPair.type === 'DOOR') {
+                    const manifestedDef = await WorldForensicsLimb.getInstance().getObjectDefinition(forensicPair.resultId);
+                    state.objectMap.set(numericId, { 
+                        ...target, 
+                        id: forensicPair.resultId, 
+                        name: manifestedDef.name,
+                        actions: manifestedDef.actions 
+                    });
+                    events.push(`[InteractionGateway] Door opened via legacy override: ${target.name} (ID ${activeId}) -> ${manifestedDef.name} (ID ${forensicPair.resultId})`);
+                } else if (forensicPair.type === 'LADDER' || forensicPair.type === 'CAVE' || forensicPair.type === 'PORTAL') {
+                    // Plane Transition Logic
+                    const isUp = forensicPair.action.toLowerCase().includes('up');
+                    const isDown = forensicPair.action.toLowerCase().includes('down') || forensicPair.type === 'CAVE';
+                    
+                    if (isUp) {
+                        source.coord.plane = Math.min(3, source.coord.plane + 1);
+                        events.push(`[InteractionGateway] Climbing UP to plane ${source.coord.plane}.`);
+                    } else if (isDown) {
+                        source.coord.plane = Math.max(0, source.coord.plane - 1);
+                        events.push(`[InteractionGateway] Climbing DOWN to plane ${source.coord.plane}.`);
+                    }
                 }
             }
         }
@@ -230,4 +253,66 @@ export class InteractionGateway {
         source.interactionState = 'COOLDOWN';
         return events;
     }
+
+    public handleDialogueScript(scriptId: number, avatar: SovereignAvatar): string[] {
+        if (scriptId === 10905) {
+            avatar.metadata = avatar.metadata || {};
+            avatar.metadata.surveyCompleted = true;
+            return ['[Dialogue] You have completed the Sovereign Beta survey. Thank you!'];
+        }
+        return [];
+    }
+
+    public async handleMasterInteraction(payload: any, state: GameState, avatar: SovereignAvatar): Promise<void> {
+        logger.info({ payload }, '[InteractionGateway] Authoritative Master Interaction script intercepted.');
+        if (payload && payload.action && payload.targetId) {
+            await this.evaluateInteraction(avatar, payload.action, payload.targetId, state, null);
+        }
+    }
+
+    /**
+     * evaluateSearchIntent - Handles 'TypeString' and 'Search' pulses targeted at specific UI components.
+     * Maps intent-to-search to the precise UI component IDs bound to varbit 28556.
+     */
+    private evaluateSearchIntent(source: SovereignAvatar | NPC, targetComponentId: string, action: string, state: GameState): string[] {
+        const events: string[] = [];
+        
+        // Strip ui_ prefix if present
+        const componentId = targetComponentId.replace('ui_', '');
+
+        // Interfaces known for Search:
+        // 703 (Grand Exchange)
+        // 1420 (Bank / General Search)
+        const interfaceId = componentId.split(':')[0];
+        if (interfaceId !== '703' && interfaceId !== '1420' && interfaceId !== '11' && interfaceId !== '91' && interfaceId !== '658' && interfaceId !== '1851') {
+             // 11, 91, 658, 1851 are from script_28556_resolution.json
+             return [`[InteractionGateway] Rejecting search. Component ${componentId} is not bound to a known search context.`];
+        }
+
+        // Search Varbit is 28556 (Global Search State Flag)
+        const searchVarbitId = 28556;
+        const varbitLimb = VarbitSovereigntyLimb.getInstance();
+        
+        // 1 = Active Search, 0 = Inactive
+        varbitLimb.setVarbit(searchVarbitId, 1, state);
+        
+        // Attach the query to the avatar's metadata for the UI substrate to read.
+        // We use the 'action' or a specific query property if we want, but since action might be SEARCH,
+        // we'll assume the intent stores the actual query string.
+        let query = action;
+        if (source.intent && (source.intent as any).query) {
+            query = (source.intent as any).query;
+        }
+
+        source.metadata = source.metadata || {};
+        source.metadata.activeSearchQuery = query;
+        source.metadata.activeSearchComponent = componentId;
+        source.metadata.searchActive = true;
+        
+        source.interactionState = 'COOLDOWN';
+        events.push(`[InteractionGateway] 🔍 Search Intent Processed -> Component: ${componentId} | Query: '${query}'. Varbit 28556 activated.`);
+        
+        return events;
+    }
 }
+

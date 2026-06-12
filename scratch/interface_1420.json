@@ -1,0 +1,29 @@
+{
+  "interfaceId": 1420,
+  "components": [],
+  "textLabels": [],
+  "isHudCandidate": false,
+  "classification": {
+    "interfaceId": 1420,
+    "score": 35,
+    "confidence": "LOW",
+    "category": "RIBBON",
+    "reasons": [
+      "textRatio: 0.0% (max: 25%)",
+      "spriteRatio: 0.0%",
+      "containerRatio: 0.0%",
+      "maxDepth: 0",
+      "avgTextLength: 0 chars",
+      "textComponents: 0",
+      "lexMatches: 0"
+    ],
+    "structuralMetrics": {
+      "textRatio": 0,
+      "spriteRatio": 0,
+      "containerRatio": 0,
+      "maxDepth": 0,
+      "avgTextLength": 0,
+      "totalComponents": 0
+    }
+  }
+}

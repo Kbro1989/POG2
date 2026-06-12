@@ -7,14 +7,14 @@ const TARGET_SCRIPTS = [1459712, 1459840, 1676160, 1856000];
 async function run() {
     console.log("🚀 Sovereign Behavioral Scrutiny — Decompiling Target Handlers");
     const source = new GameCacheLoader(CACHE_DIR);
-    
+
     for (const scriptId of TARGET_SCRIPTS) {
         const group = Math.floor(scriptId / 128);
         const fileId = scriptId % 128;
-        
+
         const arch = await source.getArchiveById(12, group);
         const file = arch.find(f => f.fileid === fileId);
-        
+
         if (file) {
             console.log(`📜 Script ${scriptId} Bytecode (Hex): ${file.buffer.slice(0, 100).toString('hex')}...`);
             // Looking for Spatial Opcodes:
@@ -32,3 +32,4 @@ async function run() {
 }
 
 run().catch(console.error);
+

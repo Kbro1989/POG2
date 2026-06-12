@@ -373,7 +373,9 @@ export class WorldGroundingLimb implements GroundingHydrator {
 
             if (fs.existsSync(effectivePath)) {
                 const data = fs.readFileSync(effectivePath, 'utf8');
-                this.npcSpawns = JSON.parse(data);
+                const parsed = JSON.parse(data);
+                // Support both raw array and { entities: [...] } manifest formats
+                this.npcSpawns = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.entities) ? parsed.entities : []);
                 this.npcsLoaded = true;
                 logger.debug({ count: this.npcSpawns.length, source: effectivePath }, 'NPC Spawns grounded via Breakthrough Manifest.');
             }
@@ -389,22 +391,42 @@ export class WorldGroundingLimb implements GroundingHydrator {
         const maxX = minX + 63;
         const maxZ = minZ + 63;
 
-        const localSpawns = this.npcSpawns.filter(s => s.worldX >= minX && s.worldX <= maxX && s.worldZ >= minZ && s.worldZ <= maxZ);
+        const localSpawns = this.npcSpawns.filter(s => {
+            const x = s.worldX ?? s.coord?.x;
+            const z = s.worldZ ?? s.coord?.z ?? s.coord?.y;
+            return x >= minX && x <= maxX && z >= minZ && z <= maxZ;
+        });
         if (localSpawns.length === 0) return;
 
         const tx = this.beginTick();
         const spatial = SpatialSovereigntyLimb.getInstance();
 
         for (const spawn of localSpawns) {
-            const entId = `npc_${spawn.npcId}_${spawn.worldX}_${spawn.worldZ}`;
+            const x = spawn.worldX ?? spawn.coord?.x;
+            const z = spawn.worldZ ?? spawn.coord?.z ?? spawn.coord?.y;
+            const plane = spawn.plane ?? spawn.coord?.plane ?? 0;
+            
+            // Determine type to prevent dumping Enums/Objects into NPC logic
+            const isNpc = spawn.npcId !== undefined || (spawn.id && spawn.id.includes('npc'));
+            const typePrefix = isNpc ? 'npc' : 'obj';
+            
+            const coreId = spawn.npcId ?? spawn.entityId ?? spawn.objectId ?? spawn.id ?? 'unknown';
+            const entityName = spawn.npcName ?? spawn.title ?? `${typePrefix.toUpperCase()} ${coreId}`;
+
+            const entId = `${typePrefix}_${coreId}_${x}_${z}`;
             if (this.manifest.entities[entId]) continue;
-            tx.set(entId, {
+            
+            const payload: any = {
                 id: entId,
-                npcId: spawn.npcId,
-                name: spawn.npcName,
-                spatial: { x: spawn.worldX, y: spawn.worldZ, z: spatial.getAltitude(spawn.plane, spawn.worldX, spawn.worldZ), plane: spawn.plane },
+                name: entityName,
+                spatial: { x: x, y: z, z: spatial.getAltitude(plane, x, z), plane: plane },
                 behavior: 'STATIC_FORENSIC'
-            });
+            };
+            
+            if (isNpc) payload.npcId = coreId;
+            else payload.objectId = coreId;
+            
+            tx.set(entId, payload);
         }
         await this.commitTick(tx);
     }
@@ -417,3 +439,4 @@ export class WorldGroundingLimb implements GroundingHydrator {
         };
     }
 }
+

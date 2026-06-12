@@ -1,0 +1,23 @@
+{
+  "exemptPaths": [
+    "src/rsmv/scripts/",
+    "src/rsmv/viewer/",
+    "src/core/OpcodeReader.ts",
+    "src/rsmv/opcode_reader.ts",
+    "src/utils/rsmv_bridge.ts",
+    "src/utils/ClinicalAuditTool.ts",
+    "src/engines/OrchestrateEngine.ts",
+    "src/cli.ts",
+    "test_",
+    "scratch/"
+  ],
+  "exemptPatterns": [
+    "Mock",
+    "test_",
+    "\\.test\\.",
+    "scratch",
+    "tmp_",
+    "verify_"
+  ],
+  "rationale": "CLI tools, browser UI, binary parsing, test infrastructure, and scratch scripts are exempt from clinical logging and strict typing rules where contextually justified."
+}

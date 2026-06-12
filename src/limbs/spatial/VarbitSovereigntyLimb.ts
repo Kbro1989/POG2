@@ -1,9 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { GameState } from '../../core/models.js';
+import { GameState, YaoState, MovingLine } from '../../core/models.js';
 import { WorldForensicsLimb, ObjectDefinition } from './WorldForensicsLimb.js';
 import { createLogger } from '../../utils/logger.js';
 import { SpatialSovereigntyLimb } from './SpatialSovereigntyLimb.js';
+import { GameplaySovereigntyLimb } from './GameplaySovereigntyLimb.js';
+import { EpistemicTransitionKernel } from '../../engines/core/EpistemicTransitionKernel.js';
+import { HexagramManager } from '../../routing/HexagramManager.js';
+import { rsmvBridge } from '../../utils/RSMVBridge.js';
 
 const logger = createLogger('VarbitSovereigntyLimb');
 
@@ -114,6 +118,29 @@ export class VarbitSovereigntyLimb {
     }
 
     /**
+     * setVarbit - Mutates a specific varbit, calculates the new parent Varp value, and triggers invalidation.
+     */
+    public async setVarbit(id: number, value: number, gameState: GameState): Promise<void> {
+        const def = this.getVarbitDefinition(id);
+        if (!def) {
+            logger.warn({ id }, 'Attempted to set an undefined varbit. Storing in isolated cache.');
+            gameState.varbits.set(id, value);
+            return;
+        }
+
+        const parentValue = gameState.varps.get(def.parentVarpId) || 0;
+        const mask = ((1 << (def.msb - def.lsb + 1)) - 1);
+        
+        // Clear the old bit-window
+        let newVarpValue = parentValue & ~(mask << def.lsb);
+        // Insert the new value
+        newVarpValue |= ((value & mask) << def.lsb);
+
+        logger.info({ varbitId: id, value, parentVarp: def.parentVarpId, oldVarp: parentValue, newVarp: newVarpValue }, 'Authoritative VARBIT Update');
+        await this.setVarp(def.parentVarpId, newVarpValue, gameState);
+    }
+
+    /**
      * setVarp - Updates a player variable and triggers varbit cache invalidation.
      * In Phase 13, this also triggers Spatial manifestations for affected objects.
      */
@@ -122,11 +149,40 @@ export class VarbitSovereigntyLimb {
         if (oldValue === value) return;
 
         gameState.varps.set(id, value);
+        GameplaySovereigntyLimb.getInstance().markDirty();
         logger.info({ id, oldValue, newValue: value }, 'Authoritative VARP Update');
+
+        // Kernel signal: Varp mutation is a high-confidence gameplay state change
+        // Emit as MovingLine Line 4 (external world engagement)
+        const line: MovingLine = {
+            position: 4,
+            fromState: oldValue > 0 ? 'YANG' : 'YIN',
+            toState: value > 0 ? 'YANG' : 'YIN',
+            confidence: 1.0,
+            source: 'VarbitSovereigntyLimb',
+            timestamp: Date.now()
+        };
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const yao = HexagramManager.getInstance().getYaoState();
+            kernel.observeTransition(yao, 1.0, [line]);
+        } catch {
+            // Initialization phase
+        }
 
         // Phase 13: World Manifestation Trigger
         const affectedVarbits = this.varpToVarbits.get(id) || [];
         
+        // Phase-aware gating: skip heavy remanifest during DEGRADING
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            if (kernel.getPhaseGateMultiplier() < 0.3) {
+                logger.warn({ varpId: id, phase: kernel.getCurrentPhase() },
+                    'Remanifest deferred: kernel in DEGRADING phase.');
+                return;
+            }
+        } catch { /* kernel not initialized */ }
+
         // Find all objects in the current local area and check if they depend on these varbits/varp
         await this.remanifestAffectedObjects(id, affectedVarbits, gameState);
     }
@@ -135,6 +191,10 @@ export class VarbitSovereigntyLimb {
      * remanifestAffectedObjects - Scans active world for objects that need a visual/collision flip.
      */
     private async remanifestAffectedObjects(varpId: number, affectedVarbits: number[], gameState: GameState): Promise<void> {
+        if (!gameState.objectMap) {
+            logger.debug({ varpId }, 'remanifestAffectedObjects: objectMap not present, skipping.');
+            return;
+        }
         logger.info({ varpId, objectMapSize: gameState.objectMap.size }, 'Entering remanifestAffectedObjects');
         const spatial = SpatialSovereigntyLimb.getInstance();
         logger.info('Spatial limb accessed.');
@@ -170,6 +230,9 @@ export class VarbitSovereigntyLimb {
                         
                         obj.id = newManifestedId;
                         await spatial.swapObjectManifestation(obj.x, obj.y, obj.plane, oldManifestedId, newManifestedId);
+
+                        // Kernel signal: Confirmed world-state change = maximum confidence
+                        this.emitKernelSignal(1.0);
                     } else {
                         logger.info({ id: numericId }, 'Morphism skip: Manifested ID unchanged.');
                     }
@@ -191,4 +254,83 @@ export class VarbitSovereigntyLimb {
     public getForensics(): WorldForensicsLimb {
         return this.forensics;
     }
+
+    /**
+     * hasVarbitDefinition — Check if the L1 static registry contains a definition.
+     * Used by StateProvider to decide whether to trigger async fallback.
+     */
+    public hasVarbitDefinition(varbitId: number): boolean {
+        return this.definitions.has(varbitId);
+    }
+
+    /**
+     * resolveVarbitDefinitionFromCache — Async fallback that loads a single varbit
+     * definition from the live NXT JCACHE via the rsmv bridge subprocess.
+     *
+     * If the bridge returns valid data, the definition is permanently injected
+     * into the in-memory L1 registry and the varpToVarbits inverse index.
+     */
+    public async resolveVarbitDefinitionFromCache(varbitId: number): Promise<{ parentVarpId: number, lsb: number, msb: number } | null> {
+        // Already loaded?
+        if (this.definitions.has(varbitId)) {
+            return this.definitions.get(varbitId)!;
+        }
+
+        const result = await rsmvBridge.getVarbit(varbitId);
+        if (!result.ok) {
+            logger.warn({ varbitId, error: result.error?.message }, 'Failed to resolve varbit definition from live cache.');
+            return null;
+        }
+
+        const raw = result.value;
+        const parentVarpId = raw.varid;
+        if (parentVarpId === undefined || parentVarpId === null) {
+            logger.warn({ varbitId, raw }, 'Bridge returned varbit without varid.');
+            return null;
+        }
+
+        let lsb: number;
+        let msb: number;
+
+        if (raw.bits && Array.isArray(raw.bits) && raw.bits.length === 2) {
+            lsb = raw.bits[0];
+            msb = raw.bits[1];
+        } else if (raw.lsb !== undefined && raw.msb !== undefined) {
+            lsb = raw.lsb;
+            msb = raw.msb;
+        } else if (raw.bitcount !== undefined && raw.bitcount > 0) {
+            lsb = 0;
+            msb = raw.bitcount - 1;
+        } else {
+            logger.warn({ varbitId, raw }, 'Bridge returned varbit without bit-window data.');
+            return null;
+        }
+
+        const def = { parentVarpId, lsb, msb };
+        this.injectVarbitDefinition(varbitId, def);
+
+        // Update inverse index
+        if (!this.varpToVarbits.has(parentVarpId)) {
+            this.varpToVarbits.set(parentVarpId, []);
+        }
+        this.varpToVarbits.get(parentVarpId)!.push(varbitId);
+
+        logger.info({ varbitId, parentVarpId, lsb, msb }, 'Varbit definition resolved from live cache and injected.');
+        return def;
+    }
+
+    /**
+     * emitKernelSignal — Feeds a causal confidence observation into the predictive kernel.
+     * Safe to call even if the kernel or HexagramManager aren't initialized yet.
+     */
+    private emitKernelSignal(confidence: number): void {
+        try {
+            const kernel = EpistemicTransitionKernel.getInstance();
+            const yao = HexagramManager.getInstance().getYaoState();
+            kernel.observeTransition(yao, confidence);
+        } catch {
+            // Kernel or HexagramManager not yet initialized
+        }
+    }
 }
+

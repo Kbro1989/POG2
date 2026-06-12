@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign Avatar - First Photon</title>
+    <!-- Babylon.js core and loaders -->
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #111; }
+        #renderCanvas { width: 100%; height: 100vh; touch-action: none; outline: none; }
+        #overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #00ffcc;
+            font-family: 'Courier New', Courier, monospace;
+            pointer-events: none;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border: 1px solid #00ffcc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <div id="overlay">
+        <h2>Sovereign Avatar Limb</h2>
+        <p>Status: Rendering Point Cloud Topology</p>
+        <p>Kit ID: <span id="kit-id">31149</span></p>
+        <p>Material: Enum 1195 RGB (12104087)</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
+
+        const createScene = async function () {
+            const scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color4(0.05, 0.05, 0.05, 1);
+
+            // Camera: Orbit around origin
+            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 200, BABYLON.Vector3.Zero(), scene);
+            camera.attachControl(canvas, true);
+            camera.wheelPrecision = 10;
+
+            // Lighting
+            const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+            light.intensity = 0.9;
+
+            // Define Sovereign Skin Tone (Enum 1195 -> 12104087)
+            const skinPacked = 12104087;
+            const r = ((skinPacked >> 16) & 0xFF) / 255;
+            const g = ((skinPacked >> 8) & 0xFF) / 255;
+            const b = (skinPacked & 0xFF) / 255;
+            
+            const skinColor = new BABYLON.Color3(r, g, b);
+
+            // Fetch the extracted Babylon.js JSON template
+            try {
+                // Since this runs in a browser, we assume we are serving the root or public dir
+                // We will fetch the model from our output directory
+                const res = await fetch('/models/kit_31149.json');
+                const meshData = await res.json();
+
+                // Point cloud rendering approach since we don't have face indices yet
+                const mesh = new BABYLON.Mesh("kit_31149", scene);
+                const vertexData = new BABYLON.VertexData();
+
+                vertexData.positions = meshData.positions;
+                
+                // If we don't have indices, we can't create a traditional mesh, 
+                // so we will render it as a PointCloudSystem or lines.
+                // Actually, let's create a PointsCloudSystem
+                const pcs = new BABYLON.PointsCloudSystem("pcs", 1, scene);
+                
+                // Add points based on positions
+                const positions = meshData.positions;
+                const pointCount = positions.length / 3;
+                console.log(`Rendering ${pointCount} vertices`);
+
+                pcs.addPoints(pointCount, (particle, i) => {
+                    particle.position = new BABYLON.Vector3(
+                        positions[i * 3],
+                        positions[i * 3 + 1],
+                        positions[i * 3 + 2]
+                    );
+                    particle.color = new BABYLON.Color4(r, g, b, 1);
+                });
+
+                await pcs.buildMeshAsync();
+
+                // Center camera on the point cloud bounds
+                camera.target = pcs.mesh.getBoundingInfo().boundingBox.center;
+                
+            } catch (err) {
+                console.error("Failed to load or parse mesh data:", err);
+                document.getElementById('overlay').innerHTML += '<p style="color:red">Failed to load kit_31149.json</p>';
+            }
+
+            return scene;
+        };
+
+        createScene().then(scene => {
+            engine.runRenderLoop(() => {
+                scene.render();
+            });
+        });
+
+        window.addEventListener("resize", () => {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>

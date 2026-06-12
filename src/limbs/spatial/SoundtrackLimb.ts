@@ -1,4 +1,4 @@
-﻿// src/limbs/spatial/SoundtrackLimb.ts
+// src/limbs/spatial/SoundtrackLimb.ts
 // Phase 4B/5: Audio Synthesis with Keyframe Sync
 
 import { spawn } from 'child_process';
@@ -29,7 +29,7 @@ export interface SoundtrackResult {
 
 export class SoundtrackLimb {
   async generate(params: SoundtrackParams): Promise<Result<SoundtrackResult>> {
-    console.log(`ðŸŽµ Synthesizing ${params.channels}ch audio: ${params.duration}s`);
+    console.log(`🎵 Synthesizing ${params.channels}ch audio: ${params.duration}s`);
 
     try {
       // Generate volume modulation curve from keyframes
@@ -130,3 +130,4 @@ export class SoundtrackLimb {
     return { online: true, details: 'SoundtrackLimb: FFmpeg synthesis ready' };
   }
 }
+

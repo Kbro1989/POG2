@@ -17,11 +17,11 @@ for (const sf of sourceFiles) {
         ...sf.getImportDeclarations(),
         ...sf.getExportDeclarations()
     ];
-    
+
     for (const decl of importSpecs) {
         if (typeof (decl as any).getModuleSpecifierValue !== "function") continue;
         const moduleSpecifierValue = (decl as any).getModuleSpecifierValue();
-        
+
         if (moduleSpecifierValue && moduleSpecifierValue.startsWith(".")) {
             if (!moduleSpecifierValue.endsWith(".js") && !moduleSpecifierValue.endsWith(".json") && !moduleSpecifierValue.endsWith(".css") && !moduleSpecifierValue.endsWith(".png") && !moduleSpecifierValue.endsWith(".tsx")) {
                 decl.setModuleSpecifier(moduleSpecifierValue + ".js");
@@ -34,9 +34,9 @@ for (const sf of sourceFiles) {
     const functions = sf.getFunctions();
     const methods = sf.getClasses().flatMap(c => c.getMethods());
     const arrowFuncs = sf.getDescendantsOfKind(SyntaxKind.ArrowFunction);
-    
+
     const allFuncs = [...functions, ...methods, ...arrowFuncs];
-    
+
     for (const f of allFuncs) {
         for (const p of f.getParameters()) {
             if (!p.getTypeNode() && !p.getInitializer()) {
@@ -45,7 +45,7 @@ for (const sf of sourceFiles) {
             }
         }
     }
-    
+
     // 3. Fix implicit any on variables without initializers
     const varDecls = sf.getDescendantsOfKind(SyntaxKind.VariableDeclaration);
     for (const v of varDecls) {
@@ -54,7 +54,7 @@ for (const sf of sourceFiles) {
             try {
                 v.setType("any");
                 changed = true;
-            } catch (e) {}
+            } catch (e) { }
         }
     }
 

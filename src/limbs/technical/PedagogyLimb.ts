@@ -1,5 +1,5 @@
 import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+const nodeRequire = createRequire(import.meta.url);
 import { Result, ok, err, YaoState, EmotionalState } from '../../core/models.js';
 import type { PedagogyProfile } from '../../core/models.js';
 export { PedagogyProfile }; // Re-export for dependent limbs
@@ -13,11 +13,14 @@ import * as fs from 'fs';
 
 import { TernaryRouter } from '../../routing/TernaryRouter.js';
 import { VectorDB } from '../../utils/VectorDB.js';
-import { RSMVExtractor } from '../../utils/RSMVExtractor.js';
+import { rsmvExtractor } from '../../utils/RSMVExtractor.js';
 import { WikiEnricher } from '../../utils/WikiEnricher.js';
 import { VectorPedagogyLimb } from './VectorPedagogyLimb.js';
 import { ModelClient } from '../../clients/ModelClient.js';
-// import { HudResearchLimb } from './HudResearchLimb.js';
+import { EventBus } from '../../events/EventBus.js';
+import { SkillsLimb } from '../system/SkillsLimb.js';
+import { ToolRegistry } from '../../ToolRegistry.js';
+// import { HudResearchLimb } from './HudResearchLimb';
 // Stubbing missing HudResearchLimb until it appears in origin
 class HudResearchLimb { findCandidates(): any { return ok([]); } }
 
@@ -57,13 +60,41 @@ export class PedagogyLimb {
         this.client = client;
         this.vectorIndex = new VectorPedagogyLimb(client);
         this.hudResearcher = new HudResearchLimb();
-        
+
         // Asynchronously initialize the Logic Hub
         this.initialize().catch(err => {
             logger.error({ error: err.message }, 'Failed to initialize Logic Hub');
         });
 
+        // Phase 240: Behavioral Learning Integration
+        EventBus.getInstance().subscribe('cognitive.learning', (event: any) => {
+            this.processLearningEvent(event.payload);
+        });
+
         logger.info('PedagogyLimb initialized. Linked to Forensics, Topology, Router, and Substrate.');
+    }
+
+    private processLearningEvent(event: any): void {
+        // Phase 260: ISA Governance Check
+        const contract = this.router.getHexagram().getContract();
+        const permissions = contract.permissions;
+        if (!permissions.allowPedagogy) return;
+
+        const patterns = event.patterns || [];
+        const invariants = event.invariants || [];
+
+        if (patterns.length > 0 || invariants.length > 0) {
+            // Update pedagogical strategies with discovered causal patterns
+            if (!this.logic.strategies) this.logic.strategies = { causalPatterns: [], discoveredInvariants: [] };
+
+            this.logic.strategies.causalPatterns = patterns.map((p: any) => p.label);
+            this.logic.strategies.discoveredInvariants = invariants.map((i: any) => i.constraint);
+
+            logger.debug({
+                patterns: patterns.length,
+                invariants: invariants.length
+            }, 'PedagogyLimb internal strategies updated via Causal Learning Event.');
+        }
     }
 
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
@@ -134,7 +165,7 @@ export class PedagogyLimb {
         const wikiRes = await WikiEnricher.enrich(itemData.forensics.name);
         const wikiData = wikiRes.ok ? wikiRes.value : null;
 
-        const slot = this.forensics.findItemSlot(itemId) as string | null;
+        const slot = this.forensics.findItemSlot(itemId);
 
         const profile = this.synthesizeProfile(`ITEM_${itemId}`, itemData.forensics.name, 'ITEM', topologicalProfiles, {
             role: wikiData?.role || itemData.pedagogy.summary,
@@ -221,7 +252,7 @@ The second should define its cinematic intent.
         const maxBoneCount = Math.max(0, ...topology.map(p => p.boneCount));
 
         // Affective Inference (Phase 7)
-        const resonance = RSMVExtractor.inferEmotionalResonance(name, totalPolyCount, 0);
+        const resonance = rsmvExtractor.inferEmotionalResonance(name, totalPolyCount, 0);
 
         const structuralMetrics = {
             polyCount: totalPolyCount,
@@ -406,7 +437,7 @@ The second should define its cinematic intent.
         if (!res.ok) return res;
 
         const candidates = res.value;
-        const pedagogyResults = [];
+        const pedagogyResults: any[] = [];
 
         for (const candidate of candidates) {
             const profile = await this.storePrinciple(
@@ -574,6 +605,57 @@ Output JSON ONLY:
     }
 
     /**
+     * Phase 240: Parasitic Distillation Activation Loop
+     * Iterates through the entire anatomy (all ingested skills across engines, limbs, memory)
+     * and intentionally fires generative prompts to external hosts.
+     * 
+     * As the external models (Kimi, Gemini, etc.) solve the logic, ModelClient intercepts 
+     * and permanently metabolizes the output into SovereignKnowledgeDB.
+     */
+    public async stimulateMetabolism(): Promise<Result<any>> {
+        logger.info('Initiating total metabolic stimulation (Parasitic Distillation).');
+        try {
+            // Temporary instantiate to get the catalog (in full architecture, this is passed via OrchestrateEngine)
+            const registry = new ToolRegistry();
+            const skillsLimb = new SkillsLimb(registry);
+            skillsLimb.bootstrapLocalSkills();
+            
+            const catalog = skillsLimb.getCatalog();
+            let metabolicHits = 0;
+
+            for (const [skillName, skill] of catalog.entries()) {
+                logger.info({ skillName }, 'Metabolizing skill logic...');
+
+                const prompt = `
+You are an expert sub-routine for the Sovereign Architecture.
+Given the following architectural skill definition, synthesize a perfect, deterministic output demonstrating its logic.
+SKILL: ${skillName}
+DESCRIPTION: ${skill.description}
+INSTRUCTIONS:
+${skill.instructions.substring(0, 2000)}
+
+Output the absolute best-in-class generative response resolving this skill.
+                `.trim();
+
+                // Intentional offload to trigger the DB hook
+                await this.client.call({
+                    model: 'gemini:flash', // Example synthetic neurotransmitter host
+                    prompt,
+                    category: 'pedagogy',
+                    yaoState: YaoState.OldYang,
+                    temperature: 0.1
+                });
+                
+                metabolicHits++;
+            }
+
+            return ok({ status: 'Metabolism Complete', ingestedHostLogic: metabolicHits });
+        } catch (e) {
+            return err(e instanceof Error ? e : new Error(String(e)));
+        }
+    }
+
+    /**
      * Conducts learning from the Internal State substrate (Major 2, Page 69).
      * Teaches the AI how to track variables (Varbits/Varps) for quest states.
      */
@@ -604,6 +686,91 @@ Output JSON ONLY:
                 return err(new Error('Worldmap substrate (worldmap.json) missing.'));
             }
             const principle = await this.storePrinciple('CONTEXT_WORLDMAP', 'Jagex Cache Major 23', 0.91);
+            return ok({ profile: principle.ok ? principle.value : null });
+        } catch (e) {
+            return err(e instanceof Error ? e : new Error(String(e)));
+        }
+    }
+
+    /**
+     * Conducts learning from DB Tables (Major 40).
+     */
+    public async analyzeDbTables(): Promise<Result<any>> {
+        logger.info('Analyzing DB Tables Substrate (Major 40)...');
+        try {
+            const tablesPath = path.join('D:', 'sovereign', 'cache_pedagogy', 'json_dumps', 'dbtables.json');
+            if (!fs.existsSync(tablesPath)) {
+                return err(new Error('dbtables.json missing.'));
+            }
+            const data = JSON.parse(fs.readFileSync(tablesPath, 'utf8'));
+            const count = Object.keys(data).length;
+            const principle = await this.storePrinciple('DB_TABLES_SCHEMA', `Jagex Cache Major 40 (${count} tables)`, 0.96);
+            return ok({ count, profile: principle.ok ? principle.value : null });
+        } catch (e) {
+            return err(e instanceof Error ? e : new Error(String(e)));
+        }
+    }
+
+    /**
+     * Conducts learning from DB Rows (Major 39).
+     */
+    public async analyzeDbRows(): Promise<Result<any>> {
+        logger.info('Analyzing DB Rows Substrate (Major 39)...');
+        try {
+            const rowsPath = path.join('D:', 'sovereign', 'cache_pedagogy', 'json_dumps', 'dbrows.json');
+            if (!fs.existsSync(rowsPath)) {
+                return err(new Error('dbrows.json missing.'));
+            }
+            const data = JSON.parse(fs.readFileSync(rowsPath, 'utf8'));
+            const count = Object.keys(data).length;
+            const principle = await this.storePrinciple('DB_ROWS_DATA', `Jagex Cache Major 39 (${count} rows)`, 0.96);
+            return ok({ count, profile: principle.ok ? principle.value : null });
+        } catch (e) {
+            return err(e instanceof Error ? e : new Error(String(e)));
+        }
+    }
+
+    /**
+     * Conducts generalized learning over the entire Kinematics layer (Sequences).
+     */
+    public async analyzeAllKinematics(): Promise<Result<any>> {
+        logger.info('Analyzing Global Kinematics Substrate (Sequences)...');
+        try {
+            const pathSeq = path.join(getPedagogyPath(), 'sequences.json');
+            if (!fs.existsSync(pathSeq)) return err(new Error('sequences.json missing.'));
+            // sequences.json is 155MB, don't parse fully just stat it or read a stream, but we will assume ~40k sequences based on cache major max ids.
+            const stats = fs.statSync(pathSeq);
+            const principle = await this.storePrinciple('GLOBAL_KINEMATICS_LAYER', `Jagex Cache Sequences (${Math.floor(stats.size / 1024 / 1024)}MB dataset)`, 0.98);
+            return ok({ profile: principle.ok ? principle.value : null });
+        } catch (e) {
+            return err(e instanceof Error ? e : new Error(String(e)));
+        }
+    }
+
+    /**
+     * Conducts generalized learning over the entire Dynamics layer (SpotAnims).
+     */
+    public async analyzeAllDynamics(): Promise<Result<any>> {
+        logger.info('Analyzing Global Dynamics Substrate (SpotAnims)...');
+        try {
+            const pathSpot = path.join(getPedagogyPath(), 'spotanims.json');
+            if (!fs.existsSync(pathSpot)) return err(new Error('spotanims.json missing.'));
+            const data = JSON.parse(fs.readFileSync(pathSpot, 'utf8'));
+            const count = Object.keys(data).length;
+            const principle = await this.storePrinciple('GLOBAL_DYNAMICS_LAYER', `Jagex Cache SpotAnims (${count} dynamic FX)`, 0.95);
+            return ok({ count, profile: principle.ok ? principle.value : null });
+        } catch (e) {
+            return err(e instanceof Error ? e : new Error(String(e)));
+        }
+    }
+
+    /**
+     * Conducts learning from Varps (Major 2, Page 60).
+     */
+    public async analyzeVarps(): Promise<Result<any>> {
+        logger.info('Analyzing Varps Substrate...');
+        try {
+            const principle = await this.storePrinciple('INTERNAL_STATE_VARPS', `Jagex Cache Major 2 (Player Variables)`, 0.97);
             return ok({ profile: principle.ok ? principle.value : null });
         } catch (e) {
             return err(e instanceof Error ? e : new Error(String(e)));
@@ -731,4 +898,5 @@ Output JSON ONLY:
     public getNecromancyLogic() { return this.logic.necromancy; }
     public getEquipmentRequirements() { return this.logic.equipment; }
 }
+
 

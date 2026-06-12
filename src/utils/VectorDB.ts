@@ -8,6 +8,7 @@ import { SovereignIgnoreManager } from './SovereignIgnoreManager.js';
 import { getSystemRoot } from './SovereignPathResolver.js';
 import { SovereignDBLifecycle } from './SovereignDBLifecycle.js';
 import { createLogger } from "./logger.js";
+import { ClockAuthorityRegistry, ClockDomain } from './ClockAuthorityRegistry.js';
 
 const logger = createLogger('VectorDB');
 
@@ -50,6 +51,18 @@ export class VectorDB {
     constructor(config: VectorDBConfig) {
         this.dbPath = getLearningDbPath();
         this.client = config.client;
+    }
+
+    /**
+     * Generate embedding for raw text using ModelClient
+     */
+    public async embedText(text: string): Promise<Result<Float32Array>> {
+        if (!this.client || typeof this.client.embed !== 'function') {
+            return { ok: false, error: new Error('Embedding capability not available.') };
+        }
+        const res = await this.client.embed(text);
+        if (!res.ok || !res.value) return { ok: false, error: res.error || new Error('Empty embedding') };
+        return ok(new Float32Array(res.value));
     }
 
     /**
@@ -141,6 +154,15 @@ export class VectorDB {
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (line_index, projectId)
             );
+
+            CREATE TABLE IF NOT EXISTS cognitive_anomalies (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tick INTEGER NOT NULL,
+                event_id TEXT,
+                anomaly_type TEXT NOT NULL,
+                data_json TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            );
         `);
 
         // Migration/Hardening: Ensure columns exist
@@ -228,7 +250,7 @@ export class VectorDB {
                  const similarityValue = this.cosineSimilarity(queryEmbedding, embedding);
                 
                 // --- Phase 25: Cognitive Evolution Logic ---
-                const now = Date.now();
+                const now = ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB');
                 const ageSeconds = (now - row.createdAt) / 1000;
                 const tau = 7 * 24 * 60 * 60; // 7-day half-life for memory decay (in seconds)
                 const temporalDecay = Math.exp(-ageSeconds / tau);
@@ -375,7 +397,7 @@ export class VectorDB {
                 UPDATE lessons 
                 SET usageCount = usageCount + ?, lastAccessed = ? 
                 WHERE id = ?
-            `).run(strength, Date.now(), id);
+            `).run(strength, ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB'), id);
             return ok(undefined);
         } catch (err) {
             logger.error({ id, err }, 'Failed to reinforce lesson');
@@ -418,13 +440,14 @@ export class VectorDB {
             const embedRes = await this.client.embed(content.substring(0, 4000));
             if (!embedRes.ok) return { ok: false, error: embedRes.error };
 
+            const inferenceTime = ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB');
             return this.addLesson({
-                id: `auto-${hash.substring(0, 8)}-${Date.now()}`,
+                id: `auto-${hash.substring(0, 8)}-${inferenceTime}`,
                 text: content.substring(0, 2000), // Summary snippet
                 embedding: new Float32Array(embedRes.value),
                 projectId,
                 domainNamespace: 'global',
-                createdAt: Date.now(),
+                createdAt: inferenceTime,
                 metadata: { source: filePath, type: 'auto-index', hash },
                 hash,
                 type: 'file_index'
@@ -474,7 +497,7 @@ export class VectorDB {
                 embedding: embedRes.value,
                 projectId: 'global',
                 domainNamespace: 'anatomy',
-                createdAt: Date.now(),
+                createdAt: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB'),
                 metadata: spec,
                 hash,
                 type: 'anatomy_fact'
@@ -506,7 +529,7 @@ export class VectorDB {
                 embedding: embedRes.value,
                 projectId: 'global',
                 domainNamespace: 'anatomy',
-                createdAt: Date.now(),
+                createdAt: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB'),
                 metadata: { ...model, type: '3d_model_ref' },
                 hash,
                 type: '3d_model_fact'
@@ -538,7 +561,7 @@ export class VectorDB {
                 embedding: embedRes.value,
                 projectId: 'global',
                 domainNamespace: 'anatomy',
-                createdAt: Date.now(),
+                createdAt: ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB'),
                 metadata: spec,
                 hash,
                 type: 'kinetic_fact'
@@ -587,6 +610,22 @@ export class VectorDB {
         return ok(null);
     }
 
+    /**
+     * addAnomaly - Direct persistence of forensic structural deviations.
+     */
+    public addAnomaly(tick: number, eventId: string | null, type: string, data: any): Result<void> {
+        if (!this.db) return { ok: false, error: new Error('Database not initialized') };
+        try {
+            this.db.prepare(`
+                INSERT INTO cognitive_anomalies (tick, event_id, anomaly_type, data_json, created_at)
+                VALUES (?, ?, ?, ?, ?)
+            `).run(tick, eventId, type, JSON.stringify(data), ClockAuthorityRegistry.resolveTime(ClockDomain.INFERENCE, 'VectorDB'));
+            return ok(undefined);
+        } catch (err) {
+            return { ok: false, error: err as Error };
+        }
+    }
+
     public close(): void {
         if (this.closed) return;
         this.closed = true;
@@ -605,3 +644,4 @@ export class VectorDB {
         this.satellites = [];
     }
 }
+

@@ -114,47 +114,47 @@ export interface SovereignConfig {
 const DEFAULT_CONFIG: SovereignConfig = {
     mode: 'hybrid',
     metabolicCostScale: 1.0,
-    planningModel: 'kimi-k2.5:cloud',
+    planningModel: 'kimi-k2.6:cloud',
     codingModel: 'deepseek-r1:8b', // Upgraded to thinking model
-    orchestratorModel: 'kimi-k2.5:cloud',
+    orchestratorModel: 'deepseek-r1:8b', // Downgraded to 8b to fit VHD memory limit
     visionModel: 'moondream:latest',
-    voiceModel: 'tinyllama:latest',
+    voiceModel: 'gemma4:26b',
     codingHeavyModel: 'deepseek-r1:8b',
     codingFastModel: 'deepseek-r1:8b', 
     embeddingModel: 'qwen3-embedding:latest', // Upgraded to actual embedding node
     cloudflareAccountId: undefined,
     cloudflareApiToken: undefined,
     cloudflareAuthEmail: undefined,
-    criticModel: 'kimi-k2.5:cloud',
+    criticModel: 'kimi-k2.6:cloud',
     lightAuditorModel: 'all-minilm:latest',
-    geminiFlashModel: 'gemini-1.5-flash',
-    geminiProModel: 'gemini-1.5-pro',
+    geminiFlashModel: 'gemini-3.0-flash',
+    geminiProModel: 'gemini-3.0-pro',
     geminiEmbeddingModel: 'text-embedding-004',
     
     // specialized Generation Defaults (Phase 104)
     storyboardModel: 'deepseek-r1:8b',
-    vocalAnalysisModel: 'qwen2.5-coder:1.5b-instruct-q4_K_M',
-    imagePromptModel: 'deepseek-coder:6.7b-instruct-q4_K_M',
+    vocalAnalysisModel: 'gemma4:26b',
+    imagePromptModel: 'deepseek-r1:32b',
     // Back to 7b for rapid processing speeds over the 14b CPU latency.
     soulIngestionModel: 'deepseek-r1:8b',
     memoryConsolidationModel: 'deepseek-r1:8b',
 
     // Phase 71 Hierarchy Defaults
-    masterReasoningModel: 'kimi-k2.5:cloud',
+    masterReasoningModel: 'kimi-k2.6:cloud',
     executiveCoderModel: 'deepseek-r1:8b',
     reactiveAgentModel: 'deepseek-r1:8b', // VibeThinker fallback for demo stability
 
     // Phase 78 Economic Budget Paths (Layer 3)
     fastPathModel: 'deepseek-r1:8b',
     midPathModel: 'deepseek-r1:8b',
-    deepPathModel: 'kimi-k2.5:cloud',
+    deepPathModel: 'kimi-k2.6:cloud',
 
     // Phase 72 Failover & Specialized Defaults
-    masterFallbackModel: 'huggingface:openai-compat/kimi-k2.5-thinking',
+    masterFallbackModel: 'huggingface:openai-compat/kimi-k2.6-thinking',
     masterLocalModel: 'deepseek-r1:8b',
     imageGenModel: 'cloudflare:@cf/stabilityai/stable-diffusion-xl-base-1.0',
 
-    huggingfaceFallbackModel: 'huggingface:openai-compat/kimi-k2.5-thinking',
+    huggingfaceFallbackModel: 'huggingface:openai-compat/kimi-k2.6-thinking',
     localFallbackModel: 'deepseek-r1:8b',
     ollamaBaseUrl: 'http://localhost:11434',
     projectId: 'global',
@@ -192,12 +192,12 @@ const DEFAULT_CONFIG: SovereignConfig = {
     laneAwareWeighting: true,
 
     // Phase 23 Defaults
-    correctionModel: 'deepseek-coder:6.7b-instruct-q4_K_M',
-    optimizationModel: 'yi-coder:9b-chat-q5_K_M',
-    legacyModel: 'deepseek-coder:latest',
+    correctionModel: 'deepseek-r1:32b',
+    optimizationModel: 'gemma4:26b',
+    legacyModel: 'deepseek-r1:8b',
     prototypeModel: 'deepseek-r1:8b',
     rscModel: 'moondream:latest',
-    bioModel: 'medgemma:latest',
+    bioModel: 'gemma4:26b',
     visionFastModel: 'moondream:latest'
 };
 
@@ -339,7 +339,7 @@ export function loadConfig(configPath: string): SovereignConfig {
 
     // Phase 106: Normalize wsPort defaults (Default to 8765 if -1 or missing)
     if (config.wsPort === -1 || config.wsPort === undefined) {
-        config.wsPort = 8765;
+        config.wsPort = 8788;
     }
 
     return config as SovereignConfig;
@@ -356,3 +356,4 @@ function bootstrapConfig(configPath: string): void {
     }
     writeFileSync(configPath, JSON.stringify(DEFAULT_CONFIG, null, 2));
 }
+

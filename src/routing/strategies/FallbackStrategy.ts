@@ -1,4 +1,4 @@
-﻿import type { RoutingContext, RoutingDecision, RoutingStrategy } from '../types.js';
+import type { RoutingContext, RoutingDecision, RoutingStrategy } from '../types.js';
 
 export class FallbackStrategy implements RoutingStrategy {
     readonly name = 'fallback';
@@ -20,3 +20,4 @@ export class FallbackStrategy implements RoutingStrategy {
         };
     }
 }
+

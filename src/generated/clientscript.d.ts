@@ -17,8 +17,9 @@ export type clientscript = {
 	localintcount: number,
 	instructioncount: number,
 	opcodedata: {
-		opcode:number,
-		imm:number,
-		imm_obj:number|string|[number,number]|null,
+		opcode: number,
+		imm: number,
+		imm_obj: number | string | [number, number] | null,
 	}[],
 };
+

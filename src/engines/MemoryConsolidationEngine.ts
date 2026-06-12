@@ -1,4 +1,4 @@
-﻿import { type Result } from '../core/models.js';
+import { type Result } from '../core/models.js';
 import { ModelClient } from '../clients/ModelClient.js';
 import { VectorDB } from '../utils/VectorDB.js';
 import { StateManager } from '../state/StateManager.js';
@@ -23,7 +23,7 @@ export class MemoryConsolidationEngine {
      * consolidate - Synthesizes raw session memories into profound generative rules.
      * Can be focused on specific Sovereign Law repairs if violations are detected.
      */
-    public async consolidate(sessionLog?: any, options?: { focus: string; violations: any[] }): Promise<Result<void>> {
+    public async consolidate(sessionLog?: any, options?: { focus?: string; violations?: any[] }): Promise<Result<void>> {
         const sessionId = this.state.getSessionId();
         if (!sessionId) return { ok: false, error: new Error('No active Session ID.') };
 
@@ -97,8 +97,9 @@ Format:
                     const embedRes = await this.client.embed(consolidation.synthesizedLesson);
                     if (!embedRes.ok) continue;
 
-                    // Write the new master lesson
-                    await this.vectorDB.addLesson({
+                    // Write the new master lesson via TrainingCollector
+                    const { TrainingCollector } = await import('../utils/TrainingCollector.js');
+                    await TrainingCollector.getInstance().recordLesson({
                         id: `compressed-${Date.now()}-${Math.random().toString(36).substring(7)}`,
                         text: consolidation.synthesizedLesson,
                         embedding: embedRes.value,
@@ -138,3 +139,4 @@ Format:
         return true;
     }
 }
+

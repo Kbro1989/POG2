@@ -10,9 +10,10 @@ export type dbrows = {
 			flags: number,
 			columns: {
 				type: number,
-				value: (string|number)[],
+				value: (string | number)[],
 			}[],
 		}[],
 	} | null
 	table?: number | null
 };
+

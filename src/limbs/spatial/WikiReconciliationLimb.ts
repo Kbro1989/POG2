@@ -29,7 +29,7 @@ export class WikiReconciliationLimb {
         try {
             const response = await fetch(`${this.API_BASE}?action=query&meta=siteinfo&format=json`, {
                 headers: { 'User-Agent': this.USER_AGENT },
-                signal: AbortSignal.timeout(5000)
+                signal: AbortSignal.timeout(15000)
             });
             const online = response.ok;
             return {
@@ -88,7 +88,7 @@ export class WikiReconciliationLimb {
     public async fetchCompleteQuestList(): Promise<Result<WikiQuest[]>> {
         try {
             logger.info('Commencing full quest list extraction from Wiki...');
-            let quests: WikiQuest[] = [];
+            const quests: WikiQuest[] = [];
             let gcmcontinue: string | undefined = undefined;
 
             // Fetch members of "Category:Quests"
@@ -338,4 +338,5 @@ export interface WikiAbilitiesData {
     sourceUrl: string;
     fetchedAt: string;
 }
+
 

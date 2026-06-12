@@ -1,0 +1,18 @@
+{
+  "build": 45261,
+  "timestamp": 1746708145,
+  "variant": "BETA",
+  "js5": {
+    "host": "content.beta.runescape.com",
+    "port": 43594,
+    "portSsl": 443,
+    "revision": 225,
+    "buildId": 1149
+  },
+  "world": {
+    "id": 204,
+    "codebase": "http://world204.runescape.com/",
+    "gamePort": 43594
+  },
+  "environment": "BETA"
+}

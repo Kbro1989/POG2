@@ -117,10 +117,11 @@ export class KinematicsLimb {
             const fs = await import('fs');
             fs.writeFileSync(substratePath, JSON.stringify(substrate, null, 2));
 
-            // Vectorize the principle
+            // Vectorize the principle via TrainingCollector
             const embedRes = await this.client.embed(`Kinematic sequence ${sequenceId} bound to ${state}`);
             if (embedRes.ok) {
-                await this.vectorDB.addLesson({
+                const { TrainingCollector } = await import('../../utils/TrainingCollector.js');
+                await TrainingCollector.getInstance().recordLesson({
                     id: `kinematic-${sequenceId}`,
                     text: `Kinematic sequence ${sequenceId} bound to ${state}`,
                     embedding: embedRes.value,
@@ -140,5 +141,6 @@ export class KinematicsLimb {
         }
     }
 
-    public close(): void {}
+    public close(): void { }
 }
+

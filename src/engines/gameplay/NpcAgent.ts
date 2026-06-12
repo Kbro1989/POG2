@@ -4,8 +4,8 @@ import { SpatialSovereigntyLimb } from '../../limbs/spatial/SpatialSovereigntyLi
 import { createLogger } from '../../utils/logger.js';
 import { EventBus } from '../../events/EventBus.js';
 import { CombatRotationEngine, CombatEvaluationContext, TargetContext, CombatIntent, TacticalArchetype } from './CombatRotationEngine.js';
-import { CombatStyle } from './AbilityBook.js';
-
+import { AbilityBook, CombatStyle } from './AbilityBook.js';
+import { CanonicalClock } from '../../utils/CanonicalClock.js';
 const logger = createLogger('NpcAgent');
 
 export type NpcBehavior = 'wander' | 'patrol' | 'stationary' | 'follow';
@@ -92,7 +92,7 @@ export class NpcAgent {
                     x: this.npc.x,
                     y: this.npc.y,
                     plane: this.npc.plane,
-                    timestamp: Date.now()
+                    timestamp: CanonicalClock.getInstance().simulatedNow()
                 }
             });
 
@@ -166,8 +166,9 @@ export class NpcAgent {
         const maxAttempts = 12;
 
         for (let i = 0; i < maxAttempts; i++) {
-            const dx = Math.floor(Math.random() * (radius * 2 + 1)) - radius;
-            const dy = Math.floor(Math.random() * (radius * 2 + 1)) - radius;
+            const rng = CanonicalClock.getInstance().rng();
+            const dx = rng.range(-radius, radius);
+            const dy = rng.range(-radius, radius);
             const tx = this.spawnCoord.x + dx;
             const ty = this.spawnCoord.y + dy;
             const plane = this.spawnCoord.plane;
@@ -249,16 +250,16 @@ export class NpcAgent {
             if (this.tacticalState === 'evading') {
                 // Flee to farthest safespot
                 if (field.safespots && field.safespots.length > 0) {
-                    let bestSpot = field.safespots[0];
+                    const bestSpot = field.safespots[0];
                     let maxDist = 0;
                     let furthestCoord: Coord | null = null;
                     const npcCoord = { x: this.npc.x, y: this.npc.y, plane: this.npc.plane };
                     const safes = field.safespots;
                     for (const safe of safes) {
-                        const dist = Math.abs(safe.coord.x - npcCoord.x) + Math.abs(safe.coord.y - npcCoord.y); // Manhattan for simple evaluation
+                        const dist = Math.abs(safe.x - npcCoord.x) + Math.abs(safe.y - npcCoord.y); // Manhattan for simple evaluation
                         if (dist > maxDist) {
                             maxDist = dist;
-                            furthestCoord = safe.coord;
+                            furthestCoord = safe;
                         }
                     }
 
@@ -324,6 +325,7 @@ export class NpcAgent {
                 lastCombatTick: this.npc.metadata.lastCombatTick || 0,
                 cooldowns: this.npc.cooldowns || {},
             },
+            availableAbilities: AbilityBook.getInstance().getByStyle(style),
         };
         
         const intent = engine.evaluateRotation(ctx, target);
@@ -335,3 +337,4 @@ export class NpcAgent {
         }
     }
 }
+

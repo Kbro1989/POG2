@@ -1,4 +1,4 @@
-﻿import { YaoState, CognitiveChoice, FreeModelConfig, ModelPerformance, Lesson } from '../core/models.js';
+import { YaoState, CognitiveChoice, FreeModelConfig, ModelPerformance, Lesson } from '../core/models.js';
 
 export interface RoutingDecision {
     model: string;
@@ -43,3 +43,4 @@ export interface RoutingStrategy {
 export interface TerminalStrategy extends RoutingStrategy {
     route(context: RoutingContext): Promise<RoutingDecision>;
 }
+

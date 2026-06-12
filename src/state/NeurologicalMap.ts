@@ -7,7 +7,8 @@ export enum NeuralCategory {
     SENSORY = 'Sensory (Perception)',
     MEMORY = 'Memory (Hippocampus)',
     IMMUNE = 'Immune (Validation)',
-    METABOLIC = 'Metabolic (Connective Tissue)'
+    METABOLIC = 'Metabolic (Connective Tissue)',
+    GAMEPLAY = 'Gameplay'
 }
 
 export interface BiologicalFunction {
@@ -131,11 +132,11 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Tactile Nerve', input: 'RSC game data', output: 'Parsed game structures', constraints: 'Game-specific limb' }
     },
     {
-        path: 'src/utils/RSMVExtractor.ts', role: 'Anatomical Vision & Structural Pedagogy', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 10,
-        biologicalRole: { organ: 'Spatial Retain', input: 'RSMV Model JSON / Pedagogy Profile', output: 'SpeciesAnatomy + KineticProfile', constraints: 'Substrate for developmental memory' }
+        path: 'src/utils/rsmvExtractor.ts', role: 'Anatomical Vision & Structural Pedagogy', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Spatial Retain', input: 'rsmv Model JSON / Pedagogy Profile', output: 'SpeciesAnatomy + KineticProfile', constraints: 'Substrate for developmental memory' }
     },
     {
-        path: 'src/vision/RSMVController.ts', role: 'Active 3D Actuator & Pedagogy Ingestor', category: NeuralCategory.PNS, docDomain: 'VISION', metabolicBaseCost: 20,
+        path: 'src/vision/rsmvController.ts', role: 'Active 3D Actuator & Pedagogy Ingestor', category: NeuralCategory.PNS, docDomain: 'VISION', metabolicBaseCost: 20,
         biologicalRole: { organ: 'Visual Cortex (Motor)', input: 'ModelModifications / WikiData', output: 'ActuationResult (GLTF/Inspector/PedagogyProfile)', constraints: 'Drives physical model modification and structural learning' }
     },
     {
@@ -205,6 +206,46 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
     {
         path: 'src/limbs/technical/SovereignEditorLimb.ts', role: 'Motor Hand (RS3 Cache Editor)', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 25,
         biologicalRole: { organ: 'Surgical Hand', input: 'CacheEntity + EditCommand', output: 'Modified Pedagogy State', constraints: 'Mod-layer persistence; ternary-router undo/redo' }
+    },
+    {
+        path: 'src/limbs/spatial/SpatialSovereigntyLimb.ts', role: 'Proprioceptive Orientation (Physics)', category: NeuralCategory.PNS, docDomain: 'SYSTEM', metabolicBaseCost: 20,
+        biologicalRole: { organ: 'Vestibular System', input: 'World coordinates + collision matrix', output: 'SurfaceStack + Walkability', constraints: 'Authoritative collision arbiter' }
+    },
+    {
+        path: 'src/limbs/technical/ObjectiveLimb.ts', role: 'Discovery and Completion (Task Master)', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 25,
+        biologicalRole: { organ: 'Executive Function', input: 'Skill milestones + Discovery POIs', output: 'Sovereign Goals', constraints: 'Prioritizes uncompleted objectives' }
+    },
+    {
+        path: 'src/limbs/technical/QuestSynthesisLimb.ts', role: 'Quest Generator (Higher)', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 20,
+        biologicalRole: { organ: 'Quest Cortex', input: 'Game state', output: 'Synthesized Quest', constraints: 'Complex narrative generation' }
+    },
+    {
+        path: 'src/limbs/technical/QuestForgeLimb.ts', role: 'Quest Production Engine', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 25,
+        biologicalRole: { organ: 'Forge Motor', input: 'Blueprint', output: 'Production-ready Quest', constraints: 'No mocks; full integration' }
+    },
+    {
+        path: 'src/limbs/technical/LogicBrainLimb.ts', role: 'Higher Logic Processor', category: NeuralCategory.CNS, docDomain: 'SYSTEM', metabolicBaseCost: 30,
+        biologicalRole: { organ: 'Higher Logic Center', input: 'Logic Manifests', output: 'Logical Consistency', constraints: 'Authoritative logic arbiter' }
+    },
+    {
+        path: 'src/limbs/logical/SovereignVocabularyLimb.ts', role: 'Linguistic Mapping', category: NeuralCategory.METABOLIC, docDomain: 'SYSTEM', metabolicBaseCost: 5,
+        biologicalRole: { organ: 'Broca Area (Mapping)', input: 'Game Jargon', output: 'Sovereign Terms', constraints: 'Semantic alignment' }
+    },
+    {
+        path: 'src/limbs/technical/ValidationLimb.ts', role: 'Structural Validator (Limb)', category: NeuralCategory.IMMUNE, docDomain: 'IMMUNE', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Limb Antibody', input: 'Asset data', output: 'Validation report', constraints: 'Multi-layer validation' }
+    },
+    {
+        path: 'src/limbs/technical/UISubstrateLimb.ts', role: 'UI/HUD Orchestrator', category: NeuralCategory.PNS, docDomain: 'VISION', metabolicBaseCost: 20,
+        biologicalRole: { organ: 'HUD Center', input: 'UI Components', output: 'Grounded HUD', constraints: 'Tri-layer synthesis' }
+    },
+    {
+        path: 'src/limbs/technical/SovereignSandboxLimb.ts', role: 'Sandbox Sculptor', category: NeuralCategory.PNS, docDomain: 'CODE', metabolicBaseCost: 15,
+        biologicalRole: { organ: 'Surgical Sandbox Hand', input: 'Sandbox command', output: 'Modified Sandbox manifest', constraints: 'Persistence to D:/sovereign' }
+    },
+    {
+        path: 'src/substrates/GhostSplatEngine.ts', role: 'Predictive Spatial Intelligence', category: NeuralCategory.CNS, docDomain: 'VISION', metabolicBaseCost: 30,
+        biologicalRole: { organ: 'Superior Colliculus', input: 'Live world state + entity movement', output: 'GhostSplatField (Heatmap/Safespots)', constraints: 'Predicts N+1 to N+3 ticks' }
     },
     // --- Phase 48: New Physicalized Limbs ---
     {
@@ -314,8 +355,8 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Auditory Nerve', input: 'Audio buffer/stream', output: 'Transcription/Sentiment', constraints: 'Diagnostic focus' }
     },
     {
-        path: 'src/scripts/verify_rsmv_capabilities.ts', role: 'Spatial Capability Probe (RSMV)', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 10,
-        biologicalRole: { organ: 'Spatial Proprioception', input: 'Tool registry', output: 'RSMV functionality verification', constraints: 'Diagnostic focus' }
+        path: 'src/scripts/verify_rsmv_capabilities.ts', role: 'Spatial Capability Probe (rsmv)', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 10,
+        biologicalRole: { organ: 'Spatial Proprioception', input: 'Tool registry', output: 'rsmv functionality verification', constraints: 'Diagnostic focus' }
     },
     {
         path: 'src/limbs/spatial/WikiReconciliationLimb.ts', role: 'Fact Verification (Wiki)', category: NeuralCategory.SENSORY, docDomain: 'VISION', metabolicBaseCost: 15,
@@ -581,3 +622,4 @@ export const NEUROLOGICAL_MAP: NeuralNode[] = [
         biologicalRole: { organ: 'Observation Log', input: 'System state changes', output: 'Chronological clinical record', constraints: 'Immutable history' }
     }
 ];
+
