@@ -13,6 +13,8 @@ import { HexagramManager } from '../../routing/HexagramManager.js';
 import { createLogger } from "../../utils/logger.js";
 import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
 import { CacheForensicsLimb } from '../spatial/CacheForensicsLimb.js';
+import { RSMVBridge } from '../../utils/RSMVBridge.js';
+import { EnrichedSovereignCacheLoader } from '../spatial/EnrichedSovereignCacheLoader.js';
 
 const logger = createLogger('StoryboardLimb');
 
@@ -45,6 +47,9 @@ export interface StoryboardScene {
 }
 
 export class StoryboardLimbV2 {
+    private bridge: RSMVBridge;
+    private loader: EnrichedSovereignCacheLoader;
+
     constructor(
         private readonly client: ModelClient,
         private readonly gutenberg: GutenbergLimb,
@@ -57,6 +62,8 @@ export class StoryboardLimbV2 {
         private readonly modelName: string = 'deepseek-r1:8b'
     ) {
         this.gutenberg.enable();
+        this.bridge = RSMVBridge.instance;
+        this.loader = EnrichedSovereignCacheLoader.getInstance();
     }
 
     /**
@@ -453,31 +460,8 @@ Vary prosody based on narrative tension and ${yaostate} influence.
 
         logger.info({ sceneCount: sceneList.length }, 'Initiating Generalized Forensic Casting protocol (Total Substrate Awareness).');
 
-        // Stage 0.5: Specialized Substrate Detection (KBD/Project Specific)
-        const isKbdContext = sceneList.some(s => (s.description || "").toLowerCase().includes('kbd') || (s.speaker || "").toLowerCase().includes('kbd'));
-
         let localConfigs: any[] = [];
         let boneAudit: Record<string, any> = {};
-
-        if (isKbdContext) {
-            logger.info('Specialized KBD context detected. Loading specialized substrates.');
-            const kbdSubstratePath = join(process.cwd(), 'audit_output', 'kbd_arena', 'assets', 'kbd_legion_configs.json');
-            const boneAuditPath = join(process.cwd(), 'kbd_bone_audit.json');
-
-            if (existsSync(kbdSubstratePath)) {
-                try {
-                    localConfigs = JSON.parse(readFileSync(kbdSubstratePath, 'utf8'));
-                    logger.debug({ count: localConfigs.length }, 'Loaded local KBD substrate.');
-                } catch (e) { logger.warn('Failed to parse kbd_legion_configs.json'); }
-            }
-
-            if (existsSync(boneAuditPath)) {
-                try {
-                    boneAudit = JSON.parse(readFileSync(boneAuditPath, 'utf8'));
-                    logger.debug('Loaded KBD bone audit signals.');
-                } catch (e) { logger.warn('Failed to parse kbd_bone_audit.json'); }
-            }
-        }
 
         let kinematicsSubstrate: any = { kinematics: [] };
         const kinematicsPath = join(getSovereignRoot(), 'memory', 'pedagogy', 'kinematics.json');
