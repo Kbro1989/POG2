@@ -421,6 +421,8 @@ export class OrchestrateEngine {
         this.domainLocker = new DomainLocker();
         this.client.setDomainLocker(this.domainLocker);
         this.registry.setDomainLocker(this.domainLocker);
+        this.registry.setTernaryRouter(this.router);
+        this.registry.setHexagramManager(this.router.getHexagram());
 
         // Phase 259: Instantiate Simulation Harness (Heartbeat Logic)
         const worldGrounding = WorldGroundingLimb.getInstance();

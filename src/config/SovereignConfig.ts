@@ -59,6 +59,7 @@ export interface SovereignConfig {
     pog2Dir: string;
     gutenbergPath: string;
     sovereignRoot: string;
+    cacheDir?: string;
 
     // Advanced Model Parameters
     contextWindow: number;
@@ -164,6 +165,7 @@ const DEFAULT_CONFIG: SovereignConfig = {
     pog2Dir: process.env['POG2_DIR'] || join(homedir(), '.pog2-sovereign'),
     gutenbergPath: process.env['GUTENBERG_PATH'] || '',
     sovereignRoot: process.env['POG_SOVEREIGN_ROOT'] || '',
+    cacheDir: process.env['POG2_CACHE_DIR'] || 'C:\\ProgramData\\Jagex\\RuneScape',
 
     // Performance & Precision
     contextWindow: 16384,

@@ -287,9 +287,10 @@ export class HexagramManager extends EventEmitter {
     }
 
     private getCurrentHexagram(): string {
-        // Find corresponding hexagram for current YaoState
-        const yao = this.getYaoState();
-        return yao === YaoState.OldYin ? '000000' : '111111'; // Simplified, use binary string
+        // Derive the actual current hexagram from the current line cards.
+        // This avoids collapsing the entire substrate into pure old/past vs present/yang simplification.
+        const calculated = this.calculateHexagramId(this.lines, false);
+        return calculated || '111111';
     }
 
     private readonly FACET_MAP: Record<number, string> = {
@@ -830,6 +831,11 @@ Respond in JSON ONLY:
     public getNumericId(): number {
         const interpretation = this.getInterpretation();
         return interpretation.id;
+    }
+
+    public getCurrentSequence(): string[] {
+        const binaryId = this.calculateHexagramId(this.lines, false);
+        return binaryId.split('');
     }
 
     /**

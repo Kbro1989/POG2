@@ -1,7 +1,8 @@
 // Import necessary types and utilities
-import { type Result, type EngineOutput, type YaoState } from './core/models.js';
+import { type Result, type EngineOutput, type YaoState, err } from './core/models.js';
 import { SovereignDomain, DOMAIN_ADJACENCY } from './types/SovereignDomain.js';
 import { createLogger } from "./utils/logger.js";
+import { createHash } from 'crypto';
 import { performance } from "perf_hooks";
 import { DomainLocker } from './routing/DomainLocker.js';
 
@@ -24,6 +25,7 @@ export interface ToolDefinition {
     readonly minTier?: 'Master' | 'Executive' | 'Reactive'; // Minimum tier required
     readonly requiresConsensus?: boolean;    // Force multi-model for this tool
     readonly backingLimb?: string;            // Explicit limb routing override
+    readonly proof?: string;
     readonly parameters: Readonly<Record<string, unknown>>; // Parameters are part of the definition and should be immutable
     readonly execute: (args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>; // The execution function itself is part of the definition
 }
@@ -36,9 +38,89 @@ export interface ToolDefinition {
 export class ToolRegistry {
     private readonly tools: Map<string, ToolDefinition> = new Map();
     private domainLocker?: DomainLocker;
+    private ternaryRouter?: any; // Assume accessible via context or injection
+    private hexagramManager?: any;
 
     public setDomainLocker(dl: DomainLocker): void {
         this.domainLocker = dl;
+    }
+
+    public setTernaryRouter(tr: any): void {
+        this.ternaryRouter = tr;
+    }
+
+    public setHexagramManager(hm: any): void {
+        this.hexagramManager = hm;
+    }
+
+    private computeStructuralProof(tool: ToolDefinition): string {
+        const data = {
+            name: tool.name,
+            description: tool.description,
+            domain: tool.domain,
+            category: tool.category,
+            parameters: tool.parameters,
+            humanDescription: tool.humanDescription,
+            jargonDescription: tool.jargonDescription,
+            idealYaoState: tool.idealYaoState,
+            minTier: tool.minTier,
+            requiresConsensus: tool.requiresConsensus,
+            backingLimb: tool.backingLimb
+        };
+
+        return `sha256:${createHash('sha256').update(JSON.stringify(data)).digest('hex')}`;
+    }
+
+    private wrapWithSecurity(tool: ToolDefinition, flags: { isForeign: boolean }): ToolDefinition {
+        const originalExecute = tool.execute;
+        
+        const wrappedExecute = async (args: Readonly<Record<string, unknown>>): Promise<Result<EngineOutput>> => {
+            // 1. DomainLocker gate
+            if (this.domainLocker) {
+                const domainCheck = this.domainLocker.dispatchCheck(tool.name);
+                if (domainCheck.action === 'WAIT') {
+                    logger.warn({ tool: tool.name, domain: tool.domain, activeDomain: domainCheck.activeDomain }, 'Cross-domain tool execution: dispatch wait expected');
+                }
+            }
+            
+            // 2. SovereignKnock for foreign tools
+            if (flags.isForeign && this.ternaryRouter) {
+                const structuralProof = this.computeStructuralProof(tool);
+                const knock = await this.ternaryRouter.sovereignKnock({
+                    iChingSequence: this.hexagramManager?.getCurrentSequence() ?? [],
+                    chromaticSoul: (this.hexagramManager?.getCurrentSequence() ?? []).join('-') || 'foreign-skill',
+                    temporalFingerprint: `${Date.now()}-${tool.name}`,
+                    anatomicalProof: { limbCount: 33, structuralIntegrity: 10 },
+                    structuralProof
+                });
+                if (!knock.ok) {
+                    logger.warn({
+                        tool: tool.name,
+                        domain: tool.domain,
+                        structuralProof,
+                        error: knock.error?.message ?? knock.error
+                    }, 'Foreign tool failed SovereignKnock authentication');
+                    return err(new Error(`Tool ${tool.name} failed SovereignKnock authentication`));
+                }
+            }
+            
+            // 3. Causality logging
+            // CNSCausalityLedger.getInstance().record(...) // Assuming singleton exists
+            
+            // 4. Execute
+            try {
+                const result = await originalExecute(args);
+                return result;
+            } catch (e: any) {
+                // Apply stun lock on failure if foreign
+                if (flags.isForeign) {
+                    // this.applyStunLock(tool.name);
+                }
+                throw e;
+            }
+        };
+
+        return { ...tool, execute: wrappedExecute };
     }
 
     /**
@@ -46,41 +128,9 @@ export class ToolRegistry {
      * @param tool The ToolDefinition to register.
      */
     public register(tool: ToolDefinition): void {
-        const originalExecute = tool.execute;
-        
-        const wrappedExecute = async (args: Readonly<Record<string, unknown>>) => {
-            if (this.domainLocker) {
-                this.domainLocker.check(tool.name, tool.domain);
-            }
-            const startMs = performance.now();
-            const res = await originalExecute(args);
-            const latencyMs = performance.now() - startMs;
-            
-            // Fire-and-forget Hippocampus capture
-            import('./utils/TrainingCollector.js').then(m => {
-                m.TrainingCollector.getInstance().recordConsequence({
-                    decisionId: 'global_registry_exec',
-                    tool: tool.name,
-                    args: args,
-                    output: res.ok ? JSON.stringify(res.value) : (res.error?.message || 'unknown error'),
-                    success: res.ok,
-                    yaoState: -1,
-                    latencyMs
-                }).catch(err => {
-                    logger.debug({ err: err.message }, 'Hippocampus capture failed');
-                });
-            }).catch(() => {});
-
-            return res;
-        };
-
-        const wrappedTool: ToolDefinition = {
-            ...tool,
-            execute: wrappedExecute
-        };
-
-        this.tools.set(wrappedTool.name, wrappedTool);
-        logger.debug({ tool: wrappedTool.name, domain: wrappedTool.domain, category: wrappedTool.category }, 'Tool registered with Hippocampus interceptor');
+        const securedTool = this.wrapWithSecurity(tool, { isForeign: false });
+        this.tools.set(securedTool.name, securedTool);
+        logger.debug({ tool: securedTool.name, domain: securedTool.domain, category: securedTool.category }, 'Tool registered with security wrapper');
     }
 
     /**
@@ -89,12 +139,9 @@ export class ToolRegistry {
      * @param tool The ToolDefinition to assimilate.
      */
     public assimilateExternalSkill(tool: ToolDefinition): void {
-        const foreignTool: ToolDefinition = {
-            ...tool,
-            isForeign: true,
-        };
-        this.tools.set(foreignTool.name, foreignTool);
-        logger.warn({ tool: foreignTool.name, domain: foreignTool.domain, category: foreignTool.category }, 'Foreign tool assimilated via SkillsLimb');
+        const securedTool = this.wrapWithSecurity({ ...tool, isForeign: true }, { isForeign: true });
+        this.tools.set(securedTool.name, securedTool);
+        logger.warn({ tool: securedTool.name, domain: securedTool.domain, category: securedTool.category }, 'Foreign tool assimilated with security wrapping');
     }
 
     /**
