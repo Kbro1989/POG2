@@ -618,7 +618,7 @@ Output JSON ONLY:
             // Temporary instantiate to get the catalog (in full architecture, this is passed via OrchestrateEngine)
             const registry = new ToolRegistry();
             const skillsLimb = new SkillsLimb(registry);
-            skillsLimb.bootstrapLocalSkills();
+            await skillsLimb.bootstrapLocalSkills();
             
             const catalog = skillsLimb.getCatalog();
             let metabolicHits = 0;

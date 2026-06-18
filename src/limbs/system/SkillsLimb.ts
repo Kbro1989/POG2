@@ -2,12 +2,20 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
+import { createHash } from 'crypto';
 import type { Intent, Result, Execution, TernaryDecision, EngineOutput } from '../../core/models.js';
 import { ok, err } from '../../core/models.js';
 import type { NeuralLimb } from '../core/NeuralLimb.js';
 import type { ToolRegistry, ToolDefinition } from '../../ToolRegistry.js';
 import { SovereignDomain } from '../../types/SovereignDomain.js';
 import { createLogger } from '../../utils/logger.js';
+
+// Immune System
+import { GhostLimb } from '../metaphysical/GhostLimb.js';
+import { ClinicalAuditTool } from '../../utils/ClinicalAuditTool.js';
+import { OmegaLimb } from '../metaphysical/OmegaLimb.js';
+import { InvariantCompiler } from '../../engines/core/InvariantCompiler.js';
+import { CNSCausalityLedger } from '../../engines/core/CNSCausalityLedger.js';
 
 const execAsync = promisify(exec);
 const logger = createLogger('SkillsLimb');
@@ -53,7 +61,7 @@ export class SkillsLimb implements NeuralLimb {
     public id = 'SkillsLimb';
     public type = 'system' as const;
     public capabilities = ['ingest_external_skill', 'assimilate_tool', 'protocol_boundary', 'skill_query'];
-    
+
     public preferredHexagrams = ['21', '22', '23']; // Biting Through, Grace, Splitting Apart
 
     private registry: ToolRegistry;
@@ -86,7 +94,7 @@ export class SkillsLimb implements NeuralLimb {
 
         try {
             logger.info({ repoUrl }, 'SkillsLimb: Commencing ingestion of external skill.');
-            
+
             const cliPath = path.resolve(process.cwd(), 'skills/src/cli.ts');
             if (!fs.existsSync(cliPath)) {
                 return err(new Error('Sovereign skills CLI not found at expected path.'));
@@ -161,7 +169,7 @@ export class SkillsLimb implements NeuralLimb {
      * Bootstraps ALL local skills directories into the ToolRegistry.
      * This is the real ingestion — reads full content, catalogs everything.
      */
-    public bootstrapLocalSkills(): void {
+    public async bootstrapLocalSkills(): Promise<void> {
         const pathsToScan = [
             path.resolve(process.cwd(), '.agents/skills'),
             path.resolve(process.cwd(), '.claude/user_profile/plugins/marketplaces/claude-plugins-official/plugins'),
@@ -173,7 +181,7 @@ export class SkillsLimb implements NeuralLimb {
 
         for (const scanPath of pathsToScan) {
             if (!fs.existsSync(scanPath)) continue;
-            const assimilated = this.scanAndAssimilateDirectory(scanPath);
+            const assimilated = await this.scanAndAssimilateDirectory(scanPath);
             totalAssimilated += assimilated.length;
         }
 
@@ -191,24 +199,34 @@ export class SkillsLimb implements NeuralLimb {
     /**
      * Scans a directory for skill folders and assimilates each one fully.
      */
-    private scanAndAssimilateDirectory(dirPath: string): AssimilatedSkill[] {
+    private async scanAndAssimilateDirectory(dirPath: string): Promise<AssimilatedSkill[]> {
         const assimilated: AssimilatedSkill[] = [];
-        if (!fs.existsSync(dirPath)) return assimilated;
+        if (!fs.existsSync(dirPath)) {
+            logger.warn({ dirPath }, 'Directory does not exist');
+            return assimilated;
+        }
 
         const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+        logger.debug({ dirPath, entryCount: entries.length }, 'Scanning directory');
+
         for (const entry of entries) {
             if (!entry.isDirectory()) continue;
+            logger.debug({ folder: entry.name }, 'Found directory entry');
             const folderPath = path.join(dirPath, entry.name);
 
             // Find SKILL.md — check multiple possible locations
             const skillMdPath = this.findSkillMd(folderPath);
-            if (!skillMdPath) continue;
+            if (!skillMdPath) {
+                logger.debug({ folder: entry.name }, 'No SKILL.md found');
+                continue;
+            }
 
             const skill = this.ingestSkillFully(skillMdPath, folderPath);
+
             if (skill) {
                 // Avoid duplicates — later scan paths override earlier ones
                 this.skillCatalog.set(skill.name, skill);
-                this.registerSkillAsTool(skill);
+                await this.registerSkillAsTool(skill);
                 assimilated.push(skill);
             }
         }
@@ -223,6 +241,8 @@ export class SkillsLimb implements NeuralLimb {
             path.join(folderPath, 'SKILL.md'),
             path.join(folderPath, 'skills', 'SKILL.md'),
         ];
+
+        logger.debug({ folderPath, candidates }, 'Searching for SKILL.md');
 
         // Also check for nested skill folders (e.g. plugin/skills/skill-name/SKILL.md)
         const skillsSubdir = path.join(folderPath, 'skills');
@@ -302,10 +322,29 @@ export class SkillsLimb implements NeuralLimb {
      * Register a fully-ingested skill as a ToolDefinition in the ToolRegistry.
      * The execute function serves the real instruction body + file manifest.
      */
-    private registerSkillAsTool(skill: AssimilatedSkill): void {
+    private async registerSkillAsTool(skill: AssimilatedSkill): Promise<void> {
+        // --- PRE-REGISTRATION IMMUNE AUDIT ---
+        try {
+            await Promise.all([
+                new GhostLimb(null as any).adversarialAudit(skill.instructions),
+                new ClinicalAuditTool().schemaScan([
+                    ...skill.scripts,
+                    ...skill.referenceDocs,
+                    ...skill.auxiliaryFiles
+                ]),
+                new OmegaLimb().verifyAlignment(skill.metadata.objective || 'General'),
+                InvariantCompiler.getInstance().structuralProof(skill as any)
+            ]);
+            logger.info({ skill: skill.name }, 'SkillsLimb: Skill passed immune audit.');
+        } catch (e: any) {
+            logger.error({ skill: skill.name, error: e.message }, 'SkillsLimb: Skill failed immune audit. Ingestion blocked.');
+            return;
+        }
+
         const toolDef: ToolDefinition = {
             name: skill.name,
             description: skill.description || `Assimilated skill: ${skill.name}`,
+            proof: this.computeSkillProof(skill),
             domain: SovereignDomain.SYSTEM,
             category: 'core',
             parameters: {
@@ -410,6 +449,27 @@ export class SkillsLimb implements NeuralLimb {
         };
 
         this.registry.assimilateExternalSkill(toolDef);
+    }
+
+    private computeSkillProof(skill: AssimilatedSkill): string {
+        const sortStrings = (items: string[]): string[] => [...items].sort();
+        const sortedMetadata: Record<string, string> = {};
+        for (const key of Object.keys(skill.metadata).sort()) {
+            sortedMetadata[key] = skill.metadata[key];
+        }
+
+        const canonical = {
+            name: skill.name,
+            description: skill.description,
+            instructions: skill.instructions,
+            referenceDocs: sortStrings(skill.referenceDocs),
+            scripts: sortStrings(skill.scripts),
+            examples: sortStrings(skill.examples),
+            auxiliaryFiles: sortStrings(skill.auxiliaryFiles),
+            metadata: sortedMetadata
+        };
+
+        return `sha256:${createHash('sha256').update(JSON.stringify(canonical)).digest('hex')}`;
     }
 
     /**
