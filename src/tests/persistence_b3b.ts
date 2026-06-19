@@ -10,21 +10,21 @@ import * as fs from 'fs';
 async function testPersistenceB3b() {
     console.log('ðŸ§ª PHASE B3b TEST: Persistence to vibe-learning.db\n');
 
-    const DB_PATH = 'D:\\sovereign\\vibe-learning-test.db';
+    const DB_PATH = getVectorDbPath();
     if (fs.existsSync(DB_PATH)) fs.unlinkSync(DB_PATH);
 
     // 1. Initialize limbs
     const spatial = SpatialSovereigntyLimb.getInstance();
     await spatial.initialize();
     await spatial.loadLogic('barrows');
-    
+
     const worldForensics = WorldForensicsLimb.getInstance();
     await worldForensics.initialize();
-    
+
     const lessonLearner = new LessonLearner(worldForensics, DB_PATH);
     const discovery = new DiscoveryLimb();
     const pathfinder = new DirectionalPathfinder(spatial);
-    
+
     const avatar: Coord = { x: 3564, y: 3288, plane: 0 };
     const engine = new ExplorationEngine(avatar, discovery, pathfinder, spatial, lessonLearner);
 
@@ -67,7 +67,7 @@ async function testPersistenceB3b() {
 
     console.log(`\nðŸ“š QUERIED TILES FROM DB:`);
     learned.forEach((tile, i) => {
-        console.log(`  Tile ${i+1}: (${tile.x}, ${tile.y}) -> ${tile.objects.length} objects`);
+        console.log(`  Tile ${i + 1}: (${tile.x}, ${tile.y}) -> ${tile.objects.length} objects`);
     });
 
     const SUCCESS_CRITERIA = {

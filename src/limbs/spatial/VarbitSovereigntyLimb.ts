@@ -7,7 +7,6 @@ import { SpatialSovereigntyLimb } from './SpatialSovereigntyLimb.js';
 import { GameplaySovereigntyLimb } from './GameplaySovereigntyLimb.js';
 import { EpistemicTransitionKernel } from '../../engines/core/EpistemicTransitionKernel.js';
 import { HexagramManager } from '../../routing/HexagramManager.js';
-import { rsmvBridge } from '../../utils/RSMVBridge.js';
 
 const logger = createLogger('VarbitSovereigntyLimb');
 
@@ -42,7 +41,7 @@ export class VarbitSovereigntyLimb {
      * loadRegistry - Ingests the authoritative varbit-to-varp mappings from the Pedagogy KB.
      */
     private loadRegistry(): void {
-        const registryPath = 'D:\\sovereign\\memory\\pedagogy\\varbits_registry.json';
+        const registryPath = resolveSovereignPath('memory/pedagogy/varbits_registry.json');
         if (!fs.existsSync(registryPath)) {
             logger.warn('Varbit Registry missing. Morphism resolution will use fallbacks.');
             return;
@@ -94,8 +93,8 @@ export class VarbitSovereigntyLimb {
             }
         }
 
-        return def.defaultTransformId !== undefined && def.defaultTransformId !== -1 
-            ? def.defaultTransformId 
+        return def.defaultTransformId !== undefined && def.defaultTransformId !== -1
+            ? def.defaultTransformId
             : def.id;
     }
 
@@ -111,7 +110,7 @@ export class VarbitSovereigntyLimb {
         const parentValue = gameState.varps.get(def.parentVarpId) || 0;
         const mask = ((1 << (def.msb - def.lsb + 1)) - 1);
         const resolved = (parentValue >> def.lsb) & mask;
-        
+
         // Cache the resolved value for quick lookups
         gameState.varbits.set(varbitId, resolved);
         return resolved;
@@ -130,7 +129,7 @@ export class VarbitSovereigntyLimb {
 
         const parentValue = gameState.varps.get(def.parentVarpId) || 0;
         const mask = ((1 << (def.msb - def.lsb + 1)) - 1);
-        
+
         // Clear the old bit-window
         let newVarpValue = parentValue & ~(mask << def.lsb);
         // Insert the new value
@@ -172,7 +171,7 @@ export class VarbitSovereigntyLimb {
 
         // Phase 13: World Manifestation Trigger
         const affectedVarbits = this.varpToVarbits.get(id) || [];
-        
+
         // Phase-aware gating: skip heavy remanifest during DEGRADING
         try {
             const kernel = EpistemicTransitionKernel.getInstance();
@@ -198,36 +197,36 @@ export class VarbitSovereigntyLimb {
         logger.info({ varpId, objectMapSize: gameState.objectMap.size }, 'Entering remanifestAffectedObjects');
         const spatial = SpatialSovereigntyLimb.getInstance();
         logger.info('Spatial limb accessed.');
-        
+
         // Scan the active world state for morphing objects
         for (const [id, obj] of gameState.objectMap.entries()) {
             try {
                 const numericId = Number(id);
                 const def = await this.forensics.getObjectDefinition(numericId);
-                
+
                 // Authoritative Logic Check
-                const isAffected = (def.varpId === varpId) || 
-                                   (def.varbitId !== undefined && affectedVarbits.includes(def.varbitId));
-                
-                logger.info({ 
-                    id: numericId, 
-                    isAffected, 
-                    defVarp: def.varpId, 
+                const isAffected = (def.varpId === varpId) ||
+                    (def.varbitId !== undefined && affectedVarbits.includes(def.varbitId));
+
+                logger.info({
+                    id: numericId,
+                    isAffected,
+                    defVarp: def.varpId,
                     targetVarp: varpId,
-                    hasTransforms: !!def.transforms 
+                    hasTransforms: !!def.transforms
                 }, 'Morphism Potential Checked');
 
                 if (isAffected && def.transforms) {
                     const oldManifestedId = obj.id || obj.id;
                     const newManifestedId = this.resolveCurrentObjectIdFromDef(def, gameState);
-                    
+
                     if (oldManifestedId !== newManifestedId) {
-                        logger.info({ 
-                            id: numericId, 
-                            from: oldManifestedId, 
-                            to: newManifestedId 
+                        logger.info({
+                            id: numericId,
+                            from: oldManifestedId,
+                            to: newManifestedId
                         }, '⚠️ MORPHISM TRIGGERED');
-                        
+
                         obj.id = newManifestedId;
                         await spatial.swapObjectManifestation(obj.x, obj.y, obj.plane, oldManifestedId, newManifestedId);
 
@@ -247,8 +246,8 @@ export class VarbitSovereigntyLimb {
         this.definitions.set(id, def);
     }
 
-    private getVarbitDefinition(varbitId: number): { parentVarpId: number, lsb: number, msb: number } | null {
-        return this.definitions.get(varbitId) || null; 
+    public getVarbitDefinition(varbitId: number): { parentVarpId: number, lsb: number, msb: number } | null {
+        return this.definitions.get(varbitId) || null;
     }
 
     public getForensics(): WorldForensicsLimb {
@@ -264,59 +263,18 @@ export class VarbitSovereigntyLimb {
     }
 
     /**
-     * resolveVarbitDefinitionFromCache — Async fallback that loads a single varbit
-     * definition from the live NXT JCACHE via the rsmv bridge subprocess.
-     *
-     * If the bridge returns valid data, the definition is permanently injected
-     * into the in-memory L1 registry and the varpToVarbits inverse index.
+     * resolveVarbitDefinitionFromCache — Uses only the in-memory L1 registry.
+     * No longer attempts to fetch from the live cache via bridge.
+     * Returns null if not found in static definitions.
      */
     public async resolveVarbitDefinitionFromCache(varbitId: number): Promise<{ parentVarpId: number, lsb: number, msb: number } | null> {
-        // Already loaded?
+        // Already loaded in L1?
         if (this.definitions.has(varbitId)) {
             return this.definitions.get(varbitId)!;
         }
 
-        const result = await rsmvBridge.getVarbit(varbitId);
-        if (!result.ok) {
-            logger.warn({ varbitId, error: result.error?.message }, 'Failed to resolve varbit definition from live cache.');
-            return null;
-        }
-
-        const raw = result.value;
-        const parentVarpId = raw.varid;
-        if (parentVarpId === undefined || parentVarpId === null) {
-            logger.warn({ varbitId, raw }, 'Bridge returned varbit without varid.');
-            return null;
-        }
-
-        let lsb: number;
-        let msb: number;
-
-        if (raw.bits && Array.isArray(raw.bits) && raw.bits.length === 2) {
-            lsb = raw.bits[0];
-            msb = raw.bits[1];
-        } else if (raw.lsb !== undefined && raw.msb !== undefined) {
-            lsb = raw.lsb;
-            msb = raw.msb;
-        } else if (raw.bitcount !== undefined && raw.bitcount > 0) {
-            lsb = 0;
-            msb = raw.bitcount - 1;
-        } else {
-            logger.warn({ varbitId, raw }, 'Bridge returned varbit without bit-window data.');
-            return null;
-        }
-
-        const def = { parentVarpId, lsb, msb };
-        this.injectVarbitDefinition(varbitId, def);
-
-        // Update inverse index
-        if (!this.varpToVarbits.has(parentVarpId)) {
-            this.varpToVarbits.set(parentVarpId, []);
-        }
-        this.varpToVarbits.get(parentVarpId)!.push(varbitId);
-
-        logger.info({ varbitId, parentVarpId, lsb, msb }, 'Varbit definition resolved from live cache and injected.');
-        return def;
+        logger.warn({ varbitId }, '[VarbitSovereigntyLimb] Varbit definition not found in static registry.');
+        return null;
     }
 
     /**

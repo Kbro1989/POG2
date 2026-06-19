@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const CACHE_DB = "C:\\\\ProgramData\\\\Jagex\\\\RuneScape";
-const MEMORY_DIR = "D:\\sovereign\\memory\\pedagogy";
+const MEMORY_DIR = resolveSovereignPath("memory/pedagogy");
 
 const targetScripts = {
     mouse: [3009, 3495, 5067, 11839],
@@ -67,7 +67,7 @@ async function main() {
                     });
                 }
             }
-        } catch (e) {}
+        } catch (e) { }
         objCount++;
     }
 
@@ -76,7 +76,7 @@ async function main() {
     const npcIndex = await cache.getCacheIndex(cacheMajors.npcs);
     let npcCount = 0;
     const seekingTerms = ['toy mouse', 'platypus', 'playtpus'];
-    
+
     for (const entry of npcIndex) {
         if (!entry) continue;
         try {
@@ -95,15 +95,15 @@ async function main() {
                         id: id,
                         name: def.name,
                         options: def.options,
-                        walkSpeed: def.walkSpeed, 
-                        walkRange: def.walkBoundary || def.walkRange, 
+                        walkSpeed: def.walkSpeed,
+                        walkRange: def.walkBoundary || def.walkRange,
                         models: def.models,
                         params: paramsObj,
                         CS2_Link: 'Inferred via Global Opcode Hook'
                     });
                 }
             }
-        } catch (e) {}
+        } catch (e) { }
         npcCount++;
         if (npcCount % 5000 === 0) console.log(`Processed ${npcCount} NPCs...`);
     }

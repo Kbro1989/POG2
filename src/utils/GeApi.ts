@@ -19,7 +19,8 @@ const logger = createLogger('GeApi');
 // ═══════════════════════════════════════════════════════
 
 const WG_BASE = 'https://api.weirdgloop.org/exchange/history/rs';
-const JAGEX_PROXY_BASE = 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/ge';
+const JAGEX_PROXY_BASE = process.env.POG2_GLOBE_API_GE ||
+    (process.env.POG2_GLOBE_ENDPOINT ? process.env.POG2_GLOBE_ENDPOINT.replace(/\/parties\/.*/, '/api/ge') : 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/ge');
 const USER_AGENT = 'POG2-Sovereign/1.0 (GE Intelligence Engine; RS3 price enrichment; admin@pog2.internal; +https://github.com/Kbro1989/POG2)';
 
 export interface GePrice {

@@ -64,9 +64,9 @@ export interface SynthesisFile {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const PEDAGOGY_ROOT = 'D:\\sovereign\\memory\\pedagogy';
-const ATLAS_ROOT = 'D:\\sovereign\\atlas\\spatial\\world_extract';
-const UNIFIED_ROOT = 'D:\\sovereign\\atlas\\spatial\\unified_extract';
+const PEDAGOGY_ROOT = resolveSovereignPath('memory/pedagogy');
+const ATLAS_ROOT = resolveSovereignPath('atlas/spatial/world_extract');
+const UNIFIED_ROOT = resolveSovereignPath('atlas/spatial/unified_extract');
 const CHUNK_SIZE = 104; // RS mapsquare is 64 tiles; group chunks are 104x104
 
 // ── SovereignGroundingStream ──────────────────────────────────────────────────
@@ -119,7 +119,7 @@ export class SovereignGroundingStream {
       this.mapsquareFiles = atlasFiles
         .filter(f => f.startsWith('ms_') && f.endsWith('.json'))
         .map(f => path.join(ATLAS_ROOT, f));
-      
+
       for (const f of this.mapsquareFiles) {
         const parts = path.basename(f, '.json').split('_'); // ["ms", "8", "25"]
         if (parts.length === 3) {
@@ -161,9 +161,9 @@ export class SovereignGroundingStream {
       const synthesis = this.loadSynthesis(filePath);
       const allEntities = [
         ...(synthesis.entities ?? []),
-        ...(synthesis.npcs     ?? []),
-        ...(synthesis.objects  ?? []),
-        ...(synthesis.locs     ?? []),
+        ...(synthesis.npcs ?? []),
+        ...(synthesis.objects ?? []),
+        ...(synthesis.locs ?? []),
       ];
 
       // Godhead Varbit Extraction: Infiltrate Logic
@@ -244,15 +244,15 @@ export class SovereignGroundingStream {
 
     // Handle virtual cache-backed files
     if (filePath.startsWith('cache_ms_')) {
-        const parts = filePath.split('_'); // ["cache", "ms", "8", "25"]
-        const mx = parseInt(parts[2]);
-        const mz = parseInt(parts[3]);
-        return this.materializeFromCache(mx, mz);
+      const parts = filePath.split('_'); // ["cache", "ms", "8", "25"]
+      const mx = parseInt(parts[2]);
+      const mz = parseInt(parts[3]);
+      return this.materializeFromCache(mx, mz);
     }
 
     try {
       const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      
+
       // Normalize Atlas ms_*.json format (uses 'objects' primarily) to SynthesisFile format
       let normalized: SynthesisFile = {};
       if (path.basename(filePath).startsWith('ms_')) {
@@ -277,52 +277,52 @@ export class SovereignGroundingStream {
   }
 
   private materializeFromCache(mx: number, mz: number): SynthesisFile {
-      const virtualKey = `cache_ms_${mx}_${mz}`;
-      
-      // Ensure we only brute-force the local SQLITE substrate, not the LIVE server.
-      // And check the extraction lock.
-      if (!this.cacheSubstrate || !(this.cacheSubstrate instanceof GameCacheLoader) || this.pendingMaterializations.has(virtualKey)) {
-          return this.synthesisIndex.get(virtualKey) || {};
-      }
-      
-      const archId = (mx << 8) | mz;
-      const normalized: SynthesisFile = {
-          name: `Cache Brute Force ${mx}_${mz}`,
-          objects: []
-      };
+    const virtualKey = `cache_ms_${mx}_${mz}`;
 
-      this.pendingMaterializations.add(virtualKey);
-      
-      console.log(`[SovereignGroundingStream] Brute-forcing MapSquare [${mx}, ${mz}] from Jagex Cache...`);
-      
-      this.cacheSubstrate.getIndexEntryById(cacheMajors.mapsquares, archId)
+    // Ensure we only brute-force the local SQLITE substrate, not the LIVE server.
+    // And check the extraction lock.
+    if (!this.cacheSubstrate || !(this.cacheSubstrate instanceof GameCacheLoader) || this.pendingMaterializations.has(virtualKey)) {
+      return this.synthesisIndex.get(virtualKey) || {};
+    }
+
+    const archId = (mx << 8) | mz;
+    const normalized: SynthesisFile = {
+      name: `Cache Brute Force ${mx}_${mz}`,
+      objects: []
+    };
+
+    this.pendingMaterializations.add(virtualKey);
+
+    console.log(`[SovereignGroundingStream] Brute-forcing MapSquare [${mx}, ${mz}] from Jagex Cache...`);
+
+    this.cacheSubstrate.getIndexEntryById(cacheMajors.mapsquares, archId)
       .then(async (archInfo) => {
-          if (!archInfo) {
-               this.synthesisIndex.set(virtualKey, { name: "Void", objects: [] });
-               return;
-          }
-          const arch = await this.cacheSubstrate!.getFileArchive(archInfo);
-          const locsFile = arch.find(f => f.fileid === cacheMapFiles.locations);
-          if (locsFile) {
-              const locs = parse.mapsquareLocations.read(locsFile.buffer, this.cacheSubstrate!);
-              normalized.objects = locs.locations.map((loc: any) => ({
-                  ...loc,
-                  id: loc.id,
-                  type: 'object',
-                  x: (mx * 64) + (loc.uses?.[0]?.x ?? 0),
-                  z: (mz * 64) + (loc.uses?.[0]?.y ?? 0)
-              }));
-              this.synthesisIndex.set(virtualKey, normalized);
-              console.log(`[SovereignGroundingStream] Materialized ${normalized.objects.length} objects from Cache.`);
-          }
+        if (!archInfo) {
+          this.synthesisIndex.set(virtualKey, { name: "Void", objects: [] });
+          return;
+        }
+        const arch = await this.cacheSubstrate!.getFileArchive(archInfo);
+        const locsFile = arch.find(f => f.fileid === cacheMapFiles.locations);
+        if (locsFile) {
+          const locs = parse.mapsquareLocations.read(locsFile.buffer, this.cacheSubstrate!);
+          normalized.objects = locs.locations.map((loc: any) => ({
+            ...loc,
+            id: loc.id,
+            type: 'object',
+            x: (mx * 64) + (loc.uses?.[0]?.x ?? 0),
+            z: (mz * 64) + (loc.uses?.[0]?.y ?? 0)
+          }));
+          this.synthesisIndex.set(virtualKey, normalized);
+          console.log(`[SovereignGroundingStream] Materialized ${normalized.objects.length} objects from Cache.`);
+        }
       })
       .catch(err => console.error(`[BruteForce] Extraction failed for [${mx}, ${mz}]:`, err))
       .finally(() => {
-          // Keep it in pending for a few seconds to let the scene settle
-          setTimeout(() => this.pendingMaterializations.delete(virtualKey), 5000);
+        // Keep it in pending for a few seconds to let the scene settle
+        setTimeout(() => this.pendingMaterializations.delete(virtualKey), 5000);
       });
 
-      return normalized;
+    return normalized;
   }
 
   private deriveBounds(entities: SynthesisEntity[], plane: number): ChunkBounds {
@@ -341,20 +341,20 @@ export class SovereignGroundingStream {
   }
 
   private async infiltrateLogic(entities: SynthesisEntity[]) {
-      const { SovereignVarbitBridge } = await import('../logic/SovereignVarbitBridge');
-      const bridge = SovereignVarbitBridge.getInstance();
-      
-      const varbitIds = new Set<number>();
-      entities.forEach(e => {
-          if (e.thickModelData?.varbitId) varbitIds.add(e.thickModelData.varbitId);
-          if (e.thickModelData?.configId) varbitIds.add(e.thickModelData.configId);
-          // Standard RS property mapping
-          if ((e as any).varbitId) varbitIds.add((e as any).varbitId);
-      });
+    const { SovereignVarbitBridge } = await import('../logic/SovereignVarbitBridge');
+    const bridge = SovereignVarbitBridge.getInstance();
 
-      if (varbitIds.size > 0) {
-          console.log(`[SovereignGroundingStream] Infiltrating ${varbitIds.size} Varbit Logics from Godhead...`);
-          await bridge.batchExtract(Array.from(varbitIds));
-      }
+    const varbitIds = new Set<number>();
+    entities.forEach(e => {
+      if (e.thickModelData?.varbitId) varbitIds.add(e.thickModelData.varbitId);
+      if (e.thickModelData?.configId) varbitIds.add(e.thickModelData.configId);
+      // Standard RS property mapping
+      if ((e as any).varbitId) varbitIds.add((e as any).varbitId);
+    });
+
+    if (varbitIds.size > 0) {
+      console.log(`[SovereignGroundingStream] Infiltrating ${varbitIds.size} Varbit Logics from Godhead...`);
+      await bridge.batchExtract(Array.from(varbitIds));
+    }
   }
 }

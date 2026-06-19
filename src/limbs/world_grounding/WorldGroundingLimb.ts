@@ -24,11 +24,11 @@ export class WorldGroundingLimb implements GroundingHydrator {
     private manifest: GroundingManifest;
     private readonly manifestPath: string;
     private cacheMapping: Record<string, any[]> = {};
-    
+
     // Era Layering State
     private currentEra: '2004' | 'RS3' | 'POG2' = 'POG2';
     private eraBaseDir: string;
-    
+
     private lastSaveTime: number = Date.now();
     private readonly SAVE_INTERVAL = 300000; // 5 Minutes (RSC Style)
     private tickStaging: Map<string, any> = new Map();
@@ -49,13 +49,16 @@ export class WorldGroundingLimb implements GroundingHydrator {
         this.instance = undefined;
     }
 
-    protected constructor(substratePath: string = 'D:/sovereign') {
+    protected constructor(substratePath?: string) {
+        if (!substratePath) {
+            substratePath = getSovereignRoot();
+        }
         if (WorldGroundingLimb.instance) {
             throw new Error('Singleton violation: use WorldGroundingLimb.getInstance()');
         }
         this.eraBaseDir = join(substratePath, 'memory', 'pedagogy');
         this.manifestPath = join(this.eraBaseDir, 'grounding_manifest.json');
-        
+
         // Initial Grounding
         this.manifest = this.loadManifest();
         this.loadCacheMapping();
@@ -70,13 +73,13 @@ export class WorldGroundingLimb implements GroundingHydrator {
      */
     public async invokeEraVolley(era: '2004' | 'RS3' | 'POG2'): Promise<void> {
         logger.info({ from: this.currentEra, to: era }, 'âš¡ GROUNDING_VOLLEY: Re-orienting world substrate...');
-        
+
         this.currentEra = era;
-        
+
         // Dynamic Path Re-resolution
         // Era-specific nodes take precedence; fall back to root pedagogy if missing.
         const eraDir = era === 'POG2' ? this.eraBaseDir : join(this.eraBaseDir, 'eras', era.toLowerCase());
-        
+
         if (!fs.existsSync(eraDir) && era !== 'POG2') {
             fs.mkdirSync(eraDir, { recursive: true });
             logger.warn({ eraDir }, 'Era substrate missing - initialized empty layer.');
@@ -116,7 +119,7 @@ export class WorldGroundingLimb implements GroundingHydrator {
         try {
             const base = targetDir ?? this.eraBaseDir;
             const mappingPath = join(base, 'cache_logic_mapping.json');
-            
+
             // Fallback to absolute system mapping if era-specific mapping missing
             const systemRoot = getAtlasSystemPath();
             const fallbackPath = join(systemRoot, 'cache_logic_mapping.json');
@@ -136,7 +139,7 @@ export class WorldGroundingLimb implements GroundingHydrator {
         try {
             const base = targetDir ?? this.eraBaseDir;
             const eraManifestPath = join(base, 'grounding_manifest.json');
-            
+
             // Phase 116: Prioritize public/grounding_manifest.json for breakthrough tests
             const publicManifest = join(process.cwd(), 'public', 'grounding_manifest.json');
             const target = fs.existsSync(publicManifest) ? publicManifest : (fs.existsSync(eraManifestPath) ? eraManifestPath : this.manifestPath);
@@ -175,7 +178,7 @@ export class WorldGroundingLimb implements GroundingHydrator {
         if (!entry) {
             const [type, idStr] = entityId.split('_');
             const cacheResult = this.getAuthoritativeLogic(type, idStr);
-            
+
             if (cacheResult) {
                 return {
                     ...pedagogy,
@@ -285,10 +288,10 @@ export class WorldGroundingLimb implements GroundingHydrator {
 
     public async commitTick(tx: Map<string, any>): Promise<void> {
         if (tx.size === 0) return;
-        
+
         for (const [id, data] of tx) {
             const existing = this.manifest.entities[id];
-            
+
             // Elevate critical spatial/identity data for hot-path access
             const topId = data.id || existing?.id || id;
             const topCoord = data.coord || data.spatial || existing?.coord || null;
@@ -308,14 +311,14 @@ export class WorldGroundingLimb implements GroundingHydrator {
                 const [type, entId] = id.split('_');
                 const pedagogy = PedagogyForensicsLimb.getInstance();
                 const provenance = pedagogy.buildProvenance(
-                    id, 
+                    id,
                     ServerLogicRegistry.getCanonicalProvenance((type || 'OTHER').toUpperCase() as any, entId || '0')
                 );
 
                 this.manifest.entities[id] = {
                     id: topId,
                     coord: topCoord,
-                    pedigree: 'D:/sovereign/memory/pedagogy/generated_logic.json',
+                    pedigree: join(getPedagogyPath(), 'generated_logic.json'),
                     authorityLevel: 'ABSOLUTE',
                     provenance,
                     grounded: {
@@ -362,11 +365,11 @@ export class WorldGroundingLimb implements GroundingHydrator {
         try {
             // Phase 116: Check public/authentic_spawn_manifest.json for breakthrough tests
             const publicSpawns = join(process.cwd(), 'public', 'authentic_spawn_manifest.json');
-            
+
             const spatialRoot = getAtlasSpatialPath();
             const base = targetDir ?? join(spatialRoot, 'npc_extract');
             const spawnsPath = join(base, 'npc_spawns.json');
-            
+
             // Absolute fallback for global NPC truth
             const fallbackPath = join(spatialRoot, 'npc_extract', 'npc_spawns.json');
             const effectivePath = fs.existsSync(publicSpawns) ? publicSpawns : (fs.existsSync(spawnsPath) ? spawnsPath : fallbackPath);
@@ -405,27 +408,27 @@ export class WorldGroundingLimb implements GroundingHydrator {
             const x = spawn.worldX ?? spawn.coord?.x;
             const z = spawn.worldZ ?? spawn.coord?.z ?? spawn.coord?.y;
             const plane = spawn.plane ?? spawn.coord?.plane ?? 0;
-            
+
             // Determine type to prevent dumping Enums/Objects into NPC logic
             const isNpc = spawn.npcId !== undefined || (spawn.id && spawn.id.includes('npc'));
             const typePrefix = isNpc ? 'npc' : 'obj';
-            
+
             const coreId = spawn.npcId ?? spawn.entityId ?? spawn.objectId ?? spawn.id ?? 'unknown';
             const entityName = spawn.npcName ?? spawn.title ?? `${typePrefix.toUpperCase()} ${coreId}`;
 
             const entId = `${typePrefix}_${coreId}_${x}_${z}`;
             if (this.manifest.entities[entId]) continue;
-            
+
             const payload: any = {
                 id: entId,
                 name: entityName,
                 spatial: { x: x, y: z, z: spatial.getAltitude(plane, x, z), plane: plane },
                 behavior: 'STATIC_FORENSIC'
             };
-            
+
             if (isNpc) payload.npcId = coreId;
             else payload.objectId = coreId;
-            
+
             tx.set(entId, payload);
         }
         await this.commitTick(tx);

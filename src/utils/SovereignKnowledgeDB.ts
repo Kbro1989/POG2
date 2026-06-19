@@ -28,7 +28,10 @@ export class SovereignKnowledgeDB {
         insertMetabolism: Database.Statement;
     };
 
-    private constructor(dbPath: string = 'D:\\sovereign\\vibe-learning.db') {
+    private constructor(dbPath?: string) {
+        if (!dbPath) {
+            dbPath = join(getSovereignRoot(), 'learning', 'sovereign-learning.db');
+        }
         this.db = new Database(dbPath);
         this.db.pragma('journal_mode = WAL');
 

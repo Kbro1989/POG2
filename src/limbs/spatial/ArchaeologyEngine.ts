@@ -43,10 +43,10 @@ export class ArchaeologyEngine {
     private readonly outputDir: string;
 
     constructor() {
-        this.sovereignBase = 'D:/sovereign';
+        this.sovereignBase = getSovereignRoot();
         this.unifiedDir = resolve(this.sovereignBase, 'atlas/spatial/unified_extract');
         this.outputDir = resolve(this.sovereignBase, 'atlas/spatial/pathing_theory');
-        
+
         if (!existsSync(this.outputDir)) {
             mkdirSync(this.outputDir, { recursive: true });
         }
@@ -84,7 +84,7 @@ export class ArchaeologyEngine {
 
         const reportPath = resolve(this.outputDir, 'unified_audit_report.json');
         writeFileSync(reportPath, JSON.stringify(report, null, 2));
-        
+
         return report;
     }
 

@@ -11,8 +11,8 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve } from 'path';
 
-const SOVEREIGN_BASE = 'D:/sovereign';
-const OUTPUT_DIR = 'D:/sovereign/atlas/spatial/pathing_theory';
+const SOVEREIGN_BASE = getSovereignRoot();
+const OUTPUT_DIR = resolveSovereignPath('atlas/spatial/pathing_theory');
 const OBJECTS_PATH = resolve(SOVEREIGN_BASE, 'cache_pedagogy/json_dumps/objects.json');
 
 // Action words that indicate a transport trigger
@@ -56,7 +56,7 @@ async function main() {
         if (!obj) continue;
         const name = (obj.name || '').toLowerCase();
         const isCart = cartKeywords.some(kw => name.includes(kw));
-        
+
         // Check if this object has interactive options (op array)
         const ops: string[] = obj.op || [];
         const hasTransportAction = ops.some((action: string) => {
@@ -89,7 +89,7 @@ async function main() {
 
     // ─── PRINT ACTIONABLE CARTS ───
     console.log(`Found ${actionableCarts.length} ACTIONABLE mine carts (with Board/Ride/Travel/etc):\n`);
-    
+
     for (const cart of actionableCarts) {
         console.log(`  ═══ [${cart.id}] "${cart.name}" ═══`);
         console.log(`    Actions:  ${JSON.stringify(cart.op)}`);
@@ -121,7 +121,7 @@ async function main() {
         const name = (obj.name || '').toLowerCase();
         const rawStr = JSON.stringify(obj).toLowerCase();
         const isTunnelType = tunnelKeywords.some(kw => name.includes(kw));
-        
+
         // Only grab ones that mention keldagrim or dwarven in their full data
         if (isTunnelType && (rawStr.includes('keldagrim') || rawStr.includes('dwarven') || rawStr.includes('dwarf'))) {
             const ops: string[] = obj.op || [];
@@ -144,7 +144,7 @@ async function main() {
     console.log('\n━━━ Deep extraction: Known GE/Keldagrim mine cart IDs ━━━\n');
     // Key IDs from our Phase 1 scan that are likely the GE->Keldagrim route
     const targetIds = [2299, 5731, 14997, 22376, 22425, 22429, 24824, 29740, 37618, 72781, 72782, 102272, 102304, 102305, 102315];
-    
+
     for (const tid of targetIds) {
         const obj = allObjects.find((o: any) => o && (o.$fileid === tid || o.id === tid));
         if (obj) {

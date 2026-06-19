@@ -3,6 +3,8 @@
  * Aggregator and Domain-Specific Taxonomy.
  */
 
+export type ScriptState = "running" | "canceled" | "error" | "done";
+
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 import { join, basename } from 'path';
@@ -1604,6 +1606,18 @@ export interface TickEvent {
     readonly parentHash?: string;
     readonly signature?: string;      // Authoritative HMAC signature
     readonly substrateAnchor?: string; // RS3 Cache Version / Substrate Salt
+}
+
+export interface SkillTickEvent extends TickEvent {
+    readonly type: 'SKILL_INGESTION' | 'SKILL_EXECUTION' | 'SKILL_VIOLATION';
+    readonly payload: {
+        readonly skillName: string;
+        readonly instructionHash: string;
+        readonly scriptCount: number;
+        readonly domain: SovereignDomain;
+        readonly isForeign: boolean;
+        readonly auditResults?: any[];
+    };
 }
 
 export interface TileLock {

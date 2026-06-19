@@ -15,8 +15,8 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve } from 'path';
 
-const SOVEREIGN_BASE = 'D:/sovereign';
-const OUTPUT_DIR = 'D:/sovereign/atlas/spatial/pathing_theory';
+const SOVEREIGN_BASE = getSovereignRoot();
+const OUTPUT_DIR = resolveSovereignPath('atlas/spatial/pathing_theory');
 
 const OBJECTS_PATH = resolve(SOVEREIGN_BASE, 'cache_pedagogy/json_dumps/objects.json');
 const NPCS_PATH = resolve(SOVEREIGN_BASE, 'cache_pedagogy/json_dumps/npcs.json');

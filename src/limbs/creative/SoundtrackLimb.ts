@@ -84,7 +84,7 @@ export class SoundtrackLimb {
             writeFileSync(tempSource, metadata.rawBuffer);
 
             const params: SoundtrackParams = {
-                prompt: `Event: ${event.type}, ID: ${event.entityId}`,
+                prompt: `Cache sound event: ${event.type}${event.soundId != null ? `, soundId=${event.soundId}` : ''}`,
                 duration,
                 keyframes,
                 outputPath,
@@ -97,6 +97,40 @@ export class SoundtrackLimb {
                 // In a real app, we'd use a temp file library, but for now we just write to audit_output
             }
         }
+    }
+
+    public async generateFromCacheSound(
+        soundId: number,
+        duration: number,
+        outputPath?: string,
+        keyframes: AudioCue[] = [],
+        cacheMajor?: number,
+        isMusic?: boolean
+    ): Promise<Result<SoundtrackResult>> {
+        const resolution = await this.resolver.resolve({
+            type: 'CACHE_SOUND',
+            soundId,
+            cacheMajor,
+            isMusic
+        });
+
+        if (!resolution.ok || !resolution.value) {
+            return { ok: false, error: new Error(`Could not resolve cache sound ${soundId}`) };
+        }
+
+        const metadata = resolution.value;
+        const tempSource = join(process.cwd(), 'audit_output', `temp_cache_${Date.now()}.wav`);
+
+        writeFileSync(tempSource, metadata.rawBuffer);
+        const params: SoundtrackParams = {
+            prompt: `Cache sound ${soundId}`,
+            duration,
+            keyframes,
+            outputPath,
+            sourcePath: tempSource
+        };
+
+        return await this.generate(params);
     }
 
     /**

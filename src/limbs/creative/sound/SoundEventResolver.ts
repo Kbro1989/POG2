@@ -2,14 +2,17 @@
 import { CacheSoundSource } from './CacheSoundSource.js';
 import { SoundEffectDecoder } from './SoundEffectDecoder.js';
 import { SoundTriggerRegistry } from './SoundTriggerRegistry.js';
-import { Result, ok } from '../../core/models.js';
+import { Result, ok } from '../../../core/models.js';
 import { AudioMetadata } from './SoundEffectDecoder.js';
 
 export interface SoundEvent {
-    type: 'COMBAT' | 'SKILL' | 'OBJECT' | 'AMBIENT';
+    type: 'COMBAT' | 'SKILL' | 'OBJECT' | 'AMBIENT' | 'CACHE_SOUND';
     entityId?: number;
     trigger?: string;
-    context: any;
+    soundId?: number;
+    cacheMajor?: number;
+    isMusic?: boolean;
+    context?: any;
 }
 
 /**
@@ -29,6 +32,14 @@ export class SoundEventResolver {
      * resolve - Transforms a game event into a playable audio buffer.
      */
     public async resolve(event: SoundEvent): Promise<Result<AudioMetadata | null>> {
+        if (event.soundId != null) {
+            const buffer = await this.soundSource.getSoundBuffer(event.soundId, event.isMusic ?? false, event.cacheMajor);
+            if (!buffer) {
+                return { ok: false, error: new Error(`Sound ID ${event.soundId} not found in cache`) };
+            }
+            return ok(SoundEffectDecoder.decode(buffer));
+        }
+
         let soundId: number | null = null;
 
         switch (event.type) {
@@ -43,7 +54,7 @@ export class SoundEventResolver {
                 }
                 break;
             default:
-                // Ambient and Skill sounds would be mapped here
+                // Ambient and Skill sounds would be mapped here when needed.
                 break;
         }
 

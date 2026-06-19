@@ -17,7 +17,6 @@ import type {
 } from '../../core/models.js';
 import { createLogger } from '../../utils/logger.js';
 import { EpistemicValidator } from './EpistemicValidator.js';
-import { rsmvBridge } from '../../utils/RSMVBridge.js';
 import { PedagogyDistiller, type InstructionPair } from '../../limbs/pedagogy/PedagogyDistiller.js';
 import { createHash } from 'crypto';
 import { ClockAuthorityRegistry, ClockDomain } from '../../utils/ClockAuthorityRegistry.js';

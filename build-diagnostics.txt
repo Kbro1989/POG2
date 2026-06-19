@@ -1,0 +1,16 @@
+﻿
+> pog2-cli@1.1.0 build
+> tsc
+
+src/limbs/creative/sound/CacheSoundSource.ts(2,34): error TS2307: Cannot find module '../../utils/JagexCacheReader.js' or its corresponding type declarations.
+src/limbs/creative/sound/SoundEventResolver.ts(5,28): error TS2307: Cannot find module '../../core/models.js' or its corresponding type declarations.
+src/limbs/creative/sound/SoundTriggerRegistry.ts(2,34): error TS2307: Cannot find module '../../utils/JagexCacheReader.js' or its corresponding type declarations.
+src/limbs/creative/sound/SovereignOpcodeParser.ts(2,34): error TS2307: Cannot find module '../../utils/JagexCacheReader.js' or its corresponding type declarations.
+src/limbs/system/SkillsLimb.ts(329,44): error TS2339: Property 'adversarialAudit' does not exist on type 'GhostLimb'.
+src/limbs/system/SkillsLimb.ts(330,41): error TS2339: Property 'schemaScan' does not exist on type 'ClinicalAuditTool'.
+src/limbs/system/SkillsLimb.ts(331,33): error TS2339: Property 'verifyAlignment' does not exist on type 'OmegaLimb'.
+src/limbs/system/SkillsLimb.ts(332,17): error TS2673: Constructor of class 'InvariantCompiler' is private and only accessible within the class declaration.
+src/ToolRegistry.ts(53,34): error TS2339: Property 'allowed' does not exist on type 'boolean'.
+src/ToolRegistry.ts(54,28): error TS2304: Cannot find name 'err'.
+src/ToolRegistry.ts(54,100): error TS2339: Property 'reason' does not exist on type 'boolean'.
+src/ToolRegistry.ts(66,28): error TS2304: Cannot find name 'err'.

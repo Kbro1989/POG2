@@ -1,5 +1,5 @@
 
-import { JagexCacheReader } from '../../utils/JagexCacheReader.js';
+import { JagexCacheReader } from '../../../utils/JagexCacheReader.js';
 import { SovereignOpcodeParser } from './SovereignOpcodeParser.js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -68,9 +68,9 @@ export class SoundTriggerRegistry {
         const buffer = entry.decompressed;
         let offset = 0;
 
-        for (const [key, op] of Object.entries(this.objectOpcode)) {
+        for (const [key, op] of Object.entries(this.objectOpcode as any)) {
             const targetOffset = parseInt(key, 16);
-            if (op.name === 'soundEffect') {
+            if ((op as any).name === 'soundEffect') {
                 const res = SovereignOpcodeParser.readValue(buffer, offset + targetOffset, op);
                 return res.value;
             }

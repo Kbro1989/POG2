@@ -1,0 +1,513 @@
+﻿node_modules/@types/chokidar/index.d.ts(21,14): error TS2420: Class 'import("C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/@types/chokidar/index").FSWatcher' incorrectly implements interface 'import("fs").FSWatcher'.
+  Type 'FSWatcher' is missing the following properties from type 'FSWatcher': ref, unref
+node_modules/gaxios/build/cjs/src/gaxios.d.ts(16,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/google-auth-library/build/src/auth/awsclient.d.ts(83,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/google-auth-library/build/src/auth/baseexternalclient.d.ts(173,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/google-auth-library/build/src/auth/googleauth.d.ts(159,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/google-auth-library/build/src/auth/oauth2common.d.ts(50,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/google-auth-library/build/src/auth/stscredentials.d.ts(99,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/google-auth-library/build/src/util.d.ts(125,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/pino/pino.d.ts(20,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/thread-stream/index"' can only be default-imported using the 'esModuleInterop' flag
+src/api/ai/ModelRolodex.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/config/SovereignConfig.ts(210,43): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/constants/ModelRegistry.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/core/HexagramDefinitions.ts(373,31): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/core/HexagramDefinitions.ts(374,28): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/core/HexagramDefinitions.ts(375,26): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/core/HexagramDefinitions.ts(376,29): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/core/models.ts(9,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/durable-objects/POG2WorldDO.ts(193,26): error TS2802: Type 'Set<WebSocket>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/ArchitecturalValidator.ts(89,27): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/BlenderRenderer.ts(62,82): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/engines/ChromanumberEngine.ts(155,13): error TS2322: Type 'Result<PerceptionValidation>' is not assignable to type 'Result<PerceptionValidation & { readonly output: string; }>'.
+  Type '{ ok: true; value: PerceptionValidation; error?: never; }' is not assignable to type 'Result<PerceptionValidation & { readonly output: string; }>'.
+    Type '{ ok: true; value: PerceptionValidation; error?: never; }' is not assignable to type '{ ok: true; value: PerceptionValidation & { readonly output: string; }; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'PerceptionValidation' is not assignable to type 'PerceptionValidation & { readonly output: string; }'.
+          Property 'output' is missing in type 'PerceptionValidation' but required in type '{ readonly output: string; }'.
+src/engines/ChromanumberEngine.ts(195,13): error TS2322: Type 'Result<CaptureResult>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: CaptureResult; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: CaptureResult; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Property 'output' is missing in type 'CaptureResult' but required in type 'EngineOutput'.
+src/engines/core/CausalPatternExtractor.ts(135,20): error TS2802: Type 'MapIterator<CausalPattern>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/core/InvariantCompiler.ts(59,31): error TS2802: Type 'MapIterator<CausalPattern>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/EmbedEngine.ts(4,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/engines/gameplay/CNSGodheadPulseVolley.ts(31,8): error TS1192: Module '"crypto"' has no default export.
+src/engines/gameplay/CNSGodheadPulseVolley.ts(864,50): error TS2802: Type 'Map<number, NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/CombatRotationEngine.ts(421,41): error TS2802: Type 'Map<string, EntityGhost>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/LuckTierRegistry.ts(238,29): error TS2802: Type 'MapIterator<LuckBossEntry>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/LuckTierRegistry.ts(343,29): error TS2802: Type 'MapIterator<LuckBossEntry>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/LuckTierRegistry.ts(371,40): error TS2802: Type 'MapIterator<[string, EquipmentLuckQuery]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/PlayerAgent.ts(224,35): error TS2802: Type 'Map<number, NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/PlayerAgent.ts(248,35): error TS2802: Type 'Map<number, NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/SimulationHarness.ts(327,41): error TS2802: Type 'MapIterator<[string, GroundItem[]]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/SimulationHarness.ts(425,36): error TS2802: Type 'Map<number, NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/SimulationHarness.ts(434,40): error TS2802: Type 'Map<number, NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/SimulationHarness.ts(468,36): error TS2802: Type 'Map<number, NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/SimulationHarness.ts(490,33): error TS2802: Type 'Map<number, NpcAgent>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/SimulationHarness.ts(541,34): error TS2802: Type 'MapIterator<[number, NPC]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/SimulationHarness.ts(553,45): error TS2802: Type 'MapIterator<[string, GroundItem[]]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/SimulationHarness.ts(583,31): error TS2802: Type 'Map<number, NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/SimulationHarness.ts(613,31): error TS2802: Type 'Map<number, GameObject>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/SimulationHarness.ts(658,32): error TS2802: Type 'Map<number, NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/SimulationHarness.ts(838,54): error TS2802: Type 'MapIterator<NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/SimulationHarness.ts(854,54): error TS2802: Type 'MapIterator<NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/gameplay/SimulationHarness.ts(873,54): error TS2802: Type 'MapIterator<NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/MCPEngine.ts(127,38): error TS2802: Type 'MapIterator<[string, Client<{ method: string; params?: { [x: string]: unknown; _meta?: { [x: string]: unknown; progressToken?: string | number; "io.modelcontextprotocol/related-task"?: { taskId: string; }; }; }; }, { method: string; params?: { ...; }; }, { ...; }>]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/MemeticEngine.ts(1,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/engines/OrchestrateEngine.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/engines/OrchestrateEngine.ts(5,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/engines/OrchestrateEngine.ts(1375,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: Error; value?: never; } | { ok: true; value: number; error?: never; } | { ok: true; value: { output: string; data: Result<...>; }; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: Error; value?: never; } | { ok: true; value: number; error?: never; } | { ok: true; value: { output: string; data: Result<any>; }; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: Error; value?: never; } | { ok: true; value: number; error?: never; } | { ok: true; value: { output: string; data: Result<any>; }; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: number; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: number; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'number' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(1397,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: Error; value?: never; } | { ok: true; value: { action: string; yao: YaoState; reasoning: string; }; error?: never; } | { ...; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: Error; value?: never; } | { ok: true; value: { action: string; yao: YaoState; reasoning: string; }; error?: never; } | { ok: true; value: { output: string; data: { action: string; yao: YaoState; reasoning: string; }; }; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: Error; value?: never; } | { ok: true; value: { action: string; yao: YaoState; reasoning: string; }; error?: never; } | { ok: true; value: { output: string; data: { action: string; yao: YaoState; reasoning: string; }; }; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: { action: string; yao: YaoState; reasoning: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: { action: string; yao: YaoState; reasoning: string; }; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type '{ action: string; yao: YaoState; reasoning: string; }' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(1495,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: ShadowInsight; error?: never; } | { ok: true; value: ShadowInsight[]; error?: never; } | { ...; } | { ...; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: ShadowInsight; error?: never; } | { ok: true; value: ShadowInsight[]; error?: never; } | { ok: true; value: { ...; }; error?: never; } | { ...; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: ShadowInsight; error?: never; } | { ok: true; value: ShadowInsight[]; error?: never; } | { ok: true; value: { output: string; data: { ...; }; }; error?: never; } | { ...; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: ShadowInsight; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: ShadowInsight; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'ShadowInsight' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(1527,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: InterfaceForensics[]; error?: never; } | { ok: true; value: { ...; }; error?: never; } | { ...; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: InterfaceForensics[]; error?: never; } | { ok: true; value: { output: string; data: { results: InterfaceForensics[]; skipNormalization: boolean; }; }; error?: never; } | { ...; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: InterfaceForensics[]; error?: never; } | { ok: true; value: { output: string; data: { results: InterfaceForensics[]; skipNormalization: boolean; }; }; error?: never; } | { ...; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: InterfaceForensics[]; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: InterfaceForensics[]; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'InterfaceForensics[]' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(1558,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: MemeticEntry[]; error?: never; } | { ok: true; value: { output: string; data: { ...; }; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: MemeticEntry[]; error?: never; } | { ok: true; value: { output: string; data: { entries: MemeticEntry[]; skipNormalization: boolean; skipReflection: boolean; }; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: MemeticEntry[]; error?: never; } | { ok: true; value: { output: string; data: { entries: MemeticEntry[]; skipNormalization: boolean; skipReflection: boolean; }; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: MemeticEntry[]; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: MemeticEntry[]; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'MemeticEntry[]' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(1900,63): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/engines/OrchestrateEngine.ts(1900,71): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/engines/OrchestrateEngine.ts(1900,79): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/engines/OrchestrateEngine.ts(1905,189): error TS2339: Property 'error' does not exist on type 'DiagnosticResult<DiskSubstrate>'.
+  Property 'error' does not exist on type '{ success: true; data: DiskSubstrate; timestamp: Date; }'.
+src/engines/OrchestrateEngine.ts(1906,141): error TS2339: Property 'error' does not exist on type 'DiagnosticResult<{ total: bigint; free: bigint; }>'.
+  Property 'error' does not exist on type '{ success: true; data: { total: bigint; free: bigint; }; timestamp: Date; }'.
+src/engines/OrchestrateEngine.ts(2016,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: string; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: string; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'string' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2032,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: string; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: string; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'string' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2274,30): error TS2322: Type 'Result<ThinkingNexus>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: ThinkingNexus; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: ThinkingNexus; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'ThinkingNexus' is not assignable to type 'EngineOutput'.
+          Property 'output' is optional in type 'ThinkingNexus' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2301,13): error TS2322: Type '() => Promise<{ ok: false; error: Error; value?: undefined; } | { ok: true; value: { output: string; data: { tables: string[]; rowCount: number; }; }; error?: undefined; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: Error; value?: undefined; } | { ok: true; value: { output: string; data: { tables: string[]; rowCount: number; }; }; error?: undefined; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: Error; value?: undefined; } | { ok: true; value: { output: string; data: { tables: string[]; rowCount: number; }; }; error?: undefined; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: false; error: Error; value?: undefined; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: false; error: Error; value?: undefined; }' is not assignable to type '{ ok: false; error: Error; value?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'undefined' is not assignable to type 'never'.
+src/engines/OrchestrateEngine.ts(2319,13): error TS2322: Type '() => Promise<{ ok: false; error: Error; value?: undefined; } | { ok: true; value: { output: string; data: { path: string; }; }; error?: undefined; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: Error; value?: undefined; } | { ok: true; value: { output: string; data: { path: string; }; }; error?: undefined; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: Error; value?: undefined; } | { ok: true; value: { output: string; data: { path: string; }; }; error?: undefined; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: false; error: Error; value?: undefined; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: false; error: Error; value?: undefined; }' is not assignable to type '{ ok: false; error: Error; value?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'undefined' is not assignable to type 'never'.
+src/engines/OrchestrateEngine.ts(2335,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: Error; value?: undefined; } | { ok: true; value: { output: string; data: { deleted: number; }; }; error?: undefined; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: Error; value?: undefined; } | { ok: true; value: { output: string; data: { deleted: number; }; }; error?: undefined; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: Error; value?: undefined; } | { ok: true; value: { output: string; data: { deleted: number; }; }; error?: undefined; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: false; error: Error; value?: undefined; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: false; error: Error; value?: undefined; }' is not assignable to type '{ ok: false; error: Error; value?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'undefined' is not assignable to type 'never'.
+src/engines/OrchestrateEngine.ts(2353,13): error TS2322: Type '() => Promise<{ ok: false; error: Error; value?: undefined; } | { ok: true; value: { output: string; data: {}; }; error?: undefined; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: Error; value?: undefined; } | { ok: true; value: { output: string; data: {}; }; error?: undefined; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: Error; value?: undefined; } | { ok: true; value: { output: string; data: {}; }; error?: undefined; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: false; error: Error; value?: undefined; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: false; error: Error; value?: undefined; }' is not assignable to type '{ ok: false; error: Error; value?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'undefined' is not assignable to type 'never'.
+src/engines/OrchestrateEngine.ts(2400,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: Error; value?: never; } | { ok: true; value: EngineOutput; error?: never; } | { ok: true; value: { ...; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: Error; value?: never; } | { ok: true; value: EngineOutput; error?: never; } | { ok: true; value: { readonly path: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: Error; value?: never; } | { ok: true; value: EngineOutput; error?: never; } | { ok: true; value: { readonly path: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: { readonly path: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: { readonly path: string; }; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type '{ readonly path: string; }' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2507,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: ActuationResult; error?: never; } | { ok: true; value: { ...; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: ActuationResult; error?: never; } | { ok: true; value: { output: string; data: ActuationResult; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: ActuationResult; error?: never; } | { ok: true; value: { output: string; data: ActuationResult; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: ActuationResult; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: ActuationResult; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'ActuationResult' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2524,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: ActuationResult; error?: never; } | { ok: true; value: { ...; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: ActuationResult; error?: never; } | { ok: true; value: { output: string; data: ActuationResult; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: ActuationResult; error?: never; } | { ok: true; value: { output: string; data: ActuationResult; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: ActuationResult; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: ActuationResult; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'ActuationResult' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2541,13): error TS2322: Type '() => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: VolatilityStatus; error?: never; } | { ok: true; value: { output: string; data: VolatilityStatus; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: VolatilityStatus; error?: never; } | { ok: true; value: { output: string; data: VolatilityStatus; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: VolatilityStatus; error?: never; } | { ok: true; value: { output: string; data: VolatilityStatus; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: VolatilityStatus; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: VolatilityStatus; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'VolatilityStatus' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2581,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: ActuationResult; error?: never; } | { ok: true; value: { ...; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: ActuationResult; error?: never; } | { ok: true; value: { output: string; data: ActuationResult; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: ActuationResult; error?: never; } | { ok: true; value: { output: string; data: ActuationResult; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: ActuationResult; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: ActuationResult; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'ActuationResult' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2651,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: ActuationResult; error?: never; } | { ok: true; value: { ...; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: ActuationResult; error?: never; } | { ok: true; value: { output: string; data: ActuationResult; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: ActuationResult; error?: never; } | { ok: true; value: { output: string; data: ActuationResult; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: ActuationResult; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: ActuationResult; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'ActuationResult' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2668,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: any[]; error?: never; } | { ok: true; value: { output: string; data: any[]; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: any[]; error?: never; } | { ok: true; value: { output: string; data: any[]; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: any[]; error?: never; } | { ok: true; value: { output: string; data: any[]; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: any[]; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: any[]; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'any[]' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2777,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: BookMetadata; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: BookMetadata; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: BookMetadata; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: BookMetadata; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: BookMetadata; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'BookMetadata' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2797,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: { profile: StyleProfile; book: BookMetadata; }; error?: never; } | { ...; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: { profile: StyleProfile; book: BookMetadata; }; error?: never; } | { ok: true; value: { output: string; data: StyleProfile; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: { profile: StyleProfile; book: BookMetadata; }; error?: never; } | { ok: true; value: { output: string; data: StyleProfile; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: { profile: StyleProfile; book: BookMetadata; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: { profile: StyleProfile; book: BookMetadata; }; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type '{ profile: StyleProfile; book: BookMetadata; }' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2839,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: void; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: void; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'void' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2857,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: GutenbergBook[]; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: GutenbergBook[]; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: GutenbergBook[]; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: GutenbergBook[]; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: GutenbergBook[]; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'GutenbergBook[]' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2886,30): error TS2322: Type 'Result<StoryboardScene[]>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: StoryboardScene[]; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: StoryboardScene[]; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Property 'output' is missing in type 'StoryboardScene[]' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2905,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: AppBlueprint; error?: never; } | { ...; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: AppBlueprint; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: AppBlueprint; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: string; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: string; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'string' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2938,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: string; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: string; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'string' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2955,13): error TS2322: Type '() => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: PersonalityArchetype[]; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: PersonalityArchetype[]; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: PersonalityArchetype[]; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: PersonalityArchetype[]; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: PersonalityArchetype[]; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'PersonalityArchetype[]' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(2972,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: string; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: string; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'string' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3052,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: GutenbergBook[]; error?: never; } | { ok: true; value: { output: string; data: { ...; }; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: GutenbergBook[]; error?: never; } | { ok: true; value: { output: string; data: { results: GutenbergBook[]; }; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: GutenbergBook[]; error?: never; } | { ok: true; value: { output: string; data: { results: GutenbergBook[]; }; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: GutenbergBook[]; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: GutenbergBook[]; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'GutenbergBook[]' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3074,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: BookMetadata; error?: never; } | { ok: true; value: { output: string; data: BookMetadata; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: BookMetadata; error?: never; } | { ok: true; value: { output: string; data: BookMetadata; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: BookMetadata; error?: never; } | { ok: true; value: { output: string; data: BookMetadata; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: BookMetadata; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: BookMetadata; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'BookMetadata' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3091,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: void; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: void; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'void' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3107,13): error TS2322: Type '() => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: string; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: string; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'string' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3123,13): error TS2322: Type '() => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: string; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: string; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'string' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3172,30): error TS2322: Type 'Result<void>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: void; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: void; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'void' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3200,30): error TS2322: Type 'Result<NarrationResult>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: NarrationResult; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: NarrationResult; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Property 'output' is missing in type 'NarrationResult' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3225,30): error TS2322: Type 'Result<StoryboardScene[]>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: StoryboardScene[]; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: StoryboardScene[]; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Property 'output' is missing in type 'StoryboardScene[]' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3255,30): error TS2322: Type 'Result<{ videoVerified: true; bytes: number; videoPath: string; }>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: { videoVerified: true; bytes: number; videoPath: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: { videoVerified: true; bytes: number; videoPath: string; }; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Property 'output' is missing in type '{ videoVerified: true; bytes: number; videoPath: string; }' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3272,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: ThinkingNexus; error?: never; } | { ok: true; value: { output: string; data: ThinkingNexus; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: ThinkingNexus; error?: never; } | { ok: true; value: { output: string; data: ThinkingNexus; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: ThinkingNexus; error?: never; } | { ok: true; value: { output: string; data: ThinkingNexus; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: ThinkingNexus; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: ThinkingNexus; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'ThinkingNexus' is not assignable to type 'EngineOutput'.
+              Property 'output' is optional in type 'ThinkingNexus' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3317,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: SoundtrackResult; error?: never; } | { ok: true; value: { ...; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: SoundtrackResult; error?: never; } | { ok: true; value: { output: string; data: SoundtrackResult; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: SoundtrackResult; error?: never; } | { ok: true; value: { output: string; data: SoundtrackResult; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: SoundtrackResult; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: SoundtrackResult; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type 'SoundtrackResult' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3339,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: { readonly path: string; }; error?: never; } | { ok: true; value: { output: string; data: { ...; }; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: { readonly path: string; }; error?: never; } | { ok: true; value: { output: string; data: { readonly path: string; }; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: { readonly path: string; }; error?: never; } | { ok: true; value: { output: string; data: { readonly path: string; }; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: { readonly path: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: { readonly path: string; }; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type '{ readonly path: string; }' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3385,30): error TS2322: Type 'Result<string>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: string; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: string; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'string' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3466,34): error TS2322: Type 'Result<void>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: void; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: void; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'void' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3471,34): error TS2322: Type 'Result<void>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: void; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: void; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'void' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3559,30): error TS2322: Type 'Result<SoundtrackResult>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: SoundtrackResult; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: SoundtrackResult; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Property 'output' is missing in type 'SoundtrackResult' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3618,13): error TS2322: Type '() => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: void; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: void; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'void' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3634,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: unknown; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: unknown; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: unknown; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: unknown; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: unknown; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Property 'output' is missing in type '{}' but required in type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3665,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; data: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; data: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: string; error?: never; } | { ok: true; value: { output: string; data: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: string; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: string; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'string' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(3696,13): error TS2322: Type '(args: Readonly<Record<string, unknown>>) => Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type '(args: Readonly<Record<string, unknown>>) => Promise<Result<EngineOutput>>'.
+  Type 'Promise<{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }>' is not assignable to type 'Promise<Result<EngineOutput>>'.
+    Type '{ ok: false; error: any; value?: never; } | { ok: true; value: void; error?: never; } | { ok: true; value: { output: string; }; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+      Type '{ ok: true; value: void; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+        Type '{ ok: true; value: void; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+          Types of property 'value' are incompatible.
+            Type 'void' is not assignable to type 'EngineOutput'.
+src/engines/OrchestrateEngine.ts(4057,37): error TS2322: Type 'Result<Plan>' is not assignable to type 'Result<EngineOutput>'.
+  Type '{ ok: true; value: Plan; error?: never; }' is not assignable to type 'Result<EngineOutput>'.
+    Type '{ ok: true; value: Plan; error?: never; }' is not assignable to type '{ ok: true; value: EngineOutput; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'Plan' is not assignable to type 'EngineOutput'.
+          Property 'output' is optional in type 'Plan' but required in type 'EngineOutput'.
+src/engines/SovereignIngestionEngine.ts(12,8): error TS1192: Module '"fs/promises"' has no default export.
+src/engines/SovereignIngestionEngine.ts(13,8): error TS1192: Module '"crypto"' has no default export.
+src/engines/SovereignIngestionEngine.ts(14,8): error TS1259: Module '"path"' can only be default-imported using the 'esModuleInterop' flag
+src/engines/SyntropyEngine.ts(229,29): error TS2802: Type 'Set<any>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/engines/SyntropyEngine.ts(235,32): error TS2802: Type 'Set<any>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/generators/CacheSchemaGenerator.ts(24,50): error TS2307: Cannot find module 'rsmv/cache/sqlite.js' or its corresponding type declarations.
+src/generators/CacheSchemaGenerator.ts(25,46): error TS2307: Cannot find module 'rsmv/constants.js' or its corresponding type declarations.
+src/generators/CacheSchemaGenerator.ts(26,40): error TS2307: Cannot find module 'rsmv/opdecoder.js' or its corresponding type declarations.
+src/generators/CacheSchemaGenerator.ts(77,47): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/limbs/creative/StoryboardLimbV2.ts(347,22): error TS2322: Type 'Result<ModelResponse>' is not assignable to type 'Result<StoryboardScene[]>'.
+  Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type 'Result<StoryboardScene[]>'.
+    Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type '{ ok: true; value: StoryboardScene[]; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'ModelResponse' is missing the following properties from type 'StoryboardScene[]': length, pop, push, concat, and 29 more.
+src/limbs/creative/StoryboardLimbV2.ts(407,22): error TS2322: Type 'Result<ModelResponse>' is not assignable to type 'Result<StoryboardScene[]>'.
+  Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type 'Result<StoryboardScene[]>'.
+    Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type '{ ok: true; value: StoryboardScene[]; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'ModelResponse' is missing the following properties from type 'StoryboardScene[]': length, pop, push, concat, and 29 more.
+src/limbs/creative/WebAppForgeLimb.ts(195,22): error TS2322: Type 'Result<ModelResponse>' is not assignable to type 'Result<string>'.
+  Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type 'Result<string>'.
+    Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type '{ ok: true; value: string; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'ModelResponse' is not assignable to type 'string'.
+src/limbs/creative/WebAppForgeLimb.ts(245,22): error TS2322: Type 'Result<ModelResponse>' is not assignable to type 'Result<AppBlueprint>'.
+  Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type 'Result<AppBlueprint>'.
+    Type '{ ok: true; value: ModelResponse; error?: never; }' is not assignable to type '{ ok: true; value: AppBlueprint; error?: never; }'.
+      Types of property 'value' are incompatible.
+        Type 'ModelResponse' is missing the following properties from type 'AppBlueprint': name, features, stack
+src/limbs/creative/YouTubeLimb.ts(8,8): error TS1192: Module '"http"' has no default export.
+src/limbs/creative/YouTubeLimb.ts(9,8): error TS1192: Module '"url"' has no default export.
+src/limbs/pedagogy/PedagogyForensicsLimb.ts(71,28): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/pedagogy/SovereignAvatarActionBarVolition.ts(310,28): error TS2802: Type 'Map<string, number>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/pedagogy/SovereignAvatarActionBarVolition.ts(420,28): error TS2802: Type 'Set<(event: CombatEvent) => void>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/pedagogy/SovereignAvatarActionBarVolition.ts(433,28): error TS2802: Type 'Set<(state: CombatTickState) => void>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/spatial/CacheLearningLimb.ts(3,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/limbs/spatial/CacheLearningLimb.ts(21,8): error TS1192: Module '"fs/promises"' has no default export.
+src/limbs/spatial/CacheWatcherLimb.ts(23,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/limbs/spatial/CacheWatcherLimb.ts(257,40): error TS2802: Type 'Set<CacheInvalidationListener>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/spatial/CacheWatcherLimb.ts(287,54): error TS2307: Cannot find module 'rsmv/cache/sqlite.js' or its corresponding type declarations.
+src/limbs/spatial/CacheWatcherLimb.ts(288,50): error TS2307: Cannot find module 'rsmv/constants.js' or its corresponding type declarations.
+src/limbs/spatial/DBRowOracleLimb.ts(140,27): error TS2802: Type 'MapIterator<DBRow>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/spatial/GameplayProjectionLimb.ts(129,38): error TS2802: Type 'Map<number, NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/spatial/GameplayProjectionLimb.ts(142,45): error TS2802: Type 'Map<string, GroundItem[]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/spatial/GameplaySovereigntyLimb.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/limbs/spatial/GameplaySovereigntyLimb.ts(435,31): error TS2802: Type 'MapIterator<NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/spatial/GameplaySovereigntyLimb.ts(603,41): error TS2802: Type 'MapIterator<[number, NPC]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/spatial/HUDForensicsLimb.ts(3,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/limbs/spatial/HUDForensicsLimb.ts(698,43): error TS2802: Type 'Set<number>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/spatial/HUDForensicsLimb.ts(699,42): error TS2802: Type 'Set<number>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/spatial/MaterialLimb.ts(3,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/limbs/spatial/SpatialRadarLimb.ts(1,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/chalk/index"' can only be default-imported using the 'esModuleInterop' flag
+src/limbs/spatial/SpatialSovereigntyLimb.ts(574,33): error TS2802: Type 'MapIterator<[number, GameObject]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/spatial/SpatialSovereigntyLimb.ts(768,40): error TS2802: Type 'MapIterator<[string, SpatialLogicArtifact]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/spatial/SpatialSovereigntyLimb.ts(781,76): error TS2802: Type 'MapIterator<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/spatial/TeleportGrounding.ts(1,8): error TS1192: Module '"fs"' has no default export.
+src/limbs/spatial/TeleportGrounding.ts(2,8): error TS1259: Module '"path"' can only be default-imported using the 'esModuleInterop' flag
+src/limbs/spatial/VarbitSovereigntyLimb.ts(203,33): error TS2802: Type 'MapIterator<[number, GameObject]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/spatial/WorldForensicsLimb.ts(8,8): error TS1192: Module '"fs"' has no default export.
+src/limbs/technical/DynamicsLimb.ts(3,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/limbs/technical/EntityLimb.ts(1,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/limbs/technical/LogicBrainLimb.ts(3,8): error TS1192: Module '"fs"' has no default export.
+src/limbs/technical/LogicBrainLimb.ts(4,8): error TS1259: Module '"path"' can only be default-imported using the 'esModuleInterop' flag
+src/limbs/technical/MechanicalSovereigntyLimb.ts(165,29): error TS2802: Type 'MapIterator<MechanicalLogicArtifact>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/technical/MechanicalSovereigntyLimb.ts(251,36): error TS2802: Type 'MapIterator<NPC[]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/technical/MechanicalSovereigntyLimb.ts(359,79): error TS2802: Type 'MapIterator<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/technical/PedagogyLimb.ts(2,35): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/limbs/technical/PedagogyLimb.ts(125,30): error TS2802: Type 'Set<any>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/technical/PedagogyLimb.ts(157,30): error TS2802: Type 'Set<number>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/technical/PedagogyLimb.ts(626,46): error TS2802: Type 'MapIterator<[string, AssimilatedSkill]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/limbs/technical/SovereignSandboxLimb.ts(1,8): error TS1192: Module '"fs"' has no default export.
+src/limbs/technical/SovereignSandboxLimb.ts(2,8): error TS1259: Module '"path"' can only be default-imported using the 'esModuleInterop' flag
+src/limbs/world_grounding/WorldGroundingLimb.ts(289,34): error TS2802: Type 'Map<string, any>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/monitor/NodeTester.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/monitor/NodeTester.ts(58,47): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/monitor/PulseMonitor.ts(56,29): error TS2802: Type 'Set<ChildProcess>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/monitor/PulseMonitor.ts(163,49): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(164,46): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(256,24): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(257,60): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(282,67): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(283,62): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(300,86): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/PulseMonitor.ts(300,94): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+src/monitor/SwitchboardLimb.ts(4,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/@types/express/index"' can only be default-imported using the 'esModuleInterop' flag
+src/monitor/SwitchboardLimb.ts(13,8): error TS1192: Module '"fs"' has no default export.
+src/routing/HexagramManager.ts(868,20): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/routing/TaskScheduler.ts(201,41): error TS2802: Type 'MapIterator<[string, number[]]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/routing/TernaryRouter.ts(1036,38): error TS2802: Type 'Map<YaoState, number>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/routing/WorkforceManifest.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/routing/WorkforceManifest.ts(314,37): error TS2802: Type 'MapIterator<[string, WorkerDefinition]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/routing/WorkforceManifest.ts(355,30): error TS2802: Type 'MapIterator<WorkerDefinition>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/routing/WorkforceManifest.ts(369,30): error TS2802: Type 'MapIterator<WorkerDefinition>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/routing/WorkforceManifest.ts(381,30): error TS2802: Type 'MapIterator<WorkerDefinition>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/state/NeurologicalMap.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/substrates/GhostSplatEngine.ts(184,36): error TS2802: Type 'Map<number, NPC>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/ToolRegistry.ts(158,35): error TS2802: Type 'MapIterator<[string, ToolDefinition]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/ui/Renderer.ts(3,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/chalk/index"' can only be default-imported using the 'esModuleInterop' flag
+src/ui/Renderer.ts(290,32): error TS2802: Type 'Set<NeuralCategory>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/ChromaCore.ts(153,29): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/ChromaCore.ts(154,31): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/ChromaCore.ts(156,35): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/ChromaCore.ts(156,47): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/DBMaintenance.ts(1,8): error TS2613: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/sqlite3/lib/sqlite3"' has no default export. Did you mean to use 'import { sqlite3 } from "C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/sqlite3/lib/sqlite3"' instead?
+src/utils/JagexCacheReader.ts(2,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/utils/JagexCacheReader.ts(163,26): error TS2802: Type 'MapIterator<any>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/logger.ts(1,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/pino/pino"' can only be default-imported using the 'esModuleInterop' flag
+src/utils/RSMVBridge.ts(21,34): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/utils/RSMVCacheDB.ts(1,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/utils/SovereignDBLifecycle.ts(73,34): error TS2802: Type 'MapIterator<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/SovereignDBLifecycle.ts(114,39): error TS2802: Type 'Map<string, DBHandler>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/SovereignDBLifecycle.ts(128,20): error TS2802: Type 'MapIterator<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/SovereignKnowledgeDB.ts(1,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/utils/SovereignPathResolver.ts(42,42): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/utils/SovereignSubstrate.ts(10,8): error TS1259: Module '"path"' can only be default-imported using the 'esModuleInterop' flag
+src/utils/StateProvider.ts(296,37): error TS2802: Type 'Map<number, VarbitDefinition>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/VectorDB.ts(1,8): error TS1259: Module '"C:/Users/krist/.gemini/antigravity/scratch/POG2/node_modules/@types/better-sqlite3/index"' can only be default-imported using the 'esModuleInterop' flag
+src/utils/WikiEquipmentEnricher.ts(349,50): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+src/utils/WikiEquipmentEnricher.ts(557,45): error TS1501: This regular expression flag is only available when targeting 'es2018' or later.
+src/utils/WikiEquipmentEnricher.ts(560,35): error TS1501: This regular expression flag is only available when targeting 'es2018' or later.
+src/vision/RSMVController.ts(2,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/vision/TransientObserver.ts(3,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.

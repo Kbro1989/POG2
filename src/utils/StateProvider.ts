@@ -10,7 +10,7 @@
  *
  * Design:
  *   - Wraps VarbitSovereigntyLimb for synchronous L1 lookups
- *   - Falls back to RSMVBridge.getVarbit(id) for on-demand cache resolution
+ *   - Uses only static cache definitions (no dynamic fallback)
  *   - Caches resolved definitions permanently (L1 is immutable)
  *   - Provides getVarbit/setVarbit/getVarp/setVarp as the canonical API
  *     for gameplay scripts, replacing all direct state.varbits.set() calls
@@ -18,7 +18,6 @@
 
 import { GameState } from '../core/models.js';
 import { VarbitSovereigntyLimb } from '../limbs/spatial/VarbitSovereigntyLimb.js';
-import { rsmvBridge, BridgeVarbitResult } from './RSMVBridge.js';
 import { createLogger } from './logger.js';
 import * as fs from 'fs';
 
@@ -167,7 +166,17 @@ export class StateProvider {
         }
 
         // Check if sovereignty limb already has it (from static registry)
-        const existing = this.sovereignty.resolveVarbitValue(varbitId, { varps: new Map(), varbits: new Map() } as any);
+        const _existing = this.sovereignty.resolveVarbitValue(varbitId, {
+            plane: 0,
+            npcMap: new Map(),
+            npcSpatialIndex: new Map(),
+            objectMap: new Map(),
+            varps: new Map(),
+            varcs: new Map(),
+            varbits: new Map(),
+            players: new Map(),
+            messages: []
+        } as GameState);
         // If resolveVarbitValue returned a non-zero value without a varp, the definition existed
         // But we need a cleaner check — use the public accessor we're about to add
 
@@ -188,70 +197,30 @@ export class StateProvider {
     }
 
     /**
-     * resolveFromBridge — Fetches a single varbit definition from the NXT cache
-     * via the rsmv_bridge subprocess.
+     * resolveFromBridge — Attempts to resolve a varbit definition from the static cache.
+     * Since we no longer use the rsmv bridge, we rely entirely on VarbitSovereigntyLimb's
+     * static definitions loaded during initialization.
      */
     private async resolveFromBridge(varbitId: number): Promise<VarbitDefinition | null> {
-        logger.info({ varbitId }, '[StateProvider] Resolving varbit definition from live cache...');
+        logger.info({ varbitId }, '[StateProvider] Varbit definition not in static registry.');
 
-        const result = await rsmvBridge.getVarbit(varbitId);
-        if (!result.ok) {
-            logger.warn({ varbitId, error: result.error?.message }, '[StateProvider] Failed to resolve varbit from cache.');
-            return null;
+        // Try to get from VarbitSovereigntyLimb's cache, which may have been loaded from static files
+        const def = this.sovereignty.getVarbitDefinition(varbitId);
+        if (def) {
+            this.dynamicDefinitions.set(varbitId, def);
+            logger.info({
+                varbitId,
+                parentVarpId: def.parentVarpId,
+                lsb: def.lsb,
+                msb: def.msb
+            }, '[StateProvider] Varbit definition found in sovereignty limb.');
+            return def;
         }
 
-        const raw = result.value;
-        const def = this.parseBridgeVarbit(raw);
-        if (!def) {
-            logger.warn({ varbitId, raw }, '[StateProvider] Bridge returned unparseable varbit structure.');
-            return null;
-        }
-
-        // Inject into VarbitSovereigntyLimb's permanent L1 registry
-        this.sovereignty.injectVarbitDefinition(varbitId, def);
-        this.dynamicDefinitions.set(varbitId, def);
-
-        logger.info({
-            varbitId,
-            parentVarpId: def.parentVarpId,
-            lsb: def.lsb,
-            msb: def.msb
-        }, '[StateProvider] Varbit definition resolved and injected.');
-
-        return def;
+        logger.warn({ varbitId }, '[StateProvider] Varbit definition not available - using defaults.');
+        return null;
     }
 
-    /**
-     * parseBridgeVarbit — Normalizes the rsmv parser output into the canonical
-     * VarbitDefinition shape used by VarbitSovereigntyLimb.
-     *
-     * The rsmv parser can return the bit window in multiple formats:
-     *   - { varid, bits: [lsb, msb] }      (standard)
-     *   - { varid, lsb, msb }              (flattened)
-     *   - { varid, bitcount }              (count only, derive lsb=0, msb=bitcount-1)
-     */
-    private parseBridgeVarbit(raw: BridgeVarbitResult): VarbitDefinition | null {
-        const parentVarpId = raw.varid;
-        if (parentVarpId === undefined || parentVarpId === null) return null;
-
-        let lsb: number;
-        let msb: number;
-
-        if (raw.bits && Array.isArray(raw.bits) && raw.bits.length === 2) {
-            lsb = raw.bits[0];
-            msb = raw.bits[1];
-        } else if (raw.lsb !== undefined && raw.msb !== undefined) {
-            lsb = raw.lsb;
-            msb = raw.msb;
-        } else if (raw.bitcount !== undefined && raw.bitcount > 0) {
-            lsb = 0;
-            msb = raw.bitcount - 1;
-        } else {
-            return null;
-        }
-
-        return { parentVarpId, lsb, msb };
-    }
 
     // ── Batch Pre-Resolution ──────────────────────────────────────────────────
 
@@ -283,9 +252,13 @@ export class StateProvider {
      * Prevents redundant bridge calls across restarts and builds a self-updating L1 registry.
      * Call this during graceful shutdown of the engine.
      */
-    public async persistDiscoveredVarbits(outputPath: string = 'D:/POG2/src/limbs/spatial/varbits_registry.json'): Promise<void> {
+    public async persistDiscoveredVarbits(outputPath?: string): Promise<void> {
+        if (!outputPath) {
+            const { resolveSovereignPath } = await import('./SovereignPathResolver.js');
+            outputPath = resolveSovereignPath('memory/pedagogy/varbits_registry.json');
+        }
         if (this.dynamicDefinitions.size === 0) return;
-        
+
         try {
             let existing: Record<string, VarbitDefinition> = {};
             if (fs.existsSync(outputPath)) {

@@ -112,7 +112,7 @@ export class SkillsLimb implements NeuralLimb {
                 return err(new Error('Skills directory not found post-ingestion.'));
             }
 
-            const assimilated = this.scanAndAssimilateDirectory(skillsDir);
+            const assimilated = await this.scanAndAssimilateDirectory(skillsDir);
 
             return ok({
                 tool: 'SkillsLimb',

@@ -22,7 +22,7 @@ export class FragmentOrchestrator {
     private spatial: SpatialSovereigntyLimb;
     private registry: SpaceRegistry;
     private loadedRegions: Set<string> = new Set();
-    
+
     // Hysteresis: Only check for new regions when moving significant distance
     private lastCheckCoord: Coord | null = null;
     private readonly checkThreshold = 8; // tiles
@@ -47,7 +47,7 @@ export class FragmentOrchestrator {
         for (let mx = centerX - 2; mx <= centerX + 2; mx++) {
             for (let my = centerY - 2; my <= centerY + 2; my++) {
                 const anchor = `m_${mx}_${my}`;
-                
+
                 if (!this.loadedRegions.has(anchor)) {
                     loadPromises.push(this.attemptRegionalLoad(anchor, mx, my));
                 }
@@ -76,8 +76,8 @@ export class FragmentOrchestrator {
     private async attemptRegionalLoad(anchor: string, mx: number, my: number): Promise<void> {
         // Priority 1: Sovereign Path Authority resolution (D:\sovereign\atlas\spatial\)
         const logicPath = resolveLogicFragment(anchor);
-        
-        const originLabel = logicPath?.includes('D:\\sovereign') ? '[D-SOVEREIGN]' : '[C-LOCAL]';
+
+        const originLabel = logicPath?.includes(getSovereignRoot()) ? '[SOVEREIGN]' : '[LOCAL]';
         if (logicPath) {
             logger.info(`${originLabel} Fragment resolved: ${logicPath}`);
         } else {

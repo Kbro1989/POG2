@@ -1,0 +1,23 @@
+[
+  {
+    "id": "varrock_bank_stairs_g0_g1",
+    "rs3Id": 27251,
+    "actions": ["Climb up", "climb up"],
+    "source": {
+      "world": "RS3",
+      "x": 3253,
+      "y": 3420,
+      "plane": 0,
+      "region": "Varrock"
+    },
+    "destination": {
+      "world": "RS3",
+      "x": 3253,
+      "y": 3420,
+      "plane": 1,
+      "region": "Varrock"
+    },
+    "triggerType": "COMMAND",
+    "notes": "Varrock bank stairs placeholder — coordinates to be forensically verified."
+  }
+]

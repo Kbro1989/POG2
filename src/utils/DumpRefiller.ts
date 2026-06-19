@@ -12,8 +12,8 @@ const logger = createLogger('DumpRefiller');
  * deconstructed viewer and re-mapping them into functional POG2 logic nodes.
  */
 export class DumpRefiller {
-    private sourceDir: string = 'D:\\sovereign\\resources\\webviewer-deconstructed\\unidentified';
-    private targetDir: string = 'D:\\sovereign\\refilled';
+    private sourceDir: string = resolveSovereignPath('resources/webviewer-deconstructed/unidentified');
+    private targetDir: string = resolveSovereignPath('refilled');
     private registry: NodeRegistry;
 
     constructor() {

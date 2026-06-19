@@ -14,7 +14,7 @@ const logger = createLogger('LumbridgeTTOExtractor');
  * Mandate: As-Is Cache Truth. Tick-Based Movement.
  */
 
-const OUTPUT_PATH = 'D:/sovereign/atlas/spatial/pathing_theory/lumbridge_collision_v1.json';
+const OUTPUT_PATH = resolveSovereignPath('atlas/spatial/pathing_theory/lumbridge_collision_v1.json');
 
 async function extractLumbridgeGrid() {
     const origin = { x: 3222, y: 3218 }; // Castle Center
@@ -72,7 +72,7 @@ async function extractLumbridgeGrid() {
 
     logger.info('Audit Grid generated with 9-Way Adjacency. Exporting to Sovereign Atlas...');
     writeFileSync(OUTPUT_PATH, JSON.stringify(finalizedGrid, null, 2));
-    
+
     console.log('\n[MAP ARSENAL: Sovereign 9-Way Collision Unleashed]');
     console.log(`- Collision Engine: Sovereign 9-Way v36.13`);
     console.log(`- Tick Rate: 600ms / 6000ms Cycle`);

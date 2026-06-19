@@ -8,8 +8,9 @@ import { createLogger } from "../utils/logger.js";
 import { EventBus } from '../events/EventBus.js';
 import { DBRowOracleLimb } from '../limbs/spatial/DBRowOracleLimb.js';
 import { PedagogyForensicsLimb } from '../limbs/pedagogy/PedagogyForensicsLimb.js';
+import { CacheForensicsLimb } from '../limbs/spatial/CacheForensicsLimb.js';
+import { WorldForensicsLimb } from '../limbs/spatial/WorldForensicsLimb.js';
 import { getAtlasSpatialPath } from '../utils/SovereignPathResolver.js';
-import { rsmvBridge } from '../utils/RSMVBridge.js';
 import fs from 'fs';
 import { WikiEnricher } from '../utils/WikiEnricher.js';
 import { I1841CacheTranslator } from '../limbs/pedagogy/Interface1841ActionBarMapping.js';
@@ -260,61 +261,66 @@ export class SwitchboardLimb {
                             return res.sendFile(localPath);
                         }
 
-                        logger.info(`[SWITCHBOARD] ⚡ Dynamic Mapsquare Extraction triggered for [${rx}, ${ry}]`);
-                        const tilesRes = await rsmvBridge.getMapsquareTiles(rx, ry);
-                        if (!tilesRes.ok) {
-                            logger.error(`[SWITCHBOARD] Live extract failed for [${rx}, ${ry}]: ${tilesRes.error.message}`);
-                            return res.status(404).json({ error: tilesRes.error.message });
-                        }
+                        logger.info(`[SWITCHBOARD] ⚡ Attempting to load Mapsquare data for [${rx}, ${ry}]`);
+                        
+                        // Try to load from pre-generated atlas data
+                        const cachedPath = join(worldExtractDir, `${rx}_${ry}.json`);
+                        if (fs.existsSync(cachedPath)) {
+                            logger.info(`[SWITCHBOARD] Loading cached mapsquare from ${cachedPath}`);
+                            const tilesData = JSON.parse(fs.readFileSync(cachedPath, 'utf8'));
+                            const collisionMatrix: any = {};
+                            if (tilesData && tilesData.tiles) {
+                                for (const tile of tilesData.tiles) {
+                                    const wx = (rx * 64) + tile.x;
+                                    const wy = (ry * 64) + tile.z;
+                                    const plane = tile.plane;
+                                    const key = `${plane}_${wx}_${wy}`;
 
-                        const tilesData = tilesRes.value;
-                        const collisionMatrix: any = {};
-                        if (tilesData && tilesData.tiles) {
-                            for (const tile of tilesData.tiles) {
-                                const wx = (rx * 64) + tile.x;
-                                const wy = (ry * 64) + tile.z;
-                                const plane = tile.plane;
-                                const key = `${plane}_${wx}_${wy}`;
+                                    const flag = tile.collision || 0;
+                                    const isBlocked = (flag & 1) !== 0; // Standard 0x1 standard solid/blocking
+                                    const isOverlay = (flag & 2) !== 0;
+                                    const isWater = (flag & 128) !== 0;
 
-                                const flag = tile.collision || 0;
-                                const isBlocked = (flag & 1) !== 0; // Standard 0x1 standard solid/blocking
-                                const isOverlay = (flag & 2) !== 0;
-                                const isWater = (flag & 128) !== 0;
+                                    let surfaceType = 'terrain';
+                                    if (isOverlay) surfaceType = 'bridge';
+                                    else if (isWater) surfaceType = 'water';
 
-                                let surfaceType = 'terrain';
-                                if (isOverlay) surfaceType = 'bridge';
-                                else if (isWater) surfaceType = 'water';
-
-                                collisionMatrix[key] = {
-                                    walkable: !isBlocked,
-                                    surfaceType,
-                                    edges: {
-                                        northBlocked: false,
-                                        southBlocked: false,
-                                        eastBlocked: false,
-                                        westBlocked: false
-                                    },
-                                    sourceFlags: flag
-                                };
+                                    collisionMatrix[key] = {
+                                        walkable: !isBlocked,
+                                        surfaceType,
+                                        edges: {
+                                            northBlocked: false,
+                                            southBlocked: false,
+                                            eastBlocked: false,
+                                            westBlocked: false
+                                        },
+                                        sourceFlags: flag
+                                    };
+                                }
                             }
+
+                            const syntheticExport = {
+                                rx,
+                                ry,
+                                collision_matrix: collisionMatrix,
+                                entities: []
+                            };
+
+                            if (!fs.existsSync(worldExtractDir)) {
+                                fs.mkdirSync(worldExtractDir, { recursive: true });
+                            }
+                            fs.writeFileSync(localPath, JSON.stringify(syntheticExport, null, 2));
+                            logger.info(`[SWITCHBOARD] ✅ Mapsquare [${rx}, ${ry}] loaded from cache.`);
+
+                            return res.json(syntheticExport);
+                        } else {
+                            logger.warn(`[SWITCHBOARD] No cached mapsquare available for [${rx}, ${ry}]`);
+                            return res.status(404).json({ 
+                                error: `Mapsquare [${rx}, ${ry}] not in cache. Generate via POG2 atlas extraction or static maps.`
+                            });
                         }
-
-                        const syntheticExport = {
-                            rx,
-                            ry,
-                            collision_matrix: collisionMatrix,
-                            entities: []
-                        };
-
-                        if (!fs.existsSync(worldExtractDir)) {
-                            fs.mkdirSync(worldExtractDir, { recursive: true });
-                        }
-                        fs.writeFileSync(localPath, JSON.stringify(syntheticExport, null, 2));
-                        logger.info(`[SWITCHBOARD] ✅ Dynamic Mapsquare [${rx}, ${ry}] successfully synthesized and cached.`);
-
-                        return res.json(syntheticExport);
                     } catch (err: any) {
-                        logger.error({ err }, '[SWITCHBOARD] Dynamic mapsquare failed');
+                        logger.error({ err }, '[SWITCHBOARD] Mapsquare load failed');
                         return res.status(500).json({ error: err.message });
                     }
                 });
@@ -337,20 +343,21 @@ export class SwitchboardLimb {
                         let queryName = name;
 
                         if (id) {
+                            const cacheForensics = CacheForensicsLimb.getInstance();
                             if (type === 'npc') {
-                                const r = await rsmvBridge.getNpc(id);
+                                const r = await cacheForensics.getNpcDetails(id);
                                 if (r.ok) {
                                     cacheData = r.value;
                                     queryName = r.value.name;
                                 }
                             } else if (type === 'item') {
-                                const r = await rsmvBridge.getItem(id);
+                                const r = await cacheForensics.getItemDetails(id);
                                 if (r.ok) {
                                     cacheData = r.value;
                                     queryName = r.value.name;
                                 }
                             } else if (type === 'object') {
-                                const r = await rsmvBridge.getObject(id);
+                                const r = await cacheForensics.getObjectDetails(id);
                                 if (r.ok) {
                                     cacheData = r.value;
                                     queryName = r.value.name;
@@ -426,19 +433,20 @@ export class SwitchboardLimb {
                                         const MAX_RETRIES = 3;
                                         const RETRY_BASE_MS = 2000;
                                         let lastError = 'Unknown extraction failure';
+                                        const worldForensics = WorldForensicsLimb.getInstance();
 
                                         for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-                                            const result = await rsmvBridge.getCollision(x, z, plane);
+                                            const result = await worldForensics.getTerrainFlags(x, z, plane);
 
-                                            if (result.ok) {
-                                                ws.send(JSON.stringify({ type: 'result', ok: true, value: { type: 'LIVE_rsmv', ...result.value }, error: null }));
+                                            if (result && result > 0) {
+                                                ws.send(JSON.stringify({ type: 'result', ok: true, value: { type: 'COLLISION_DATA', collision: result }, error: null }));
                                                 return;
                                             }
 
-                                            lastError = result.error.message;
+                                            lastError = 'Collision data not available';
                                             if (attempt < MAX_RETRIES) {
                                                 const waitMs = RETRY_BASE_MS * attempt;
-                                                logger.warn({ attempt, waitMs, err: lastError }, `[SWITCHBOARD] rsmv extraction failed, retrying in ${waitMs}ms...`);
+                                                logger.warn({ attempt, waitMs, err: lastError }, `[SWITCHBOARD] collision extraction failed, retrying in ${waitMs}ms...`);
                                                 await new Promise(r => setTimeout(r, waitMs));
                                             }
                                         }

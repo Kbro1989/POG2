@@ -51,7 +51,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
 
     // Global State Bus (Phase 11)
     public state: GameState;
-    
+
     // Persistent Organism State
     public inventory: (Item | null)[]; // Fixed 28 slots
     public bank: Item[];
@@ -60,20 +60,20 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
     public skills: Record<number, Skill>;
     public quests: { points: number; completedCount: number; quests: Record<number, any> }; // QuestState
     public achievements: { points: number; completed: Record<string, boolean> };
-    
+
     public appearanceEra: 'pre_avatar' | 'transitional' | 'post_avatar' = 'post_avatar';
-    
+
     public get appearance() {
         const bt = this.visualState.morphology.bodyType;
         return {
             gender: bt === 'refresh_female' ? 'female' as const
-                  : bt === 'classic' ? 'classic' as const
-                  : 'male' as const,
+                : bt === 'classic' ? 'classic' as const
+                    : 'male' as const,
             mode: bt === 'classic' ? 'classic' : 'beta',
             bodyType: bt,
         };
     }
-    
+
     // Sovereign Rendering State
     public visualState: {
         // From AvatarStateLimb
@@ -81,7 +81,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
         hairRgb: number;        // Enum 1195 lookup  
         bodyKit: number;        // Appearance Kit model ID
         faceMorph: Float32Array; // Sub-morph weights
-        
+
         // Avatar Refresh (Varp 5745, 5746, 524476)
         morphology: {
             // Varp 5745
@@ -91,41 +91,41 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
             gameMode: number;
             oldHeadFallback: boolean;
             torsoOverride: boolean;
-            
+
             // Varp 5746 (category indices)
             categoryIndices: {
                 head: number; torso: number; legs: number;
                 shoes: number; beard: number; skinMat: number; hairMat: number;
             };
-            
+
             // Varp 524476 (color/style indices)
             appearanceIndices: {
                 skinColor: number; hairColor: number; torsoColor: number;
                 randomSeed: number; shoeColor: number;
             };
         };
-        
+
         // From Wardrobe (1797)
         dgTheme: 'frozen' | 'furnished' | 'abandoned' | 'occult' | 'warped';
         dgSlots: boolean[];     // 5 slots unlocked bitmap
-        
+
         // Dynamic animation/material states
         combatStance: 'melee' | 'ranged' | 'magic' | 'necromancy';
     } = {
-        skinRgb: 12104087, // Default to a neutral skin tone from enum 1195
-        hairRgb: 1907226,  // Default dark hair
-        bodyKit: -1,
-        faceMorph: new Float32Array(8),
-        morphology: {
-            bodyBase: 0, torsoLegsStyle: 0, bodyType: 'refresh_male', gameMode: 0,
-            oldHeadFallback: false, torsoOverride: false,
-            categoryIndices: { head: 0, torso: 0, legs: 0, shoes: 0, beard: 0, skinMat: 0, hairMat: 0 },
-            appearanceIndices: { skinColor: 0, hairColor: 0, torsoColor: 0, randomSeed: 0, shoeColor: 0 }
-        },
-        dgTheme: 'frozen',
-        dgSlots: [false, false, false, false, false],
-        combatStance: 'melee'
-    };
+            skinRgb: 12104087, // Default to a neutral skin tone from enum 1195
+            hairRgb: 1907226,  // Default dark hair
+            bodyKit: -1,
+            faceMorph: new Float32Array(8),
+            morphology: {
+                bodyBase: 0, torsoLegsStyle: 0, bodyType: 'refresh_male', gameMode: 0,
+                oldHeadFallback: false, torsoOverride: false,
+                categoryIndices: { head: 0, torso: 0, legs: 0, shoes: 0, beard: 0, skinMat: 0, hairMat: 0 },
+                appearanceIndices: { skinColor: 0, hairColor: 0, torsoColor: 0, randomSeed: 0, shoeColor: 0 }
+            },
+            dgTheme: 'frozen',
+            dgSlots: [false, false, false, false, false],
+            combatStance: 'melee'
+        };
 
     public lastHub: string = 'Lumbridge';
     public lastDeathCoord: Coord | null = null;
@@ -156,7 +156,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
     public animaCharged: boolean; // March 2026 Magic Mechanics
     public searingWindsTicksRemaining: number; // March 2026 Ranged Mechanics
     public shadowImbuedTicksRemaining: number; // March 2026 Ranged Mechanics
-    
+
     // Necromancy Specifics
     public conjureActive: { skeleton: boolean, zombie: boolean, ghost: boolean, phantom: boolean } = {
         skeleton: false, zombie: false, ghost: false, phantom: false
@@ -167,7 +167,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
 
     public lastCombatTick: number;
     public cooldowns: Record<string, number>;
-    
+
     // Sovereign Action Bar (Interface 1841/1840)
     public actionBarSlots: (string | null)[] = [
         'slice', 'fury', 'cleave', null,
@@ -177,13 +177,14 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
     ];
 
     constructor(username: string = 'Sovereign') {
+        logger.debug({ username }, 'SovereignAvatarEntity instantiated');
         this.username = username;
         // Coordinates are no longer hardcoded here; they must be hydrated from sovereign_state.json
-        this.coord = { x: 0, y: 0, plane: 0 }; 
+        this.coord = { x: 0, y: 0, plane: 0 };
         this.x = 0;
         this.y = 0;
         this.plane = 0;
-        
+
         this.state = {
             plane: 0,
             npcMap: new Map(),
@@ -195,7 +196,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
             players: new Map(),
             messages: []
         };
-        
+
         // Initialize 28 empty slots
         this.inventory = Array(28).fill(null);
         this.bank = [];
@@ -218,7 +219,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
         this.skills = {};
         this.quests = { points: 0, completedCount: 0, quests: {} };
         this.achievements = { points: 0, completed: {} };
-        
+
         this.runEnergy = 10000;
         this.lockTicks = 0;
         this.currentPath = null;
@@ -234,7 +235,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
         this.shadowImbuedTicksRemaining = 0;
         this.lastCombatTick = 0;
         this.cooldowns = {};
-        
+
         this.combatEngine = new AdrenalineStateMachine('MELEE');
         this.combatEngine.on(event => {
             if (event.type === 'ADRENALINE_CHANGED') {
@@ -244,7 +245,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
                 this.emit('ability_used', { ability: event.ability, damage: event.damage });
             }
         });
-        
+
         this.initializeDefaultSkills();
     }
 
@@ -287,7 +288,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
             console.error('Failed to inject state:', e);
         }
     }
-    
+
     public updateMorphology(state: any): void {
         if (state && state.morphology) {
             this.visualState.morphology = JSON.parse(JSON.stringify(state.morphology));
@@ -313,7 +314,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
         if (data.kinematics) {
             this.metadata.kinematics = data.kinematics;
         }
-        
+
         // Mark Era transition
         if (this.appearanceEra === 'pre_avatar') {
             this.appearanceEra = 'transitional';
@@ -346,8 +347,8 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
      * Everything else is marked for dropping (Authentic Rule).
      */
     public authenticDie(): Item[] {
-        const dropped: Item[] = [];
-        
+        const _dropped: Item[] = [];
+
         // 1. Combine inventory and equipment
         const allItems: Item[] = [
             ...this.inventory.filter((i): i is Item => i !== null),
@@ -358,13 +359,13 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
         // Authentic: Keeps 3 most valuable. 
         // For grounding, we'll keep the first 3 items in the list.
         const sorted = allItems; // TODO: Implement ItemValue lookup from cache
-        const kept = sorted.slice(0, 3);
+        const _kept = sorted.slice(0, 3);
         const toDrop = sorted.slice(3);
 
         // 3. Clear Inventory & Equipment
         this.inventory = this.inventory.map((item, idx) => idx < 3 ? item : null);
         Object.keys(this.equipment).forEach(slot => {
-             this.setEquipmentSlot(slot as any, null);
+            this.setEquipmentSlot(slot as any, null);
         });
 
         this.lastDeathCoord = { ...this.coord };
@@ -419,7 +420,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
      */
     public executeAbility(abilityId: string, targetId: number | string = 'Sovereign') {
         if (this.isBusy()) return false;
-        
+
         this.intent = {
             action: 'execute_ability',
             targetId: targetId,
@@ -427,7 +428,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
             tickStarted: 0,
             contextHash: `ability_${abilityId}_${Date.now()}`
         } as any;
-        
+
         return true;
     }
 
@@ -506,15 +507,15 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
      * Attempts to traverse to a target coordinate using the Quaternary Pathfinder.
      */
     public plotPath(
-        targetX: number, 
-        targetY: number, 
+        targetX: number,
+        targetY: number,
         pathfinder: DirectionalPathfinder,
         context: any, // GameState
-        collisionMatrix?: Map<string, any>
+        _collisionMatrix?: Map<string, any>
     ): boolean {
         const start = this.coord;
         const end = { x: targetX, y: targetY, plane: this.coord.plane };
-        
+
         try {
             const isPlayer = true; // For now, SovereignAvatars behave as players
             const path = pathfinder.findPath(start, end, context, isPlayer);
@@ -551,7 +552,7 @@ export class SovereignAvatarEntity implements NPC, CombatantState, ISovereignAva
             this.x = this.coord.x;
             this.y = this.coord.y;
             this.plane = this.coord.plane;
-            
+
             if (this.currentPath.length === 0) {
                 this.currentPath = null;
                 // Pending interaction evaluation happens securely in the SimulationHarness

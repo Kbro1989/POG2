@@ -24,8 +24,8 @@ import { resolve } from 'path';
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CONFIGURATION
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-const SOVEREIGN_BASE = 'D:/sovereign';
-const OUTPUT_DIR = 'D:/sovereign/atlas/spatial/pathing_theory';
+const SOVEREIGN_BASE = getSovereignRoot();
+const OUTPUT_DIR = resolveSovereignPath('atlas/spatial/pathing_theory');
 const UNIFIED_EXTRACT_DIR = resolve(SOVEREIGN_BASE, 'atlas/spatial/unified_extract');
 
 const OBJECTS_PATH = resolve(SOVEREIGN_BASE, 'cache_pedagogy/json_dumps/objects.json');

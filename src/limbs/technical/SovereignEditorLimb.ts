@@ -8,9 +8,9 @@ import { type Result, ok, err } from '../../core/models.js';
  * Demonstrates Jagex-grade mastery of their proprietary format.
  */
 export class SovereignEditorLimb {
-  private basePedagogy = 'D:\\sovereign\\cache_pedagogy\\';
-  private modLayer = 'D:\\sovereign\\cache_pedagogy\\modified\\';
-  
+  private basePedagogy = resolveSovereignPath('cache_pedagogy/');
+  private modLayer = resolveSovereignPath('cache_pedagogy/modified/');
+
   constructor(
     private ternaryRouter: any, // CNS Thalamus for history
     private bioIntelligence: any // Clinical Auditor
@@ -64,7 +64,7 @@ export class SovereignEditorLimb {
     if (fs.existsSync(modFile)) {
       return JSON.parse(fs.readFileSync(modFile, 'utf-8'));
     }
-    
+
     // Fallback to extraction_inventory or pedagogy
     const pedagogyFile = path.join(this.basePedagogy, 'entities', `${entityId}.json`);
     if (fs.existsSync(pedagogyFile)) {

@@ -12,7 +12,7 @@ import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
 async function testTripleViewC1() {
     console.log('ðŸ§ª PHASE C1 TEST: Triple View & Fragment Orchestration\n');
 
-    const DB_PATH = 'D:\\sovereign\\vibe-learning-test.db';
+    const DB_PATH = getVectorDbPath();
     if (fs.existsSync(DB_PATH)) fs.unlinkSync(DB_PATH);
 
     // 0. Mock a neighboring region to test orchestration
@@ -20,7 +20,7 @@ async function testTripleViewC1() {
     // Neighbors would be (54,50) through (56,52)
     const atlasDir = path.join(getSovereignRoot(), 'atlas', 'spatial');
     const neighborPath = path.join(atlasDir, 'm_55_50_logic.json'); // Direct neighbor
-    
+
     // Create a dummy neighbor if it doesn't exist
     if (!fs.existsSync(neighborPath)) {
         const dummyMatrix = {
@@ -37,14 +37,14 @@ async function testTripleViewC1() {
     await spatial.initialize();
     // Only preload Barrows; neighbor should be proactively loaded by Orchestrator
     await spatial.loadLogic('barrows');
-    
+
     const worldForensics = WorldForensicsLimb.getInstance();
     await worldForensics.initialize();
-    
+
     const lessonLearner = new LessonLearner(worldForensics, DB_PATH);
     const discovery = new DiscoveryLimb();
     const pathfinder = new DirectionalPathfinder(spatial);
-    
+
     // Avatar at the BOTTOM edge of Barrows mapsquare (Y=3288)
     // Decreasing Y will move us into the (55, 51) -> (55, 50) boundary
     const avatar: Coord = { x: 3564, y: 3288, plane: 0 };

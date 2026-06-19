@@ -12,8 +12,8 @@ import { cacheMajors, cacheMapFiles } from "../constants";
  * into the interactive 3D Sovereign Engine.
  */
 
-const UNIFIED_DIR = "D:\\sovereign\\atlas\\spatial\\unified_extract";
-const WORLD_EXTRACT_DIR = "D:\\sovereign\\atlas\\spatial\\world_extract";
+const UNIFIED_DIR = resolveSovereignPath("atlas/spatial/unified_extract");
+const WORLD_EXTRACT_DIR = resolveSovereignPath("atlas/spatial/world_extract");
 
 export interface SovereignEntity {
     id: number;

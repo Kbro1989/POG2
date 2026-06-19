@@ -1,5 +1,5 @@
 
-import { JagexCacheReader } from '../../utils/JagexCacheReader.js';
+import { JagexCacheReader } from '../../../utils/JagexCacheReader.js';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
@@ -10,13 +10,13 @@ import { existsSync } from 'fs';
  */
 export class CacheSoundSource {
     private reader: JagexCacheReader;
-    private static DEFAULT_CACHE_DIR = 'C:\\ProgramData\\Jagex\\RuneScape';
-    private static BACKUP_CACHE_DIR = 'D:\\D-sovereign-\\cache_pedagogy\\RuneScape-BETA-Backup';
+    public static DEFAULT_CACHE_DIR = 'C:\\ProgramData\\Jagex\\RuneScape';
+    public static BACKUP_CACHE_DIR = resolveSovereignPath('cache_pedagogy/RuneScape-BETA-Backup');
 
     constructor(cacheDir?: string) {
         // Priority: Passed dir -> Live C: drive -> Authoritative Backup D: drive
         const activeDir = cacheDir ||
-                        (existsSync(this.DEFAULT_CACHE_DIR) ? this.DEFAULT_CACHE_DIR : this.BACKUP_CACHE_DIR);
+            (existsSync(CacheSoundSource.DEFAULT_CACHE_DIR) ? CacheSoundSource.DEFAULT_CACHE_DIR : CacheSoundSource.BACKUP_CACHE_DIR);
         this.reader = new JagexCacheReader(activeDir);
     }
 
@@ -24,9 +24,10 @@ export class CacheSoundSource {
      * getSoundBuffer - Fetches raw audio bytes for a specific sound ID.
      * @param soundId The index within the audio archive.
      * @param isMusic If true, targets Index 15, otherwise Index 14.
+     * @param cacheMajor Override the cache major directly when a specific archive is known.
      */
-    public async getSoundBuffer(soundId: number, isMusic = false): Promise<Buffer | null> {
-        const major = isMusic ? 15 : 14;
+    public async getSoundBuffer(soundId: number, isMusic = false, cacheMajor?: number): Promise<Buffer | null> {
+        const major = cacheMajor ?? (isMusic ? 15 : 14);
         const entry = this.reader.readEntry(major, soundId);
 
         if (!entry) {
@@ -40,8 +41,8 @@ export class CacheSoundSource {
     /**
      * getRawAudioEntry - Returns full metadata including CRC.
      */
-    public getRawAudioEntry(soundId: number, isMusic = false) {
-        const major = isMusic ? 15 : 14;
+    public getRawAudioEntry(soundId: number, isMusic = false, cacheMajor?: number) {
+        const major = cacheMajor ?? (isMusic ? 15 : 14);
         return this.reader.readEntry(major, soundId);
     }
 

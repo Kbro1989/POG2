@@ -7,7 +7,7 @@ import path from 'path';
  * Mirrors the Morrowind MWSE-Lua 'writeGameStateFile' pattern.
  */
 export class SovereignSandboxLimb {
-  private sandboxPath = 'D:\\sovereign\\memory\\pedagogy\\sandbox_synthesis.json';
+  private sandboxPath = resolveSovereignPath('memory/pedagogy/sandbox_synthesis.json');
 
   constructor() { }
 

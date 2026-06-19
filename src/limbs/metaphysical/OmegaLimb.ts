@@ -25,6 +25,11 @@ export class OmegaLimb {
         });
     }
 
+    public async verifyAlignment(goal: string): Promise<Result<{ aligned: boolean; score: number }>> {
+        logger.info({ goal }, 'Verifying alignment via OmegaLimb compatibility shim.');
+        return this.verifyObjective({ state: 'ALIGNMENT_CHECK' }, goal);
+    }
+
     public async healthCheck(): Promise<{ online: boolean; details: string }> {
         // terminal alignment self-audit
         const audit = await this.verifyObjective({ state: 'ALIVE' }, 'existence');

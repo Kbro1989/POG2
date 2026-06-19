@@ -1,7 +1,8 @@
 import { createLogger } from '../../utils/logger.js';
 import { createHash, createHmac } from 'crypto';
 import { RegistryB } from '../../core/RegistryB.js';
-import { rsmvBridge } from '../../utils/RSMVBridge.js';
+import { existsSync } from 'fs';
+import { getrsmvLiveCachePath } from '../../utils/SovereignPathResolver.js';
 import { TruthClass } from '../../core/models.js';
 import { EpistemicValidator } from './EpistemicValidator.js';
 import type { CausalEvidence, CausalTrace, LearningTrace, EventOutcome, SignalSource, EventSource, TickEvent, RetryPolicy, TileLock } from '../../core/models.js';
@@ -293,8 +294,9 @@ export class CNSCausalityLedger {
         const isValid = validator.validateTransition(event.truthClass, targetClass);
         const finalClass = isValid ? targetClass : TruthClass.ANOMALY;
 
-        // 2. Capture Substrate Anchor
-        const anchor = rsmvBridge.isOnline ? 'RS3_CACHE_V2' : 'OFFLINE_SIM';
+        // 2. Capture Substrate Anchor (check if local cache is available)
+        const cacheExists = existsSync(getrsmvLiveCachePath());
+        const anchor = cacheExists ? 'RS3_CACHE_V2' : 'OFFLINE_SIM';
 
         // 3. Deterministic Payload Construction
         const payload = JSON.stringify(event, Object.keys(event).sort());

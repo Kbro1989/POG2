@@ -22,7 +22,7 @@ interface BoundingBox {
 // Replace with actual cache.getKit(id).getModel().getAABB() when live.
 async function extractKitAABBFromCache(kitId: number): Promise<BoundingBox> {
     logger.info(`Extracting kit_${kitId} AABB from cache...`);
-    
+
     // Simulated known values based on table and typical Jagex fixed-point
     if (kitId === 0 || kitId === 3) {
         // Player base model (typically fits strictly inside 1x1 tile)
@@ -37,7 +37,7 @@ async function extractKitAABBFromCache(kitId: number): Promise<BoundingBox> {
         // KBD Head/Accessories
         return { minX: -68, maxX: 68, minY: 80, maxY: 172, minZ: -18, maxZ: 18 };
     }
-    
+
     throw new Error(`Kit ${kitId} not mocked for extraction.`);
 }
 
@@ -48,21 +48,21 @@ async function main() {
 
     // 1. Scale Calibration via Player Base Model (kit_0)
     const baseKitAabb = await extractKitAABBFromCache(0);
-    const modelGroundWidth = baseKitAabb.maxX - baseKitAabb.minX; 
-    
+    const modelGroundWidth = baseKitAabb.maxX - baseKitAabb.minX;
+
     // Assuming the player base model strictly occupies a 1x1 tile footprint:
     const targetTileFootprint = 1.0;
     const scaleFactor = modelGroundWidth / targetTileFootprint;
-    
+
     logger.info(`[Calibration] kit_0 ground width: ${modelGroundWidth} units`);
     logger.info(`[Calibration] Derived scale factor: ${scaleFactor} units/tile`);
 
     // 2. Extract KBD Kits & Composite AABB
     const kbdKits = [420, 37641];
-    const compositeAABB: BoundingBox = { 
-        minX: Infinity, maxX: -Infinity, 
-        minY: Infinity, maxY: -Infinity, 
-        minZ: Infinity, maxZ: -Infinity 
+    const compositeAABB: BoundingBox = {
+        minX: Infinity, maxX: -Infinity,
+        minY: Infinity, maxY: -Infinity,
+        minZ: Infinity, maxZ: -Infinity
     };
 
     for (const kitId of kbdKits) {
@@ -85,8 +85,8 @@ async function main() {
 
     // 4. Validate against Havenhythe Bake
     const target = { x: 3712, y: 3328, plane: 0 };
-    const matrixPath = 'D:/sovereign/atlas/spatial/havenhythe_collision_matrix.json';
-    
+    const matrixPath = resolveSovereignPath('atlas/spatial/havenhythe_collision_matrix.json');
+
     let matrixData;
     try {
         matrixData = JSON.parse(readFileSync(matrixPath, 'utf8')).matrices;
@@ -98,7 +98,7 @@ async function main() {
     // Calculate footprint boundaries centered on target
     const halfWidth = Math.floor(tileFootprintX / 2);
     const halfDepth = Math.floor(tileFootprintY / 2);
-    
+
     let isCollisionFree = true;
     const collisionPoints = [];
 
@@ -108,11 +108,11 @@ async function main() {
         for (let dy = -halfDepth; dy <= halfDepth; dy++) {
             const checkX = target.x + dx;
             const checkY = target.y + dy;
-            
+
             // Safe access into baked matrix
             const planeData = matrixData[target.plane.toString()];
             if (!planeData) continue;
-            
+
             const rowData = planeData[checkY.toString()];
             const cellType = rowData ? rowData[checkX.toString()] : '?';
 

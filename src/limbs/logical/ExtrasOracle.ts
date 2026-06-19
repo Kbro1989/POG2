@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
+import { CacheSpatialDecoder } from '../spatial/CacheSpatialDecoder.js';
 
 export interface ExtraValue {
     key: number;
@@ -17,8 +18,11 @@ export class ExtrasOracle {
     private static instance: ExtrasOracle;
     private extrasIndex: Map<number, Map<number, number | string>> = new Map();
     private handlerRegistry: Map<number, string> = new Map();
+    private spatialDecoder: CacheSpatialDecoder;
 
-    private constructor() {}
+    private constructor() {
+        this.spatialDecoder = CacheSpatialDecoder.getInstance();
+    }
 
     public static getInstance(): ExtrasOracle {
         if (!ExtrasOracle.instance) {

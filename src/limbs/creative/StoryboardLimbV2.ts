@@ -14,7 +14,6 @@ import { createLogger } from "../../utils/logger.js";
 import { getSovereignRoot } from '../../utils/SovereignPathResolver.js';
 import { CacheForensicsLimb } from '../spatial/CacheForensicsLimb.js';
 import { RSMVBridge } from '../../utils/RSMVBridge.js';
-import { EnrichedSovereignCacheLoader } from '../spatial/EnrichedSovereignCacheLoader.js';
 
 const logger = createLogger('StoryboardLimb');
 
@@ -48,7 +47,7 @@ export interface StoryboardScene {
 
 export class StoryboardLimbV2 {
     private bridge: RSMVBridge;
-    private loader: EnrichedSovereignCacheLoader;
+    private loader: any;
 
     constructor(
         private readonly client: ModelClient,
@@ -63,7 +62,7 @@ export class StoryboardLimbV2 {
     ) {
         this.gutenberg.enable();
         this.bridge = RSMVBridge.instance;
-        this.loader = EnrichedSovereignCacheLoader.getInstance();
+        this.loader = null;
     }
 
     /**

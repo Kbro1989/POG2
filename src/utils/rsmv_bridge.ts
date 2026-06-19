@@ -20,6 +20,7 @@
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join, resolve } from 'path';
 import { existsSync } from 'fs';
+import { getrsmvCachePath } from './SovereignPathResolver.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -28,7 +29,7 @@ const __dirname = dirname(__filename);
 
 function findrsmvSubstrate(): string {
     // 1. Operational External Substrate (Verified Working)
-    const externalPath = 'D:\\pog2\\rsmv_inspector';
+    const externalPath = getrsmvSubstratePath();
     if (existsSync(externalPath)) return externalPath;
 
     // 2. Local Workspace Fallback
@@ -39,7 +40,7 @@ function findrsmvSubstrate(): string {
 }
 
 const rsmv_PATH = findrsmvSubstrate();
-const CACHE_PATH = process.env['POG_rsmv_CACHE_DIR'] || 'C:\\ProgramData\\Jagex\\RuneScape';
+const CACHE_PATH = getrsmvCachePath();
 
 const subFolder = existsSync(join(rsmv_PATH, 'src')) ? 'src' : '';
 
@@ -480,7 +481,7 @@ async function main() {
             const sqIndex = chunkX + chunkZ * WORLD_STRIDE;
             const index = await cs.loader.getCacheIndex(cs.cacheMajors.mapsquares);
             const sq = index.find((p: any) => p && p.minor === sqIndex);
-            
+
             if (!sq) {
                 throw new Error(`Mapsquare index ${sqIndex} not found in cache index`);
             }

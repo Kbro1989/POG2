@@ -59,9 +59,9 @@ export class CombatHUDBridge {
             const server = createServer((req, res) => {
                 if (req.url === '/health') {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ 
-                        status: 'alive', 
-                        port: 8080, 
+                    res.end(JSON.stringify({
+                        status: 'alive',
+                        port: 8080,
                         uptimeMs: CanonicalClock.getInstance().simulatedNow() - this.startTime,
                         clientsConnected: this.clients.size,
                         lastTickReceived: this.lastTickReceived,
@@ -94,7 +94,7 @@ export class CombatHUDBridge {
                         const nameQuery = url.searchParams.get('name') || '';
                         const idQuery = url.searchParams.get('id') || '';
 
-                        const dumpDir = 'D:\\sovereign\\cache_pedagogy\\json_dumps';
+                        const dumpDir = getCachePedagogyPath();
                         const fileMap: Record<string, string> = { npc: 'npcs.json', item: 'items.json', object: 'objects.json' };
                         const fileName = fileMap[type] || 'npcs.json';
                         const dataPath = join(dumpDir, fileName);
@@ -112,7 +112,7 @@ export class CombatHUDBridge {
                         } else if (nameQuery) {
                             const q = nameQuery.toLowerCase();
                             match = entries.find((e: any) => e.name && e.name.toLowerCase() === q)
-                                 || entries.find((e: any) => e.name && e.name.toLowerCase().includes(q));
+                                || entries.find((e: any) => e.name && e.name.toLowerCase().includes(q));
                         }
 
                         if (match) {
@@ -136,7 +136,7 @@ export class CombatHUDBridge {
                 if (pathname === '/api/actionbar') {
                     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
                     try {
-                        const regPath = 'D:\\sovereign\\memory\\pedagogy\\sovereign_ability_registry.json';
+                        const regPath = resolveSovereignPath('memory/pedagogy/sovereign_ability_registry.json');
                         if (existsSync(regPath)) {
                             const reg = JSON.parse(readFileSync(regPath, 'utf8'));
                             const style = (url.searchParams.get('style') || 'ranged').toLowerCase();
@@ -163,9 +163,9 @@ export class CombatHUDBridge {
 
                 // ─── Mounted Sovereign Data Directories ───
                 const mountedPaths: Record<string, string> = {
-                    '/interfaces/': 'D:\\sovereign\\cache_pedagogy\\atlas\\interfaces',
-                    '/dumps/': 'D:\\sovereign\\cache_pedagogy\\json_dumps',
-                    '/pedagogy/': 'D:\\sovereign\\memory\\pedagogy',
+                    '/interfaces/': resolveSovereignPath('cache_pedagogy/atlas/interfaces'),
+                    '/dumps/': getCachePedagogyPath(),
+                    '/pedagogy/': getPedagogyPath(),
                     '/scratch/': join(process.cwd(), 'scratch'),
                     '/pvme/': join(process.cwd(), 'data', 'pvme'),
                     '/atlas/': join(process.cwd(), 'atlas'),
@@ -220,7 +220,7 @@ export class CombatHUDBridge {
             this.wss.on('connection', (ws) => {
                 this.clients.add(ws);
                 logger.info('HUD client connected');
-                
+
                 ws.on('close', () => {
                     this.clients.delete(ws);
                     logger.info('HUD client disconnected');
@@ -272,7 +272,7 @@ export class CombatHUDBridge {
             learningTrace
         };
         this.broadcast(payload);
-        
+
         // Simple ring buffer for causal traces (learningTrace)
         if (learningTrace) {
             this.traceBuffer.push(learningTrace);

@@ -4,7 +4,7 @@ import { getrsmvCachePath } from '../../utils/SovereignPathResolver.js';
 import { createLogger } from '../../utils/logger.js';
 import { ByteReader } from '../../utils/ByteReader.js';
 import { getBlockedDirections } from '../../utils/DirectionalRegistry.js';
-import { rsmvBridge } from '../../utils/RSMVBridge.js';
+import { CacheForensicsLimb } from './CacheForensicsLimb.js';
 import fs from 'fs';
 
 const logger = createLogger('WorldForensicsLimb');
@@ -162,33 +162,9 @@ export class WorldForensicsLimb {
             console.log(`[WorldForensicsLimb] JSON Truth error for [${mapsquareX},${mapsquareZ}]:`, e);
         }
 
-        // --- CACHE FALLBACK: rsmvBridge Collision Probing ---
-        const bridgeRes = await rsmvBridge.getCollision(mapsquareX << 6, mapsquareZ << 6, plane);
-        if (bridgeRes.ok) {
-            const { data } = bridgeRes.value;
-            // Bridge returns 5 shorts per tile: [h00, h01, h10, h11, collision3]
-            for (let i = 0; i < 64 * 64; i++) {
-                const tx = Math.floor(i / 64);
-                const tz = i % 64;
-                const col3 = data[i * 5 + 4];
-                // col3 is base-3: center is bits 0..1 (value 0=pass, 1=block, 2=sight)
-                // We want bits 0..1 for blocking.
-                const centerVal = col3 % 3;
-                grid[plane][tx + 1][tz + 1] = (centerVal === 1 || centerVal === 2) ? 1 : 0;
-
-                observations.push({
-                    x: (mapsquareX << 6) + tx,
-                    z: (mapsquareZ << 6) + tz,
-                    plane: plane,
-                    collision: grid[plane][tx + 1][tz + 1],
-                    objects: []
-                });
-            }
-            this.terrainCache.set(cacheKey, observations);
-            return ok(observations);
-        }
-
-        return err(new Error(`Mapsquare terrain data missing for [${mapsquareX}, ${mapsquareZ}] and rsmvBridge failed.`));
+        // --- CACHE FALLBACK: Use static terrain data only ---
+        logger.warn({ mapsquareX, mapsquareZ, plane }, '[WorldForensicsLimb] JSON Truth missing and no dynamic fallback available.');
+        return err(new Error(`Mapsquare terrain data missing for [${mapsquareX}, ${mapsquareZ}] - use pre-generated static data.`));
     }
 
     /**
@@ -286,16 +262,18 @@ export class WorldForensicsLimb {
     }
 
     /**
-     * getObjectDefinition - Parses Archive 16 for object metadata using opcodes.
+     * getObjectDefinition - Fetch object metadata from static cache or native limbs.
      */
     public async getObjectDefinition(id: number): Promise<ObjectDefinition> {
         if (this.objectDefs.has(id)) {
             return this.objectDefs.get(id)!;
         }
 
-        const bridgeRes = await rsmvBridge.getObject(id);
-        if (bridgeRes.ok) {
-            const b = bridgeRes.value;
+        // Try to use CacheForensicsLimb for object details
+        const cacheForensics = CacheForensicsLimb.getInstance();
+        const res = await cacheForensics.getObjectDetails(id);
+        if (res.ok) {
+            const b = res.value;
             const def: ObjectDefinition = {
                 id: b.id,
                 name: b.name,
@@ -306,10 +284,10 @@ export class WorldForensicsLimb {
                 blocksSight: false,
                 maybe_blocks_movement: b.maybe_blocks_movement,
                 actions: b.actions,
-                varbitId: b.raw.varbit,
-                varpId: b.raw.varp,
-                transforms: b.raw.transforms,
-                defaultTransformId: b.raw.defaultTransformId
+                varbitId: b.varbit,
+                varpId: b.varp,
+                transforms: b.transforms,
+                defaultTransformId: b.defaultTransformId
             };
             this.objectDefs.set(id, def);
             return def;

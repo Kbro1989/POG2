@@ -17,7 +17,10 @@ export class PedagogyForensicsLimb {
     private fileRegistry: Set<string> = new Set();
     private lookupMap: Map<string, string> = new Map(); // O(1) Lookup substrate
 
-    private constructor(path: string = 'D:/sovereign/memory/pedagogy') {
+    private constructor(path?: string) {
+        if (!path) {
+            path = getPedagogyPath();
+        }
         this.substratePath = path;
         this.initializeRegistry();
     }
@@ -40,7 +43,7 @@ export class PedagogyForensicsLimb {
                     if (f.endsWith('.json')) {
                         const normalized = f.replace(/\\/g, '/');
                         this.fileRegistry.add(normalized);
-                        
+
                         // Populate lookup map for O(1) resolution
                         const fileName = normalized.split('/').pop()?.toLowerCase().replace('.json', '');
                         if (fileName) this.lookupMap.set(fileName, normalized);
@@ -62,7 +65,7 @@ export class PedagogyForensicsLimb {
      */
     public resolvePedigree(identifier: string): string | null {
         const target = identifier.toLowerCase();
-        
+
         // 1. O(1) Map Lookup (Optimal Path)
         const mapped = this.lookupMap.get(target);
         if (mapped) return mapped;
@@ -87,7 +90,7 @@ export class PedagogyForensicsLimb {
      */
     public buildProvenance(entityId: string, substrateProv: Provenance): Provenance {
         const pedigree = this.resolvePedigree(entityId);
-        
+
         if (!pedigree) return substrateProv;
 
         return {

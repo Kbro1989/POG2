@@ -16,14 +16,14 @@ async function testBridgeNavigationC3() {
 
     const { getAtlasSpatialPath } = await import('../utils/SovereignPathResolver.js');
     const atlasDir = getAtlasSpatialPath();
-    const DB_PATH = 'D:\\sovereign\\vibe-learning-test.db';
+    const DB_PATH = getVectorDbPath();
     if (fs.existsSync(DB_PATH)) fs.unlinkSync(DB_PATH);
 
     // 1. Setup TWO regions with a 1-tile "No-Man's-Land" gap
     // Region A: Barrows (55, 51) - Bounds end at Y=3264
     // Region B: Barrows South (55, 50) - Bounds start at Y=3262
     // We will place a target in Region B and see if the pathfinder can bridge the gap.
-    
+
     const barrowsPath = path.join(atlasDir, 'barrows_logic.json');
     const barrowsMatrix = JSON.parse(fs.readFileSync(barrowsPath, 'utf8'));
     // Ensure Barrows has a clear path to its southern exit
@@ -45,14 +45,14 @@ async function testBridgeNavigationC3() {
     const spatial = SpatialSovereigntyLimb.getInstance();
     await spatial.initialize();
     await spatial.loadLogic('barrows');
-    
+
     const worldForensics = WorldForensicsLimb.getInstance();
     await worldForensics.initialize();
-    
+
     const lessonLearner = new LessonLearner(worldForensics, DB_PATH);
     const discovery = new DiscoveryLimb();
     const pathfinder = new DirectionalPathfinder(spatial);
-    
+
     // Start at the southern edge of Barrows
     const avatar: Coord = { x: 3564, y: 3266, plane: 0 };
     const engine = new ExplorationEngine(avatar, discovery, pathfinder, spatial, lessonLearner);
@@ -74,17 +74,17 @@ async function testBridgeNavigationC3() {
 
     // 4. Trigger Movement Crossing
     console.log('\n--- Attempting Inter-Regional Crossing ---');
-    
+
     const startY = avatar.y;
     // Run for 3 ticks to ensure it has time to cross the 1-tile gap
     await engine.tick(gameState);
     await engine.tick(gameState);
     await engine.tick(gameState);
-    
+
     // Pathfinding happens in tick. Check if avatar moved SOUTH toward target.
     const finalPos = engine.getStats().avatar;
     console.log(`   Final Position: (${finalPos.x}, ${finalPos.y})`);
-    
+
     const movedSouth = finalPos.y < startY;
     const bridgeSuccess = finalPos.y <= 3264; // Successfully reached or crossed the 3264 boundary
 

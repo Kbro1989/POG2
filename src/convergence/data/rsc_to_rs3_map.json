@@ -1,0 +1,34 @@
+{
+  "_meta": {
+    "description": "RSC object ID → RS3 object ID bridge table. Generated from forensic cache analysis.",
+    "version": "1.0.0",
+    "lastUpdated": "2026-06-10",
+    "coordinateNotes": "RSC coordinates: tile origin top-left, approx 0-900 range. RS3 coordinates: tile origin bottom-left, 3000-15000 range. No linear mapping exists — use region labels for cross-era resolution."
+  },
+  "mappings": [
+    {
+      "rscId": 64,
+      "rs3Id": 15645,
+      "name": "Staircase",
+      "regions": ["Lumbridge Castle", "Al Kharid Palace"],
+      "semanticRole": "vertical_transition",
+      "notes": "RSC 64 is the generic staircase object. RS3 15645 is the modern equivalent in Lumbridge. Multiple RS3 IDs may map from a single RSC ID."
+    },
+    {
+      "rscId": 57,
+      "rs3Id": 16543,
+      "name": "Trapdoor / Cellar entrance",
+      "regions": ["Lumbridge Castle"],
+      "semanticRole": "dungeon_entry",
+      "notes": "RSC 57 = cellar trapdoor at Lumbridge. RS3 16543 = modern trapdoor variant."
+    },
+    {
+      "rscId": 23,
+      "rs3Id": 1579,
+      "name": "Ladder (up)",
+      "regions": ["Varrock", "Falador", "Al Kharid"],
+      "semanticRole": "vertical_transition",
+      "notes": "Generic RSC ladder. RS3 maps to multiple object IDs depending on region."
+    }
+  ]
+}

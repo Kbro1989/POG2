@@ -129,7 +129,7 @@ Please analyze this context and construct a corrected command or deployment conf
     }
 
     async wranglerKvList(): Promise<Result<EngineOutput>> {
-        return this.executeWithDiagnostics('wrangler kv:namespace list');
+        return this.executeWithDiagnostics('wrangler kv namespace list');
     }
 
     async wranglerR2List(): Promise<Result<EngineOutput>> {

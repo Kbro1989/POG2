@@ -18,12 +18,12 @@ async function runValidation() {
     logger.info('Starting Refilled Node Validation (Phase D)...');
 
     const refiller = new DumpRefiller();
-    const targetDir = 'D:\\sovereign\\refilled';
+    const targetDir = resolveSovereignPath('refilled');
 
     // 1. Refill Spatial Node (7244)
     logger.info('Refilling Spatial Master Node (7244)...');
     const spatialSuccess = await refiller.refillNode(7244);
-    
+
     // 2. Refill Decompression Node (1447)
     logger.info('Refilling Decompression Node (1447)...');
     const decompSuccess = await refiller.refillNode(1447);
@@ -37,7 +37,7 @@ async function runValidation() {
 
     if (spatialSuccess && decompSuccess && spatialExits && decompExits) {
         logger.info('✅ REFILL VALIDATION PASSED: Multi-node re-hydration successful.');
-        
+
         // 4. Sample check for semantic mapping
         const spatialContent = fs.readFileSync(spatialPath, 'utf8');
         if (spatialContent.includes('export const UnpackRGBAToIntegerFloat')) {

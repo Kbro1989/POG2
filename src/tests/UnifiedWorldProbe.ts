@@ -28,15 +28,15 @@ interface SovereignNode {
 }
 
 class SovereignChainProbe {
-    private landscapePath = 'D:/sovereign/atlas/reference/arsenal/landscape_reference.json';
-    private synthesisPath = 'D:/sovereign/memory/pedagogy/prifddinas_synthesis.json';
-    private kineticPath = 'D:/sovereign/atlas/spatial/pathing_theory/kinetic_targets/';
-    private examinePath = 'D:/sovereign/memory/pedagogy/RS3_Examine_Authority.json';
-    private outputPath = 'D:/sovereign/atlas/spatial/pathing_theory/pog2_logical_chain_audit.json';
+    private landscapePath = resolveSovereignPath('atlas/reference/arsenal/landscape_reference.json');
+    private synthesisPath = resolveSovereignPath('memory/pedagogy/prifddinas_synthesis.json');
+    private kineticPath = resolveSovereignPath('atlas/spatial/pathing_theory/kinetic_targets/');
+    private examinePath = resolveSovereignPath('memory/pedagogy/RS3_Examine_Authority.json');
+    private outputPath = resolveSovereignPath('atlas/spatial/pathing_theory/pog2_logical_chain_audit.json');
 
     async runAudit(districtFocus: string = 'ALL') {
         console.log(`[CNS] Initializing Sovereign Chain Audit [God Head -> God Body -> Execution]`);
-        
+
         if (!fs.existsSync(this.landscapePath)) {
             console.error(`Arsenal missing at ${this.landscapePath}`);
             return;
@@ -46,7 +46,7 @@ class SovereignChainProbe {
         const landscape = JSON.parse(fs.readFileSync(this.landscapePath, 'utf8'));
         const synthesis = fs.existsSync(this.synthesisPath) ? JSON.parse(fs.readFileSync(this.synthesisPath, 'utf8')) : { districts: {} };
         const examineData = fs.existsSync(this.examinePath) ? JSON.parse(fs.readFileSync(this.examinePath, 'utf8')) : { npcs: {}, items: {} };
-        
+
         // 2. Load Kinetic Substrate (Actions/Cursors/Animation Groups)
         const kineticMap = new Map<string, any>();
         if (fs.existsSync(this.kineticPath)) {
@@ -106,7 +106,7 @@ class SovereignChainProbe {
                     combat: kinetic?.combat
                 }
             };
-            
+
             chainAudit.push(node);
         }
 
@@ -124,7 +124,7 @@ class SovereignChainProbe {
             node.locations.forEach(loc => {
                 const gx = Math.floor(loc.x % gridDim);
                 const gy = Math.floor(loc.y % gridDim);
-                
+
                 if (node.execution.actions.length > 0) {
                     grid[gy][gx] = 'O'; // Interactive (God Head has 'What')
                 } else if (node.execution.requirements.length > 0) {
@@ -135,7 +135,7 @@ class SovereignChainProbe {
             });
         });
 
-        const gridPath = 'D:/sovereign/atlas/spatial/pathing_theory/prifddinas_audit_grid.txt';
+        const gridPath = resolveSovereignPath('atlas/spatial/pathing_theory/prifddinas_audit_grid.txt');
         const gridStr = grid.reverse().map(row => row.join(' ')).join('\n');
         fs.writeFileSync(gridPath, gridStr);
         console.log(`[CNS] High-Fidelity Spatial Grid Refined (God Body Grounding): ${gridPath}`);

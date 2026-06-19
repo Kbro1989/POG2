@@ -13,7 +13,7 @@ import { getSovereignRoot } from '../utils/SovereignPathResolver.js';
 async function testGlobalDiscoveryC2() {
     console.log('ðŸ§ª PHASE C2 TEST: Global Frontier Discovery (3x3 View)\n');
 
-    const DB_PATH = 'D:\\sovereign\\vibe-learning-test.db';
+    const DB_PATH = getVectorDbPath();
     if (fs.existsSync(DB_PATH)) fs.unlinkSync(DB_PATH);
 
     const atlasDir = path.join(getSovereignRoot(), 'atlas', 'spatial');
@@ -35,21 +35,21 @@ async function testGlobalDiscoveryC2() {
     const spatial = SpatialSovereigntyLimb.getInstance();
     await spatial.initialize();
     await spatial.loadLogic('barrows'); // Preload Barrows
-    
+
     const worldForensics = WorldForensicsLimb.getInstance();
     await worldForensics.initialize();
-    
+
     const lessonLearner = new LessonLearner(worldForensics, DB_PATH);
     const discovery = new DiscoveryLimb();
     const pathfinder = new DirectionalPathfinder(spatial);
-    
+
     const avatar: Coord = { x: 3564, y: 3288, plane: 0 };
     const engine = new ExplorationEngine(avatar, discovery, pathfinder, spatial, lessonLearner);
 
     const gameState = { plane: 0, npcSpatialIndex: new Map(), npcMap: new Map(), objectMap: new Map(), players: [] } as any;
 
     console.log(`ðŸ“ Avatar at (${avatar.x}, ${avatar.y}) in Barrows.`);
-    
+
     // 3. Mark Barrows corridor as visited to force scanning the neighbor
     console.log('ðŸ“Œ Simulating full exploration of current mapsquare...');
     for (let x = 3550; x < 3580; x++) {
@@ -61,8 +61,8 @@ async function testGlobalDiscoveryC2() {
     // 4. Trigger Global Discovery
     console.log('\n--- Triggering Global Discovery (3x3 Scan) ---');
     // Tick 0 will trigger FragmentOrchestrator to load Barrows South
-    await engine.tick(gameState); 
-    
+    await engine.tick(gameState);
+
     const frontier = await discovery.getGlobalFrontier(0, avatar.x, avatar.y, spatial);
     const distantTarget = frontier.find(t => t.y < 3280); // Target in Barrows South (55, 50)
 

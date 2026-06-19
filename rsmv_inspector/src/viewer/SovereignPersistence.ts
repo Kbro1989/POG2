@@ -9,8 +9,8 @@ export interface SovereignState {
 }
 
 export class SovereignPersistence {
-    private static STATE_PATH = 'D:\\sovereign\\memory\\sovereign_state.json';
-    private static LEGACY_SAVE_PATH = 'D:\\sovereign\\memory\\pedagogy\\2004_save.json';
+    private static STATE_PATH = resolveSovereignPath('memory/sovereign_state.json');
+    private static LEGACY_SAVE_PATH = resolveSovereignPath('memory/pedagogy/2004_save.json');
 
     /**
      * Loads the 2004 legacy save "pick_of_gods" and translates it to the 2026 baseline.

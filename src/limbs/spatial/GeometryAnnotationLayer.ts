@@ -35,34 +35,34 @@ export type AnnotationConfidence = 'RESOLVED' | 'INFERRED' | 'CONTESTED';
 export type AnnotationSource = 'HUMAN' | 'LEARNER' | 'ARCHAEOLOGIST';
 
 export type GeometryAnnotation = {
-    id:           string;               // "<x>_<z>_<plane>_<index>"
-    region:       { x: number; z: number; plane: number };
-    tile_range:   { x1: number; z1: number; x2: number; z2: number };
-    void_type:    VoidType;
-    navigable:    boolean;
-    signal:       string;               // Human-readable label
-    confidence:   AnnotationConfidence;
-    source:       AnnotationSource;
-    object_ids?:  number[];             // Cache object IDs that match
-    varbit_ids?:  number[];             // Varbits governing state
-    notes?:       string;
-    timestamp:    string;
+    id: string;               // "<x>_<z>_<plane>_<index>"
+    region: { x: number; z: number; plane: number };
+    tile_range: { x1: number; z1: number; x2: number; z2: number };
+    void_type: VoidType;
+    navigable: boolean;
+    signal: string;               // Human-readable label
+    confidence: AnnotationConfidence;
+    source: AnnotationSource;
+    object_ids?: number[];             // Cache object IDs that match
+    varbit_ids?: number[];             // Varbits governing state
+    notes?: string;
+    timestamp: string;
 };
 
 export type GALIndex = {
-    version:      number;
-    updated:      string;
-    count:        number;
-    entries:      GALIndexEntry[];
+    version: number;
+    updated: string;
+    count: number;
+    entries: GALIndexEntry[];
 };
 
 type GALIndexEntry = {
-    id:           string;
-    region:       { x: number; z: number; plane: number };
-    tile_range:   { x1: number; z1: number; x2: number; z2: number };
-    void_type:    VoidType;
-    navigable:    boolean;
-    confidence:   AnnotationConfidence;
+    id: string;
+    region: { x: number; z: number; plane: number };
+    tile_range: { x1: number; z1: number; x2: number; z2: number };
+    void_type: VoidType;
+    navigable: boolean;
+    confidence: AnnotationConfidence;
 };
 
 // ═══════════════════════════════════════════════════════
@@ -70,7 +70,7 @@ type GALIndexEntry = {
 // ═══════════════════════════════════════════════════════
 
 export class GeometryAnnotationLayer {
-    private static readonly BASE_DIR = 'D:/sovereign/atlas/annotations';
+    private static readonly BASE_DIR = resolveSovereignPath('atlas/annotations');
     private static readonly INDEX_PATH = `${GeometryAnnotationLayer.BASE_DIR}/index.gal.json`;
 
     private index: GALIndex;
@@ -194,7 +194,7 @@ export class GeometryAnnotationLayer {
                 try {
                     const ann = JSON.parse(readFileSync(this.annotationPath(entry.id), 'utf-8'));
                     results.push(ann);
-                } catch {}
+                } catch { }
             }
         }
         return results;

@@ -13,7 +13,7 @@ const logger = createLogger('VolumeSovereigntyLimb');
 export class VolumeSovereigntyLimb {
     private static instance: VolumeSovereigntyLimb;
     private zones: Map<string, MapZone> = new Map();
-    
+
     // Spatial Binning: "mapsquare_plane" -> [Zone IDs]
     // mapsquare = (worldX >> 6) << 8 | (worldZ >> 6)
     private spatialIndex: Map<string, string[]> = new Map();
@@ -31,16 +31,16 @@ export class VolumeSovereigntyLimb {
 
     private loadRegistry() {
         try {
-            const registryPath = 'D:\\sovereign\\memory\\pedagogy\\mapzones_registry.json';
+            const registryPath = resolveSovereignPath('memory/pedagogy/mapzones_registry.json');
             const data = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
-            
+
             for (const [id, zone] of Object.entries(data)) {
                 const z = zone as MapZone;
                 z.id = id;
                 this.zones.set(id, z);
                 this.indexZone(z);
             }
-            
+
             logger.info({ zoneCount: this.zones.size }, 'MapZone Registry synchronized.');
         } catch (err) {
             logger.error({ err }, 'Failed to load MapZone Registry from Pedagogy.');
@@ -54,13 +54,13 @@ export class VolumeSovereigntyLimb {
         for (const bound of zone.bounds) {
             const dst = bound.dst;
             const plane = bound.plane;
-            
+
             // Calculate overlapping mapsquares
             const startX = dst.xstart >> 6;
             const endX = dst.xend >> 6;
             const startZ = dst.zstart >> 6;
             const endZ = dst.zend >> 6;
-            
+
             for (let mx = startX; mx <= endX; mx++) {
                 for (let mz = startZ; mz <= endZ; mz++) {
                     const key = `${mx}_${mz}_${plane}`;
@@ -81,10 +81,10 @@ export class VolumeSovereigntyLimb {
         const mx = coord.x >> 6;
         const mz = coord.y >> 6;
         const key = `${mx}_${mz}_${coord.plane}`;
-        
+
         const candidateIds = this.spatialIndex.get(key) || [];
         const matches: MapZone[] = [];
-        
+
         for (const id of candidateIds) {
             const zone = this.zones.get(id)!;
             if (this.isInside(coord, zone)) {

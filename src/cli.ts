@@ -10,22 +10,15 @@
  */
 
 import 'dotenv/config';
-import { createRequire } from 'module';
 import { GameCacheLoader } from 'rsmv/cache/sqlite.js';
 import { cacheMajors, cacheConfigPages } from 'rsmv/constants.js';
 import { parse } from 'rsmv/opdecoder.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-const require = createRequire(import.meta.url);
 
 // Get the directory where this CLI script is located
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-// Project root is two levels up from src/cli.ts
-const projectRoot = join(__dirname, '..', '..');
-if (typeof (globalThis as any).__non_webpack_require__ === 'undefined') {
-    (globalThis as any).__non_webpack_require__ = require;
-}
 import { program, Command } from 'commander';
 
 // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
@@ -92,7 +85,7 @@ import { OfficialApiLimb } from './limbs/spatial/OfficialApiLimb.js';
 import { SpatialMetricEngine } from './limbs/spatial/SpatialMetricEngine.js';
 import { WikiEnricher } from './utils/WikiEnricher.js';
 import { MinigameForensicsLimb } from './limbs/spatial/MinigameForensicsLimb.js';
-import { getSovereignRoot, getrsmvCachePath, getCachePedagogyPath, getPipelineRootPath, getGodHeadRoot, getGutenbergPath, setProjectRoot as setSovereignRoot, getPackageRoot } from './utils/SovereignPathResolver.js';
+import { getSovereignRoot, getrsmvCachePath, setProjectRoot as setSovereignRoot, getPackageRoot } from './utils/SovereignPathResolver.js';
 import { CacheForensicsLimb } from './limbs/spatial/CacheForensicsLimb.js';
 import { SystemTaxonomyLimb } from './limbs/spatial/SystemTaxonomyLimb.js';
 import { MaterialLimb } from './limbs/spatial/MaterialLimb.js';
@@ -277,7 +270,7 @@ export async function main(): Promise<void> {
 
     // Phase 0: Initialize the Thought Processor (HexagramManager singleton)
     // Must happen BEFORE TernaryRouter construction Ã¢â‚¬â€ the router calls getInstance()
-    
+
 
     const hexagram = new HexagramManager(null, getPackageRoot());
     await hexagram.initialize();
@@ -376,10 +369,10 @@ export async function main(): Promise<void> {
         .action(async (minigame: string | undefined, opts: { headless: boolean }) => {
             const gameplay = GameplaySovereigntyLimb.getInstance();
             renderer.info('🕸️ POG2 Sovereign Organism: Initiating boot sequence...');
-            
+
             gameplay.engagePlayerHarness();
             let module: any = null;
-            
+
             if (minigame) {
                 renderer.info(`🎮 Initializing Sovereign Play Substrate: ${minigame}...`);
                 if (minigame.toLowerCase() === 'prifddinas') module = new PrifddinasInterpreter();
@@ -420,7 +413,7 @@ export async function main(): Promise<void> {
                             const view = radar.render(gameplay.globalState, gameplay.avatar);
                             process.stdout.write('\x1Bc'); // Clear screen
                             process.stdout.write(view + '\n');
-                        } catch (e) {}
+                        } catch (e) { }
                         setTimeout(renderRadar, 600);
                     };
                     renderRadar();
@@ -471,10 +464,10 @@ export async function main(): Promise<void> {
                 }
                 promptLoop();
             };
-            
+
             // SIGINT handler removed to avoid conflict with main REPL shutdown flow
 
-            
+
             promptLoop();
         });
     program
@@ -701,7 +694,7 @@ export async function main(): Promise<void> {
     atlas
         .command('hud-scan')
         .description('Batch classify all decomposed HUD manifests in atlas, filter false positives, optionally write clean JSON')
-        .option('--atlas-dir <dir>', 'Path to atlas/interfaces directory', 'D:\\D-sovereign-\\cache_pedagogy\\atlas\\interfaces')
+        .option('--atlas-dir <dir>', 'Path to atlas/interfaces directory', join(getSovereignRoot(), 'cache_pedagogy', 'atlas', 'interfaces'))
         .option('--output <file>', 'Write clean classifications to this JSON file')
         .option('--all', 'Include all results (not just HIGH/MEDIUM confidence)', false)
         .action(async (opts: { atlasDir: string; output?: string; all: boolean }) => {
@@ -741,7 +734,7 @@ export async function main(): Promise<void> {
     atlas
         .command('hud-extract')
         .description('Bulk extract and decompose all Major 3 interfaces to disk (expands atlas coverage)')
-        .option('--output-dir <dir>', 'Output directory for decomposed JSON files', 'D:\\D-sovereign-\\cache_pedagogy\\atlas\\interfaces')
+        .option('--output-dir <dir>', 'Output directory for decomposed JSON files', join(getSovereignRoot(), 'cache_pedagogy', 'atlas', 'interfaces'))
         .option('--range <range>', 'ID range to extract, e.g. 0-2000', '0-2000')
         .option('--force', 'Overwrite existing decomposed files', false)
         .action(async (opts: { outputDir: string; range: string; force: boolean }) => {
@@ -840,9 +833,10 @@ export async function main(): Promise<void> {
                 const server = http.createServer((req, res) => {
                     let filePath = join('public', req.url === '/' ? 'heatmap.html' : req.url!);
 
-                    // Root fallback for collision data: Check the bulk extraction directory on D-drive
+                    // Root fallback for collision data: Check the bulk extraction directory via resolver
                     if (!fs.existsSync(filePath) && req.url?.startsWith('/ms_')) {
-                        const dPath = join('D:\\sovereign\\atlas\\spatial\\world_extract', req.url.substring(1));
+                        const { resolveSovereignPath } = await import('./utils/SovereignPathResolver.js');
+                        const dPath = join(resolveSovereignPath('atlas/spatial/world_extract'), req.url.substring(1));
                         if (fs.existsSync(dPath)) {
                             filePath = dPath;
                         }
@@ -1106,7 +1100,7 @@ export async function main(): Promise<void> {
                     process.exit(1);
                 }
 
-                const CACHE_DIR = "C:\\ProgramData\\Jagex\\RuneScape";
+                const CACHE_DIR = getrsmvCachePath();
                 const source = new GameCacheLoader(CACHE_DIR);
                 const results: any[] = [];
                 const TABLE_ID = 39; // NPC Grounding
@@ -1159,7 +1153,7 @@ export async function main(): Promise<void> {
                     }
                 }
 
-                const outputPath = `D:/sovereign/memory/pedagogy/grounding_extraction_${minX}_${minY}.json`;
+                const outputPath = join(getPedagogyPath(), `grounding_extraction_${minX}_${minY}.json`);
                 fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
                 renderer.info(`\u{2705} Successfully extracted ${results.length} entities to ${outputPath}`);
 
@@ -1180,7 +1174,7 @@ export async function main(): Promise<void> {
             const engine = new OrchestrateEngine(config, router, renderer);
             const routerInstance = new CLIRouter(engine);
             const limb = engine.mechanicalSovereignty;
-            
+
             renderer.info(`Ã°Å¸Â§Â¬ Loading Mechanical Logic for: ${region}...`);
             const res = await routerInstance.routeSpatialInitialize({ loadLogic: region });
             if (res.ok) {
@@ -1281,7 +1275,7 @@ export async function main(): Promise<void> {
             renderer.info(`\nÃ°Å¸Â§Â¬ Commencing Unified Learning for ${type}: ${idOrName}...`);
 
             const apiLimb = new OfficialApiLimb();
-            const metricEngine = new SpatialMetricEngine();
+            const metricEngine = SpatialMetricEngine.getInstance();
             const engine = new OrchestrateEngine(config, router, renderer);
             const routerInstance = new CLIRouter(engine);
             const forensics = engine.cacheForensics;
@@ -1334,7 +1328,7 @@ export async function main(): Promise<void> {
                 }
 
                 // 4. Persistence
-                const atlasPath = path.join('D:\\sovereign\\atlas', type, `${learnedObject.name.replace(/\s+/g, '_').toLowerCase()}.json`);
+                const atlasPath = path.join(getAtlasLogicPath(), `${learnedObject.name.replace(/\s+/g, '_').toLowerCase()}.json`);
                 await fs.promises.mkdir(path.dirname(atlasPath), { recursive: true });
                 await fs.promises.writeFile(atlasPath, JSON.stringify(learnedObject, null, 2));
 
@@ -2286,7 +2280,7 @@ export async function main(): Promise<void> {
         .action(async (idArg: string | undefined, opts: { adren?: number; stance?: string; tactical?: string; archetype?: string; leader?: string }) => {
             const engine = new OrchestrateEngine(config, router, renderer);
             const routerInstance = new CLIRouter(engine);
-            
+
             const res = await routerInstance.routeGameplayVolition({
                 adren: opts.adren,
                 stance: opts.stance,
@@ -2378,7 +2372,7 @@ export async function main(): Promise<void> {
                 const limb = AbilityDiscoveryLimb.getInstance();
                 const style = avatar.visualState?.combatStance || 'melee';
                 const list = limb.discoverFromAbilityBook(style as any);
-                
+
                 renderer.log(`\n\x1b[38;5;154m[OPTIMAL COMBAT ROTATION - ${style.toUpperCase()}]\x1b[0m`);
                 if (list.length === 0) {
                     renderer.info('No abilities discovered for this combat style yet.');
@@ -3423,7 +3417,7 @@ export async function main(): Promise<void> {
                     Promise.resolve(extractor.healthCheck()),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Substrate probe timed out')), 2000))
                 ]).catch(err => ({ online: false, details: `Probe Error: ${err.message}` })) as { online: boolean; details: string };
-                
+
                 if (probe.online) renderer.success(`RSMV Substrate: ${probe.details}`);
                 else renderer.error(`RSMV Substrate: ${probe.details}`);
             } catch (err) {
@@ -3535,8 +3529,8 @@ export async function main(): Promise<void> {
     // Three-tier post-parse post-execution router
     const commandName = program.args[0];
     if (commandName) {
-        const isDaemon = 
-            commandName === 'play' || 
+        const isDaemon =
+            commandName === 'play' ||
             commandName === 'serve' ||
             (commandName === 'atlas' && program.args.includes('grounding')) ||
             (commandName === 'atlas' && program.args.includes('play'));

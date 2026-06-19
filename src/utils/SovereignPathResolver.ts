@@ -320,15 +320,10 @@ export function getStaticResourcesPath(): string {
 /**
  * Returns the formal structural path to the local Jagex/RuneScape cache.
  * Governs the vision bridge's access to underlying model data.
- * Priority: Beta if available, otherwise Live.
+ * Priority: live server cache only, as beta availability is no longer valid.
  */
 export function getrsmvCachePath(): string {
     if (process.env['POG_rsmv_CACHE_DIR']) return process.env['POG_rsmv_CACHE_DIR'];
-    
-    // Auto-detect: Beta takes precedence for forensic monitoring
-    const beta = getrsmvBetaCachePath();
-    if (beta && existsSync(beta)) return beta;
-
     return getrsmvLiveCachePath();
 }
 
@@ -348,7 +343,7 @@ export function getrsmvLiveCachePath(): string {
  */
 export function getrsmvBetaCachePath(): string | null {
     if (process.platform === 'win32') {
-        const rs3BetaPath = 'C:\\ProgramData\\Jagex\\RuneScape-BETA';
+        const rs3BetaPath = 'C:\\ProgramData\\Jagex\\RuneScape';
         if (existsSync(rs3BetaPath)) return rs3BetaPath;
     }
     return null;

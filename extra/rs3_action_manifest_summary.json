@@ -1,0 +1,219 @@
+{
+  "meta": {
+    "timestamp": "2026-04-10T05:27:50.561Z",
+    "source": "RS3_Live_Cache"
+  },
+  "statistics": {
+    "total_actions": 1440,
+    "total_usage_count": 51525,
+    "singleton_count": 652,
+    "unique_verbs": 1019,
+    "core_actions": 8,
+    "common_actions": 50,
+    "niche_actions": 1382
+  },
+  "top_20": [
+    {
+      "name": "Talk to",
+      "count": 7229,
+      "percentage": 14.03
+    },
+    {
+      "name": "Attack",
+      "count": 7037,
+      "percentage": 13.66
+    },
+    {
+      "name": "Destroy",
+      "count": 4582,
+      "percentage": 8.89
+    },
+    {
+      "name": "Wear",
+      "count": 3831,
+      "percentage": 7.44
+    },
+    {
+      "name": "Wield",
+      "count": 1800,
+      "percentage": 3.49
+    },
+    {
+      "name": "Inspect",
+      "count": 1466,
+      "percentage": 2.85
+    },
+    {
+      "name": "Guide",
+      "count": 1125,
+      "percentage": 2.18
+    },
+    {
+      "name": "Open",
+      "count": 1072,
+      "percentage": 2.08
+    },
+    {
+      "name": "Read",
+      "count": 942,
+      "percentage": 1.83
+    },
+    {
+      "name": "Mark",
+      "count": 850,
+      "percentage": 1.65
+    },
+    {
+      "name": "Drink",
+      "count": 828,
+      "percentage": 1.61
+    },
+    {
+      "name": "Search",
+      "count": 758,
+      "percentage": 1.47
+    },
+    {
+      "name": "Remove",
+      "count": 728,
+      "percentage": 1.41
+    },
+    {
+      "name": "Empty",
+      "count": 694,
+      "percentage": 1.35
+    },
+    {
+      "name": "Interact",
+      "count": 691,
+      "percentage": 1.34
+    },
+    {
+      "name": "Clear",
+      "count": 665,
+      "percentage": 1.29
+    },
+    {
+      "name": "Bind",
+      "count": 545,
+      "percentage": 1.06
+    },
+    {
+      "name": "Trade",
+      "count": 468,
+      "percentage": 0.91
+    },
+    {
+      "name": "Enter",
+      "count": 410,
+      "percentage": 0.8
+    },
+    {
+      "name": "Convert",
+      "count": 385,
+      "percentage": 0.75
+    }
+  ],
+  "category_distribution": {
+    "inventory": {
+      "action_count": 21,
+      "total_usage": 13825,
+      "percentage": 26.83
+    },
+    "other": {
+      "action_count": 1011,
+      "total_usage": 10397,
+      "percentage": 20.18
+    },
+    "social": {
+      "action_count": 13,
+      "total_usage": 7324,
+      "percentage": 14.21
+    },
+    "combat": {
+      "action_count": 12,
+      "total_usage": 7276,
+      "percentage": 14.12
+    },
+    "interface": {
+      "action_count": 78,
+      "total_usage": 4729,
+      "percentage": 9.18
+    },
+    "movement": {
+      "action_count": 67,
+      "total_usage": 1480,
+      "percentage": 2.87
+    },
+    "quest": {
+      "action_count": 36,
+      "total_usage": 1380,
+      "percentage": 2.68
+    },
+    "crafting": {
+      "action_count": 49,
+      "total_usage": 1237,
+      "percentage": 2.4
+    },
+    "trade": {
+      "action_count": 68,
+      "total_usage": 1010,
+      "percentage": 1.96
+    },
+    "farming": {
+      "action_count": 19,
+      "total_usage": 866,
+      "percentage": 1.68
+    },
+    "summoning": {
+      "action_count": 12,
+      "total_usage": 742,
+      "percentage": 1.44
+    },
+    "thieving": {
+      "action_count": 9,
+      "total_usage": 395,
+      "percentage": 0.77
+    },
+    "fishing": {
+      "action_count": 6,
+      "total_usage": 262,
+      "percentage": 0.51
+    },
+    "mining": {
+      "action_count": 3,
+      "total_usage": 173,
+      "percentage": 0.34
+    },
+    "prayer": {
+      "action_count": 8,
+      "total_usage": 151,
+      "percentage": 0.29
+    },
+    "magic": {
+      "action_count": 16,
+      "total_usage": 150,
+      "percentage": 0.29
+    },
+    "agility": {
+      "action_count": 2,
+      "total_usage": 47,
+      "percentage": 0.09
+    },
+    "minigame": {
+      "action_count": 8,
+      "total_usage": 40,
+      "percentage": 0.08
+    },
+    "null": {
+      "action_count": 1,
+      "total_usage": 21,
+      "percentage": 0.04
+    },
+    "woodcutting": {
+      "action_count": 1,
+      "total_usage": 20,
+      "percentage": 0.04
+    }
+  }
+}

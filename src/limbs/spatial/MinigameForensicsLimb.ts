@@ -25,7 +25,7 @@ export class MinigameForensicsLimb {
     constructor(
         private forensics: CacheForensicsLimb,
         private learning: CacheLearningLimb
-    ) {}
+    ) { }
 
     /**
      * learnMinigame(name) - Deconstructs a minigame system.
@@ -84,7 +84,7 @@ export class MinigameForensicsLimb {
             }
 
             // 4. Persistence
-            const atlasDir = 'D:\\sovereign\\atlas\\minigames';
+            const atlasDir = resolveSovereignPath('atlas/minigames');
             const atlasPath = path.join(atlasDir, `${name.replace(/\s+/g, '_').toLowerCase()}.json`);
             if (!fs.existsSync(atlasDir)) fs.mkdirSync(atlasDir, { recursive: true });
             fs.writeFileSync(atlasPath, JSON.stringify(manifest, null, 2));

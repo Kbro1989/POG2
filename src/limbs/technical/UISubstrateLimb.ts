@@ -40,7 +40,7 @@ export class UISubstrateLimb {
         logger.debug({ id, hitWords }, 'Processing HUD component alignment...');
 
         const tx = this.grounding.beginTick();
-        
+
         // Phase 23: Tri-Layer Synthesis
         // We map the component to the manifest with the high-confidence 0.97 score
         tx.set(`interface_${id}`, {
@@ -66,18 +66,18 @@ export class UISubstrateLimb {
      * massSync - Authoritatively ground the pedagogical substrate from D:/sovereign.
      */
     public async massSync(): Promise<Result<{ counts: number }>> {
-        const substratePath = 'D:/sovereign/memory/pedagogy';
+        const substratePath = getPedagogyPath();
         try {
             const files = fs.readdirSync(substratePath)
                 .filter((f: string) => f.startsWith('GROUP_PRINCIPLE_HUD_CANDIDATE_') && f.endsWith('.json'));
-            
+
             logger.info({ count: files.length }, 'Mass HUD synchronization initiated.');
 
             let synced = 0;
             for (const file of files) {
                 const idMatch = file.match(/_(\d+)\.json$/);
                 if (!idMatch) continue;
-                
+
                 const id = parseInt(idMatch[1]);
                 const content = JSON.parse(fs.readFileSync(join(substratePath, file), 'utf-8'));
                 const hitWords = content.semantics?.role?.split('Hits: ')[1]?.split(', ') || [];

@@ -3,7 +3,7 @@
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { SoundtrackLimb } from '../limbs/creative/SoundtrackLimb.js';
+import { SoundtrackLimb, AudioCue } from '../limbs/creative/SoundtrackLimb.js';
 import { ChromaValidator } from '../limbs/vision/ChromaValidator.js';
 
 export interface GLTFAsset {
@@ -20,12 +20,6 @@ export interface GLTFAsset {
   materials?: any[];
   images?: any[];
   samplers?: any[];
-}
-
-export interface AudioCue {
-  timeMs: number;
-  intensity: number;
-  type: 'ROAR_BUILD' | 'ROAR_PEAK' | 'ROAR_DECAY';
 }
 
 const ASSET_DIR = join(process.cwd(), 'audit_output', 'kbd_cinema');

@@ -1,9 +1,10 @@
 import * as path from 'path';
 import { Result, ok, err } from '../../core/models.js';
 import { createLogger } from "../../utils/logger.js";
-import { getSovereignRoot, getrsmvCachePath, getCachePedagogyPath, getrsmvSubstratePath, getrsmvLiveCachePath, getrsmvBetaCachePath } from '../../utils/SovereignPathResolver.js';
-import { rsmvBridge } from '../../utils/RSMVBridge.js'; // Assuming rsmvBridge has a .getEnum(id: number) method
+import { getSovereignRoot, getrsmvCachePath, getCachePedagogyPath, getrsmvSubstratePath, getrsmvLiveCachePath, getrsmvBetaCachePath, getPedagogyPath } from '../../utils/SovereignPathResolver.js';
 import { WorldGroundingLimb } from '../world_grounding/WorldGroundingLimb.js';
+import { HUDForensicsLimb } from './HUDForensicsLimb.js';
+import { DBRowOracleLimb } from './DBRowOracleLimb.js';
 import * as fs from 'fs';
 import * as fsPromise from 'fs/promises';
 
@@ -107,7 +108,7 @@ interface EquipmentBySlotData {
  */
 export class CacheForensicsLimb {
     private static instance: CacheForensicsLimb | undefined;
-    private readonly rootDir: string = getCachePedagogyPath(); // D:\sovereign\cache_pedagogy\json_dumps
+    private readonly rootDir: string = getCachePedagogyPath();
     private readonly liveCachePath: string = getrsmvLiveCachePath();
     private readonly betaCachePath: string | null = getrsmvBetaCachePath();
 
@@ -126,7 +127,11 @@ export class CacheForensicsLimb {
 
     // Grounding & Pedagogy
     private readonly grounding: WorldGroundingLimb;
-    private readonly pedagogyDir: string = path.join('D:/sovereign', 'memory', 'pedagogy'); // This path is intentionally hardcoded as D:/sovereign, not relative to getSovereignRoot()
+    private readonly pedagogyDir: string = getPedagogyPath(); // Use resolver instead of hardcoded path
+
+    // Native limb references for redirected queries
+    private hudForensics: HUDForensicsLimb | null = null;
+    private dbRowOracle: DBRowOracleLimb | null = null;
 
     private readonly SLOT_NAMES: readonly string[] = [
         'helm', 'cape', 'necklace', 'weapon', 'body', 'offhand',
@@ -225,16 +230,17 @@ export class CacheForensicsLimb {
     }
 
     /**
-     * isAuthoritative - Confirms if the substrate is grounded in the 11GB Live Cache.
+     * isAuthoritative - Confirms if the substrate is grounded in the local cache.
      * @returns A Promise resolving to a boolean indicating if the substrate is authoritative.
      */
     public async isAuthoritative(): Promise<boolean> {
         try {
-            const health = await rsmvBridge.healthCheck();
-            // Statuses like 'ONLINE (Authoritative)' or 'ONLINE' against the live path confirm authority.
-            return health.ok && health.value.online;
+            // Check if the local cache files exist and are readable
+            const liveExists = fs.existsSync(this.liveMainFile);
+            const pedagogyExists = fs.existsSync(this.pedagogyDir);
+            return liveExists && pedagogyExists;
         } catch (error) {
-            logger.error({ error }, 'Failed to check rsmvBridge authority.');
+            logger.error({ error }, 'Failed to check cache authority.');
             return false;
         }
     }
@@ -305,36 +311,48 @@ export class CacheForensicsLimb {
 
     /**
      * monitorSkillRegistry - Automated sentinel for the 30th skill.
-     * Checks Enum 1518 (Skills) and Interface 1314 (Skills Menu) for expansion.
+     * Checks Interface 1314 (Skills Menu) for expansion using native HUDForensicsLimb.
      */
     public async monitorSkillRegistry(): Promise<void> {
         logger.info('Running skill registry forensic sentinel...');
         try {
-            // 1. Check Enum 1518 (Skill IDs)
-            const skillEnumRes = await rsmvBridge.getEnum(1518);
-            if (skillEnumRes.ok && skillEnumRes.value?.raw?.values) {
-                const skillCount = Object.keys(skillEnumRes.value.raw.values).length;
-                if (skillCount > 29) {
-                    logger.warn({ skillCount }, '!!! 30TH SKILL DETECTED IN ENUM 1518 !!!');
-                }
+            // Initialize native limbs if not already done
+            if (!this.hudForensics) {
+                this.hudForensics = HUDForensicsLimb.getInstance();
+            }
+            if (!this.dbRowOracle) {
+                this.dbRowOracle = DBRowOracleLimb.getInstance();
             }
 
-            // 2. Check Interface 1314 (Skills Interface)
-            const skillUiRes = await rsmvBridge.getInterface(1314);
-            if (skillUiRes.ok && skillUiRes.value?.raw?.components) {
-                const componentCount = skillUiRes.value.raw.components.length;
+            // 1. Check Interface 1314 (Skills Interface) using native HUDForensicsLimb
+            const skillUiRes = await this.hudForensics.getInterface(1314);
+            if (skillUiRes.ok && skillUiRes.value?.components) {
+                const componentCount = skillUiRes.value.components.length;
                 // Necromancy ends at 162-163. If > 164, a new slot was likely added.
                 if (componentCount > 164) {
                     logger.warn({ componentCount }, '!!! NEW SKILL COMPONENTS DETECTED IN INTERFACE 1314 !!!');
                 }
             }
 
-            // 3. Check DBRows (Archive 41) for XP table growth in Table 1 (Skill XP Curves)
-            const dbRowsRes = await rsmvBridge.getDBRows(1);
-            if (dbRowsRes.ok && dbRowsRes.value) {
-                const rows = dbRowsRes.value.count;
-                logger.info({ skillXpRows: rows }, 'DBRows (Table 1: Skill XP) audit completed.');
+            // 2. For Enum 1518 (Skill IDs), check generated cache schemas if available
+            // This would typically come from data/entity_instances or generated cache schemas
+            const enumPath = path.join(this.rootDir, 'enums.json');
+            if (fs.existsSync(enumPath)) {
+                try {
+                    const enumData = JSON.parse(fs.readFileSync(enumPath, 'utf8'));
+                    if (enumData['1518']) {
+                        const skillCount = Object.keys(enumData['1518']).length;
+                        if (skillCount > 29) {
+                            logger.warn({ skillCount }, '!!! 30TH SKILL DETECTED IN ENUM 1518 !!!');
+                        }
+                    }
+                } catch (e) {
+                    logger.debug('Could not parse enums.json for Enum 1518 check.');
+                }
             }
+
+            // 3. DBRows audit via native DBRowOracleLimb
+            logger.info('DBRows (Genome) audit: use DBRowOracleLimb.initialize() for detailed checks.');
         } catch (e) {
             logger.error({ error: (e as Error).message }, 'Skill registry sentinel failed.');
         }

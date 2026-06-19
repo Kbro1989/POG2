@@ -5,7 +5,7 @@ import path from 'path';
 
 const logger = createLogger('LogicBrainLimb');
 
-const PEDAGOGY_LOGIC_DIR = 'D:\\sovereign\\memory\\pedagogy\\logic';
+const PEDAGOGY_LOGIC_DIR = resolveSovereignPath('memory/pedagogy/logic');
 
 /**
  * LogicBrainLimb - The "Higher Logic" substrate of the Sovereign Organism.
@@ -60,7 +60,7 @@ export class LogicBrainLimb {
         if (!skillManifest) return null;
 
         const xp = skillManifest.xp_table[level.toString()] || null;
-        const category = Object.keys(skillManifest.categories).find(cat => 
+        const category = Object.keys(skillManifest.categories).find(cat =>
             skillManifest.categories[cat].includes(skill)
         );
 

@@ -12,7 +12,7 @@ export class SovereignValidator {
     private skillManifest: any;
     private equipReqs: any;
 
-    private constructor() {}
+    private constructor() { }
 
     static async getInstance(): Promise<SovereignValidator> {
         if (!SovereignValidator.instance) {
@@ -28,8 +28,8 @@ export class SovereignValidator {
             if (typeof require !== "undefined") {
                 const fs = require('fs');
                 const path = require('path');
-                const logicPath = "D:\\sovereign\\memory\\pedagogy\\logic\\";
-                
+                const logicPath = resolveSovereignPath("memory/pedagogy/logic/");
+
                 this.skillManifest = JSON.parse(fs.readFileSync(path.join(logicPath, "skill_manifest.json"), "utf8"));
                 this.equipReqs = JSON.parse(fs.readFileSync(path.join(logicPath, "equipment_requirements.json"), "utf8"));
                 console.log("SovereignValidator: Logic substrates grounded successfully via FS.");
@@ -60,7 +60,7 @@ export class SovereignValidator {
         // Mock logic: In a full substrate, we'd lookup item.id in the Materialized Substrate.
         // Here we use the "Typical Tiering" based on name or metadata for grounding.
         const name = item.name.toLowerCase();
-        
+
         // Example: "Black" items require Level 10 Attack/Defence.
         if (name.includes("black")) {
             const atk = skills["Attack"]?.base || 1;

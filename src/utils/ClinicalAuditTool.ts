@@ -68,7 +68,24 @@ export class ClinicalAuditTool {
         return false;
     }
 
-    private readonly auditableExtensions = new Set(['.ts', '.js', '.tsx', '.jsx']);
+    private readonly auditableExtensions = new Set(['.ts', '.js', '.tsx', '.jsx', '.md']);
+
+    async schemaScan(targets: string[]): Promise<Result<AuditResult[]>> {
+        const results: AuditResult[] = [];
+        for (const target of targets) {
+            if (!target || !existsSync(target)) continue;
+            if ((await stat(target)).isDirectory()) {
+                const res = await this.auditDirectory(target);
+                if (!res.ok) return { ok: false, error: res.error };
+                results.push(...res.value);
+            } else {
+                const res = await this.auditFile(target);
+                if (!res.ok) return { ok: false, error: res.error };
+                results.push(res.value);
+            }
+        }
+        return ok(results);
+    }
 
     async auditFile(filePath: string): Promise<Result<AuditResult>> {
         try {

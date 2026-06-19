@@ -1,5 +1,5 @@
 
-import { JagexCacheReader } from '../../utils/JagexCacheReader.js';
+import { JagexCacheReader } from '../../../utils/JagexCacheReader.js';
 import { Buffer } from 'buffer';
 
 /**

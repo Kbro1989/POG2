@@ -5,8 +5,6 @@ import { SoundEvent } from '../creative/sound/SoundEventResolver.js';
 
 const logger = createLogger('CombatLimb');
 
-const logger = createLogger('CombatLimb');
-
 export interface AbilityDefinition {
     id: string;
     name: string;
@@ -154,9 +152,6 @@ export class CombatLimb {
                     context: { targetId: target.id, abilityId }
                 }, 1.5).catch(e => logger.error({ e }, 'Sound synthesis failed during combat execute'));
             }
-
-            // 4. Single-shot Death Check
-            if ((target as any).isDead && !wasDead) {
 
             // 4. Single-shot Death Check
             if ((target as any).isDead && !wasDead) {

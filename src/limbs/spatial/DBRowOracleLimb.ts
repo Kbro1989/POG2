@@ -74,7 +74,7 @@ export class DBRowOracleLimb {
     public async initialize(): Promise<void> {
         logger.info('Waking Genomic Oracle...');
 
-        const dbrowPath = 'D:/sovereign/atlas/system/dbrows.json';
+        const dbrowPath = resolveSovereignPath('atlas/system/dbrows.json');
         if (!existsSync(dbrowPath)) {
             logger.error({ path: dbrowPath }, 'Genome Substrate Missing: dbrows.json');
             return;

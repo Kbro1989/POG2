@@ -6,7 +6,7 @@
  */
 
 import { SwitchboardLimb } from './monitor/SwitchboardLimb.js';
-import { rsmvBridge } from './utils/RSMVBridge.js';
+import { WorldForensicsLimb } from './limbs/spatial/WorldForensicsLimb.js';
 
 const PORT = 8789;
 
@@ -21,13 +21,14 @@ const minimalOrchestrator = {
             const z = parseInt(parts[2] || '3200');
             const plane = parseInt(parts[3] || '0');
 
-            console.log(`[SWITCHBOARD] ⚡ Requesting LIVE RSMV Extraction at [${x}, ${z}, ${plane}]`);
-            const result = await rsmvBridge.getCollision(x, z, plane);
+            console.log(`[SWITCHBOARD] ⚡ Requesting Collision Data at [${x}, ${z}, ${plane}]`);
+            const worldForensics = WorldForensicsLimb.getInstance();
+            const collisionData = await worldForensics.getTerrainFlags(x, z, plane);
 
-            if (result.ok) {
-                return { ok: true, value: { type: 'LIVE_RSMV', ...result.value }, error: null };
+            if (collisionData && collisionData > 0) {
+                return { ok: true, value: { type: 'COLLISION_DATA', collision: collisionData }, error: null };
             } else {
-                return { ok: false, value: null, error: result.error.message };
+                return { ok: false, value: null, error: 'Collision data not available' };
             }
         }
 

@@ -50,13 +50,13 @@ export interface MorphologyState {
   gameMode: number;         // mapped from 28557
   oldHeadFallback: boolean;
   torsoOverride: boolean;
-  
+
   // Varp 5746
   categoryIndices: {
     head: number; torso: number; legs: number;
     shoes: number; beard: number; skinMat: number; hairMat: number;
   };
-  
+
   // Varp 524476
   appearanceIndices: {
     skinColor: number; hairColor: number; torsoColor: number;
@@ -67,14 +67,14 @@ export interface MorphologyState {
 export interface AvatarConfiguration {
   ui: CharacterCreationUIState;
   morphology: MorphologyState;
-  
+
   // Equipment overlay (existing 29-skill state)
   helmId: number;
   capeId: number;
   bodyId: number;
   legsId: number;
   weaponId: number;
-  
+
   // Animation state
   idlePose: 'stand' | 'walk' | 'combat' | 'emote';
   emoteId: number;
@@ -227,7 +227,7 @@ export class AvatarStateLimb implements CacheInvalidationListener {
     return AvatarStateLimb.instance;
   }
 
-  
+
   constructor() {
     this.cache = CacheForensicsLimb.getInstance();
     this.hudForensics = new HUDForensicsLimb();
@@ -307,9 +307,9 @@ export class AvatarStateLimb implements CacheInvalidationListener {
 
     const bodyType = this.state.morphology.bodyType;
     const bufferStart = bodyType === 'refresh_female' ?
-        AvatarStateLimb.MIRROR_FEMALE_START : AvatarStateLimb.MIRROR_MALE_START;
+      AvatarStateLimb.MIRROR_FEMALE_START : AvatarStateLimb.MIRROR_MALE_START;
     const bufferEnd = bodyType === 'refresh_female' ?
-        AvatarStateLimb.MIRROR_FEMALE_END : AvatarStateLimb.MIRROR_MALE_END;
+      AvatarStateLimb.MIRROR_FEMALE_END : AvatarStateLimb.MIRROR_MALE_END;
 
     // Simulate the packing logic:
     // In the real bytecode, this is a series of reads and a hash/index mapping.
@@ -330,7 +330,7 @@ export class AvatarStateLimb implements CacheInvalidationListener {
     this.writeVarBit(AvatarStateLimb.BROADCAST_VARBIT, index);
     logger.info({ index }, 'Broadcast signal committed to varbit 19712');
   }
-  
+
   private getDefaultState(): AvatarConfiguration {
     return {
       ui: {
@@ -357,35 +357,35 @@ export class AvatarStateLimb implements CacheInvalidationListener {
       }
     };
   }
-  
+
   private getVarbitMeta(varbitId: number): { varid: number; base: number; size: number } | null {
     if (this.varbitCache.has(varbitId)) return this.varbitCache.get(varbitId)!;
 
-    const filePath = `D:/sovereign/memory/pedagogy/varbits_json/varbits-${varbitId}.json`;
+    const filePath = join(resolveSovereignPath('memory/pedagogy/varbits_json'), `varbits-${varbitId}.json`);
     try {
-        if (!fs.existsSync(filePath)) {
-            // Fallback to internal constant map if possible
-            const fallback = this.getFallbackMeta(varbitId);
-            if (fallback) {
-                this.varbitCache.set(varbitId, fallback);
-                return fallback;
-            }
-            this.varbitCache.set(varbitId, null);
-            return null;
+      if (!fs.existsSync(filePath)) {
+        // Fallback to internal constant map if possible
+        const fallback = this.getFallbackMeta(varbitId);
+        if (fallback) {
+          this.varbitCache.set(varbitId, fallback);
+          return fallback;
         }
-        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        if (data.varid == null || data.bits == null) { this.varbitCache.set(varbitId, null); return null; }
-
-        const meta = {
-            varid: data.varid,
-            base: data.bits[0],
-            size: data.bits[1]
-        };
-        this.varbitCache.set(varbitId, meta);
-        return meta;
-    } catch {
         this.varbitCache.set(varbitId, null);
         return null;
+      }
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      if (data.varid == null || data.bits == null) { this.varbitCache.set(varbitId, null); return null; }
+
+      const meta = {
+        varid: data.varid,
+        base: data.bits[0],
+        size: data.bits[1]
+      };
+      this.varbitCache.set(varbitId, meta);
+      return meta;
+    } catch {
+      this.varbitCache.set(varbitId, null);
+      return null;
     }
   }
 
@@ -417,46 +417,46 @@ export class AvatarStateLimb implements CacheInvalidationListener {
 
     return null;
   }
-  
+
   // VarBit read/write — the core state machine operation
   readVarBit(varbitId: number): number {
     const meta = this.getVarbitMeta(varbitId);
     if (!meta) return 0;
-    
+
     // Read the base variable (varp)
     const varpValue = this.readVarp(meta.varid);
-    
+
     // Extract bits
     const bitSize = meta.size - meta.base + 1;
     return (varpValue >> meta.base) & ((1 << bitSize) - 1);
   }
-  
+
   writeVarBit(varbitId: number, value: number): void {
     const meta = this.getVarbitMeta(varbitId);
     if (!meta) return;
-    
+
     const bitSize = meta.size - meta.base + 1;
     const mask = ((1 << bitSize) - 1) << meta.base;
     const current = this.readVarp(meta.varid);
     const newValue = (current & ~mask) | ((value & ((1 << bitSize) - 1)) << meta.base);
-    
+
     this.writeVarp(meta.varid, newValue);
   }
-  
+
   private readVarp(varid: number): number {
     if (!this.entity) return 0;
     return this.entity.state.varps.get(varid) ?? 0;
   }
-  
+
   private writeVarp(varid: number, value: number): void {
     if (!this.entity) return;
     this.entity.state.varps.set(varid, value);
-    
+
     // Notify subscribers
     this.entity.emit('varp_change', { varid, value });
     logger.debug({ varid, value }, 'Varp updated');
   }
-  
+
   // Avatar Refresh - Part 1 specific mappings
   setBodyType(type: MorphologyState['bodyType']): void {
     this.state.morphology.bodyType = type;
@@ -492,14 +492,14 @@ export class AvatarStateLimb implements CacheInvalidationListener {
     this.writeVarBit(VARP_5745.GAME_MODE, mode);
     logger.debug({ gameMode: mode }, 'Avatar game mode updated and synced to 28557');
   }
-  
+
   // setBodyMorph has been removed as the UI parameters for scale/muscle/fat
   // are no longer tracked as independent varbits in the beta avatar refresh.
 
   // Refresh entire state based on active varps
   public syncFromVarps(): void {
     if (!this.entity) return;
-    
+
     // Varp 5745
     this.state.morphology.bodyBase = this.readVarBit(VARP_5745.BODY_BASE);
     this.state.morphology.torsoLegsStyle = this.readVarBit(VARP_5745.TORSO_LEGS);
@@ -508,7 +508,7 @@ export class AvatarStateLimb implements CacheInvalidationListener {
     this.state.morphology.gameMode = this.readVarBit(VARP_5745.GAME_MODE);
     this.state.morphology.oldHeadFallback = this.readVarBit(VARP_5745.OLD_HEAD_FALLBACK) === 1;
     this.state.morphology.torsoOverride = this.readVarBit(VARP_5745.TORSO_OVERRIDE) === 1;
-    
+
     // Varp 5746
     this.state.morphology.categoryIndices = {
       head: this.readVarBit(VARP_5746.HEAD),
@@ -519,7 +519,7 @@ export class AvatarStateLimb implements CacheInvalidationListener {
       skinMat: this.readVarBit(VARP_5746.SKIN_MAT),
       hairMat: this.readVarBit(VARP_5746.HAIR_MAT)
     };
-    
+
     // Varp 524476
     this.state.morphology.appearanceIndices = {
       skinColor: this.readVarBit(VARP_524476.SKIN_COLOR),
@@ -550,15 +550,15 @@ export class AvatarStateLimb implements CacheInvalidationListener {
       hairColor: HAIR_COLORS[hairColorIndex] ?? `Hair Color ${hairColorIndex}`
     };
   }
-  
+
   getRenderState(): AvatarConfiguration {
     return { ...this.state };
   }
-  
+
   serialize(): string {
     return JSON.stringify(this.state);
   }
-  
+
   deserialize(data: string): void {
     this.state = { ...this.getDefaultState(), ...JSON.parse(data) };
   }
@@ -578,10 +578,10 @@ export class AvatarStateLimb implements CacheInvalidationListener {
       const wardrobeRes = await this.hudForensics.getEquipmentWardrobe();
 
       if (charCreationRes.ok) {
-        const hasMorphology = charCreationRes.value.textLabels.some(t => 
+        const hasMorphology = charCreationRes.value.textLabels.some(t =>
           t.toLowerCase().includes('skin colour') || t.toLowerCase().includes('appearance')
         );
-        
+
         if (hasMorphology) {
           logger.info('Avatar Refresh morphology components validated in BETA interface 1420.');
           // Initialize baseline morph telemetry to the entity state if empty

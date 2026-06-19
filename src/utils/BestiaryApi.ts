@@ -62,7 +62,8 @@ export interface WeaknessType {
 // ═══════════════════════════════════════════════════════
 
 export class BestiaryApi {
-  private static readonly BASE = 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/bestiary';
+  private static readonly BASE = process.env.POG2_GLOBE_API_BESTIARY ||
+    (process.env.POG2_GLOBE_ENDPOINT ? process.env.POG2_GLOBE_ENDPOINT.replace(/\/parties\/.*/, '/api/bestiary') : 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/bestiary');
   private static readonly THROTTLE = ApiThrottle.getInstance();
 
   // ── Core Resolution ────────────────────────────────────

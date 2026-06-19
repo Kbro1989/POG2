@@ -16,7 +16,7 @@ async function runDemo() {
 
     // 1. Setup Minimal Engine Substrate
     HexagramManager.initializeSimulation(); // Required for TernaryRouter
-    
+
     const config: any = {
         mode: 'hybrid',
         orchestratorModel: 'deepseek-r1:8b',
@@ -28,8 +28,8 @@ async function runDemo() {
         ollamaBaseUrl: 'http://127.0.0.1:11434',
         projectRoot: process.cwd(),
         pog2Dir: 'pog-vibe-interactive\\files',
-        gutenbergPath: 'D:\\sovereign\\pog-gutenberg',
-        sovereignRoot: 'D:\\sovereign'
+        gutenbergPath: getGutenbergPath(),
+        sovereignRoot: getSovereignRoot()
     };
 
     const router = new TernaryRouter(config);
@@ -49,14 +49,14 @@ async function runDemo() {
     avatar.coord.x = 3222;
     avatar.coord.y = 3218;
     avatar.coord.plane = 0;
-    
+
     console.log(`--- Avatar at (${avatar.coord.x}, ${avatar.coord.y}) ---`);
 
     // 5. Ignite Switchboard Bridge
     const { SwitchboardLimb } = await import('../monitor/SwitchboardLimb.js');
     const switchboard = SwitchboardLimb.getInstance();
     switchboard.initialize();
-    
+
     const bridge = await switchboard.startWithGracefulPort({ run: async () => ({ ok: true }) }, 8788);
     console.log(`\x1b[32m[BRIDGE] ✅ Sovereign Bridge ACTIVE on ${bridge.url}\x1b[0m`);
     console.log(`\x1b[36m[BRIDGE] 🔬 HEATMAP: ${bridge.url}/heatmap.html\x1b[0m`);
@@ -73,7 +73,7 @@ async function runDemo() {
     console.log('--- RADIATING PERSISTENT HEARTBEAT (Ctrl+C to Stop) ---');
     const heartbeat = TemporalHeartbeatLimb.getInstance();
     let pulseCount = 0;
-    
+
     while (true) {
         pulseCount++;
         if (pulseCount % 10 === 0) console.log(`[HEARTBEAT] Pulse ${pulseCount} complete.`);

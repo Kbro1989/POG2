@@ -16,7 +16,7 @@ class CS2ApiAdapter {
     interfaceId: number;
     componentId: number;
     registry: SovereignCs2NativeRegistry;
-    
+
     constructor(interfaceId: number, componentId: number, registry: SovereignCs2NativeRegistry) {
         this.interfaceId = interfaceId;
         this.componentId = componentId;
@@ -38,7 +38,7 @@ class CS2ApiAdapter {
     setFilled(filled: number) { this.registry.execute('IF_SETFILLED', this.interfaceId, this.componentId, filled); }
     setColor(col: number) { this.registry.execute('IF_SETCOLOUR', this.interfaceId, this.componentId, col); }
     setTextAlign(a: number, b: number, c: number) { this.registry.execute('IF_SETTEXTALIGN', this.interfaceId, this.componentId, a, b, c); }
-    
+
     // Getters returning defaults (for now) to prevent interpreter crashes
     getText() { return ""; }
     getHide() { return 0; }
@@ -60,7 +60,7 @@ class CS2ApiAdapter {
     createChild(ccid: number, type: number) { return new CS2ApiAdapter(this.interfaceId, ccid, this.registry); }
     findChild(ccid: number) { return new CS2ApiAdapter(this.interfaceId, ccid, this.registry); }
     getNextChildId() { return 0; }
-    
+
     changed() { }
 }
 
@@ -111,12 +111,12 @@ export class InterfaceRuntimeLimb {
     private source: any = null;
     private agentListeners: AgentEventHandler[] = [];
     private bootstrappedInterfaces = new Set<number>();
-    
+
     constructor() {
         this.nativeRegistry = SovereignCs2NativeRegistry.getInstance();
         this.overlay = new HUDOverlayLimb();
     }
-    
+
     async initialize(): Promise<void> {
         this.overlay.initialize();
         logger.info('Initializing InterfaceRuntimeLimb...');
@@ -130,11 +130,11 @@ export class InterfaceRuntimeLimb {
             prepareClientScript = alt1.prepareClientScript;
             ClientScriptInterpreter = alt1.ClientScriptInterpreter;
         } catch (e) {
-            const inspectorPath = 'D:/rsmv_inspector';
+            const inspectorPath = getrsmvSubstratePath();
             const sqlitePath = path.join(inspectorPath, 'src', 'cache', 'sqlite.ts');
             const indexTsPath = path.join(inspectorPath, 'src', 'clientscript', 'index.ts');
             const interpreterPath = path.join(inspectorPath, 'src', 'clientscript', 'interpreter.ts');
-            
+
             ({ GameCacheLoader } = require(sqlitePath));
             ({ prepareClientScript } = require(indexTsPath));
             ({ ClientScriptInterpreter } = require(interpreterPath));
@@ -143,16 +143,16 @@ export class InterfaceRuntimeLimb {
         const { getrsmvCachePath } = require('../../utils/SovereignPathResolver.js');
         const cachePath = getrsmvCachePath();
         this.source = new GameCacheLoader(cachePath);
-        
+
         // Wait for calibration to complete and load
         this.calli = await prepareClientScript(this.source);
-        
+
         // We defer interpreter instantiation per-script because the interpreter is stateful,
         // but we cache the ClientScriptInterpreter constructor.
         this.interpreter = ClientScriptInterpreter;
         logger.info('InterfaceRuntimeLimb initialized successfully.');
     }
-    
+
     /** Register an agent listener for the forensics feedback loop */
     onAgentEvent(handler: AgentEventHandler): void {
         this.agentListeners.push(handler);
@@ -225,9 +225,9 @@ export class InterfaceRuntimeLimb {
         const hud = new HUDForensicsLimb();
         const forensics = await hud.getInterface(interfaceId);
         if (!forensics.ok) throw forensics.error;
-        
+
         logger.info(`Bootstrapping interface ${interfaceId} with ${forensics.value.components.length} components.`);
-        
+
         // 2. Execute load scripts + follow packed component refs (the feedback loop)
         for (const comp of forensics.value.components) {
             if (comp.scripts?.load && comp.scripts.load.length > 0) {
@@ -237,10 +237,10 @@ export class InterfaceRuntimeLimb {
                 await this.executeScript(scriptId as number, args, interfaceId, comp.componentId);
             }
         }
-        
+
         // 3. Resolve layout
         const rendered = this.resolveLayout(forensics.value.components, interfaceId);
-        
+
         // 4. Emit agent event: interface is ready for consumption
         this.emit({ type: 'INTERFACE_READY', interfaceId, rendered });
 
@@ -253,10 +253,10 @@ export class InterfaceRuntimeLimb {
 
         // 6. Hand off to HUD renderer
         this.overlay.render(rendered);
-        
+
         return rendered;
     }
-    
+
     /**
      * runScript - Public entry point to execute a script without a specific UI context.
      * Defaults to interface 0 and component 0.
@@ -267,13 +267,13 @@ export class InterfaceRuntimeLimb {
     }
 
     private async executeScript(
-        scriptId: number, 
-        args: (number | string)[], 
-        interfaceId: number, 
+        scriptId: number,
+        args: (number | string)[],
+        interfaceId: number,
         componentId: number
     ): Promise<void> {
         if (!this.interpreter) throw new Error('Interpreter not initialized');
-        
+
         logger.debug(`Executing script ${scriptId} on component ${interfaceId}:${componentId} with args: ${JSON.stringify(args)}`);
 
         // Create a mock UiRenderContext that provides the CS2ApiAdapter
@@ -289,20 +289,20 @@ export class InterfaceRuntimeLimb {
 
         // Instantiate interpreter with our mocked uictx
         const inter = new this.interpreter(this.calli, uictx);
-        
+
         inter.reset();
         inter.pushlist(args);
         inter.activecompid = componentId;
         await inter.callscriptid(scriptId);
         await inter.runToEnd();
     }
-    
+
     private resolveLayout(components: any[], interfaceId: number): RenderedInterface {
         // Option B: HTML overlay CSS resolution
         const rendered: RenderedComponent[] = components.map(comp => {
             let type: 'CONTAINER' | 'TEXT' | 'SPRITE' | 'MODEL' | 'FIGURE' = 'CONTAINER';
             const content: any = {};
-            
+
             if (comp.type === 4) {
                 type = 'TEXT';
                 content.text = comp.textdata?.text || '';
@@ -336,10 +336,10 @@ export class InterfaceRuntimeLimb {
                 style: this.cssPosition(comp) + this.cssSize(comp)
             };
         });
-        
+
         return { interfaceId, components: rendered };
     }
-    
+
     private cssPosition(data: any) {
         let css = "";
         const defaulttranslate = "0px";

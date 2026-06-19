@@ -103,7 +103,8 @@ export const ACTIVITY_NAMES: string[] = [
 // ═══════════════════════════════════════════════════════
 
 export class OfficialPlayerDataApi {
-  private static readonly PROXY_BASE = 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/player';
+  private static readonly PROXY_BASE = process.env.POG2_GLOBE_API_PLAYER ||
+    (process.env.POG2_GLOBE_ENDPOINT ? process.env.POG2_GLOBE_ENDPOINT.replace(/\/parties\/.*/, '/api/player') : 'https://multiplayer-globe-pog2.kristain33rs.workers.dev/api/player');
   private static readonly THROTTLE = ApiThrottle.getInstance();
 
   // ── Runemetrics Profile ────────────────────────────────
