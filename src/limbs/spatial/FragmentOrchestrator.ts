@@ -4,7 +4,7 @@ import { SpaceRegistry, SpaceMetadata } from '../../core/SpaceRegistry.js';
 import { createLogger } from '../../utils/logger.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { resolveSpatialAnchor, resolveLogicFragment } from '../../utils/SovereignPathResolver.js';
+import { resolveSpatialAnchor, resolveLogicFragment, getSovereignRoot } from '../../utils/SovereignPathResolver.js';
 import { RegistryB } from '../../core/RegistryB.js';
 import { VibeMapper } from '../../routing/VibeMapper.js';
 

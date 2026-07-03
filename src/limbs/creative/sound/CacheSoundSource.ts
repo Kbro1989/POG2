@@ -2,6 +2,7 @@
 import { JagexCacheReader } from '../../../utils/JagexCacheReader.js';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { resolveSovereignPath } from '../../../utils/SovereignPathResolver.js';
 
 /**
  * CacheSoundSource

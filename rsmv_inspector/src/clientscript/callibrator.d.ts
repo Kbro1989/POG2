@@ -184,6 +184,4 @@ declare function findOpcodeImmidiates(calli: ClientscriptObfuscation): {
     testCascade(ipop: number): number | "too many states" | "could not expand problem further";
 };
 declare function callibrateOperants(calli: ClientscriptObfuscation, candidates: Map<number, ScriptCandidate>): void;
-export declare function getArgType(script: clientscriptdata | clientscript): StackDiff;
-export declare function getReturnType(calli: ClientscriptObfuscation, ops: ClientScriptOp[], endindex?: number): StackList;
 export {};

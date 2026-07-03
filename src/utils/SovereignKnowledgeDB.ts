@@ -1,6 +1,8 @@
+import { join } from 'path';
 import Database from 'better-sqlite3';
 import { createLogger } from './logger.js';
 import { SovereignDBLifecycle } from './SovereignDBLifecycle.js';
+import { getSovereignRoot } from './SovereignPathResolver.js';
 
 const logger = createLogger('SovereignKnowledgeDB');
 

@@ -46,8 +46,12 @@ export class PulseMonitor extends EventEmitter {
         if (this.isRunning) return;
         this.isRunning = true;
         this.clinicalLogger.log('INFO', 'PulseMonitor', 'BIOLOGICAL_HEART_RATE_ESTABLISHED');
-        await this.pulse();
-        this.monitorInterval = setInterval(() => this.pulse(), 10000).unref(); // 10 second decoupled pulse
+
+        const clock = (await import('../utils/CanonicalClock.js')).CanonicalClock.getInstance();
+        if (!('registerPulse' in clock)) {
+            throw new Error('CanonicalClock missing registerPulse API required for sovereign pulseing');
+        }
+        clock.registerPulse({ domain: 'pulse-monitor', name: 'PulseMonitor', priority: 5, callback: async () => this.pulse().catch(() => {}) });
     }
 
     public stop(): void {
@@ -99,6 +103,10 @@ export class PulseMonitor extends EventEmitter {
     /** Inject NodeTester reference for lightweight limb health monitoring */
     public setNodeTester(tester: NodeTester): void {
         this.nodeTester = tester;
+    }
+
+    public getNodeTester(): NodeTester | null {
+        return this.nodeTester;
     }
 
     /** Lightweight pulse: Skip Win32 WMI queries, only check limb health via NodeTester */
@@ -355,6 +363,8 @@ export class PulseMonitor extends EventEmitter {
                 chromaticSoul: await chroma.generateFromSequence(testSequence),
                 temporalFingerprint: `airgap-nonce-${Date.now()}`,
                 anatomicalProof: { limbCount: 33, structuralIntegrity: 10 }
+                // currentHexagramId intentionally omitted: airgap test must work
+                // without HexagramManager state (the substrate is offline).
             };
 
             // 2. Substrate Resilience Verification:

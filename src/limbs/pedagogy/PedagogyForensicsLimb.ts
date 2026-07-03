@@ -2,6 +2,7 @@ import { existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { createLogger } from '../../utils/logger.js';
 import { Provenance, ProvenanceSource } from '../../core/models.js';
+import { getPedagogyPath } from '../../utils/SovereignPathResolver.js';
 
 const logger = createLogger('PedagogyForensicsLimb');
 

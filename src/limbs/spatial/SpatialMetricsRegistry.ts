@@ -1,6 +1,7 @@
 import { SpatialMetrics } from '../../types/spatial.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
 
 export class SpatialMetricsRegistry {
   private static instance: SpatialMetricsRegistry;

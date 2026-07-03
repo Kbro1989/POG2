@@ -46,6 +46,10 @@ export class GhostSplatEngine {
     private spatialRegistry: SpatialMetricsRegistry;
 
     private persistentHeat: Uint8Array = new Uint8Array(PADDED_SIZE * PADDED_SIZE);
+    // Zero-allocation scratchpad reused by calculateThreatHeatmap each tick.
+    // Eliminates the per-tick 4.3 KB Uint8Array allocation that would otherwise
+    // trigger V8 GC mid-tick under sustained load.
+    private tempHeatmapScratchpad: Uint8Array = new Uint8Array(PADDED_SIZE * PADDED_SIZE);
     private throttleMs: number = 0;
 
     private constructor() {
@@ -69,12 +73,18 @@ export class GhostSplatEngine {
         this.throttleMs = ms;
     }
 
+    private lastComputeAt: number = 0;
+
     /**
      * project - Generates a GhostSplatField for a given number of ticks into the future.
      */
     public project(state: GameState, tickDepth: number = 2, playerAgent?: PlayerAgent): GhostSplatField | null {
         const start = CanonicalClock.getInstance().realNow();
         
+        if (this.throttleMs > 0 && start - this.lastComputeAt < this.throttleMs) {
+            return this.latestField;
+        }
+
         try {
             const field: GhostSplatField = {
                 tickDepth,
@@ -98,7 +108,7 @@ export class GhostSplatEngine {
                 ghost.confidence *= limbAccuracy; // downweight if we've been wrong
             });
 
-            this.generateGaussianTensor(field);
+            this.generateGaussianTensor(field, state);
 
             const duration = CanonicalClock.getInstance().realNow() - start;
             if (duration > this.MAX_COMPUTE_MS) {
@@ -108,6 +118,7 @@ export class GhostSplatEngine {
             }
 
             this.latestField = field;
+            this.lastComputeAt = CanonicalClock.getInstance().realNow();
 
             // ── Kernel Integration: Feed spatial volatility into predictive controller ──
             this.feedKernelSpatialSignal(field, duration);
@@ -181,7 +192,7 @@ export class GhostSplatEngine {
     private projectNpcMovement(state: GameState, field: GhostSplatField): void {
         // Iterate the authoritative npcMap registry (always populated by SimulationHarness).
         // npcSpatialIndex is a secondary index that isn't reliably maintained.
-        for (const [npcId, npc] of state.npcMap) {
+        for (const npc of state.npcMap.values()) {
             const source = (npc.path && npc.path.length > 0) ? 'path_queue'
                 : (npc.interactionState === 'MOVING' && npc.metadata?.targetCoord) ? 'extrapolation'
                 : 'offline_fallback';
@@ -295,7 +306,8 @@ export class GhostSplatEngine {
     }
 
     private calculateThreatHeatmap(field: GhostSplatField, state?: GameState, playerAgent?: PlayerAgent): void {
-        const tempHeatmap = new Uint8Array(PADDED_SIZE * PADDED_SIZE);
+        // GC OPTIMIZATION: Reuse pre-allocated scratchpad instead of `new Uint8Array`.
+        this.tempHeatmapScratchpad.fill(0);
         const mod = this.getThreatModulation(playerAgent);
         
         field.projections.forEach((ghost, entityId) => {
@@ -362,7 +374,7 @@ export class GhostSplatEngine {
                     const nx = localX + dx;
                     const ny = localY + dy;
                     if (nx >= PADDING && nx < PADDING + INNER_SIZE && ny >= PADDING && ny < PADDING + INNER_SIZE) {
-                        tempHeatmap[ny * PADDED_SIZE + nx] += 1;
+                        this.tempHeatmapScratchpad[ny * PADDED_SIZE + nx] += 1;
                     }
                 }
             }
@@ -370,7 +382,7 @@ export class GhostSplatEngine {
 
         // Merge back into original heatmap.
         for (let i = 0; i < field.heatmap.length; i++) {
-            field.heatmap[i] += tempHeatmap[i];
+            field.heatmap[i] += this.tempHeatmapScratchpad[i];
         }
     }
 
@@ -397,7 +409,7 @@ export class GhostSplatEngine {
         }
     }
 
-    private generateGaussianTensor(field: GhostSplatField): void {
+    private generateGaussianTensor(field: GhostSplatField, state?: GameState): void {
         const entityCount = field.projections.size;
         const tileCount = PADDED_SIZE * PADDED_SIZE;
         const totalCount = entityCount + tileCount;
@@ -529,7 +541,7 @@ export class GhostSplatEngine {
                     if (metrics) {
                         // Cache-derived physical presence shapes the Gaussian
                         scale = metrics.tileScale.radius;
-                        
+
                         // Optional: Shape the ellipsoid based on actual proportions
                         // If height > radius*2, stretch vertically (flying/crawling entities)
                         const heightScale = metrics.tileScale.height / (metrics.tileScale.radius * 2);
@@ -541,10 +553,33 @@ export class GhostSplatEngine {
                 }
             }
 
-            tensor[offset + 3] = scale; // s11 (X)
+            // COVARIANCE UPGRADE: Velocity Stretching
+            // Compute velocity vector from authoritative coord to projected coord.
+            // Stretching the diagonal of the covariance matrix along the trajectory
+            // gives the renderer a natural motion-blur teardrop without per-frame
+            // shader work — the Float32Array just ships wider diagonals.
+            // Capped so a teleport or path-resync doesn't blow covariance out to infinity.
+            const VELOCITY_STRETCH = 0.3;
+            const MAX_STRETCH_TILES = 4;
+            let velX = 0;
+            let velZ = 0;
+            if (isNpc && state) {
+                const npcId = parseInt(id.replace('npc_', ''), 10);
+                if (!isNaN(npcId)) {
+                    const npc = state.npcMap.get(npcId);
+                    if (npc) {
+                        velX = ghost.projectedCoord.x - npc.coord.x;
+                        velZ = ghost.projectedCoord.y - npc.coord.y;
+                    }
+                }
+            }
+            const stretchX = Math.min(Math.abs(velX) * VELOCITY_STRETCH, MAX_STRETCH_TILES);
+            const stretchZ = Math.min(Math.abs(velZ) * VELOCITY_STRETCH, MAX_STRETCH_TILES);
+
+            tensor[offset + 3] = scale + stretchX; // s11 (X)
             tensor[offset + 4] = 0;     // s12
             tensor[offset + 5] = 0;     // s13
-            tensor[offset + 6] = scale; // s22 (Z, horizontal)
+            tensor[offset + 6] = scale + stretchZ; // s22 (Z, horizontal)
             tensor[offset + 7] = 0;     // s23
             tensor[offset + 8] = isNpc && tensor[offset + 8] > scale ? tensor[offset + 8] : scale; // s33 (Y, vertical)
 

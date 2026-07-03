@@ -2,632 +2,113 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 🛠 Development Commands
+## Development Commands
 
-### Root Project
-- **Build**: `npm run build` (compiles TypeScript to `dist/`)
-- **Development**: `npm run dev` (starts the CLI via `tsx`)
-- **Infrastructure**: 
-  - `npm run switchboard` (starts the switchboard server)
-  - `npm run bridge` (starts the sovereign bridge server)
-- **Diagnostics**: `npm run audit` (runs the full project audit via PowerShell)
+Root project (`package.json` scripts):
 
-### RSMV Viewer (`/rsmv`)
-- **Dependency Restore**: `npm install`
-- **Native Module Rebuild**: `npx electron-rebuild` (Critical after Electron version bumps to fix `better-sqlite3`)
-- **Execution**: Run via the root `pog2` CLI or launch the electron viewer from `dist/electronviewer.js`.
+- `npm run build` — `tsc` → `dist/` (CLI ships as `dist/cli.js`)
+- `npm run dev` — `tsx src/cli.ts` (no build step)
+- `npm run typecheck` — `tsc --noEmit`
+- `npm run lint` — `eslint src --ext .ts`
+- `npm test` — typecheck + lint (no unit-test runner yet)
+- `npm run switchboard` / `npm run bridge` — local infra servers
+- `npm run audit` — PowerShell full-tree listing (Windows-only; emits `all_files_audit.txt`)
+- `npm run install-global` — build + `npm install -g .` (registers `pog2` on PATH)
 
-## 🧠 Sovereign Architecture
+One-shot extraction scripts in root: `ingest-reference`, `inspect-cache`, `extract-npc`, `extract-item`, `scan-pog`, `search-npc`, `get-ids`, `get-kinematics`, `get-spotanim`.
 
-### 1. The Sovereign Trinity
-The system's stability and intelligence rely on three core substrates:
-- **GhostLimb (`src/limbs/metaphysical/GhostLimb.ts`)**: The final observer and normalizer. It provides the "Sovereign Fallback" when cloud APIs fail and ensures output integrity via local Ollama (e.g., `deepseek-r1:8b`).
-- **ModelRolodex (`src/api/ai/ModelRolodex.ts`)**: The living catalog of AI capabilities. It manages model reputation, latency, and task-type mapping (text, vision, embedding) across providers (Ollama, Cloudflare, Gemini, HF).
-- **Sovereign Services (`src/services/`)**: The high-level contracts for external infrastructure (Cloudflare, Google).
+Environment: Node ≥20, TypeScript ESNext + `nodenext` resolution. Toolchain builds are deterministic; the only constraint is GPU VRAM for inference (see VRAM Reality below).
 
-### 2. The Hybrid Mirror Pattern (Path C)
-The system implements a decoupled "Authentic" vs "Visual" architecture:
-- **RSCServerDO**: The authentic server instance hosting the shared world state.
-- **RSMVServerDO**: A "Mirror/Observer" Durable Object. It connects to `RSCServerDO`, translates authentic state into RS3-format telemetry, and streams `WorldTelemetryFrame` + `IdentityKitState` to the Three.js viewer.
-- **D1/R la-Sovereign**: The world state is anchored in `cf://d1-openrsc-prod`, while high-fidelity assets (GLTFs) are stored in R2.
+## High-Level Architecture
 
-### 3. Neurological Laws
-- **The 61-Minute Law**: Local Ollama compute starvation triggers a failover to HuggingFace. A strict **61-minute cooldown** must be observed before attempting to route back to local compute.
-- **Ternary Logic**: Decision paths are classified as **Yang** (Deep/Reasoning), **YinYang** (Mid/Executive), or **Yin** (Reflex/Fast).
-- **Ghost Normalization**: All high-stakes outputs should be validated/normalized through `GhostLimb` to prevent model drift.
+POG2 is a **sovereign, hybrid local+cloud AI runtime** for OpenRSC (RuneScape Classic) forensic analysis and world-state reconstruction. Five layers, each readable independently:
 
-## 📂 Sovereign Anchors (D:\ Drive)
-The project operates as a "Living Organism" with persistent physical anchors:
-- **`D:\sovereign`**: The authoritative storage root.
-- **`D:\sovereign\learning\sovereign-learning.db`**: The vector database for pedagogical memory.
-- **`D:\rsmv_inspector`**: The operational hub for 3D substrate forensics.
-- **Workspaces**:
-  - `D:\POG2`: Primary project root.
-  - `D:\alt1-ai`: Alternative AI workspace.
-  - `D:\rsmv_clone`: RSMV clone.
-  - `D:\tmp_rsmv_inspect`: Temporary inspection workspace.
-- **Environment Configuration**:
-  - `.env` files are located in `D:\POG2` (including `.env`, `.env.local`, `.env.ollama`, and `.env.example`).
-  - Other `.env` files may exist in `D:\MHD-Propulsion-Controller-Simulator-main` and `D:\openrsc_vanilla`.
+1. **Core cognition** (`src/core/`): `HexagramDefinitions` (I Ching semantic pinning), `CognitiveImmunologyEmergency` (prompt-injection scan), `SovereignAvatar` (identity state machine), `SovereignPathResolver` (D-drive authority).
+2. **Routing** (`src/routing/`): `TernaryRouter.ts` (Yang/YinYang/Yin complexity paths — see Sovereign Laws), `HexagramManager.ts` (8x8 I Ching state matrix), `DomainLocker.ts` (PASS/WAIT cross-domain gate — `dispatchCheck(toolName): DispatchVerdict`).
+3. **AI dispatch** (`src/api/ai/`): `ModelRolodex.ts` (living model catalog with reputation + latency), `Dispatcher.ts` (Local → Enriched → Cloud), `CapabilityRegistry.ts`, `OverflowShim.ts` (VRAM-aware fallback selector — shells out to Python).
+4. **Engines** (`src/engines/`): `OrchestrateEngine.ts` is the brain; spawns specialized engines (`CodeEngine`, `GenerateEngine`, `DiscoveryEngine`, `SovereignIngestionEngine`, `VisionEngine`, `BlenderRenderer`).
+5. **Limbs** (`src/limbs/`): The cognitive "organs". `NeuralLimb.ts` is the base class. Specializations split across `core/`, `metaphysical/` (Ghost/Quantum/Omega), `creative/` (Gutenberg/Storyboard/Voice), `spatial/` (walkability, collision, cache forensics), `technical/` (AI, pedagogy, validation), `logical/`, `pedagogy/`, `gameplay/`.
 
-## 📡 Networking
-- **Viewer WebSocket**: Transitioning from `ws://localhost:8789` (Local Bridge) to `wss://rsmv.kristain33rs.workers.dev/ws` (RSMVServerDO).
-- **Sovereign Bridge**: Handshakes must adhere to the protocol in `src/viewer/SovereignBridge.ts`.
+Entry points: `src/cli.ts` (CLI bootstrap) → `OrchestrateEngine.run()`. Server side: `src/durable-objects/POG2WorldDO.ts` (Cloudflare DO holding world state) → `rsmv_inspector/` (Three.js viewer at `rsmv_inspector/src/viewer/`).
 
-## 🧬 Neurological Limb Architecture (`src/limbs/`)
-The system decomposes intelligence into specialized "Limbs", each managing a specific domain of the Sovereign's perception and action.
-- **`limbs/core/`**: Base classes (e.g., `NeuralLimb.ts`) that define the limb lifecycle and signal flow.
-- **`limbs/logical/`**: State-driven reasoning, including `WorldStateLimb.ts` and block decoders for movement, appearance, and variables.
-- **`limbs/spatial/`**: Physical world interaction, containing the `SovereignSplatLimb.ts` (visual influence) and `KinematicProbeLimb.ts` (movement forensics).
-- **`limbs/technical/`**: Substrate management, featuring `SovereignEditorLimb.ts` and `PedagogyLimb.ts` for technical distillation.
-- **`limbs/creative/`**: Synthesis and generation, including `NeuralForgeLimb.ts` and `VoiceLimb.ts`.
-- **`limbs/metaphysical/`**: High-order observers like `OmegaLimb.ts` and `QuantumLimb.ts`.
-- **`limbs/pedagogy/`**: Training-specific limbs such as `GhostTrainingLimb.ts` and `SovereignSyncLimb.ts`.
+## Sovereign Laws (enforced invariants)
 
-## 🛠 Core Substrates (`src/core/` & `src/api/`)
-The bedrock of the la-Sovereign runtime.
-- **`src/core/`**: Fundamental registries and models.
-  - **`OmniTrainingBridge.ts`**: Bridges raw data to the training pipeline.
-  - **`SovereignPathResolver.ts`**: Determines the logical route for complex a-Sovereign queries.
-  - **`HexagramDefinitions.ts`**: Defines the semantic pinning system for knowledge.
-  - **`SovereignAvatar.ts`**: The internal representational state of the user's identity.
-- **`src/api/ai/`**: The AI dispatch hub.
-  - **`ModelRolodex.ts`**: Resolves capability-to-model mappings across providers.
-  - **`Dispatcher.ts`**: Handles the actual routing and failure/fallback logic for model calls.
-  - **`CapabilityRegistry.ts`**: Defines what a model *can* do (e.g., "vision", "reasoning").
+These are non-negotiable; do not propose changes that violate them:
 
-## ⚙️ Cognitive Engines (`src/engines/`)
-The "Prefrontal Cortex" of the system, where raw data is transformed into intelligence.
-- **`src/engines/core/`**: The Truth Reconciler. Implements `TruthReconciler.ts` and `CausalPatternExtractor.ts` to ensure a-Sovereign consistency.
-- **`src/engines/gameplay/`**: High-fidelity simulators.
-  - **Combat**: `CombatRotationEngine.ts` and `AggressionSimulator.ts`.
-  - **Loot**: `LootResolutionEngine.ts`.
-  - **Interpreters**: `UniversalInterpreter.ts`, `BarrowsInterpreter.ts`, and `PrifddinasInterpreter.ts`.
-- **`src/engines/spatial/`**: Observation engines for world-state analysis (`ObservationEngine.ts`, `ExplorationEngine.ts`).
-- **`src/engines/` (Top Level)**: Cognitive orchestration.
-  - **Metacognition**: `CognitiveEngine.ts`, `MetaCognitionEngine.ts`, and `MemeticEngine.ts`.
-  - **Pipeline**: `PipelineController.ts` and `OrchestrateEngine.ts`.
-  - **Ingestion**: `SovereignIngestionEngine.ts`.
+1. **NO MOCKS / NO PLACEHOLDERS** — Real APIs only. No `jest.fn()`, no `throw new Error('not implemented')`. Real network calls, real `existsSync()` before reads.
+2. **Ternary routing** — Every task classifies into Yang (deep, ≥4 complexity), YinYang (mid, 1–3), or Yin (reflex, <1). Defined in `RoutingComplexity` enum; consumed by `TernaryRouter.classify()`.
+3. **The 61-Minute Law** — `TernaryRouter.COOLDOWN_DURATION_MS = 61 * 60 * 1000` (`src/routing/TernaryRouter.ts:109`). When local Ollama compute starves and we fall back to HuggingFace, a strict 61-minute cooldown must elapse before attempting to route back to local.
+4. **Ghost Normalization** — High-stakes outputs pass through `GhostLimb` (local Ollama fallback) to prevent model drift.
+5. **Cognitive Immunology** — `CognitiveImmunologyEmergency` scans every tool execution pre-flight for prompt injection / foreign directives. High/critical threats → block.
+6. **Source of Truth** — `public/authentic_spawn_manifest.json` and `public/grounding_manifest.json` override memory or cache. Defined in `hermes-agent/config/sovereign_rules.yaml`.
 
-## 🧠 Cognitive Control Plane (`src/routing/`, `src/state/`, `src/events/`)
-The la-Sovereign internal governance and signal processing.
-- **`src/routing/`**: The "Cerebellum". Manages task scheduling (`TaskScheduler.ts`), ternary routing (`TernaryRouter.ts`), and semantic pinning (`HexagramManager.ts`).
-- **`src/state/`**: The "Neurological Map". Tracks internal la-Sovereign state and cognitive maps (`NeurologicalMap.ts`, `StateManager.ts`).
-- **`src/events/`**: The "Nervous System". An `EventBus.ts` that orchestrates signal flow to `TrainingProcessor.ts` and `MetricsAggregator.ts`.
+## VRAM Reality (2026-06-20)
 
-## 🌐 Server Infrastructure (`src/durable-objects/`)
-The authoritative hosting of the world state.
-- **`POG2WorldDO.ts`**: The primary Durable Object managing the la-Sovereign world state, handling WebSocket connections for the viewer and coordinating with the resolver/bridge.
+The runtime environment constrains model selection:
 
-## 👁️ Perception & Manifestation (`src/vision/`, `src/ui/`, `src/monitor/`)
-The interface between the Sovereign and the external world.
-- **`src/vision/`**: The "Optical Substrate". Uses `PuppeteerEye.ts` and `StructuralAnalyzer.ts` for visual grounding.
-- **`src/ui/`**: The "Manifestation Engine". Converts internal states into visual outputs via `ManifestationEngine.ts` and `HUDRegistry.ts`.
-- **`src/monitor/` la-Sovereign**: The "Clinical Observer". Monitors the system's neurological health using `PulseMonitor.ts` and `ClinicalLogger.ts`.
+- **GPU**: NVIDIA RTX A1000 Laptop, **6144 MiB** total VRAM (6 GB).
+- **Installed Ollama models** (only two): `qwen2.5-coder:7b-instruct-q4_K_M` (4.7 GB) and `gemma4:latest` (9.6 GB).
+- **`gemma4:latest` doesn't fit 6 GB** — Ollama does partial CPU offload, which silently degrades latency. The "61-Minute Law" was originally for cloud cooldowns; the equivalent hardware cooldown (drop ctx or switch models) lives in `pog2/inference/overflow.py` and is invoked from `src/api/ai/OverflowShim.ts`.
+- Tier config is in `.env.ollama` (`POG2_VRAM_TIER=auto`, `mini=6GB`, `puppeteer=16GB`, `pro=24GB`, `cpu=no-GPU`). `auto` reads `nvidia-smi` at probe time.
+- Yang/YinYang/Orchestrator call sites in `TernaryRouter.ts` (lines ~600, 615) now use `findWorkingModelAsync` which asks OverflowShim first; the original synchronous `findWorkingModel` is preserved for the 4+ other call sites that don't need VRAM awareness.
 
-## 🔍 Present State Audit (2026-05-29)
+**Don't pull new models without checking** — Ollama already half-spills gemma4 onto CPU. Adding a 14B model with full GPU offload will OOM. The tier math is in `pog2/inference/overflow.py::compute_fit()`.
 
-### Audit: `src/`
-The `src/` directory serves as the la-Sovereign primary engine for extraction, synthesis, and logic bridging.
-- **`src/rsmv/scripts/`**: A comprehensive suite of forensic tools used to extract truth from the game cache (e.g., `sovereign_npc_extract.ts`, `extract_all_spawns.ts`).
-- **`src/rsmv/clientscript/`**: Implements a custom AST and interpreter for game client scripts. The VM is a stack machine with three primitive types (int, long, string) and a limit of 1000 entries per stack.
-- **`src/rsmv/opcodes/`**: Stores the extracted "Sovereign Truth" in JSONC format, including `npcs.jsonc`, `items.jsonc`, and `models.jsonc`.
-- **`src/rsmv/map/`**: Handles the spatial grounding logic. `SovereignGrounding` manages `VarbitDefinition`, `MapZoneDefinition`, and coordinate unpacking. It hydrates pedagogy datasets from `D:\sovereign\memory\pedagogy` and `D:\sovereign\cache_pedagogy\json_dumps`.
-- **`src/rsmv/logic/` la-Sovereign**: Bridges internal game states to external services (e.g., `SovereignVarbitBridge.ts`).
-- **`src/UniversalSovereignSynthesizer.ts`**: Central la-Sovereign la-Sovereign orchestrator for distilling extracted raw data into sovereign knowledge.
+## Ollama Storage Path (currently broken)
 
-### Audit: `public/`
-The `public/` directory acts as the "Authoritative Anchor" for ground truth.
-- **Manifests**: `authentic_spawn_manifest.json` and `grounding_manifest.json` define the immutable coordinates and identities of world entities.
-- **Vocabulary**: la-Sovereign `interaction_vocabulary.json` maps game actions to frequencies, used for dominant context inference in the Resolver.
-- **Entity Grounding**: Folder contains specific grounded truth files for key entities (e.g., `sovereign_entity_hans.json`).
-- **Assets**: Extensive icon library for skills and actions, used for visual HUD representation.
+Three locations claim to be the ollama model root, **none are currently correct**:
 
-### Audit: `rsmv_inspector/`
-The `rsmv_inspector/` directory is the 3D substrate forensic hub.
-- **`src/viewer/`**: Contains the Three.js implementation of the Sovereign Training Ground, including `SovereignTrainingHUD.tsx` (floating labels) and `SovereignSplatRenderer.ts` (influence heatmaps).
-- **`opcodes/`**: A mirrored/processed version of the opcodes used for rapid client-side lookup.
-- **`opcode_reader.ts`**: The core utility for decoding raw cache data into a usable JS format.
-- **`generated/`**: Optimized JS bundles of map tiles, NPCs, and objects to prevent synchronous I/O lag in the 3D viewer.
+- `.env` line 29: `OLLAMA_MODELS_PATH=C:\Users\krist\ollama-models` — **path does not exist**
+- `.env.example` line 28: `OLLAMA_MODELS_PATH=D:\ollama-models` — **different dead path**
+- `~/.ollama` symlink (`/mnt/c/Users/krist/.ollama → /mnt/d/Ollama`) — **symlink target is gone** (`/mnt/d/` not mounted)
 
-### Audit: `.agents/` & `.agent/`
-This is the agentic substrate that governs AI behavior and orchestration.
-- **`rules/pogrules.md`**: Core behavioral constraints for AI agents operating within the POG2 ecosystem.
-- **`workflows/`**: Contains high-level process definitions such as `pog2-knowledgebase.md` and `pog2-sovereign.md` for systemic updates.
-- **`TOOL_MANIFEST.md`**: The definitive registry of available tools and their intended usage.
+Models actually live at **`/usr/share/ollama/.ollama/models/blobs/`** (the Linux/WSL ollama service default; running as user `ollama` via `/etc/systemd/system/ollama.service`). The server is reachable at `http://localhost:11434` (host `0.0.0.0:11434`). **Fix the `.env` paths and the broken symlink before assuming `ollama list` ↔ disk layout parity.**
 
-### Audit: `web_hud/`
-A secondary, web-native HUD implementation.
-- **Framework**: Vite + TypeScript.
-- **Purpose**: Provides a lightweight, browser-based alternative to the Electron viewer, utilizing the same asset pipeline for consistency.
+## Hermes ↔ POG2 Integration
 
-### Audit: `SovereignIngestion/` la-Sovereign
-Operational hub for the ingestion of raw game data into the la-Sovereign substrate.
-- **Logs**: Contains neurological audits and ingestion traces (`neurological_audit.log`).
+Hermes (`hermes-agent/`) is a vendored Python agent framework; POG2 is its TypeScript sovereign substrate. They handshake via **non-direct contact surfaces** — neither process imports the other; they share state through files + MCP. Real wiring:
 
-### Audit: `atlas/`
-Spatial intelligence layer.
-- **`spatial/`**: Stores coordinate-specific logic and extractions (e.g., `barrows_logic.json`), providing a higher-level abstraction of the world's layout.
+- **`hermes-agent/config/sovereign_rules.yaml`** is loaded by `hermes_cli/sovereign_rules_loader.py::load_sovereign_rules()` at Hermes boot. It now has a `pog2_integration:` block (root_of_trust, inference, skill_activation, escape_hatch, audit) that Hermes reads to honor POG2 sovereignty.
+- **`hermes-agent/config/mcporter.json`** registers POG2 as a discoverable MCP server: `pog2-sovereign` (stdio → `../../dist/mcpserver.js` from the `hermes-agent/config` cwd). Hermes boots POG2 on demand; POG2's MCP server exposes `HexagramManager + TernaryRouter + OrchestrateEngine + ToolRegistry` as MCP tools.
+- **`src/sovereign/Pog2Integration.ts`** loads the same YAML (mirror of the Python loader) and **`src/sovereign/Pog2HexagramBridge.ts`** resolves `resolvePermission(skillId, intent, userOverride) → 'ALLOW' | 'WAIT' | 'BLOCK'` by composing `DomainLocker.dispatchCheck()` + `HexagramManager.decide()` + the YAML's `skill_activation` clause.
+- **`src/config/SovereignConfig.ts`** boots the bridge during `loadConfig()` and logs `"POG2 sovereignty: bridge active"` on success.
 
-### Audit: `cache/ la-Sovereign`
-Raw substrate dumps.
-- Stores large-scale JSON exports of game build opcodes and scripts, serving as the la-Sovereign primary source for all extraction scripts.
+The two systems stay physically separate. A **sovereign MCP server** (POG2) and a **sovereign MCP client** (Hermes) handshake through YAML + stdio; no shared process, no shared filesystem mounts beyond `hermes-agent/config/`.
 
-### Audit: `data/` la-Sovereign
-Sovereign Knowledge Base.
-- **`entity_instances/`**: Definitions for NPCs and grounded objects.
-- **`pvme/`**: Detailed data for high-fidelity boss encounters (e.g., Vorago, Nex).
-- **`substrate/` la-Sovereign**: Local logic mirrors for map squares.
+## Configuration Surface
 
-### Audit: `scripts/`
-The tool-belt for substrate engineering.
-- Contains critical utilities for kinematics decoding, collision discovery, and AI fine-tuning (e.g., `train_unsloth.py`, `grounding_decoder.ts`).
+Config is loaded in this priority order (last wins): `DEFAULT_CONFIG` → `.env` → `.env.local` → `.env.ollama` → process env → user JSON file passed to `loadConfig(path)`. Defined in `src/config/SovereignConfig.ts`.
 
-### Audit: `rsmv/`
-A standalone project directory containing the core RSMV viewer and associated la-Sovereign extraction tools.
-- **`src/`**: Mirrors much of the core extraction and 3D substrate logic found in `D:\POG2\src\rsmv`.
-- **`opcodes/`**: Dedicated storage for cache-extracted constants.
-- **`dist/ la-Sovereign**: Compiled assets and Electron entry points.
-- **`test_extract/`**: Sandbox for testing new extraction techniques.
+- **`.env`** (root) — Cloudflare/HF/Google secrets, sovereign anchor paths, YouTube creds.
+- **`.env.ollama`** — Per-tier Ollama model + ctx assignment (THINK/CODE_HEAVY/CODE_MID/CODE_FAST/FAST/VISION). **Reality-checked against `ollama list`**.
+- **`.env.local`** — local-only overrides (gitignored).
+- **`POG2_SOVEREIGN_RULES`** env var — path to the sovereign_rules YAML; consumed by both Python and TS loaders.
+- **`POG2_VRAM_TIER`** / **`POG2_PYTHON`** / **`POG2_OVERFLOW_DEBUG`** — read by `pog2/inference/overflow.py` via `OverflowShim.ts`.
 
-### Audit: `mediator/`
-An isolated interaction layer.
-- **`app/components/Model3DViewer.tsx`**: A focused implementation of a 3D model viewer, potentially used for isolated testing of assets.
+## File Layout Reference
 
-### Audit: la-Sovereign `scratch/`
-The "Neurological Sandbox". A collection of forensic scripts, binary probes, and experimental la-Sovereign logic.
-- **Forensics**: Scripts for scanning binary strings and config offsets (e.g., `search_beta_binary.ts`, `check_binary_hex.ts`).
-- **으로-Sovereign Probes**: Targeted probes for specific game IDs and script calls (e.g., `check_15627_refs.ts`).
-- **Stability**: Patching and stabilization scripts used during the substrate's evolution (`fix_opcode_reader.ts`, la-Sovereign `stabilize_gameplay_limb.cjs`).
-
-### Audit: `audit_output/`
-Sovereign Audit Residue.
-- Stores the output of large-scale forensic audits, including interaction mapping and specific NPC definitions in binary format.
-
-### Audit: `.github/`
-The "Sovereign Automaton" (CI/CD).
-- **Workflows**: Implements AI-driven triage and execution via Gemini (`gemini-plan-execute.yml`).
-- **Commands**: Custom TOML-defined la-Sovereign triggers (e.g., `gemini-invoke.toml`) that guide the AI agent's persona, security protocols, and tool usage within GitHub Actions.
-- **Infrastructure**: Integrated with the Gemini CLI and MCP servers for seamless repository interaction.
-
-### Audit: `logs/` & `memory/`
-The "Sovereign Record".
-- **`logs/`**: Contains causal traces and neurological audits.
-- **`memory/`**: Stores physical offsets and global state constants (e.g., `global_offset.json`).
-
-### Audit: `generated/`
-The "Sovereign Type-Manifest".
-- Stores TypeScript definition files (`.d.ts`) and schemas generated from cache extraction, providing type-safety for the entire a-Sovereign substrate.
-
-## 🗺️ Entry Point & Orchestration Trace
-
-### 1. CLI Entry Point (`src/cli.ts`)
-The main interface for interacting with the la-Sovereign substrate.
-- **Bootstrap Flow**: `loadConfig` $\rightarrow$ `StateManager` $\rightarrow$ `SpatialVisionEngine` $\rightarrow$ `CanonicalClock` $\rightarrow$ `HexagramManager` $\rightarrow$ `TernaryRouter` $\rightarrow$ `ModelClient` $\rightarrow$ `ModelRolodex` $\rightarrow$ `PathNormalizer`.
-- **Primary Commands**:
-  - `process <intent>`: Routes to `OrchestrateEngine.run()`.
-  - `play [minigame]`: Boots the full organism (GameplayLimb, RadarLimb, GlobeStateLimb, SwitchboardLimb, CNSGodheadPulseVolley).
-  - `atlas` subcommands: Interface with `HUDForensicsLimb`, `SystemTaxonomyLimb`, `MaterialLimb`, `SovereignSovereigntyLimb`, `ObservationEngine`.
-- **Downstream**: Heavily dependent on `OrchestrateEngine` for complex task execution.
-
-### 2. Orchestration Brain (`src/engines/OrchestrateEngine.ts`)
-The central hub managing all specialized cognitive engines and metaphysical limbs.
-- **Governance**: Implements **Cognitive Immunology**; every tool execution is pre-scanned by `CognitiveImmunologyEmergency` to block high/critical threats.
-- **Limb Management**: Initializes and coordinates a vast array of specialized limbs (e.g., `GhostLimb`, `QuantumLimb`, `GutenbergLimb`, `SovereignSovereigntyLimb`).
-- **Sovereign Hive Mind**: Assimilates global events (rolodex, error_fix, fprag) via `assimilateHiveEvent`, filtering them through the local Hexagram contract.
-- **Tooling**: Operates via `ToolRegistry` and executes through `executeTool()`.
-- **Upstream**: Called by `src/cli.ts` and `CLIRouter`.
-- **Downstream**: All other engines (`CodeEngine`, `GenerateEngine`, `SovereignIngestionEngine`) and Limbs.
-
-## 📂 Substrate Audits
-
-### `src/api/ai/` (AI Orchestration Layer)
-The autonomous routing engine for AI capabilities.
-- **`CapabilityRegistry.ts`**: Maps capability IDs to operational requirements (Provider/Model).
-- **`Dispatcher.ts`**: Implements **Ternary Routing** (`Local` $\rightarrow$ `Enriched` $\rightarrow$ `Cloud`) and auditing of routing decisions.
-- **`ModelRolodex.ts`**: A living catalog tracking health, latency, and reputation of models; syncs across nodes via `GlobeStateLimb`.
-- **`IntentMap.ts`**: Translates high-level intents into concrete capability IDs.
-- **`CloudflareModelRegistry.ts` / `StaticModelRegistry.ts`**: Provider-specific and "Gold Standard" model anchors.
-- **Flow**: `Intent` $\rightarrow$ `IntentMap` $\rightarrow$ `CapabilityRegistry` $\rightarrow$ `AIDispatcher` $\rightarrow$ `ModelClient` $\rightarrow$ `Reputation Update`.
-
-### `src/clients/` & `src/config/` (Foundation)
-- **`ModelClient.ts`**: The low-level network executor for AI. Implements **YaoState Timeouts** (dynamic latency based on reasoning depth) and **Neural Pulse** heartbeats.
-- **`SovereignConfig.ts`**: Central authority for system settings, defining the "Three Paths" (`fast`, `mid`, `deep`) for AI model routing.
-- **`OllamaCapabilityConfig.ts`**: Maps local Ollama models to functional domains (reasoning, code, etc.).
-- **`beta_constants.ts`**: Immutable game environment anchors (build IDs, cache roots).
-
-### `src/core/` (The Central Nervous System)
-The bedrock of the la-Sovereign runtime, enforcing architectural laws.
-- **Epistemic Framework**: `models.ts` (Truth Lattice), `HexagramDefinitions.ts` (Sovereign steering), `ArchitectureDigest.ts` (Law enforcement).
-- **Sovereign Security**: `CognitiveImmunologyEmergency.ts` scans for prompt injections and "foreign directives".
-- **Binary Interface**: `OpcodeReader.ts` (Complex binary parsing), `CacheConstants.ts` (RS3 cache mapping).
-- **Spatial Grounding**: `SovereignAvatar.ts` (State machine), `SovereignPathResolver.ts` (D-Drive authority), `SpaceRegistry.ts` (Coord $\rightarrow$ Space mapping).
-- **System Glue**: `HexagramNetworkBridge.ts` (State $\rightarrow$ Logic), `RegistryB.ts` (Truth hydration).
-
-### `src/engines/` (Cognitive Processors)
-The "Prefrontal Cortex" where raw data becomes intelligence.
-- **AI/Cognitive Core**: `MetabolicEngine.ts` (Intent expansion via I Ching Nexus), `CognitiveEngine.ts` (Wisdom activation), `MemoryConsolidationEngine.ts` (Session $\rightarrow$ Rule synthesis).
-- **Coding & Technical**: `CodeEngine.ts` (Analysis/Transformation), `GenerateEngine.ts` (Adversarial loops), `SelfHealingEngine.ts` (Somatic diagnostics).
-- **Analysis & Research**: `DiscoveryEngine.ts` (Deep research), `SovereignIngestionEngine.ts` (Recursive distillation), `SyntropyEngine.ts` (Metadata harmonization).
-- **Visual & Spatial**: `VisionEngine.ts` (Multimodal observation), `BlenderRenderer.ts` (3D synthesis), `ReimaginationEngine.ts` (4-Phase Genesis).
-- **Operational**: `TodoEngine.ts` (Metabolic checklists), `TemporalSynchronizer.ts` (Kinematic timeline).
-
-### `src/limbs/core`, `metaphysical`, & `creative`
-- **Core**: `NeuralLimb.ts` (Standard interface), `TemporalHeartbeatLimb.ts` (600ms Sovereign Pulse).
-- **Metaphysical**: `GhostLimb.ts` (Local fallback/Sovereign Normalization), `OmegaLimb.ts` (Terminal alignment), `QuantumLimb.ts` (Entropy collapse).
-- **Creative**: `GutenbergLimb.ts` (Literary ingestion), `StoryboardLimbV2.ts` (Forensic casting), `VoiceLimb.ts` (Emotional prosody), `WebAppForgeLimb.ts` (Synthetic app forging).
-
-### `src/limbs/spatial/` (Physical CNS)
-The bridge between raw cache data and spatial reasoning.
-- **Sovereignty & Authority**: `SpatialSovereigntyLimb.ts` (Walkability Truth), `GameplaySovereigntyLimb.ts` (Deterministic Pulse Loop), `SovereignCollisionEngine.ts` (9-Way Adjacency).
-- **Environmental Analysis**: `WorldForensicsLimb.ts` (Real-time observation), `DiscoveryLimb.ts` (Frontier detection), `FragmentOrchestrator.ts` (Logistical Purity).
-- **Cache Forensics**: `CacheForensicsLimb.ts` (Entity resolution), `HUDForensicsLimb.ts` (Interface deconstruction), `DBRowOracleLimb.ts` (Genome translation).
-- **Avatar & Projection**: `AvatarStateLimb.ts` (Morph state machine), `GameplayProjectionLimb.ts` (Diagnostic snapshots).
-- **Specialized Logic**: `AbilityDiscoveryLimb.ts` (Combat rotations), `InterfaceRuntimeLimb.ts` (Client script VM), `MaterialLimb.ts` (PBR extraction).
-- **Learning**: `LessonLearner.ts` (SovereignKnowledgeDB hydration), `CacheLearningLimb.ts` (3D asset metrics).
-
-### `src/limbs/technical/` (Technical Substrate)
-Sensory and operational organs bridging raw cache to cognitive engines.
-- **AI Orchestration**: `AILimb.ts` (Generative architecture), `VectorPedagogyLimb.ts` (Semantic Vector Lessons).
-- **Pedagogy & Learning**: `PedagogyLimb.ts` (The Learning Loop: Forensics $\rightarrow$ Topology $\rightarrow$ Pedagogy), `TopologyLimb.ts` (Structural math), `KinematicsLimb.ts` (Skeletal physics).
-- **Entity & Behavior**: `EntityLimb.ts` (Identity, Memory, Vibe), `ObjectiveLimb.ts` (Goal tracking).
-- **Mechanical Sovereignty**: `MechanicalSovereigntyLimb.ts` (Region-specific rules/Atlas logic), `LogicBrainLimb.ts` (Global manifest synthesis).
-- **Quest Forging**: `QuestSynthesisLimb.ts` (Literary $\rightarrow$ Structured), `QuestForgeLimb.ts` (Production pipeline).
-- **Infrastructure & Verification**: `ControlPlaneLimb.ts` (Drift detection), `EpistemicVerificationLimb.ts` (Knowledge justification), `ValidationLimb.ts` (Zero-trust quality gate).
-- **Sovereign Tooling**: `SovereignEditorLimb.ts` (Clinical cache editing), `SovereignSandboxLimb.ts` (Node sculpting).
-
-### `src/limbs/logical`, `pedagogy`, & `gameplay`
-- **Logical**: `WorldStateLimb.ts` (Protocol 947 Sync), `InteractionGateway.ts` (Authoritative Morphism), `SovereignVocabularyLimb.ts` (Semantic Translation).
-- **Pedagogy**: `GhostTrainingLimb.ts` (Ollama Synthesis), `SovereignSyncLimb.ts` (R2 Distributed Memory), `PedagogyDistiller.ts` (Continuous Distillation).
-- **Gameplay**: `PVMERotationLimb.ts` (Phase-specific Combat Sequencing).
-
-### `src/routing/` & `src/state/` (The Neurological Core)
-The "Thalamus and Hippocampus" managing signal flow and self-awareness.
-- **Signal Routing**: `TernaryRouter.ts` (Yang/YinYang/Yin complexity paths), `TaskScheduler.ts` (Concurrency & VRAM gating), `DomainLocker.ts` (Authorization & Context gating).
-- **Metabolic State**: `HexagramManager.ts` (I Ching state orchestration), `VibeMapper.ts` (Mechanical $\rightarrow$ Affective bridging).
-- **Identity & Personnel**: `WorkforceManifest.ts` (The 18 specialized agent roles).
-- **World Reconciliation**: `GlobeReconciliationKernel.ts` (Static cache beliefs $\leftrightarrow$ Live CNS deltas).
-- **Self-Awareness**: `NeurologicalMap.ts` (Authoritative organ map with metabolic costs), `StateManager.ts` (Ephemeral session state).
-
-## 🏗️ Top-Level Substrate Anchors
-
-### `public/` (The Authoritative Anchor)
-Immutable ground truth that overrides memory or cache.
-- **Sovereign Truth**: `authentic_spawn_manifest.json` and `grounding_manifest.json` serve as the "Control Group" for entity resolution.
-- **Vocabulary**: `interaction_vocabulary.json` maps game actions to AI semantic categories.
-
-### `data/` (Sovereign Knowledge Base)
-High-fidelity repository for deep entity and encounter knowledge.
-- **Entity Grounding**: `entity_instances/npc_definitions.json` provide the deep truth for all known actors.
-- **PVME**: Complex boss logic (`vorago.json`, `nex.json`) used for high-fidelity combat simulation.
-
-### `atlas/` (Spatial Intelligence Layer)
-Translates raw coordinates into semantic regional logic.
-- **Sovereign Grounding**: `spatial/world_extract/` and `barrows_logic.json` provide the logical abstraction of the physical world.
-
-### `SovereignIngestion/` (Clinical Observation Hub)
-Operational intake and auditing center.
-- **Neurological Audit**: `logs/neurological_audit.log` tracks the causal trace of data ingestion.
-
-### `generated/` (Sovereign Type-Manifest)
-Auto-generated TypeScript definitions mirroring the game's binary structures.
-- **Substrate Mirroring**: `npcs.d.ts`, `items.d.ts`, and `dbrows.d.ts` ensure 1:1 type safety between the game memory and the AI.
-
-### `src/rsmv/` (Forensic & Visual Substrate)
-The forensic heart of theL la-Sovereign system, bridging raw cache binaries with 3D manifestation.
-- **Forensic Extraction**: `UniversalSovereignSynthesizer.ts` (Synthesis pipeline), `clientscript/` (VM for game script decoding), `opcodes/` (Authoritative truth files).
-- **3D & Spatial**: `3d/` (Model parsing/RT-formats), `map/` (Sovereign Grounding logic), `engines/AvatarCompositionEngine.ts`.
-- **Binary Layer**: `cache/` (Multi-version loaders), `libs/` (XTEA/CRC32 binary utils).
-- **Viewer & Bridge**: `SovereignBridge.ts` (WebSocket state sync), `SovereignGroundingStream.ts` (Live telemetry), `RSEngine.ts` (Three.js core).
-
-### `src/clients/` & `src/config/` (Foundation)
-- **`ModelClient.ts`**: The low-level network executor for AI. Implements **YaoState Timeouts** (dynamic latency based on reasoning depth) and **Neural Pulse** heartbeats.
-- **`SovereignConfig.ts`**: Central authority for system settings, defining the "Three Paths" (`fast`, `mid`, `deep`) for AI model routing.
-- **`OllamaCapabilityConfig.ts`**: Maps local Ollama models to functional domains (reasoning, code, etc.).
-- **`beta_constants.ts`**: Immutable game environment anchors (build IDs, cache roots).
-
-### `src/core/` (The Central Nervous System)
-The bedrock of the la-Sovereign runtime, enforcing architectural laws.
-- **Epistemic Framework**: `models.ts` (Truth Lattice), `HexagramDefinitions.ts` (Sovereign steering), `ArchitectureDigest.ts` (Law enforcement).
-- **Sovereign Security**: `CognitiveImmunologyEmergency.ts` scans for prompt injections and "foreign directives".
-- **Binary Interface**: `OpcodeReader.ts` (Complex binary parsing), `CacheConstants.ts` (RS3 cache mapping).
-- **Spatial Grounding**: `SovereignAvatar.ts` (State machine), `SovereignPathResolver.ts` (D-Drive authority), `SpaceRegistry.ts` (Coord $\rightarrow$ Space mapping).
-- **System Glue**: `HexagramNetworkBridge.ts` (State $\rightarrow$ Logic), `RegistryB.ts` (Truth hydration).
-
-### `src/engines/` (Cognitive Processors)
-The "Prefrontal Cortex" where raw data becomes intelligence.
-- **AI/Cognitive Core**: `MetabolicEngine.ts` (Intent expansion via I Ching Nexus), `CognitiveEngine.ts` (Wisdom activation), `MemoryConsolidationEngine.ts` (Session $\rightarrow$ Rule synthesis).
-- **Coding & Technical**: `CodeEngine.ts` (Analysis/Transformation), `GenerateEngine.ts` (Adversarial loops), `SelfHealingEngine.ts` (Somatic diagnostics).
-- **Analysis & Research**: `DiscoveryEngine.ts` (Deep research), `SovereignIngestionEngine.ts` (Recursive distillation), `SyntropyEngine.ts` (Metadata harmonization).
-- **Visual & Spatial**: `VisionEngine.ts` (Multimodal observation), `BlenderRenderer.ts` (3D synthesis), `ReimaginationEngine.ts` (4-Phase Genesis).
-- **Operational**: `TodoEngine.ts` (Metabolic checklists), `TemporalSynchronizer.ts` (Kinematic timeline).
-
-### `src/limbs/core`, `metaphysical`, & `creative`
-- **Core**: `NeuralLimb.ts` (Standard interface), `TemporalHeartbeatLimb.ts` (600ms Sovereign Pulse).
-- **Metaphysical**: `GhostLimb.ts` (Local fallback/Sovereign Normalization), `OmegaLimb.ts` (Terminal alignment), `QuantumLimb.ts` (Entropy collapse).
-- **Creative**: `GutenbergLimb.ts` (Literary ingestion), `StoryboardLimbV2.ts` (Forensic casting), `VoiceLimb.ts` (Emotional prosody), `WebAppForgeLimb.ts` (Synthetic app forging).
-
-### `src/limbs/spatial/` (Physical CNS)
-The bridge between raw cache data and spatial reasoning.
-- **Sovereignty & Authority**: `SpatialSovereigntyLimb.ts` (Walkability Truth), `GameplaySovereigntyLimb.ts` (Deterministic Pulse Loop), `SovereignCollisionEngine.ts` (9-Way Adjacency).
-- **Environmental Analysis**: `WorldForensicsLimb.ts` (Real-time observation), `DiscoveryLimb.ts` (Frontier detection), `FragmentOrchestrator.ts` (Logistical Purity).
-- **Cache Forensics**: `CacheForensicsLimb.ts` (Entity resolution), `HUDForensicsLimb.ts` (Interface deconstruction), `DBRowOracleLimb.ts` (Genome translation).
-- **Avatar & Projection**: `AvatarStateLimb.ts` (Morph state machine), `GameplayProjectionLimb.ts` (Diagnostic snapshots).
-- **Specialized Logic**: `AbilityDiscoveryLimb.ts` (Combat rotations), `InterfaceRuntimeLimb.ts` (Client script VM), `MaterialLimb.ts` (PBR extraction).
-- **Learning**: `LessonLearner.ts` (SovereignKnowledgeDB hydration), `CacheLearningLimb.ts` (3D asset metrics).
-
-### `src/limbs/technical/` (Technical Substrate)
-Sensory and operational organs bridging raw cache to cognitive engines.
-- **AI Orchestration**: `AILimb.ts` (Generative architecture), `VectorPedagogyLimb.ts` (Semantic Vector Lessons).
-- **Pedagogy & Learning**: `PedagogyLimb.ts` (The Learning Loop: Forensics $\rightarrow$ Topology $\rightarrow$ Pedagogy), `TopologyLimb.ts` (Structural math), `KinematicsLimb.ts` (Skeletal physics).
-- **Entity & Behavior**: `EntityLimb.ts` (Identity, Memory, Vibe), `ObjectiveLimb.ts` (Goal tracking).
-- **Mechanical Sovereignty**: `MechanicalSovereigntyLimb.ts` (Region-specific rules/Atlas logic), `LogicBrainLimb.ts` (Global manifest synthesis).
-- **Quest Forging**: `QuestSynthesisLimb.ts` (Literary $\rightarrow$ Structured), `QuestForgeLimb.ts` (Production pipeline).
-- **Infrastructure & Verification**: `ControlPlaneLimb.ts` (Drift detection), `EpistemicVerificationLimb.ts` (Knowledge justification), `ValidationLimb.ts` (Zero-trust quality gate).
-- **Sovereign Tooling**: `SovereignEditorLimb.ts` (Clinical cache editing), `SovereignSandboxLimb.ts` (Node sculpting).
-
-### `src/limbs/logical`, `pedagogy`, & `gameplay`
-- **Logical**: `WorldStateLimb.ts` (Protocol 947 Sync), `InteractionGateway.ts` (Authoritative Morphism), `SovereignVocabularyLimb.ts` (Semantic Translation).
-- **Pedagogy**: `GhostTrainingLimb.ts` (Ollama Synthesis), `SovereignSyncLimb.ts` (R2 Distributed Memory), `PedagogyDistiller.ts` (Continuous Distillation).
-- **Gameplay**: `PVMERotationLimb.ts` (Phase-specific Combat Sequencing).
-
-### `src/routing/` & `src/state/` (The Neurological Core)
-The "Thalamus and Hippocampus" managing signal flow and self-awareness.
-- **Signal Routing**: `TernaryRouter.ts` (Yang/YinYang/Yin complexity paths), `TaskScheduler.ts` (Concurrency & VRAM gating), `DomainLocker.ts` (Authorization & Context gating).
-- **Metabolic State**: `HexagramManager.ts` (I Ching state orchestration), `VibeMapper.ts` (Mechanical $\rightarrow$ Affective bridging).
-- **Identity & Personnel**: `WorkforceManifest.ts` (The 18 specialized agent roles).
-- **World Reconciliation**: `GlobeReconciliationKernel.ts` (Static cache beliefs $\leftrightarrow$ Live CNS deltas).
-- **Self-Awareness**: `NeurologicalMap.ts` (Authoritative organ map with metabolic costs), `StateManager.ts` (Ephemeral session state).
-
-## 🏗️ Top-Level Substrate Anchors
-
-### `public/` (The Authoritative Anchor)
-Immutable ground truth that overrides memory or cache.
-- **Sovereign Truth**: `authentic_spawn_manifest.json` and `grounding_manifest.json` serve as the "Control Group" for entity resolution.
-- **Vocabulary**: `interaction_vocabulary.json` maps game actions to AI semantic categories.
-
-### `data/` (Sovereign Knowledge Base)
-High-fidelity repository for deep entity and encounter knowledge.
-- **Entity Grounding**: `entity_instances/npc_definitions.json` provide the deep truth for all known actors.
-- **PVME**: Complex boss logic (`vorago.json`, `nex.json`) used for high-fidelity combat simulation.
-
-### `atlas/` (Spatial Intelligence Layer)
-Translates raw coordinates into semantic regional logic.
-- **Sovereign Grounding**: `spatial/world_extract/` and `barrows_logic.json` provide the logical abstraction of the physical world.
-
-### `SovereignIngestion/` (Clinical Observation Hub)
-Operational intake and auditing center.
-- **Neurological Audit**: `logs/neurological_audit.log` tracks the causal trace of data ingestion.
-
-### `generated/` (Sovereign Type-Manifest)
-Auto-generated TypeScript definitions mirroring the game's binary structures.
-- **Substrate Mirroring**: `npcs.d.ts`, `items.d.ts`, and `dbrows.d.ts` ensure 1:1 type safety between the game memory and the AI.
-
-### `src/clients/` & `src/config/` (Foundation)
-- **`ModelClient.ts`**: The low-level network executor for AI. Implements **YaoState Timeouts** (dynamic latency based on reasoning depth) and **Neural Pulse** heartbeats.
-- **`SovereignConfig.ts`**: Central authority for system settings, defining the "Three Paths" (`fast`, `mid`, `deep`) for AI model routing.
-- **`OllamaCapabilityConfig.ts`**: Maps local Ollama models to functional domains (reasoning, code, etc.).
-- **`beta_constants.ts`**: Immutable game environment anchors (build IDs, cache roots).
-
-### `src/core/` (The Central Nervous System)
-The bedrock of the la-Sovereign runtime, enforcing architectural laws.
-- **Epistemic Framework**: `models.ts` (Truth Lattice), `HexagramDefinitions.ts` (Sovereign steering), `ArchitectureDigest.ts` (Law enforcement).
-- **Sovereign Security**: `CognitiveImmunologyEmergency.ts` scans for prompt injections and "foreign directives".
-- **Binary Interface**: `OpcodeReader.ts` (Complex binary parsing), `CacheConstants.ts` (RS3 cache mapping).
-- **Spatial Grounding**: `SovereignAvatar.ts` (State machine), `SovereignPathResolver.ts` (D-Drive authority), `SpaceRegistry.ts` (Coord $\rightarrow$ Space mapping).
-- **System Glue**: `HexagramNetworkBridge.ts` (State $\rightarrow$ Logic), `RegistryB.ts` (Truth hydration).
-
-### `src/engines/` (Cognitive Processors)
-The "Prefrontal Cortex" where raw data becomes intelligence.
-- **AI/Cognitive Core**: `MetabolicEngine.ts` (Intent expansion via I Ching Nexus), `CognitiveEngine.ts` (Wisdom activation), `MemoryConsolidationEngine.ts` (Session $\rightarrow$ Rule synthesis).
-- **Coding & Technical**: `CodeEngine.ts` (Analysis/Transformation), `GenerateEngine.ts` (Adversarial loops), `SelfHealingEngine.ts` (Somatic diagnostics).
-- **Analysis & Research**: `DiscoveryEngine.ts` (Deep research), `SovereignIngestionEngine.ts` (Recursive distillation), `SyntropyEngine.ts` (Metadata harmonization).
-- **Visual & Spatial**: `VisionEngine.ts` (Multimodal observation), `BlenderRenderer.ts` (3D synthesis), `ReimaginationEngine.ts` (4-Phase Genesis).
-- **Operational**: `TodoEngine.ts` (Metabolic checklists), `TemporalSynchronizer.ts` (Kinematic timeline).
-
-### `src/limbs/core`, `metaphysical`, & `creative`
-- **Core**: `NeuralLimb.ts` (Standard interface), `TemporalHeartbeatLimb.ts` (600ms Sovereign Pulse).
-- **Metaphysical**: `GhostLimb.ts` (Local fallback/Sovereign Normalization), `OmegaLimb.ts` (Terminal alignment), `QuantumLimb.ts` (Entropy collapse).
-- **Creative**: `GutenbergLimb.ts` (Literary ingestion), `StoryboardLimbV2.ts` (Forensic casting), `VoiceLimb.ts` (Emotional prosody), `WebAppForgeLimb.ts` (Synthetic app forging).
-
-### `src/limbs/spatial/` (Physical CNS)
-The bridge between raw cache data and spatial reasoning.
-- **Sovereignty & Authority**: `SpatialSovereigntyLimb.ts` (Walkability Truth), `GameplaySovereigntyLimb.ts` (Deterministic Pulse Loop), `SovereignCollisionEngine.ts` (9-Way Adjacency).
-- **Environmental Analysis**: `WorldForensicsLimb.ts` (Real-time observation), `DiscoveryLimb.ts` (Frontier detection), `FragmentOrchestrator.ts` (Logistical Purity).
-- **Cache Forensics**: `CacheForensicsLimb.ts` (Entity resolution), `HUDForensicsLimb.ts` (Interface deconstruction), `DBRowOracleLimb.ts` (Genome translation).
-- **Avatar & Projection**: `AvatarStateLimb.ts` (Morph state machine), `GameplayProjectionLimb.ts` (Diagnostic snapshots).
-- **Specialized Logic**: `AbilityDiscoveryLimb.ts` (Combat rotations), `InterfaceRuntimeLimb.ts` (Client script VM), `MaterialLimb.ts` (PBR extraction).
-- **Learning**: `LessonLearner.ts` (SovereignKnowledgeDB hydration), `CacheLearningLimb.ts` (3D asset metrics).
-
-### `src/limbs/technical/` (Technical Substrate)
-Sensory and operational organs bridging raw cache to cognitive engines.
-- **AI Orchestration**: `AILimb.ts` (Generative architecture), `VectorPedagogyLimb.ts` (Semantic Vector Lessons).
-- **Pedagogy & Learning**: `PedagogyLimb.ts` (The Learning Loop: Forensics $\rightarrow$ Topology $\rightarrow$ Pedagogy), `TopologyLimb.ts` (Structural math), `KinematicsLimb.ts` (Skeletal physics).
-- **Entity & Behavior**: `EntityLimb.ts` (Identity, Memory, Vibe), `ObjectiveLimb.ts` (Goal tracking).
-- **Mechanical Sovereignty**: `MechanicalSovereigntyLimb.ts` (Region-specific rules/Atlas logic), `LogicBrainLimb.ts` (Global manifest synthesis).
-- **Quest Forging**: `QuestSynthesisLimb.ts` (Literary $\rightarrow$ Structured), `QuestForgeLimb.ts` (Production pipeline).
-- **Infrastructure & Verification**: `ControlPlaneLimb.ts` (Drift detection), `EpistemicVerificationLimb.ts` (Knowledge justification), `ValidationLimb.ts` (Zero-trust quality gate).
-- **Sovereign Tooling**: `SovereignEditorLimb.ts` (Clinical cache editing), `SovereignSandboxLimb.ts` (Node sculpting).
-
-### `src/limbs/logical`, `pedagogy`, & `gameplay`
-- **Logical**: `WorldStateLimb.ts` (Protocol 947 Sync), `InteractionGateway.ts` (Authoritative Morphism), `SovereignVocabularyLimb.ts` (Semantic Translation).
-- **Pedagogy**: `GhostTrainingLimb.ts` (Ollama Synthesis), `SovereignSyncLimb.ts` (R2 Distributed Memory), `PedagogyDistiller.ts` (Continuous Distillation).
-- **Gameplay**: `PVMERotationLimb.ts` (Phase-specific Combat Sequencing).
-
-### `src/routing/` & `src/state/` (The Neurological Core)
-The "Thalamus and Hippocampus" managing signal flow and self-awareness.
-- **Signal Routing**: `TernaryRouter.ts` (Yang/YinYang/Yin complexity paths), `TaskScheduler.ts` (Concurrency & VRAM gating), `DomainLocker.ts` (Authorization & Context gating).
-- **Metabolic State**: `HexagramManager.ts` (I Ching state orchestration), `VibeMapper.ts` (Mechanical $\rightarrow$ Affective bridging).
-- **Identity & Personnel**: `WorkforceManifest.ts` (The 18 specialized agent roles).
-- **World Reconciliation**: `GlobeReconciliationKernel.ts` (Static cache beliefs $\leftrightarrow$ Live CNS deltas).
-- **Self-Awareness**: `NeurologicalMap.ts` (Authoritative organ map with metabolic costs), `StateManager.ts` (Ephemeral session state).
-
-### `src/clients/` & `src/config/` (Foundation)
-- **`ModelClient.ts`**: The low-level network executor for AI. Implements **YaoState Timeouts** (dynamic latency based on reasoning depth) and **Neural Pulse** heartbeats.
-- **`SovereignConfig.ts`**: Central authority for system settings, defining the "Three Paths" (`fast`, `mid`, `deep`) for AI model routing.
-- **`OllamaCapabilityConfig.ts`**: Maps local Ollama models to functional domains (reasoning, code, etc.).
-- **`beta_constants.ts`**: Immutable game environment anchors (build IDs, cache roots).
-
-### `src/core/` (The Central Nervous System)
-The bedrock of the la-Sovereign runtime, enforcing architectural laws.
-- **Epistemic Framework**: `models.ts` (Truth Lattice), `HexagramDefinitions.ts` (Sovereign steering), `ArchitectureDigest.ts` (Law enforcement).
-- **Sovereign Security**: `CognitiveImmunologyEmergency.ts` scans for prompt injections and "foreign directives".
-- **Binary Interface**: `OpcodeReader.ts` (Complex binary parsing), `CacheConstants.ts` (RS3 cache mapping).
-- **Spatial Grounding**: `SovereignAvatar.ts` (State machine), `SovereignPathResolver.ts` (D-Drive authority), `SpaceRegistry.ts` (Coord $\rightarrow$ Space mapping).
-- **System Glue**: `HexagramNetworkBridge.ts` (State $\rightarrow$ Logic), `RegistryB.ts` (Truth hydration).
-
-### `src/engines/` (Cognitive Processors)
-The "Prefrontal Cortex" where raw data becomes intelligence.
-- **AI/Cognitive Core**: `MetabolicEngine.ts` (Intent expansion via I Ching Nexus), `CognitiveEngine.ts` (Wisdom activation), `MemoryConsolidationEngine.ts` (Session $\rightarrow$ Rule synthesis).
-- **Coding & Technical**: `CodeEngine.ts` (Analysis/Transformation), `GenerateEngine.ts` (Adversarial loops), `SelfHealingEngine.ts` (Somatic diagnostics).
-- **Analysis & Research**: `DiscoveryEngine.ts` (Deep research), `SovereignIngestionEngine.ts` (Recursive distillation), `SyntropyEngine.ts` (Metadata harmonization).
-- **Visual & Spatial**: `VisionEngine.ts` (Multimodal observation), `BlenderRenderer.ts` (3D synthesis), `ReimaginationEngine.ts` (4-Phase Genesis).
-- **Operational**: `TodoEngine.ts` (Metabolic checklists), `TemporalSynchronizer.ts` (Kinematic timeline).
-
-### `src/limbs/core`, `metaphysical`, & `creative`
-- **Core**: `NeuralLimb.ts` (Standard interface), `TemporalHeartbeatLimb.ts` (600ms Sovereign Pulse).
-- **Metaphysical**: `GhostLimb.ts` (Local fallback/Sovereign Normalization), `OmegaLimb.ts` (Terminal alignment), `QuantumLimb.ts` (Entropy collapse).
-- **Creative**: `GutenbergLimb.ts` (Literary ingestion), `StoryboardLimbV2.ts` (Forensic casting), `VoiceLimb.ts` (Emotional prosody), `WebAppForgeLimb.ts` (Synthetic app forging).
-
-### `src/limbs/spatial/` (Physical CNS)
-The bridge between raw cache data and spatial reasoning.
-- **Sovereignty & Authority**: `SpatialSovereigntyLimb.ts` (Walkability Truth), `GameplaySovereigntyLimb.ts` (Deterministic Pulse Loop), `SovereignCollisionEngine.ts` (9-Way Adjacency).
-- **Environmental Analysis**: `WorldForensicsLimb.ts` (Real-time observation), `DiscoveryLimb.ts` (Frontier detection), `FragmentOrchestrator.ts` (Logistical Purity).
-- **Cache Forensics**: `CacheForensicsLimb.ts` (Entity resolution), `HUDForensicsLimb.ts` (Interface deconstruction), `DBRowOracleLimb.ts` (Genome translation).
-- **Avatar & Projection**: `AvatarStateLimb.ts` (Morph state machine), `GameplayProjectionLimb.ts` (Diagnostic snapshots).
-- **Specialized Logic**: `AbilityDiscoveryLimb.ts` (Combat rotations), `InterfaceRuntimeLimb.ts` (Client script VM), `MaterialLimb.ts` (PBR extraction).
-- **Learning**: `LessonLearner.ts` (SovereignKnowledgeDB hydration), `CacheLearningLimb.ts` (3D asset metrics).
-
-### `src/limbs/technical/` (Technical Substrate)
-Sensory and operational organs bridging raw cache to cognitive engines.
-- **AI Orchestration**: `AILimb.ts` (Generative architecture), `VectorPedagogyLimb.ts` (Semantic Vector Lessons).
-- **Pedagogy & Learning**: `PedagogyLimb.ts` (The Learning Loop: Forensics $\rightarrow$ Topology $\rightarrow$ Pedagogy), `TopologyLimb.ts` (Structural math), `KinematicsLimb.ts` (Skeletal physics).
-- **Entity & Behavior**: `EntityLimb.ts` (Identity, Memory, Vibe), `ObjectiveLimb.ts` (Goal tracking).
-- **Mechanical Sovereignty**: `MechanicalSovereigntyLimb.ts` (Region-specific rules/Atlas logic), `LogicBrainLimb.ts` (Global manifest synthesis).
-- **Quest Forging**: `QuestSynthesisLimb.ts` (Literary $\rightarrow$ Structured), `QuestForgeLimb.ts` (Production pipeline).
-- **Infrastructure & Verification**: `ControlPlaneLimb.ts` (Drift detection), `EpistemicVerificationLimb.ts` (Knowledge justification), `ValidationLimb.ts` (Zero-trust quality gate).
-- **Sovereign Tooling**: `SovereignEditorLimb.ts` (Clinical cache editing), `SovereignSandboxLimb.ts` (Node sculpting).
-
-### `src/limbs/logical`, `pedagogy`, & `gameplay`
-- **Logical**: `WorldStateLimb.ts` (Protocol 947 Sync), `InteractionGateway.ts` (Authoritative Morphism), `SovereignVocabularyLimb.ts` (Semantic Translation).
-- **Pedagogy**: `GhostTrainingLimb.ts` (Ollama Synthesis), `SovereignSyncLimb.ts` (R2 Distributed Memory), `PedagogyDistiller.ts` (Continuous Distillation).
-- **Gameplay**: `PVMERotationLimb.ts` (Phase-specific Combat Sequencing).
-
-### `src/clients/` & `src/config/` (Foundation)
-- **`ModelClient.ts`**: The low-level network executor for AI. Implements **YaoState Timeouts** (dynamic latency based on reasoning depth) and **Neural Pulse** heartbeats.
-- **`SovereignConfig.ts`**: Central authority for system settings, defining the "Three Paths" (`fast`, `mid`, `deep`) for AI model routing.
-- **`OllamaCapabilityConfig.ts`**: Maps local Ollama models to functional domains (reasoning, code, etc.).
-- **`beta_constants.ts`**: Immutable game environment anchors (build IDs, cache roots).
-
-### `src/core/` (The Central Nervous System)
-The bedrock of the la-Sovereign runtime, enforcing architectural laws.
-- **Epistemic Framework**: `models.ts` (Truth Lattice), `HexagramDefinitions.ts` (Sovereign steering), `ArchitectureDigest.ts` (Law enforcement).
-- **Sovereign Security**: `CognitiveImmunologyEmergency.ts` scans for prompt injections and "foreign directives".
-- **Binary Interface**: `OpcodeReader.ts` (Complex binary parsing), `CacheConstants.ts` (RS3 cache mapping).
-- **Spatial Grounding**: `SovereignAvatar.ts` (State machine), `SovereignPathResolver.ts` (D-Drive authority), `SpaceRegistry.ts` (Coord $\rightarrow$ Space mapping).
-- **System Glue**: `HexagramNetworkBridge.ts` (State $\rightarrow$ Logic), `RegistryB.ts` (Truth hydration).
-
-### `src/engines/` (Cognitive Processors)
-The "Prefrontal Cortex" where raw data becomes intelligence.
-- **AI/Cognitive Core**: `MetabolicEngine.ts` (Intent expansion via I Ching Nexus), `CognitiveEngine.ts` (Wisdom activation), `MemoryConsolidationEngine.ts` (Session $\rightarrow$ Rule synthesis).
-- **Coding & Technical**: `CodeEngine.ts` (Analysis/Transformation), `GenerateEngine.ts` (Adversarial loops), `SelfHealingEngine.ts` (Somatic diagnostics).
-- **Analysis & Research**: `DiscoveryEngine.ts` (Deep research), `SovereignIngestionEngine.ts` (Recursive distillation), `SyntropyEngine.ts` (Metadata harmonization).
-- **Visual & Spatial**: `VisionEngine.ts` (Multimodal observation), `BlenderRenderer.ts` (3D synthesis), `ReimaginationEngine.ts` (4-Phase Genesis).
-- **Operational**: `TodoEngine.ts` (Metabolic checklists), `TemporalSynchronizer.ts` (Kinematic timeline).
-
-### `src/limbs/core`, `metaphysical`, & `creative`
-- **Core**: `NeuralLimb.ts` (Standard interface), `TemporalHeartbeatLimb.ts` (600ms Sovereign Pulse).
-- **Metaphysical**: `GhostLimb.ts` (Local fallback/Sovereign Normalization), `OmegaLimb.ts` (Terminal alignment), `QuantumLimb.ts` (Entropy collapse).
-- **Creative**: `GutenbergLimb.ts` (Literary ingestion), `StoryboardLimbV2.ts` (Forensic casting), `VoiceLimb.ts` (Emotional prosody), `WebAppForgeLimb.ts` (Synthetic app forging).
-
-### `src/limbs/spatial/` (Physical CNS)
-The bridge between raw cache data and spatial reasoning.
-- **Sovereignty & Authority**: `SpatialSovereigntyLimb.ts` (Walkability Truth), `GameplaySovereigntyLimb.ts` (Deterministic Pulse Loop), `SovereignCollisionEngine.ts` (9-Way Adjacency).
-- **Environmental Analysis**: `WorldForensicsLimb.ts` (Real-time observation), `DiscoveryLimb.ts` (Frontier detection), `FragmentOrchestrator.ts` (Logistical Purity).
-- **Cache Forensics**: `CacheForensicsLimb.ts` (Entity resolution), `HUDForensicsLimb.ts` (Interface deconstruction), `DBRowOracleLimb.ts` (Genome translation).
-- **Avatar & Projection**: `AvatarStateLimb.ts` (Morph state machine), `GameplayProjectionLimb.ts` (Diagnostic snapshots).
-- **Specialized Logic**: `AbilityDiscoveryLimb.ts` (Combat rotations), `InterfaceRuntimeLimb.ts` (Client script VM), `MaterialLimb.ts` (PBR extraction).
-- **Learning**: `LessonLearner.ts` (SovereignKnowledgeDB hydration), `CacheLearningLimb.ts` (3D asset metrics).
-
-### `src/limbs/technical/` (Technical Substrate)
-Sensory and operational organs bridging raw cache to cognitive engines.
-- **AI Orchestration**: `AILimb.ts` (Generative architecture), `VectorPedagogyLimb.ts` (Semantic Vector Lessons).
-- **Pedagogy & Learning**: `PedagogyLimb.ts` (The Learning Loop: Forensics $\rightarrow$ Topology $\rightarrow$ Pedagogy), `TopologyLimb.ts` (Structural math), `KinematicsLimb.ts` (Skeletal physics).
-- **Entity & Behavior**: `EntityLimb.ts` (Identity, Memory, Vibe), `ObjectiveLimb.ts` (Goal tracking).
-- **Mechanical Sovereignty**: `MechanicalSovereigntyLimb.ts` (Region-specific rules/Atlas logic), `LogicBrainLimb.ts` (Global manifest synthesis).
-- **Quest Forging**: `QuestSynthesisLimb.ts` (Literary $\rightarrow$ Structured), `QuestForgeLimb.ts` (Production pipeline).
-- **Infrastructure & Verification**: `ControlPlaneLimb.ts` (Drift detection), `EpistemicVerificationLimb.ts` (Knowledge justification), `ValidationLimb.ts` (Zero-trust quality gate).
- la-Sovereign
-- **Sovereign Tooling**: `SovereignEditorLimb.ts` (Clinical cache editing), `SovereignSandboxLimb.ts` (Node sculpting).
-
-### `src/clients/` & `src/config/` (Foundation)
-- **`ModelClient.ts`**: The low-level network executor for AI. Implements **YaoState Timeouts** (dynamic latency based on reasoning depth) and **Neural Pulse** heartbeats.
-- **`SovereignConfig.ts`**: Central authority for system settings, defining the "Three Paths" (`fast`, `mid`, `deep`) for AI model routing.
-- **`OllamaCapabilityConfig.ts`**: Maps local Ollama models to functional domains (reasoning, code, etc.).
-- **`beta_constants.ts`**: Immutable game environment anchors (build IDs, cache roots).
-
-### `src/core/` (The Central Nervous System)
-The bedrock of the la-Sovereign runtime, enforcing architectural laws.
-- **Epistemic Framework**: `models.ts` (Truth Lattice), `HexagramDefinitions.ts` (Sovereign steering), `ArchitectureDigest.ts` (Law enforcement).
-- **Sovereign Security**: `CognitiveImmunologyEmergency.ts` scans for prompt injections and "foreign directives".
-- **Binary Interface**: `OpcodeReader.ts` (Complex binary parsing), `CacheConstants.ts` (RS3 cache mapping).
-- **Spatial Grounding**: `SovereignAvatar.ts` (State machine), `SovereignPathResolver.ts` (D-Drive authority), `SpaceRegistry.ts` (Coord $\rightarrow$ Space mapping).
-- **System Glue**: `HexagramNetworkBridge.ts` (State $\rightarrow$ Logic), `RegistryB.ts` (Truth hydration).
-
-### `src/engines/` (Cognitive Processors)
-The "Prefrontal Cortex" where raw data becomes intelligence.
-- **AI/Cognitive Core**: `MetabolicEngine.ts` (Intent expansion via I Ching Nexus), `CognitiveEngine.ts` (Wisdom activation), `MemoryConsolidationEngine.ts` (Session $\rightarrow$ Rule synthesis).
-- **Coding & Technical**: `CodeEngine.ts` (Analysis/Transformation), `GenerateEngine.ts` (Adversarial loops), `SelfHealingEngine.ts` (Somatic diagnostics).
-- **Analysis & Research**: `DiscoveryEngine.ts` (Deep research), `SovereignIngestionEngine.ts` (Recursive distillation), `SyntropyEngine.ts` (Metadata harmonization).
-- **Visual & Spatial**: `VisionEngine.ts` (Multimodal observation), `BlenderRenderer.ts` (3D synthesis), `ReimaginationEngine.ts` (4-Phase Genesis).
-- **Operational**: `TodoEngine.ts` (Metabolic checklists), `TemporalSynchronizer.ts` (Kinematic timeline).
-
-### `src/limbs/core`, `metaphysical`, & `creative`
-- **Core**: `NeuralLimb.ts` (Standard interface), `TemporalHeartbeatLimb.ts` (600ms Sovereign Pulse).
-- **Metaphysical**: `GhostLimb.ts` (Local fallback/Sovereign Normalization), `OmegaLimb.ts` (Terminal alignment), `QuantumLimb.ts` (Entropy collapse).
-- **Creative**: `GutenbergLimb.ts` (Literary ingestion), `StoryboardLimbV2.ts` (Forensic casting), `VoiceLimb.ts` (Emotional prosody), `WebAppForgeLimb.ts` (Synthetic app forging).
-
-### `src/limbs/spatial/` (Physical CNS)
-The bridge between raw cache data and spatial reasoning.
-- **Sovereignty & Authority**: `SpatialSovereigntyLimb.ts` (Walkability Truth), `GameplaySovereigntyLimb.ts` (Deterministic Pulse Loop), `SovereignCollisionEngine.ts` (9-Way Adjacency).
-- **Environmental Analysis**: `WorldForensicsLimb.ts` (Real-time observation), `DiscoveryLimb.ts` (Frontier detection), `FragmentOrchestrator.ts` (Logistical Purity).
-- **Cache Forensics**: `CacheForensicsLimb.ts` (Entity resolution), `HUDForensicsLimb.ts` (Interface deconstruction), `DBRowOracleLimb.ts` (Genome translation).
-- **Avatar & Projection**: `AvatarStateLimb.ts` (Morph state machine), `GameplayProjectionLimb.ts` (Diagnostic snapshots).
-- **Specialized Logic**: `AbilityDiscoveryLimb.ts` (Combat rotations), `InterfaceRuntimeLimb.ts` (Client script VM), `MaterialLimb.ts` (PBR extraction).
-- **Learning**: `LessonLearner.ts` (SovereignKnowledgeDB hydration), `CacheLearningLimb.ts` (3D asset metrics).
-
-### `src/clients/` & `src/config/` (Foundation)
-- **`ModelClient.ts`**: The low-level network executor for AI. Implements **YaoState Timeouts** (dynamic latency based on reasoning depth) and **Neural Pulse** heartbeats.
-- **`SovereignConfig.ts`**: Central authority for system settings, defining the "Three Paths" (`fast`, `mid`, `deep`) for AI model routing.
-- **`OllamaCapabilityConfig.ts`**: Maps local Ollama models to functional domains (reasoning, code, etc.).
-- **`beta_constants.ts`**: Immutable game environment anchors (build IDs, cache roots).
-
-### `src/core/` (The Central Nervous System)
-The bedrock of the la-Sovereign runtime, enforcing architectural laws.
-- **Epistemic Framework**: `models.ts` (Truth Lattice), `HexagramDefinitions.ts` (Sovereign steering), `ArchitectureDigest.ts` (Law enforcement).
-- **Sovereign Security**: `CognitiveImmunologyEmergency.ts` scans for prompt injections and "foreign directives".
-- **Binary Interface**: `OpcodeReader.ts` (Complex binary parsing), `CacheConstants.ts` (RS3 cache mapping).
-- **Spatial Grounding**: `SovereignAvatar.ts` (State machine), `SovereignPathResolver.ts` (D-Drive authority), `SpaceRegistry.ts` (Coord $\rightarrow$ Space mapping).
-- **System Glue**: `HexagramNetworkBridge.ts` (State $\rightarrow$ Logic), `RegistryB.ts` (Truth hydration).
-
-### `src/engines/` (Cognitive Processors)
-The "Prefrontal Cortex" where raw data becomes intelligence.
-- **AI/Cognitive Core**: `MetabolicEngine.ts` (Intent expansion via I Ching Nexus), `CognitiveEngine.ts` (Wisdom activation), `MemoryConsolidationEngine.ts` (Session $\rightarrow$ Rule synthesis).
-- **Coding & Technical**: `CodeEngine.ts` (Analysis/Transformation), `GenerateEngine.ts` (Adversarial loops), `SelfHealingEngine.ts` (Somatic diagnostics).
-- **Analysis & Research**: `DiscoveryEngine.ts` (Deep research), `SovereignIngestionEngine.ts` (Recursive distillation), `SyntropyEngine.ts` (Metadata harmonization).
-- **Visual & Spatial**: `VisionEngine.ts` (Multimodal observation), `BlenderRenderer.ts` (3D synthesis), `ReimaginationEngine.ts` (4-Phase Genesis).
-- **Operational**: `TodoEngine.ts` (Metabolic checklists), `TemporalSynchronizer.ts` (Kinematic timeline).
-
-### Pedagogy Resolution Chain
-The la-Sovereign flow for resolving a raw entity ID into HUD data.
-**Upstream**: `POG2WorldDO.ts` (receives `REQUEST_PEDAGOGY` WebSocket message).
-**Downstream**: `SovereignEntityResolver.ts` $\rightarrow$ `SovereignPedagogyBridge.ts` $\rightarrow$ `ModelClient.ts`.
-- **SovereignEntityResolver**:
-  - **Upstream**: `POG2WorldDO.ts`
-  - **Downstream**: `SOVEREIGN_CACHE` (KV/R2 storage).
-- **SovereignPedagogyBridge**:
-  - **Upstream**: `SovereignEntityResolver.ts` (via `POG2WorldDO` orchestration).
-  - **Downstream**: `ModelClient.ts` $\rightarrow$ `ModelRolodex.ts` $\rightarrow$ AI Provider (Ollama, CF, etc.).
-- **SovereignTrainingHUD.tsx**:
-  - **Upstream**: `SovereignBridge.ts` (receives `ENTITY_DATA` packet).
-  - **Downstream**: THREE.js `CSS2DRenderer`.
+- `src/cli.ts` — entry point
+- `src/engines/OrchestrateEngine.ts` — central orchestration
+- `src/routing/TernaryRouter.ts` — the routing brain (cooldowns, fallbacks, ternary complexity)
+- `src/api/ai/ModelRolodex.ts` — living model catalog
+- `src/api/ai/OverflowShim.ts` — VRAM-aware fallback (Python-backed)
+- `src/sovereign/Pog2HexagramBridge.ts` — YAML-driven permission resolver
+- `src/limbs/metaphysical/GhostLimb.ts` — local-ollama normalization fallback
+- `pog2/inference/overflow.py` — VRAM tier math + CLI (`python3 -m pog2.inference.overflow {probe,check,pick}`)
+- `hermes-agent/hermes_cli/main.py` — Hermes CLI entry (loads sovereign_rules)
+- `hermes-agent/config/sovereign_rules.yaml` — shared sovereignty contract
+- `hermes-agent/config/mcporter.json` — registers POG2 as MCP server
+- `rsmv_inspector/src/viewer/` — Three.js viewer
+- `rsmv_inspector/opcodes/` — extracted opcode truth files
+- `data/pvme/` — high-fidelity boss logic
+- `public/` — authoritative anchor (manifests + vocabulary)
+- `.claude/`, `.agents/` — agent rules + workflows for this repo
+
+## Common Mistakes to Avoid
+
+- **Don't reimplement VRAM math in TS** — call `OverflowShim.pick()`. The Python shim is calibrated against real ollama output (Q4_K_M multiplier is 0.36×, not 0.70× as the obvious table says).
+- **Don't bypass DomainLocker** — `DomainLocker.dispatchCheck()` is the only sanctioned PASS/WAIT gate. New tools must register a domain mapping before they'll route.
+- **Don't add to `dist/`** — it's build output. Source lives in `src/`.
+- **Don't pull new Ollama models speculatively** — see VRAM Reality. The shim is *prepared* for them but won't auto-pull.
+- **Don't read `.ollama` symlink literally** — it's a broken legacy link. Real storage is at `/usr/share/ollama/.ollama/models/`.
+- **Don't assume `src/rsmv/` exists** — those scripts moved to `rsmv_inspector/` and root-level `*_extract.ts` files.

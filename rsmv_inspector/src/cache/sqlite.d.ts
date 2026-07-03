@@ -1,7 +1,6 @@
-import * as cache from "./index";
-import type * as sqlite3 from "sqlite3";
+import * as cache from "./index.js";
 type CacheTable = {
-    db: sqlite3.Database | null;
+    db: any | null;
     indices: Promise<cache.CacheIndexFile>;
     readFile: (minor: number) => Promise<{
         DATA: Buffer;
@@ -27,7 +26,7 @@ export declare class GameCacheLoader extends cache.CacheFileSource {
     };
     generateRootIndex(): Promise<cache.CacheIndex[]>;
     openTable(major: number): CacheTable;
-    getFile(major: number, minor: number, crc?: number): Promise<Buffer<any>>;
+    getFile(major: number, minor: number, crc?: number): Promise<Buffer<any> | null>;
     getFileArchive(index: cache.CacheIndex): Promise<cache.SubFile[]>;
     writeFile(major: number, minor: number, file: Buffer): Promise<void>;
     writeFileArchive(major: number, minor: number, files: Buffer[]): Promise<void>;

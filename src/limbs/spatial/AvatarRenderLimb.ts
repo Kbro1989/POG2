@@ -1,6 +1,8 @@
+import { join } from 'path';
 import { createLogger } from '../../utils/logger.js';
 import { Engine, Scene, Mesh, VertexData, StandardMaterial, Color3, ArcRotateCamera, Vector3, HemisphericLight, PointsCloudSystem, Color4 } from '@babylonjs/core';
 import { AvatarStateLimb } from './AvatarStateLimb.js';
+import { resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
 
 const logger = createLogger('AvatarRenderLimb');
 

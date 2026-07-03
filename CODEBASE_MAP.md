@@ -164,6 +164,10 @@ This registry provides absolute GitHub links to all neurological substrates with
 
 - [NeuralLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/core/NeuralLimb.ts)
 
+### 🖥️ System (`system/`)
+
+- [SkillsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/system/SkillsLimb.ts): Foreign-skill assimilation pipeline. Ingests full skill content (instructions, refs, scripts, examples), runs the four-stage immune audit (GhostLimb adversarial / ClinicalAuditTool schema / OmegaLimb alignment / InvariantCompiler structural), and registers the skill as a `ToolDefinition`. See `SKILLSLIMB_ASSIMILATION_MAP.md` for command/skill slot assignments.
+
 ### 🎨 Creative Core (`creative/`)
 
 - [GutenbergLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/GutenbergLimb.ts)
@@ -243,7 +247,7 @@ This registry provides absolute GitHub links to all neurological substrates with
 
 ### Core
 
-- [DomainLocker.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/DomainLocker.ts)
+- [DomainLocker.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/DomainLocker.ts): Runtime gate returning PASS/WAIT per `src/types/SovereignDomain.ts`. Reads `TOOL_DOMAIN_MAP` and `DOMAIN_ADJACENCY` from the enum file; the two are inseparable. See `SECURITY_CHAIN.md` Gate 2.
 - [HexagramManager.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/HexagramManager.ts)
 - [TaskScheduler.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/TaskScheduler.ts)
 - [TernaryRouter.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/TernaryRouter.ts)

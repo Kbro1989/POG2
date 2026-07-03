@@ -1,19 +1,16 @@
-import { appendFile, readFile } from 'fs/promises';
-import { existsSync, mkdirSync, readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { appendFile } from 'fs/promises';
+import { existsSync, readFileSync } from 'fs';
+import { join } from 'path';
 import {
     getTrainingInteractionsPath,
-    getTrainingDecisionsPath,
     getTrainingHistoryPath,
-    getTrainingMetricsPath,
-    getTrainingThinkingPath,
     getTrainingFPRAGPath,
-    getTrainingErrorFixesPath,
     getTrainingConsequencesPath
 } from './SovereignPathResolver.js';
 import { type ThinkingNexus, type DecisionAuditRecord, YaoState, type LearningEvent, LearningFidelity, LearningMode, type Lesson, TruthClass } from '../core/models.js';
 import { EventBus } from '../events/EventBus.js';
 import { createLogger } from "./logger.js";
+import { CanonicalClock, type TickCoordinate } from './CanonicalClock.js';
 import { HexagramManager } from '../routing/HexagramManager.js';
 import type { VectorDB } from './VectorDB.js';
 
@@ -42,6 +39,8 @@ export interface InteractionRecord {
     tokenCount?: number;
     success: boolean;
     error?: string;
+    source?: string;
+    trainingContext?: TrainingContext;
 }
 
 export interface RoutingDecisionRecord {
@@ -56,6 +55,7 @@ export interface RoutingDecisionRecord {
     fallbackUsed: boolean;
     fallbackReason?: string;
     cascadeOrder: string[];
+    trainingContext?: TrainingContext;
 }
 
 export interface SessionHistoryRecord {
@@ -64,6 +64,7 @@ export interface SessionHistoryRecord {
     event: 'task_start' | 'task_complete' | 'task_failed' | 'tool_used' | 'error' | 'rollback';
     detail: string;
     metadata?: Record<string, unknown>;
+    trainingContext?: TrainingContext;
 }
 
 export interface MetricRecord {
@@ -75,6 +76,7 @@ export interface MetricRecord {
     success: boolean;
     tokenCount?: number;
     memoryUsageMb?: number;
+    trainingContext?: TrainingContext;
 }
 
 export interface ErrorFixRecord {
@@ -84,6 +86,7 @@ export interface ErrorFixRecord {
     resolution?: string;
     model: string;
     success: boolean;
+    trainingContext?: TrainingContext;
 }
 
 export interface ConsequenceRecord {
@@ -96,6 +99,7 @@ export interface ConsequenceRecord {
     success: boolean;
     yaoState: number;
     latencyMs: number;
+    trainingContext?: TrainingContext;
 }
 
 export interface RetrospectiveInsight {
@@ -106,6 +110,22 @@ export interface RetrospectiveInsight {
     logic: number;
 }
 
+export interface TrainingContext {
+    tickCoordinate: TickCoordinate;
+    hexagram: {
+        id: number;
+        name: string;
+        binary: string;
+        strategy: string;
+        judgment?: string;
+        emotion: string;
+        yaoState: YaoState;
+        ternaryState: 'Yin' | 'Yang' | 'YinYang';
+        phase: string;
+        mode: string;
+    };
+}
+
 export interface RetrospectiveRecord {
     timestamp: string;
     sessionId: string;
@@ -114,6 +134,7 @@ export interface RetrospectiveRecord {
     insight: RetrospectiveInsight;
     yaoState: number;
     hexagram: string;
+    trainingContext?: TrainingContext;
 }
 
 /**
@@ -147,7 +168,8 @@ export class TrainingCollector {
         const full: RetrospectiveRecord = {
             ...record,
             timestamp: new Date().toISOString(),
-            sessionId: this.sessionId
+            sessionId: this.sessionId,
+            trainingContext: this.buildTrainingContext()
         };
         EventBus.getInstance().publish({
             type: 'retrospective',
@@ -188,8 +210,15 @@ export class TrainingCollector {
     public async recordLesson(lesson: Lesson & { projectId: string; domainNamespace?: string; hash?: string; type?: string }): Promise<void> {
         const contract = HexagramManager.getInstance().getContract();
         const permissions = contract.permissions;
-        const outcome = this.arbitrateLesson(lesson, permissions);
-        await this.executeEmission(outcome, lesson);
+        const enrichedLesson = {
+            ...lesson,
+            metadata: {
+                ...lesson.metadata,
+                trainingContext: this.buildTrainingContext()
+            }
+        };
+        const outcome = this.arbitrateLesson(enrichedLesson, permissions);
+        await this.executeEmission(outcome, enrichedLesson);
     }
 
     public async recordAnomaly(tick: number, eventId: string | null, type: string, data: any): Promise<void> {
@@ -349,7 +378,8 @@ export class TrainingCollector {
         const full: InteractionRecord = {
             ...record,
             timestamp: new Date().toISOString(),
-            sessionId: this.sessionId
+            sessionId: this.sessionId,
+            trainingContext: this.buildTrainingContext()
         };
 
         this.interactionCount++;
@@ -395,7 +425,8 @@ export class TrainingCollector {
         const full: RoutingDecisionRecord = {
             ...record,
             timestamp: new Date().toISOString(),
-            sessionId: this.sessionId
+            sessionId: this.sessionId,
+            trainingContext: this.buildTrainingContext()
         };
 
         EventBus.getInstance().publish({
@@ -427,7 +458,8 @@ export class TrainingCollector {
             sessionId: this.sessionId,
             event,
             detail,
-            metadata
+            metadata,
+            trainingContext: this.buildTrainingContext()
         };
 
         EventBus.getInstance().publish({
@@ -443,7 +475,8 @@ export class TrainingCollector {
         const full: MetricRecord = {
             ...record,
             timestamp: new Date().toISOString(),
-            sessionId: this.sessionId
+            sessionId: this.sessionId,
+            trainingContext: this.buildTrainingContext()
         };
 
         EventBus.getInstance().publish({
@@ -459,7 +492,8 @@ export class TrainingCollector {
         const full = {
             ...nexus,
             timestamp: new Date().toISOString(),
-            sessionId: this.sessionId
+            sessionId: this.sessionId,
+            trainingContext: this.buildTrainingContext()
         };
 
         EventBus.getInstance().publish({
@@ -471,7 +505,7 @@ export class TrainingCollector {
         // Broadcast deep thinking chains to the swarm
         if (this.globeStateLimb && this.shouldBroadcast('thinking_event')) {
             const score = nexus.curiosity !== undefined ? nexus.curiosity : 0.95;
-            const lastActivity = nexus.reflection 
+            const lastActivity = nexus.reflection
                 ? (nexus.reflection.length > 35 ? nexus.reflection.substring(0, 35) + '...' : nexus.reflection)
                 : 'Nominal cogitation';
             this.globeStateLimb.pushNodeState('thinking_event', {
@@ -502,7 +536,7 @@ export class TrainingCollector {
 
         // Broadcast ethical/directive validations to the swarm
         if (this.globeStateLimb && this.shouldBroadcast('fprag_event')) {
-            const lastActivity = audit.directive 
+            const lastActivity = audit.directive
                 ? (audit.directive.length > 30 ? `Directive: ${audit.directive.substring(0, 30)}...` : `Directive: ${audit.directive}`)
                 : (audit.task.length > 30 ? `Audit: ${audit.task.substring(0, 30)}...` : `Audit: ${audit.task}`);
             this.globeStateLimb.pushNodeState('fprag_event', {
@@ -522,7 +556,8 @@ export class TrainingCollector {
         const full: ErrorFixRecord = {
             ...record,
             timestamp: new Date().toISOString(),
-            sessionId: this.sessionId
+            sessionId: this.sessionId,
+            trainingContext: this.buildTrainingContext()
         };
 
         EventBus.getInstance().publish({
@@ -545,7 +580,8 @@ export class TrainingCollector {
         const full: ConsequenceRecord = {
             ...record,
             timestamp: new Date().toISOString(),
-            sessionId: this.sessionId
+            sessionId: this.sessionId,
+            trainingContext: this.buildTrainingContext()
         };
 
         EventBus.getInstance().publish({
@@ -593,9 +629,54 @@ export class TrainingCollector {
             timestamp: new Date().toISOString(),
             tick: event.tick,
             fidelity: event.fidelity === LearningFidelity.PATTERN ? 'PATTERN' : 'KNOWLEDGE',
-            data: event.patterns || event.invariants
+            data: event.patterns || event.invariants,
+            trainingContext: this.buildTrainingContext()
         };
         await appendFile(path, JSON.stringify(record) + '\n');
+    }
+
+    private buildTrainingContext(): TrainingContext {
+        const coordinate = CanonicalClock.getInstance().getCoordinate();
+        let hexManager = this.hexagramManager || HexagramManager.getInstance();
+        let interpretation: any;
+        let yaoState = YaoState.YoungYang;
+        let ternaryState: 'Yin' | 'Yang' | 'YinYang' = 'YinYang';
+        let contractMode = 'UNKNOWN';
+        let phase = 'UNKNOWN';
+
+        try {
+            interpretation = hexManager.getInterpretation();
+            yaoState = hexManager.getYaoState();
+            ternaryState = hexManager.getTernaryState ? hexManager.getTernaryState() : (hexManager.isYin?.() ? 'Yin' : 'Yang');
+            const contract = hexManager.getContract?.();
+            contractMode = contract?.mode ?? contractMode;
+            phase = contract?.phase ?? phase;
+        } catch {
+            interpretation = {
+                id: -1,
+                name: 'Unknown Hexagram',
+                binary: '000000',
+                strategy: 'UNKNOWN',
+                judgment: undefined,
+                emotion: 'Zen'
+            };
+        }
+
+        return {
+            tickCoordinate: coordinate,
+            hexagram: {
+                id: interpretation.id ?? -1,
+                name: interpretation.name ?? 'Unknown Hexagram',
+                binary: interpretation.binary ?? '000000',
+                strategy: interpretation.strategy ?? 'UNKNOWN',
+                judgment: interpretation.judgment,
+                emotion: interpretation.emotion ?? 'Zen',
+                yaoState,
+                ternaryState,
+                phase,
+                mode: contractMode
+            }
+        };
     }
 
     private getDatePrefix(): string {

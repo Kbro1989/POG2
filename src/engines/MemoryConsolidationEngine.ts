@@ -7,7 +7,10 @@ import { createLogger } from "../utils/logger.js";
 const logger = createLogger('MemoryConsolidation');
 
 export class MemoryConsolidationEngine {
-    private readonly consumedNonces = new Set<string>();
+    // Map: nonce → insertion timestamp (ms). Switched from Set<string>
+    // in the 2026-06-21 tightening so we can prune entries older than
+    // config.knock.ttlSeconds. Unbounded growth was a real bug.
+    private readonly consumedNonces: Map<string, number> = new Map();
 
     constructor(
         private readonly client: ModelClient,
@@ -126,8 +129,17 @@ Format:
 
     /**
      * validateNonce - Temporal fingerprint verification to prevent SovereignKnock replay attacks.
+     *
+     * @param nonce - The temporal fingerprint the caller supplied.
+     * @param ttlSeconds - (Optional) bound nonce lifetime. When provided, nonces older
+     *   than `ttlSeconds` are pruned before the membership check. When omitted, the
+     *   pre-tightening behavior is preserved (no expiry).
      */
-    public async validateNonce(nonce: string): Promise<boolean> {
+    public async validateNonce(nonce: string, ttlSeconds?: number): Promise<boolean> {
+        if (ttlSeconds !== undefined && ttlSeconds > 0) {
+            this.pruneExpiredNonces(ttlSeconds);
+        }
+
         // Check if nonce has been used in this session locally
         if (this.consumedNonces.has(nonce)) {
             logger.warn({ nonce }, 'SovereignKnock Replay Attack detected: Nonce already consumed.');
@@ -135,8 +147,26 @@ Format:
         }
 
         // Record the nonce to prevent reuse
-        this.consumedNonces.add(nonce);
+        this.consumedNonces.set(nonce, Date.now());
         return true;
     }
-}
 
+    /**
+     * pruneExpiredNonces - Remove nonces older than `ttlSeconds` from the in-memory store.
+     * Called automatically by `validateNonce` when a ttlSeconds is provided.
+     * Public for tests / health probes.
+     */
+    public pruneExpiredNonces(ttlSeconds: number): void {
+        const cutoff = Date.now() - ttlSeconds * 1000;
+        let pruned = 0;
+        for (const [nonce, insertedAt] of this.consumedNonces.entries()) {
+            if (insertedAt < cutoff) {
+                this.consumedNonces.delete(nonce);
+                pruned++;
+            }
+        }
+        if (pruned > 0) {
+            logger.debug({ pruned, remaining: this.consumedNonces.size, ttlSeconds }, 'SovereignKnock: pruned expired nonces.');
+        }
+    }
+}

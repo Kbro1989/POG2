@@ -12,14 +12,13 @@
 
 import { spawn } from 'child_process';
 import { CanonicalClock } from './CanonicalClock.js';
-import { join, dirname } from 'path';
+import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { createLogger } from './logger.js';
 import { Result, ok, err } from '../core/models.js';
 
 const logger = createLogger('RSMVBridge');
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 let _lastLatencyMs = 0;
 

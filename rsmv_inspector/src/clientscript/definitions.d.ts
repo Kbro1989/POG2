@@ -1,3 +1,5 @@
+import { clientscript } from "../../generated/clientscript";
+import { clientscriptdata } from "../../generated/clientscriptdata";
 export declare const variableSources: {
     player: {
         key: number;
@@ -437,4 +439,8 @@ export declare class StackDiff {
     toFunctionBindString(): string;
     toTypeScriptVarlist(nameoffset: StackDiff, withnames: boolean, withtypes: boolean, exacttype?: ExactStack | null): string;
 }
+export declare function getArgType(script: clientscriptdata | clientscript): StackDiff;
+export declare function getReturnType(calli: {
+    getNamedOp: (opcode: number) => any;
+}, ops: ClientScriptOp[], endindex?: number): StackList;
 export {};

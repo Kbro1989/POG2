@@ -1,3 +1,4 @@
+import { join } from 'path';
 import { createLogger } from '../../utils/logger.js';
 import { CacheForensicsLimb } from './CacheForensicsLimb.js';
 import * as fs from 'fs';
@@ -5,6 +6,7 @@ import * as path from 'path';
 import { SovereignAvatarEntity } from '../../core/SovereignAvatar.js';
 import { HUDForensicsLimb } from './HUDForensicsLimb.js';
 import { CacheWatcherLimb, CacheInvalidationListener } from './CacheWatcherLimb.js';
+import { resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
 
 const logger = createLogger('AvatarStateLimb');
 

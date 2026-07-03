@@ -20,7 +20,7 @@
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join, resolve } from 'path';
 import { existsSync } from 'fs';
-import { getrsmvCachePath } from './SovereignPathResolver.js';
+import { getrsmvCachePath, getrsmvSubstratePath } from './SovereignPathResolver.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

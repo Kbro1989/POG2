@@ -10,6 +10,7 @@
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve } from 'path';
+import { resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
 
 // ═══════════════════════════════════════════════════════
 // TYPES

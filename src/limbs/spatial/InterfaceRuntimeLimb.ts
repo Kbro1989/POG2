@@ -4,6 +4,7 @@ import { createLogger } from '../../utils/logger.js';
 import { SovereignCs2NativeRegistry } from './SovereignCs2NativeRegistry.js';
 import { HUDForensicsLimb } from './HUDForensicsLimb.js';
 import { HUDOverlayLimb } from './HUDOverlayLimb.js';
+import { getrsmvSubstratePath } from '../../utils/SovereignPathResolver.js';
 
 const require = createRequire(import.meta.url);
 const logger = createLogger('InterfaceRuntimeLimb');
@@ -140,8 +141,8 @@ export class InterfaceRuntimeLimb {
             ({ ClientScriptInterpreter } = require(interpreterPath));
         }
 
-        const { getrsmvCachePath } = require('../../utils/SovereignPathResolver.js');
-        const cachePath = getrsmvCachePath();
+        
+        const cachePath = getrsmvSubstratePath();
         this.source = new GameCacheLoader(cachePath);
 
         // Wait for calibration to complete and load

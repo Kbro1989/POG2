@@ -5,6 +5,7 @@ import { ServerSideInjector, YaoState } from "../../core/models.js";
 import { PedagogyForensicsLimb } from "../pedagogy/PedagogyForensicsLimb.js";
 import { EpistemicTransitionKernel } from '../../engines/core/EpistemicTransitionKernel.js';
 import { HexagramManager } from '../../routing/HexagramManager.js';
+import { resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
 
 const logger = createLogger('DBRowOracleLimb');
 

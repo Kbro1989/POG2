@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { createLogger } from "../../utils/logger.js";
-import { getSovereignRoot, resolveLogicFragment, getAtlasSpatialPath } from '../../utils/SovereignPathResolver.js';
+import { getSovereignRoot, resolveLogicFragment, getAtlasSpatialPath, resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
 import { VarbitSovereigntyLimb } from './VarbitSovereigntyLimb.js';
 import { WorldForensicsLimb } from './WorldForensicsLimb.js';
 import { Result, ok, err, GameState, Direction, Coord, DirectionalCollision } from '../../core/models.js';

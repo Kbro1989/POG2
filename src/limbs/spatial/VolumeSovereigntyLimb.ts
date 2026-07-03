@@ -3,6 +3,7 @@ import * as path from 'path';
 import { GameState, MapZone, Coord, VolumeContext } from '../../core/models.js';
 import { createLogger } from '../../utils/logger.js';
 import { VarbitSovereigntyLimb } from './VarbitSovereigntyLimb.js';
+import { resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
 
 const logger = createLogger('VolumeSovereigntyLimb');
 

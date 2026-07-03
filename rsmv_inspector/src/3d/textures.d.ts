@@ -9,7 +9,7 @@ export declare class ParsedTexture {
     bmpWidth: number;
     bmpHeight: number;
     filesize: number;
-    constructor(texture: Buffer | ImageData, stripAlpha: boolean, isMaterialTexture?: boolean);
+    constructor(texture: Buffer | ImageData | null | undefined, stripAlpha: boolean, isMaterialTexture?: boolean);
     toImageData(subimg?: number): Promise<ImageData>;
     toWebgl(subimg?: number): Promise<HTMLImageElement | ImageBitmap>;
 }

@@ -7,6 +7,7 @@ import { SpatialSovereigntyLimb } from './SpatialSovereigntyLimb.js';
 import { GameplaySovereigntyLimb } from './GameplaySovereigntyLimb.js';
 import { EpistemicTransitionKernel } from '../../engines/core/EpistemicTransitionKernel.js';
 import { HexagramManager } from '../../routing/HexagramManager.js';
+import { resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
 
 const logger = createLogger('VarbitSovereigntyLimb');
 

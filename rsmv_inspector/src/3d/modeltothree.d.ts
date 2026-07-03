@@ -61,7 +61,7 @@ export declare class EngineCache extends CachingFileSource {
             area?: import("./mapsquare").MapRect;
         } | undefined) => Promise<void>;
     }>;
-    getGameFile(type: keyof LegacyData & keyof typeof cacheMajors, id: number): Promise<Buffer<ArrayBufferLike>>;
+    getGameFile(type: keyof LegacyData & keyof typeof cacheMajors, id: number): Promise<Buffer<ArrayBufferLike> | null>;
     getMaterialData(id: number): MaterialData;
     /**
      * very aggressive caching, do not use for objects which take a lot of memory
@@ -86,6 +86,7 @@ export declare class ThreejsSceneCache {
     engine: EngineCache;
     textureType: TextureModes;
     modelType: ModelModes;
+    modelnode: THREE.Group | null;
     static textureIndices: Record<TextureTypes, Record<Exclude<TextureModes, "none">, number>>;
     private constructor();
     static create(engine: EngineCache, texturemode?: TextureModes | "auto", modelmode?: ModelModes | "auto"): Promise<ThreejsSceneCache>;
@@ -102,6 +103,8 @@ export declare function applyMaterial(mesh: Mesh, parsedmat: ParsedMaterial, min
  */
 export declare function mergeBoneids(model: ModelData): void;
 export declare function mergeModelDatas(models: ModelData[]): ModelData;
-export declare function ob3ModelToThree(scene: ThreejsSceneCache, model: ModelData): Promise<THREE.Object3D<THREE.Object3DEventMap>>;
+export declare function ob3ModelToThree(scene: ThreejsSceneCache, model: ModelData, options?: {
+    noSkin?: boolean;
+}): Promise<THREE.Object3D<THREE.Object3DEventMap>>;
 export declare function getModelHashes(model: models, id: number): void;
 export {};

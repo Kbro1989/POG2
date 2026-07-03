@@ -67,6 +67,7 @@ export declare const cacheFileJsonModes: {
     environments: JsonBasedFile;
     animgroupconfigs: JsonBasedFile;
     maplabels: JsonBasedFile;
+    varbits: JsonBasedFile;
     mapzones: JsonBasedFile;
     cutscenes: JsonBasedFile;
     particles0: JsonBasedFile;
@@ -131,7 +132,7 @@ export declare const cacheFileDecodeGroups: {
         modelhash: DecodeModeFactory;
         npcmodels: DecodeModeFactory;
     };
-    json: Record<"models" | "test" | "params" | "fontmetrics" | "items" | "enums" | "mapscenes" | "sequences" | "framemaps" | "frames" | "oldmodels" | "classicmodels" | "materials" | "oldmaterials" | "environments" | "identitykit" | "structs" | "maplabels" | "cutscenes" | "interfaces" | "dbtables" | "dbrows" | "objects" | "overlays" | "underlays" | "npcs" | "spotanims" | "achievements" | "indices" | "soundjson" | "musicjson" | "quickchatcats" | "quickchatlines" | "animgroupconfigs" | "mapzones" | "particles0" | "particles1" | "maptiles" | "maptiles_nxt" | "maplocations" | "mapenvs" | "maptiles_old" | "maplocations_old" | "skeletons" | "proctextures" | "oldproctextures" | "rootindex" | "clientscriptops", DecodeModeFactory>;
+    json: Record<"dbtables" | "dbrows" | "enums" | "structs" | "params" | "npcs" | "items" | "objects" | "interfaces" | "fontmetrics" | "sequences" | "spotanims" | "varbits" | "test" | "mapscenes" | "framemaps" | "frames" | "models" | "oldmodels" | "classicmodels" | "materials" | "oldmaterials" | "environments" | "identitykit" | "maplabels" | "cutscenes" | "overlays" | "underlays" | "achievements" | "indices" | "soundjson" | "musicjson" | "quickchatcats" | "quickchatlines" | "animgroupconfigs" | "mapzones" | "particles0" | "particles1" | "maptiles" | "maptiles_nxt" | "maplocations" | "mapenvs" | "maptiles_old" | "maplocations_old" | "skeletons" | "proctextures" | "oldproctextures" | "rootindex" | "clientscriptops", DecodeModeFactory>;
 };
 export declare const cacheFileDecodeModes: {
     [k: string]: DecodeModeFactory;

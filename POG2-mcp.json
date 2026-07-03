@@ -1,5 +1,18 @@
 {
   "mcpServers": {
+    "pog2-hermes": {
+      "command": "node",
+      "args": [
+        "/mnt/c/Users/krist/.gemini/antigravity/scratch/pog2/dist/mcpserver.js",
+        "C:/Users/krist/.gemini/antigravity/scratch/pog2/dist/mcpserver.js"
+      ],
+      "handshake": {
+        "identity": "Hermes",
+        "topic": "HERMES",
+        "huntgodScope": "Hermes",
+        "wslContract": true
+      }
+    },
     "pog2-GitKraken": {
       "command": "npx",
       "args": [
@@ -23,18 +36,21 @@
     "pog2-github": {
       "command": "node",
       "args": [
+        "/mnt/c/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/github/.mcp.json",
         "C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/github/.mcp.json"
       ]
     },
     "pog2-linear": {
       "command": "node",
       "args": [
+        "/mnt/c/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/linear/.mcp.json",
         "C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/linear/.mcp.json"
       ]
     },
     "pog2-terraform": {
       "command": "node",
       "args": [
+        "/mnt/c/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/terraform/.mcp.json",
         "C:/Users/krist/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/terraform/.mcp.json"
       ]
     }

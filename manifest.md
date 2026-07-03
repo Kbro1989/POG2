@@ -2,9 +2,10 @@
 
 This manifest is the **Live Sensor Dashboard** for the POG2 organism. It lists active limbs and metabolic heart rate for AI proprioception.
 
-## 🛠️ Active Specialized Limbs (The Expression Suite)
+> **Last Sync**: 2026-04-12 | **State**: YOUNG YANG [Phase 15 Ignition Aligned]
+> **Hermes Handshake**: Registered as `HERMES` / HuntGodScope=Hermes / WSLContract=true
 
-| Limb | Primary Role | Domain | Health (YaoState) |
+---
 | :--- | :--- | :--- | :--- |
 | **GutenbergLimb** | Literary Ingestion (70k+ Books) | RESEARCH | YoungYang |
 | **StoryboardLimb** | Sequential Narrative Visualization | VISION | YoungYang |

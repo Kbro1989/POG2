@@ -249,6 +249,7 @@ export class ModelClient implements ModelExecutor {
             this.trainingCollector.recordInteraction({
                 model: enforcedParams.model,
                 provider,
+                source: 'model_client',
                 category: safeCategory as 'coding' | 'gutenberg' | 'chromanumber' | 'vision' | 'voice' | 'orchestration' | 'diagnostic' | 'error_fix' | 'search' | 'general',
                 prompt: enforcedParams.prompt,
                 response: result.ok ? result.value.response : '',

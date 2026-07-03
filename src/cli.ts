@@ -26,7 +26,7 @@ import { program, Command } from 'commander';
 // Handle ternary/hexagram duplicate registrations without crashing
 // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 const originalCommand = Command.prototype.command;
-Command.prototype.command = function (this: Command, name: string, ...args: any[]) {
+Command.prototype.command = function(this: Command, name: string, ...args: any[]) {
     const cmdName = name.split(' ')[0];
     const existing = (this as any).commands.find((c: any) => c.name() === cmdName);
     if (existing) return existing;
@@ -34,14 +34,14 @@ Command.prototype.command = function (this: Command, name: string, ...args: any[
 };
 
 const originalOption = Command.prototype.option;
-Command.prototype.option = function (this: Command, flags: string, description?: string, defaultValue?: any) {
+Command.prototype.option = function(this: Command, flags: string, description?: string, defaultValue?: any) {
     const existing = (this as any).options.find((o: any) => o.flags === flags);
     if (existing) return this;
     return (originalOption as any).apply(this, [flags, description, defaultValue]);
 };
 
 const originalDescription = Command.prototype.description;
-(Command.prototype as any).description = function (this: Command, str: string, argsDescription?: any) {
+(Command.prototype as any).description = function(this: Command, str: string, argsDescription?: any) {
     if (typeof str === 'string' && (this as any)._description) return this;
     return (originalDescription as any).apply(this, [str, argsDescription]);
 };
@@ -71,7 +71,7 @@ import { SovereignConfig, loadConfig } from './config/SovereignConfig.js';
 import { Renderer } from './ui/Renderer.js';
 import { PathNormalizer } from './utils/PathNormalizer.js';
 import { DBMaintenance } from './utils/DBMaintenance.js';
-import { type Result, YaoState, NPC, GameState, VarbitSnapshot, CompositeCondition, Item, SovereignAvatar, GameObject } from './core/models.js';
+import { type Result, YaoState, NPC, GameState, VarbitSnapshot, CompositeCondition, Item, SovereignAvatar, GameObject, SovereignKnock } from './core/models.js';
 import { HexagramManager } from './routing/HexagramManager.js';
 import { EntityLimb } from './limbs/technical/EntityLimb.js';
 import { PedagogyLimb } from './limbs/technical/PedagogyLimb.js';
@@ -454,7 +454,7 @@ export async function main(): Promise<void> {
                             renderer.error(`Reflection failed: ${result.error?.message}`);
                         }
                     } else {
-                        const playResult = await orchestrator.executePlayAction(answer);
+                        const playResult = await orchestrator.executePlayAction(answer, currentContract);
                         if (playResult.ok) {
                             console.log(`\n${playResult.value}`);
                         } else {
@@ -830,7 +830,7 @@ export async function main(): Promise<void> {
                 const fs = await import('fs');
                 const path = await import('path');
 
-                const server = http.createServer((req, res) => {
+                const server = http.createServer(async (req, res) => {
                     let filePath = join('public', req.url === '/' ? 'heatmap.html' : req.url!);
 
                     // Root fallback for collision data: Check the bulk extraction directory via resolver
@@ -2699,11 +2699,20 @@ export async function main(): Promise<void> {
             const sequence = opts.sequence.split(',').map((h: string) => h.trim());
             const chromaLimb = new (await import('./limbs/spatial/ChromaLimb.js')).ChromaLimb(config);
 
-            const knock = {
+            // currentHexagramId: pull from live HexagramManager when available.
+            // Falls back to undefined (length-only check) at early boot.
+            let liveHexId: number | undefined = undefined;
+            try {
+                const { HexagramManager } = await import('./routing/HexagramManager.js');
+                liveHexId = HexagramManager.getInstance().getCurrentHexagramId();
+            } catch { /* HexagramManager not yet initialized */ }
+
+            const knock: SovereignKnock = {
                 iChingSequence: sequence,
                 chromaticSoul: await chromaLimb.generateFromSequence(sequence),
                 temporalFingerprint: `test-nonce-${Date.now()}`,
-                anatomicalProof: { limbCount: 33, structuralIntegrity: 9 }
+                anatomicalProof: { limbCount: 33, structuralIntegrity: 9 },
+                currentHexagramId: liveHexId
             };
 
             const result = await router.sovereignKnock(knock);
@@ -3622,7 +3631,6 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
         // Slash Commands
         if (cmd.startsWith('/')) {
             const [slash, ...args] = cmd.split(' ');
-            const targetPath = args[0] || '.';
 
             switch (slash?.toLowerCase()) {
                 case '/help':
@@ -3643,7 +3651,7 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
                 case '/syntropy':
                     await engine.run('harmonize external metadata paradigms');
                     break;
-                case '/bridge':
+                case '/bridge': {
                     renderer.info('Ã°Å¸Â§Â  Sovereign Bridge Interface: Choose a component to introspect, reconfigure, or trigger reflection:');
                     renderer.info('1. [System] Trigger full CNS Health Pulse');
                     renderer.info('2. [Memory] Initiate Consolidation Substrate');
@@ -3672,6 +3680,7 @@ async function startRepl(renderer: Renderer, config: SovereignConfig, router: Te
                         default: renderer.warn('Invalid bridge selection.');
                     }
                     break;
+                }
                 case '/pull': {
                     const modelToPull = args[0];
                     if (!modelToPull) {
@@ -3825,8 +3834,11 @@ function resetConfig(configPath: string): Result<void> {
 
 main().catch(err => {
     // Commander's exitOverride throws CommanderError for --help/--version with exitCode 0
-    if (err && typeof err === 'object' && 'exitCode' in err && (err as any).exitCode === 0) {
-        process.exit(0);
+    if (err && typeof err === 'object' && 'exitCode' in err) {
+        const exitError = err as { exitCode?: unknown };
+        if (exitError.exitCode === 0) {
+            process.exit(0);
+        }
     }
     const msg = err instanceof Error ? err.stack || err.message : String(err);
     console.error(`\x1b[38;5;196m[FATAL CLI ERROR]\x1b[0m ${msg}`);

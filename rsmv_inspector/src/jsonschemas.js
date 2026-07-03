@@ -1,30 +1,25 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.maprenderConfigSchema = exports.scenarioStateSchema = exports.customModelDefSchema = void 0;
-exports.assertSchema = assertSchema;
-exports.parseJsonOrDefault = parseJsonOrDefault;
-var json_schema_1 = require("json-schema");
-function assertSchema(v, schema) {
-    (0, json_schema_1.mustBeValid)((0, json_schema_1.validate)(v, schema));
+import { validate, mustBeValid } from "json-schema";
+export function assertSchema(v, schema) {
+    mustBeValid(validate(v, schema));
 }
-function parseJsonOrDefault(str, schema, defaultvalue) {
+export function parseJsonOrDefault(str, schema, defaultvalue) {
     try {
         if (typeof str != "string") {
             throw new Error("json string expected");
         }
-        var v = JSON.parse(str);
+        let v = JSON.parse(str);
         assertSchema(v, schema);
         return v;
     }
-    catch (_a) {
+    catch {
         return (typeof defaultvalue == "function" ? defaultvalue() : defaultvalue);
     }
 }
-var int = { type: "integer" };
-var number = { type: "number" };
-var string = { type: "string" };
-var boolean = { type: "boolean" };
-var mapRectSchema = {
+const int = { type: "integer" };
+const number = { type: "number" };
+const string = { type: "string" };
+const boolean = { type: "boolean" };
+const mapRectSchema = {
     properties: {
         x: int,
         z: int,
@@ -33,13 +28,13 @@ var mapRectSchema = {
     },
     required: ["x", "z", "xsize", "zsize"]
 };
-var modelModsSchema = {
+const modelModsSchema = {
     properties: {
         replaceMaterials: { type: "array", minLength: 2, maxLength: 2, items: int },
         replaceColors: { type: "array", minLength: 2, maxLength: 2, items: int }
     }
 };
-var simpleModelDefSchema = {
+const simpleModelDefSchema = {
     type: "array",
     items: {
         properties: {
@@ -49,7 +44,7 @@ var simpleModelDefSchema = {
         required: ["modelid", "mods"]
     }
 };
-exports.customModelDefSchema = {
+export const customModelDefSchema = {
     properties: {
         type: { const: "custom" },
         modelkey: string,
@@ -60,7 +55,7 @@ exports.customModelDefSchema = {
     },
     required: ["type", "modelkey", "name", "simplemodel", "globalMods", "basecomp"]
 };
-var scenarioModelSchema = {
+const scenarioModelSchema = {
     oneOf: [
         {
             properties: {
@@ -80,10 +75,10 @@ var scenarioModelSchema = {
             },
             required: ["type", "modelkey", "name", "mapRect"]
         },
-        exports.customModelDefSchema
+        customModelDefSchema
     ]
 };
-var scenarioActionSchema = {
+const scenarioActionSchema = {
     oneOf: [
         {
             properties: {
@@ -156,7 +151,7 @@ var scenarioActionSchema = {
         }
     ]
 };
-exports.scenarioStateSchema = {
+export const scenarioStateSchema = {
     properties: {
         components: {
             type: "object",
@@ -168,7 +163,7 @@ exports.scenarioStateSchema = {
         }
     }
 };
-exports.maprenderConfigSchema = {
+export const maprenderConfigSchema = {
     properties: {
         tileimgsize: number,
         mapsizex: number,

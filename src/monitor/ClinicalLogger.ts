@@ -1,6 +1,7 @@
 import { appendFileSync, existsSync, mkdirSync, statSync, renameSync } from 'fs';
 import { join } from 'path';
 import { getPackageRoot } from '../utils/SovereignPathResolver.js';
+import { ClockAuthorityRegistry, ClockDomain } from '../utils/ClockAuthorityRegistry.js';
 
 export type DiagnosticLevel = 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
 
@@ -25,6 +26,14 @@ export class ClinicalLogger {
         this.ensureLogFile();
     }
 
+    private resolveTime(): string {
+        try {
+            return new Date(ClockAuthorityRegistry.resolveTime(ClockDomain.OBSERVABILITY, 'ClinicalLogger')).toISOString();
+        } catch {
+            return new Date().toISOString();
+        }
+    }
+
     private ensureLogFile(): void {
         if (!existsSync(this.logDir)) {
             mkdirSync(this.logDir, { recursive: true });
@@ -33,8 +42,7 @@ export class ClinicalLogger {
         if (existsSync(this.logPath)) {
             const stats = statSync(this.logPath);
             if (stats.size >= this.MAX_LOG_SIZE) {
-                const archivePath = join(this.logDir, `neurological_audit_${Date.now()}.log`);
-                renameSync(this.logPath, archivePath);
+                renameSync(this.logPath, join(this.logDir, `neurological_audit_archive.log`));
             }
         }
     }
@@ -43,7 +51,7 @@ export class ClinicalLogger {
         this.ensureLogFile();
 
         const entry: ClinicalLogEntry = {
-            timestamp: new Date().toISOString(),
+            timestamp: this.resolveTime(),
             level,
             component,
             event,

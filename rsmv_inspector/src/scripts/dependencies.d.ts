@@ -1,6 +1,6 @@
 import { ChunkData, MapRect } from "../3d/mapsquare";
 import { EngineCache } from "../3d/modeltothree";
-declare const depids: ("sequence" | "model" | "npc" | "frameset" | "enum" | "loc" | "texture" | "material" | "item" | "overlay" | "mapsquare" | "skeleton" | "animgroup" | "framebase" | "underlay")[];
+declare const depids: ("npc" | "item" | "skeleton" | "enum" | "loc" | "model" | "texture" | "material" | "overlay" | "mapsquare" | "sequence" | "frameset" | "animgroup" | "framebase" | "underlay")[];
 export type DepTypes = typeof depids[number];
 type DepArgs = {
     area?: MapRect;

@@ -2,6 +2,11 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { homedir } from 'os';
 import { fileURLToPath } from 'url';
+import { createLogger } from '../utils/logger.js';
+import { loadPog2Integration, getSovereignRulesPath } from '../sovereign/Pog2Integration.js';
+import '../sovereign/Pog2HexagramBridge.js';
+
+const sovereignLogger = createLogger('SovereignConfig');
 
 export interface SovereignConfig {
     mode: 'hybrid' | 'local' | 'sovereign';
@@ -116,12 +121,12 @@ const DEFAULT_CONFIG: SovereignConfig = {
     mode: 'hybrid',
     metabolicCostScale: 1.0,
     planningModel: 'kimi-k2.6:cloud',
-    codingModel: 'deepseek-r1:8b', // Upgraded to thinking model
-    orchestratorModel: 'deepseek-r1:8b', // Downgraded to 8b to fit VHD memory limit
+    codingModel: 'gemma4:latest',
+    orchestratorModel: 'gemma4:latest',
     visionModel: 'moondream:latest',
     voiceModel: 'gemma4:26b',
-    codingHeavyModel: 'deepseek-r1:8b',
-    codingFastModel: 'deepseek-r1:8b', 
+    codingHeavyModel: 'gemma4:latest',
+    codingFastModel: 'gemma4:latest', 
     embeddingModel: 'qwen3-embedding:latest', // Upgraded to actual embedding node
     cloudflareAccountId: undefined,
     cloudflareApiToken: undefined,
@@ -135,28 +140,28 @@ const DEFAULT_CONFIG: SovereignConfig = {
     // specialized Generation Defaults (Phase 104)
     storyboardModel: 'deepseek-r1:8b',
     vocalAnalysisModel: 'gemma4:26b',
-    imagePromptModel: 'deepseek-r1:32b',
+    imagePromptModel: 'gemma4:latest',
     // Back to 7b for rapid processing speeds over the 14b CPU latency.
-    soulIngestionModel: 'deepseek-r1:8b',
-    memoryConsolidationModel: 'deepseek-r1:8b',
+    soulIngestionModel: 'gemma4:latest',
+    memoryConsolidationModel: 'gemma4:latest',
 
     // Phase 71 Hierarchy Defaults
     masterReasoningModel: 'kimi-k2.6:cloud',
-    executiveCoderModel: 'deepseek-r1:8b',
-    reactiveAgentModel: 'deepseek-r1:8b', // VibeThinker fallback for demo stability
+    executiveCoderModel: 'gemma4:latest',
+    reactiveAgentModel: 'gemma4:latest', // VibeThinker fallback for demo stability
 
     // Phase 78 Economic Budget Paths (Layer 3)
-    fastPathModel: 'deepseek-r1:8b',
-    midPathModel: 'deepseek-r1:8b',
+    fastPathModel: 'gemma4:latest',
+    midPathModel: 'gemma4:latest',
     deepPathModel: 'kimi-k2.6:cloud',
 
     // Phase 72 Failover & Specialized Defaults
     masterFallbackModel: 'huggingface:openai-compat/kimi-k2.6-thinking',
-    masterLocalModel: 'deepseek-r1:8b',
+    masterLocalModel: 'gemma4:latest',
     imageGenModel: 'cloudflare:@cf/stabilityai/stable-diffusion-xl-base-1.0',
 
     huggingfaceFallbackModel: 'huggingface:openai-compat/kimi-k2.6-thinking',
-    localFallbackModel: 'deepseek-r1:8b',
+    localFallbackModel: 'gemma4:latest',
     ollamaBaseUrl: 'http://localhost:11434',
     projectId: 'global',
     embeddingDimensions: 768,
@@ -168,11 +173,11 @@ const DEFAULT_CONFIG: SovereignConfig = {
     cacheDir: process.env['POG2_CACHE_DIR'] || 'C:\\ProgramData\\Jagex\\RuneScape',
 
     // Performance & Precision
-    contextWindow: 16384,
+    contextWindow: 32768,
     temperature: 0.7,
     topP: 0.9,
     repeatPenalty: 1.1,
-    numCtx: 16384,
+    numCtx: 32768,
     stopSequences: ["USER:"],
     outputFormat: 'json',
     logLevel: 'debug',
@@ -194,10 +199,10 @@ const DEFAULT_CONFIG: SovereignConfig = {
     laneAwareWeighting: true,
 
     // Phase 23 Defaults
-    correctionModel: 'deepseek-r1:32b',
+    correctionModel: 'gemma4:latest',
     optimizationModel: 'gemma4:26b',
-    legacyModel: 'deepseek-r1:8b',
-    prototypeModel: 'deepseek-r1:8b',
+    legacyModel: 'gemma4:latest',
+    prototypeModel: 'gemma4:latest',
     rscModel: 'moondream:latest',
     bioModel: 'gemma4:26b',
     visionFastModel: 'moondream:latest'
@@ -342,6 +347,34 @@ export function loadConfig(configPath: string): SovereignConfig {
     // Phase 106: Normalize wsPort defaults (Default to 8765 if -1 or missing)
     if (config.wsPort === -1 || config.wsPort === undefined) {
         config.wsPort = 8788;
+    }
+
+    // Phase 21.5: Boot Pog2HexagramBridge from sovereign_rules.yaml.
+    // Best-effort: if the YAML is missing or malformed, log once and continue.
+    // POG2 still boots; the bridge just returns BLOCK verdicts until the
+    // YAML is fixed.
+    try {
+        const integration = loadPog2Integration();
+        if (integration) {
+            sovereignLogger.info(
+                {
+                    rulesPath: getSovereignRulesPath(),
+                    rootOfTrust: integration.root_of_trust,
+                    inference: integration.inference.provider_routing,
+                    escapeHatch: integration.escape_hatch.memory_reference,
+                },
+                'POG2 sovereignty: bridge active'
+            );
+        } else {
+            sovereignLogger.warn(
+                'POG2 sovereignty: no pog2_integration block in sovereign_rules.yaml — bridge disabled'
+            );
+        }
+    } catch (err) {
+        sovereignLogger.warn(
+            { err: err instanceof Error ? err.message : String(err) },
+            'POG2 sovereignty: bridge boot failed — continuing without it'
+        );
     }
 
     return config as SovereignConfig;

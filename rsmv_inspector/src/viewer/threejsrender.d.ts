@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
 import { TypedEmitter } from '../utils';
 import { ModelExtras, ClickableMesh } from '../3d/mapsquare';
 import { Camera, Mesh, Object3D, Vector3 } from "three";
@@ -35,9 +36,9 @@ export type ThreeJsSceneElement = {
         aspect?: number;
     };
 };
-type CameraControlMode = "free" | "world";
+type CameraControlMode = "free" | "world" | "editor";
 type AutoFrameMode = "forced" | "continuous" | "never";
-export type RenderCameraMode = "standard" | "vr360" | "item" | "topdown";
+export type RenderCameraMode = "standard" | "vr360" | "item" | "topdown" | "editor";
 export declare class ThreeJsRenderer extends TypedEmitter<ThreeJsRendererEvents> {
     private renderer;
     private canvas;
@@ -56,18 +57,31 @@ export declare class ThreeJsRenderer extends TypedEmitter<ThreeJsRendererEvents>
     private forceAspectRatio;
     private standardLights;
     private camMode;
-    private camera;
+    camera: THREE.PerspectiveCamera;
     private topdowncam;
     private standardControls;
     private orthoControls;
+    transformControls: TransformControls;
     private itemcam;
     constructor(canvas: HTMLCanvasElement, params?: THREE.WebGLRendererParameters);
+    private handleTickEvent;
+    /**
+     * applyVisualActuation
+     * Translates CNS "Calls" (id+calls) into bone-level animations and expressions.
+     * Fulfills the "full on 3D with bones in eye and face" requirement.
+     */
+    applyVisualActuation(entityId: string, signature: string, metadata: any): void;
+    private triggerCombatFeedback;
+    private applyFacialExpression;
+    private triggerSkillVFX;
+    private triggerMaterialPulse;
     getCurrent2dCamera(): THREE.PerspectiveCamera | THREE.OrthographicCamera | null;
     getStandardCamera(): THREE.PerspectiveCamera;
     getVr360Camera(): VR360Render;
     getItemCamera(): THREE.PerspectiveCamera;
     getTopdownCamera(): THREE.OrthographicCamera;
     getModelNode(): THREE.Group<THREE.Object3DEventMap>;
+    getCanvas(): HTMLCanvasElement;
     addSceneElement(el: ThreeJsSceneElementSource): void;
     removeSceneElement(el: ThreeJsSceneElementSource): void;
     sceneElementsChanged(): void;

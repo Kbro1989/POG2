@@ -6,20 +6,10 @@ import { createLogger } from "../../utils/logger.js";
 import { getrsmvCachePath, getSovereignRoot, getrsmvSubstratePath } from '../../utils/SovereignPathResolver.js';
 import { BetaConfig } from '../../core/beta_constants.js';
 import * as fs from 'fs';
-
-let GameCacheLoader: any = null;
-let parse: any = null;
-
-try {
-    const alt1 = require('alt1cache');
-    GameCacheLoader = alt1.GameCacheLoader;
-    parse = alt1.parse;
-} catch (alt1Error) {
-    const rsmv = getrsmvSubstratePath();
-    try { ({ GameCacheLoader } = require(path.join(rsmv, 'src', 'cache', 'sqlite.ts'))); } catch { }
-    try { ({ parse } = require(path.join(rsmv, 'src', 'opdecoder.ts'))); } catch { }
-}
-import { WikiEnricher, WikiData } from '../../utils/WikiEnricher.js';
+// ADDED: POG2-native imports
+import { JagexCacheReader } from '../utils/JagexCacheReader.js';
+import { POG2NativeCacheSource } from '../utils/POG2NativeCacheSource.js';
+import { InterfaceParser } from '../parsers/InterfaceParser.js';
 
 const logger = createLogger('HUDForensicsLimb');
 
@@ -101,7 +91,7 @@ export interface HUDClassification {
 
 /**
  * HUDForensicsLimb - Sovereign Interface Epistemology
- * 
+ *
  * Responsibilities:
  * 1. Real-time extraction of HUD/Interface data from Jagex Cache (Major 3).
  * 2. Forensic deconstruction of interface hierarchies.
@@ -172,13 +162,10 @@ export class HUDForensicsLimb {
         this.pedagogyCandidateDir = path.join(getSovereignRoot(), 'cache_pedagogy', 'atlas', 'interfaces');
 
         try {
-            if (GameCacheLoader) {
-                this.cache = new GameCacheLoader(this.cachePath);
-                this.cache.buildnr = BetaConfig.BUILD_ID;
-                logger.info({ path: this.cachePath }, 'HUDForensicsLimb connected to Jagex Cache substrate.');
-            } else {
-                logger.warn('HUDForensicsLimb: GameCacheLoader not available.');
-            }
+            // REPLACED: Direct rsmv requires with POG2-native cache reader + adapter
+            const reader = new JagexCacheReader(getrsmvCachePath());
+            this.cache = new POG2NativeCacheSource(reader, BetaConfig.BUILD_ID);
+            logger.info({ path: this.cachePath }, 'HUDForensicsLimb connected to Jagex Cache substrate.');
         } catch (e) {
             logger.error({ error: (e as Error).message }, 'Failed to connect to GameCacheLoader.');
         }
@@ -187,7 +174,7 @@ export class HUDForensicsLimb {
     public detectEncounterPhase(bossName: string, state: any): string | null {
         if (!bossName) return null;
         const name = bossName.toLowerCase();
-        
+
         // 1. Lexical Triggers (Chat/HP)
         if (name === 'nex') {
             const combatantState = state.state || state;
@@ -211,7 +198,7 @@ export class HUDForensicsLimb {
                  }
              }
         }
-        
+
         return null;
     }
 
@@ -233,7 +220,7 @@ export class HUDForensicsLimb {
      */
     public async getInterface(id: number): Promise<Result<InterfaceForensics>> {
         if (!this.cache) return err(new Error('Cache substrate not connected.'));
-        if (!parse) return err(new Error('HUDForensicsLimb: parse not available.'));
+        if (!InterfaceParser) return err(new Error('HUDForensicsLimb: InterfaceParser not available.'));
 
         try {
             const archive = await this.cache.getArchiveById(3, id);
@@ -257,7 +244,7 @@ export class HUDForensicsLimb {
                 };
 
                 try {
-                    const comp = parse.interfaces.parser.read(state);
+                    const comp = InterfaceParser.read(state);
                     const compId = (id << 16) | sub.fileid;
 
                     if (sub.fileid === 0) {
@@ -656,7 +643,7 @@ export class HUDForensicsLimb {
         onProgress?: (current: number, total: number, found: number, errors: number) => void;
     } = {}): Promise<{ extracted: number; skipped: number; errors: number; errorIds: number[] }> {
         if (!this.cache) throw new Error('Cache substrate not connected.');
-        if (!parse) throw new Error('HUDForensicsLimb: parse not available.');
+        if (!InterfaceParser) throw new Error('HUDForensicsLimb: InterfaceParser not available.');
 
         const [start, end] = options.range ?? [0, 2000];
         const outputDir = options.outputDir ?? this.pedagogyCandidateDir;
@@ -719,4 +706,3 @@ export class HUDForensicsLimb {
         return { extracted, skipped, errors, errorIds };
     }
 }
-

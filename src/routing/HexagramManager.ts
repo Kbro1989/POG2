@@ -839,6 +839,17 @@ Respond in JSON ONLY:
     }
 
     /**
+     * getCurrentHexagramId — Returns the canonical hexagram ID (1-64)
+     * for the current substrate state. This is the authoritative
+     * identity used by `SovereignKnock.currentHexagramId` and the
+     * downstream gating logic. Distinct from `getCurrentSequence()`,
+     * which returns the binary-digit display form.
+     */
+    public getCurrentHexagramId(): number {
+        return this.getNumericId();
+    }
+
+    /**
      * getActiveLimbSet — Returns the list of limb names permitted to execute
      * in the current hexagram state. Combines brainstem defaults, permission-gated
      * limb groups, and hexagram-specific engine focus overrides.

@@ -8,6 +8,7 @@ import type { ModelClient } from '../clients/ModelClient.js';
 import type { ContextBuilder } from '../engines/ContextBuilder.js';
 import type { TrainingCollector } from '../utils/TrainingCollector.js';
 import { ModelRolodex } from '../api/ai/ModelRolodex.js';
+import { pick as overflowPick } from '../api/ai/OverflowShim.js';
 
 type TaskType = 'text' | 'image' | 'audio' | 'embedding' | 'vision' | 'unknown';
 import { SovereignIgnoreManager } from '../utils/SovereignIgnoreManager.js';
@@ -108,8 +109,17 @@ export class TernaryRouter {
     private readonly COOLDOWN_DURATION_MS = 61 * 60 * 1000; // 61 minutes
     private readonly CLOUD_OUTAGE_DURATION_MS = 4 * 60 * 60 * 1000; // 4 hours
 
+    // SovereignKnock config block (subset of SovereignConfig.knock).
+    // Captured at construction; the setter pattern for chromaLimb/bioIntelligence/
+    // memoryConsolidation keeps the live deps injectable post-construction.
+    private readonly knockConfig: { ttlSeconds: number; enabled: boolean } = { ttlSeconds: 30, enabled: true };
+
     constructor(config: SovereignConfig) {
         this.config = config;
+        this.knockConfig = {
+            ttlSeconds: (config && config.knock && config.knock.ttlSeconds) || 30,
+            enabled: !config || !config.knock || config.knock.enabled !== false
+        };
         this.hexagram = HexagramManager.getInstance();
         this.outcomeScorer = new OutcomeScorer();
         this.strategyAdvisor = new StrategyAdvisor();
@@ -232,35 +242,74 @@ export class TernaryRouter {
      * sovereignKnock - Core authentication primitive for Sovereign Substrate.
      * Uses metaphysical and structural proofs to validate access.
      */
+    /**
+     * sovereignKnock - Core authentication primitive for Sovereign Substrate.
+     * Uses metaphysical and structural proofs to validate access.
+     *
+     * Tightened 2026-06-21:
+     *   1. Hexagram length + optional currentHexagramId match against HexagramManager.
+     *   2. ChromaLimb: WARN on bypass, validate when wired.
+     *   3. Nonce TTL bound to config.knock.ttlSeconds (default 30).
+     *   4. Anatomical proof: WARN on bypass, validate when wired.
+     *   5. Posture selection via optional requestedPosture.
+     *
+     * See SECURITY_CHAIN.md for the full gate composition.
+     */
     public async sovereignKnock(knock: SovereignKnock): Promise<Result<ConcealmentState>> {
-        // 1. Hexagram validation
+        // 1. Hexagram validation: 6 entries required.
         if (!knock.iChingSequence || knock.iChingSequence.length !== 6) {
             return { ok: false, error: new Error('Invalid sequence: Require 6 Hexagrams') };
         }
-        // In full impl, this validates the actual progression of the I Ching sequences
-        // against the current HexagramManager instance state.
+        // When currentHexagramId is supplied, anchor to HexagramManager state.
+        if (knock.currentHexagramId !== undefined && this.hexagram) {
+            const expectedId = this.hexagram.getCurrentHexagramId();
+            if (knock.currentHexagramId !== expectedId) {
+                return { ok: false, error: new Error('Hexagram mismatch: knock id ' + knock.currentHexagramId + ' does not match substrate id ' + expectedId) };
+            }
+        }
 
-        // 2. Chroma verification
-        if (this.chromaLimb) {
+        // 2. Chroma verification: WARN when bypassed, validate when wired.
+        if (!this.chromaLimb) {
+            logger.warn('sovereignKnock: chromaLimb not wired; stage 2 (chroma) bypassed. Wire via TernaryRouter.setChromaLimb() to enforce. See SECURITY_CHAIN.md.');
+        } else {
             const chromaValid = await this.chromaLimb.validateChromaticSoul(knock.chromaticSoul);
-            if (!chromaValid) return { ok: false, error: new Error('Chromatic mismatch') };
+            if (!chromaValid) {
+                return { ok: false, error: new Error('Chromatic mismatch') };
+            }
         }
 
-        // 3. Temporal fingerprint (replay protection)
-        if (this.memoryConsolidation) {
-            const nonceValid = await this.memoryConsolidation.validateNonce(knock.temporalFingerprint);
-            if (!nonceValid) return { ok: false, error: new Error('Replay detected') };
+        // 3. Temporal fingerprint: bind nonce lifetime to config.knock.ttlSeconds.
+        if (!this.memoryConsolidation) {
+            logger.warn('sovereignKnock: memoryConsolidation not wired; stage 3 (nonce) bypassed. Wire via TernaryRouter.setMemoryConsolidationEngine() to enforce. See SECURITY_CHAIN.md.');
+        } else {
+            const ttlSeconds = (this.knockConfig && this.knockConfig.ttlSeconds) || 30;
+            const nonceValid = await this.memoryConsolidation.validateNonce(knock.temporalFingerprint, ttlSeconds);
+            if (!nonceValid) {
+                return { ok: false, error: new Error('Replay detected or nonce expired') };
+            }
         }
 
-        // 4. Anatomical proof (33-limb consensus)
-        if (this.bioIntelligence) {
+        // 4. Anatomical proof: WARN when bypassed, validate when wired.
+        if (!this.bioIntelligence) {
+            logger.warn('sovereignKnock: bioIntelligence not wired; stage 4 (anatomical proof) bypassed. Wire via TernaryRouter.setBioIntelligence() to enforce. See SECURITY_CHAIN.md.');
+        } else {
             const anatomyValid = await this.bioIntelligence.validateStructure(knock.anatomicalProof);
-            if (!anatomyValid) return { ok: false, error: new Error('Structural failure: Anatomical proof invalid') };
+            if (!anatomyValid) {
+                return { ok: false, error: new Error('Structural failure: Anatomical proof invalid (got limbCount=' + knock.anatomicalProof.limbCount + ', structuralIntegrity=' + knock.anatomicalProof.structuralIntegrity + ')') };
+            }
         }
 
-        // 5. State transition
-        logger.info('âœ¨ SovereignKnock sequence validated successfully. Concealment state updated to: isnot');
-        return { ok: true, value: 'isnot' };
+        // 5. State transition: posture selection (default 'isnot', allow 'is' / 'isif' via requestedPosture).
+        const requested = knock.requestedPosture;
+        let posture: ConcealmentState = 'isnot';
+        if (requested !== undefined) {
+            if (requested !== 'is' && requested !== 'isif' && requested !== 'isnot') {
+                return { ok: false, error: new Error('Unknown requestedPosture: ' + requested) };
+            }
+            posture = requested;
+        }
+        logger.info({ posture, hexagramId: knock.currentHexagramId }, '✨ SovereignKnock sequence validated successfully.');
+        return { ok: true, value: posture };
     }
 
     /**
@@ -597,9 +646,10 @@ export class TernaryRouter {
             const yao = this.classifyYao(taskType || '', complexity);
 
             if (complexity === 'Yang') {
-                const model = this.findWorkingModel(
+                const model = await this.findWorkingModelAsync(
                     this.config.deepPathModel,
-                    [this.config.masterLocalModel, 'deepseek-r1:32b', 'deepseek-r1:8b', this.config.localFallbackModel],
+                    [this.config.masterLocalModel, 'deepseek-r1:32b', 'deepseek-r1:8b', this.config.localFallbackModel, 'gemma4:latest'],
+                    complexity,
                     finalTaskType
                 );
                 decision = {
@@ -612,7 +662,12 @@ export class TernaryRouter {
                     timestamp: routeStartTime
                 };
             } else if (complexity === 'YinYang') {
-                const model = this.findWorkingModel(this.config.midPathModel, [this.config.codingHeavyModel, this.config.localFallbackModel], finalTaskType);
+                const model = await this.findWorkingModelAsync(
+                    this.config.midPathModel,
+                    [this.config.codingHeavyModel, this.config.localFallbackModel, 'gemma4:latest'],
+                    complexity,
+                    finalTaskType
+                );
                 decision = {
                     model,
                     complexity: 'YinYang',
@@ -623,7 +678,7 @@ export class TernaryRouter {
                     timestamp: routeStartTime
                 };
             } else {
-                const model = this.findWorkingModel(this.config.fastPathModel, ['moondream:latest', 'deepseek-r1:8b', this.config.reactiveAgentModel], finalTaskType);
+                const model = this.findWorkingModel(this.config.fastPathModel, ['moondream:latest', 'deepseek-r1:8b', this.config.reactiveAgentModel, 'gemma4:latest'], finalTaskType);
                 decision = {
                     model,
                     complexity: 'Yin',
@@ -796,6 +851,75 @@ export class TernaryRouter {
     }
 
     private readonly BASE_EXPLORATION_EPSILON = 0.15;
+
+    // Phase 21: Default ctx windows per complexity tier. Used by
+    // findWorkingModelAsync to ask OverflowShim how much VRAM the chosen
+    // model will actually consume. These are advisory; the shim clamps if
+    // the tier's ctx_max is lower.
+    private readonly DEFAULT_CTX_BY_COMPLEXITY: Record<RoutingComplexity, number> = {
+        Yang: 32768,
+        YinYang: 16384,
+        Yin: 8192,
+        Vision: 4096,
+        Voice: 4096,
+        Chromanumber: 2048,
+        SovereignEye: 4096,
+        Orchestrator: 32768,
+        low: 4096,
+        medium: 16384,
+        high: 32768,
+        extreme: 65536,
+    };
+
+    /**
+     * Async sibling of findWorkingModel. Consults OverflowShim FIRST to pick
+     * a model that physically fits in available VRAM at the requested ctx.
+     * If the shim returns a degraded result (Python missing, timeout, etc.)
+     * the call falls through to the original synchronous findWorkingModel
+     * so the rest of the system keeps working.
+     *
+     * Opt-in: only Yang/YinYang/Orchestrator paths use this. The 5+ other
+     * call sites keep using the static findWorkingModel.
+     */
+    private async findWorkingModelAsync(
+        preferred: string,
+        fallbacks: string[],
+        complexity: RoutingComplexity,
+        taskType: TaskType = 'text'
+    ): Promise<string> {
+        const requestedCtx = this.DEFAULT_CTX_BY_COMPLEXITY[complexity] ?? 8192;
+
+        try {
+            const overflow = await overflowPick(preferred, fallbacks, requestedCtx);
+            if (overflow.fit_status === 'impossible' && overflow.model === preferred) {
+                // Preferred model flagged impossible at the requested ctx;
+                // overflow.model is the fallback the shim picked.
+                logger.info(
+                    { preferred, picked: overflow.model, ctx: overflow.ctx, reason: overflow.reason },
+                    'OverflowShim overflowed preferred model due to VRAM pressure'
+                );
+            }
+            if (overflow.fit_status === 'clamped') {
+                logger.info(
+                    { model: overflow.model, ctx: overflow.ctx, requested: requestedCtx },
+                    'OverflowShim clamped ctx to fit available VRAM'
+                );
+            }
+            // Always pass through the shim's pick — it knows more than the
+            // static list does. If it returns the preferred model with
+            // fit_status=ok/tight, that's our answer.
+            if (overflow.model && overflow.model.length > 0) {
+                return overflow.model;
+            }
+        } catch (err) {
+            logger.warn(
+                { err: err instanceof Error ? err.message : String(err) },
+                'OverflowShim threw — falling through to static findWorkingModel'
+            );
+        }
+
+        return this.findWorkingModel(preferred, fallbacks, taskType);
+    }
 
     private findWorkingModel(preferred: string, fallbacks: string[], taskType: TaskType = 'text'): string {
         const rawList = [preferred, ...fallbacks, this.config.localFallbackModel];

@@ -35,5 +35,14 @@ export type ModelMeshData = {
 };
 export declare function getBoneCenters(model: ModelData): BoneCenter[];
 export declare function getModelCenter(model: ModelData): BoneCenter;
+export declare function parsePosData(arr: Int16Array): THREE.BufferAttribute;
+export declare function addBoneIdBuffer(attributes: ModelMeshData["attributes"], boneidBuffer: Uint16Array): void;
+export declare function addUvBuffer(attributes: ModelMeshData["attributes"], vertexCount: number, uvBuffer: Uint16Array | Float32Array): void;
+export declare function addNormalsBuffer(attributes: ModelMeshData["attributes"], normalBuffer: Int8Array | Int16Array): void;
 export declare function parseOb3Model(modelfile: Buffer, source: CacheFileSource): ModelData;
+/**
+ * Parses a "Thick" Model Substrate that has already been parsed into a JSON object
+ * with materialized TypedArrays.
+ */
+export declare function parseThickModelData(parsed: any): ModelData;
 export declare function makeModelData(meshes: ModelData["meshes"]): ModelData;

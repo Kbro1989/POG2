@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createLogger } from './logger.js';
 import { NodeRegistry, NodeMetadata } from '../core/NodeRegistry.js';
+import { resolveSovereignPath } from './SovereignPathResolver.js';
 
 const logger = createLogger('DumpRefiller');
 
@@ -103,6 +104,7 @@ ${content}
  * Description: ${meta.description}
  */
 import { inflate } from 'pako'; // Using internal pako mapping from module logic
+
 
 export const decompressCacheBlock = (buffer: Buffer): Buffer => {
     // Logic Refill: module-1447 uses a custom pako-like inflate for 0x5a blocks

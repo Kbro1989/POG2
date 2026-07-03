@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
 
 /**
  * 🧬 SovereignSandboxLimb

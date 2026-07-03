@@ -1,4 +1,3 @@
-import type * as jsonschema from "json-schema";
 export type TypeDef = {
     [name: string]: unknown;
 };
@@ -36,7 +35,7 @@ export type ChunkParser = {
     read(state: DecodeState): any;
     write(state: EncodeState, v: unknown): void;
     getTypescriptType(indent: string): string;
-    getJsonSchema(): jsonschema.JSONSchema6Definition;
+    getJsonSchema(): any;
     readConst?(state: SharedEncoderState): any;
 };
 type ChunkParentCallback = (prop: string, childresolve: ResolvedReference) => ResolvedReference;

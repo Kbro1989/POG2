@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import { createLogger } from '../../utils/logger.js';
 import { WorldGroundingLimb } from '../world_grounding/WorldGroundingLimb.js';
 import { ok, err, Result } from '../../core/models.js';
+import { getPedagogyPath } from '../../utils/SovereignPathResolver.js';
 
 const logger = createLogger('UISubstrateLimb');
 

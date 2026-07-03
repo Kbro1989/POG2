@@ -1,48 +1,36 @@
 {
   "compilerOptions": {
-         "target": "ESNext",
-         "module": "ESNext",
-         "moduleResolution": "bundler",
-         "outDir": "./dist",
-         "rootDir": "./src",
-         "baseUrl": "./",
-         "strict": false,
-         "strictNullChecks": true,
-         "strictBindCallApply": true,
-         "noImplicitAny": false,
-         "noUnusedLocals": false,
-         "noUnusedParameters": false,
-         "strictFunctionTypes": false,
-         "esModuleInterop": true,
-         "skipLibCheck": true,
-         "forceConsistentCasingInFileNames": true,
-         "declaration": true,
-         "jsx": "react-jsx",
-         "lib": [
-           "ESNext",
-           "DOM",
-           "DOM.Iterable"
-         ],
-         "paths": {
-          "*": ["src/*"],
-          "rsmv/*": ["src/rsmv/*"]
-         }
-       },
-       "include": [
-         "src/**/*"
-       ],
-       "exclude": [
-         "node_modules",
-         "dist",
-         "resources",
-         "logs",
-         "rsmv_inspector",
-         "scratch",
-         "src/scripts/**/*",
-         "src/scripts_backup/**/*",
-         "src/tests/**/*",
-         "src/tests_backup/**/*",
-         "../src_rsmv/**/*",
-         "D:/src_rsmv/**/*"
-       ]
-     }
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node16",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./",
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "moduleResolution": "Node16",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "logs",
+    "scratch",
+    "src/scripts/**",
+    "src/scripts_backup/**",
+    "src/tests/**"
+  ]
+}

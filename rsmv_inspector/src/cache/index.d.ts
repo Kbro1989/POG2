@@ -76,7 +76,7 @@ export declare abstract class CacheFileSource {
     writeFileArchive(major: number, minor: number, files: Buffer[]): Promise<void>;
     getIndexEntryById(major: number, minor: number): Promise<CacheIndex>;
     getArchiveById(major: number, minor: number): Promise<SubFile[]>;
-    getFileById(major: number, fileid: number): Promise<Buffer<ArrayBufferLike>>;
+    getFileById(major: number, fileid: number): Promise<Buffer | null>;
     findFileByName(major: number, name: string): Promise<CacheIndex | undefined>;
     findSubfileByName(major: number, minor: number, name: string): Promise<SubFile | undefined>;
     bruteForceFindAnyNamedFile(name: string): Promise<SubFile[] | null>;

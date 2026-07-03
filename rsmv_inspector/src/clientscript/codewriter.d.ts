@@ -1,4 +1,4 @@
-import { AstNode } from "./ast";
+import { AstNode } from "./ast_nodes";
 import { ClientscriptObfuscation } from "./callibrator";
 import { ClientScriptSubtypeSolver } from "./subtypedetector";
 /**

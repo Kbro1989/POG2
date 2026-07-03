@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { join } from 'path';
-import { getAtlasSystemPath, getAtlasSpatialPath } from '../../utils/SovereignPathResolver.js';
+import { getAtlasSystemPath, getAtlasSpatialPath, getSovereignRoot, getPedagogyPath } from '../../utils/SovereignPathResolver.js';
 import { createLogger } from '../../utils/logger.js';
 import type { GroundingManifest, GroundingEntry, GroundingHydrator } from '../../core/grounding.js';
 import type { Result, Provenance } from '../../core/models.js';

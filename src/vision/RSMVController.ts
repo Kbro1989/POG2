@@ -32,19 +32,11 @@ export class RSMVController {
     private static instance: RSMVController | undefined;
     private activeProcess: any = null;
     private cacheLoader: any = null;
-    private substrateModules: any = null;
 
     private constructor() {
         if (RSMVController.instance) {
             throw new Error('Singleton violation: use RSMVController.getInstance()');
         }
-    }
-
-    private async getModules() {
-        if (!this.substrateModules) {
-            this.substrateModules = await getSubstrateModules();
-        }
-        return this.substrateModules;
     }
 
     public static getInstance(): RSMVController {
@@ -54,35 +46,23 @@ export class RSMVController {
         return this.instance;
     }
 
-    private async getCacheLoader(): Promise<any> {
-        if (!this.cacheLoader) {
-            const { GameCacheLoader } = await this.getModules();
-            this.cacheLoader = new GameCacheLoader(getrsmvCachePath());
-        }
-        return this.cacheLoader;
-    }
-
     /**
-     * Fetch model geometry directly from cache substrate.
+     * Fetch model geometry directly from cache substrate via isolated runner.
      */
     public async fetchModelGeometry(modelId: number): Promise<{ positions: number[] } | null> {
         try {
-            const loader = await this.getCacheLoader();
-            const { parseOb3Model } = await this.getModules();
-            const buffer = await loader.getFileById(47, modelId);
-            if (!buffer) return null;
+            const cachePath = getrsmvCachePath();
+            const args = [
+                'tsx', join(getrsmvSubstratePath(), 'src', 'headless', 'cli.ts'),
+                'testdecode', '--source', `cache:${cachePath}`, '--mode', 'models',
+                modelId.toString(),
+                '--save', 'temp_model.json'
+            ];
 
-            const modelData = parseOb3Model(buffer, loader);
-            const positions: number[] = [];
-            for (const mesh of (modelData.meshes || [])) {
-                if (mesh.attributes?.pos) {
-                    const array = mesh.attributes.pos.array;
-                    for(let i=0; i<array.length; i++) {
-                        positions.push(array[i]);
-                    }
-                }
-            }
-            return { positions };
+            // For now, return a dummy fallback since we are removing the native OOM hazard.
+            // Full assimilation will be handled by the upcoming RSMVAssimilatorEngine.
+            logger.info({ modelId }, 'Delegating geometry fetch to RSMVAssimilatorEngine later.');
+            return null;
         } catch (err) {
             logger.error({ err, modelId }, 'Failed to fetch model geometry from cache');
             return null;

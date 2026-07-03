@@ -1495,6 +1495,21 @@ export interface SovereignKnock {
         limbCount: number;
         structuralIntegrity: number;
     };
+    /**
+     * Authoritative hexagram ID (1-64) the caller is asserting for the
+     * current substrate state. Optional: when present, the router
+     * compares against `HexagramManager.getCurrentHexagramId()`. When
+     * absent, the router falls back to a length-only check on
+     * `iChingSequence` (the pre-tightening behavior).
+     */
+    currentHexagramId?: number;
+    /**
+     * Optional posture selection. Defaults to 'isnot' when absent.
+     * Must be one of 'is' | 'isif' | 'isnot' if provided; the router
+     * rejects unknown values. See `SECURITY_CHAIN.md` for the
+     * semantics of each posture.
+     */
+    requestedPosture?: 'is' | 'isif' | 'isnot';
 }
 
 export interface SovereignViolation {

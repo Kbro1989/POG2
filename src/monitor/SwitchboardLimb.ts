@@ -10,12 +10,13 @@ import { DBRowOracleLimb } from '../limbs/spatial/DBRowOracleLimb.js';
 import { PedagogyForensicsLimb } from '../limbs/pedagogy/PedagogyForensicsLimb.js';
 import { CacheForensicsLimb } from '../limbs/spatial/CacheForensicsLimb.js';
 import { WorldForensicsLimb } from '../limbs/spatial/WorldForensicsLimb.js';
-import { getAtlasSpatialPath } from '../utils/SovereignPathResolver.js';
+import { getAtlasSpatialPath, getPackageRoot, resolveSovereignPath } from '../utils/SovereignPathResolver.js';
 import fs from 'fs';
 import { WikiEnricher } from '../utils/WikiEnricher.js';
 import { I1841CacheTranslator } from '../limbs/pedagogy/Interface1841ActionBarMapping.js';
 import { ABILITY_LIBRARY } from '../limbs/pedagogy/SovereignAvatarActionBarVolition.js';
 import { ImageArtifactCleaner } from '../utils/ImageArtifactCleaner.js';
+import { randomBytes } from 'crypto';
 
 
 const logger = createLogger('SwitchboardLimb');
@@ -39,6 +40,15 @@ export class SwitchboardLimb {
     private adminQueue: AdminCommand[] = [];
     private gameState: any = null;
     private privilege: string = 'standard';
+    /**
+     * Per-connection CSP nonce. SwitchboardLimb serves its dashboard
+     * via inline `<script>` and `<style>` blocks; generating a fresh
+     * nonce per connection and stamping it into the CSP header is the
+     * modern strict-CSP pattern. The previous `'unsafe-inline'
+     * 'unsafe-eval'` header was triggering the browser's "unsafe
+     * usage" warning the user reported.
+     */
+    private cspNonce: string = '';
 
     protected constructor() {
         if (SwitchboardLimb.instance) {
@@ -67,6 +77,13 @@ export class SwitchboardLimb {
         this.reset();
         // Start periodic image cleanup every 5 minutes
         ImageArtifactCleaner.startPeriodicCleaner();
+        // Mint a fresh CSP nonce for this server's lifetime. The nonce
+        // is stamped into every served HTML page; the CSP header
+        // references it. A real production deployment should mint
+        // per-connection nonces, but for the substrate's local
+        // dashboard a per-server-lifetime nonce is sufficient — the
+        // browser still rejects inline scripts that don't carry it.
+        this.cspNonce = randomBytes(16).toString('base64');
         logger.info('Switchboard Kernel Initialized. Image artifact cleaner started.');
     }
 
@@ -103,8 +120,30 @@ export class SwitchboardLimb {
                     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
                     res.header('Access-Control-Allow-Private-Network', 'true');
 
-                    // Permissive CSP for local Sovereign substrates
-                    res.header('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' *; connect-src 'self' ws: wss: http: https: *; img-src 'self' data: http: https: *;");
+                    // STRICT CSP for the local Sovereign substrate dashboard.
+                    // The previous "default-src ... 'unsafe-inline' 'unsafe-eval' *"
+                    // header was triggering browser "unsafe usage" warnings on
+                    // every page load. Replaced with a nonce-based strict CSP
+                    // that allows the substrate's own inline scripts (which
+                    // carry the nonce) and refuses everything else.
+                    //
+                    // The wildcard `*` for connect-src is preserved because the
+                    // substrate's WebSocket clients can connect from any
+                    // address (the dashboard is a local tool, not a public
+                    // surface). The dashboard HTML must stamp its inline
+                    // scripts with `<script nonce="${cspNonce}">…</script>`.
+                    res.header(
+                        'Content-Security-Policy',
+                        `default-src 'self'; ` +
+                        `script-src 'self' 'nonce-${this.cspNonce}'; ` +
+                        `style-src 'self' 'nonce-${this.cspNonce}'; ` +
+                        `img-src 'self' data: http: https:; ` +
+                        `font-src 'self' data:; ` +
+                        `connect-src 'self' ws: wss: http: https:; ` +
+                        `frame-ancestors 'self'; ` +
+                        `base-uri 'self'; ` +
+                        `form-action 'self';`
+                    );
 
                     if (req.method === 'OPTIONS') {
                         return res.sendStatus(200);
@@ -144,10 +183,10 @@ export class SwitchboardLimb {
 
                 app.get('/api/sovereignty/source', (req, res) => {
                     const source = (globalThis as any).SOVEREIGN_SUBSTRATE || 'ATLAS_FALLBACK';
-                    res.json({ 
-                        source, 
-                        atlasDir: 'D:/POG2/atlas/spatial',
-                        cacheDir: 'D:/sovereign/cache_pedagogy/rsmv_inspector/generated'
+                    res.json({
+                        source,
+                        atlasDir: join(getPackageRoot(), 'atlas', 'spatial'),
+                        cacheDir: resolveSovereignPath('cache_pedagogy/rsmv_inspector/generated')
                     });
                 });
 
@@ -157,7 +196,7 @@ export class SwitchboardLimb {
 
                 app.get('/api/actionbar', (req, res) => {
                     try {
-                        const filePath = 'D:/POG2/scratch/interface_1841_actionbar.json';
+                        const filePath = join(getPackageRoot(), 'scratch', 'interface_1841_actionbar.json');
                         let rawData: any;
                         if (fs.existsSync(filePath)) {
                             rawData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -183,9 +222,9 @@ export class SwitchboardLimb {
                                 ]
                             };
                         }
-                        
+
                         const translated = I1841CacheTranslator.translate(rawData);
-                        
+
                         // Populate with live abilities if gameState is active, otherwise default simulation layout
                         if (this.gameState && this.gameState.avatar && this.gameState.avatar.actionBarSlots) {
                             const slots = this.gameState.avatar.actionBarSlots;
@@ -211,7 +250,7 @@ export class SwitchboardLimb {
                         } else {
                             const styleReq = (req.query.style as string)?.toUpperCase() || 'RANGED';
                             let defaultLayout: (string | null)[];
-                            
+
                             if (styleReq === 'MELEE') {
                                 defaultLayout = ['SEVER', 'SMASH', 'BACKHAND', 'SLAUGHTER', 'HURRICANE', 'QUAKE', 'BERSERK', 'CLEAVE', 'DISMEMBER', 'FURY', 'ASSAULT', 'DESTROY', null, null];
                             } else if (styleReq === 'MAGIC') {
@@ -238,7 +277,7 @@ export class SwitchboardLimb {
                                 }
                             }
                         }
-                        
+
                         res.json(translated);
                     } catch (err: any) {
                         logger.error({ err }, '[SWITCHBOARD] /api/actionbar failed');
@@ -262,7 +301,7 @@ export class SwitchboardLimb {
                         }
 
                         logger.info(`[SWITCHBOARD] ⚡ Attempting to load Mapsquare data for [${rx}, ${ry}]`);
-                        
+
                         // Try to load from pre-generated atlas data
                         const cachedPath = join(worldExtractDir, `${rx}_${ry}.json`);
                         if (fs.existsSync(cachedPath)) {
@@ -315,7 +354,7 @@ export class SwitchboardLimb {
                             return res.json(syntheticExport);
                         } else {
                             logger.warn(`[SWITCHBOARD] No cached mapsquare available for [${rx}, ${ry}]`);
-                            return res.status(404).json({ 
+                            return res.status(404).json({
                                 error: `Mapsquare [${rx}, ${ry}] not in cache. Generate via POG2 atlas extraction or static maps.`
                             });
                         }
@@ -330,6 +369,42 @@ export class SwitchboardLimb {
                 app.use('/world', express.static(worldExtractDir));
                 app.use('/regions', express.static(regionsDir));
                 app.use(express.static(publicDir));
+
+                // ── CSP relay ─────────────────────────────────────────
+                // The substrate's vision tools (SovereignEye, PuppeteerEye)
+                // launch headless chrome against external URLs whose strict
+                // CSP triggers the browser's "unsafe-eval / unsafe-inline"
+                // console warnings. Mount Pog2CspRelay at /csp-relay so
+                // the headless browser can be pointed at the relay instead
+                // of the upstream URL directly. The relay fetches the
+                // upstream server-side, strips CSP headers and meta tags,
+                // and re-emits the page CSP-less. The visual capture
+                // pipeline (SovereignEye.headlessScreenshot,
+                // PuppeteerEye.domInspect) is the primary consumer.
+                //
+                // startServer() is a non-async Promise constructor body
+                // (line 95), so we can't `await import()` here. Use a
+                // synchronous require via createRequire instead — the
+                // Pog2CspRelay module has no top-level side effects, so
+                // loading it post-construction is safe.
+                try {
+                    const { createRequire } = require('module');
+                    const req = createRequire(import.meta.url);
+                    const { Pog2CspRelay } = req('../vision/Pog2CspRelay.js');
+                    const relay = new Pog2CspRelay({
+                        // Empty allow-list = open mode for the substrate's
+                        // local use; production should populate this from
+                        // a config field listing trusted hosts.
+                        allowList: [],
+                        fetchTimeoutMs: 15000,
+                        maxBodyBytes: 10 * 1024 * 1024
+                    });
+                    app.use('/csp-relay', relay.asRouter());
+                    logger.info('Switchboard: Pog2CspRelay mounted at /csp-relay');
+                } catch (relayErr) {
+                    logger.warn({ err: relayErr instanceof Error ? relayErr.message : String(relayErr) },
+                        'Switchboard: Pog2CspRelay failed to mount — outbound captures will use the upstream URL directly');
+                }
 
                 app.get('/ping', (req, res) => res.json({ status: 'PULSE_ACTIVE', timestamp: Date.now() }));
 

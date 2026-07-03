@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { type Result, ok, err } from '../../core/models.js';
+import { resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
 
 /**
  * 🧬 SovereignEditorLimb (Limb #34)

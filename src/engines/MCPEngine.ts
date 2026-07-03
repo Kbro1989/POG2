@@ -7,6 +7,12 @@ import { SovereignDomain } from '../types/SovereignDomain.js';
 import type { ToolRegistry } from '../ToolRegistry.js';
 import type { SovereignConfig } from '../config/SovereignConfig.js';
 import { createLogger } from "../utils/logger.js";
+import { WslPathNegotiator } from "../utils/WslPathNegotiator.js";
+
+// Surface `WslPathNegotiator` on the engine instance so higher-level
+// subsystems (OrchestrateEngine boot, sovereign config loader, tests)
+// can observe the translator without instantiating their own copy.
+export { WslPathNegotiator };
 
 const logger = createLogger('MCPEngine');
 
@@ -53,9 +59,19 @@ export class MCPEngine {
         logger.info({ server: name }, 'Ã°Å¸â€Å’ Engaging MCP Neural Link...');
 
         try {
+            // Translate WSL↔Windows file-system paths for MCP entrypoints.
+            // The `wslContract` flag on this server means paths may have
+            // been authored for the _other_ side of the boundary, so we
+            // always negotiate in that case.
+            const wslContract = (config as any)?.handshake?.wslContract === true;
+            const resolvedArgs = WslPathNegotiator.resolveArgs(
+                config.args || [],
+                { wslContract }
+            );
+
             const transport = new StdioClientTransport({
                 command: config.command,
-                args: config.args || [],
+                args: resolvedArgs,
                 env: { ...process.env, ...config.env } as Record<string, string>
             });
 

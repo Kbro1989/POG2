@@ -10,6 +10,7 @@ import { MaterialData } from "./jmat";
 export type SimpleModelDef = {
     modelid: number;
     mods: ModelModifications;
+    injectedModelData?: ModelData;
 }[];
 export type SimpleModelInfo<T = object, ID = string> = {
     models: SimpleModelDef;
@@ -22,43 +23,21 @@ export declare function castModelInfo<T, ID>(info: SimpleModelInfo<T, ID>): Simp
 export declare function modelToModel(cache: ThreejsSceneCache, id: number): Promise<SimpleModelInfo<{
     modeldata: ModelData;
     info: any;
-}, number>>;
+}, number> | null>;
 export declare function playerDataToModel(cache: ThreejsSceneCache, modeldata: {
     player: string;
     head: boolean;
     data: Buffer;
-}): Promise<SimpleModelInfo<{
-    avatar: import("../../generated/avataroverrides").avataroverrides | null;
-    gender: number;
-    npc: import("../../generated/npcs").npcs | null;
-    kitcolors: Record<"hair" | "feet" | "skin" | "clothes", Record<number, number>>;
-    buffer: Buffer<ArrayBufferLike>;
-}, {
-    player: string;
-    head: boolean;
-    data: Buffer;
-}>>;
-export declare function playerToModel(cache: ThreejsSceneCache, name: string): Promise<SimpleModelInfo<{
-    avatar: import("../../generated/avataroverrides").avataroverrides | null;
-    gender: number;
-    npc: import("../../generated/npcs").npcs | null;
-    kitcolors: Record<"hair" | "feet" | "skin" | "clothes", Record<number, number>>;
-    buffer: Buffer<ArrayBufferLike>;
-}, string>>;
-export declare function npcBodyToModel(cache: ThreejsSceneCache, id: number): Promise<SimpleModelInfo<import("../../generated/npcs").npcs, {
-    id: number;
-    head: boolean;
-}>>;
+}): Promise<SimpleModelInfo<any, any> | null>;
+export declare function playerToModel(cache: ThreejsSceneCache, name: string): Promise<SimpleModelInfo<any, any> | null>;
+export declare function npcBodyToModel(cache: ThreejsSceneCache, id: number): Promise<SimpleModelInfo<any, any> | null>;
 export declare function npcToModel(cache: ThreejsSceneCache, id: {
     id: number;
     head: boolean;
-}): Promise<SimpleModelInfo<import("../../generated/npcs").npcs, {
-    id: number;
-    head: boolean;
-}>>;
-export declare function spotAnimToModel(cache: ThreejsSceneCache, id: number): Promise<SimpleModelInfo<import("../../generated/spotanims").spotanims, number>>;
-export declare function locToModel(cache: ThreejsSceneCache, id: number): Promise<SimpleModelInfo<import("../../generated/objects").objects, number>>;
-export declare function itemToModel(cache: ThreejsSceneCache, id: number): Promise<SimpleModelInfo<import("../../generated/items").items, number>>;
+}): Promise<SimpleModelInfo<any, any> | null>;
+export declare function spotAnimToModel(cache: ThreejsSceneCache, id: number): Promise<SimpleModelInfo<any, any> | null>;
+export declare function locToModel(cache: ThreejsSceneCache, id: number): Promise<SimpleModelInfo<any, any> | null>;
+export declare function itemToModel(cache: ThreejsSceneCache, id: number): Promise<SimpleModelInfo<any, any> | null>;
 export declare function materialToModel(sceneCache: ThreejsSceneCache, id: number): Promise<SimpleModelInfo<{
     texs: Record<string, {
         texid: number;
@@ -106,7 +85,9 @@ export declare class RSModel extends TypedEmitter<{
     addToScene(scene: ThreeJsRenderer): void;
     onModelLoaded: () => void;
     updateAnimation: (delta: number, epochtime: number) => void;
-    constructor(cache: ThreejsSceneCache, models: SimpleModelDef, name?: string);
+    constructor(cache: ThreejsSceneCache, models: SimpleModelDef, name?: string, options?: {
+        noSkin?: boolean;
+    });
     private mountAnim;
     loadAnimation(animid: number): {
         clip: AnimationClip | null;

@@ -25,7 +25,6 @@ export declare const parse: {
     mapsquareEnvironment: FileParser<import("../generated/mapsquare_envs").mapsquare_envs>;
     mapZones: FileParser<import("../generated/mapzones").mapzones>;
     enums: FileParser<import("../generated/enums").enums>;
-    fontmetrics: FileParser<import("../generated/fontmetrics").fontmetrics>;
     mapscenes: FileParser<import("../generated/mapscenes").mapscenes>;
     sequences: FileParser<import("../generated/sequences").sequences>;
     framemaps: FileParser<import("../generated/framemaps").framemaps>;
@@ -47,6 +46,10 @@ export declare const parse: {
     identitykit: FileParser<import("../generated/identitykit").identitykit>;
     structs: FileParser<import("../generated/structs").structs>;
     params: FileParser<import("../generated/params").params>;
+    varbits: FileParser<{
+        varid: number;
+        bits: [number, number];
+    }>;
     particles_0: FileParser<import("../generated/particles_0").particles_0>;
     particles_1: FileParser<import("../generated/particles_1").particles_1>;
     audio: FileParser<import("../generated/audio").audio>;

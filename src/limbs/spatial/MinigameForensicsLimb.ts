@@ -5,6 +5,7 @@ import { CacheLearningLimb } from './CacheLearningLimb.js';
 import { WikiEnricher } from '../../utils/WikiEnricher.js';
 import * as fs from 'fs';
 import * as path from 'path';
+import { resolveSovereignPath } from '../../utils/SovereignPathResolver.js';
 
 const logger = createLogger('MinigameForensicsLimb');
 

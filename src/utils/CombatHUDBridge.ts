@@ -4,6 +4,7 @@ import { createServer } from 'http';
 import { existsSync, mkdirSync, appendFileSync, readFileSync } from 'fs';
 import { join, extname } from 'path';
 import { createLogger } from './logger.js';
+import { resolveSovereignPath, getCachePedagogyPath, getPedagogyPath } from './SovereignPathResolver.js';
 
 const logger = createLogger('CombatHUDBridge');
 

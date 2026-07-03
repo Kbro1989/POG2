@@ -38,7 +38,7 @@ export declare function avatarToModel(engine: EngineCache, buffer: Buffer, head:
     avatar: avataroverrides | null;
     gender: number;
     npc: npcs | null;
-    kitcolors: Record<"hair" | "feet" | "skin" | "clothes", Record<number, number>>;
+    kitcolors: Record<"feet" | "skin" | "hair" | "clothes", Record<number, number>>;
     buffer: Buffer<ArrayBufferLike>;
 }, Buffer<ArrayBufferLike>>>;
 export declare function writeAvatar(avatar: avataroverrides | null, gender: number, npc: avatars["npc"]): Buffer<ArrayBufferLike>;

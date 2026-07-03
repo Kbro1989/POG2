@@ -86,11 +86,16 @@ export class ToolRegistry {
             // 2. SovereignKnock for foreign tools
             if (flags.isForeign && this.ternaryRouter) {
                 const structuralProof = this.computeStructuralProof(tool);
+                const currentSequence = this.hexagramManager?.getCurrentSequence() ?? [];
+                // currentHexagramId is the authoritative identity (1-64);
+                // iChingSequence is the display form for backward compatibility.
+                const currentHexagramId = this.hexagramManager?.getCurrentHexagramId();
                 const knock = await this.ternaryRouter.sovereignKnock({
-                    iChingSequence: this.hexagramManager?.getCurrentSequence() ?? [],
-                    chromaticSoul: (this.hexagramManager?.getCurrentSequence() ?? []).join('-') || 'foreign-skill',
+                    iChingSequence: currentSequence,
+                    chromaticSoul: currentSequence.join('-') || 'foreign-skill',
                     temporalFingerprint: `${Date.now()}-${tool.name}`,
                     anatomicalProof: { limbCount: 33, structuralIntegrity: 10 },
+                    currentHexagramId,
                     structuralProof
                 });
                 if (!knock.ok) {

@@ -171,6 +171,28 @@ export class OrchestrateEngine {
     public getRegistry(): ToolRegistry {
         return this.registry;
     }
+
+    /**
+     * DomainLocker accessor — the engine instantiates a DomainLocker in its
+     * constructor (line 480) and wires it onto the ModelClient + ToolRegistry.
+     * The MCP server needs the same instance to construct the ExteriorGate
+     * (src/api/ai/ExteriorGate.ts) so the composed gate stack shares one
+     * source of truth for cross-domain dispatch verdicts.
+     */
+    public getDomainLocker(): DomainLocker {
+        return this.domainLocker;
+    }
+
+    /**
+     * MemoryConsolidationEngine accessor — the engine constructs the
+     * MemoryConsolidationEngine with the real ModelClient + VectorDB +
+     * StateManager (line 421). The MCP server needs the same instance so
+     * the Handshake Triad's nonce stage (SovereignKnock stage 3) runs
+     * against the real consumedNonces map.
+     */
+    public getMemoryConsolidationEngine(): MemoryConsolidationEngine {
+        return this.memoryConsolidation;
+    }
     private readonly todoEngine: TodoEngine;
     private readonly visionEngine: SpatialVisionEngine;
     private readonly vision: VisionEngine;
@@ -637,7 +659,7 @@ export class OrchestrateEngine {
                 const { HexagramManager } = await import('../routing/HexagramManager.js');
                 const hexManager = HexagramManager.getInstance();
                 const activeLimbs = hexManager.getActiveLimbSet();
-                
+
                 // Orchestrator limbs are inherently allowed by the gating logic
                 if (!activeLimbs.includes(backingLimb)) {
                     logger.warn({ tool: toolName, backingLimb, activeLimbs }, 'Hexagram Gate BLOCKED execution');
@@ -654,7 +676,7 @@ export class OrchestrateEngine {
         }
 
 
-        
+
         // ─── COGNITIVE IMMUNOLOGY PRE-SCAN ───
         const context = [
             `Tool: ${toolName}`,
@@ -665,13 +687,13 @@ export class OrchestrateEngine {
                 return `${k}: ${val.length > 200 ? val.substring(0, 200) + '...' : val}`;
             })
         ];
-        
+
         const report = await this.immunology.scan(
             context,
             sourceAgent,
             args['filePath'] as string | undefined
         );
-        
+
         // Record this modification for chain tracing
         if (args['filePath']) {
             this.immunology.recordAgentModification({
@@ -682,7 +704,7 @@ export class OrchestrateEngine {
                 description: `Tool: ${toolName}`
             });
         }
-        
+
         // BLOCK: HIGH and CRITICAL
         if (report.threatLevel === 'HIGH' || report.threatLevel === 'CRITICAL') {
             logger.error({
@@ -692,7 +714,7 @@ export class OrchestrateEngine {
                 reasons: report.reasons,
                 contextHash: report.contextHash
             }, 'COGNITIVE IMMUNOLOGY BLOCK');
-            
+
             return err({
                 name: 'Error',
                 message: `Cognitive Immunology blocked execution. Threat: ${report.threatLevel}. Reasons: ${report.reasons.join('; ')}`,
@@ -700,7 +722,7 @@ export class OrchestrateEngine {
                 report
             } as any);
         }
-        
+
         // WARN: MEDIUM — log but continue with sovereign flag
         if (report.threatLevel === 'MEDIUM') {
             logger.warn({
@@ -708,13 +730,13 @@ export class OrchestrateEngine {
                 agent: sourceAgent,
                 reasons: report.reasons
             }, 'COGNITIVE IMMUNOLOGY WARNING');
-            
+
             // Proceed with caution flag in metadata
             (args as any)._immunologyWarning = report.reasons;
         }
-        
+
         // LOW: Silent continue
-        
+
         // ─── EXECUTE TOOL ───
         return tool.execute(args);
     }
@@ -882,11 +904,11 @@ export class OrchestrateEngine {
             `HiveEvent: ${type}`,
             typeof payload === 'string' ? payload : JSON.stringify(payload).substring(0, 1000)
         ];
-        
+
         const source: AgentType = payload._source || payload.source || 'unknown';
-        
+
         const report = await this.immunology.scan(context, source);
-        
+
         // BLOCK: HIGH and CRITICAL
         if (report.threatLevel === 'HIGH' || report.threatLevel === 'CRITICAL') {
             logger.warn({
@@ -895,15 +917,15 @@ export class OrchestrateEngine {
                 threat: report.threatLevel,
                 reasons: report.reasons
             }, 'Hive event blocked by immunology');
-            
+
             this.router.getHexagram().pinPulse(
                 YaoState.OldMixed,
                 `Rejected hive ${type}: Immunology ${report.threatLevel}. Reasons: ${report.reasons.slice(0, 3).join(', ')}`
             );
-            
+
             return;
         }
-        
+
         // MEDIUM: Process with caution
         if (report.threatLevel === 'MEDIUM') {
             logger.warn({
@@ -942,7 +964,7 @@ export class OrchestrateEngine {
             if (type === 'rolodex') {
                 const localRolodex = this.client.getRolodex();
                 if (!localRolodex) return true;
-                
+
                 // Future: will this model be needed for upcoming tasks?
                 const pendingTasks = this.todoEngine.getTodos().filter(t => t.status !== 'completed' && t.status !== 'cancelled');
 
@@ -950,7 +972,7 @@ export class OrchestrateEngine {
                 for (const [key, remoteModel] of Object.entries(payload.models || {})) {
                     const localModel = localRolodex.state.models[key];
                     const incomingRep = (remoteModel as any).reputation ?? 1.0;
-                    
+
                     // Past & Present checking: If remote reputation degrades a highly trusted local model (>0.8) by more than 0.3, reject
                     if (localModel) {
                         if (localModel.reputation > 0.8 && localModel.reputation - incomingRep > 0.3) {
@@ -963,11 +985,11 @@ export class OrchestrateEngine {
                     const modelKeyLower = key.toLowerCase();
                     const modelNeeded = pendingTasks.some(t => {
                         const taskLower = t.task.toLowerCase();
-                        return taskLower.includes(modelKeyLower) || 
-                               (modelKeyLower.includes('code') && taskLower.includes('code')) ||
-                               (modelKeyLower.includes('vision') && taskLower.includes('vision')) ||
-                               (modelKeyLower.includes('sensory') && taskLower.includes('screen')) ||
-                               (modelKeyLower.includes('agent') && taskLower.includes('agent'));
+                        return taskLower.includes(modelKeyLower) ||
+                            (modelKeyLower.includes('code') && taskLower.includes('code')) ||
+                            (modelKeyLower.includes('vision') && taskLower.includes('vision')) ||
+                            (modelKeyLower.includes('sensory') && taskLower.includes('screen')) ||
+                            (modelKeyLower.includes('agent') && taskLower.includes('agent'));
                     });
 
                     const futureValue = modelNeeded ? incomingRep * 1.2 : incomingRep * 0.8;
@@ -1333,7 +1355,7 @@ export class OrchestrateEngine {
             execute: async (args) => {
                 const limb = this.gameplay;
                 if (!limb) throw new Error("GameplaySovereigntyLimb not mounted");
-                
+
                 const opts = args as { adren?: number; stance?: string; tactical?: string; leader?: string; archetype?: string };
                 if (opts.adren !== undefined) (limb.avatar as any).adrenaline = opts.adren;
                 if (opts.stance !== undefined) (limb.avatar as any).combatStance = opts.stance;
@@ -1345,7 +1367,7 @@ export class OrchestrateEngine {
                         limb.playerAgent.setLeader(opts.leader === 'none' ? null : opts.leader);
                     }
                 }
-                
+
                 limb.markDirty();
                 limb.saveSovereignState();
                 return { ok: true, value: { output: `Volition mutations applied successfully.` } };
@@ -1385,8 +1407,8 @@ export class OrchestrateEngine {
             execute: async (args) => {
                 await this.spatialSovereignty.initialize();
                 await this.mechanicalSovereignty.initialize();
-                
-                const opts = args as { loadGrounding?: {x: number, z: number}, loadLogic?: string };
+
+                const opts = args as { loadGrounding?: { x: number, z: number }, loadLogic?: string };
                 if (opts.loadGrounding) {
                     await this.spatialSovereignty.loadUnifiedGrounding(opts.loadGrounding.x, opts.loadGrounding.z);
                 }
@@ -1473,7 +1495,7 @@ export class OrchestrateEngine {
                 const { HUDForensicsLimb } = await import('../limbs/spatial/HUDForensicsLimb.js');
                 const limb = new HUDForensicsLimb();
                 const opts = args as { method: 'getInterface' | 'searchInterfaces' | 'scanAtlas' | 'extractAllInterfaces' | 'healthCheck', target?: any };
-                
+
                 if (opts.method === 'healthCheck') {
                     return { ok: true, value: { output: 'health checked', data: limb.healthCheck() } };
                 }
@@ -1482,9 +1504,9 @@ export class OrchestrateEngine {
                     const res = await (limb as any)[opts.method](opts.target);
                     // if res is already a Result, return it, otherwise wrap it
                     if (res && res.ok !== undefined) {
-                         return res.ok ? { ok: true, value: { output: `HUD Forensic scan complete.`, data: res.value } } : res;
+                        return res.ok ? { ok: true, value: { output: `HUD Forensic scan complete.`, data: res.value } } : res;
                     } else {
-                         return { ok: true, value: { output: `HUD Forensic scan complete.`, data: res } };
+                        return { ok: true, value: { output: `HUD Forensic scan complete.`, data: res } };
                     }
                 } else {
                     const res = await (limb as any)[opts.method]();
@@ -1505,7 +1527,7 @@ export class OrchestrateEngine {
             execute: async (args) => {
                 const { HUDForensicsLimb } = await import('../limbs/spatial/HUDForensicsLimb.js');
                 const limb = new HUDForensicsLimb();
-                const opts = args as { requests: Array<{method: 'getInterface' | 'searchInterfaces', target: any}> };
+                const opts = args as { requests: Array<{ method: 'getInterface' | 'searchInterfaces', target: any }> };
                 const results: any[] = [];
                 for (const req of opts.requests) {
                     const res = await (limb as any)[req.method](req.target);
@@ -1659,6 +1681,193 @@ export class OrchestrateEngine {
                 }
 
                 return ok({ output });
+            }
+        });
+
+        this.registry.register({
+            name: 'knock_lock_assimilate',
+            description: 'Knock-Lock-Assimilate: Discover and ingest external program memory from .gemini/antigravity folder structure into POG2 training with hex/time context.',
+            humanDescription: 'Import training data from Claude/Gemini environments into POG2\'s memory substrate with proper knowledge context.',
+            jargonDescription: 'Orchestrates discovery → planning (TodoEngine) → execution (ShellEngine) → recording (TrainingCollector) pipeline for all JSON artifacts in C:\\Users\\krist\\.gemini\\antigravity\\* with Hexagram metadata.',
+            idealYaoState: YaoState.YoungYin,
+            domain: SovereignDomain.OBSERVE,
+            category: 'core',
+            parameters: {
+                source: { type: 'string', description: 'Source folder (default: C:\\Users\\krist\\.gemini\\antigravity)', default: 'C:\\Users\\krist\\.gemini\\antigravity' },
+                types: { type: 'string', description: 'CSV of types to ingest: annotations,artifacts,brain,conversations,knowledge,scratch,all', default: 'all' },
+                batchSize: { type: 'number', description: 'Max files per batch', default: 10 },
+                dryRun: { type: 'boolean', description: 'Plan only, no execution', default: false }
+            },
+            execute: async (args) => {
+                const { readdirSync, statSync } = await import('fs');
+                const { join, extname } = await import('path');
+
+                const source = (args.source as string) || 'C:\\Users\\krist\\.gemini\\antigravity';
+                const types = ((args.types as string) || 'all').split(',').map(t => t.trim());
+                const batchSize = (args.batchSize as number) || 10;
+                const dryRun = (args.dryRun as boolean) || false;
+
+                const typeMap: Record<string, string> = {
+                    'annotations': 'annotations',
+                    'artifacts': 'artifacts',
+                    'brain': 'brain',
+                    'conversations': 'conversations',
+                    'knowledge': 'knowledge',
+                    'scratch': 'scratch'
+                };
+
+                const selectedTypes = types.includes('all')
+                    ? Object.values(typeMap)
+                    : types.map(t => typeMap[t]).filter(Boolean);
+
+                let discoveredCount = 0;
+                let plannedCount = 0;
+                let ingestedCount = 0;
+                const discoveries: { path: string; type: string; size: number; modified: Date }[] = [];
+
+                try {
+                    // PHASE 1: DISCOVER — Scan for JSON/JSONL artifacts
+                    for (const typeName of selectedTypes) {
+                        const typeDir = join(source, typeName);
+                        try {
+                            const files = readdirSync(typeDir, { recursive: true }) as string[];
+                            for (const file of files) {
+                                const ext = extname(file).toLowerCase();
+                                if (['.json', '.jsonl', '.md'].includes(ext)) {
+                                    const fullPath = join(typeDir, file);
+                                    try {
+                                        const stat = statSync(fullPath);
+                                        if (stat.isFile()) {
+                                            discoveries.push({
+                                                path: fullPath,
+                                                type: typeName,
+                                                size: stat.size,
+                                                modified: stat.mtime
+                                            });
+                                            discoveredCount++;
+                                        }
+                                    } catch { /* skip unreadable files */ }
+                                }
+                            }
+                        } catch { /* skip missing type dirs */ }
+                    }
+
+                    // PHASE 2: PLAN — Create todos via TodoEngine
+                    const hex = this.router.getHexagram();
+                    const yaoState = hex.getYaoState();
+                    const interpretation = hex.getInterpretation();
+
+                    const batches = Math.ceil(discoveries.length / batchSize);
+                    const todos: Todo[] = [];
+
+                    for (let i = 0; i < batches; i++) {
+                        const batchStart = i * batchSize;
+                        const batchEnd = Math.min((i + 1) * batchSize, discoveries.length);
+                        const batchFiles = discoveries.slice(batchStart, batchEnd);
+
+                        todos.push({
+                            task: `[KLA] Ingest antigravity batch ${i + 1}/${batches} (${batchFiles.length} files, ${(batchFiles.reduce((s, f) => s + f.size, 0) / 1024).toFixed(1)}KB)`,
+                            status: dryRun ? 'completed' : 'not_started'
+                        } as Todo);
+                        plannedCount += batchFiles.length;
+                    }
+
+                    this.todoEngine.update(todos);
+
+                    if (dryRun) {
+                        return ok({
+                            output: `[DRY RUN] Knock-Lock-Assimilate Plan:\n` +
+                                `Discovered: ${discoveredCount} files\n` +
+                                `Planned: ${plannedCount} files in ${batches} batches\n` +
+                                `Yao State: ${yaoState}\n` +
+                                `Hexagram: ${interpretation.name} (${interpretation.id})\n` +
+                                `Ready to execute with: knock_lock_assimilate(source, types, batchSize, dryRun=false)`,
+                            data: { discoveries, batches, yaoState, hexagram: interpretation }
+                        });
+                    }
+
+                    // PHASE 3: EXECUTE & RECORD — Process each file with training context
+                    const hexCoordinate = CanonicalClock.getInstance().getCoordinate?.() || { tick: Date.now(), phase: 'unknown' };
+                    const trainingContext = {
+                        tickCoordinate: hexCoordinate,
+                        hexagram: {
+                            id: interpretation.id,
+                            name: interpretation.name,
+                            binary: interpretation.binary || '000000',
+                            strategy: interpretation.strategy || 'UNKNOWN',
+                            judgment: interpretation.judgment,
+                            emotion: interpretation.emotion || 'Zen',
+                            yaoState,
+                            ternaryState: (hex.getTernaryState?.() || 'YinYang') as 'Yin' | 'Yang' | 'YinYang',
+                            phase: (hex.getContract?.()?.phase) || 'UNKNOWN',
+                            mode: (hex.getContract?.()?.mode) || 'UNKNOWN'
+                        }
+                    };
+                    
+                    for (const discovery of discoveries) {
+                        try {
+                            // Read file
+                            const { readFileSync } = await import('fs');
+                            const content = readFileSync(discovery.path, 'utf-8');
+                            let parsed: Record<string, unknown> | string = content;
+                            
+                            try {
+                                parsed = JSON.parse(content);
+                            } catch {
+                                // Keep as string if not JSON
+                            }
+                            
+                            const lessonText = typeof parsed === 'string' ? parsed.substring(0, 500) : JSON.stringify(parsed).substring(0, 500);
+                            const lessonHash = `antigravity_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+                            
+                            // Generate embedding via ModelClient (can be lightweight)
+                            const embedRes = await this.client.embed(lessonText);
+                            const embedding = embedRes.ok ? embedRes.value : new Float32Array(0);
+                            
+                            // Record to TrainingCollector
+                            await this.trainingCollector.recordLesson({
+                                id: lessonHash,
+                                projectId: 'antigravity-assimilation',
+                                domainNamespace: `knock_lock/${discovery.type}`,
+                                type: 'external_memory',
+                                text: lessonText,
+                                embedding,
+                                createdAt: Date.now(),
+                                metadata: {
+                                    source: discovery.path,
+                                    size: discovery.size,
+                                    modified: discovery.modified.toISOString(),
+                                    sourceType: discovery.type,
+                                    fidelity: 'HIGH',
+                                    trainingContext
+                                },
+                                hash: lessonHash
+                            });
+                            
+                            ingestedCount++;
+                        } catch (err) {
+                            this.renderer.warn(`Failed to ingest ${discovery.path}: ${(err as Error).message}`);
+                        }
+                    }
+
+                    // Update todos to completed
+                    const updatedTodos = todos.map(t => ({ ...t, status: 'completed' as const }));
+                    this.todoEngine.update(updatedTodos);
+
+                    return ok({
+                        output: `[KNOCK-LOCK-ASSIMILATE] Acquisition Complete:\n` +
+                            `Discovered: ${discoveredCount} artifacts\n` +
+                            `Planned: ${plannedCount} files\n` +
+                            `Ingested: ${ingestedCount} records\n` +
+                            `Hexagram Context: ${interpretation.name} (YaoState: ${yaoState})\n` +
+                            `Training Context Recorded: Yes`,
+                        data: { discoveredCount, plannedCount, ingestedCount, trainingContext }
+                    });
+
+                } catch (err) {
+                    this.renderer.error(`Knock-Lock-Assimilate failure: ${(err as Error).message}`);
+                    return { ok: false, error: err as Error };
+                }
             }
         });
 
@@ -3996,13 +4205,13 @@ Mapping tool selection over to Y...
      * Bridges POG2 CLI-driven play functionality through HexagramDefinitions,
      * enforcing strategy rules and behavioral ceilings before delegating to GameplaySovereigntyLimb.
      */
-    public async executePlayAction(action: string): Promise<Result<string>> {
+    public async executePlayAction(action: string, overrideContract?: InterpretationContract): Promise<Result<string>> {
         await this.initialize();
-        
-        const contract = this.router.getHexagram().getContract();
+
+        const contract = overrideContract || this.router.getHexagram().getContract();
         const interpretation = this.router.getHexagram().getInterpretation();
         const actionLower = action.toLowerCase();
-        
+
         this.renderer.info(`[OrchestrateEngine] Intercepting play action: "${action}" under Hexagram ${interpretation.name}`);
 
         // Phase-aware gating via contract
@@ -4013,7 +4222,7 @@ Mapping tool selection over to Y...
         if (actionLower.includes('emergency') && !contract.gates.allowActiveRecovery) {
             return { ok: false, error: new Error(`[Hexagram Blocked] Emergency action blocked under active contract (${interpretation.name}).`) };
         }
-        
+
         if (actionLower.includes('destroy') && !contract.gates.allowDestructiveCommands) {
             return { ok: false, error: new Error(`[Hexagram Blocked] Destructive command blocked under active contract (${interpretation.name}).`) };
         }
@@ -4021,7 +4230,7 @@ Mapping tool selection over to Y...
         // Apply HexagramDefinitions strategy logic
         // Using arbitrary matching for "overwhelmed" or "cautious" from interpretation.emotion 
         // as numbers or enums based on how EmotionalState is defined
-        if (interpretation.emotion === 'AGITATED' as any || interpretation.emotion === 'MELANCHOLY' as any) { 
+        if (interpretation.emotion === 'AGITATED' as any || interpretation.emotion === 'MELANCHOLY' as any) {
             if (actionLower.includes('attack') || actionLower.includes('rush')) {
                 this.renderer.warn(`⚠️ [Cognitive Block] Aggressive action "${action}" throttled by current emotional state: ${interpretation.emotion}`);
             }
@@ -4307,7 +4516,7 @@ Respond organically in a few concise sentences. Do NOT output a JSON plan. Ackno
         // --- Cognitive ISA Governance Check (Phase 220) ---
         const hexInterpretation = this.router.getHexagram().getInterpretation();
         const activeLimbs = hexInterpretation.activeLimbs || ['motor', 'forge', 'core']; // Fallback
-        
+
         if (tool.category && !activeLimbs.includes(tool.category)) {
             this.renderer.error(`[Hexagram Blocked] Tool category "${tool.category}" is suppressed under current hexagram state (${hexInterpretation.name}).`);
             return { ok: false, error: new Error(`[Hexagram Blocked] Tool category "${tool.category}" is suppressed under current hexagram state (${hexInterpretation.name}). Active limbs: ${activeLimbs.join(', ')}`) };
@@ -4537,27 +4746,27 @@ Otherwise, provide a concise list of improvements and a "REVIED_PLAN" in JSON fo
             `SelfModify: ${request.intent}`,
             `File: ${request.targetPath}, Action: ${request.operation}`
         ];
-        
+
         const report = await this.immunology.scan(context, 'unknown', request.targetPath);
-        
+
         if (report.threatLevel === 'CRITICAL') {
             logger.error({
                 plan: request.intent,
                 threat: report.threatLevel
             }, 'Self-modification blocked by immunology');
-            
+
             return {
                 ok: false,
                 error: new Error(`Self-modification blocked: ${report.reasons.join('; ')}`)
             };
         }
-        
+
         if (report.threatLevel === 'HIGH') {
             logger.warn({
                 plan: request.intent,
                 reasons: report.reasons
             }, 'Self-modification requires approval');
-            
+
             return {
                 ok: false,
                 error: new Error('Self-modification requires sovereign approval for HIGH threat')

@@ -24,7 +24,8 @@ const logger = createLogger('CanonicalClock');
 export enum TickTier {
     GAME = 'GAME',           // T1: 600ms server truth
     PLAYER = 'PLAYER',       // T2: 300ms reflex pulse
-    COGNITIVE = 'COGNITIVE'  // T3: variable, 1+ ticks
+    COGNITIVE = 'COGNITIVE',  // T3: variable, 1+ ticks
+    SYSTEM = 'SYSTEM',
 }
 
 /**
@@ -473,6 +474,46 @@ export class CanonicalClock {
     }
 
     // ═══════════════════════════════════════════════════════════════
+// ==== DETERMINISTIC RETRY / TIMEOUT CONTRACT (simulated tick time only) ====
+
+/**
+ * pendingActions — deferred ops keyed by tick coordinate.
+ * Consumer must call scheduleAction/advancePending on each tick/phase.
+ */
+private pendingActions: Map<number, Array<() => void>> = new Map();
+
+/**
+ * scheduleAction(callback, maxTicks)
+ * Best-effort placement into the current or next tick bucket.
+ * Do NOT call this inside listener callbacks under active ticking.
+ */
+public scheduleAction(callback: () => void, maxTicks = 3): void {
+    CanonicalClock.assertBootstrapped();
+    const tick = this.gameTick;
+    if (!this.pendingActions.has(tick)) this.pendingActions.set(tick, []);
+    this.pendingActions.get(tick)!.push(callback);
+    if (maxTicks <= 0) this.flushPending(TickTier.GAME);
+}
+
+public advancePending(tier: TickTier = TickTier.GAME): void {
+    this.flushPending(tier);
+    const expired = new Set<string>();
+    for (const [tick, actions] of this.activeCognitiveWindows.entries()) {
+        if (!actions) continue; // type guard
+    }
+}
+
+private flushPending(tier: TickTier): void {
+    const tick = this.gameTick;
+    const actions = this.pendingActions.get(tick);
+    if (!actions) return;
+    this.pendingActions.delete(tick);
+    for (const fn of actions) {
+        try { fn(); } catch (e) { /* best-effort only */ }
+    }
+}
+
+// ==== END DETERMINISTIC RETRY / TIMEOUT CONTRACT ====
     // UTILITY
     // ═══════════════════════════════════════════════════════════════
 
