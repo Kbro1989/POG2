@@ -1,501 +1,351 @@
-# 🗂 POG2 Full Codebase Map (Sovereign Registry)
+# 🗂 POG2 Full Codebase Map
 
-This registry provides absolute GitHub links to all neurological substrates within the POG2 organism.
+**Last updated**: 2026-07-06
+**Style**: live-tree-first with cross-repo pointers.
 
-> **Last Audited**: 2026-04-12 | **Total Files**: 106 TypeScript substrates
-
----
-
-## 📂 Root (`src/`)
-
-*Entry points, CLI spine, and standalone scripts.*
-
-- [cli.ts](https://github.com/Kbro1989/POG2/blob/main/src/cli.ts): **Sovereign CLI entry point** — 3100+ line nerve center connecting all limbs and engines to user commands.
-- [verify_advanced_audio.ts](https://github.com/Kbro1989/POG2/blob/main/src/verify_advanced_audio.ts)
+This file is the working codebasemap for the local checkout.
+For broader sovereign-context and file-tree indexes, use `C:\Users\krist\Desktop\POG2_GLOBAL_INDEX.md`.
 
 ---
 
-## 📂 AI Instruction Substrate (`.agent/`, `.agents/`)
+## 📍 Live Tree Index (`Kbro1989/POG2`)
 
-*Hidden neurological workflows and sovereign rules.*
+Root: `C:\Users\krist\.gemini\antigravity\scratch\POG2`
 
-- [.agent/rules/](https://github.com/Kbro1989/POG2/tree/main/.agent/rules)
-- [.agent/workflows/pog2-sovereign.md](https://github.com/Kbro1989/POG2/blob/main/.agent/workflows/pog2-sovereign.md)
-- [.agents/rules/pogrules.md](https://github.com/Kbro1989/POG2/blob/main/.agents/rules/pogrules.md)
-- [.agents/workflows/pog2-knowledgebase.md](https://github.com/Kbro1989/POG2/blob/main/.agents/workflows/pog2-knowledgebase.md)
+Entry points / spine:
+- `src/cli.ts`
+- `src/cli/CLIRouter.ts`
+- `src/mcpserver.ts`
+- `src/switchboard_server.ts`
+- `src/bridge_server.ts`
+- `src/PlayerAgent.ts`
 
----
+Config / constants:
+- `src/config/SovereignConfig.ts`
+- `src/config/beta_constants.ts`
+- `src/config/OllamaCapabilityConfig.ts`
+- `src/constants/AnatomyRegistry.ts`
+- `src/constants/KineticRegistry.ts`
+- `src/constants/ModelRegistry.ts`
 
-## 📂 Resources & Deconstructed Assets (`resources/`)
+Core:
+- `src/core/.` many foundation files including bootstrap, models, opcode/protocol readers, avatar/path/node registries, grounding, errors, and sovereign helpers.
 
-*Deconstructed webviewer modules and reconstruction reports.*
+AI/API:
+- `src/api/ai/CapabilityRegistry.ts`
+- `src/api/ai/CloudflareModelRegistry.ts`
+- `src/api/ai/Dispatcher.ts`
+- `src/api/ai/ExteriorGate.ts`
+- `src/api/ai/IntentMap.ts`
+- `src/api/ai/ModelRolodex.ts`
+- `src/api/ai/OverflowShim.ts`
+- `src/api/ai/StaticModelRegistry.ts`
+- `src/clients/ModelClient.ts`
 
-- [webviewer-deconstructed/](https://github.com/Kbro1989/POG2/tree/main/resources/webviewer-deconstructed)
-- [_analysis-report.json](https://github.com/Kbro1989/POG2/blob/main/resources/webviewer-deconstructed/_analysis-report.json)
+Engines:
+- `src/engines/ArchitecturalValidator.ts`
+- `src/engines/ASTWatcher.ts`
+- `src/engines/AvatarCompositionEngine.ts`
+- `src/engines/BlenderRenderer.ts`
+- `src/engines/ChromanumberEngine.ts`
+- `src/engines/CodeEngine.ts`
+- `src/engines/CognitiveEngine.ts`
+- `src/engines/CompletionEngine.ts`
+- `src/engines/ContextBuilder.ts`
+- `src/engines/DiscoveryEngine.ts`
+- `src/engines/EmbedEngine.ts`
+- `src/engines/ForgeEngine.ts`
+- `src/engines/GenerateEngine.ts`
+- `src/engines/IntentVerifier.ts`
+- `src/engines/MCPEngine.ts`
+- `src/engines/MemeticEngine.ts`
+- `src/engines/MemoryConsolidationEngine.ts`
+- `src/engines/MetabolicEngine.ts`
+- `src/engines/MetaCognitionEngine.ts`
+- `src/engines/MultiModelExecutor.ts`
+- `src/engines/OrchestrateEngine.ts`
+- `src/engines/PipelineController.ts`
+- `src/engines/ReimaginationEngine.ts`
+- `src/engines/SelfHealingEngine.ts`
+- `src/engines/ShadowEngine.ts`
+- `src/engines/ShellEngine.ts`
+- `src/engines/ShellLibrary.ts`
+- `src/engines/SovereignDefinitionEngine.ts`
+- `src/engines/SovereignIngestionEngine.ts`
+- `src/engines/SpatialVisionEngine.ts`
+- `src/engines/SyntropyEngine.ts`
+- `src/engines/TemporalSynchronizer.ts`
+- `src/engines/TodoEngine.ts`
+- `src/engines/ValidationSystem.ts`
+- `src/engines/VisionActuationHarness.ts`
+- `src/engines/VisionEngine.ts`
+- `src/engines/VSCodeEngine.ts`
+- `src/engines/WebSearchEngine.ts`
+- `src/engines/core/CausalPatternExtractor.ts`
+- `src/engines/core/CNSCausalityLedger.ts`
+- `src/engines/core/EpistemicTransitionKernel.ts`
+- `src/engines/core/EpistemicValidator.ts`
+- `src/engines/core/InvariantCompiler.ts`
+- `src/engines/core/NecromancerBrain.ts`
+- `src/engines/core/TruthReconciler.ts`
+- `src/engines/core/WaitDecisionMaker.ts`
+- `src/engines/gameplay/...`
+- `src/engines/spatial/ObservationEngine.ts`
+- `src/engines/spatial/ExplorationEngine.ts`
 
----
+Limbs:
+- `src/limbs/core/NeuralLimb.ts`
+- `src/limbs/core/TemporalHeartbeatLimb.ts`
+- `src/limbs/system/SkillsLimb.ts`
+- `src/limbs/cognitive/CognitivePermissionMatrix.ts`
+- `src/limbs/combat/AdrenalineStateMachine.ts`
+- `src/limbs/creative/...` media, video, voice, webapp, youtube
+- `src/limbs/metaphysical/...` Ghost/Omega/Quantum/Relic
+- `src/limbs/spatial/...` spatial/system limbs including forensics, cache, collision, HUD, radar, wiki reconciliation, official API, world forensics, etc.
+- `src/limbs/logical/...` clue, extras, handshake, interaction, restock, sandbox, vocabulary, state persistence
+- `src/limbs/pedagogy/...` combat pedagogy, ghost training, interface mapping, distiller, forensics, avatar action bar volition, sync
+- `src/limbs/sensory/PerceptionLimb.ts`
+- `src/limbs/technical/...` AI, control plane, entity, environment, epistemic, kinematics, logic brain, mechanical, pedagogy, quest forge/synthesis, sandbox, topology, UI, validation, vector pedagogy
+- `src/limbs/vision/...` chroma validator, image processor, vision router
+- `src/limbs/voice/CartesiaAdapter.ts`
+- `src/limbs/world_grounding/WorldGroundingLimb.ts`
 
-## 📂 API & AI Layer (`src/api/ai/`)
+Routing:
+- `src/routing/TernaryRouter.ts`
+- `src/routing/HexagramManager.ts`
+- `src/routing/TaskScheduler.ts`
+- `src/routing/DomainLocker.ts`
+- `src/routing/FireInjectionRouter.ts`
+- `src/routing/AttentionRouter.ts`
+- `src/routing/GlobeReconciliationKernel.ts`
+- `src/routing/VibeMapper.ts`
+- `src/routing/WorkforceManifest.ts`
+- `src/routing/types.ts`
+- `src/routing/strategies/...`
+- `src/routing/evolution/...`
 
-*Model discovery, capability mapping, and dispatch substrate.*
+Services / bridges / sovereign extras:
+- `src/services/CloudflareServices.ts`
+- `src/services/GoogleServices.ts`
+- `src/services/SovereignEntityResolver.ts`
+- `src/services/SovereignPedagogyBridge.ts`
+- `src/bridge/ChatTelemetryBridge.ts`
+- `src/sovereign/Pog2HexagramBridge.ts`
+- `src/sovereign/Pog2Integration.ts`
+- `src/convergence/...`
 
-- [CapabilityRegistry.ts](https://github.com/Kbro1989/POG2/blob/main/src/api/ai/CapabilityRegistry.ts)
-- [CloudflareModelRegistry.ts](https://github.com/Kbro1989/POG2/blob/main/src/api/ai/CloudflareModelRegistry.ts)
-- [Dispatcher.ts](https://github.com/Kbro1989/POG2/blob/main/src/api/ai/Dispatcher.ts)
-- [IntentMap.ts](https://github.com/Kbro1989/POG2/blob/main/src/api/ai/IntentMap.ts)
-- [ModelRolodex.ts](https://github.com/Kbro1989/POG2/blob/main/src/api/ai/ModelRolodex.ts)
-- [StaticModelRegistry.ts](https://github.com/Kbro1989/POG2/blob/main/src/api/ai/StaticModelRegistry.ts)
+Monitor / vision / utils:
+- `src/monitor/...`
+- `src/vision/...`
+- `src/utils/...`
+- `src/types/...`
+- `src/state/...`
+- `src/ui/...`
 
----
+Scripts / tests / backups:
+- `src/scripts/...`
+- `src/scripts_backup/...`
+- `src/tests/...`
 
-## 📂 Clients (`src/clients/`)
+Public assets:
+- `public/...`
 
-*Direct neural substrate callers. Real `fetch` calls only.*
-
-- [ModelClient.ts](https://github.com/Kbro1989/POG2/blob/main/src/clients/ModelClient.ts)
-
----
-
-## 📂 Configuration (`src/config/`)
-
-*Sovereign configuration and environment variable mapping.*
-
-- [SovereignConfig.ts](https://github.com/Kbro1989/POG2/blob/main/src/config/SovereignConfig.ts)
-
----
-
-## 📂 Constants (`src/constants/`)
-
-*Immutable registries for anatomy, kinetics, and model catalogs.*
-
-- [AnatomyRegistry.ts](https://github.com/Kbro1989/POG2/blob/main/src/constants/AnatomyRegistry.ts)
-- [KineticRegistry.ts](https://github.com/Kbro1989/POG2/blob/main/src/constants/KineticRegistry.ts)
-- [ModelRegistry.ts](https://github.com/Kbro1989/POG2/blob/main/src/constants/ModelRegistry.ts)
-
----
-
-## 📂 Core Types & Definitions (`src/core/`)
-
-*Foundational types, hexagram definitions, avatar substrate, and architectural digests.*
-
-- [ArchitectureDigest.ts](https://github.com/Kbro1989/POG2/blob/main/src/core/ArchitectureDigest.ts)
-- [HexagramDefinitions.ts](https://github.com/Kbro1989/POG2/blob/main/src/core/HexagramDefinitions.ts)
-- [models.ts](https://github.com/Kbro1989/POG2/blob/main/src/core/models.ts)
-- [ServiceDiscovery.ts](https://github.com/Kbro1989/POG2/blob/main/src/core/ServiceDiscovery.ts)
-- [SovereignAvatar.ts](https://github.com/Kbro1989/POG2/blob/main/src/core/SovereignAvatar.ts): Authoritative player state substrate (inventory, skills, quests, wallet).
-- [SovereignEye.ts](https://github.com/Kbro1989/POG2/blob/main/src/core/SovereignEye.ts)
-
----
-
-## 📂 Cognitive Engines (`src/engines/`)
-
-*The 30 specialized processing centers of the Sovereign Mind.*
-
-<details>
-<summary>View Engine Registry (30 files)</summary>
-
-- [ArchitecturalValidator.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/ArchitecturalValidator.ts)
-- [ASTWatcher.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/ASTWatcher.ts)
-- [ChromanumberEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/ChromanumberEngine.ts)
-- [CodeEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/CodeEngine.ts)
-- [CognitiveEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/CognitiveEngine.ts)
-- [CompletionEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/CompletionEngine.ts)
-- [ContextBuilder.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/ContextBuilder.ts)
-- [DiscoveryEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/DiscoveryEngine.ts)
-- [EmbedEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/EmbedEngine.ts)
-- [GenerateEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/GenerateEngine.ts)
-- [IntentVerifier.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/IntentVerifier.ts)
-- [MCPEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/MCPEngine.ts)
-- [MemeticEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/MemeticEngine.ts)
-- [MemoryConsolidationEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/MemoryConsolidationEngine.ts)
-- [MetabolicEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/MetabolicEngine.ts)
-- [MetaCognitionEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/MetaCognitionEngine.ts)
-- [MultiModelExecutor.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/MultiModelExecutor.ts)
-- [OrchestrateEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/OrchestrateEngine.ts)
-- [PipelineController.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/PipelineController.ts)
-- [SelfHealingEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/SelfHealingEngine.ts)
-- [ShadowEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/ShadowEngine.ts)
-- [ShellEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/ShellEngine.ts)
-- [ShellLibrary.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/ShellLibrary.ts)
-- [SpatialVisionEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/SpatialVisionEngine.ts)
-- [SyntropyEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/SyntropyEngine.ts)
-- [TodoEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/TodoEngine.ts)
-- [ValidationSystem.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/ValidationSystem.ts)
-- [VisionEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/VisionEngine.ts)
-- [WebSearchEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/WebSearchEngine.ts)
-
-#### Gameplay Sub-Engines (`src/engines/gameplay/`)
-
-- [CNSGodheadPulseVolley.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/CNSGodheadPulseVolley.ts): 600ms deterministic heartbeat kernel.
-- [SimulationHarness.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/SimulationHarness.ts): Central CNS node for dual-tick deterministic simulation.
-- [ServerLogicRegistry.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/ServerLogicRegistry.ts): Cache-authoritative server logic mapping.
-- [NpcAgent.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/NpcAgent.ts): Autonomous NPC agent controller.
-- [MinigameInterfaces.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/MinigameInterfaces.ts): GameplayModule interface contract.
-- [PrifddinasInterpreter.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/PrifddinasInterpreter.ts): Prifddinas logic interpreter.
-- [BarrowsInterpreter.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/BarrowsInterpreter.ts): Barrows logic interpreter.
-- [PestControlInterpreter.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/PestControlInterpreter.ts): Pest Control logic interpreter.
-- [JsonLogicInterpreter.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/JsonLogicInterpreter.ts): Generic JSON logic module loader.
-- [UniversalInterpreter.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/UniversalInterpreter.ts): Universal fallback interpreter.
-- [NecromancyInterfaces.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/gameplay/NecromancyInterfaces.ts): Necromancy ability/GFX definitions.
-
-#### Spatial Sub-Engines (`src/engines/spatial/`)
-
-- [ObservationEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/engines/spatial/ObservationEngine.ts): Live spatial observation lens.
-
-</details>
-
----
-
-## 📂 Vision & Pedagogy (`src/vision/`)
-
-*Transient observation, RSMV controller, and analysis of high-fidelity substrates.*
-
-- [RSMVController.ts](https://github.com/Kbro1989/POG2/blob/main/src/vision/RSMVController.ts): CNS Bridge for active 3D modification and GLTF export.
-- [StructuralAnalyzer.ts](https://github.com/Kbro1989/POG2/blob/main/src/vision/StructuralAnalyzer.ts)
-- [TransientObserver.ts](https://github.com/Kbro1989/POG2/blob/main/src/vision/TransientObserver.ts)
-
----
-
-## 📂 Sovereign Limbs (`src/limbs/`)
-
-*The 23 limbs connecting thought to substrate action.*
-
-### 🧬 Base Substrate (`core/`)
-
-- [NeuralLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/core/NeuralLimb.ts)
-
-### 🖥️ System (`system/`)
-
-- [SkillsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/system/SkillsLimb.ts): Foreign-skill assimilation pipeline. Ingests full skill content (instructions, refs, scripts, examples), runs the four-stage immune audit (GhostLimb adversarial / ClinicalAuditTool schema / OmegaLimb alignment / InvariantCompiler structural), and registers the skill as a `ToolDefinition`. See `SKILLSLIMB_ASSIMILATION_MAP.md` for command/skill slot assignments.
-
-### 🎨 Creative Core (`creative/`)
-
-- [GutenbergLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/GutenbergLimb.ts)
-- [MediaForgeLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/MediaForgeLimb.ts)
-- [NeuralForgeLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/NeuralForgeLimb.ts)
-- [SoundtrackLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/SoundtrackLimb.ts)
-- [StoryboardLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/StoryboardLimb.ts)
-- [VideoAssemblerLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/VideoAssemblerLimb.ts)
-- [VoiceLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/VoiceLimb.ts)
-- [WebAppForgeLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/WebAppForgeLimb.ts)
-- [YouTubeLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/creative/YouTubeLimb.ts)
-
-### 🌌 Metaphysical Core (`metaphysical/`)
-
-- [GhostLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/metaphysical/GhostLimb.ts)
-- [OmegaLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/metaphysical/OmegaLimb.ts)
-- [QuantumLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/metaphysical/QuantumLimb.ts)
-- [RelicLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/metaphysical/RelicLimb.ts)
-
-### 🧿 Spatial Core (`spatial/`)
-
-- [ArchaeologyEngine.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/ArchaeologyEngine.ts): Sovereign pathing archaeology audit.
-- [BankLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/BankLimb.ts): Bank deposit/withdraw logic.
-- [BioIntelligenceLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/BioIntelligenceLimb.ts)
-- [CacheForensicsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/CacheForensicsLimb.ts)
-- [CacheLearningLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/CacheLearningLimb.ts)
-- [ChromaLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/ChromaLimb.ts)
-- [CloudflareSyncLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/CloudflareSyncLimb.ts): Edge synchronization.
-- [CombatLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/CombatLimb.ts): Authoritative combat resolution.
-- [DBRowOracleLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/DBRowOracleLimb.ts): DBRow data oracle.
-- [DirectionalPathfinder.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/DirectionalPathfinder.ts): A* pathfinding with directional collision.
-- [GameplaySovereigntyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/GameplaySovereigntyLimb.ts): Authoritative gameplay tick engine.
-- [GlobeStateLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/GlobeStateLimb.ts)
-- [HUDForensicsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/HUDForensicsLimb.ts): Jagex interface decompiler.
-- [ItemLifecycleLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/ItemLifecycleLimb.ts): Item creation/destruction lifecycle.
-- [MaterialLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/MaterialLimb.ts): Major 26 material shader extraction.
-- [MinigameForensicsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/MinigameForensicsLimb.ts): Minigame system forensics.
-- [OfficialApiLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/OfficialApiLimb.ts): RuneScape official API bridge.
-- [RSCLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/RSCLimb.ts)
-- [SpatialSovereigntyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/SpatialSovereigntyLimb.ts): Authoritative spatial collision & walkability.
-- [SystemTaxonomyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/SystemTaxonomyLimb.ts): Major 2 config/dbtable extraction.
-- [TeleportGrounding.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/TeleportGrounding.ts): Teleport destination registry.
-- [VarbitSovereigntyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/VarbitSovereigntyLimb.ts): Varbit/Varp state sovereignty.
-- [VolumeSovereigntyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/VolumeSovereigntyLimb.ts)
-- [WebSensoryLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/WebSensoryLimb.ts)
-- [WorldForensicsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/spatial/WorldForensicsLimb.ts): Object definition & morphism resolution.
-
-### 🧠 Logical Core (`logical/`)
-
-- [ClueLogicLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/ClueLogicLimb.ts): Treasure trail spot verification.
-- [ExtrasOracle.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/ExtrasOracle.ts): Logical context & handler resolution.
-- [InteractionGateway.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/InteractionGateway.ts): Deterministic interaction pipeline.
-- [SovereignVocabularyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/SovereignVocabularyLimb.ts): Action normalization & vocabulary.
-- [WorldStateLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/WorldStateLimb.ts): Global world state facade.
-- [AdminCommandProcessor.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/logical/world/AdminCommandProcessor.ts): Tick-synchronized admin command execution.
-
-### 🌐 World Grounding (`world_grounding/`)
-
-- [WorldGroundingLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/world_grounding/WorldGroundingLimb.ts): Proximity entity manifestation.
-
-### ⚙️ Technical Core (`technical/`)
-
-- [AILimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/AILimb.ts)
-- [ControlPlaneLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/ControlPlaneLimb.ts)
-- [EntityLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/EntityLimb.ts)
-- [EnvironmentLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/EnvironmentLimb.ts)
-- [HiScoreLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/HiScoreLimb.ts): Player HiScore API bridge.
-- [KinematicsLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/KinematicsLimb.ts): Animation forensic deconstruction.
-- [MechanicalSovereigntyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/MechanicalSovereigntyLimb.ts): Mechanical logic / state transition resolution.
-- [PedagogyLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/limbs/technical/PedagogyLimb.ts): Quest grounding & principle archiving.
+Docs in repo:
+- `CODEBASE.md`
+- `CODEBASE_MAP.md`
+- `ARCHITECTURE.md`
+- `CLAUDE.md`
+- `GEMINI.md`
+- `OrchestrateEngine.md`
+- `POG2_KNOWLEDGEBASE.md`
+- `POG2_FUNCTIONAL_KNOWLEDGE.md`
+- `POG2_FUNCTIONAL_TETHER_MECHANICS.md`
+- `POG2_INIT_VISIBILITY_CONTRACT.md`
+- `POG2_APP_HANDSHAKE_CONTRACT.md`
+- `POG2_DUAL_SUPPORT_POLICY.md`
+- `RSMV_AUDIT_SUMMARY.md`
+- `RSMV_DEPENDENCY_AUDIT.md`
+- `RSMV_REPLACEMENT_PLAN.md`
+- `SECURITY_CHAIN.md`
+- `SKILLSLIMB_ASSIMILATION_MAP.md`
+- `SOVEREIGN_THESIS.md`
+- `WEBPACK_DEPENDENCY_ANALYSIS.md`
+- `EXTERIOR_HANDSHAKES.md`
+- `CONTRIBUTING.md`
+- `README.md`
+- `PULL_REQUIREMENTS.md`
+- `PROJECT-OVERVIEW.md`
+- `NEUROLOGICAL_MAP.md`
+- `MEMORY_UPDATE.md`
+- `allfiles.md`
+- `manifest.md`
+- `.manifest.md`
+- `pog2.md`
+- `.pog.md`
+- `.pog2.md`
+- `rules.md`
+- `.agents/TOOL_MANIFEST.md`
+- `.agents/rules/pogrules.md`
+- `.agents/skills/diagnostic_healer/SKILL.md`
+- `.agents/workflows/pog2-knowledgebase.md`
+- `.agent/workflows/pog2-sovereign.md`
+- `extra/JAGA_FORMAT_ANALYSIS.md`
+- `memory/hudforensics-limb-fix.md`
+- `plans/sharded-roaming-alpaca.md`
+- `rsmv_inspector/GEMINI.md`
+- `rsmv_inspector/readme.md`
+- `rsmv_inspector/src/clientscript/readme.md`
+- `rsmv_inspector/src/map/readme.md`
+- `rsmv_inspector/todo.md`
+- `src/mapping/rsmv_pog2_mapper.md`
+- `src/utils/SovereignPathResolver.md`
 
 ---
 
-## 📂 Routing (`src/routing/`)
+---
 
-*Ternary decision-making, hexagram state, and evolutionary feedback.*
+## 📂 Per-Folder README Index
 
-### Core
+Root README: [`./README.md`](./README.md)
 
-- [DomainLocker.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/DomainLocker.ts): Runtime gate returning PASS/WAIT per `src/types/SovereignDomain.ts`. Reads `TOOL_DOMAIN_MAP` and `DOMAIN_ADJACENCY` from the enum file; the two are inseparable. See `SECURITY_CHAIN.md` Gate 2.
-- [HexagramManager.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/HexagramManager.ts)
-- [TaskScheduler.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/TaskScheduler.ts)
-- [TernaryRouter.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/TernaryRouter.ts)
-- [types.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/types.ts)
-- [WorkforceManifest.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/WorkforceManifest.ts)
+**Note**: some folders below may not exist on disk yet; their READMEs are placeholders noting absence or role expectation.
 
-### 🧬 Evolution (`evolution/`)
+### Hidden/config
 
-- [OutcomeScorer.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/evolution/OutcomeScorer.ts)
-- [StrategyAdvisor.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/evolution/StrategyAdvisor.ts)
+- [`.agent/`](./.agent/README.md)
+- [`.agent/workflows/`](./.agent/workflows/README.md)
+- [`.agents/`](./.agents/README.md)
+- [`.agents/rules/`](./.agents/rules/README.md)
+- [`.agents/skills/`](./.agents/skills/README.md)
+- [`.agents/skills/diagnostic_healer/`](./.agents/skills/diagnostic_healer/README.md)
+- [`.agents/workflows/`](./.agents/workflows/README.md)
+- [`.claude/`](./.claude/README.md)
+- [`.github/`](./.github/README.md)
+- [`.github/commands/`](./.github/commands/README.md)
+- [`.github/workflows/`](./.github/workflows/README.md)
+- [`.vscode/`](./.vscode/README.md)
+- [`.wrangler/`](./.wrangler/README.md)
+- [`.wrangler/state/`](./.wrangler/state/README.md)
 
-### 🎯 Strategies (`strategies/`)
+### Top-level data/assets
 
-- [AnalyticalStrategy.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/strategies/AnalyticalStrategy.ts)
-- [CompositeStrategy.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/strategies/CompositeStrategy.ts)
-- [DefaultStrategy.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/strategies/DefaultStrategy.ts)
-- [FallbackStrategy.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/strategies/FallbackStrategy.ts)
-- [OverrideStrategy.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/strategies/OverrideStrategy.ts)
-- [TernaryClassifierStrategy.ts](https://github.com/Kbro1989/POG2/blob/main/src/routing/strategies/TernaryClassifierStrategy.ts)
+- [`atlas/`](./atlas/README.md)
+- [`atlas/spatial/`](./atlas/spatial/README.md)
+- [`atlas/spatial/unified_extract/`](./atlas/spatial/unified_extract/README.md)
+- [`atlas/spatial/world_extract/`](./atlas/spatial/world_extract/README.md)
+- [`cache/`](./cache/README.md)
+- [`data/`](./data/README.md)
+- [`data/boss_templates/`](./data/boss_templates/README.md)
+- [`data/entity_instances/`](./data/entity_instances/README.md)
+- [`data/pvme/`](./data/pvme/README.md)
+- [`data/substrate/`](./data/substrate/README.md)
+- [`diagnostic/`](./diagnostic/README.md)
+- [`extra/`](./extra/README.md)
+- [`extra/items/`](./extra/items/README.md)
+- [`generated/`](./generated/README.md)
+- [`mediator/`](./mediator/README.md)
+- [`mediator/app/`](./mediator/app/README.md)
+- [`memory/`](./memory/README.md)
+- [`plans/`](./plans/README.md)
+- [`pog2-git/`](./pog2-git/README.md)
+- [`public/`](./public/README.md)
+- [`public/gameplay/`](./public/gameplay/README.md)
+- [`public/icons/`](./public/icons/README.md)
+- [`public/models/`](./public/models/README.md)
+- [`public/test_output/`](./public/test_output/README.md)
+- [`public/unified/`](./public/unified/README.md)
+- [`rsmv_clone/`](./rsmv_clone/README.md)
+- [`rsmv_clone/src/`](./rsmv_clone/src/README.md)
+- [`rsmv_inspector/`](./rsmv_inspector/README.md)
+- [`rsmv_inspector/data/`](./rsmv_inspector/data/README.md)
+- [`rsmv_inspector/dist_scripts/`](./rsmv_inspector/dist_scripts/README.md)
+- [`rsmv_inspector/generated/`](./rsmv_inspector/generated/README.md)
+- [`rsmv_inspector/opcodes/`](./rsmv_inspector/opcodes/README.md)
+- [`rsmv_inspector/scratch/`](./rsmv_inspector/scratch/README.md)
+- [`rsmv_inspector/src/`](./rsmv_inspector/src/README.md)
+- [`rsmv_inspector/test_extract/`](./rsmv_inspector/test_extract/README.md)
+- [`scratch/`](./scratch/README.md)
+- [`scratch/live_extracts/`](./scratch/live_extracts/README.md)
+- [`scratch/public/`](./scratch/public/README.md)
+- [`scratch/staging/`](./scratch/staging/README.md)
+- [`scripts/`](./scripts/README.md)
+- [`web_hud/`](./web_hud/README.md)
+- [`web_hud/public/`](./web_hud/public/README.md)
+- [`web_hud/src/`](./web_hud/src/README.md)
+
+### Source (`src/`)
+
+- [`src/.scratch/`](./src/.scratch/README.md)
+- [`src/api/`](./src/api/README.md)
+- [`src/api/ai/`](./src/api/ai/README.md)
+- [`src/bridge/`](./src/bridge/README.md)
+- [`src/cli/`](./src/cli/CLIRouter.ts)
+- [`src/clients/`](./src/clients/README.md)
+- [`src/config/`](./src/config/README.md)
+- [`src/constants/`](./src/constants/README.md)
+- [`src/convergence/`](./src/convergence/README.md)
+- [`src/core/`](./src/core/README.md)
+- [`src/domain/chat/`](./src/domain/chat/README.md)
+- [`src/durable-objects/`](./src/durable-objects/README.md)
+- [`src/entities/`](./src/entities/README.md)
+- [`src/entities/ai/`](./src/entities/ai/README.md)
+- [`src/events/`](./src/events/README.md)
+- [`src/events/processors/`](./src/events/processors/README.md)
+- [`src/forensics/`](./src/forensics/README.md)
+- [`src/generated/`](./src/generated/README.md)
+- [`src/generated/cache-schemas/`](./src/generated/cache-schemas/README.md)
+- [`src/generators/`](./src/generators/README.md)
+- [`src/limbs/`](./src/limbs/README.md)
+- [`src/limbs/audio/`](./src/limbs/audio/README.md)
+- [`src/limbs/cognitive/`](./src/limbs/cognitive/README.md)
+- [`src/limbs/combat/`](./src/limbs/combat/README.md)
+- [`src/limbs/core/`](./src/limbs/core/README.md)
+- [`src/limbs/creative/`](./src/limbs/creative/README.md)
+- [`src/limbs/gameplay/`](./src/limbs/gameplay/README.md)
+- [`src/limbs/logical/`](./src/limbs/logical/README.md)
+- [`src/limbs/metaphysical/`](./src/limbs/metaphysical/README.md)
+- [`src/limbs/pedagogy/`](./src/limbs/pedagogy/README.md)
+- [`src/limbs/sensory/`](./src/limbs/sensory/README.md)
+- [`src/limbs/spatial/`](./src/limbs/spatial/README.md)
+- [`src/limbs/system/`](./src/limbs/system/README.md)
+- [`src/limbs/technical/`](./src/limbs/technical/README.md)
+- [`src/limbs/vision/`](./src/limbs/vision/README.md)
+- [`src/limbs/voice/`](./src/limbs/voice/README.md)
+- [`src/limbs/world_grounding/`](./src/limbs/world_grounding/README.md)
+- [`src/logic/`](./src/logic/README.md)
+- [`src/logic/handlers/`](./src/logic/handlers/README.md)
+- [`src/mapping/`](./src/mapping/README.md)
+- [`src/mcpserver/`](./src/mcpserver/README.md)
+- [`src/monitor/`](./src/monitor/README.md)
+- [`src/parsers/`](./src/parsers/README.md)
+- [`src/prompts/`](./src/prompts/README.md)
+- [`src/routing/`](./src/routing/README.md)
+- [`src/routing/core/`](./src/routing/core/README.md)
+- [`src/routing/evolution/`](./src/routing/evolution/README.md)
+- [`src/routing/strategies/`](./src/routing/strategies/README.md)
+- [`src/scripts/`](./src/scripts/README.md)
+- [`src/scripts_backup/`](./src/scripts_backup/README.md)
+- [`src/services/`](./src/services/README.md)
+- [`src/sovereign/`](./src/sovereign/README.md)
+- [`src/state/`](./src/state/README.md)
+- [`src/substrates/`](./src/substrates/README.md)
+- [`src/tests/`](./src/tests/README.md)
+- [`src/tools/`](./src/tools/README.md)
+- [`src/types/`](./src/types/README.md)
+- [`src/ui/`](./src/ui/README.md)
+- [`src/utils/`](./src/utils/README.md)
+- [`src/vision/`](./src/vision/README.md)
 
 ---
 
-## 📂 Monitor (`src/monitor/`)
-
-*Biological heartbeat, clinical logging, and node testing.*
-
-- [ClinicalLogger.ts](https://github.com/Kbro1989/POG2/blob/main/src/monitor/ClinicalLogger.ts)
-- [NodeTester.ts](https://github.com/Kbro1989/POG2/blob/main/src/monitor/NodeTester.ts)
-- [PulseMonitor.ts](https://github.com/Kbro1989/POG2/blob/main/src/monitor/PulseMonitor.ts)
-- [SwitchboardLimb.ts](https://github.com/Kbro1989/POG2/blob/main/src/monitor/SwitchboardLimb.ts)
-
----
-
-## 📂 Prompts (`src/prompts/`)
-
-*System prompt templates for sovereign law enforcement.*
-
-- [SystemPrompts.ts](https://github.com/Kbro1989/POG2/blob/main/src/prompts/SystemPrompts.ts)
-
----
-
-## 📂 Scripts (`src/scripts/`)
-
-*Diagnostic probes and stress testing utilities.*
-
-- [cascadeDiagnostic.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/cascadeDiagnostic.ts)
-- [evolutionDiagnostic.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/evolutionDiagnostic.ts)
-- [liveVisionLoop.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/liveVisionLoop.ts)
-- [pullHans.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/pullHans.ts)
-- [stressTest.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/stressTest.ts)
-- [testActuation.ts](https://github.com/Kbro1989/POG2/blob/main/src/scripts/testActuation.ts)
-
----
-
-## 📂 Services (`src/services/`)
-
-*Cloud provider integrations.*
-
-- [CloudflareServices.ts](https://github.com/Kbro1989/POG2/blob/main/src/services/CloudflareServices.ts)
-- [GoogleServices.ts](https://github.com/Kbro1989/POG2/blob/main/src/services/GoogleServices.ts)
-
----
-
-## 📂 State (`src/state/`)
-
-*Neurological map and state management.*
-
-- [NeurologicalMap.ts](https://github.com/Kbro1989/POG2/blob/main/src/state/NeurologicalMap.ts)
-- [StateManager.ts](https://github.com/Kbro1989/POG2/blob/main/src/state/StateManager.ts)
-
----
-
-## 📂 Types (`src/types/`)
-
-*Type definitions and domain contracts.*
-
-- [diagnostic.ts](https://github.com/Kbro1989/POG2/blob/main/src/types/diagnostic.ts)
-- [pipeline.ts](https://github.com/Kbro1989/POG2/blob/main/src/types/pipeline.ts)
-- [result_test.ts](https://github.com/Kbro1989/POG2/blob/main/src/types/result_test.ts)
-- [SovereignDomain.ts](https://github.com/Kbro1989/POG2/blob/main/src/types/SovereignDomain.ts)
-
----
-
-## 📂 UI (`src/ui/`)
-
-*Terminal rendering and interactive output.*
-
-- [Renderer.ts](https://github.com/Kbro1989/POG2/blob/main/src/ui/Renderer.ts)
-
----
-
-## 📂 Utilities (`src/utils/`)
-
-*Critical substrate utilities for extraction, memory, path resolution, and grounding.*
-
-<details>
-<summary>View Utility Registry (25+ files)</summary>
-
-- [ClinicalAuditTool.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/ClinicalAuditTool.ts)
-- [CodeExtractor.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/CodeExtractor.ts)
-- [CognitiveTranslator.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/CognitiveTranslator.ts)
-- [DBMaintenance.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/DBMaintenance.ts)
-- [EndpointHealer.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/EndpointHealer.ts)
-- [JsonExtractor.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/JsonExtractor.ts)
-- [KeyVault.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/KeyVault.ts)
-- [logger.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/logger.ts)
-- [NarrativeExtractor.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/NarrativeExtractor.ts)
-- [PathNormalizer.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/PathNormalizer.ts)
-- [QuotaTracker.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/QuotaTracker.ts)
-- [RSMVExtractor.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/RSMVExtractor.ts): Real-world substrate hook for RS model extraction.
-- **[RSMVController.ts](src/vision/RSMVController.ts)**: CNS Bridge for active 3D modification and GLTF export.
-- **[CacheForensicsLimb.ts](src/limbs/spatial/CacheForensicsLimb.ts)**: Live volatility monitoring of the Jagex cache.
-- **[CacheLearningLimb.ts](src/limbs/spatial/CacheLearningLimb.ts)**: Sovereign extraction of raw JS5 substrates.
-- [shell.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/shell.ts)
-- [SmartEdit.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/SmartEdit.ts)
-- [SovereignEye.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/SovereignEye.ts)
-- [SovereignIgnoreManager.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/SovereignIgnoreManager.ts)
-- [SovereignLibrary.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/SovereignLibrary.ts)
-- [SovereignPathResolver.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/SovereignPathResolver.ts)
-- [SovereignProprioception.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/SovereignProprioception.ts)
-- [SovereignUI.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/SovereignUI.ts)
-- [StyleAnalyzer.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/StyleAnalyzer.ts)
-- [VectorDB.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/VectorDB.ts)
-- [WikiEnricher.ts](https://github.com/Kbro1989/POG2/blob/main/src/utils/WikiEnricher.ts)
-
-</details>
-
----
-
-## 📂 External Core Substrates (`tmp/`)
-
-*Local repository clones and critical external dependencies woven into the cognitive runtime.*
-
-- [Kbro1989/rsmv](rsmv/) (RuneScape 3 Model Viewer + Cache Subsystem)
-
----
-
-## 🪐 The Sovereign Substrate (`D:\sovereign\`)
-
-*The physical, persistent data body of the organism, deeply managed by `SovereignPathResolver.ts`.*
-
-### 🗺️ Spatial & Logic Matrices (`atlas/`)
-
-* Ground truth definitions and logic bounds for Phase 15+.
-
-- `atlas/spatial/` *(Authoritative Mapsquare Logic)*
-- `atlas/logic/` *(System / Regional Rules)*
-- `atlas/system/` *(Active Gameplay Sandbox / Minigame Systems)*
-
-### 🧠 Persistence & Epistemology (`memory/`, `learning/`)
-
-* Long-term memory storage, vector embeddings, and pedagogical dumps.
-
-- `learning/sovereign-learning.db` *(Vector Storage Bank)*
-- `memory/pedagogy/` *(The enriched Sovereign knowledge base)*
-- `memory/sovereign_state.json` *(The global world save state)*
-- `memory/sovereign-performance.json` *(Neurological operational limits)*
-
-### 🔍 Phenomenological Digs (`cache_pedagogy/`)
-
-* Deep cache data extraction and visual forensic reconstruction instances.
-
-- `cache_pedagogy/rsmv/` *(The operational 3D runtime hub)*
-- `cache_pedagogy/json_dumps/` *(Raw forensic extrusions from the visual bridge)*
-
-### ⚙️ Autonomous Creation Pipelines (`training/`, `pipelines/`)
-
-* AI automation pipelines, generative storage, and automated training data.
-
-- `training/` *(Includes `interactions`, `decisions`, `thinking`, `consequences`, `error_fixes`)*
-- `pipelines/` & `generations/` & `snapshots/` *(Workflow snapshots and generated media)*
-- `pog-gutenberg/` *(Literature and historical texts)*
-- `rsc-data/` *(RuneScape Classic archaeological data)*
-
----
-
-# 🧠 System Awareness Layer (The Living Organism)
-
-*Functional topography and cognitive flow dynamics.*
-
-## 🧬 Cognitive Flow Map (Meridians)
-
-The following map visualizes how energy and intent move from User Input through the Internal Kernel to External Actuators.
-
-```mermaid
-graph TD
-    Input[User Input] --> Router[TernaryRouter]
-    Router --> Intent[Intent Classification]
-    Intent --> Logic{Ternary Logic}
-    Logic -->|Yang/Deep| Master[Master Tier Model]
-    Logic -->|YinYang/Mid| Executive[Executive Tier Model]
-    Logic -->|Yin/Reflex| Reactive[Reactive Tier Model]
-    Master --> Engine[OrchestrateEngine]
-    Executive --> Engine
-    Reactive --> Engine
-    Engine --> Limb[Actuation Limb]
-    Limb --> Output[Actuator / Reality Hook]
-    Output --> Feedback[Reinforcement Loop]
-    Feedback --> Router
-```
-
-## 🏗️ Functional Hierarchy
-
-### 1. Internal Kernel (The Core Spine)
-
-*Central nervous system and routing logic. Responsible for "Self" awareness and intent triage.*
-
-- **[TernaryRouter.ts](src/routing/TernaryRouter.ts)**: Cognitive Load Balancer & ε-greedy model discovery.
-- **[HexagramManager.ts](src/routing/HexagramManager.ts)**: Probabilistic state machine / I Ching abstraction layer.
-- **[OrchestrateEngine.ts](src/engines/OrchestrateEngine.ts)**: Central spine coordinating all limbs and specialized processing.
-- **[ModelRolodex.ts](src/api/ai/ModelRolodex.ts)**: Living model catalog with reputation-based selection.
-
-### 2. Cognitive Processing (The Cortex)
-
-*Deep thought and analysis subsystems.*
-
-- **[CognitiveEngine.ts](src/engines/CognitiveEngine.ts)**: Reasoning & context synthesis.
-- **[CodeEngine.ts](src/engines/CodeEngine.ts)**: Structural analysis and code generation.
-- **[DiscoveryEngine.ts](src/engines/DiscoveryEngine.ts)**: Knowledgebase exploration and pattern recognition.
-- **[MetabolicEngine.ts](src/engines/MetabolicEngine.ts)**: System health and resource management.
-
-### 3. External Actuation (The Limbs)
-
-*The actuation surface where thoughts become reality actions.*
-
-- **[AILimb.ts](src/limbs/technical/AILimb.ts)**: Primary generative and creative interface.
-- **[BlenderRenderer.ts](src/engines/BlenderRenderer.ts)**: Visual and 3D reconstruction actuator.
-- **[PipelineController.ts](src/engines/PipelineController.ts)**: Orchestrating multi-step execution sequences.
-- **[StoryboardLimbV2.ts](src/limbs/creative/StoryboardLimb.ts)**: Narrative and visual sequencing.
-- **[RSMVExtractor.ts](src/utils/RSMVExtractor.ts)**: Real-world substrate hook for RS model extraction.
-
-### 4. Sensory & Memory (Proprioception)
-
-*Input probes and persistent context substrates.*
-
-- **[PulseMonitor.ts](src/monitor/PulseMonitor.ts)**: Real-time system heartbeat and file-system awareness.
-- **[WebSensoryLimb.ts](src/limbs/spatial/WebSensoryLimb.ts)**: External world information gathering.
-- **[VectorDB.ts](src/utils/VectorDB.ts)**: High-dimensional associative memory.
-- **[MemoryConsolidationEngine.ts](src/engines/MemoryConsolidationEngine.ts)**: Context gating and long-term memory stratification.
-
-## 🛠️ Tool Execution Surface
-
-The POG2 organism exposes **92+ nodes** (tools) across the following surfaces:
-
-- **Spatial Nodes**: Cache extraction (`cache_learn_extract`), pixel forensic (`cache_forensics_scan`), chromatic soul validation.
-- **Motor Nodes**: Code generation, renderer actuation, file modification, 3D export (`rsmv_export`).
-- **Sensory Nodes**: Vision detection (`rsmv_view`), audio transcription, web scraping.
-- **Audit Nodes**: Neurological verification, health checks, clinical logging.
-
----
-*Audited: 2026-04-12 | 106 Substrates | Alive Mode: Active*
+## 🔗 Cross-Repo Context (`Kbro1989/POG2_GLOBAL_INDEX.md`)
+
+Use `C:\Users\krist\Desktop\POG2_GLOBAL_INDEX.md` for the authoritative multi-repo `.md` index and broadened tree context across:
+- Kbro1989/POG2
+- Kbro1989/Pog2-Core
+- Kbro1989/Pog2-Data
+- Kbro1989/Pog2-Atlas
+- Kbro1989/D-sovereign-
+- Kbro1989/openrsc-vinilla
+- Kbro1989/rsc-globe1-pure
+- Kbro1989/rscaievolution-png
