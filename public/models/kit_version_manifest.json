@@ -1,0 +1,191 @@
+{
+  "timestamp": "2026-07-11T07:30:27.561963100+00:00",
+  "cache_dir": "C:\\ProgramData\\Jagex\\RuneScape",
+  "kit_ids": [
+    12428,
+    31149,
+    37641,
+    420
+  ],
+  "timelines": [
+    {
+      "kit_id": 12428,
+      "entries": [
+        {
+          "major": 12,
+          "version": 0,
+          "size_bytes": 39,
+          "sha256": "9847084343bc95d1"
+        },
+        {
+          "major": 47,
+          "version": 1742970142,
+          "size_bytes": 1771,
+          "sha256": "9105e7d4b4f4005f"
+        },
+        {
+          "major": 48,
+          "version": 1441270757,
+          "size_bytes": 639,
+          "sha256": "565c3f3a5cdcf2b1"
+        },
+        {
+          "major": 54,
+          "version": 1574372814,
+          "size_bytes": 116226,
+          "sha256": "f8fabad616c9c06a"
+        },
+        {
+          "major": 8,
+          "version": 1607421741,
+          "size_bytes": 71692,
+          "sha256": "5901341fa0becbc1"
+        }
+      ],
+      "first_seen_major": 12,
+      "latest_major": 8,
+      "entry_count": 5
+    },
+    {
+      "kit_id": 31149,
+      "entries": [
+        {
+          "major": 47,
+          "version": 1742970229,
+          "size_bytes": 3159,
+          "sha256": "8ea1c2699b352a4c"
+        },
+        {
+          "major": 48,
+          "version": 1497428437,
+          "size_bytes": 14490,
+          "sha256": "81834877418a558e"
+        },
+        {
+          "major": 52,
+          "version": 1695637399,
+          "size_bytes": 19446,
+          "sha256": "f10c5bd097177aef"
+        },
+        {
+          "major": 54,
+          "version": 1695637420,
+          "size_bytes": 62538,
+          "sha256": "23bfa356e0c0a87d"
+        },
+        {
+          "major": 8,
+          "version": 1495528614,
+          "size_bytes": 20251,
+          "sha256": "0dc802862c042e9f"
+        }
+      ],
+      "first_seen_major": 47,
+      "latest_major": 8,
+      "entry_count": 5
+    },
+    {
+      "kit_id": 37641,
+      "entries": [
+        {
+          "major": 47,
+          "version": 1742970264,
+          "size_bytes": 842,
+          "sha256": "2caf9523c4422e08"
+        },
+        {
+          "major": 52,
+          "version": 1746528956,
+          "size_bytes": 148,
+          "sha256": "41f40c0bc8d402c1"
+        },
+        {
+          "major": 54,
+          "version": 1746528979,
+          "size_bytes": 122,
+          "sha256": "3662b9709971fb8d"
+        }
+      ],
+      "first_seen_major": 47,
+      "latest_major": 54,
+      "entry_count": 3
+    },
+    {
+      "kit_id": 420,
+      "entries": [
+        {
+          "major": 1,
+          "version": 1742969999,
+          "size_bytes": 58,
+          "sha256": "33b790bfa7031013"
+        },
+        {
+          "major": 12,
+          "version": 0,
+          "size_bytes": 64,
+          "sha256": "6991ca88e963a89c"
+        },
+        {
+          "major": 16,
+          "version": 1770658584,
+          "size_bytes": 2985,
+          "sha256": "7548b833aab62d65"
+        },
+        {
+          "major": 22,
+          "version": 1,
+          "size_bytes": 76,
+          "sha256": "0f4c22889b3414d4"
+        },
+        {
+          "major": 3,
+          "version": 1690216078,
+          "size_bytes": 131,
+          "sha256": "c76e19ff46c8b331"
+        },
+        {
+          "major": 41,
+          "version": 1471952434,
+          "size_bytes": 503,
+          "sha256": "15cc1c6370b12d60"
+        },
+        {
+          "major": 47,
+          "version": 1742970089,
+          "size_bytes": 10472,
+          "sha256": "d823dd28ae88278e"
+        },
+        {
+          "major": 48,
+          "version": 1441270363,
+          "size_bytes": 20532,
+          "sha256": "b58cdeb61952c38f"
+        },
+        {
+          "major": 56,
+          "version": 1645049819,
+          "size_bytes": 193886,
+          "sha256": "10612a1453edcdf3"
+        },
+        {
+          "major": 61,
+          "version": 1751451672,
+          "size_bytes": 2261,
+          "sha256": "3057de6fae1ac34a"
+        },
+        {
+          "major": 8,
+          "version": 3,
+          "size_bytes": 614,
+          "sha256": "50ac34d92fbd7387"
+        }
+      ],
+      "first_seen_major": 1,
+      "latest_major": 8,
+      "entry_count": 11
+    }
+  ],
+  "full_model_id": 12428,
+  "full_model_reason": [],
+  "selection_rule": "highest interactionFlagCount; ties broken by vertexCount then kit_id"
+}
